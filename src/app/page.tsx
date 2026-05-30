@@ -18,24 +18,32 @@ export default function Home() {
   const [expression, setExpression] = useState("");
   const [graphs, setGraphs] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [minX, setMinX] = useState(-10);
+  const [maxX, setMaxX] = useState(10);
 
   const generateGraph = () => {
     try {
       const points = [];
-
-      for (let x = -10; x <= 10; x += 0.5) {
+    
+      for (let x = minX; x <= maxX; x += 0.5) {
         const y = evaluate(expression, { x });
-
+    
         points.push({
           x,
           y,
         });
       }
-
+    
       setChartData(points);
+      setErrorMessage("");
     } catch (error) {
       console.error("Error al generar gráfico:", error);
-      alert("Expresión inválida");
+    
+      setErrorMessage(
+        "La expresión matemática es inválida."
+      );
     }
   };
 
@@ -83,7 +91,7 @@ export default function Home() {
     try {
       const points = [];
   
-      for (let x = -10; x <= 10; x += 0.5) {
+      for (let x = minX; x <= maxX; x += 0.5) {
         const y = evaluate(expr, { x });
   
         points.push({
@@ -127,7 +135,10 @@ export default function Home() {
         <input
           type="text"
           value={expression}
-          onChange={(e) => setExpression(e.target.value)}
+          onChange={(e) => {
+            setExpression(e.target.value);
+            setErrorMessage("");
+          }}
           placeholder="Ej: x^2 + 3*x + 1"
           className="border p-2 rounded w-80 text-black"
         />
@@ -146,6 +157,11 @@ export default function Home() {
           Guardar
         </button>
       </div>
+      {errorMessage && (
+          <p className="text-red-600 mb-4 font-medium">
+            ❌ {errorMessage}
+          </p>
+      )}
 
       <div className="w-full max-w-4xl h-[400px] mb-10">
         <ResponsiveContainer width="100%" height="100%">
@@ -189,6 +205,23 @@ export default function Home() {
           </button>
           </div>
         ))}
+        <div className="flex gap-2 mb-8">
+          <input
+            type="number"
+            value={minX}
+            onChange={(e) => setMinX(Number(e.target.value))}
+            className="border p-2 rounded w-32 text-black"
+            placeholder="Desde"
+          />
+
+          <input
+            type="number"
+            value={maxX}
+            onChange={(e) => setMaxX(Number(e.target.value))}
+            className="border p-2 rounded w-32 text-black"
+            placeholder="Hasta"
+          />
+        </div>
       </div>
     </main>
   );
