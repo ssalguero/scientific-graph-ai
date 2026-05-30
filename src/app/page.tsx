@@ -2,10 +2,42 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { evaluate } from "mathjs";
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function Home() {
   const [expression, setExpression] = useState("");
   const [graphs, setGraphs] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+
+  const generateGraph = () => {
+    try {
+      const points = [];
+
+      for (let x = -10; x <= 10; x += 0.5) {
+        const y = evaluate(expression, { x });
+
+        points.push({
+          x,
+          y,
+        });
+      }
+
+      setChartData(points);
+    } catch (error) {
+      console.error("Error al generar gráfico:", error);
+      alert("Expresión inválida");
+    }
+  };
 
   const loadGraphs = async () => {
     const { data, error } = await supabase
@@ -20,7 +52,18 @@ export default function Home() {
 
   const saveGraph = async () => {
     if (!expression.trim()) return;
-
+  
+    const { data: existing } = await supabase
+      .from("graphs")
+      .select("id")
+      .eq("expression", expression)
+      .limit(1);
+  
+    if (existing && existing.length > 0) {
+      alert("Ese gráfico ya está guardado");
+      return;
+    }
+  
     const { error } = await supabase
       .from("graphs")
       .insert([
@@ -29,13 +72,47 @@ export default function Home() {
           expression: expression,
         },
       ]);
-
+  
     if (!error) {
-      setExpression("");
       loadGraphs();
     }
   };
-
+  const loadGraph = (expr: string) => {
+    setExpression(expr);
+  
+    try {
+      const points = [];
+  
+      for (let x = -10; x <= 10; x += 0.5) {
+        const y = evaluate(expr, { x });
+  
+        points.push({
+          x,
+          y,
+        });
+      }
+  
+      setChartData(points);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const deleteGraph = async (id: string) => {
+    const confirmDelete = confirm(
+      "¿Eliminar este gráfico?"
+    );
+  
+    if (!confirmDelete) return;
+  
+    const { error } = await supabase
+      .from("graphs")
+      .delete()
+      .eq("id", id);
+  
+    if (!error) {
+      loadGraphs();
+    }
+  };
   useEffect(() => {
     loadGraphs();
   }, []);
@@ -51,9 +128,16 @@ export default function Home() {
           type="text"
           value={expression}
           onChange={(e) => setExpression(e.target.value)}
-          placeholder="Ej: x^2 + 3x + 1"
+          placeholder="Ej: x^2 + 3*x + 1"
           className="border p-2 rounded w-80 text-black"
         />
+
+        <button
+          onClick={generateGraph}
+          className="bg-green-600 text-white px-4 py-2 rounded"
+        >
+          Graficar
+        </button>
 
         <button
           onClick={saveGraph}
@@ -61,6 +145,23 @@ export default function Home() {
         >
           Guardar
         </button>
+      </div>
+
+      <div className="w-full max-w-4xl h-[400px] mb-10">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="x" />
+            <YAxis />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="y"
+              stroke="#2563eb"
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
 
       <div className="w-full max-w-xl">
@@ -71,13 +172,24 @@ export default function Home() {
         {graphs.map((graph) => (
           <div
             key={graph.id}
-            className="border p-3 rounded mb-2"
+            className="border p-3 rounded mb-2 flex justify-between items-center"
+          >
+          <span
+            onClick={() => loadGraph(graph.expression)}
+            className="cursor-pointer flex-1"
           >
             {graph.expression}
+          </span>
+
+          <button
+            onClick={() => deleteGraph(graph.id)}
+            className="bg-red-600 text-white px-3 py-1 rounded"
+          >
+            🗑️
+          </button>
           </div>
         ))}
       </div>
     </main>
   );
 }
-
