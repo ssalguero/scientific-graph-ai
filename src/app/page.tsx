@@ -46,7 +46,31 @@ export default function Home() {
       );
     }
   };
-
+  const graphExpression = (expr: string) => {
+    try {
+      setExpression(expr);
+  
+      const points = [];
+  
+      for (let x = minX; x <= maxX; x += 0.5) {
+        const y = evaluate(expr, { x });
+  
+        points.push({
+          x,
+          y,
+        });
+      }
+  
+      setChartData(points);
+      setErrorMessage("");
+    } catch (error) {
+      console.error(error);
+  
+      setErrorMessage(
+        "La expresión matemática es inválida."
+      );
+    }
+  };
   const loadGraphs = async () => {
     const { data, error } = await supabase
       .from("graphs")
@@ -162,7 +186,71 @@ export default function Home() {
             ❌ {errorMessage}
           </p>
       )}
+      <div className="text-sm text-gray-600 mb-6">
+          <p className="font-semibold mb-2">
+          Ejemplos:
+        </p>
 
+       <div className="flex flex-wrap gap-2">
+
+        <button
+          onClick={() => graphExpression("x^2")}
+          className="border px-2 py-1 rounded hover:bg-gray-100"
+        >
+          x²
+        </button>
+
+        <button
+          onClick={() => graphExpression("x^3")}
+          className="border px-2 py-1 rounded hover:bg-gray-100"
+        >
+          x³
+        </button>
+
+        <button
+          onClick={() => graphExpression("sin(x)")}
+          className="border px-2 py-1 rounded hover:bg-gray-100"
+        >
+         sin(x)
+        </button>
+
+        <button
+          onClick={() => graphExpression("cos(x)")}
+          className="border px-2 py-1 rounded hover:bg-gray-100"
+        >
+         cos(x)
+        </button>
+
+        <button
+          onClick={() => graphExpression("tan(x)")}
+          className="border px-2 py-1 rounded hover:bg-gray-100"
+        >
+         tan(x)
+        </button>
+
+        <button
+          onClick={() => graphExpression("sqrt(abs(x))")}
+          className="border px-2 py-1 rounded hover:bg-gray-100"
+        >
+         sqrt(abs(x))
+        </button>
+
+        <button
+          onClick={() => graphExpression("log(x)")}
+          className="border px-2 py-1 rounded hover:bg-gray-100"
+        >
+         log(x)
+        </button>
+
+        <button
+          onClick={() => graphExpression("exp(x)")}
+          className="border px-2 py-1 rounded hover:bg-gray-100"
+        >
+         exp(x)
+        </button>
+
+       </div>
+      </div>
       <div className="w-full max-w-4xl h-[400px] mb-10">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
