@@ -18,6 +18,7 @@ export default function Home() {
   const [expression, setExpression] = useState("");
   const [graphs, setGraphs] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [color, setColor] = useState("blue");
   const [errorMessage, setErrorMessage] = useState("");
 
   const [minX, setMinX] = useState(-10);
@@ -102,6 +103,9 @@ export default function Home() {
         {
           title: expression,
           expression: expression,
+          color: color,
+          min_x: minX,
+          max_x: maxX,
         },
       ]);
   
@@ -109,25 +113,24 @@ export default function Home() {
       loadGraphs();
     }
   };
-  const loadGraph = (expr: string) => {
-    setExpression(expr);
+  const newGraph = () => {
+    setExpression("");
+    setChartData([]);
+    setErrorMessage("");
   
-    try {
-      const points = [];
+    setColor("blue");
+    setMinX(-10);
+    setMaxX(10);
+  };
+  const loadGraph = (graph: any) => {
+    setExpression(graph.expression);
   
-      for (let x = minX; x <= maxX; x += 0.5) {
-        const y = evaluate(expr, { x });
+    setColor(graph.color || "blue");
   
-        points.push({
-          x,
-          y,
-        });
-      }
+    setMinX(Number(graph.min_x ?? -10));
+    setMaxX(Number(graph.max_x ?? 10));
   
-      setChartData(points);
-    } catch (error) {
-      console.error(error);
-    }
+    graphExpression(graph.expression);
   };
   const deleteGraph = async (id: string) => {
     const confirmDelete = confirm(
@@ -150,11 +153,34 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-10">
+    <main className="flex min-h-screen">
+      <div className="w-72 border-r p-4">
+        <h2 className="text-xl font-bold mb-4">
+          Gráficos
+        </h2>
+
+        <button
+          onClick={newGraph}
+          className="w-full bg-green-600 text-white p-2 rounded mb-4"
+        >
+          + Nuevo
+        </button>
+
+        {graphs.map((graph) => (
+          <button
+            key={graph.id}
+            onClick={() => loadGraph(graph)}
+            className="w-full text-left border p-2 rounded mb-2 hover:bg-gray-100"
+          >
+            {graph.expression}
+          </button>
+        ))}
+      </div>
+
+    <div className="flex-1 p-10">
       <h1 className="text-5xl font-bold mb-8">
         Scientific Graph AI 🚀
       </h1>
-
       <div className="flex gap-2 mb-8">
         <input
           type="text"
@@ -166,14 +192,12 @@ export default function Home() {
           placeholder="Ej: x^2 + 3*x + 1"
           className="border p-2 rounded w-80 text-black"
         />
-
         <button
           onClick={generateGraph}
           className="bg-green-600 text-white px-4 py-2 rounded"
         >
           Graficar
         </button>
-
         <button
           onClick={saveGraph}
           className="bg-blue-600 text-white px-4 py-2 rounded"
@@ -181,6 +205,55 @@ export default function Home() {
           Guardar
         </button>
       </div>
+      <div className="flex gap-2 mb-4">
+        <button
+           onClick={() => setColor("blue")}
+           className="bg-blue-500 text-white px-3 py-1 rounded"
+        >
+          Azul
+        </button>
+        <button
+          onClick={() => setColor("red")}
+          className="bg-red-500 text-white px-3 py-1 rounded"
+        >
+         Rojo
+        </button>
+        <button
+          onClick={() => setColor("green")}
+          className="bg-green-500 text-white px-3 py-1 rounded"
+        >
+         Verde
+        </button>
+        <button
+          onClick={() => setColor("purple")}
+          className="bg-purple-500 text-white px-3 py-1 rounded"
+        >
+         Violeta
+        </button>
+      </div>
+      <div className="mb-6">
+        <p className="font-semibold mb-2">
+          Rango X
+        </p>
+
+        <div className="flex gap-2">
+          <input
+            type="number"
+            value={minX}
+            onChange={(e) => setMinX(Number(e.target.value))}
+            placeholder="Desde"
+            className="border p-2 rounded w-24 text-black"
+          />
+          <input
+            type="number"
+            value={maxX}
+            onChange={(e) => setMaxX(Number(e.target.value))}
+            placeholder="Hasta"
+            className="border p-2 rounded w-24 text-black"
+          />
+        </div>
+      </div>
+   
       {errorMessage && (
           <p className="text-red-600 mb-4 font-medium">
             ❌ {errorMessage}
@@ -261,7 +334,7 @@ export default function Home() {
             <Line
               type="monotone"
               dataKey="y"
-              stroke="#2563eb"
+              stroke={color}
               dot={false}
             />
           </LineChart>
@@ -276,39 +349,42 @@ export default function Home() {
         {graphs.map((graph) => (
           <div
             key={graph.id}
-            className="border p-3 rounded mb-2 flex justify-between items-center"
+            className="border p-3 rounded mb-3"
           >
-          <span
-            onClick={() => loadGraph(graph.expression)}
-            className="cursor-pointer flex-1"
-          >
-            {graph.expression}
-          </span>
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="font-semibold">
+                  {graph.color === "blue" && "🔵 "}
+                  {graph.color === "red" && "🔴 "}
+                  {graph.color === "green" && "🟢 "}
+                  {graph.color === "purple" && "🟣 "}
+                  {graph.expression}
+                </p>
 
-          <button
-            onClick={() => deleteGraph(graph.id)}
-            className="bg-red-600 text-white px-3 py-1 rounded"
-          >
-            🗑️
-          </button>
+                <p className="text-sm text-gray-500">
+                  Rango: {graph.min_x} → {graph.max_x}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+            <button
+               onClick={() => loadGraph(graph)}
+               className="bg-blue-600 text-white px-3 py-1 rounded"
+             >
+              📈
+            </button>
+
+            <button
+                onClick={() => deleteGraph(graph.id)}
+                className="bg-red-600 text-white px-3 py-1 rounded"
+            >
+              🗑
+            </button>
+            </div>
+            </div>
           </div>
         ))}
-        <div className="flex gap-2 mb-8">
-          <input
-            type="number"
-            value={minX}
-            onChange={(e) => setMinX(Number(e.target.value))}
-            className="border p-2 rounded w-32 text-black"
-            placeholder="Desde"
-          />
-
-          <input
-            type="number"
-            value={maxX}
-            onChange={(e) => setMaxX(Number(e.target.value))}
-            className="border p-2 rounded w-32 text-black"
-            placeholder="Hasta"
-          />
+        
         </div>
       </div>
     </main>
