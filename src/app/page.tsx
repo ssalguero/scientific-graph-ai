@@ -14,13 +14,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const COLOR_LABELS: Record<string, string> = {
-  blue: "Azul",
-  red: "Rojo",
-  green: "Verde",
-  purple: "Violeta",
-};
-
 const card =
   "bg-white rounded-xl border border-slate-200 shadow-sm p-6 lg:p-8";
 const inputField =
@@ -29,8 +22,6 @@ const btnPrimary =
   "inline-flex items-center justify-center font-semibold text-white text-base px-7 py-3 rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.98]";
 const btnOutline =
   "border border-slate-200 bg-white px-4 py-2 rounded-lg text-base text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow";
-const btnIcon =
-  "inline-flex items-center justify-center text-white text-lg px-4 py-2.5 rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.98]";
 const sectionTitle =
   "text-sm sm:text-base font-semibold uppercase tracking-wider text-slate-500 mb-5";
 
@@ -102,33 +93,39 @@ const KNOWN_FUNCTION_PATTERNS = [
   "1/x",
 ] as const;
 
-const getKnownFunctionWarning = (expression: string): string | null => {
+const getKnownFunctionWarnings = (expression: string): string[] => {
   const normalized = normalizeExpressionForWarning(expression);
   if (normalized in KNOWN_FUNCTION_WARNINGS) {
-    return KNOWN_FUNCTION_WARNINGS[normalized];
+    return [KNOWN_FUNCTION_WARNINGS[normalized]];
   }
 
-  for (const pattern of KNOWN_FUNCTION_PATTERNS) {
-    if (normalized.includes(pattern)) {
-      return KNOWN_FUNCTION_WARNINGS[pattern];
-    }
-  }
-
-  return null;
+  return KNOWN_FUNCTION_PATTERNS.filter((pattern) =>
+    normalized.includes(pattern)
+  ).map((pattern) => KNOWN_FUNCTION_WARNINGS[pattern]);
 };
+
+const getKnownFunctionWarning = (expression: string): string | null =>
+  getKnownFunctionWarnings(expression)[0] ?? null;
 
 const formatRangeWarning = (
   maxPerCurveDiscardRate: number,
   activeExpressions: string[]
-) => {
-  if (maxPerCurveDiscardRate < 0.35) return null;
+): string[] => {
+  if (maxPerCurveDiscardRate < 0.35) return [];
+
+  const seen = new Set<string>();
+  const warnings: string[] = [];
 
   for (const expression of activeExpressions) {
-    const known = getKnownFunctionWarning(expression);
-    if (known) return known;
+    for (const message of getKnownFunctionWarnings(expression)) {
+      if (!seen.has(message)) {
+        seen.add(message);
+        warnings.push(message);
+      }
+    }
   }
 
-  return GENERIC_RANGE_WARNING;
+  return warnings.length > 0 ? warnings : [GENERIC_RANGE_WARNING];
 };
 
 type DiscardMetrics = {
@@ -136,6 +133,20 @@ type DiscardMetrics = {
   maxPerCurveDiscardRate: number;
   discardedPerCurve: number[];
 };
+
+type CurveYMetrics = {
+  minObservedY: number | null;
+  maxObservedY: number | null;
+};
+
+type YMetrics = {
+  minObservedY: number | null;
+  maxObservedY: number | null;
+  perCurve: CurveYMetrics[];
+};
+
+const SCALE_WARNING_MESSAGE =
+  "⚠ Algunas curvas tienen escalas muy diferentes. Algunas pueden verse comprimidas en la visualización actual.";
 
 const countXSteps = (min: number, max: number) => {
   let numX = 0;
@@ -170,10 +181,60 @@ const emptyDiscardMetrics = (): DiscardMetrics => ({
   discardedPerCurve: [],
 });
 
+const computeYMetrics = (
+  values: number[],
+  perCurveValues: number[][] = []
+): YMetrics => ({
+  minObservedY: values.length > 0 ? Math.min(...values) : null,
+  maxObservedY: values.length > 0 ? Math.max(...values) : null,
+  perCurve: perCurveValues.map((curveValues) => ({
+    minObservedY: curveValues.length > 0 ? Math.min(...curveValues) : null,
+    maxObservedY: curveValues.length > 0 ? Math.max(...curveValues) : null,
+  })),
+});
+
+const formatScaleWarning = (yMetrics: YMetrics): string | null => {
+  const { minObservedY, maxObservedY, perCurve } = yMetrics;
+
+  if (minObservedY == null || maxObservedY == null || maxObservedY <= 0) {
+    return null;
+  }
+
+  if (perCurve.length < 2) return null;
+
+  const curveStats = perCurve
+    .filter((c) => c.minObservedY != null && c.maxObservedY != null)
+    .map((c) => {
+      const min = c.minObservedY as number;
+      const max = c.maxObservedY as number;
+      const maxAbsY = Math.max(Math.abs(min), Math.abs(max));
+      const span = max - min;
+      const minPositiveSpan = span > 0 ? span : maxAbsY;
+
+      return { maxAbsY, minPositiveSpan };
+    })
+    .filter((c) => c.minPositiveSpan > 0);
+
+  if (curveStats.length < 2) return null;
+
+  const maxAbsY = Math.max(...curveStats.map((c) => c.maxAbsY));
+  const minPositiveSpan = Math.min(...curveStats.map((c) => c.minPositiveSpan));
+
+  if (minPositiveSpan <= 0) return null;
+
+  const factor = maxAbsY / minPositiveSpan;
+  return factor >= 100 ? SCALE_WARNING_MESSAGE : null;
+};
+
 const logDiscardMetrics = (metrics: DiscardMetrics) => {
   console.log("globalDiscardRate", metrics.globalDiscardRate);
   console.log("maxPerCurveDiscardRate", metrics.maxPerCurveDiscardRate);
   console.log("discardedPerCurve", metrics.discardedPerCurve);
+};
+
+const logYMetrics = (metrics: YMetrics) => {
+  console.log("minObservedY", metrics.minObservedY);
+  console.log("maxObservedY", metrics.maxObservedY);
 };
 
 export default function Home() {
@@ -185,9 +246,11 @@ export default function Home() {
   const [chartData, setChartData] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [mathWarning, setMathWarning] = useState<string | null>(null);
-  const [rangeWarning, setRangeWarning] = useState<string | null>(null);
+  const [rangeWarning, setRangeWarning] = useState<string[]>([]);
   const [discardMetrics, setDiscardMetrics] =
     useState<DiscardMetrics>(emptyDiscardMetrics);
+  const [yMetrics, setYMetrics] = useState<YMetrics>(computeYMetrics([]));
+  const [scaleWarning, setScaleWarning] = useState<string | null>(null);
   const [selectedGraphId, setSelectedGraphId] = useState<string | null>(null);
 
   const [minX, setMinX] = useState(-10);
@@ -244,6 +307,8 @@ export default function Home() {
 
       const discardedPerCurve = activeCurves.map(() => 0);
       const numX = countXSteps(minX, maxX);
+      const validYValues: number[] = [];
+      const validYPerCurve = activeCurves.map(() => [] as number[]);
 
       for (let x = minX; x <= maxX; x += 0.5) {
         const point: Record<string, number> = { x };
@@ -252,6 +317,8 @@ export default function Home() {
           const y = toPlottableY(evaluate(curve.expression, { x }));
           if (y !== undefined) {
             point[`y${curve.idx + 1}`] = y;
+            validYValues.push(y);
+            validYPerCurve[ci].push(y);
           } else {
             discardedCount++;
             discardedPerCurve[ci]++;
@@ -276,14 +343,20 @@ export default function Home() {
           activeCurves.map((c) => c.expression)
         )
       );
+      const nextYMetrics = computeYMetrics(validYValues, validYPerCurve);
+      setYMetrics(nextYMetrics);
+      setScaleWarning(formatScaleWarning(nextYMetrics));
       logDiscardMetrics(metrics);
+      logYMetrics(nextYMetrics);
     } catch (error) {
       console.error("Error al generar gráfico:", error);
 
       setErrorMessage("La expresión matemática es inválida.");
       setMathWarning(null);
-      setRangeWarning(null);
+      setRangeWarning([]);
+      setScaleWarning(null);
       setDiscardMetrics(emptyDiscardMetrics());
+      setYMetrics(computeYMetrics([]));
     }
   };
 
@@ -296,12 +369,14 @@ export default function Home() {
       let discardedCount = 0;
       const discardedPerCurve = [0];
       const numX = countXSteps(minX, maxX);
+      const validYValues: number[] = [];
 
       for (let x = minX; x <= maxX; x += 0.5) {
         const y = toPlottableY(evaluate(trimmedExpr, { x }));
         const point: Record<string, number> = { x };
         if (y !== undefined) {
           point.y1 = y;
+          validYValues.push(y);
         } else {
           discardedCount++;
           discardedPerCurve[0]++;
@@ -321,14 +396,20 @@ export default function Home() {
       setRangeWarning(
         formatRangeWarning(metrics.maxPerCurveDiscardRate, [trimmedExpr])
       );
+      const nextYMetrics = computeYMetrics(validYValues, [validYValues]);
+      setYMetrics(nextYMetrics);
+      setScaleWarning(formatScaleWarning(nextYMetrics));
       logDiscardMetrics(metrics);
+      logYMetrics(nextYMetrics);
     } catch (error) {
       console.error(error);
 
       setErrorMessage("La expresión matemática es inválida.");
       setMathWarning(null);
-      setRangeWarning(null);
+      setRangeWarning([]);
+      setScaleWarning(null);
       setDiscardMetrics(emptyDiscardMetrics());
+      setYMetrics(computeYMetrics([]));
     }
   };
 
@@ -390,8 +471,10 @@ export default function Home() {
     setChartData([]);
     setErrorMessage("");
     setMathWarning(null);
-    setRangeWarning(null);
+    setRangeWarning([]);
+    setScaleWarning(null);
     setDiscardMetrics(emptyDiscardMetrics());
+    setYMetrics(computeYMetrics([]));
     setMinX(-10);
     setMaxX(10);
   };
@@ -443,6 +526,8 @@ export default function Home() {
       const loadMaxX = Number(graph.max_x ?? 10);
       const discardedPerCurve = activeCurves.map(() => 0);
       const numX = countXSteps(loadMinX, loadMaxX);
+      const validYValues: number[] = [];
+      const validYPerCurve = activeCurves.map(() => [] as number[]);
 
       for (let x = loadMinX; x <= loadMaxX; x += 0.5) {
         const point: Record<string, number> = { x };
@@ -451,6 +536,8 @@ export default function Home() {
           const y = toPlottableY(evaluate(curve.expression, { x }));
           if (y !== undefined) {
             point[`y${curve.idx + 1}`] = y;
+            validYValues.push(y);
+            validYPerCurve[ci].push(y);
           } else {
             discardedCount++;
             discardedPerCurve[ci]++;
@@ -474,13 +561,19 @@ export default function Home() {
           activeCurves.map((c) => c.expression)
         )
       );
+      const nextYMetrics = computeYMetrics(validYValues, validYPerCurve);
+      setYMetrics(nextYMetrics);
+      setScaleWarning(formatScaleWarning(nextYMetrics));
       logDiscardMetrics(metrics);
+      logYMetrics(nextYMetrics);
     } catch (error) {
       console.error(error);
       setErrorMessage("La expresión matemática es inválida.");
       setMathWarning(null);
-      setRangeWarning(null);
+      setRangeWarning([]);
+      setScaleWarning(null);
       setDiscardMetrics(emptyDiscardMetrics());
+      setYMetrics(computeYMetrics([]));
     }
   };
 
@@ -680,6 +773,14 @@ export default function Home() {
                   >
                     {isEditing ? "Actualizar" : "Guardar"}
                   </button>
+                  {isEditing && selectedGraphId && (
+                    <button
+                      onClick={() => deleteGraph(selectedGraphId)}
+                      className={`bg-red-600 hover:bg-red-700 ${btnPrimary} sm:min-w-[160px]`}
+                    >
+                      Eliminar
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -723,6 +824,89 @@ export default function Home() {
             </div>
           </section>
 
+          <section className={`${card}`}>
+            <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-2">
+              Ejemplos matemáticos
+            </h3>
+            <p className="text-base text-slate-500 mb-5">
+              Haz clic para cargar una expresión de ejemplo
+            </p>
+
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  📐 Básicas
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => graphExpression("x^2")}
+                    className={btnOutline}
+                  >
+                    x²
+                  </button>
+                  <button
+                    onClick={() => graphExpression("x^3")}
+                    className={btnOutline}
+                  >
+                    x³
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  📈 Exponenciales y logarítmicas
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => graphExpression("exp(x)")}
+                    className={btnOutline}
+                  >
+                    exp(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("log(x)")}
+                    className={btnOutline}
+                  >
+                    log(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("sqrt(abs(x))")}
+                    className={btnOutline}
+                  >
+                    sqrt(abs(x))
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  📊 Trigonométricas
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => graphExpression("sin(x)")}
+                    className={btnOutline}
+                  >
+                    sin(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("cos(x)")}
+                    className={btnOutline}
+                  >
+                    cos(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("tan(x)")}
+                    className={btnOutline}
+                  >
+                    tan(x)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {errorMessage && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
               {errorMessage}
@@ -735,9 +919,18 @@ export default function Home() {
             </div>
           )}
 
-          {rangeWarning && (
+          {rangeWarning.map((warning, index) => (
+            <div
+              key={index}
+              className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium"
+            >
+              {warning}
+            </div>
+          ))}
+
+          {scaleWarning && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium">
-              {rangeWarning}
+              {scaleWarning}
             </div>
           )}
 
@@ -787,197 +980,6 @@ export default function Home() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </div>
-          </section>
-
-          <section className={`${card}`}>
-            <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-2">
-              Ejemplos matemáticos
-            </h3>
-            <p className="text-base text-slate-500 mb-5">
-              Haz clic para cargar una expresión de ejemplo
-            </p>
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => graphExpression("x^2")}
-                className={btnOutline}
-              >
-                x²
-              </button>
-
-              <button
-                onClick={() => graphExpression("x^3")}
-                className={btnOutline}
-              >
-                x³
-              </button>
-
-              <button
-                onClick={() => graphExpression("sin(x)")}
-                className={btnOutline}
-              >
-                sin(x)
-              </button>
-
-              <button
-                onClick={() => graphExpression("cos(x)")}
-                className={btnOutline}
-              >
-                cos(x)
-              </button>
-
-              <button
-                onClick={() => graphExpression("tan(x)")}
-                className={btnOutline}
-              >
-                tan(x)
-              </button>
-
-              <button
-                onClick={() => graphExpression("sqrt(abs(x))")}
-                className={btnOutline}
-              >
-                sqrt(abs(x))
-              </button>
-
-              <button
-                onClick={() => graphExpression("log(x)")}
-                className={btnOutline}
-              >
-                log(x)
-              </button>
-
-              <button
-                onClick={() => graphExpression("exp(x)")}
-                className={btnOutline}
-              >
-                exp(x)
-              </button>
-            </div>
-          </section>
-
-          <section>
-            <h2 className={sectionTitle}>Detalles del gráfico</h2>
-
-            {graphs.length === 0 && (
-              <div className={`${card} text-center py-12`}>
-                <p className="text-slate-500 text-lg">
-                  No hay gráficos guardados aún.
-                </p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 lg:gap-6">
-              {graphs.map((graph) => (
-                <div key={graph.id} className={card}>
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-5">
-                    <dl className="space-y-4 flex-1 min-w-0">
-                      <div>
-                        <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
-                          Título
-                        </dt>
-                        <dd className="text-lg font-semibold text-slate-900 mt-1 truncate">
-                          {getGraphDisplayTitle(graph)}
-                        </dd>
-                      </div>
-                      {Array.isArray(graph.curves) &&
-                      graph.curves.length > 0 ? (
-                        <div>
-                          <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
-                            Curvas ({graph.curves.length})
-                          </dt>
-                          <dd className="mt-2 space-y-2">
-                            {graph.curves.map(
-                              (curve: { expression?: string; color?: string } | string, idx: number) => {
-                                const curveExpression =
-                                  typeof curve === "string"
-                                    ? curve
-                                    : String(curve?.expression ?? "");
-                                const curveColor =
-                                  typeof curve === "object" && curve?.color
-                                    ? String(curve.color)
-                                    : null;
-
-                                return (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center gap-2.5 font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5"
-                                  >
-                                    {curveColor && (
-                                      <span
-                                        className="inline-block w-3 h-3 rounded-full shrink-0 border border-slate-200"
-                                        style={{ backgroundColor: curveColor }}
-                                        title={curveColor}
-                                      />
-                                    )}
-                                    <span className="break-all">
-                                      {curveExpression}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                            )}
-                          </dd>
-                        </div>
-                      ) : (
-                        <div>
-                          <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
-                            Expresión
-                          </dt>
-                          <dd className="text-base text-slate-700 mt-1 font-mono bg-slate-50 rounded-md px-3 py-1.5 inline-block max-w-full break-all">
-                            {graph.expression}
-                          </dd>
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-x-10 gap-y-4">
-                        {!(
-                          Array.isArray(graph.curves) && graph.curves.length > 0
-                        ) && (
-                          <div>
-                            <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
-                              Color
-                            </dt>
-                            <dd className="text-base text-slate-700 mt-1">
-                              {graph.color === "blue" && "🔵 "}
-                              {graph.color === "red" && "🔴 "}
-                              {graph.color === "green" && "🟢 "}
-                              {graph.color === "purple" && "🟣 "}
-                              {COLOR_LABELS[graph.color] || graph.color}
-                            </dd>
-                          </div>
-                        )}
-                        <div>
-                          <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
-                            Rango X
-                          </dt>
-                          <dd className="text-base text-slate-700 mt-1">
-                            {graph.min_x} → {graph.max_x}
-                          </dd>
-                        </div>
-                      </div>
-                    </dl>
-
-                    <div className="flex gap-3 shrink-0">
-                      <button
-                        onClick={() => loadGraph(graph)}
-                        className={`bg-blue-600 hover:bg-blue-700 ${btnIcon}`}
-                        title="Cargar gráfico"
-                      >
-                        📈
-                      </button>
-
-                      <button
-                        onClick={() => deleteGraph(graph.id)}
-                        className={`bg-red-600 hover:bg-red-700 ${btnIcon}`}
-                        title="Eliminar gráfico"
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </section>
         </div>
