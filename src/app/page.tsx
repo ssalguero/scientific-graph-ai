@@ -199,6 +199,26 @@ const computeYMetrics = (
   })),
 });
 
+const computeYAxisDomain = (
+  yMetrics: YMetrics
+): [number, number] | undefined => {
+  const { minObservedY, maxObservedY } = yMetrics;
+
+  if (minObservedY == null || maxObservedY == null) {
+    return undefined;
+  }
+
+  if (minObservedY === maxObservedY) {
+    const margin = Math.abs(minObservedY) * 0.1 || 1;
+    return [minObservedY - margin, maxObservedY + margin];
+  }
+
+  return [
+    minObservedY - Math.abs(minObservedY) * 0.1,
+    maxObservedY + Math.abs(maxObservedY) * 0.1,
+  ];
+};
+
 const formatScaleWarning = (yMetrics: YMetrics): string | null => {
   const { minObservedY, maxObservedY, perCurve } = yMetrics;
 
@@ -261,6 +281,7 @@ export default function Home() {
 
   const [minX, setMinX] = useState(-10);
   const [maxX, setMaxX] = useState(10);
+  const [autoScaleY, setAutoScaleY] = useState(false);
 
   const nextCurveIdRef = useRef(2);
   const expression = curves[0]?.expression ?? "";
@@ -447,6 +468,7 @@ export default function Home() {
       color: legacyColor,
       min_x: minX,
       max_x: maxX,
+      auto_scale_y: autoScaleY,
     };
 
     if (selectedGraphId) {
@@ -483,6 +505,7 @@ export default function Home() {
     setYMetrics(computeYMetrics([]));
     setMinX(-10);
     setMaxX(10);
+    setAutoScaleY(false);
   };
 
   const loadGraph = (graph: any) => {
@@ -516,6 +539,7 @@ export default function Home() {
     setCurves(nextCurves);
     setMinX(Number(graph.min_x ?? -10));
     setMaxX(Number(graph.max_x ?? 10));
+    setAutoScaleY(graph.auto_scale_y === true);
 
     try {
       const points = [];
@@ -602,6 +626,7 @@ export default function Home() {
     graph.title?.trim() || graph.expression;
 
   const isEditing = selectedGraphId !== null;
+  const yAxisDomain = autoScaleY ? computeYAxisDomain(yMetrics) : undefined;
   const activeCurves = curves
     .map((c, idx) => ({
       idx,
@@ -826,6 +851,16 @@ export default function Home() {
                     />
                   </div>
                 </div>
+
+                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoScaleY}
+                    onChange={(e) => setAutoScaleY(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                  />
+                  Ajustar eje Y automáticamente
+                </label>
               </div>
             </div>
           </section>
@@ -1058,7 +1093,11 @@ export default function Home() {
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="x" stroke="#64748b" fontSize={14} />
-                    <YAxis stroke="#64748b" fontSize={14} />
+                    <YAxis
+                      stroke="#64748b"
+                      fontSize={14}
+                      domain={yAxisDomain}
+                    />
                     <Tooltip
                       contentStyle={{
                         borderRadius: "0.5rem",
