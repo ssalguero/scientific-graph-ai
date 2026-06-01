@@ -907,6 +907,68 @@ export default function Home() {
             </div>
           </section>
 
+          <section className={`${card}`}>
+            <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-2">
+              Funciones soportadas
+            </h3>
+            <p className="text-base text-slate-500 mb-5">
+              Sintaxis disponible para escribir expresiones
+            </p>
+
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  📐 Básicas
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    x
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    x^2
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    1/x
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  📈 Exponenciales y logarítmicas
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    exp(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    log(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    sqrt(x)
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  📊 Trigonométricas
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    sin(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    cos(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    tan(x)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {errorMessage && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
               {errorMessage}
