@@ -36,9 +36,12 @@ const btnIcon =
 const sectionTitle =
   "text-sm sm:text-base font-semibold uppercase tracking-wider text-slate-500 mb-5";
 
+const EXPRESSION2_COLOR = "#334155";
+
 export default function Home() {
   const [title, setTitle] = useState("");
   const [expression, setExpression] = useState("");
+  const [expression2, setExpression2] = useState("");
   const [graphs, setGraphs] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [color, setColor] = useState("blue");
@@ -51,14 +54,19 @@ export default function Home() {
   const generateGraph = () => {
     try {
       const points = [];
+      const hasSecondExpression = expression2.trim().length > 0;
 
       for (let x = minX; x <= maxX; x += 0.5) {
-        const y = evaluate(expression, { x });
-
-        points.push({
+        const point: { x: number; y: number; y2?: number } = {
           x,
-          y,
-        });
+          y: evaluate(expression, { x }),
+        };
+
+        if (hasSecondExpression) {
+          point.y2 = evaluate(expression2, { x });
+        }
+
+        points.push(point);
       }
 
       setChartData(points);
@@ -73,6 +81,7 @@ export default function Home() {
   const graphExpression = (expr: string) => {
     try {
       setExpression(expr);
+      setExpression2("");
 
       const points = [];
 
@@ -163,6 +172,7 @@ export default function Home() {
     setSelectedGraphId(null);
     setTitle("");
     setExpression("");
+    setExpression2("");
     setChartData([]);
     setErrorMessage("");
     setColor("blue");
@@ -174,6 +184,7 @@ export default function Home() {
     setSelectedGraphId(graph.id);
     setTitle(graph.title || graph.expression);
     setExpression(graph.expression);
+    setExpression2("");
     setColor(graph.color || "blue");
     setMinX(Number(graph.min_x ?? -10));
     setMaxX(Number(graph.max_x ?? 10));
@@ -199,6 +210,7 @@ export default function Home() {
     graph.title?.trim() || graph.expression;
 
   const isEditing = selectedGraphId !== null;
+  const hasSecondExpression = expression2.trim().length > 0;
 
   useEffect(() => {
     loadGraphs();
@@ -296,7 +308,7 @@ export default function Home() {
 
                   <div>
                     <label className="block text-base font-medium text-slate-700 mb-2">
-                      Expresión
+                      Expresión 1
                     </label>
                     <input
                       type="text"
@@ -306,6 +318,25 @@ export default function Home() {
                         setErrorMessage("");
                       }}
                       placeholder="Ej: x^2 + 3*x + 1"
+                      className={inputField}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-base font-medium text-slate-700 mb-2">
+                      Expresión 2
+                      <span className="ml-2 text-sm font-normal text-slate-400">
+                        (opcional)
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      value={expression2}
+                      onChange={(e) => {
+                        setExpression2(e.target.value);
+                        setErrorMessage("");
+                      }}
+                      placeholder="Ej: sin(x)"
                       className={inputField}
                     />
                   </div>
@@ -333,7 +364,7 @@ export default function Home() {
                     Apariencia
                   </h3>
                   <p className="text-base text-slate-500 mt-2">
-                    Selecciona el color de la línea
+                    Selecciona el color de la curva 1
                   </p>
                 </div>
 
@@ -430,6 +461,33 @@ export default function Home() {
           <section>
             <h2 className={sectionTitle}>Visualización</h2>
             <div className={`${card} p-5 sm:p-6 lg:p-8 w-full`}>
+              {(expression.trim() || hasSecondExpression) && (
+                <div className="flex flex-wrap gap-5 mb-5 pb-5 border-b border-slate-100">
+                  {expression.trim() && (
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className="inline-block w-5 h-1.5 rounded-full shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="text-sm font-mono text-slate-700">
+                        {expression}
+                      </span>
+                    </div>
+                  )}
+                  {hasSecondExpression && (
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className="inline-block w-5 h-1.5 rounded-full shrink-0"
+                        style={{ backgroundColor: EXPRESSION2_COLOR }}
+                      />
+                      <span className="text-sm font-mono text-slate-700">
+                        {expression2}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="w-full min-h-[600px] h-[600px] sm:h-[650px] lg:h-[700px] max-h-[700px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
@@ -450,6 +508,15 @@ export default function Home() {
                       strokeWidth={2}
                       dot={false}
                     />
+                    {hasSecondExpression && (
+                      <Line
+                        type="monotone"
+                        dataKey="y2"
+                        stroke={EXPRESSION2_COLOR}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
