@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { evaluate } from "mathjs";
 
@@ -36,12 +36,13 @@ const btnIcon =
 const sectionTitle =
   "text-sm sm:text-base font-semibold uppercase tracking-wider text-slate-500 mb-5";
 
-const EXPRESSION2_COLOR = "#334155";
+const SECOND_CURVE_COLOR = "#334155";
 
 export default function Home() {
   const [title, setTitle] = useState("");
-  const [expression, setExpression] = useState("");
-  const [expression2, setExpression2] = useState("");
+  const [curves, setCurves] = useState<Array<{ id: number; expression: string }>>(
+    [{ id: 1, expression: "" }]
+  );
   const [graphs, setGraphs] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [color, setColor] = useState("blue");
@@ -51,19 +52,57 @@ export default function Home() {
   const [minX, setMinX] = useState(-10);
   const [maxX, setMaxX] = useState(10);
 
+  const nextCurveIdRef = useRef(2);
+  const expression = curves[0]?.expression ?? "";
+
+  const CURVE_COLORS = [
+    SECOND_CURVE_COLOR,
+    "#4f46e5", // indigo-600
+    "#16a34a", // green-600
+    "#db2777", // pink-600
+    "#f59e0b", // amber-500
+    "#0891b2", // cyan-600
+  ];
+
+  const getCurveColor = (index: number) => {
+    if (index === 0) return color;
+    return CURVE_COLORS[(index - 1) % CURVE_COLORS.length];
+  };
+
+  const addCurve = () => {
+    const id = nextCurveIdRef.current++;
+    setCurves((prev) => [...prev, { id, expression: "" }]);
+  };
+
+  const removeCurve = (id: number) => {
+    setCurves((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((c) => c.id !== id);
+    });
+  };
+
+  const updateCurveExpression = (id: number, value: string) => {
+    setCurves((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, expression: value } : c))
+    );
+  };
+
+  const resetToSingleCurve = (expr: string) => {
+    nextCurveIdRef.current = 2;
+    setCurves([{ id: 1, expression: expr }]);
+  };
+
   const generateGraph = () => {
     try {
       const points = [];
-      const hasSecondExpression = expression2.trim().length > 0;
+      const activeCurves = curves
+        .map((c, idx) => ({ idx, expression: c.expression.trim() }))
+        .filter((c) => c.expression.length > 0);
 
       for (let x = minX; x <= maxX; x += 0.5) {
-        const point: { x: number; y: number; y2?: number } = {
-          x,
-          y: evaluate(expression, { x }),
-        };
-
-        if (hasSecondExpression) {
-          point.y2 = evaluate(expression2, { x });
+        const point: Record<string, number> = { x };
+        for (const curve of activeCurves) {
+          point[`y${curve.idx + 1}`] = evaluate(curve.expression, { x });
         }
 
         points.push(point);
@@ -80,8 +119,7 @@ export default function Home() {
 
   const graphExpression = (expr: string) => {
     try {
-      setExpression(expr);
-      setExpression2("");
+      resetToSingleCurve(expr);
 
       const points = [];
 
@@ -90,7 +128,7 @@ export default function Home() {
 
         points.push({
           x,
-          y,
+          y1: y,
         });
       }
 
@@ -121,6 +159,7 @@ export default function Home() {
     const graphPayload = {
       title: graphTitle,
       expression: expression,
+      curves: curves.map((c) => ({ expression: c.expression })),
       color: color,
       min_x: minX,
       max_x: maxX,
@@ -145,6 +184,7 @@ export default function Home() {
         .eq("id", selectedGraphId);
 
       if (!error) {
+        generateGraph();
         loadGraphs();
       }
       return;
@@ -164,6 +204,7 @@ export default function Home() {
     const { error } = await supabase.from("graphs").insert([graphPayload]);
 
     if (!error) {
+      generateGraph();
       loadGraphs();
     }
   };
@@ -171,8 +212,7 @@ export default function Home() {
   const newGraph = () => {
     setSelectedGraphId(null);
     setTitle("");
-    setExpression("");
-    setExpression2("");
+    resetToSingleCurve("");
     setChartData([]);
     setErrorMessage("");
     setColor("blue");
@@ -183,12 +223,44 @@ export default function Home() {
   const loadGraph = (graph: any) => {
     setSelectedGraphId(graph.id);
     setTitle(graph.title || graph.expression);
-    setExpression(graph.expression);
-    setExpression2("");
+    const dbCurves = graph.curves;
+    let nextCurves: Array<{ id: number; expression: string }> = [
+      { id: 1, expression: graph.expression ?? "" },
+    ];
+
+    if (Array.isArray(dbCurves) && dbCurves.length > 0) {
+      nextCurves = dbCurves.map((c: any, idx: number) => {
+        if (typeof c === "string") return { id: idx + 1, expression: c };
+        return { id: idx + 1, expression: String(c?.expression ?? "") };
+      });
+    }
+
+    nextCurveIdRef.current = nextCurves.length + 1;
+    setCurves(nextCurves);
     setColor(graph.color || "blue");
     setMinX(Number(graph.min_x ?? -10));
     setMaxX(Number(graph.max_x ?? 10));
-    graphExpression(graph.expression);
+
+    try {
+      const points = [];
+      const activeCurves = nextCurves
+        .map((c, idx) => ({ idx, expression: c.expression.trim() }))
+        .filter((c) => c.expression.length > 0);
+
+      for (let x = Number(graph.min_x ?? -10); x <= Number(graph.max_x ?? 10); x += 0.5) {
+        const point: Record<string, number> = { x };
+        for (const curve of activeCurves) {
+          point[`y${curve.idx + 1}`] = evaluate(curve.expression, { x });
+        }
+        points.push(point);
+      }
+
+      setChartData(points);
+      setErrorMessage("");
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("La expresión matemática es inválida.");
+    }
   };
 
   const deleteGraph = async (id: string) => {
@@ -210,7 +282,9 @@ export default function Home() {
     graph.title?.trim() || graph.expression;
 
   const isEditing = selectedGraphId !== null;
-  const hasSecondExpression = expression2.trim().length > 0;
+  const activeCurves = curves
+    .map((c, idx) => ({ idx, expression: c.expression.trim() }))
+    .filter((c) => c.expression.length > 0);
 
   useEffect(() => {
     loadGraphs();
@@ -306,39 +380,60 @@ export default function Home() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-base font-medium text-slate-700 mb-2">
-                      Expresión 1
-                    </label>
-                    <input
-                      type="text"
-                      value={expression}
-                      onChange={(e) => {
-                        setExpression(e.target.value);
-                        setErrorMessage("");
-                      }}
-                      placeholder="Ej: x^2 + 3*x + 1"
-                      className={inputField}
-                    />
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-base font-medium text-slate-700">
+                      Curvas
+                    </p>
+                    <button
+                      type="button"
+                      onClick={addCurve}
+                      className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline"
+                    >
+                      + Agregar curva
+                    </button>
                   </div>
 
-                  <div>
-                    <label className="block text-base font-medium text-slate-700 mb-2">
-                      Expresión 2
-                      <span className="ml-2 text-sm font-normal text-slate-400">
-                        (opcional)
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      value={expression2}
-                      onChange={(e) => {
-                        setExpression2(e.target.value);
-                        setErrorMessage("");
-                      }}
-                      placeholder="Ej: sin(x)"
-                      className={inputField}
-                    />
+                  <div className="space-y-4">
+                    {curves.map((curve, idx) => (
+                      <div key={curve.id}>
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <label className="block text-base font-medium text-slate-700">
+                            Expresión {idx + 1}
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                              <span
+                                className="inline-block w-5 h-1.5 rounded-full shrink-0"
+                                style={{ backgroundColor: getCurveColor(idx) }}
+                              />
+                              Color
+                            </span>
+                            {idx > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => removeCurve(curve.id)}
+                                className="text-sm font-semibold text-slate-500 hover:text-slate-700 hover:underline"
+                                title="Eliminar curva"
+                              >
+                                Eliminar
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={curve.expression}
+                          onChange={(e) => {
+                            updateCurveExpression(curve.id, e.target.value);
+                            setErrorMessage("");
+                          }}
+                          placeholder={
+                            idx === 0 ? "Ej: x^2 + 3*x + 1" : "Ej: sin(x)"
+                          }
+                          className={inputField}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -461,30 +556,19 @@ export default function Home() {
           <section>
             <h2 className={sectionTitle}>Visualización</h2>
             <div className={`${card} p-5 sm:p-6 lg:p-8 w-full`}>
-              {(expression.trim() || hasSecondExpression) && (
+              {activeCurves.length > 0 && (
                 <div className="flex flex-wrap gap-5 mb-5 pb-5 border-b border-slate-100">
-                  {expression.trim() && (
-                    <div className="flex items-center gap-2.5">
+                  {activeCurves.map((curve) => (
+                    <div key={curve.idx} className="flex items-center gap-2.5">
                       <span
                         className="inline-block w-5 h-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: color }}
+                        style={{ backgroundColor: getCurveColor(curve.idx) }}
                       />
                       <span className="text-sm font-mono text-slate-700">
-                        {expression}
+                        {curve.expression}
                       </span>
                     </div>
-                  )}
-                  {hasSecondExpression && (
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className="inline-block w-5 h-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: EXPRESSION2_COLOR }}
-                      />
-                      <span className="text-sm font-mono text-slate-700">
-                        {expression2}
-                      </span>
-                    </div>
-                  )}
+                  ))}
                 </div>
               )}
 
@@ -501,22 +585,16 @@ export default function Home() {
                         boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                       }}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="y"
-                      stroke={color}
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    {hasSecondExpression && (
+                    {activeCurves.map((curve) => (
                       <Line
+                        key={curve.idx}
                         type="monotone"
-                        dataKey="y2"
-                        stroke={EXPRESSION2_COLOR}
+                        dataKey={`y${curve.idx + 1}`}
+                        stroke={getCurveColor(curve.idx)}
                         strokeWidth={2}
                         dot={false}
                       />
-                    )}
+                    ))}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
