@@ -64,6 +64,9 @@ const toPlottableY = (value: unknown): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
+const evaluateExpression = (expression: string, scope: { x: number }) =>
+  evaluate(expression.replace(/\bln\s*\(/gi, "log("), scope);
+
 const formatMathWarning = (discardedCount: number) =>
   discardedCount > 0
     ? `⚠ Se omitieron ${discardedCount} valores no válidos para algunas curvas.`
@@ -78,6 +81,8 @@ const normalizeExpressionForWarning = (expression: string) =>
 const KNOWN_FUNCTION_WARNINGS: Record<string, string> = {
   "log(x)":
     "⚠ log(x) solo está definida para x > 0. Parte del rango actual queda fuera de su dominio.",
+  "ln(x)":
+    "⚠ ln(x) solo está definida para x > 0. Parte del rango actual queda fuera de su dominio.",
   "sqrt(x)":
     "⚠ sqrt(x) solo está definida para x ≥ 0. Parte del rango actual queda fuera de su dominio.",
   "1/x":
@@ -89,6 +94,7 @@ const KNOWN_FUNCTION_WARNINGS: Record<string, string> = {
 const KNOWN_FUNCTION_PATTERNS = [
   "1/(1-x)",
   "log(x)",
+  "ln(x)",
   "sqrt(x)",
   "1/x",
 ] as const;
@@ -314,7 +320,7 @@ export default function Home() {
         const point: Record<string, number> = { x };
         for (let ci = 0; ci < activeCurves.length; ci++) {
           const curve = activeCurves[ci];
-          const y = toPlottableY(evaluate(curve.expression, { x }));
+          const y = toPlottableY(evaluateExpression(curve.expression, { x }));
           if (y !== undefined) {
             point[`y${curve.idx + 1}`] = y;
             validYValues.push(y);
@@ -372,7 +378,7 @@ export default function Home() {
       const validYValues: number[] = [];
 
       for (let x = minX; x <= maxX; x += 0.5) {
-        const y = toPlottableY(evaluate(trimmedExpr, { x }));
+        const y = toPlottableY(evaluateExpression(trimmedExpr, { x }));
         const point: Record<string, number> = { x };
         if (y !== undefined) {
           point.y1 = y;
@@ -533,7 +539,7 @@ export default function Home() {
         const point: Record<string, number> = { x };
         for (let ci = 0; ci < activeCurves.length; ci++) {
           const curve = activeCurves[ci];
-          const y = toPlottableY(evaluate(curve.expression, { x }));
+          const y = toPlottableY(evaluateExpression(curve.expression, { x }));
           if (y !== undefined) {
             point[`y${curve.idx + 1}`] = y;
             validYValues.push(y);
@@ -850,6 +856,12 @@ export default function Home() {
                   >
                     x³
                   </button>
+                  <button
+                    onClick={() => graphExpression("abs(x)")}
+                    className={btnOutline}
+                  >
+                    abs(x)
+                  </button>
                 </div>
               </div>
 
@@ -869,6 +881,12 @@ export default function Home() {
                     className={btnOutline}
                   >
                     log(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("ln(x)")}
+                    className={btnOutline}
+                  >
+                    ln(x)
                   </button>
                   <button
                     onClick={() => graphExpression("sqrt(abs(x))")}
@@ -930,6 +948,9 @@ export default function Home() {
                   <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
                     1/x
                   </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    abs(x)
+                  </span>
                 </div>
               </div>
 
@@ -943,6 +964,9 @@ export default function Home() {
                   </span>
                   <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
                     log(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    ln(x)
                   </span>
                   <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
                     sqrt(x)
@@ -963,6 +987,20 @@ export default function Home() {
                   </span>
                   <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
                     tan(x)
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  🔢 Constantes
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    pi
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    e
                   </span>
                 </div>
               </div>
