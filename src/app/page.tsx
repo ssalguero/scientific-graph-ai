@@ -56,6 +56,126 @@ const HEX_TO_LEGACY_COLOR: Record<string, string> = {
   "#a855f7": "purple",
 };
 
+const toPlottableY = (value: unknown): number | undefined => {
+  let n: number;
+
+  if (typeof value === "number") {
+    n = value;
+  } else if (
+    value != null &&
+    typeof (value as { toNumber?: () => number }).toNumber === "function"
+  ) {
+    n = (value as { toNumber: () => number }).toNumber();
+  } else {
+    return undefined;
+  }
+
+  return Number.isFinite(n) ? n : undefined;
+};
+
+const formatMathWarning = (discardedCount: number) =>
+  discardedCount > 0
+    ? `⚠ Se omitieron ${discardedCount} valores no válidos para algunas curvas.`
+    : null;
+
+const GENERIC_RANGE_WARNING =
+  "⚠ El rango X actual deja sin graficar una parte importante de una o más curvas. Verifica que el intervalo sea válido para todas las expresiones.";
+
+const normalizeExpressionForWarning = (expression: string) =>
+  expression.trim().toLowerCase().replace(/\s+/g, "");
+
+const KNOWN_FUNCTION_WARNINGS: Record<string, string> = {
+  "log(x)":
+    "⚠ log(x) solo está definida para x > 0. Parte del rango actual queda fuera de su dominio.",
+  "sqrt(x)":
+    "⚠ sqrt(x) solo está definida para x ≥ 0. Parte del rango actual queda fuera de su dominio.",
+  "1/x":
+    "⚠ 1/x presenta una discontinuidad en x = 0 dentro del rango actual.",
+  "1/(1-x)":
+    "⚠ 1/(1-x) presenta una discontinuidad en x = 1 dentro del rango actual.",
+};
+
+const KNOWN_FUNCTION_PATTERNS = [
+  "1/(1-x)",
+  "log(x)",
+  "sqrt(x)",
+  "1/x",
+] as const;
+
+const getKnownFunctionWarning = (expression: string): string | null => {
+  const normalized = normalizeExpressionForWarning(expression);
+  if (normalized in KNOWN_FUNCTION_WARNINGS) {
+    return KNOWN_FUNCTION_WARNINGS[normalized];
+  }
+
+  for (const pattern of KNOWN_FUNCTION_PATTERNS) {
+    if (normalized.includes(pattern)) {
+      return KNOWN_FUNCTION_WARNINGS[pattern];
+    }
+  }
+
+  return null;
+};
+
+const formatRangeWarning = (
+  maxPerCurveDiscardRate: number,
+  activeExpressions: string[]
+) => {
+  if (maxPerCurveDiscardRate < 0.35) return null;
+
+  for (const expression of activeExpressions) {
+    const known = getKnownFunctionWarning(expression);
+    if (known) return known;
+  }
+
+  return GENERIC_RANGE_WARNING;
+};
+
+type DiscardMetrics = {
+  globalDiscardRate: number;
+  maxPerCurveDiscardRate: number;
+  discardedPerCurve: number[];
+};
+
+const countXSteps = (min: number, max: number) => {
+  let numX = 0;
+  for (let x = min; x <= max; x += 0.5) numX++;
+  return numX;
+};
+
+const computeDiscardMetrics = (
+  discardedCount: number,
+  discardedPerCurve: number[],
+  numX: number
+): DiscardMetrics => {
+  const curveCount = discardedPerCurve.length;
+  const totalAttempts = numX * curveCount;
+  const globalDiscardRate =
+    totalAttempts > 0 ? discardedCount / totalAttempts : 0;
+  const maxPerCurveDiscardRate =
+    numX > 0 && curveCount > 0
+      ? Math.max(...discardedPerCurve.map((d) => d / numX))
+      : 0;
+
+  return {
+    globalDiscardRate,
+    maxPerCurveDiscardRate,
+    discardedPerCurve,
+  };
+};
+
+const emptyDiscardMetrics = (): DiscardMetrics => ({
+  globalDiscardRate: 0,
+  maxPerCurveDiscardRate: 0,
+  discardedPerCurve: [],
+});
+
+const logDiscardMetrics = (metrics: DiscardMetrics) => {
+  console.log("globalDiscardRate", metrics.globalDiscardRate);
+  console.log("maxPerCurveDiscardRate", metrics.maxPerCurveDiscardRate);
+  console.log("discardedPerCurve", metrics.discardedPerCurve);
+};
+
 export default function Home() {
   const [title, setTitle] = useState("");
   const [curves, setCurves] = useState<Curve[]>([
@@ -64,6 +184,10 @@ export default function Home() {
   const [graphs, setGraphs] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [mathWarning, setMathWarning] = useState<string | null>(null);
+  const [rangeWarning, setRangeWarning] = useState<string | null>(null);
+  const [discardMetrics, setDiscardMetrics] =
+    useState<DiscardMetrics>(emptyDiscardMetrics);
   const [selectedGraphId, setSelectedGraphId] = useState<string | null>(null);
 
   const [minX, setMinX] = useState(-10);
@@ -109,6 +233,7 @@ export default function Home() {
   const generateGraph = () => {
     try {
       const points = [];
+      let discardedCount = 0;
       const activeCurves = curves
         .map((c, idx) => ({
           idx,
@@ -117,10 +242,20 @@ export default function Home() {
         }))
         .filter((c) => c.expression.length > 0);
 
+      const discardedPerCurve = activeCurves.map(() => 0);
+      const numX = countXSteps(minX, maxX);
+
       for (let x = minX; x <= maxX; x += 0.5) {
         const point: Record<string, number> = { x };
-        for (const curve of activeCurves) {
-          point[`y${curve.idx + 1}`] = evaluate(curve.expression, { x });
+        for (let ci = 0; ci < activeCurves.length; ci++) {
+          const curve = activeCurves[ci];
+          const y = toPlottableY(evaluate(curve.expression, { x }));
+          if (y !== undefined) {
+            point[`y${curve.idx + 1}`] = y;
+          } else {
+            discardedCount++;
+            discardedPerCurve[ci]++;
+          }
         }
 
         points.push(point);
@@ -128,10 +263,27 @@ export default function Home() {
 
       setChartData(points);
       setErrorMessage("");
+      setMathWarning(formatMathWarning(discardedCount));
+      const metrics = computeDiscardMetrics(
+        discardedCount,
+        discardedPerCurve,
+        numX
+      );
+      setDiscardMetrics(metrics);
+      setRangeWarning(
+        formatRangeWarning(
+          metrics.maxPerCurveDiscardRate,
+          activeCurves.map((c) => c.expression)
+        )
+      );
+      logDiscardMetrics(metrics);
     } catch (error) {
       console.error("Error al generar gráfico:", error);
 
       setErrorMessage("La expresión matemática es inválida.");
+      setMathWarning(null);
+      setRangeWarning(null);
+      setDiscardMetrics(emptyDiscardMetrics());
     }
   };
 
@@ -139,23 +291,44 @@ export default function Home() {
     try {
       resetToSingleCurve(expr);
 
+      const trimmedExpr = expr.trim();
       const points = [];
+      let discardedCount = 0;
+      const discardedPerCurve = [0];
+      const numX = countXSteps(minX, maxX);
 
       for (let x = minX; x <= maxX; x += 0.5) {
-        const y = evaluate(expr, { x });
-
-        points.push({
-          x,
-          y1: y,
-        });
+        const y = toPlottableY(evaluate(trimmedExpr, { x }));
+        const point: Record<string, number> = { x };
+        if (y !== undefined) {
+          point.y1 = y;
+        } else {
+          discardedCount++;
+          discardedPerCurve[0]++;
+        }
+        points.push(point);
       }
 
       setChartData(points);
       setErrorMessage("");
+      setMathWarning(formatMathWarning(discardedCount));
+      const metrics = computeDiscardMetrics(
+        discardedCount,
+        discardedPerCurve,
+        numX
+      );
+      setDiscardMetrics(metrics);
+      setRangeWarning(
+        formatRangeWarning(metrics.maxPerCurveDiscardRate, [trimmedExpr])
+      );
+      logDiscardMetrics(metrics);
     } catch (error) {
       console.error(error);
 
       setErrorMessage("La expresión matemática es inválida.");
+      setMathWarning(null);
+      setRangeWarning(null);
+      setDiscardMetrics(emptyDiscardMetrics());
     }
   };
 
@@ -216,6 +389,9 @@ export default function Home() {
     resetToSingleCurve("");
     setChartData([]);
     setErrorMessage("");
+    setMathWarning(null);
+    setRangeWarning(null);
+    setDiscardMetrics(emptyDiscardMetrics());
     setMinX(-10);
     setMaxX(10);
   };
@@ -254,6 +430,7 @@ export default function Home() {
 
     try {
       const points = [];
+      let discardedCount = 0;
       const activeCurves = nextCurves
         .map((c, idx) => ({
           idx,
@@ -262,19 +439,48 @@ export default function Home() {
         }))
         .filter((c) => c.expression.length > 0);
 
-      for (let x = Number(graph.min_x ?? -10); x <= Number(graph.max_x ?? 10); x += 0.5) {
+      const loadMinX = Number(graph.min_x ?? -10);
+      const loadMaxX = Number(graph.max_x ?? 10);
+      const discardedPerCurve = activeCurves.map(() => 0);
+      const numX = countXSteps(loadMinX, loadMaxX);
+
+      for (let x = loadMinX; x <= loadMaxX; x += 0.5) {
         const point: Record<string, number> = { x };
-        for (const curve of activeCurves) {
-          point[`y${curve.idx + 1}`] = evaluate(curve.expression, { x });
+        for (let ci = 0; ci < activeCurves.length; ci++) {
+          const curve = activeCurves[ci];
+          const y = toPlottableY(evaluate(curve.expression, { x }));
+          if (y !== undefined) {
+            point[`y${curve.idx + 1}`] = y;
+          } else {
+            discardedCount++;
+            discardedPerCurve[ci]++;
+          }
         }
         points.push(point);
       }
 
       setChartData(points);
       setErrorMessage("");
+      setMathWarning(formatMathWarning(discardedCount));
+      const metrics = computeDiscardMetrics(
+        discardedCount,
+        discardedPerCurve,
+        numX
+      );
+      setDiscardMetrics(metrics);
+      setRangeWarning(
+        formatRangeWarning(
+          metrics.maxPerCurveDiscardRate,
+          activeCurves.map((c) => c.expression)
+        )
+      );
+      logDiscardMetrics(metrics);
     } catch (error) {
       console.error(error);
       setErrorMessage("La expresión matemática es inválida.");
+      setMathWarning(null);
+      setRangeWarning(null);
+      setDiscardMetrics(emptyDiscardMetrics());
     }
   };
 
@@ -523,6 +729,18 @@ export default function Home() {
             </div>
           )}
 
+          {mathWarning && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium">
+              {mathWarning}
+            </div>
+          )}
+
+          {rangeWarning && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium">
+              {rangeWarning}
+            </div>
+          )}
+
           <section>
             <h2 className={sectionTitle}>Visualización</h2>
             <div className={`${card} p-5 sm:p-6 lg:p-8 w-full`}>
@@ -563,6 +781,7 @@ export default function Home() {
                         stroke={curve.color}
                         strokeWidth={2}
                         dot={false}
+                        connectNulls
                       />
                     ))}
                   </LineChart>
@@ -662,27 +881,72 @@ export default function Home() {
                           {getGraphDisplayTitle(graph)}
                         </dd>
                       </div>
-                      <div>
-                        <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
-                          Expresión
-                        </dt>
-                        <dd className="text-base text-slate-700 mt-1 font-mono bg-slate-50 rounded-md px-3 py-1.5 inline-block max-w-full break-all">
-                          {graph.expression}
-                        </dd>
-                      </div>
-                      <div className="flex flex-wrap gap-x-10 gap-y-4">
+                      {Array.isArray(graph.curves) &&
+                      graph.curves.length > 0 ? (
                         <div>
                           <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
-                            Color
+                            Curvas ({graph.curves.length})
                           </dt>
-                          <dd className="text-base text-slate-700 mt-1">
-                            {graph.color === "blue" && "🔵 "}
-                            {graph.color === "red" && "🔴 "}
-                            {graph.color === "green" && "🟢 "}
-                            {graph.color === "purple" && "🟣 "}
-                            {COLOR_LABELS[graph.color] || graph.color}
+                          <dd className="mt-2 space-y-2">
+                            {graph.curves.map(
+                              (curve: { expression?: string; color?: string } | string, idx: number) => {
+                                const curveExpression =
+                                  typeof curve === "string"
+                                    ? curve
+                                    : String(curve?.expression ?? "");
+                                const curveColor =
+                                  typeof curve === "object" && curve?.color
+                                    ? String(curve.color)
+                                    : null;
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center gap-2.5 font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5"
+                                  >
+                                    {curveColor && (
+                                      <span
+                                        className="inline-block w-3 h-3 rounded-full shrink-0 border border-slate-200"
+                                        style={{ backgroundColor: curveColor }}
+                                        title={curveColor}
+                                      />
+                                    )}
+                                    <span className="break-all">
+                                      {curveExpression}
+                                    </span>
+                                  </div>
+                                );
+                              }
+                            )}
                           </dd>
                         </div>
+                      ) : (
+                        <div>
+                          <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
+                            Expresión
+                          </dt>
+                          <dd className="text-base text-slate-700 mt-1 font-mono bg-slate-50 rounded-md px-3 py-1.5 inline-block max-w-full break-all">
+                            {graph.expression}
+                          </dd>
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-x-10 gap-y-4">
+                        {!(
+                          Array.isArray(graph.curves) && graph.curves.length > 0
+                        ) && (
+                          <div>
+                            <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
+                              Color
+                            </dt>
+                            <dd className="text-base text-slate-700 mt-1">
+                              {graph.color === "blue" && "🔵 "}
+                              {graph.color === "red" && "🔴 "}
+                              {graph.color === "green" && "🟢 "}
+                              {graph.color === "purple" && "🟣 "}
+                              {COLOR_LABELS[graph.color] || graph.color}
+                            </dd>
+                          </div>
+                        )}
                         <div>
                           <dt className="text-sm font-medium uppercase tracking-wide text-slate-400">
                             Rango X
