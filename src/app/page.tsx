@@ -27,8 +27,6 @@ const inputField =
   "w-full border border-slate-200 rounded-lg px-4 py-3 text-base text-slate-900 bg-white shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500";
 const btnPrimary =
   "inline-flex items-center justify-center font-semibold text-white text-base px-7 py-3 rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.98]";
-const btnColor =
-  "flex-1 min-w-[5rem] font-semibold text-base text-white px-4 py-2.5 rounded-lg shadow-sm transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98]";
 const btnOutline =
   "border border-slate-200 bg-white px-4 py-2 rounded-lg text-base text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow";
 const btnIcon =
@@ -36,16 +34,35 @@ const btnIcon =
 const sectionTitle =
   "text-sm sm:text-base font-semibold uppercase tracking-wider text-slate-500 mb-5";
 
-const SECOND_CURVE_COLOR = "#334155";
+type Curve = { id: number; expression: string; color: string };
+
+const DEFAULT_CURVE_COLORS = [
+  "#3b82f6",
+  "#ef4444",
+  "#16a34a",
+  "#a855f7",
+  "#f59e0b",
+  "#0891b2",
+  "#334155",
+];
+
+const getDefaultColorForIndex = (index: number) =>
+  DEFAULT_CURVE_COLORS[index % DEFAULT_CURVE_COLORS.length];
+
+const HEX_TO_LEGACY_COLOR: Record<string, string> = {
+  "#3b82f6": "blue",
+  "#ef4444": "red",
+  "#16a34a": "green",
+  "#a855f7": "purple",
+};
 
 export default function Home() {
   const [title, setTitle] = useState("");
-  const [curves, setCurves] = useState<Array<{ id: number; expression: string }>>(
-    [{ id: 1, expression: "" }]
-  );
+  const [curves, setCurves] = useState<Curve[]>([
+    { id: 1, expression: "", color: DEFAULT_CURVE_COLORS[0] },
+  ]);
   const [graphs, setGraphs] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
-  const [color, setColor] = useState("blue");
   const [errorMessage, setErrorMessage] = useState("");
   const [selectedGraphId, setSelectedGraphId] = useState<string | null>(null);
 
@@ -55,23 +72,12 @@ export default function Home() {
   const nextCurveIdRef = useRef(2);
   const expression = curves[0]?.expression ?? "";
 
-  const CURVE_COLORS = [
-    SECOND_CURVE_COLOR,
-    "#4f46e5", // indigo-600
-    "#16a34a", // green-600
-    "#db2777", // pink-600
-    "#f59e0b", // amber-500
-    "#0891b2", // cyan-600
-  ];
-
-  const getCurveColor = (index: number) => {
-    if (index === 0) return color;
-    return CURVE_COLORS[(index - 1) % CURVE_COLORS.length];
-  };
-
   const addCurve = () => {
     const id = nextCurveIdRef.current++;
-    setCurves((prev) => [...prev, { id, expression: "" }]);
+    setCurves((prev) => [
+      ...prev,
+      { id, expression: "", color: getDefaultColorForIndex(prev.length) },
+    ]);
   };
 
   const removeCurve = (id: number) => {
@@ -87,16 +93,28 @@ export default function Home() {
     );
   };
 
+  const updateCurveColor = (id: number, value: string) => {
+    setCurves((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, color: value } : c))
+    );
+  };
+
   const resetToSingleCurve = (expr: string) => {
     nextCurveIdRef.current = 2;
-    setCurves([{ id: 1, expression: expr }]);
+    setCurves([
+      { id: 1, expression: expr, color: getDefaultColorForIndex(0) },
+    ]);
   };
 
   const generateGraph = () => {
     try {
       const points = [];
       const activeCurves = curves
-        .map((c, idx) => ({ idx, expression: c.expression.trim() }))
+        .map((c, idx) => ({
+          idx,
+          expression: c.expression.trim(),
+          color: c.color,
+        }))
         .filter((c) => c.expression.length > 0);
 
       for (let x = minX; x <= maxX; x += 0.5) {
@@ -156,28 +174,22 @@ export default function Home() {
     if (!expression.trim()) return;
 
     const graphTitle = title.trim() || expression;
+    const legacyColor =
+      HEX_TO_LEGACY_COLOR[curves[0]?.color?.toLowerCase() ?? ""] ?? "blue";
+
     const graphPayload = {
       title: graphTitle,
       expression: expression,
-      curves: curves.map((c) => ({ expression: c.expression })),
-      color: color,
+      curves: curves.map((c) => ({
+        expression: c.expression,
+        color: c.color,
+      })),
+      color: legacyColor,
       min_x: minX,
       max_x: maxX,
     };
 
     if (selectedGraphId) {
-      const { data: existing } = await supabase
-        .from("graphs")
-        .select("id")
-        .eq("expression", expression)
-        .neq("id", selectedGraphId)
-        .limit(1);
-
-      if (existing && existing.length > 0) {
-        alert("Ese gráfico ya está guardado");
-        return;
-      }
-
       const { error } = await supabase
         .from("graphs")
         .update(graphPayload)
@@ -187,17 +199,6 @@ export default function Home() {
         generateGraph();
         loadGraphs();
       }
-      return;
-    }
-
-    const { data: existing } = await supabase
-      .from("graphs")
-      .select("id")
-      .eq("expression", expression)
-      .limit(1);
-
-    if (existing && existing.length > 0) {
-      alert("Ese gráfico ya está guardado");
       return;
     }
 
@@ -215,7 +216,6 @@ export default function Home() {
     resetToSingleCurve("");
     setChartData([]);
     setErrorMessage("");
-    setColor("blue");
     setMinX(-10);
     setMaxX(10);
   };
@@ -224,27 +224,42 @@ export default function Home() {
     setSelectedGraphId(graph.id);
     setTitle(graph.title || graph.expression);
     const dbCurves = graph.curves;
-    let nextCurves: Array<{ id: number; expression: string }> = [
-      { id: 1, expression: graph.expression ?? "" },
+    let nextCurves: Curve[] = [
+      {
+        id: 1,
+        expression: graph.expression ?? "",
+        color: getDefaultColorForIndex(0),
+      },
     ];
 
     if (Array.isArray(dbCurves) && dbCurves.length > 0) {
       nextCurves = dbCurves.map((c: any, idx: number) => {
-        if (typeof c === "string") return { id: idx + 1, expression: c };
-        return { id: idx + 1, expression: String(c?.expression ?? "") };
+        const curveExpression =
+          typeof c === "string" ? c : String(c?.expression ?? "");
+        const savedColor =
+          typeof c === "object" && c?.color ? String(c.color) : "";
+
+        return {
+          id: idx + 1,
+          expression: curveExpression,
+          color: savedColor || getDefaultColorForIndex(idx),
+        };
       });
     }
 
     nextCurveIdRef.current = nextCurves.length + 1;
     setCurves(nextCurves);
-    setColor(graph.color || "blue");
     setMinX(Number(graph.min_x ?? -10));
     setMaxX(Number(graph.max_x ?? 10));
 
     try {
       const points = [];
       const activeCurves = nextCurves
-        .map((c, idx) => ({ idx, expression: c.expression.trim() }))
+        .map((c, idx) => ({
+          idx,
+          expression: c.expression.trim(),
+          color: c.color,
+        }))
         .filter((c) => c.expression.length > 0);
 
       for (let x = Number(graph.min_x ?? -10); x <= Number(graph.max_x ?? 10); x += 0.5) {
@@ -283,7 +298,11 @@ export default function Home() {
 
   const isEditing = selectedGraphId !== null;
   const activeCurves = curves
-    .map((c, idx) => ({ idx, expression: c.expression.trim() }))
+    .map((c, idx) => ({
+      idx,
+      expression: c.expression.trim(),
+      color: c.color,
+    }))
     .filter((c) => c.expression.length > 0);
 
   useEffect(() => {
@@ -345,7 +364,7 @@ export default function Home() {
           <section>
             <h2 className={sectionTitle}>Panel de control</h2>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
-              <div className={`${card} lg:col-span-6 xl:col-span-7 flex flex-col gap-6`}>
+              <div className={`${card} lg:col-span-9 flex flex-col gap-6`}>
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
                     <h3 className="text-lg xl:text-xl font-semibold text-slate-900">
@@ -401,13 +420,18 @@ export default function Home() {
                             Expresión {idx + 1}
                           </label>
                           <div className="flex items-center gap-3">
-                            <span className="inline-flex items-center gap-2 text-sm text-slate-500">
-                              <span
-                                className="inline-block w-5 h-1.5 rounded-full shrink-0"
-                                style={{ backgroundColor: getCurveColor(idx) }}
+                            <label className="inline-flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
+                              <input
+                                type="color"
+                                value={curve.color}
+                                onChange={(e) =>
+                                  updateCurveColor(curve.id, e.target.value)
+                                }
+                                className="h-9 w-12 cursor-pointer rounded border border-slate-200 bg-white p-0.5"
+                                title="Color de la curva"
                               />
                               Color
-                            </span>
+                            </label>
                             {idx > 0 && (
                               <button
                                 type="button"
@@ -449,60 +473,6 @@ export default function Home() {
                     className={`bg-blue-600 hover:bg-blue-700 ${btnPrimary} sm:min-w-[160px]`}
                   >
                     {isEditing ? "Actualizar" : "Guardar"}
-                  </button>
-                </div>
-              </div>
-
-              <div className={`${card} lg:col-span-3 flex flex-col gap-6`}>
-                <div>
-                  <h3 className="text-lg xl:text-xl font-semibold text-slate-900">
-                    Apariencia
-                  </h3>
-                  <p className="text-base text-slate-500 mt-2">
-                    Selecciona el color de la curva 1
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 flex-1 content-start">
-                  <button
-                    onClick={() => setColor("blue")}
-                    className={`bg-blue-500 hover:bg-blue-600 ${btnColor} ${
-                      color === "blue"
-                        ? "ring-2 ring-blue-600 ring-offset-2"
-                        : ""
-                    }`}
-                  >
-                    Azul
-                  </button>
-                  <button
-                    onClick={() => setColor("red")}
-                    className={`bg-red-500 hover:bg-red-600 ${btnColor} ${
-                      color === "red"
-                        ? "ring-2 ring-red-600 ring-offset-2"
-                        : ""
-                    }`}
-                  >
-                    Rojo
-                  </button>
-                  <button
-                    onClick={() => setColor("green")}
-                    className={`bg-emerald-500 hover:bg-emerald-600 ${btnColor} ${
-                      color === "green"
-                        ? "ring-2 ring-emerald-600 ring-offset-2"
-                        : ""
-                    }`}
-                  >
-                    Verde
-                  </button>
-                  <button
-                    onClick={() => setColor("purple")}
-                    className={`bg-purple-500 hover:bg-purple-600 ${btnColor} ${
-                      color === "purple"
-                        ? "ring-2 ring-purple-600 ring-offset-2"
-                        : ""
-                    }`}
-                  >
-                    Violeta
                   </button>
                 </div>
               </div>
@@ -562,7 +532,7 @@ export default function Home() {
                     <div key={curve.idx} className="flex items-center gap-2.5">
                       <span
                         className="inline-block w-5 h-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: getCurveColor(curve.idx) }}
+                        style={{ backgroundColor: curve.color }}
                       />
                       <span className="text-sm font-mono text-slate-700">
                         {curve.expression}
@@ -590,7 +560,7 @@ export default function Home() {
                         key={curve.idx}
                         type="monotone"
                         dataKey={`y${curve.idx + 1}`}
-                        stroke={getCurveColor(curve.idx)}
+                        stroke={curve.color}
                         strokeWidth={2}
                         dot={false}
                       />
