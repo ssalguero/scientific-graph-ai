@@ -32,7 +32,12 @@ export const EXPERIMENTAL_DATA_SOURCES: ExperimentalDataSource[] = [
     enabled: true,
     accept: ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   },
-  { id: "ods", label: "ODS", enabled: false },
+  {
+    id: "ods",
+    label: "LibreOffice (.ods)",
+    enabled: true,
+    accept: ".ods,application/vnd.oasis.opendocument.spreadsheet",
+  },
   { id: "json", label: "JSON", enabled: false },
   { id: "tsv", label: "TSV", enabled: false },
   { id: "google-sheets", label: "Google Sheets", enabled: false },
@@ -137,7 +142,7 @@ const cellToNumber = (cell: unknown): number | null => {
 const isKnownHeaderPair = (first: string, second: string): boolean =>
   KNOWN_HEADER_PAIRS.some(([a, b]) => first === a && second === b);
 
-const isXlsxHeaderRow = (row: unknown[]): boolean => {
+const isSpreadsheetHeaderRow = (row: unknown[]): boolean => {
   if (row.length < 2) return false;
 
   const first = normalizeCell(row[0]);
@@ -178,7 +183,45 @@ const findNumericColumnPair = (
   return null;
 };
 
-export const parseXlsxFile = async (
+const parseSpreadsheetMatrix = (
+  matrix: unknown[][]
+): { x: number; y: number }[] | null => {
+  const rows = matrix
+    .filter((row): row is unknown[] => Array.isArray(row))
+    .filter((row) => row.some((cell) => String(cell ?? "").trim() !== ""));
+
+  if (rows.length < 2) return null;
+
+  const columnCount = Math.max(...rows.map((row) => row.length), 0);
+  if (columnCount < 2) return null;
+
+  const startRow = isSpreadsheetHeaderRow(rows[0]) ? 1 : 0;
+  const dataRows = rows.slice(startRow);
+  if (dataRows.length < 2) return null;
+
+  const columnPair =
+    columnCount === 2
+      ? ([0, 1] as [number, number])
+      : findNumericColumnPair(dataRows, columnCount);
+  if (!columnPair) return null;
+
+  const [colX, colY] = columnPair;
+  const points: { x: number; y: number }[] = [];
+
+  for (const row of dataRows) {
+    if (row.length <= Math.max(colX, colY)) return null;
+
+    const x = cellToNumber(row[colX]);
+    const y = cellToNumber(row[colY]);
+    if (x === null || y === null) return null;
+
+    points.push({ x, y });
+  }
+
+  return points.length >= 2 ? points : null;
+};
+
+const parseSpreadsheetFile = async (
   file: File
 ): Promise<{ x: number; y: number }[] | null> => {
   try {
@@ -193,46 +236,19 @@ export const parseXlsxFile = async (
       defval: "",
     });
 
-    const rows = matrix
-      .filter((row): row is unknown[] => Array.isArray(row))
-      .filter((row) => row.some((cell) => String(cell ?? "").trim() !== ""));
-
-    if (rows.length < 2) return null;
-
-    const columnCount = Math.max(
-      ...rows.map((row) => row.length),
-      0
-    );
-    if (columnCount < 2) return null;
-
-    const startRow = isXlsxHeaderRow(rows[0]) ? 1 : 0;
-    const dataRows = rows.slice(startRow);
-    if (dataRows.length < 2) return null;
-
-    const columnPair =
-      columnCount === 2
-        ? ([0, 1] as [number, number])
-        : findNumericColumnPair(dataRows, columnCount);
-    if (!columnPair) return null;
-
-    const [colX, colY] = columnPair;
-    const points: { x: number; y: number }[] = [];
-
-    for (const row of dataRows) {
-      if (row.length <= Math.max(colX, colY)) return null;
-
-      const x = cellToNumber(row[colX]);
-      const y = cellToNumber(row[colY]);
-      if (x === null || y === null) return null;
-
-      points.push({ x, y });
-    }
-
-    return points.length >= 2 ? points : null;
+    return parseSpreadsheetMatrix(matrix);
   } catch {
     return null;
   }
 };
+
+export const parseXlsxFile = async (
+  file: File
+): Promise<{ x: number; y: number }[] | null> => parseSpreadsheetFile(file);
+
+export const parseOdsFile = async (
+  file: File
+): Promise<{ x: number; y: number }[] | null> => parseSpreadsheetFile(file);
 
 export const getExperimentalDataSource = (sourceId: ExperimentalDataSourceId) =>
   EXPERIMENTAL_DATA_SOURCES.find((source) => source.id === sourceId);
@@ -263,6 +279,8 @@ export const importExperimentalDataFile = async (
 
   if (sourceId === "xlsx") {
     points = await parseXlsxFile(file);
+  } else if (sourceId === "ods") {
+    points = await parseOdsFile(file);
   } else {
     const parser = PARSERS[sourceId];
     if (!parser) return null;
