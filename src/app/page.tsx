@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { toPng, toSvg } from "html-to-image";
 import { supabase } from "../lib/supabase";
 import { evaluate } from "mathjs";
@@ -91,6 +97,92 @@ const DEFAULT_CURVE_COLORS = [
 
 const getDefaultColorForIndex = (index: number) =>
   DEFAULT_CURVE_COLORS[index % DEFAULT_CURVE_COLORS.length];
+
+type FunctionLibraryEntry = {
+  label: string;
+  expression: string;
+};
+
+type FunctionLibraryCategory = {
+  category: string;
+  functions: FunctionLibraryEntry[];
+};
+
+const FUNCTION_LIBRARY: FunctionLibraryCategory[] = [
+  {
+    category: "Básicas",
+    functions: [
+      { label: "x", expression: "x" },
+      { label: "x^2", expression: "x^2" },
+      { label: "abs(x)", expression: "abs(x)" },
+    ],
+  },
+  {
+    category: "Trigonométricas",
+    functions: [
+      { label: "sin(x)", expression: "sin(x)" },
+      { label: "cos(x)", expression: "cos(x)" },
+      { label: "tan(x)", expression: "tan(x)" },
+    ],
+  },
+  {
+    category: "Trigonométricas inversas",
+    functions: [
+      { label: "asin(x)", expression: "asin(x)" },
+      { label: "acos(x)", expression: "acos(x)" },
+      { label: "atan(x)", expression: "atan(x)" },
+    ],
+  },
+  {
+    category: "Exponenciales y logarítmicas",
+    functions: [
+      { label: "exp(x)", expression: "exp(x)" },
+      { label: "log(x)", expression: "log(x)" },
+      { label: "ln(x)", expression: "ln(x)" },
+      { label: "log10(x)", expression: "log10(x)" },
+      { label: "sqrt(x)", expression: "sqrt(x)" },
+    ],
+  },
+  {
+    category: "Hiperbólicas",
+    functions: [
+      { label: "sinh(x)", expression: "sinh(x)" },
+      { label: "cosh(x)", expression: "cosh(x)" },
+      { label: "tanh(x)", expression: "tanh(x)" },
+    ],
+  },
+  {
+    category: "Redondeo",
+    functions: [
+      { label: "floor(x)", expression: "floor(x)" },
+      { label: "ceil(x)", expression: "ceil(x)" },
+      { label: "round(x)", expression: "round(x)" },
+    ],
+  },
+  {
+    category: "Constantes",
+    functions: [
+      { label: "pi", expression: "pi" },
+      { label: "e", expression: "e" },
+    ],
+  },
+];
+
+const filterFunctionLibrary = (
+  search: string
+): FunctionLibraryCategory[] => {
+  const query = search.trim().toLowerCase();
+  if (!query) return FUNCTION_LIBRARY;
+
+  return FUNCTION_LIBRARY.map((category) => ({
+    ...category,
+    functions: category.functions.filter(
+      (fn) =>
+        fn.label.toLowerCase().includes(query) ||
+        fn.expression.toLowerCase().includes(query)
+    ),
+  })).filter((category) => category.functions.length > 0);
+};
 
 const HEX_TO_LEGACY_COLOR: Record<string, string> = {
   "#3b82f6": "blue",
@@ -451,6 +543,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [hiddenCurves, setHiddenCurves] = useState<number[]>([]);
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
+  const [functionSearch, setFunctionSearch] = useState("");
 
   const nextCurveIdRef = useRef(2);
   const chartExportRef = useRef<HTMLDivElement>(null);
@@ -904,6 +997,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     graph.title?.trim() || graph.expression;
 
   const isEditing = selectedGraphId !== null;
+  const filteredFunctionLibrary = useMemo(
+    () => filterFunctionLibrary(functionSearch),
+    [functionSearch]
+  );
+  const functionLibraryHasResults = filteredFunctionLibrary.length > 0;
   const yAxisDomain = autoScaleY ? computeYAxisDomain(yMetrics) : undefined;
   const activeCurves = curves
     .map((c, idx) => ({
@@ -1318,317 +1416,48 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
           <section className={`${card}`}>
             <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-2">
-              Ejemplos matemáticos
+              📚 Biblioteca de funciones
             </h3>
-            <p className="text-base text-slate-500 mb-5">
-              Haz clic para cargar una expresión de ejemplo
+            <p className="text-base text-slate-500 mb-4">
+              Busca y haz clic para insertar en la curva activa
             </p>
 
-            <div className="space-y-5">
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  📐 Básicas
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => graphExpression("x^2")}
-                    className={btnOutline}
-                  >
-                    x²
-                  </button>
-                  <button
-                    onClick={() => graphExpression("x^3")}
-                    className={btnOutline}
-                  >
-                    x³
-                  </button>
-                  <button
-                    onClick={() => graphExpression("abs(x)")}
-                    className={btnOutline}
-                  >
-                    abs(x)
-                  </button>
-                </div>
-              </div>
+            <input
+              type="search"
+              value={functionSearch}
+              onChange={(e) => setFunctionSearch(e.target.value)}
+              placeholder="Buscar función..."
+              className={`${inputField} mb-5`}
+              aria-label="Buscar función"
+            />
 
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  📈 Exponenciales y logarítmicas
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => graphExpression("exp(x)")}
-                    className={btnOutline}
-                  >
-                    exp(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("log(x)")}
-                    className={btnOutline}
-                  >
-                    log(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("ln(x)")}
-                    className={btnOutline}
-                  >
-                    ln(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("log10(x)")}
-                    className={btnOutline}
-                  >
-                    log10(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("sqrt(abs(x))")}
-                    className={btnOutline}
-                  >
-                    sqrt(abs(x))
-                  </button>
-                </div>
+            {functionSearch.trim() && !functionLibraryHasResults ? (
+              <p className="text-base text-slate-500">
+                No se encontraron funciones
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {filteredFunctionLibrary.map((category) => (
+                  <div key={category.category}>
+                    <p className="text-sm font-semibold text-slate-700 mb-2">
+                      {category.category}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {category.functions.map((fn) => (
+                        <button
+                          key={`${category.category}-${fn.expression}`}
+                          type="button"
+                          onClick={() => graphExpression(fn.expression)}
+                          className={`${btnOutline} font-mono text-sm px-3 py-1.5`}
+                        >
+                          {fn.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  📊 Trigonométricas
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => graphExpression("sin(x)")}
-                    className={btnOutline}
-                  >
-                    sin(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("cos(x)")}
-                    className={btnOutline}
-                  >
-                    cos(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("tan(x)")}
-                    className={btnOutline}
-                  >
-                    tan(x)
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  🔄 Trigonométricas inversas
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => graphExpression("asin(x)")}
-                    className={btnOutline}
-                  >
-                    asin(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("acos(x)")}
-                    className={btnOutline}
-                  >
-                    acos(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("atan(x)")}
-                    className={btnOutline}
-                  >
-                    atan(x)
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  〰️ Hiperbólicas
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => graphExpression("sinh(x)")}
-                    className={btnOutline}
-                  >
-                    sinh(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("cosh(x)")}
-                    className={btnOutline}
-                  >
-                    cosh(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("tanh(x)")}
-                    className={btnOutline}
-                  >
-                    tanh(x)
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  🔢 Redondeo
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => graphExpression("floor(x)")}
-                    className={btnOutline}
-                  >
-                    floor(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("ceil(x)")}
-                    className={btnOutline}
-                  >
-                    ceil(x)
-                  </button>
-                  <button
-                    onClick={() => graphExpression("round(x)")}
-                    className={btnOutline}
-                  >
-                    round(x)
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className={`${card}`}>
-            <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-2">
-              Funciones soportadas
-            </h3>
-            <p className="text-base text-slate-500 mb-5">
-              Sintaxis disponible para escribir expresiones
-            </p>
-
-            <div className="space-y-5">
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  📐 Básicas
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    x
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    x^2
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    1/x
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    abs(x)
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  📈 Exponenciales y logarítmicas
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    exp(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    log(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    ln(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    sqrt(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    log10(x)
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  📊 Trigonométricas
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    sin(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    cos(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    tan(x)
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  🔄 Trigonométricas inversas
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    asin(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    acos(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    atan(x)
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  〰️ Hiperbólicas
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    sinh(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    cosh(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    tanh(x)
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  🔢 Redondeo
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    floor(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    ceil(x)
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    round(x)
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-3">
-                  🔢 Constantes
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    pi
-                  </span>
-                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
-                    e
-                  </span>
-                </div>
-              </div>
-            </div>
+            )}
           </section>
 
           {shareNotFound && (
