@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { toPng } from "html-to-image";
+import { toPng, toSvg } from "html-to-image";
 import { supabase } from "../lib/supabase";
 import { evaluate } from "mathjs";
 
@@ -26,16 +26,16 @@ const btnOutline =
 const sectionTitle =
   "text-sm sm:text-base font-semibold uppercase tracking-wider text-slate-500 mb-5";
 
-const getChartExportFileName = (title: string) => {
+const getChartExportFileName = (title: string, extension: "png" | "svg") => {
   const trimmed = title.trim();
-  if (!trimmed) return "grafico.png";
+  if (!trimmed) return `grafico.${extension}`;
 
   const safe = trimmed
     .replace(/[<>:"/\\|?*]/g, "")
     .replace(/\s+/g, "-")
     .slice(0, 80);
 
-  return safe ? `grafico-${safe}.png` : "grafico.png";
+  return safe ? `grafico-${safe}.${extension}` : `grafico.${extension}`;
 };
 
 const DUPLICATE_TITLE_SUFFIX = " (copia)";
@@ -138,10 +138,16 @@ const KNOWN_FUNCTION_WARNINGS: Record<string, string> = {
     "⚠ 1/x presenta una discontinuidad en x = 0 dentro del rango actual.",
   "1/(1-x)":
     "⚠ 1/(1-x) presenta una discontinuidad en x = 1 dentro del rango actual.",
+  "asin(x)":
+    "⚠ asin(x) solo está definida para x ∈ [-1, 1]. Parte del rango actual queda fuera de su dominio.",
+  "acos(x)":
+    "⚠ acos(x) solo está definida para x ∈ [-1, 1]. Parte del rango actual queda fuera de su dominio.",
 };
 
 const KNOWN_FUNCTION_PATTERNS = [
   "1/(1-x)",
+  "asin(x)",
+  "acos(x)",
   "log(x)",
   "ln(x)",
   "sqrt(x)",
@@ -326,7 +332,11 @@ const logYMetrics = (metrics: YMetrics) => {
   console.log("maxObservedY", metrics.maxObservedY);
 };
 
-export default function Home() {
+type GraphEditorProps = {
+  shareGraphId?: string;
+};
+
+export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [title, setTitle] = useState("");
   const [curves, setCurves] = useState<Curve[]>([
     { id: 1, expression: "", color: DEFAULT_CURVE_COLORS[0] },
@@ -341,6 +351,8 @@ export default function Home() {
   const [yMetrics, setYMetrics] = useState<YMetrics>(computeYMetrics([]));
   const [scaleWarning, setScaleWarning] = useState<string | null>(null);
   const [selectedGraphId, setSelectedGraphId] = useState<string | null>(null);
+  const [shareNotFound, setShareNotFound] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const [minX, setMinX] = useState(-10);
   const [maxX, setMaxX] = useState(10);
@@ -434,11 +446,29 @@ export default function Home() {
       });
 
       const link = document.createElement("a");
-      link.download = getChartExportFileName(title);
+      link.download = getChartExportFileName(title, "png");
       link.href = dataUrl;
       link.click();
     } catch (error) {
       console.error("Error al exportar PNG:", error);
+    }
+  };
+
+  const exportChartSvg = async () => {
+    if (!chartExportRef.current || chartData.length === 0) return;
+
+    try {
+      const dataUrl = await toSvg(chartExportRef.current, {
+        cacheBust: true,
+        backgroundColor: "#ffffff",
+      });
+
+      const link = document.createElement("a");
+      link.download = getChartExportFileName(title, "svg");
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error("Error al exportar SVG:", error);
     }
   };
 
@@ -532,6 +562,20 @@ export default function Home() {
 
     if (!error && data) {
       setGraphs(data);
+    }
+  };
+
+  const copyShareLink = async () => {
+    if (!selectedGraphId) return;
+
+    const url = `${window.location.origin}/graph/${selectedGraphId}`;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch (error) {
+      console.error("Error al copiar enlace:", error);
     }
   };
 
@@ -728,6 +772,40 @@ export default function Home() {
   useEffect(() => {
     loadGraphs();
   }, []);
+
+  useEffect(() => {
+    if (!shareGraphId) return;
+
+    let cancelled = false;
+
+    const loadSharedGraph = async () => {
+      setShareNotFound(false);
+
+      const { data, error } = await supabase
+        .from("graphs")
+        .select("*")
+        .eq("id", shareGraphId)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error || !data) {
+        setShareNotFound(true);
+        return;
+      }
+
+      await loadGraphs();
+      if (!cancelled) {
+        loadGraph(data);
+      }
+    };
+
+    loadSharedGraph();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shareGraphId]);
 
   useEffect(() => {
     visibleRangeRef.current = { visibleMinX, visibleMaxX, minX, maxX };
@@ -984,6 +1062,13 @@ export default function Home() {
                     <>
                       <button
                         type="button"
+                        onClick={copyShareLink}
+                        className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold`}
+                      >
+                        {linkCopied ? "Enlace copiado" : "Copiar enlace"}
+                      </button>
+                      <button
+                        type="button"
                         onClick={duplicateGraph}
                         className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold`}
                       >
@@ -1004,6 +1089,14 @@ export default function Home() {
                     className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     Exportar PNG
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportChartSvg}
+                    disabled={chartData.length === 0}
+                    className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    Exportar SVG
                   </button>
                 </div>
               </div>
@@ -1117,6 +1210,12 @@ export default function Home() {
                     ln(x)
                   </button>
                   <button
+                    onClick={() => graphExpression("log10(x)")}
+                    className={btnOutline}
+                  >
+                    log10(x)
+                  </button>
+                  <button
                     onClick={() => graphExpression("sqrt(abs(x))")}
                     className={btnOutline}
                   >
@@ -1147,6 +1246,84 @@ export default function Home() {
                     className={btnOutline}
                   >
                     tan(x)
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  🔄 Trigonométricas inversas
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => graphExpression("asin(x)")}
+                    className={btnOutline}
+                  >
+                    asin(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("acos(x)")}
+                    className={btnOutline}
+                  >
+                    acos(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("atan(x)")}
+                    className={btnOutline}
+                  >
+                    atan(x)
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  〰️ Hiperbólicas
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => graphExpression("sinh(x)")}
+                    className={btnOutline}
+                  >
+                    sinh(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("cosh(x)")}
+                    className={btnOutline}
+                  >
+                    cosh(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("tanh(x)")}
+                    className={btnOutline}
+                  >
+                    tanh(x)
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  🔢 Redondeo
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => graphExpression("floor(x)")}
+                    className={btnOutline}
+                  >
+                    floor(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("ceil(x)")}
+                    className={btnOutline}
+                  >
+                    ceil(x)
+                  </button>
+                  <button
+                    onClick={() => graphExpression("round(x)")}
+                    className={btnOutline}
+                  >
+                    round(x)
                   </button>
                 </div>
               </div>
@@ -1199,6 +1376,9 @@ export default function Home() {
                   <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
                     sqrt(x)
                   </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    log10(x)
+                  </span>
                 </div>
               </div>
 
@@ -1221,6 +1401,57 @@ export default function Home() {
 
               <div>
                 <p className="text-sm font-semibold text-slate-700 mb-3">
+                  🔄 Trigonométricas inversas
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    asin(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    acos(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    atan(x)
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  〰️ Hiperbólicas
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    sinh(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    cosh(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    tanh(x)
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  🔢 Redondeo
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    floor(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    ceil(x)
+                  </span>
+                  <span className="font-mono text-base text-slate-700 bg-slate-50 rounded-md px-3 py-1.5">
+                    round(x)
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-3">
                   🔢 Constantes
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -1234,6 +1465,12 @@ export default function Home() {
               </div>
             </div>
           </section>
+
+          {shareNotFound && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
+              Gráfico no encontrado
+            </div>
+          )}
 
           {errorMessage && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
@@ -1367,4 +1604,8 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+export default function Home() {
+  return <GraphEditor />;
 }
