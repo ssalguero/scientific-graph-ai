@@ -20,8 +20,9 @@ import {
 import { evaluate } from "mathjs";
 
 import {
-  LineChart,
+  ComposedChart,
   Line,
+  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -394,6 +395,19 @@ type YMetrics = {
   perCurve: CurveYMetrics[];
 };
 
+type LinearRegressionResult = {
+  slope: number;
+  intercept: number;
+  r2: number;
+};
+
+type RegressionCurve = LinearRegressionResult & {
+  id: string;
+  name: string;
+  color: string;
+  points: { x: number; y: number }[];
+};
+
 const formatScaleFactor = (factor: number): string => {
   const rounded = Math.round(factor);
   return rounded < 1000
@@ -445,6 +459,78 @@ const computeYMetrics = (
     maxObservedY: curveValues.length > 0 ? Math.max(...curveValues) : null,
   })),
 });
+
+const calculateLinearRegression = (
+  points: { x: number; y: number }[]
+): LinearRegressionResult | null => {
+  if (points.length < 2) return null;
+
+  const n = points.length;
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumXX = 0;
+
+  for (const point of points) {
+    sumX += point.x;
+    sumY += point.y;
+    sumXY += point.x * point.y;
+    sumXX += point.x * point.x;
+  }
+
+  const denominator = n * sumXX - sumX * sumX;
+  if (denominator === 0) return null;
+
+  const slope = (n * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / n;
+  const meanY = sumY / n;
+
+  let ssRes = 0;
+  let ssTot = 0;
+  for (const point of points) {
+    const predicted = slope * point.x + intercept;
+    ssRes += (point.y - predicted) ** 2;
+    ssTot += (point.y - meanY) ** 2;
+  }
+
+  const r2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
+
+  return { slope, intercept, r2 };
+};
+
+const curveLegendKey = (idx: number) => `curve:${idx}`;
+const experimentalLegendKey = (id: string) => `exp:${id}`;
+const regressionLegendKey = (id: string) => `regression:${id}`;
+
+const mergeYMetricsWithExperimental = (
+  mathMetrics: YMetrics,
+  series: ExperimentalSeries[]
+): YMetrics => {
+  const expYValues = series.flatMap((item) => item.points.map((p) => p.y));
+  const expPerSeries = series.map((item) => item.points.map((p) => p.y));
+
+  const combinedValues = [
+    ...(mathMetrics.minObservedY != null ? [mathMetrics.minObservedY] : []),
+    ...(mathMetrics.maxObservedY != null ? [mathMetrics.maxObservedY] : []),
+    ...expYValues,
+  ];
+
+  if (combinedValues.length === 0) {
+    return { minObservedY: null, maxObservedY: null, perCurve: [] };
+  }
+
+  return {
+    minObservedY: Math.min(...combinedValues),
+    maxObservedY: Math.max(...combinedValues),
+    perCurve: [
+      ...mathMetrics.perCurve,
+      ...expPerSeries.map((values) => ({
+        minObservedY: values.length > 0 ? Math.min(...values) : null,
+        maxObservedY: values.length > 0 ? Math.max(...values) : null,
+      })),
+    ],
+  };
+};
 
 const computeYAxisDomain = (
   yMetrics: YMetrics
@@ -548,7 +634,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [visibleMinX, setVisibleMinX] = useState(-10);
   const [visibleMaxX, setVisibleMaxX] = useState(10);
   const [autoScaleY, setAutoScaleY] = useState(false);
-  const [hiddenCurves, setHiddenCurves] = useState<number[]>([]);
+  const [useSecondaryYAxis, setUseSecondaryYAxis] = useState(false);
+  const [showRegression, setShowRegression] = useState(false);
+  const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
   const [functionSearch, setFunctionSearch] = useState("");
@@ -590,7 +678,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
     setTitle(getDuplicateTitle(title));
     setSelectedGraphId(null);
-    setHiddenCurves([]);
+    setHiddenLegendKeys([]);
     setVisibleMinX(minX);
     setVisibleMaxX(maxX);
   };
@@ -629,14 +717,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     ]);
   };
 
-  const toggleCurveVisibility = (idx: number) => {
-    setHiddenCurves((prev) =>
-      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
+  const toggleLegendVisibility = (key: string) => {
+    setHiddenLegendKeys((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
+    );
+  };
+
+  const removeExperimentalSeries = (id: string) => {
+    setExperimentalSeries((prev) => prev.filter((series) => series.id !== id));
+    setHiddenLegendKeys((prev) =>
+      prev.filter((key) => key !== experimentalLegendKey(id))
     );
   };
 
   const exportChartPng = async () => {
-    if (!chartExportRef.current || chartData.length === 0) return;
+    if (
+      !chartExportRef.current ||
+      (chartData.length === 0 && experimentalSeries.length === 0)
+    ) {
+      return;
+    }
 
     try {
       const dataUrl = await toPng(chartExportRef.current, {
@@ -655,7 +755,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   };
 
   const exportChartSvg = async () => {
-    if (!chartExportRef.current || chartData.length === 0) return;
+    if (
+      !chartExportRef.current ||
+      (chartData.length === 0 && experimentalSeries.length === 0)
+    ) {
+      return;
+    }
 
     try {
       const dataUrl = await toSvg(chartExportRef.current, {
@@ -749,7 +854,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       }
 
       setExperimentalImportError(null);
-      setExperimentalSeries((prev) => [...prev, series]);
+      setExperimentalSeries((prev) => [
+        ...prev,
+        {
+          ...series,
+          color: getDefaultColorForIndex(
+            curves.filter((curve) => curve.expression.trim()).length + prev.length
+          ),
+        },
+      ]);
     } catch {
       setExperimentalImportError("Archivo de datos inválido");
     }
@@ -923,11 +1036,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setVisibleMinX(-10);
     setVisibleMaxX(10);
     setAutoScaleY(false);
-    setHiddenCurves([]);
+    setHiddenLegendKeys([]);
   };
 
   const loadGraph = (graph: any, options?: { asNew?: boolean }) => {
-    setHiddenCurves([]);
+    setHiddenLegendKeys([]);
     setSelectedGraphId(options?.asNew ? null : graph.id ?? null);
     setJsonImportError(null);
     setTitle(graph.title || graph.expression);
@@ -1053,7 +1166,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     [functionSearch]
   );
   const functionLibraryHasResults = filteredFunctionLibrary.length > 0;
-  const yAxisDomain = autoScaleY ? computeYAxisDomain(yMetrics) : undefined;
   const activeCurves = curves
     .map((c, idx) => ({
       idx,
@@ -1061,6 +1173,109 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       color: c.color,
     }))
     .filter((c) => c.expression.length > 0);
+  const visibleExperimentalSeries = useMemo(
+    () =>
+      experimentalSeries.filter(
+        (series) => !hiddenLegendKeys.includes(experimentalLegendKey(series.id))
+      ),
+    [experimentalSeries, hiddenLegendKeys]
+  );
+  const visibleActiveCurves = useMemo(
+    () =>
+      activeCurves.filter(
+        (curve) => !hiddenLegendKeys.includes(curveLegendKey(curve.idx))
+      ),
+    [activeCurves, hiddenLegendKeys]
+  );
+  const mathYMetrics = useMemo(() => {
+    const values = visibleActiveCurves.flatMap((curve) =>
+      chartData
+        .map((point) => point[`y${curve.idx + 1}`] as number | undefined)
+        .filter(
+          (value): value is number =>
+            typeof value === "number" && Number.isFinite(value)
+        )
+    );
+
+    return computeYMetrics(values);
+  }, [visibleActiveCurves, chartData]);
+  const experimentalYMetrics = useMemo(() => {
+    const values = visibleExperimentalSeries.flatMap((series) =>
+      series.points.map((point) => point.y)
+    );
+
+    return computeYMetrics(values);
+  }, [visibleExperimentalSeries]);
+  const displayYMetrics = useMemo(
+    () => mergeYMetricsWithExperimental(yMetrics, visibleExperimentalSeries),
+    [yMetrics, visibleExperimentalSeries]
+  );
+  const regressionCurves = useMemo<RegressionCurve[]>(
+    () =>
+      visibleExperimentalSeries
+        .map((series) => {
+          const regression = calculateLinearRegression(series.points);
+          if (!regression) return null;
+
+          const xs = series.points.map((point) => point.x);
+          const minX = Math.min(...xs);
+          const maxX = Math.max(...xs);
+
+          return {
+            id: series.id,
+            name: series.name,
+            color: series.color,
+            ...regression,
+            points: [
+              {
+                x: minX,
+                y: regression.slope * minX + regression.intercept,
+              },
+              {
+                x: maxX,
+                y: regression.slope * maxX + regression.intercept,
+              },
+            ],
+          };
+        })
+        .filter((curve): curve is RegressionCurve => curve !== null),
+    [visibleExperimentalSeries]
+  );
+  const visibleRegressionCurves = useMemo(
+    () =>
+      regressionCurves.filter(
+        (curve) => !hiddenLegendKeys.includes(regressionLegendKey(curve.id))
+      ),
+    [regressionCurves, hiddenLegendKeys]
+  );
+  const useDualYAxis =
+    useSecondaryYAxis &&
+    visibleActiveCurves.length > 0 &&
+    visibleExperimentalSeries.length > 0;
+  const mathYAxisDomain = autoScaleY
+    ? computeYAxisDomain(mathYMetrics)
+    : undefined;
+  const experimentalYAxisDomain = autoScaleY
+    ? computeYAxisDomain(experimentalYMetrics)
+    : undefined;
+  const yAxisDomain = autoScaleY
+    ? computeYAxisDomain(displayYMetrics)
+    : undefined;
+  const hasChartContent =
+    chartData.length > 0 || experimentalSeries.length > 0;
+  const hasLegendItems =
+    activeCurves.length > 0 ||
+    experimentalSeries.length > 0 ||
+    (showRegression && regressionCurves.length > 0);
+  const composedChartData = useMemo(() => {
+    if (chartData.length > 0) return chartData;
+
+    const visiblePoints = visibleExperimentalSeries.flatMap(
+      (series) => series.points
+    );
+
+    return visiblePoints.length > 0 ? visiblePoints : chartData;
+  }, [chartData, visibleExperimentalSeries]);
 
   useEffect(() => {
     loadGraphs();
@@ -1138,7 +1353,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [chartData.length]);
+  }, [chartData.length, experimentalSeries.length]);
 
   useEffect(() => {
     const endPan = () => {
@@ -1378,7 +1593,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   <button
                     type="button"
                     onClick={exportChartPng}
-                    disabled={chartData.length === 0}
+                    disabled={!hasChartContent}
                     className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     Exportar PNG
@@ -1386,7 +1601,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   <button
                     type="button"
                     onClick={exportChartSvg}
-                    disabled={chartData.length === 0}
+                    disabled={!hasChartContent}
                     className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     Exportar SVG
@@ -1461,6 +1676,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   />
                   Ajustar eje Y automáticamente
                 </label>
+
+                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useSecondaryYAxis}
+                    onChange={(e) => setUseSecondaryYAxis(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                  />
+                  Usar eje Y secundario para datos experimentales
+                </label>
+
+                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showRegression}
+                    onChange={(e) => setShowRegression(e.target.checked)}
+                    disabled={experimentalSeries.length === 0}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  Mostrar regresión lineal
+                </label>
               </div>
             </div>
           </section>
@@ -1510,6 +1746,41 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </div>
             )}
           </section>
+
+          {showRegression && visibleRegressionCurves.length > 0 && (
+            <section className={`${card}`}>
+              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
+                📈 Regresiones lineales
+              </h3>
+              <div className="space-y-3">
+                {visibleRegressionCurves.map((regression) => {
+                  const slope = regression.slope.toFixed(4);
+                  const interceptAbs = Math.abs(regression.intercept).toFixed(4);
+                  const sign = regression.intercept >= 0 ? "+" : "-";
+
+                  return (
+                    <div
+                      key={regression.id}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                    >
+                      <p>
+                        <span className="font-semibold">Serie:</span>{" "}
+                        {regression.name}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Modelo:</span> y ={" "}
+                        {slope}x {sign} {interceptAbs}
+                      </p>
+                      <p>
+                        <span className="font-semibold">R²:</span>{" "}
+                        {regression.r2.toFixed(4)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           <section className={`${card}`}>
             <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
@@ -1572,11 +1843,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             )}
 
             {experimentalSeries.length > 0 && (
-              <p className="mt-3 text-sm text-slate-500">
-                {experimentalSeries.length} serie
-                {experimentalSeries.length === 1 ? "" : "s"} experimental
-                {experimentalSeries.length === 1 ? "" : "es"} en memoria
-              </p>
+              <ul className="mt-3 space-y-2">
+                {experimentalSeries.map((series) => (
+                  <li
+                    key={series.id}
+                    className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600"
+                  >
+                    <span>
+                      {series.name} ({series.points.length} puntos)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeExperimentalSeries(series.id)}
+                      className={`${btnOutline} px-3 py-1.5 text-sm font-medium text-red-700 border-red-200 hover:bg-red-50`}
+                    >
+                      Eliminar serie
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
 
@@ -1625,7 +1910,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               <button
                 type="button"
                 onClick={resetVisibleRange}
-                disabled={chartData.length === 0}
+                disabled={!hasChartContent}
                 className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 Restablecer vista
@@ -1635,24 +1920,21 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               ref={chartExportRef}
               className={`${card} p-5 sm:p-6 lg:p-8 w-full`}
             >
-              {activeCurves.length > 0 && (
+              {hasLegendItems && (
                 <div className="flex flex-wrap gap-5 mb-5 pb-5 border-b border-slate-100">
                   {activeCurves.map((curve) => {
-                    const isHidden = hiddenCurves.includes(curve.idx);
+                    const legendKey = curveLegendKey(curve.idx);
+                    const isHidden = hiddenLegendKeys.includes(legendKey);
 
                     return (
                       <button
-                        key={curve.idx}
+                        key={legendKey}
                         type="button"
-                        onClick={() => toggleCurveVisibility(curve.idx)}
+                        onClick={() => toggleLegendVisibility(legendKey)}
                         className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
                           isHidden ? "opacity-50" : "opacity-100"
                         }`}
-                        title={
-                          isHidden
-                            ? "Mostrar curva"
-                            : "Ocultar curva"
-                        }
+                        title={isHidden ? "Mostrar curva" : "Ocultar curva"}
                       >
                         <span
                           className="inline-block w-5 h-1.5 rounded-full shrink-0"
@@ -1668,6 +1950,67 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </button>
                     );
                   })}
+                  {experimentalSeries.map((series) => {
+                    const legendKey = experimentalLegendKey(series.id);
+                    const isHidden = hiddenLegendKeys.includes(legendKey);
+
+                    return (
+                      <button
+                        key={legendKey}
+                        type="button"
+                        onClick={() => toggleLegendVisibility(legendKey)}
+                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                          isHidden ? "opacity-50" : "opacity-100"
+                        }`}
+                        title={isHidden ? "Mostrar serie" : "Ocultar serie"}
+                      >
+                        <span
+                          className="inline-block w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: series.color }}
+                        />
+                        <span
+                          className={`text-sm ${
+                            isHidden ? "text-slate-400" : "text-slate-700"
+                          }`}
+                        >
+                          {series.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {showRegression &&
+                    regressionCurves.map((regression) => {
+                      const legendKey = regressionLegendKey(regression.id);
+                      const isHidden = hiddenLegendKeys.includes(legendKey);
+
+                      return (
+                        <button
+                          key={legendKey}
+                          type="button"
+                          onClick={() => toggleLegendVisibility(legendKey)}
+                          className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                            isHidden ? "opacity-50" : "opacity-100"
+                          }`}
+                          title={
+                            isHidden
+                              ? "Mostrar regresión"
+                              : "Ocultar regresión"
+                          }
+                        >
+                          <span
+                            className="inline-block w-5 h-0.5 rounded-full shrink-0 border-t-2 border-dashed"
+                            style={{ borderColor: regression.color }}
+                          />
+                          <span
+                            className={`text-sm ${
+                              isHidden ? "text-slate-400" : "text-slate-700"
+                            }`}
+                          >
+                            📈 Regresión - {regression.name}
+                          </span>
+                        </button>
+                      );
+                    })}
                 </div>
               )}
 
@@ -1680,7 +2023,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 onMouseLeave={handleChartMouseUp}
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
+                  <ComposedChart data={composedChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis
                       dataKey="x"
@@ -1690,11 +2033,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       stroke="#64748b"
                       fontSize={14}
                     />
-                    <YAxis
-                      stroke="#64748b"
-                      fontSize={14}
-                      domain={yAxisDomain}
-                    />
+                    {useDualYAxis ? (
+                      <>
+                        <YAxis
+                          yAxisId="left"
+                          orientation="left"
+                          stroke="#64748b"
+                          fontSize={14}
+                          domain={mathYAxisDomain}
+                        />
+                        <YAxis
+                          yAxisId="right"
+                          orientation="right"
+                          stroke="#64748b"
+                          fontSize={14}
+                          domain={experimentalYAxisDomain}
+                        />
+                      </>
+                    ) : (
+                      <YAxis
+                        stroke="#64748b"
+                        fontSize={14}
+                        domain={yAxisDomain}
+                      />
+                    )}
                     <Tooltip
                       contentStyle={{
                         borderRadius: "0.5rem",
@@ -1703,11 +2065,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       }}
                     />
                     {activeCurves.map((curve) =>
-                      hiddenCurves.includes(curve.idx) ? null : (
+                      hiddenLegendKeys.includes(curveLegendKey(curve.idx)) ? null : (
                         <Line
-                          key={curve.idx}
+                          key={curveLegendKey(curve.idx)}
                           type="monotone"
                           dataKey={`y${curve.idx + 1}`}
+                          yAxisId={useDualYAxis ? "left" : undefined}
                           stroke={curve.color}
                           strokeWidth={2}
                           dot={false}
@@ -1715,7 +2078,42 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                       )
                     )}
-                  </LineChart>
+                    {experimentalSeries.map((series) =>
+                      hiddenLegendKeys.includes(
+                        experimentalLegendKey(series.id)
+                      ) ? null : (
+                        <Scatter
+                          key={experimentalLegendKey(series.id)}
+                          name={series.name}
+                          data={series.points}
+                          dataKey="y"
+                          yAxisId={useDualYAxis ? "right" : undefined}
+                          fill={series.color}
+                          line={false}
+                          isAnimationActive={false}
+                        />
+                      )
+                    )}
+                    {showRegression &&
+                      regressionCurves.map((regression) =>
+                        hiddenLegendKeys.includes(
+                          regressionLegendKey(regression.id)
+                        ) ? null : (
+                          <Line
+                            key={regressionLegendKey(regression.id)}
+                            type="linear"
+                            data={regression.points}
+                            dataKey="y"
+                            yAxisId={useDualYAxis ? "right" : undefined}
+                            stroke={regression.color}
+                            strokeDasharray="6 4"
+                            strokeWidth={2}
+                            dot={false}
+                            isAnimationActive={false}
+                          />
+                        )
+                      )}
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             </div>

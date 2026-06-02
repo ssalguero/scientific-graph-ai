@@ -2,6 +2,7 @@ export type ExperimentalSeries = {
   id: string;
   name: string;
   points: { x: number; y: number }[];
+  color: string;
 };
 
 export type ExperimentalDataSourceId =
@@ -126,5 +127,6 @@ export const parseExperimentalDataFile = (
     id: `${sourceId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     name: baseName || fileName,
     points,
+    color: "",
   };
 };
