@@ -17,7 +17,18 @@ import {
   type ExperimentalDataSourceId,
   type ExperimentalSeries,
 } from "../lib/experimentalData";
-import { derivative, evaluate } from "mathjs";
+import {
+  derivative,
+  evaluate,
+  parse,
+  simplify,
+  type ConstantNode,
+  type FunctionNode,
+  type MathNode,
+  type OperatorNode,
+  type ParenthesisNode,
+  type SymbolNode,
+} from "mathjs";
 
 import {
   ComposedChart,
@@ -96,6 +107,14 @@ type Curve = { id: number; expression: string; color: string };
 
 type DerivativeCurve = {
   id: number;
+  sourceExpression: string;
+  expression: string;
+  color: string;
+  points: { x: number; y: number }[];
+};
+
+type IntegralCurve = {
+  id: string;
   sourceExpression: string;
   expression: string;
   color: string;
@@ -326,8 +345,8 @@ const computeSymbolicDerivative = (expression: string): string | null => {
   }
 };
 
-const generateDerivativePoints = (
-  derivativeExpression: string,
+const generateMathExpressionPoints = (
+  mathExpression: string,
   minX: number,
   maxX: number
 ): { x: number; y: number }[] => {
@@ -335,7 +354,7 @@ const generateDerivativePoints = (
 
   for (let x = minX; x <= maxX; x += 0.5) {
     const y = toPlottableY(
-      evaluate(normalizeExpressionForMath(derivativeExpression), { x })
+      evaluate(normalizeExpressionForMath(mathExpression), { x })
     );
     if (y !== undefined) {
       points.push({ x, y });
@@ -343,6 +362,149 @@ const generateDerivativePoints = (
   }
 
   return points;
+};
+
+const generateDerivativePoints = generateMathExpressionPoints;
+
+const generateIntegralPoints = generateMathExpressionPoints;
+
+const isSymbolVar = (node: MathNode, variable: string): boolean =>
+  node.type === "SymbolNode" && (node as SymbolNode).name === variable;
+
+const isConstantValue = (node: MathNode): number | null => {
+  if (node.type !== "ConstantNode") return null;
+  const value = (node as ConstantNode).value;
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+};
+
+const integrateMathNode = (node: MathNode, variable: string): string | null => {
+  if (node.type === "ConstantNode") return "0";
+
+  if (node.type === "SymbolNode") {
+    return isSymbolVar(node, variable) ? `(${variable})^2 / 2` : "0";
+  }
+
+  if (node.type === "ParenthesisNode") {
+    return integrateMathNode((node as ParenthesisNode).content, variable);
+  }
+
+  if (node.type === "OperatorNode") {
+    const opNode = node as OperatorNode;
+    const [left, right] = opNode.args;
+
+    if (opNode.op === "+" && left && right) {
+      const a = integrateMathNode(left, variable);
+      const b = integrateMathNode(right, variable);
+      if (!a || !b) return null;
+      return `(${a}) + (${b})`;
+    }
+
+    if (opNode.op === "-" && left && right) {
+      const a = integrateMathNode(left, variable);
+      const b = integrateMathNode(right, variable);
+      if (!a || !b) return null;
+      return `(${a}) - (${b})`;
+    }
+
+    if (opNode.op === "-" && left && !right) {
+      const a = integrateMathNode(left, variable);
+      if (!a) return null;
+      return `-(${a})`;
+    }
+
+    if (opNode.op === "*" && left && right) {
+      const leftConst = isConstantValue(left);
+      const rightConst = isConstantValue(right);
+
+      if (leftConst !== null) {
+        const inner = integrateMathNode(right, variable);
+        if (!inner) return null;
+        return `${leftConst} * (${inner})`;
+      }
+
+      if (rightConst !== null) {
+        const inner = integrateMathNode(left, variable);
+        if (!inner) return null;
+        return `${rightConst} * (${inner})`;
+      }
+    }
+
+    if (opNode.op === "/" && left && right) {
+      const rightConst = isConstantValue(right);
+      if (rightConst !== null && rightConst !== 0) {
+        const inner = integrateMathNode(left, variable);
+        if (!inner) return null;
+        return `(${inner}) / ${rightConst}`;
+      }
+    }
+
+    if (opNode.op === "^" && left && right) {
+      if (isSymbolVar(left, variable)) {
+        const exponent = isConstantValue(right);
+        if (exponent === null) return null;
+        if (exponent === -1) return `log(abs(${variable}))`;
+        return `(${variable})^(${exponent + 1}) / (${exponent + 1})`;
+      }
+    }
+  }
+
+  if (node.type === "FunctionNode") {
+    const fnNode = node as FunctionNode;
+    const fnName = fnNode.fn.name;
+    const arg = fnNode.args[0];
+    if (!arg || !isSymbolVar(arg, variable)) return null;
+
+    if (fnName === "sin") return `-cos(${variable})`;
+    if (fnName === "cos") return `sin(${variable})`;
+    if (fnName === "tan") return `-log(abs(cos(${variable})))`;
+    if (fnName === "exp") return `exp(${variable})`;
+    if (fnName === "log") return `${variable} * log(${variable}) - ${variable}`;
+    if (fnName === "sqrt") return `(2/3) * (${variable})^(3/2)`;
+    if (fnName === "abs") return `(${variable}) * abs(${variable}) / 2`;
+  }
+
+  return null;
+};
+
+const computeSymbolicIntegral = (expression: string): string | null => {
+  try {
+    const normalized = normalizeExpressionForMath(expression);
+    if (!normalized) return null;
+
+    const mathIntegral = (evaluate as unknown as {
+      integral?: (expr: string, v: string) => { toString(): string };
+    }).integral;
+    if (typeof mathIntegral === "function") {
+      return mathIntegral(normalized, "x").toString();
+    }
+
+    const integrated = integrateMathNode(parse(normalized), "x");
+    if (!integrated) return null;
+
+    return simplify(integrated).toString();
+  } catch {
+    return null;
+  }
+};
+
+const calculateAreaUnderCurve = (
+  points: { x: number; y: number }[],
+  minX: number,
+  maxX: number
+): number | null => {
+  const inRange = points
+    .filter((point) => point.x >= minX && point.x <= maxX)
+    .sort((a, b) => a.x - b.x);
+
+  if (inRange.length < 2) return null;
+
+  let area = 0;
+  for (let i = 1; i < inRange.length; i++) {
+    const dx = inRange[i].x - inRange[i - 1].x;
+    area += (dx * (inRange[i].y + inRange[i - 1].y)) / 2;
+  }
+
+  return area;
 };
 
 const formatMathWarning = (discardedCount: number) =>
@@ -863,10 +1025,12 @@ const getRegressionUnavailableReason = (
 
 const curveLegendKey = (idx: number) => `curve:${idx}`;
 const derivativeLegendKey = (idx: number) => `derivative:${idx}`;
+const integralLegendKey = (idx: number) => `integral:${idx}`;
 const experimentalLegendKey = (id: string) => `exp:${id}`;
 const regressionLegendKey = (id: string) => `regression:${id}`;
 
 const DERIVATIVE_STROKE_OPACITY = 0.55;
+const INTEGRAL_STROKE_OPACITY = 0.5;
 
 const mergeYMetricsWithExperimental = (
   mathMetrics: YMetrics,
@@ -1003,6 +1167,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [useSecondaryYAxis, setUseSecondaryYAxis] = useState(false);
   const [regressionModel, setRegressionModel] = useState<RegressionModel>("none");
   const [showDerivative, setShowDerivative] = useState(false);
+  const [showIntegral, setShowIntegral] = useState(false);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
@@ -1583,6 +1748,71 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [derivativeCurves, hiddenLegendKeys]
   );
+  const integralCurves = useMemo<IntegralCurve[]>(() => {
+    if (!showIntegral) return [];
+
+    return visibleActiveCurves.reduce<IntegralCurve[]>((acc, curve) => {
+      const integralExpression = computeSymbolicIntegral(curve.expression);
+      if (!integralExpression) return acc;
+
+      const points = generateIntegralPoints(
+        integralExpression,
+        visibleMinX,
+        visibleMaxX
+      );
+      if (points.length === 0) return acc;
+
+      acc.push({
+        id: String(curve.idx),
+        sourceExpression: curve.expression,
+        expression: integralExpression,
+        color: curve.color,
+        points,
+      });
+      return acc;
+    }, []);
+  }, [showIntegral, visibleActiveCurves, visibleMinX, visibleMaxX]);
+  const visibleIntegralCurves = useMemo(
+    () =>
+      integralCurves.filter(
+        (curve) => !hiddenLegendKeys.includes(integralLegendKey(Number(curve.id)))
+      ),
+    [integralCurves, hiddenLegendKeys]
+  );
+  const curveAreaResults = useMemo(() => {
+    if (!showIntegral) return [];
+
+    return visibleActiveCurves
+      .map((curve) => {
+        const points = generateMathExpressionPoints(
+          curve.expression,
+          visibleMinX,
+          visibleMaxX
+        );
+        const area = calculateAreaUnderCurve(points, visibleMinX, visibleMaxX);
+
+        return {
+          id: curve.idx,
+          expression: curve.expression,
+          area,
+        };
+      })
+      .filter(
+        (item): item is { id: number; expression: string; area: number } =>
+          item.area !== null
+      );
+  }, [showIntegral, visibleActiveCurves, visibleMinX, visibleMaxX]);
+  const overlayMathYValues = useMemo(
+    () => [
+      ...visibleDerivativeCurves.flatMap((curve) =>
+        curve.points.map((point) => point.y)
+      ),
+      ...visibleIntegralCurves.flatMap((curve) =>
+        curve.points.map((point) => point.y)
+      ),
+    ],
+    [visibleDerivativeCurves, visibleIntegralCurves]
+  );
   const mathYMetrics = useMemo(() => {
     const values = visibleActiveCurves.flatMap((curve) =>
       chartData
@@ -1592,13 +1822,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             typeof value === "number" && Number.isFinite(value)
         )
     );
-    const derivativeValues = visibleDerivativeCurves.flatMap((curve) =>
-      curve.points.map((point) => point.y)
-    );
-    const combinedValues = [...values, ...derivativeValues];
+    const combinedValues = [...values, ...overlayMathYValues];
 
     return computeYMetrics(combinedValues);
-  }, [visibleActiveCurves, chartData, visibleDerivativeCurves]);
+  }, [visibleActiveCurves, chartData, overlayMathYValues]);
   const experimentalYMetrics = useMemo(() => {
     const values = visibleExperimentalSeries.flatMap((series) =>
       series.points.map((point) => point.y)
@@ -1611,17 +1838,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       yMetrics,
       visibleExperimentalSeries
     );
-    if (!showDerivative || visibleDerivativeCurves.length === 0) {
-      return merged;
-    }
+    if (overlayMathYValues.length === 0) return merged;
 
-    const derivativeValues = visibleDerivativeCurves.flatMap((curve) =>
-      curve.points.map((point) => point.y)
-    );
     const combinedValues = [
       ...(merged.minObservedY != null ? [merged.minObservedY] : []),
       ...(merged.maxObservedY != null ? [merged.maxObservedY] : []),
-      ...derivativeValues,
+      ...overlayMathYValues,
     ];
 
     if (combinedValues.length === 0) return merged;
@@ -1631,7 +1853,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       minObservedY: Math.min(...combinedValues),
       maxObservedY: Math.max(...combinedValues),
     };
-  }, [yMetrics, visibleExperimentalSeries, showDerivative, visibleDerivativeCurves]);
+  }, [yMetrics, visibleExperimentalSeries, overlayMathYValues]);
   const regressionComparisons = useMemo<RegressionComparison[]>(
     () =>
       visibleExperimentalSeries.map((series) => {
@@ -2069,6 +2291,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const hasLegendItems =
     activeCurves.length > 0 ||
     derivativeCurves.length > 0 ||
+    integralCurves.length > 0 ||
     experimentalSeries.length > 0 ||
     regressionCurves.length > 0;
   const hasActiveMathCurves = activeCurves.length > 0;
@@ -2524,6 +2747,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   />
                   Mostrar derivada
                 </label>
+
+                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showIntegral}
+                    onChange={(e) => setShowIntegral(e.target.checked)}
+                    disabled={!hasActiveMathCurves}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  Mostrar integral
+                </label>
               </div>
             </div>
           </section>
@@ -2546,6 +2780,60 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <p className="mt-1">
                       <span className="font-semibold">Derivada:</span>{" "}
                       <span className="font-mono">{curve.expression}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showIntegral && integralCurves.length > 0 && (
+            <section className={`${card}`}>
+              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
+                📗 Integrales
+              </h3>
+              <div className="space-y-3">
+                {integralCurves.map((curve) => (
+                  <div
+                    key={curve.id}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                  >
+                    <p>
+                      <span className="font-semibold">Función:</span>{" "}
+                      <span className="font-mono">{curve.sourceExpression}</span>
+                    </p>
+                    <p className="mt-1">
+                      <span className="font-semibold">Integral:</span>{" "}
+                      <span className="font-mono">{curve.expression}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showIntegral && curveAreaResults.length > 0 && (
+            <section className={`${card}`}>
+              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
+                📐 Área bajo la curva
+              </h3>
+              <div className="space-y-3">
+                {curveAreaResults.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                  >
+                    <p>
+                      <span className="font-semibold">Función:</span>{" "}
+                      <span className="font-mono">{item.expression}</span>
+                    </p>
+                    <p className="mt-1">
+                      <span className="font-semibold">Intervalo:</span> [
+                      {visibleMinX.toFixed(4)}, {visibleMaxX.toFixed(4)}]
+                    </p>
+                    <p className="mt-1">
+                      <span className="font-semibold">Área:</span>{" "}
+                      {item.area.toFixed(4)}
                     </p>
                   </div>
                 ))}
@@ -3004,6 +3292,40 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </button>
                     );
                   })}
+                  {integralCurves.map((curve) => {
+                    const curveIndex = Number(curve.id);
+                    const legendKey = integralLegendKey(curveIndex);
+                    const isHidden = hiddenLegendKeys.includes(legendKey);
+
+                    return (
+                      <button
+                        key={legendKey}
+                        type="button"
+                        onClick={() => toggleLegendVisibility(legendKey)}
+                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                          isHidden ? "opacity-50" : "opacity-100"
+                        }`}
+                        title={
+                          isHidden ? "Mostrar integral" : "Ocultar integral"
+                        }
+                      >
+                        <span
+                          className="inline-block w-5 h-0.5 rounded-full shrink-0 border-t-2 border-dashed"
+                          style={{
+                            borderColor: curve.color,
+                            opacity: INTEGRAL_STROKE_OPACITY,
+                          }}
+                        />
+                        <span
+                          className={`text-sm font-mono ${
+                            isHidden ? "text-slate-400" : "text-slate-700"
+                          }`}
+                        >
+                          ∫({curve.sourceExpression})
+                        </span>
+                      </button>
+                    );
+                  })}
                   {experimentalSeries.map((series) => {
                     const legendKey = experimentalLegendKey(series.id);
                     const isHidden = hiddenLegendKeys.includes(legendKey);
@@ -3144,6 +3466,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           stroke={curve.color}
                           strokeOpacity={DERIVATIVE_STROKE_OPACITY}
                           strokeDasharray="8 4"
+                          strokeWidth={2}
+                          dot={false}
+                          isAnimationActive={false}
+                        />
+                      )
+                    )}
+                    {integralCurves.map((curve) =>
+                      hiddenLegendKeys.includes(
+                        integralLegendKey(Number(curve.id))
+                      ) ? null : (
+                        <Line
+                          key={integralLegendKey(Number(curve.id))}
+                          type="monotone"
+                          data={curve.points}
+                          dataKey="y"
+                          yAxisId={useDualYAxis ? "left" : undefined}
+                          stroke={curve.color}
+                          strokeOpacity={INTEGRAL_STROKE_OPACITY}
+                          strokeDasharray="4 4"
                           strokeWidth={2}
                           dot={false}
                           isAnimationActive={false}
