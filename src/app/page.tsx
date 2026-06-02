@@ -408,13 +408,24 @@ type QuadraticRegressionResult = {
   r2: number;
 };
 
-type RegressionModel = "none" | "linear" | "quadratic" | "compare";
+type ExponentialRegressionResult = {
+  a: number;
+  b: number;
+  r2: number;
+};
+
+type RegressionModel =
+  | "none"
+  | "linear"
+  | "quadratic"
+  | "exponential"
+  | "compare";
 
 type RegressionCurve = {
   id: string;
   name: string;
   color: string;
-  model: "linear" | "quadratic";
+  model: "linear" | "quadratic" | "exponential";
   r2: number;
   points: { x: number; y: number }[];
   slope?: number;
@@ -424,14 +435,28 @@ type RegressionCurve = {
   c?: number;
 };
 
+type RegressionSeriesStatus = {
+  id: string;
+  name: string;
+  model: "linear" | "quadratic" | "exponential";
+  curve: RegressionCurve | null;
+  unavailableReason: string | null;
+};
+
 type RegressionComparison = {
   id: string;
   name: string;
   color: string;
   linear: LinearRegressionResult | null;
   quadratic: QuadraticRegressionResult | null;
-  bestModel: "linear" | "quadratic" | null;
+  exponential: ExponentialRegressionResult | null;
+  bestModel: "linear" | "quadratic" | "exponential" | null;
   bestR2: number | null;
+};
+
+type FitQuality = {
+  label: string;
+  badge: string;
 };
 
 const formatScaleFactor = (factor: number): string => {
@@ -613,19 +638,98 @@ const calculateQuadraticRegression = (
   return { a, b, c, r2 };
 };
 
+const calculateExponentialRegression = (
+  points: { x: number; y: number }[]
+): ExponentialRegressionResult | null => {
+  if (points.length < 2) return null;
+  if (points.some((point) => point.y <= 0)) return null;
+
+  const transformed = points.map((point) => ({
+    x: point.x,
+    y: Math.log(point.y),
+  }));
+  const linear = calculateLinearRegression(transformed);
+  if (!linear) return null;
+
+  const a = Math.exp(linear.intercept);
+  const b = linear.slope;
+  const meanY =
+    points.reduce((acc, point) => acc + point.y, 0) / points.length;
+
+  let ssRes = 0;
+  let ssTot = 0;
+  for (const point of points) {
+    const predicted = a * Math.exp(b * point.x);
+    ssRes += (point.y - predicted) ** 2;
+    ssTot += (point.y - meanY) ** 2;
+  }
+
+  const r2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
+  return { a, b, r2 };
+};
+
 const chooseBestRegressionModel = (
   linear: LinearRegressionResult | null,
-  quadratic: QuadraticRegressionResult | null
-): "linear" | "quadratic" | null => {
-  if (!linear && !quadratic) return null;
-  if (linear && !quadratic) return "linear";
-  if (!linear && quadratic) return "quadratic";
+  quadratic: QuadraticRegressionResult | null,
+  exponential: ExponentialRegressionResult | null
+): "linear" | "quadratic" | "exponential" | null => {
+  const candidates: Array<{
+    model: "linear" | "quadratic" | "exponential";
+    r2: number;
+    complexity: number;
+  }> = [];
 
-  const linearR2 = linear!.r2;
-  const quadraticR2 = quadratic!.r2;
+  if (linear) candidates.push({ model: "linear", r2: linear.r2, complexity: 1 });
+  if (exponential)
+    candidates.push({ model: "exponential", r2: exponential.r2, complexity: 2 });
+  if (quadratic)
+    candidates.push({ model: "quadratic", r2: quadratic.r2, complexity: 3 });
 
-  if (Math.abs(linearR2 - quadraticR2) < 0.001) return "linear";
-  return quadraticR2 > linearR2 ? "quadratic" : "linear";
+  if (candidates.length === 0) return null;
+
+  let best = candidates[0];
+  for (const candidate of candidates.slice(1)) {
+    if (candidate.r2 > best.r2 + 0.001) {
+      best = candidate;
+      continue;
+    }
+
+    if (Math.abs(candidate.r2 - best.r2) < 0.001) {
+      if (candidate.complexity < best.complexity) {
+        best = candidate;
+      }
+    }
+  }
+
+  return best.model;
+};
+
+const getFitQuality = (r2: number): FitQuality => {
+  if (r2 >= 0.99) return { label: "Excelente ajuste", badge: "🏆 Excelente ajuste" };
+  if (r2 >= 0.95) return { label: "Muy buen ajuste", badge: "✓ Muy buen ajuste" };
+  if (r2 >= 0.85) return { label: "Buen ajuste", badge: "✓ Buen ajuste" };
+  if (r2 >= 0.7) return { label: "Ajuste aceptable", badge: "⚠ Ajuste aceptable" };
+  return { label: "Ajuste débil", badge: "⚠ Ajuste débil" };
+};
+
+const getRegressionModelLabel = (
+  model: "linear" | "quadratic" | "exponential"
+) => {
+  if (model === "linear") return "Lineal";
+  if (model === "quadratic") return "Polinómica grado 2";
+  return "Exponencial";
+};
+
+const getRegressionUnavailableReason = (
+  model: "linear" | "quadratic" | "exponential"
+) => {
+  if (model === "exponential") {
+    return "La regresión exponencial requiere que todos los valores Y sean mayores que cero.";
+  }
+  if (model === "quadratic") {
+    return "La regresión polinómica grado 2 requiere al menos 3 puntos válidos.";
+  }
+  return "La regresión lineal requiere al menos 2 puntos válidos.";
 };
 
 const curveLegendKey = (idx: number) => `curve:${idx}`;
@@ -1345,10 +1449,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       visibleExperimentalSeries.map((series) => {
         const linear = calculateLinearRegression(series.points);
         const quadratic = calculateQuadraticRegression(series.points);
-        const bestModel = chooseBestRegressionModel(linear, quadratic);
+        const exponential = calculateExponentialRegression(series.points);
+        const bestModel = chooseBestRegressionModel(
+          linear,
+          quadratic,
+          exponential
+        );
         const bestR2 =
           bestModel === "linear"
             ? linear?.r2 ?? null
+            : bestModel === "exponential"
+              ? exponential?.r2 ?? null
             : bestModel === "quadratic"
               ? quadratic?.r2 ?? null
               : null;
@@ -1359,6 +1470,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           color: series.color,
           linear,
           quadratic,
+          exponential,
           bestModel,
           bestR2,
         };
@@ -1371,7 +1483,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
       return regressionComparisons.reduce<RegressionCurve[]>(
         (acc, comparison) => {
-          const { id, name, color, linear, quadratic, bestModel } = comparison;
+          const { id, name, color, linear, quadratic, exponential, bestModel } =
+            comparison;
           const series = visibleExperimentalSeries.find((item) => item.id === id);
           if (!series) return acc;
 
@@ -1443,6 +1556,33 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             return acc;
           }
 
+          if (regressionModel === "exponential") {
+            if (!exponential) return acc;
+
+            const samples = 100;
+            const span = maxX - minX;
+            const points =
+              span === 0
+                ? [{ x: minX, y: exponential.a * Math.exp(exponential.b * minX) }]
+                : Array.from({ length: samples }, (_, index) => {
+                    const t = index / (samples - 1);
+                    const x = minX + span * t;
+                    return { x, y: exponential.a * Math.exp(exponential.b * x) };
+                  });
+
+            acc.push({
+              id,
+              name,
+              color,
+              model: "exponential" as const,
+              r2: exponential.r2,
+              a: exponential.a,
+              b: exponential.b,
+              points,
+            });
+            return acc;
+          }
+
           if (bestModel === "linear" && linear) {
             acc.push({
               id,
@@ -1462,6 +1602,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   y: linear.slope * maxX + linear.intercept,
                 },
               ],
+            });
+            return acc;
+          }
+
+          if (bestModel === "exponential" && exponential) {
+            const samples = 100;
+            const span = maxX - minX;
+            const points =
+              span === 0
+                ? [{ x: minX, y: exponential.a * Math.exp(exponential.b * minX) }]
+                : Array.from({ length: samples }, (_, index) => {
+                    const t = index / (samples - 1);
+                    const x = minX + span * t;
+                    return { x, y: exponential.a * Math.exp(exponential.b * x) };
+                  });
+
+            acc.push({
+              id,
+              name,
+              color,
+              model: "exponential" as const,
+              r2: exponential.r2,
+              a: exponential.a,
+              b: exponential.b,
+              points,
             });
             return acc;
           }
@@ -1514,6 +1679,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [regressionCurves, hiddenLegendKeys]
   );
+  const selectedRegressionSeriesStatus = useMemo<RegressionSeriesStatus[]>(() => {
+    if (regressionModel === "none" || regressionModel === "compare") return [];
+
+    const selectedModel = regressionModel as "linear" | "quadratic" | "exponential";
+    return visibleExperimentalSeries.map((series) => {
+      const curve =
+        regressionCurves.find((item) => item.id === series.id) ?? null;
+
+      return {
+        id: series.id,
+        name: series.name,
+        model: selectedModel,
+        curve,
+        unavailableReason: curve ? null : getRegressionUnavailableReason(selectedModel),
+      };
+    });
+  }, [regressionModel, visibleExperimentalSeries, regressionCurves]);
   const useDualYAxis =
     useSecondaryYAxis &&
     visibleActiveCurves.length > 0 &&
@@ -1968,6 +2150,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <option value="none">Ninguna</option>
                     <option value="linear">Lineal</option>
                     <option value="quadratic">Polinómica grado 2</option>
+                    <option value="exponential">Exponencial</option>
                     <option value="compare">Comparar modelos</option>
                   </select>
                 </div>
@@ -2028,6 +2211,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </h3>
               <div className="space-y-3">
                 {regressionComparisons.map((comparison) => {
+                  const bestQuality =
+                    comparison.bestR2 != null ? getFitQuality(comparison.bestR2) : null;
                   return (
                     <div
                       key={comparison.id}
@@ -2053,18 +2238,38 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           ? comparison.quadratic.r2.toFixed(4)
                           : "No disponible"}
                       </p>
+                      <p className="mt-1">
+                        <span className="font-semibold">Exponencial:</span>
+                      </p>
+                      <p>
+                        R² ={" "}
+                        {comparison.exponential
+                          ? comparison.exponential.r2.toFixed(4)
+                          : "No disponible"}
+                      </p>
                       {comparison.bestModel && comparison.bestR2 != null && (
                         <div className="mt-2 rounded-md bg-slate-100 px-3 py-2">
                           <p className="font-semibold">🏆 Mejor ajuste:</p>
                           <p>
                             {comparison.bestModel === "linear"
                               ? "Lineal"
-                              : "Cuadrática"}
+                              : comparison.bestModel === "exponential"
+                                ? "Exponencial"
+                                : "Cuadrática"}
                           </p>
                           <p>
                             <span className="font-semibold">R² ganador:</span>{" "}
                             {comparison.bestR2.toFixed(4)}
                           </p>
+                          <p>
+                            <span className="font-semibold">Calidad:</span>{" "}
+                            {bestQuality?.label}
+                          </p>
+                          {bestQuality && (
+                            <span className="mt-1 inline-flex rounded-md bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
+                              {bestQuality.badge}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -2074,23 +2279,51 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </section>
           )}
 
-          {regressionModel !== "compare" && visibleRegressionCurves.length > 0 && (
+          {regressionModel !== "compare" && selectedRegressionSeriesStatus.length > 0 && (
             <section className={`${card}`}>
               <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
                 📈 Regresiones
               </h3>
               <div className="space-y-3">
-                {visibleRegressionCurves.map((regression) => {
+                {selectedRegressionSeriesStatus.map((status) => {
+                  if (!status.curve) {
+                    return (
+                      <div
+                        key={status.id}
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                      >
+                        <p>
+                          <span className="font-semibold">Serie:</span> {status.name}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Modelo:</span>{" "}
+                          {getRegressionModelLabel(status.model)}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Estado:</span> No disponible
+                        </p>
+                        {status.unavailableReason && (
+                          <p className="mt-1 text-slate-600">
+                            <span className="font-semibold">Motivo:</span>{" "}
+                            {status.unavailableReason}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  const regression = status.curve;
                   const r2Text = regression.r2.toFixed(4);
+                  const quality = getFitQuality(regression.r2);
 
                   return (
                     <div
-                      key={regression.id}
+                      key={status.id}
                       className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
                     >
                       <p>
                         <span className="font-semibold">Serie:</span>{" "}
-                        {regression.name}
+                        {status.name}
                       </p>
                       <p>
                         <span className="font-semibold">Modelo:</span> y ={" "}
@@ -2101,6 +2334,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             {regression.slope.toFixed(4)}x{" "}
                             {regression.intercept >= 0 ? "+" : "-"}{" "}
                             {Math.abs(regression.intercept).toFixed(4)}
+                          </>
+                        ) : regression.model === "exponential" &&
+                          regression.a != null &&
+                          regression.b != null ? (
+                          <>
+                            {regression.a.toFixed(4)} · e^({regression.b.toFixed(4)}x)
                           </>
                         ) : regression.a != null &&
                           regression.b != null &&
@@ -2119,6 +2358,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <p>
                         <span className="font-semibold">R²:</span> {r2Text}
                       </p>
+                      <p>
+                        <span className="font-semibold">Calidad:</span>{" "}
+                        {quality.label}
+                      </p>
+                      <span className="mt-1 inline-flex rounded-md bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
+                        {quality.badge}
+                      </span>
                     </div>
                   );
                 })}
