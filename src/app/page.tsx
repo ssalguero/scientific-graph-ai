@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { toPng } from "html-to-image";
 import { supabase } from "../lib/supabase";
 import { evaluate } from "mathjs";
 
@@ -24,6 +25,18 @@ const btnOutline =
   "border border-slate-200 bg-white px-4 py-2 rounded-lg text-base text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow";
 const sectionTitle =
   "text-sm sm:text-base font-semibold uppercase tracking-wider text-slate-500 mb-5";
+
+const getChartExportFileName = (title: string) => {
+  const trimmed = title.trim();
+  if (!trimmed) return "grafico.png";
+
+  const safe = trimmed
+    .replace(/[<>:"/\\|?*]/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+
+  return safe ? `grafico-${safe}.png` : "grafico.png";
+};
 
 type Curve = { id: number; expression: string; color: string };
 
@@ -299,6 +312,7 @@ export default function Home() {
   const [hiddenCurves, setHiddenCurves] = useState<number[]>([]);
 
   const nextCurveIdRef = useRef(2);
+  const chartExportRef = useRef<HTMLDivElement>(null);
   const expression = curves[0]?.expression ?? "";
 
   const addCurve = () => {
@@ -339,6 +353,25 @@ export default function Home() {
     setHiddenCurves((prev) =>
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
+  };
+
+  const exportChartPng = async () => {
+    if (!chartExportRef.current || chartData.length === 0) return;
+
+    try {
+      const dataUrl = await toPng(chartExportRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+      });
+
+      const link = document.createElement("a");
+      link.download = getChartExportFileName(title);
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error("Error al exportar PNG:", error);
+    }
   };
 
   const generateGraph = () => {
@@ -835,6 +868,14 @@ export default function Home() {
                       Eliminar
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={exportChartPng}
+                    disabled={chartData.length === 0}
+                    className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    Exportar PNG
+                  </button>
                 </div>
               </div>
 
@@ -1094,7 +1135,10 @@ export default function Home() {
 
           <section>
             <h2 className={sectionTitle}>Visualización</h2>
-            <div className={`${card} p-5 sm:p-6 lg:p-8 w-full`}>
+            <div
+              ref={chartExportRef}
+              className={`${card} p-5 sm:p-6 lg:p-8 w-full`}
+            >
               {activeCurves.length > 0 && (
                 <div className="flex flex-wrap gap-5 mb-5 pb-5 border-b border-slate-100">
                   {activeCurves.map((curve) => {
