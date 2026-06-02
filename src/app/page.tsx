@@ -38,6 +38,33 @@ const getChartExportFileName = (title: string) => {
   return safe ? `grafico-${safe}.png` : "grafico.png";
 };
 
+const clampVisibleXRange = (
+  vMin: number,
+  vMax: number,
+  dataMin: number,
+  dataMax: number
+): [number, number] => {
+  const dataSpan = dataMax - dataMin;
+  if (dataSpan <= 0) return [dataMin, dataMax];
+
+  const span = Math.max(0.5, Math.min(dataSpan, vMax - vMin));
+  if (span >= dataSpan) return [dataMin, dataMax];
+
+  let min = vMin;
+  let max = vMin + span;
+
+  if (min < dataMin) {
+    min = dataMin;
+    max = dataMin + span;
+  }
+  if (max > dataMax) {
+    max = dataMax;
+    min = dataMax - span;
+  }
+
+  return [min, max];
+};
+
 type Curve = { id: number; expression: string; color: string };
 
 const DEFAULT_CURVE_COLORS = [
@@ -308,6 +335,8 @@ export default function Home() {
 
   const [minX, setMinX] = useState(-10);
   const [maxX, setMaxX] = useState(10);
+  const [visibleMinX, setVisibleMinX] = useState(-10);
+  const [visibleMaxX, setVisibleMaxX] = useState(10);
   const [autoScaleY, setAutoScaleY] = useState(false);
   const [hiddenCurves, setHiddenCurves] = useState<number[]>([]);
   // Curva actualmente seleccionada para los botones de ejemplos
@@ -315,7 +344,25 @@ export default function Home() {
 
   const nextCurveIdRef = useRef(2);
   const chartExportRef = useRef<HTMLDivElement>(null);
+  const chartInteractionRef = useRef<HTMLDivElement>(null);
+  const visibleRangeRef = useRef({
+    visibleMinX,
+    visibleMaxX,
+    minX,
+    maxX,
+  });
+  const panStateRef = useRef({
+    isPanning: false,
+    startX: 0,
+    startMin: 0,
+    startMax: 0,
+  });
   const expression = curves[0]?.expression ?? "";
+
+  const resetVisibleRange = () => {
+    setVisibleMinX(minX);
+    setVisibleMaxX(maxX);
+  };
 
   const addCurve = () => {
     const id = nextCurveIdRef.current++;
@@ -432,6 +479,8 @@ export default function Home() {
       setScaleWarning(formatScaleWarning(nextYMetrics));
       logDiscardMetrics(metrics);
       logYMetrics(nextYMetrics);
+      setVisibleMinX(minX);
+      setVisibleMaxX(maxX);
     } catch (error) {
       console.error("Error al generar gráfico:", error);
 
@@ -521,6 +570,8 @@ export default function Home() {
     setYMetrics(computeYMetrics([]));
     setMinX(-10);
     setMaxX(10);
+    setVisibleMinX(-10);
+    setVisibleMaxX(10);
     setAutoScaleY(false);
     setHiddenCurves([]);
   };
@@ -614,6 +665,8 @@ export default function Home() {
       setScaleWarning(formatScaleWarning(nextYMetrics));
       logDiscardMetrics(metrics);
       logYMetrics(nextYMetrics);
+      setVisibleMinX(loadMinX);
+      setVisibleMaxX(loadMaxX);
     } catch (error) {
       console.error(error);
       setErrorMessage("La expresión matemática es inválida.");
@@ -656,6 +709,91 @@ export default function Home() {
   useEffect(() => {
     loadGraphs();
   }, []);
+
+  useEffect(() => {
+    visibleRangeRef.current = { visibleMinX, visibleMaxX, minX, maxX };
+  }, [visibleMinX, visibleMaxX, minX, maxX]);
+
+  useEffect(() => {
+    const el = chartInteractionRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const { visibleMinX, visibleMaxX, minX, maxX } = visibleRangeRef.current;
+      const span = visibleMaxX - visibleMinX;
+      if (span <= 0) return;
+
+      const rect = el.getBoundingClientRect();
+      const ratio = Math.min(
+        1,
+        Math.max(0, (e.clientX - rect.left) / rect.width)
+      );
+      const focusX = visibleMinX + ratio * span;
+      const zoomFactor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+      const dataSpan = maxX - minX;
+      const newSpan = Math.max(0.5, Math.min(dataSpan, span * zoomFactor));
+      const newMin = focusX - ratio * newSpan;
+      const newMax = focusX + (1 - ratio) * newSpan;
+      const [clampedMin, clampedMax] = clampVisibleXRange(
+        newMin,
+        newMax,
+        minX,
+        maxX
+      );
+
+      setVisibleMinX(clampedMin);
+      setVisibleMaxX(clampedMax);
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [chartData.length]);
+
+  useEffect(() => {
+    const endPan = () => {
+      panStateRef.current.isPanning = false;
+    };
+
+    window.addEventListener("mouseup", endPan);
+    return () => window.removeEventListener("mouseup", endPan);
+  }, []);
+
+  const handleChartMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+
+    panStateRef.current = {
+      isPanning: true,
+      startX: e.clientX,
+      startMin: visibleMinX,
+      startMax: visibleMaxX,
+    };
+  };
+
+  const handleChartMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!panStateRef.current.isPanning) return;
+
+    const el = chartInteractionRef.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const { startX, startMin, startMax } = panStateRef.current;
+    const span = startMax - startMin;
+    const deltaData = (-(e.clientX - startX) / rect.width) * span;
+    const [clampedMin, clampedMax] = clampVisibleXRange(
+      startMin + deltaData,
+      startMax + deltaData,
+      minX,
+      maxX
+    );
+
+    setVisibleMinX(clampedMin);
+    setVisibleMaxX(clampedMax);
+  };
+
+  const handleChartMouseUp = () => {
+    panStateRef.current.isPanning = false;
+  };
 
   return (
     <main className="flex min-h-screen flex-col lg:flex-row bg-slate-50">
@@ -1097,7 +1235,17 @@ export default function Home() {
           )}
 
           <section>
-            <h2 className={sectionTitle}>Visualización</h2>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              <h2 className={`${sectionTitle} mb-0`}>Visualización</h2>
+              <button
+                type="button"
+                onClick={resetVisibleRange}
+                disabled={chartData.length === 0}
+                className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                Restablecer vista
+              </button>
+            </div>
             <div
               ref={chartExportRef}
               className={`${card} p-5 sm:p-6 lg:p-8 w-full`}
@@ -1138,11 +1286,25 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="w-full min-h-[600px] h-[600px] sm:h-[650px] lg:h-[700px] max-h-[700px]">
+              <div
+                ref={chartInteractionRef}
+                className="w-full min-h-[600px] h-[600px] sm:h-[650px] lg:h-[700px] max-h-[700px] select-none cursor-grab active:cursor-grabbing"
+                onMouseDown={handleChartMouseDown}
+                onMouseMove={handleChartMouseMove}
+                onMouseUp={handleChartMouseUp}
+                onMouseLeave={handleChartMouseUp}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="x" stroke="#64748b" fontSize={14} />
+                    <XAxis
+                      dataKey="x"
+                      type="number"
+                      domain={[visibleMinX, visibleMaxX]}
+                      allowDataOverflow
+                      stroke="#64748b"
+                      fontSize={14}
+                    />
                     <YAxis
                       stroke="#64748b"
                       fontSize={14}
