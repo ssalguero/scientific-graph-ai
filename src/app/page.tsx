@@ -38,6 +38,15 @@ const getChartExportFileName = (title: string) => {
   return safe ? `grafico-${safe}.png` : "grafico.png";
 };
 
+const DUPLICATE_TITLE_SUFFIX = " (copia)";
+
+const getDuplicateTitle = (currentTitle: string) => {
+  const trimmed = currentTitle.trim();
+  if (!trimmed) return "(copia)";
+  if (trimmed.endsWith(DUPLICATE_TITLE_SUFFIX)) return trimmed;
+  return `${trimmed}${DUPLICATE_TITLE_SUFFIX}`;
+};
+
 const clampVisibleXRange = (
   vMin: number,
   vMax: number,
@@ -360,6 +369,16 @@ export default function Home() {
   const expression = curves[0]?.expression ?? "";
 
   const resetVisibleRange = () => {
+    setVisibleMinX(minX);
+    setVisibleMaxX(maxX);
+  };
+
+  const duplicateGraph = () => {
+    if (!selectedGraphId) return;
+
+    setTitle(getDuplicateTitle(title));
+    setSelectedGraphId(null);
+    setHiddenCurves([]);
     setVisibleMinX(minX);
     setVisibleMaxX(maxX);
   };
@@ -962,12 +981,21 @@ export default function Home() {
                     {isEditing ? "Actualizar" : "Guardar"}
                   </button>
                   {isEditing && selectedGraphId && (
-                    <button
-                      onClick={() => deleteGraph(selectedGraphId)}
-                      className={`bg-red-600 hover:bg-red-700 ${btnPrimary} sm:min-w-[160px]`}
-                    >
-                      Eliminar
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={duplicateGraph}
+                        className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold`}
+                      >
+                        Duplicar
+                      </button>
+                      <button
+                        onClick={() => deleteGraph(selectedGraphId)}
+                        className={`bg-red-600 hover:bg-red-700 ${btnPrimary} sm:min-w-[160px]`}
+                      >
+                        Eliminar
+                      </button>
+                    </>
                   )}
                   <button
                     type="button"
