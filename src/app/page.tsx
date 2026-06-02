@@ -17,7 +17,7 @@ import {
   type ExperimentalDataSourceId,
   type ExperimentalSeries,
 } from "../lib/experimentalData";
-import { evaluate } from "mathjs";
+import { derivative, evaluate } from "mathjs";
 
 import {
   ComposedChart,
@@ -93,6 +93,14 @@ const clampVisibleXRange = (
 };
 
 type Curve = { id: number; expression: string; color: string };
+
+type DerivativeCurve = {
+  id: number;
+  sourceExpression: string;
+  expression: string;
+  color: string;
+  points: { x: number; y: number }[];
+};
 
 const DEFAULT_CURVE_COLORS = [
   "#3b82f6",
@@ -302,8 +310,40 @@ const toPlottableY = (value: unknown): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
+const normalizeExpressionForMath = (expression: string) =>
+  expression.trim().replace(/\bln\s*\(/gi, "log(");
+
 const evaluateExpression = (expression: string, scope: { x: number }) =>
-  evaluate(expression.replace(/\bln\s*\(/gi, "log("), scope);
+  evaluate(normalizeExpressionForMath(expression), scope);
+
+const computeSymbolicDerivative = (expression: string): string | null => {
+  try {
+    const normalized = normalizeExpressionForMath(expression);
+    if (!normalized) return null;
+    return derivative(normalized, "x").toString();
+  } catch {
+    return null;
+  }
+};
+
+const generateDerivativePoints = (
+  derivativeExpression: string,
+  minX: number,
+  maxX: number
+): { x: number; y: number }[] => {
+  const points: { x: number; y: number }[] = [];
+
+  for (let x = minX; x <= maxX; x += 0.5) {
+    const y = toPlottableY(
+      evaluate(normalizeExpressionForMath(derivativeExpression), { x })
+    );
+    if (y !== undefined) {
+      points.push({ x, y });
+    }
+  }
+
+  return points;
+};
 
 const formatMathWarning = (discardedCount: number) =>
   discardedCount > 0
@@ -822,8 +862,11 @@ const getRegressionUnavailableReason = (
 };
 
 const curveLegendKey = (idx: number) => `curve:${idx}`;
+const derivativeLegendKey = (idx: number) => `derivative:${idx}`;
 const experimentalLegendKey = (id: string) => `exp:${id}`;
 const regressionLegendKey = (id: string) => `regression:${id}`;
+
+const DERIVATIVE_STROKE_OPACITY = 0.55;
 
 const mergeYMetricsWithExperimental = (
   mathMetrics: YMetrics,
@@ -959,6 +1002,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [autoScaleY, setAutoScaleY] = useState(false);
   const [useSecondaryYAxis, setUseSecondaryYAxis] = useState(false);
   const [regressionModel, setRegressionModel] = useState<RegressionModel>("none");
+  const [showDerivative, setShowDerivative] = useState(false);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
@@ -1508,6 +1552,37 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [activeCurves, hiddenLegendKeys]
   );
+  const derivativeCurves = useMemo<DerivativeCurve[]>(() => {
+    if (!showDerivative) return [];
+
+    return visibleActiveCurves.reduce<DerivativeCurve[]>((acc, curve) => {
+      const derivativeExpression = computeSymbolicDerivative(curve.expression);
+      if (!derivativeExpression) return acc;
+
+      const points = generateDerivativePoints(
+        derivativeExpression,
+        visibleMinX,
+        visibleMaxX
+      );
+      if (points.length === 0) return acc;
+
+      acc.push({
+        id: curve.idx,
+        sourceExpression: curve.expression,
+        expression: derivativeExpression,
+        color: curve.color,
+        points,
+      });
+      return acc;
+    }, []);
+  }, [showDerivative, visibleActiveCurves, visibleMinX, visibleMaxX]);
+  const visibleDerivativeCurves = useMemo(
+    () =>
+      derivativeCurves.filter(
+        (curve) => !hiddenLegendKeys.includes(derivativeLegendKey(curve.id))
+      ),
+    [derivativeCurves, hiddenLegendKeys]
+  );
   const mathYMetrics = useMemo(() => {
     const values = visibleActiveCurves.flatMap((curve) =>
       chartData
@@ -1517,9 +1592,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             typeof value === "number" && Number.isFinite(value)
         )
     );
+    const derivativeValues = visibleDerivativeCurves.flatMap((curve) =>
+      curve.points.map((point) => point.y)
+    );
+    const combinedValues = [...values, ...derivativeValues];
 
-    return computeYMetrics(values);
-  }, [visibleActiveCurves, chartData]);
+    return computeYMetrics(combinedValues);
+  }, [visibleActiveCurves, chartData, visibleDerivativeCurves]);
   const experimentalYMetrics = useMemo(() => {
     const values = visibleExperimentalSeries.flatMap((series) =>
       series.points.map((point) => point.y)
@@ -1527,10 +1606,32 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
     return computeYMetrics(values);
   }, [visibleExperimentalSeries]);
-  const displayYMetrics = useMemo(
-    () => mergeYMetricsWithExperimental(yMetrics, visibleExperimentalSeries),
-    [yMetrics, visibleExperimentalSeries]
-  );
+  const displayYMetrics = useMemo(() => {
+    const merged = mergeYMetricsWithExperimental(
+      yMetrics,
+      visibleExperimentalSeries
+    );
+    if (!showDerivative || visibleDerivativeCurves.length === 0) {
+      return merged;
+    }
+
+    const derivativeValues = visibleDerivativeCurves.flatMap((curve) =>
+      curve.points.map((point) => point.y)
+    );
+    const combinedValues = [
+      ...(merged.minObservedY != null ? [merged.minObservedY] : []),
+      ...(merged.maxObservedY != null ? [merged.maxObservedY] : []),
+      ...derivativeValues,
+    ];
+
+    if (combinedValues.length === 0) return merged;
+
+    return {
+      ...merged,
+      minObservedY: Math.min(...combinedValues),
+      maxObservedY: Math.max(...combinedValues),
+    };
+  }, [yMetrics, visibleExperimentalSeries, showDerivative, visibleDerivativeCurves]);
   const regressionComparisons = useMemo<RegressionComparison[]>(
     () =>
       visibleExperimentalSeries.map((series) => {
@@ -1967,8 +2068,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     chartData.length > 0 || experimentalSeries.length > 0;
   const hasLegendItems =
     activeCurves.length > 0 ||
+    derivativeCurves.length > 0 ||
     experimentalSeries.length > 0 ||
     regressionCurves.length > 0;
+  const hasActiveMathCurves = activeCurves.length > 0;
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
 
@@ -2410,9 +2513,45 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <option value="compare">Comparar modelos</option>
                   </select>
                 </div>
+
+                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showDerivative}
+                    onChange={(e) => setShowDerivative(e.target.checked)}
+                    disabled={!hasActiveMathCurves}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  Mostrar derivada
+                </label>
               </div>
             </div>
           </section>
+
+          {showDerivative && derivativeCurves.length > 0 && (
+            <section className={`${card}`}>
+              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
+                📘 Derivadas
+              </h3>
+              <div className="space-y-3">
+                {derivativeCurves.map((curve) => (
+                  <div
+                    key={curve.id}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                  >
+                    <p>
+                      <span className="font-semibold">Función:</span>{" "}
+                      <span className="font-mono">{curve.sourceExpression}</span>
+                    </p>
+                    <p className="mt-1">
+                      <span className="font-semibold">Derivada:</span>{" "}
+                      <span className="font-mono">{curve.expression}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className={`${card}`}>
             <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-2">
@@ -2832,6 +2971,39 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </button>
                     );
                   })}
+                  {derivativeCurves.map((curve) => {
+                    const legendKey = derivativeLegendKey(curve.id);
+                    const isHidden = hiddenLegendKeys.includes(legendKey);
+
+                    return (
+                      <button
+                        key={legendKey}
+                        type="button"
+                        onClick={() => toggleLegendVisibility(legendKey)}
+                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                          isHidden ? "opacity-50" : "opacity-100"
+                        }`}
+                        title={
+                          isHidden ? "Mostrar derivada" : "Ocultar derivada"
+                        }
+                      >
+                        <span
+                          className="inline-block w-5 h-0.5 rounded-full shrink-0 border-t-2 border-dashed"
+                          style={{
+                            borderColor: curve.color,
+                            opacity: DERIVATIVE_STROKE_OPACITY,
+                          }}
+                        />
+                        <span
+                          className={`text-sm font-mono ${
+                            isHidden ? "text-slate-400" : "text-slate-700"
+                          }`}
+                        >
+                          f&apos;({curve.sourceExpression})
+                        </span>
+                      </button>
+                    );
+                  })}
                   {experimentalSeries.map((series) => {
                     const legendKey = experimentalLegendKey(series.id);
                     const isHidden = hiddenLegendKeys.includes(legendKey);
@@ -2956,6 +3128,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           strokeWidth={2}
                           dot={false}
                           connectNulls
+                        />
+                      )
+                    )}
+                    {derivativeCurves.map((curve) =>
+                      hiddenLegendKeys.includes(
+                        derivativeLegendKey(curve.id)
+                      ) ? null : (
+                        <Line
+                          key={derivativeLegendKey(curve.id)}
+                          type="monotone"
+                          data={curve.points}
+                          dataKey="y"
+                          yAxisId={useDualYAxis ? "left" : undefined}
+                          stroke={curve.color}
+                          strokeOpacity={DERIVATIVE_STROKE_OPACITY}
+                          strokeDasharray="8 4"
+                          strokeWidth={2}
+                          dot={false}
+                          isAnimationActive={false}
                         />
                       )
                     )}
