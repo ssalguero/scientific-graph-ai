@@ -13,7 +13,7 @@ import {
   DEFAULT_EXPERIMENTAL_DATA_SOURCE_ID,
   EXPERIMENTAL_DATA_SOURCES,
   getExperimentalDataSource,
-  parseExperimentalDataFile,
+  importExperimentalDataFile,
   type ExperimentalDataSourceId,
   type ExperimentalSeries,
 } from "../lib/experimentalData";
@@ -1164,11 +1164,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     if (!source?.enabled) return;
 
     try {
-      const text = await file.text();
-      const series = parseExperimentalDataFile(
+      const series = await importExperimentalDataFile(
         selectedDataSourceId,
-        text,
-        file.name
+        file
       );
 
       if (!series) {

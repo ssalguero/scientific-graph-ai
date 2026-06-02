@@ -1,3 +1,5 @@
+import * as XLSX from "xlsx";
+
 export type ExperimentalSeries = {
   id: string;
   name: string;
@@ -24,7 +26,12 @@ export type ExperimentalDataSource = {
 export const EXPERIMENTAL_DATA_SOURCES: ExperimentalDataSource[] = [
   { id: "csv", label: "CSV", enabled: true, accept: ".csv,text/csv" },
   { id: "txt", label: "TXT", enabled: true, accept: ".txt,text/plain" },
-  { id: "xlsx", label: "XLSX", enabled: false },
+  {
+    id: "xlsx",
+    label: "Excel (.xlsx)",
+    enabled: true,
+    accept: ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  },
   { id: "ods", label: "ODS", enabled: false },
   { id: "json", label: "JSON", enabled: false },
   { id: "tsv", label: "TSV", enabled: false },
@@ -37,6 +44,13 @@ const ENABLED_DATA_SOURCE_IDS = EXPERIMENTAL_DATA_SOURCES.filter(
 
 export const DEFAULT_EXPERIMENTAL_DATA_SOURCE_ID =
   ENABLED_DATA_SOURCE_IDS[0] ?? "csv";
+
+const KNOWN_HEADER_PAIRS: [string, string][] = [
+  ["x", "y"],
+  ["tiempo", "concentración"],
+  ["tiempo", "concentracion"],
+  ["time", "concentration"],
+];
 
 const parseNumericPair = (parts: string[]): { x: number; y: number } | null => {
   if (parts.length < 2) return null;
@@ -104,8 +118,162 @@ const PARSERS: Partial<
   txt: parseTxtContent,
 };
 
+const normalizeCell = (cell: unknown): string =>
+  String(cell ?? "")
+    .trim()
+    .toLowerCase();
+
+const cellToNumber = (cell: unknown): number | null => {
+  if (typeof cell === "number" && Number.isFinite(cell)) return cell;
+  if (typeof cell === "string") {
+    const trimmed = cell.trim();
+    if (!trimmed) return null;
+    const value = Number(trimmed);
+    return Number.isFinite(value) ? value : null;
+  }
+  return null;
+};
+
+const isKnownHeaderPair = (first: string, second: string): boolean =>
+  KNOWN_HEADER_PAIRS.some(([a, b]) => first === a && second === b);
+
+const isXlsxHeaderRow = (row: unknown[]): boolean => {
+  if (row.length < 2) return false;
+
+  const first = normalizeCell(row[0]);
+  const second = normalizeCell(row[1]);
+
+  if (isKnownHeaderPair(first, second)) return true;
+
+  const x = cellToNumber(row[0]);
+  const y = cellToNumber(row[1]);
+  return x === null || y === null;
+};
+
+const findNumericColumnPair = (
+  rows: unknown[][],
+  columnCount: number
+): [number, number] | null => {
+  for (let colX = 0; colX < columnCount - 1; colX++) {
+    for (let colY = colX + 1; colY < columnCount; colY++) {
+      let valid = true;
+
+      for (const row of rows) {
+        if (!Array.isArray(row)) {
+          valid = false;
+          break;
+        }
+        const x = cellToNumber(row[colX]);
+        const y = cellToNumber(row[colY]);
+        if (x === null || y === null) {
+          valid = false;
+          break;
+        }
+      }
+
+      if (valid) return [colX, colY];
+    }
+  }
+
+  return null;
+};
+
+export const parseXlsxFile = async (
+  file: File
+): Promise<{ x: number; y: number }[] | null> => {
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) return null;
+
+    const sheet = workbook.Sheets[sheetName];
+    const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+      header: 1,
+      defval: "",
+    });
+
+    const rows = matrix
+      .filter((row): row is unknown[] => Array.isArray(row))
+      .filter((row) => row.some((cell) => String(cell ?? "").trim() !== ""));
+
+    if (rows.length < 2) return null;
+
+    const columnCount = Math.max(
+      ...rows.map((row) => row.length),
+      0
+    );
+    if (columnCount < 2) return null;
+
+    const startRow = isXlsxHeaderRow(rows[0]) ? 1 : 0;
+    const dataRows = rows.slice(startRow);
+    if (dataRows.length < 2) return null;
+
+    const columnPair =
+      columnCount === 2
+        ? ([0, 1] as [number, number])
+        : findNumericColumnPair(dataRows, columnCount);
+    if (!columnPair) return null;
+
+    const [colX, colY] = columnPair;
+    const points: { x: number; y: number }[] = [];
+
+    for (const row of dataRows) {
+      if (row.length <= Math.max(colX, colY)) return null;
+
+      const x = cellToNumber(row[colX]);
+      const y = cellToNumber(row[colY]);
+      if (x === null || y === null) return null;
+
+      points.push({ x, y });
+    }
+
+    return points.length >= 2 ? points : null;
+  } catch {
+    return null;
+  }
+};
+
 export const getExperimentalDataSource = (sourceId: ExperimentalDataSourceId) =>
   EXPERIMENTAL_DATA_SOURCES.find((source) => source.id === sourceId);
+
+const createExperimentalSeries = (
+  sourceId: ExperimentalDataSourceId,
+  points: { x: number; y: number }[],
+  fileName: string
+): ExperimentalSeries => {
+  const baseName = fileName.replace(/\.[^/.]+$/, "").trim();
+
+  return {
+    id: `${sourceId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    name: baseName || fileName,
+    points,
+    color: "",
+  };
+};
+
+export const importExperimentalDataFile = async (
+  sourceId: ExperimentalDataSourceId,
+  file: File
+): Promise<ExperimentalSeries | null> => {
+  const source = getExperimentalDataSource(sourceId);
+  if (!source?.enabled) return null;
+
+  let points: { x: number; y: number }[] | null = null;
+
+  if (sourceId === "xlsx") {
+    points = await parseXlsxFile(file);
+  } else {
+    const parser = PARSERS[sourceId];
+    if (!parser) return null;
+    const text = await file.text();
+    points = parser(text);
+  }
+
+  if (!points) return null;
+
+  return createExperimentalSeries(sourceId, points, file.name);
+};
 
 export const parseExperimentalDataFile = (
   sourceId: ExperimentalDataSourceId,
@@ -121,12 +289,5 @@ export const parseExperimentalDataFile = (
   const points = parser(text);
   if (!points) return null;
 
-  const baseName = fileName.replace(/\.[^/.]+$/, "").trim();
-
-  return {
-    id: `${sourceId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    name: baseName || fileName,
-    points,
-    color: "",
-  };
+  return createExperimentalSeries(sourceId, points, fileName);
 };
