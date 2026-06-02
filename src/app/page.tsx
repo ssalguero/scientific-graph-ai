@@ -282,6 +282,7 @@ export default function Home() {
   const [minX, setMinX] = useState(-10);
   const [maxX, setMaxX] = useState(10);
   const [autoScaleY, setAutoScaleY] = useState(false);
+  const [hiddenCurves, setHiddenCurves] = useState<number[]>([]);
 
   const nextCurveIdRef = useRef(2);
   const expression = curves[0]?.expression ?? "";
@@ -318,6 +319,12 @@ export default function Home() {
     setCurves([
       { id: 1, expression: expr, color: getDefaultColorForIndex(0) },
     ]);
+  };
+
+  const toggleCurveVisibility = (idx: number) => {
+    setHiddenCurves((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
+    );
   };
 
   const generateGraph = () => {
@@ -506,9 +513,11 @@ export default function Home() {
     setMinX(-10);
     setMaxX(10);
     setAutoScaleY(false);
+    setHiddenCurves([]);
   };
 
   const loadGraph = (graph: any) => {
+    setHiddenCurves([]);
     setSelectedGraphId(graph.id);
     setTitle(graph.title || graph.expression);
     const dbCurves = graph.curves;
@@ -1074,17 +1083,37 @@ export default function Home() {
             <div className={`${card} p-5 sm:p-6 lg:p-8 w-full`}>
               {activeCurves.length > 0 && (
                 <div className="flex flex-wrap gap-5 mb-5 pb-5 border-b border-slate-100">
-                  {activeCurves.map((curve) => (
-                    <div key={curve.idx} className="flex items-center gap-2.5">
-                      <span
-                        className="inline-block w-5 h-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: curve.color }}
-                      />
-                      <span className="text-sm font-mono text-slate-700">
-                        {curve.expression}
-                      </span>
-                    </div>
-                  ))}
+                  {activeCurves.map((curve) => {
+                    const isHidden = hiddenCurves.includes(curve.idx);
+
+                    return (
+                      <button
+                        key={curve.idx}
+                        type="button"
+                        onClick={() => toggleCurveVisibility(curve.idx)}
+                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                          isHidden ? "opacity-50" : "opacity-100"
+                        }`}
+                        title={
+                          isHidden
+                            ? "Mostrar curva"
+                            : "Ocultar curva"
+                        }
+                      >
+                        <span
+                          className="inline-block w-5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: curve.color }}
+                        />
+                        <span
+                          className={`text-sm font-mono ${
+                            isHidden ? "text-slate-400" : "text-slate-700"
+                          }`}
+                        >
+                          {curve.expression}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
@@ -1105,17 +1134,19 @@ export default function Home() {
                         boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                       }}
                     />
-                    {activeCurves.map((curve) => (
-                      <Line
-                        key={curve.idx}
-                        type="monotone"
-                        dataKey={`y${curve.idx + 1}`}
-                        stroke={curve.color}
-                        strokeWidth={2}
-                        dot={false}
-                        connectNulls
-                      />
-                    ))}
+                    {activeCurves.map((curve) =>
+                      hiddenCurves.includes(curve.idx) ? null : (
+                        <Line
+                          key={curve.idx}
+                          type="monotone"
+                          dataKey={`y${curve.idx + 1}`}
+                          stroke={curve.color}
+                          strokeWidth={2}
+                          dot={false}
+                          connectNulls
+                        />
+                      )
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
