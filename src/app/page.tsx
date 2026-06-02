@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { toPng, toSvg } from "html-to-image";
 import { supabase } from "../lib/supabase";
 import { evaluate } from "mathjs";
@@ -26,7 +26,10 @@ const btnOutline =
 const sectionTitle =
   "text-sm sm:text-base font-semibold uppercase tracking-wider text-slate-500 mb-5";
 
-const getChartExportFileName = (title: string, extension: "png" | "svg") => {
+const getChartExportFileName = (
+  title: string,
+  extension: "png" | "svg" | "json"
+) => {
   const trimmed = title.trim();
   if (!trimmed) return `grafico.${extension}`;
 
@@ -94,6 +97,91 @@ const HEX_TO_LEGACY_COLOR: Record<string, string> = {
   "#ef4444": "red",
   "#16a34a": "green",
   "#a855f7": "purple",
+};
+
+type GraphJsonExport = {
+  title: string;
+  expression: string;
+  curves: { expression: string; color: string }[];
+  min_x: number;
+  max_x: number;
+  auto_scale_y: boolean;
+  color: string;
+};
+
+const normalizeImportedGraph = (parsed: unknown): GraphJsonExport | null => {
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return null;
+  }
+
+  const raw = parsed as Record<string, unknown>;
+  const title = typeof raw.title === "string" ? raw.title : "";
+  const expression =
+    typeof raw.expression === "string" ? raw.expression.trim() : "";
+
+  let curves: { expression: string; color: string }[] | null = null;
+
+  if (Array.isArray(raw.curves) && raw.curves.length > 0) {
+    curves = [];
+    for (const item of raw.curves) {
+      if (typeof item === "string") {
+        curves.push({ expression: item.trim(), color: "" });
+        continue;
+      }
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return null;
+      }
+      const curve = item as Record<string, unknown>;
+      const curveExpression =
+        typeof curve.expression === "string" ? curve.expression.trim() : "";
+      const curveColor =
+        typeof curve.color === "string" ? curve.color.trim() : "";
+      curves.push({ expression: curveExpression, color: curveColor });
+    }
+    if (!curves.some((c) => c.expression.length > 0)) {
+      return null;
+    }
+  }
+
+  if (!curves && !expression) {
+    return null;
+  }
+
+  const min_x =
+    typeof raw.min_x === "number" && Number.isFinite(raw.min_x) ? raw.min_x : -10;
+  const max_x =
+    typeof raw.max_x === "number" && Number.isFinite(raw.max_x) ? raw.max_x : 10;
+
+  if (min_x >= max_x) {
+    return null;
+  }
+
+  const auto_scale_y = raw.auto_scale_y === true;
+  const legacyColor =
+    typeof raw.color === "string" && raw.color.trim()
+      ? raw.color.trim()
+      : "blue";
+
+  const resolvedCurves =
+    curves ??
+    ([{ expression, color: "" }] as { expression: string; color: string }[]);
+
+  const primaryExpression =
+    expression || resolvedCurves.find((c) => c.expression)?.expression || "";
+
+  if (!primaryExpression.trim()) {
+    return null;
+  }
+
+  return {
+    title,
+    expression: primaryExpression,
+    curves: resolvedCurves,
+    min_x,
+    max_x,
+    auto_scale_y,
+    color: legacyColor,
+  };
 };
 
 const toPlottableY = (value: unknown): number | undefined => {
@@ -353,6 +441,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [selectedGraphId, setSelectedGraphId] = useState<string | null>(null);
   const [shareNotFound, setShareNotFound] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [jsonImportError, setJsonImportError] = useState<string | null>(null);
 
   const [minX, setMinX] = useState(-10);
   const [maxX, setMaxX] = useState(10);
@@ -366,6 +455,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const nextCurveIdRef = useRef(2);
   const chartExportRef = useRef<HTMLDivElement>(null);
   const chartInteractionRef = useRef<HTMLDivElement>(null);
+  const jsonImportInputRef = useRef<HTMLInputElement>(null);
   const visibleRangeRef = useRef({
     visibleMinX,
     visibleMaxX,
@@ -469,6 +559,58 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       link.click();
     } catch (error) {
       console.error("Error al exportar SVG:", error);
+    }
+  };
+
+  const exportChartJson = () => {
+    const legacyColor =
+      HEX_TO_LEGACY_COLOR[curves[0]?.color?.toLowerCase() ?? ""] ?? "blue";
+    const graphTitle = title.trim() || expression.trim() || "grafico";
+
+    const payload: GraphJsonExport = {
+      title: graphTitle,
+      expression: expression.trim(),
+      curves: curves.map((c) => ({
+        expression: c.expression,
+        color: c.color,
+      })),
+      min_x: minX,
+      max_x: maxX,
+      auto_scale_y: autoScaleY,
+      color: legacyColor,
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = getChartExportFileName(title, "json");
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleJsonImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const parsed: unknown = JSON.parse(text);
+      const graph = normalizeImportedGraph(parsed);
+
+      if (!graph) {
+        setJsonImportError("Archivo de gráfico inválido");
+        return;
+      }
+
+      setJsonImportError(null);
+      loadGraph(graph, { asNew: true });
+    } catch {
+      setJsonImportError("Archivo de gráfico inválido");
     }
   };
 
@@ -622,6 +764,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
   const newGraph = () => {
     setSelectedGraphId(null);
+    setJsonImportError(null);
     setTitle("");
     resetToSingleCurve("");
     setChartData([]);
@@ -639,9 +782,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setHiddenCurves([]);
   };
 
-  const loadGraph = (graph: any) => {
+  const loadGraph = (graph: any, options?: { asNew?: boolean }) => {
     setHiddenCurves([]);
-    setSelectedGraphId(graph.id);
+    setSelectedGraphId(options?.asNew ? null : graph.id ?? null);
+    setJsonImportError(null);
     setTitle(graph.title || graph.expression);
     const dbCurves = graph.curves;
     let nextCurves: Curve[] = [
@@ -1098,6 +1242,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   >
                     Exportar SVG
                   </button>
+                  <button
+                    type="button"
+                    onClick={exportChartJson}
+                    className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold`}
+                  >
+                    Exportar JSON
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => jsonImportInputRef.current?.click()}
+                    className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold`}
+                  >
+                    Importar JSON
+                  </button>
+                  <input
+                    ref={jsonImportInputRef}
+                    type="file"
+                    accept=".json,application/json"
+                    className="hidden"
+                    onChange={handleJsonImport}
+                  />
                 </div>
               </div>
 
@@ -1469,6 +1634,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           {shareNotFound && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
               Gráfico no encontrado
+            </div>
+          )}
+
+          {jsonImportError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
+              {jsonImportError}
             </div>
           )}
 
