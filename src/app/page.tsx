@@ -310,6 +310,8 @@ export default function Home() {
   const [maxX, setMaxX] = useState(10);
   const [autoScaleY, setAutoScaleY] = useState(false);
   const [hiddenCurves, setHiddenCurves] = useState<number[]>([]);
+  // Curva actualmente seleccionada para los botones de ejemplos
+  const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
 
   const nextCurveIdRef = useRef(2);
   const chartExportRef = useRef<HTMLDivElement>(null);
@@ -374,11 +376,12 @@ export default function Home() {
     }
   };
 
-  const generateGraph = () => {
+  const generateGraph = (curveSource?: Curve[]) => {
     try {
+      const sourceCurves = curveSource ?? curves;
       const points = [];
       let discardedCount = 0;
-      const activeCurves = curves
+      const activeCurves = sourceCurves
         .map((c, idx) => ({
           idx,
           expression: c.expression.trim(),
@@ -442,56 +445,15 @@ export default function Home() {
   };
 
   const graphExpression = (expr: string) => {
-    try {
-      resetToSingleCurve(expr);
+    if (activeCurveIndex < 0 || activeCurveIndex >= curves.length) return;
 
-      const trimmedExpr = expr.trim();
-      const points = [];
-      let discardedCount = 0;
-      const discardedPerCurve = [0];
-      const numX = countXSteps(minX, maxX);
-      const validYValues: number[] = [];
+    const trimmedExpr = expr.trim();
+    const nextCurves = curves.map((c, i) =>
+      i === activeCurveIndex ? { ...c, expression: trimmedExpr } : c
+    );
 
-      for (let x = minX; x <= maxX; x += 0.5) {
-        const y = toPlottableY(evaluateExpression(trimmedExpr, { x }));
-        const point: Record<string, number> = { x };
-        if (y !== undefined) {
-          point.y1 = y;
-          validYValues.push(y);
-        } else {
-          discardedCount++;
-          discardedPerCurve[0]++;
-        }
-        points.push(point);
-      }
-
-      setChartData(points);
-      setErrorMessage("");
-      setMathWarning(formatMathWarning(discardedCount));
-      const metrics = computeDiscardMetrics(
-        discardedCount,
-        discardedPerCurve,
-        numX
-      );
-      setDiscardMetrics(metrics);
-      setRangeWarning(
-        formatRangeWarning(metrics.maxPerCurveDiscardRate, [trimmedExpr])
-      );
-      const nextYMetrics = computeYMetrics(validYValues, [validYValues]);
-      setYMetrics(nextYMetrics);
-      setScaleWarning(formatScaleWarning(nextYMetrics));
-      logDiscardMetrics(metrics);
-      logYMetrics(nextYMetrics);
-    } catch (error) {
-      console.error(error);
-
-      setErrorMessage("La expresión matemática es inválida.");
-      setMathWarning(null);
-      setRangeWarning([]);
-      setScaleWarning(null);
-      setDiscardMetrics(emptyDiscardMetrics());
-      setYMetrics(computeYMetrics([]));
-    }
+    setCurves(nextCurves);
+    generateGraph(nextCurves);
   };
 
   const loadGraphs = async () => {
@@ -833,6 +795,7 @@ export default function Home() {
                         <input
                           type="text"
                           value={curve.expression}
+                          onFocus={() => setActiveCurveIndex(idx)}
                           onChange={(e) => {
                             updateCurveExpression(curve.id, e.target.value);
                             setErrorMessage("");
@@ -849,7 +812,7 @@ export default function Home() {
 
                 <div className="flex flex-col sm:flex-row flex-wrap gap-4 pt-2">
                   <button
-                    onClick={generateGraph}
+                    onClick={() => generateGraph()}
                     className={`bg-emerald-600 hover:bg-emerald-700 ${btnPrimary} sm:min-w-[160px]`}
                   >
                     Graficar
