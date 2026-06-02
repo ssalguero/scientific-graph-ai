@@ -401,11 +401,37 @@ type LinearRegressionResult = {
   r2: number;
 };
 
-type RegressionCurve = LinearRegressionResult & {
+type QuadraticRegressionResult = {
+  a: number;
+  b: number;
+  c: number;
+  r2: number;
+};
+
+type RegressionModel = "none" | "linear" | "quadratic" | "compare";
+
+type RegressionCurve = {
   id: string;
   name: string;
   color: string;
+  model: "linear" | "quadratic";
+  r2: number;
   points: { x: number; y: number }[];
+  slope?: number;
+  intercept?: number;
+  a?: number;
+  b?: number;
+  c?: number;
+};
+
+type RegressionComparison = {
+  id: string;
+  name: string;
+  color: string;
+  linear: LinearRegressionResult | null;
+  quadratic: QuadraticRegressionResult | null;
+  bestModel: "linear" | "quadratic" | null;
+  bestR2: number | null;
 };
 
 const formatScaleFactor = (factor: number): string => {
@@ -496,6 +522,110 @@ const calculateLinearRegression = (
   const r2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
 
   return { slope, intercept, r2 };
+};
+
+const solveLinearSystem3x3 = (
+  matrix: number[][],
+  vector: number[]
+): [number, number, number] | null => {
+  const augmented = matrix.map((row, i) => [...row, vector[i]]);
+  const size = 3;
+
+  for (let col = 0; col < size; col++) {
+    let pivotRow = col;
+    for (let row = col + 1; row < size; row++) {
+      if (Math.abs(augmented[row][col]) > Math.abs(augmented[pivotRow][col])) {
+        pivotRow = row;
+      }
+    }
+
+    if (Math.abs(augmented[pivotRow][col]) < 1e-12) return null;
+
+    if (pivotRow !== col) {
+      [augmented[col], augmented[pivotRow]] = [augmented[pivotRow], augmented[col]];
+    }
+
+    const pivot = augmented[col][col];
+    for (let j = col; j <= size; j++) {
+      augmented[col][j] /= pivot;
+    }
+
+    for (let row = 0; row < size; row++) {
+      if (row === col) continue;
+      const factor = augmented[row][col];
+      for (let j = col; j <= size; j++) {
+        augmented[row][j] -= factor * augmented[col][j];
+      }
+    }
+  }
+
+  return [augmented[0][3], augmented[1][3], augmented[2][3]];
+};
+
+const calculateQuadraticRegression = (
+  points: { x: number; y: number }[]
+): QuadraticRegressionResult | null => {
+  if (points.length < 3) return null;
+
+  let sumX = 0;
+  let sumX2 = 0;
+  let sumX3 = 0;
+  let sumX4 = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumX2Y = 0;
+
+  for (const { x, y } of points) {
+    const x2 = x * x;
+    sumX += x;
+    sumX2 += x2;
+    sumX3 += x2 * x;
+    sumX4 += x2 * x2;
+    sumY += y;
+    sumXY += x * y;
+    sumX2Y += x2 * y;
+  }
+
+  const solution = solveLinearSystem3x3(
+    [
+      [sumX4, sumX3, sumX2],
+      [sumX3, sumX2, sumX],
+      [sumX2, sumX, points.length],
+    ],
+    [sumX2Y, sumXY, sumY]
+  );
+
+  if (!solution) return null;
+
+  const [a, b, c] = solution;
+  const meanY = sumY / points.length;
+  let ssRes = 0;
+  let ssTot = 0;
+
+  for (const { x, y } of points) {
+    const predicted = a * x * x + b * x + c;
+    ssRes += (y - predicted) ** 2;
+    ssTot += (y - meanY) ** 2;
+  }
+
+  const r2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
+
+  return { a, b, c, r2 };
+};
+
+const chooseBestRegressionModel = (
+  linear: LinearRegressionResult | null,
+  quadratic: QuadraticRegressionResult | null
+): "linear" | "quadratic" | null => {
+  if (!linear && !quadratic) return null;
+  if (linear && !quadratic) return "linear";
+  if (!linear && quadratic) return "quadratic";
+
+  const linearR2 = linear!.r2;
+  const quadraticR2 = quadratic!.r2;
+
+  if (Math.abs(linearR2 - quadraticR2) < 0.001) return "linear";
+  return quadraticR2 > linearR2 ? "quadratic" : "linear";
 };
 
 const curveLegendKey = (idx: number) => `curve:${idx}`;
@@ -635,7 +765,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [visibleMaxX, setVisibleMaxX] = useState(10);
   const [autoScaleY, setAutoScaleY] = useState(false);
   const [useSecondaryYAxis, setUseSecondaryYAxis] = useState(false);
-  const [showRegression, setShowRegression] = useState(false);
+  const [regressionModel, setRegressionModel] = useState<RegressionModel>("none");
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
@@ -1210,36 +1340,172 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => mergeYMetricsWithExperimental(yMetrics, visibleExperimentalSeries),
     [yMetrics, visibleExperimentalSeries]
   );
-  const regressionCurves = useMemo<RegressionCurve[]>(
+  const regressionComparisons = useMemo<RegressionComparison[]>(
     () =>
-      visibleExperimentalSeries
-        .map((series) => {
-          const regression = calculateLinearRegression(series.points);
-          if (!regression) return null;
+      visibleExperimentalSeries.map((series) => {
+        const linear = calculateLinearRegression(series.points);
+        const quadratic = calculateQuadraticRegression(series.points);
+        const bestModel = chooseBestRegressionModel(linear, quadratic);
+        const bestR2 =
+          bestModel === "linear"
+            ? linear?.r2 ?? null
+            : bestModel === "quadratic"
+              ? quadratic?.r2 ?? null
+              : null;
+
+        return {
+          id: series.id,
+          name: series.name,
+          color: series.color,
+          linear,
+          quadratic,
+          bestModel,
+          bestR2,
+        };
+      }),
+    [visibleExperimentalSeries]
+  );
+  const regressionCurves = useMemo<RegressionCurve[]>(
+    () => {
+      if (regressionModel === "none") return [];
+
+      return regressionComparisons.reduce<RegressionCurve[]>(
+        (acc, comparison) => {
+          const { id, name, color, linear, quadratic, bestModel } = comparison;
+          const series = visibleExperimentalSeries.find((item) => item.id === id);
+          if (!series) return acc;
 
           const xs = series.points.map((point) => point.x);
           const minX = Math.min(...xs);
           const maxX = Math.max(...xs);
 
-          return {
-            id: series.id,
-            name: series.name,
-            color: series.color,
-            ...regression,
-            points: [
-              {
-                x: minX,
-                y: regression.slope * minX + regression.intercept,
-              },
-              {
-                x: maxX,
-                y: regression.slope * maxX + regression.intercept,
-              },
-            ],
-          };
-        })
-        .filter((curve): curve is RegressionCurve => curve !== null),
-    [visibleExperimentalSeries]
+          if (regressionModel === "linear") {
+            if (!linear) return acc;
+
+            acc.push({
+              id,
+              name,
+              color,
+              model: "linear" as const,
+              r2: linear.r2,
+              slope: linear.slope,
+              intercept: linear.intercept,
+              points: [
+                {
+                  x: minX,
+                  y: linear.slope * minX + linear.intercept,
+                },
+                {
+                  x: maxX,
+                  y: linear.slope * maxX + linear.intercept,
+                },
+              ],
+            });
+            return acc;
+          }
+
+          if (regressionModel === "quadratic") {
+            if (!quadratic) return acc;
+
+            const samples = 100;
+            const span = maxX - minX;
+            const points =
+              span === 0
+                ? [
+                    {
+                      x: minX,
+                      y:
+                        quadratic.a * minX * minX +
+                        quadratic.b * minX +
+                        quadratic.c,
+                    },
+                  ]
+                : Array.from({ length: samples }, (_, index) => {
+                    const t = index / (samples - 1);
+                    const x = minX + span * t;
+                    return {
+                      x,
+                      y: quadratic.a * x * x + quadratic.b * x + quadratic.c,
+                    };
+                  });
+
+            acc.push({
+              id,
+              name,
+              color,
+              model: "quadratic" as const,
+              r2: quadratic.r2,
+              a: quadratic.a,
+              b: quadratic.b,
+              c: quadratic.c,
+              points,
+            });
+            return acc;
+          }
+
+          if (bestModel === "linear" && linear) {
+            acc.push({
+              id,
+              name,
+              color,
+              model: "linear" as const,
+              r2: linear.r2,
+              slope: linear.slope,
+              intercept: linear.intercept,
+              points: [
+                {
+                  x: minX,
+                  y: linear.slope * minX + linear.intercept,
+                },
+                {
+                  x: maxX,
+                  y: linear.slope * maxX + linear.intercept,
+                },
+              ],
+            });
+            return acc;
+          }
+
+          if (bestModel !== "quadratic" || !quadratic) return acc;
+          const samples = 100;
+          const span = maxX - minX;
+          const points =
+            span === 0
+              ? [
+                  {
+                    x: minX,
+                    y:
+                      quadratic.a * minX * minX +
+                      quadratic.b * minX +
+                      quadratic.c,
+                  },
+                ]
+              : Array.from({ length: samples }, (_, index) => {
+                  const t = index / (samples - 1);
+                  const x = minX + span * t;
+                  return {
+                    x,
+                    y: quadratic.a * x * x + quadratic.b * x + quadratic.c,
+                  };
+                });
+
+          acc.push({
+            id,
+            name,
+            color,
+            model: "quadratic" as const,
+            r2: quadratic.r2,
+            a: quadratic.a,
+            b: quadratic.b,
+            c: quadratic.c,
+            points,
+          });
+          return acc;
+        },
+        []
+      );
+    },
+    [visibleExperimentalSeries, regressionModel, regressionComparisons]
   );
   const visibleRegressionCurves = useMemo(
     () =>
@@ -1266,7 +1532,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const hasLegendItems =
     activeCurves.length > 0 ||
     experimentalSeries.length > 0 ||
-    (showRegression && regressionCurves.length > 0);
+    regressionCurves.length > 0;
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
 
@@ -1687,16 +1953,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   Usar eje Y secundario para datos experimentales
                 </label>
 
-                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showRegression}
-                    onChange={(e) => setShowRegression(e.target.checked)}
+                <div>
+                  <label className="block text-base font-medium text-slate-700 mb-2">
+                    Mostrar regresión
+                  </label>
+                  <select
+                    value={regressionModel}
+                    onChange={(e) =>
+                      setRegressionModel(e.target.value as RegressionModel)
+                    }
                     disabled={experimentalSeries.length === 0}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  Mostrar regresión lineal
-                </label>
+                    className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <option value="none">Ninguna</option>
+                    <option value="linear">Lineal</option>
+                    <option value="quadratic">Polinómica grado 2</option>
+                    <option value="compare">Comparar modelos</option>
+                  </select>
+                </div>
               </div>
             </div>
           </section>
@@ -1747,16 +2021,67 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             )}
           </section>
 
-          {showRegression && visibleRegressionCurves.length > 0 && (
+          {regressionModel === "compare" && regressionComparisons.length > 0 && (
             <section className={`${card}`}>
               <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
-                📈 Regresiones lineales
+                📈 Regresiones
+              </h3>
+              <div className="space-y-3">
+                {regressionComparisons.map((comparison) => {
+                  return (
+                    <div
+                      key={comparison.id}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                    >
+                      <p>
+                        <span className="font-semibold">Serie:</span>{" "}
+                        {comparison.name}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Lineal:</span>
+                      </p>
+                      <p>
+                        R² ={" "}
+                        {comparison.linear ? comparison.linear.r2.toFixed(4) : "No disponible"}
+                      </p>
+                      <p className="mt-1">
+                        <span className="font-semibold">Cuadrática:</span>
+                      </p>
+                      <p>
+                        R² ={" "}
+                        {comparison.quadratic
+                          ? comparison.quadratic.r2.toFixed(4)
+                          : "No disponible"}
+                      </p>
+                      {comparison.bestModel && comparison.bestR2 != null && (
+                        <div className="mt-2 rounded-md bg-slate-100 px-3 py-2">
+                          <p className="font-semibold">🏆 Mejor ajuste:</p>
+                          <p>
+                            {comparison.bestModel === "linear"
+                              ? "Lineal"
+                              : "Cuadrática"}
+                          </p>
+                          <p>
+                            <span className="font-semibold">R² ganador:</span>{" "}
+                            {comparison.bestR2.toFixed(4)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {regressionModel !== "compare" && visibleRegressionCurves.length > 0 && (
+            <section className={`${card}`}>
+              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
+                📈 Regresiones
               </h3>
               <div className="space-y-3">
                 {visibleRegressionCurves.map((regression) => {
-                  const slope = regression.slope.toFixed(4);
-                  const interceptAbs = Math.abs(regression.intercept).toFixed(4);
-                  const sign = regression.intercept >= 0 ? "+" : "-";
+                  const r2Text = regression.r2.toFixed(4);
 
                   return (
                     <div
@@ -1769,11 +2094,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </p>
                       <p>
                         <span className="font-semibold">Modelo:</span> y ={" "}
-                        {slope}x {sign} {interceptAbs}
+                        {regression.model === "linear" &&
+                        regression.slope != null &&
+                        regression.intercept != null ? (
+                          <>
+                            {regression.slope.toFixed(4)}x{" "}
+                            {regression.intercept >= 0 ? "+" : "-"}{" "}
+                            {Math.abs(regression.intercept).toFixed(4)}
+                          </>
+                        ) : regression.a != null &&
+                          regression.b != null &&
+                          regression.c != null ? (
+                          <>
+                            {regression.a.toFixed(4)}x²{" "}
+                            {regression.b >= 0 ? "+" : "-"}{" "}
+                            {Math.abs(regression.b).toFixed(4)}x{" "}
+                            {regression.c >= 0 ? "+" : "-"}{" "}
+                            {Math.abs(regression.c).toFixed(4)}
+                          </>
+                        ) : (
+                          "N/A"
+                        )}
                       </p>
                       <p>
-                        <span className="font-semibold">R²:</span>{" "}
-                        {regression.r2.toFixed(4)}
+                        <span className="font-semibold">R²:</span> {r2Text}
                       </p>
                     </div>
                   );
@@ -1978,39 +2322,38 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </button>
                     );
                   })}
-                  {showRegression &&
-                    regressionCurves.map((regression) => {
-                      const legendKey = regressionLegendKey(regression.id);
-                      const isHidden = hiddenLegendKeys.includes(legendKey);
+                  {regressionCurves.map((regression) => {
+                    const legendKey = regressionLegendKey(regression.id);
+                    const isHidden = hiddenLegendKeys.includes(legendKey);
 
-                      return (
-                        <button
-                          key={legendKey}
-                          type="button"
-                          onClick={() => toggleLegendVisibility(legendKey)}
-                          className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
-                            isHidden ? "opacity-50" : "opacity-100"
+                    return (
+                      <button
+                        key={legendKey}
+                        type="button"
+                        onClick={() => toggleLegendVisibility(legendKey)}
+                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                          isHidden ? "opacity-50" : "opacity-100"
+                        }`}
+                        title={
+                          isHidden
+                            ? "Mostrar regresión"
+                            : "Ocultar regresión"
+                        }
+                      >
+                        <span
+                          className="inline-block w-5 h-0.5 rounded-full shrink-0 border-t-2 border-dashed"
+                          style={{ borderColor: regression.color }}
+                        />
+                        <span
+                          className={`text-sm ${
+                            isHidden ? "text-slate-400" : "text-slate-700"
                           }`}
-                          title={
-                            isHidden
-                              ? "Mostrar regresión"
-                              : "Ocultar regresión"
-                          }
                         >
-                          <span
-                            className="inline-block w-5 h-0.5 rounded-full shrink-0 border-t-2 border-dashed"
-                            style={{ borderColor: regression.color }}
-                          />
-                          <span
-                            className={`text-sm ${
-                              isHidden ? "text-slate-400" : "text-slate-700"
-                            }`}
-                          >
-                            📈 Regresión - {regression.name}
-                          </span>
-                        </button>
-                      );
-                    })}
+                          📈 Regresión - {regression.name}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
@@ -2094,25 +2437,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                       )
                     )}
-                    {showRegression &&
-                      regressionCurves.map((regression) =>
-                        hiddenLegendKeys.includes(
-                          regressionLegendKey(regression.id)
-                        ) ? null : (
-                          <Line
-                            key={regressionLegendKey(regression.id)}
-                            type="linear"
-                            data={regression.points}
-                            dataKey="y"
-                            yAxisId={useDualYAxis ? "right" : undefined}
-                            stroke={regression.color}
-                            strokeDasharray="6 4"
-                            strokeWidth={2}
-                            dot={false}
-                            isAnimationActive={false}
-                          />
-                        )
-                      )}
+                    {regressionCurves.map((regression) =>
+                      hiddenLegendKeys.includes(
+                        regressionLegendKey(regression.id)
+                      ) ? null : (
+                        <Line
+                          key={regressionLegendKey(regression.id)}
+                          type={regression.model === "quadratic" ? "monotone" : "linear"}
+                          data={regression.points}
+                          dataKey="y"
+                          yAxisId={useDualYAxis ? "right" : undefined}
+                          stroke={regression.color}
+                          strokeDasharray="6 4"
+                          strokeWidth={2}
+                          dot={false}
+                          isAnimationActive={false}
+                        />
+                      )
+                    )}
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
