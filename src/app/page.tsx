@@ -151,8 +151,12 @@ type YMetrics = {
   perCurve: CurveYMetrics[];
 };
 
-const SCALE_WARNING_MESSAGE =
-  "⚠ Algunas curvas tienen escalas muy diferentes. Algunas pueden verse comprimidas en la visualización actual.";
+const formatScaleFactor = (factor: number): string => {
+  const rounded = Math.round(factor);
+  return rounded < 1000
+    ? String(rounded)
+    : rounded.toLocaleString("es-ES");
+};
 
 const countXSteps = (min: number, max: number) => {
   let numX = 0;
@@ -249,7 +253,17 @@ const formatScaleWarning = (yMetrics: YMetrics): string | null => {
   if (minPositiveSpan <= 0) return null;
 
   const factor = maxAbsY / minPositiveSpan;
-  return factor >= 100 ? SCALE_WARNING_MESSAGE : null;
+  if (factor < 100) return null;
+
+  const formattedFactor = formatScaleFactor(factor);
+  let message = `⚠ Existe una diferencia de escala de aproximadamente ${formattedFactor}× entre curvas.`;
+
+  if (factor >= 1000) {
+    message +=
+      "\nConsidere visualizar las curvas por separado o utilizar un rango más acotado.";
+  }
+
+  return message;
 };
 
 const logDiscardMetrics = (metrics: DiscardMetrics) => {
@@ -1073,7 +1087,7 @@ export default function Home() {
           ))}
 
           {scaleWarning && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium whitespace-pre-line">
               {scaleWarning}
             </div>
           )}
