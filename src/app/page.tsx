@@ -420,19 +420,26 @@ type LogarithmicRegressionResult = {
   r2: number;
 };
 
+type PowerRegressionResult = {
+  a: number;
+  b: number;
+  r2: number;
+};
+
 type RegressionModel =
   | "none"
   | "linear"
   | "quadratic"
   | "exponential"
   | "logarithmic"
+  | "power"
   | "compare";
 
 type RegressionCurve = {
   id: string;
   name: string;
   color: string;
-  model: "linear" | "quadratic" | "exponential" | "logarithmic";
+  model: "linear" | "quadratic" | "exponential" | "logarithmic" | "power";
   r2: number;
   points: { x: number; y: number }[];
   slope?: number;
@@ -445,7 +452,7 @@ type RegressionCurve = {
 type RegressionSeriesStatus = {
   id: string;
   name: string;
-  model: "linear" | "quadratic" | "exponential" | "logarithmic";
+  model: "linear" | "quadratic" | "exponential" | "logarithmic" | "power";
   curve: RegressionCurve | null;
   unavailableReason: string | null;
 };
@@ -458,7 +465,8 @@ type RegressionComparison = {
   quadratic: QuadraticRegressionResult | null;
   exponential: ExponentialRegressionResult | null;
   logarithmic: LogarithmicRegressionResult | null;
-  bestModel: "linear" | "quadratic" | "exponential" | "logarithmic" | null;
+  power: PowerRegressionResult | null;
+  bestModel: "linear" | "quadratic" | "exponential" | "logarithmic" | "power" | null;
   bestR2: number | null;
 };
 
@@ -706,14 +714,45 @@ const calculateLogarithmicRegression = (
   return { intercept, slope, r2 };
 };
 
+const calculatePowerRegression = (
+  points: { x: number; y: number }[]
+): PowerRegressionResult | null => {
+  if (points.length < 2) return null;
+  if (points.some((point) => point.x <= 0 || point.y <= 0)) return null;
+
+  const transformed = points.map((point) => ({
+    x: Math.log(point.x),
+    y: Math.log(point.y),
+  }));
+  const linear = calculateLinearRegression(transformed);
+  if (!linear) return null;
+
+  const a = Math.exp(linear.intercept);
+  const b = linear.slope;
+  const meanY =
+    points.reduce((acc, point) => acc + point.y, 0) / points.length;
+
+  let ssRes = 0;
+  let ssTot = 0;
+  for (const point of points) {
+    const predicted = a * Math.pow(point.x, b);
+    ssRes += (point.y - predicted) ** 2;
+    ssTot += (point.y - meanY) ** 2;
+  }
+
+  const r2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
+  return { a, b, r2 };
+};
+
 const chooseBestRegressionModel = (
   linear: LinearRegressionResult | null,
   quadratic: QuadraticRegressionResult | null,
   exponential: ExponentialRegressionResult | null,
-  logarithmic: LogarithmicRegressionResult | null
-): "linear" | "quadratic" | "exponential" | "logarithmic" | null => {
+  logarithmic: LogarithmicRegressionResult | null,
+  power: PowerRegressionResult | null
+): "linear" | "quadratic" | "exponential" | "logarithmic" | "power" | null => {
   const candidates: Array<{
-    model: "linear" | "quadratic" | "exponential" | "logarithmic";
+    model: "linear" | "quadratic" | "exponential" | "logarithmic" | "power";
     r2: number;
     complexity: number;
   }> = [];
@@ -723,8 +762,9 @@ const chooseBestRegressionModel = (
     candidates.push({ model: "logarithmic", r2: logarithmic.r2, complexity: 2 });
   if (exponential)
     candidates.push({ model: "exponential", r2: exponential.r2, complexity: 3 });
+  if (power) candidates.push({ model: "power", r2: power.r2, complexity: 4 });
   if (quadratic)
-    candidates.push({ model: "quadratic", r2: quadratic.r2, complexity: 4 });
+    candidates.push({ model: "quadratic", r2: quadratic.r2, complexity: 5 });
 
   if (candidates.length === 0) return null;
 
@@ -754,22 +794,26 @@ const getFitQuality = (r2: number): FitQuality => {
 };
 
 const getRegressionModelLabel = (
-  model: "linear" | "quadratic" | "exponential" | "logarithmic"
+  model: "linear" | "quadratic" | "exponential" | "logarithmic" | "power"
 ) => {
   if (model === "linear") return "Lineal";
   if (model === "logarithmic") return "Logarítmica";
+  if (model === "power") return "Potencial";
   if (model === "quadratic") return "Polinómica grado 2";
   return "Exponencial";
 };
 
 const getRegressionUnavailableReason = (
-  model: "linear" | "quadratic" | "exponential" | "logarithmic"
+  model: "linear" | "quadratic" | "exponential" | "logarithmic" | "power"
 ) => {
   if (model === "exponential") {
     return "La regresión exponencial requiere que todos los valores Y sean mayores que cero.";
   }
   if (model === "logarithmic") {
     return "La regresión logarítmica requiere que todos los valores X sean mayores que cero.";
+  }
+  if (model === "power") {
+    return "La regresión potencial requiere que todos los valores X e Y sean mayores que cero.";
   }
   if (model === "quadratic") {
     return "La regresión polinómica grado 2 requiere al menos 3 puntos válidos.";
@@ -1496,11 +1540,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         const quadratic = calculateQuadraticRegression(series.points);
         const exponential = calculateExponentialRegression(series.points);
         const logarithmic = calculateLogarithmicRegression(series.points);
+        const power = calculatePowerRegression(series.points);
         const bestModel = chooseBestRegressionModel(
           linear,
           quadratic,
           exponential,
-          logarithmic
+          logarithmic,
+          power
         );
         const bestR2 =
           bestModel === "linear"
@@ -1509,6 +1555,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               ? logarithmic?.r2 ?? null
             : bestModel === "exponential"
               ? exponential?.r2 ?? null
+            : bestModel === "power"
+              ? power?.r2 ?? null
             : bestModel === "quadratic"
               ? quadratic?.r2 ?? null
               : null;
@@ -1521,6 +1569,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           quadratic,
           exponential,
           logarithmic,
+          power,
           bestModel,
           bestR2,
         };
@@ -1541,6 +1590,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             quadratic,
             exponential,
             logarithmic,
+            power,
             bestModel,
           } =
             comparison;
@@ -1680,6 +1730,41 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             return acc;
           }
 
+          if (regressionModel === "power") {
+            if (!power) return acc;
+
+            const positiveX = xs.filter((x) => x > 0);
+            if (positiveX.length === 0) return acc;
+            const minPositiveX = Math.min(...positiveX);
+            const startX =
+              minX <= 0 ? Math.max(minPositiveX, 0.000001) : minX;
+            const endX = maxX;
+            if (endX <= 0 || startX > endX) return acc;
+
+            const samples = 100;
+            const span = endX - startX;
+            const points =
+              span === 0
+                ? [{ x: startX, y: power.a * Math.pow(startX, power.b) }]
+                : Array.from({ length: samples }, (_, index) => {
+                    const t = index / (samples - 1);
+                    const x = startX + span * t;
+                    return { x, y: power.a * Math.pow(x, power.b) };
+                  });
+
+            acc.push({
+              id,
+              name,
+              color,
+              model: "power" as const,
+              r2: power.r2,
+              a: power.a,
+              b: power.b,
+              points,
+            });
+            return acc;
+          }
+
           if (bestModel === "linear" && linear) {
             acc.push({
               id,
@@ -1764,6 +1849,39 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             return acc;
           }
 
+          if (bestModel === "power" && power) {
+            const positiveX = xs.filter((x) => x > 0);
+            if (positiveX.length === 0) return acc;
+            const minPositiveX = Math.min(...positiveX);
+            const startX =
+              minX <= 0 ? Math.max(minPositiveX, 0.000001) : minX;
+            const endX = maxX;
+            if (endX <= 0 || startX > endX) return acc;
+
+            const samples = 100;
+            const span = endX - startX;
+            const points =
+              span === 0
+                ? [{ x: startX, y: power.a * Math.pow(startX, power.b) }]
+                : Array.from({ length: samples }, (_, index) => {
+                    const t = index / (samples - 1);
+                    const x = startX + span * t;
+                    return { x, y: power.a * Math.pow(x, power.b) };
+                  });
+
+            acc.push({
+              id,
+              name,
+              color,
+              model: "power" as const,
+              r2: power.r2,
+              a: power.a,
+              b: power.b,
+              points,
+            });
+            return acc;
+          }
+
           if (bestModel !== "quadratic" || !quadratic) return acc;
           const samples = 100;
           const span = maxX - minX;
@@ -1819,7 +1937,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       | "linear"
       | "quadratic"
       | "exponential"
-      | "logarithmic";
+      | "logarithmic"
+      | "power";
     return visibleExperimentalSeries.map((series) => {
       const curve =
         regressionCurves.find((item) => item.id === series.id) ?? null;
@@ -2289,6 +2408,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <option value="quadratic">Polinómica grado 2</option>
                     <option value="exponential">Exponencial</option>
                     <option value="logarithmic">Logarítmica</option>
+                    <option value="power">Potencial</option>
                     <option value="compare">Comparar modelos</option>
                   </select>
                 </div>
@@ -2368,12 +2488,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         {comparison.linear ? comparison.linear.r2.toFixed(4) : "No disponible"}
                       </p>
                       <p className="mt-1">
-                        <span className="font-semibold">Cuadrática:</span>
+                        <span className="font-semibold">Logarítmica:</span>
                       </p>
                       <p>
                         R² ={" "}
-                        {comparison.quadratic
-                          ? comparison.quadratic.r2.toFixed(4)
+                        {comparison.logarithmic
+                          ? comparison.logarithmic.r2.toFixed(4)
                           : "No disponible"}
                       </p>
                       <p className="mt-1">
@@ -2386,12 +2506,21 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           : "No disponible"}
                       </p>
                       <p className="mt-1">
-                        <span className="font-semibold">Logarítmica:</span>
+                        <span className="font-semibold">Potencial:</span>
                       </p>
                       <p>
                         R² ={" "}
-                        {comparison.logarithmic
-                          ? comparison.logarithmic.r2.toFixed(4)
+                        {comparison.power
+                          ? comparison.power.r2.toFixed(4)
+                          : "No disponible"}
+                      </p>
+                      <p className="mt-1">
+                        <span className="font-semibold">Cuadrática:</span>
+                      </p>
+                      <p>
+                        R² ={" "}
+                        {comparison.quadratic
+                          ? comparison.quadratic.r2.toFixed(4)
                           : "No disponible"}
                       </p>
                       {comparison.bestModel && comparison.bestR2 != null && (
@@ -2404,6 +2533,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 ? "Logarítmica"
                               : comparison.bestModel === "exponential"
                                 ? "Exponencial"
+                              : comparison.bestModel === "power"
+                                ? "Potencial"
                                 : "Cuadrática"}
                           </p>
                           <p>
@@ -2497,6 +2628,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             {regression.intercept.toFixed(4)}{" "}
                             {regression.slope >= 0 ? "+" : "-"}{" "}
                             {Math.abs(regression.slope).toFixed(4)}·ln(x)
+                          </>
+                        ) : regression.model === "power" &&
+                          regression.a != null &&
+                          regression.b != null ? (
+                          <>
+                            {regression.a.toFixed(4)} · x^{regression.b.toFixed(4)}
                           </>
                         ) : regression.a != null &&
                           regression.b != null &&
@@ -2849,7 +2986,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           type={
                             regression.model === "quadratic" ||
                             regression.model === "exponential" ||
-                            regression.model === "logarithmic"
+                            regression.model === "logarithmic" ||
+                            regression.model === "power"
                               ? "monotone"
                               : "linear"
                           }
