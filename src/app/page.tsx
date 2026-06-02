@@ -332,6 +332,93 @@ const toPlottableY = (value: unknown): number | undefined => {
 const normalizeExpressionForMath = (expression: string) =>
   expression.trim().replace(/\bln\s*\(/gi, "log(");
 
+const normalizeNaturalLanguage = (input: string): string =>
+  input
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+
+const FUNCTION_OPERAND = "[a-z0-9^+\\-*/.]+";
+
+export const translateNaturalLanguageToMath = (input: string): string => {
+  const trimmed = input.trim();
+  if (!trimmed) return trimmed;
+
+  let text = normalizeNaturalLanguage(trimmed);
+
+  text = text.replace(/e elevado a x al cuadrado/g, "exp(x^2)");
+  text = text.replace(/e elevado a menos x/g, "exp(-x)");
+  text = text.replace(
+    new RegExp(`e elevado a (${FUNCTION_OPERAND})`, "g"),
+    "exp($1)"
+  );
+
+  text = text.replace(/\b([a-z0-9]+)\s+al cuadrado\b/g, "$1^2");
+  text = text.replace(/\b([a-z0-9]+)\s+al cubo\b/g, "$1^3");
+  text = text.replace(/\b([a-z0-9]+)\s+a la cuarta\b/g, "$1^4");
+  text = text.replace(/\b([a-z0-9]+)\s+a la quinta\b/g, "$1^5");
+
+  const functionPhrases: [RegExp, string][] = [
+    [new RegExp(`logaritmo natural de (${FUNCTION_OPERAND})`, "g"), "log($1)"],
+    [new RegExp(`logaritmo base 10 de (${FUNCTION_OPERAND})`, "g"), "log10($1)"],
+    [new RegExp(`ln de (${FUNCTION_OPERAND})`, "g"), "log($1)"],
+    [new RegExp(`raiz cuadrada de (${FUNCTION_OPERAND})`, "g"), "sqrt($1)"],
+    [new RegExp(`raiz de (${FUNCTION_OPERAND})`, "g"), "sqrt($1)"],
+    [new RegExp(`arcotangente de (${FUNCTION_OPERAND})`, "g"), "atan($1)"],
+    [new RegExp(`arcoseno de (${FUNCTION_OPERAND})`, "g"), "asin($1)"],
+    [new RegExp(`arcocoseno de (${FUNCTION_OPERAND})`, "g"), "acos($1)"],
+    [new RegExp(`tangente de (${FUNCTION_OPERAND})`, "g"), "tan($1)"],
+    [new RegExp(`coseno de (${FUNCTION_OPERAND})`, "g"), "cos($1)"],
+    [new RegExp(`seno de (${FUNCTION_OPERAND})`, "g"), "sin($1)"],
+  ];
+
+  for (const [pattern, replacement] of functionPhrases) {
+    text = text.replace(pattern, replacement);
+  }
+
+  text = text.replace(/\bnumero pi\b/g, "pi");
+  text = text.replace(/\bnumero e\b/g, "e");
+
+  text = text.replace(/\s+multiplicado por\s+/g, "*");
+  text = text.replace(/\s+dividido por\s+/g, "/");
+  text = text.replace(/\s+por\s+/g, "*");
+  text = text.replace(/\s+mas\s+/g, "+");
+  text = text.replace(/\s+menos\s+/g, "-");
+
+  text = text.replace(/\s+/g, "");
+
+  return text;
+};
+
+const isValidMathExpression = (expression: string): boolean => {
+  const normalized = normalizeExpressionForMath(expression);
+  if (!normalized) return false;
+
+  try {
+    parse(normalized);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const resolveNaturalLanguageExpression = (
+  expression: string,
+  enabled: boolean
+): string => {
+  const trimmed = expression.trim();
+  if (!trimmed || !enabled) return trimmed;
+
+  const translated = translateNaturalLanguageToMath(trimmed);
+  return isValidMathExpression(translated) ? translated : trimmed;
+};
+
+const expressionsAreEquivalent = (left: string, right: string): boolean =>
+  left.trim().replace(/\s+/g, "").toLowerCase() ===
+  right.trim().replace(/\s+/g, "").toLowerCase();
+
 const evaluateExpression = (expression: string, scope: { x: number }) =>
   evaluate(normalizeExpressionForMath(expression), scope);
 
@@ -1168,6 +1255,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [regressionModel, setRegressionModel] = useState<RegressionModel>("none");
   const [showDerivative, setShowDerivative] = useState(false);
   const [showIntegral, setShowIntegral] = useState(false);
+  const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
@@ -1401,9 +1489,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const selectedDataSource = getExperimentalDataSource(selectedDataSourceId);
   const canImportExperimentalData = selectedDataSource?.enabled ?? false;
 
+  const resolveCurvesForMath = (sourceCurves: Curve[]): Curve[] =>
+    sourceCurves.map((curve) => ({
+      ...curve,
+      expression: resolveNaturalLanguageExpression(
+        curve.expression,
+        naturalLanguageEnabled
+      ),
+    }));
+
   const generateGraph = (curveSource?: Curve[]) => {
     try {
-      const sourceCurves = curveSource ?? curves;
+      const rawCurves = curveSource ?? curves;
+      const sourceCurves = naturalLanguageEnabled
+        ? resolveCurvesForMath(rawCurves)
+        : rawCurves;
+
+      if (naturalLanguageEnabled && !curveSource) {
+        setCurves(sourceCurves);
+      }
       const points = [];
       let discardedCount = 0;
       const activeCurves = sourceCurves
@@ -1474,7 +1578,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const graphExpression = (expr: string) => {
     if (activeCurveIndex < 0 || activeCurveIndex >= curves.length) return;
 
-    const trimmedExpr = expr.trim();
+    const trimmedExpr = resolveNaturalLanguageExpression(
+      expr.trim(),
+      naturalLanguageEnabled
+    );
     const nextCurves = curves.map((c, i) =>
       i === activeCurveIndex ? { ...c, expression: trimmedExpr } : c
     );
@@ -1509,16 +1616,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   };
 
   const saveGraph = async () => {
-    if (!expression.trim()) return;
+    const resolvedCurves = naturalLanguageEnabled
+      ? resolveCurvesForMath(curves)
+      : curves;
 
-    const graphTitle = title.trim() || expression;
+    if (naturalLanguageEnabled) {
+      setCurves(resolvedCurves);
+    }
+
+    const primaryExpression = resolvedCurves[0]?.expression ?? expression;
+    if (!primaryExpression.trim()) return;
+
+    const graphTitle = title.trim() || primaryExpression;
     const legacyColor =
       HEX_TO_LEGACY_COLOR[curves[0]?.color?.toLowerCase() ?? ""] ?? "blue";
 
     const graphPayload = {
       title: graphTitle,
-      expression: expression,
-      curves: curves.map((c) => ({
+      expression: primaryExpression,
+      curves: resolvedCurves.map((c) => ({
         expression: c.expression,
         color: c.color,
       })),
@@ -1696,6 +1812,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     [functionSearch]
   );
   const functionLibraryHasResults = filteredFunctionLibrary.length > 0;
+  const activeCurveNaturalLanguagePreview = useMemo(() => {
+    if (!naturalLanguageEnabled) return null;
+
+    const raw = curves[activeCurveIndex]?.expression?.trim() ?? "";
+    if (!raw) return null;
+
+    const translated = translateNaturalLanguageToMath(raw);
+    if (expressionsAreEquivalent(raw, translated)) return null;
+
+    return translated;
+  }, [naturalLanguageEnabled, curves, activeCurveIndex]);
   const activeCurves = curves
     .map((c, idx) => ({
       idx,
@@ -2576,8 +2703,35 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           }
                           className={inputField}
                         />
+                        {idx === activeCurveIndex &&
+                          activeCurveNaturalLanguagePreview && (
+                            <p className="mt-2 text-sm text-slate-600">
+                              <span className="font-semibold">Interpretación:</span>{" "}
+                              <span className="font-mono">
+                                {activeCurveNaturalLanguagePreview}
+                              </span>
+                            </p>
+                          )}
                       </div>
                     ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={naturalLanguageEnabled}
+                        onChange={(e) =>
+                          setNaturalLanguageEnabled(e.target.checked)
+                        }
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                      />
+                      Interpretar lenguaje natural
+                    </label>
+                    <p className="text-sm text-slate-500">
+                      Permite escribir expresiones como &apos;seno de x&apos;,
+                      &apos;x al cuadrado más 3&apos;, etc.
+                    </p>
                   </div>
                 </div>
 
