@@ -9,6 +9,14 @@ import {
 } from "react";
 import { toPng, toSvg } from "html-to-image";
 import { supabase } from "../lib/supabase";
+import {
+  DEFAULT_EXPERIMENTAL_DATA_SOURCE_ID,
+  EXPERIMENTAL_DATA_SOURCES,
+  getExperimentalDataSource,
+  parseExperimentalDataFile,
+  type ExperimentalDataSourceId,
+  type ExperimentalSeries,
+} from "../lib/experimentalData";
 import { evaluate } from "mathjs";
 
 import {
@@ -544,11 +552,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
   const [functionSearch, setFunctionSearch] = useState("");
+  const [experimentalSeries, setExperimentalSeries] = useState<
+    ExperimentalSeries[]
+  >([]);
+  const [selectedDataSourceId, setSelectedDataSourceId] =
+    useState<ExperimentalDataSourceId>(DEFAULT_EXPERIMENTAL_DATA_SOURCE_ID);
+  const [experimentalImportError, setExperimentalImportError] = useState<
+    string | null
+  >(null);
 
   const nextCurveIdRef = useRef(2);
   const chartExportRef = useRef<HTMLDivElement>(null);
   const chartInteractionRef = useRef<HTMLDivElement>(null);
   const jsonImportInputRef = useRef<HTMLInputElement>(null);
+  const experimentalFileInputRef = useRef<HTMLInputElement>(null);
   const visibleRangeRef = useRef({
     visibleMinX,
     visibleMaxX,
@@ -706,6 +723,40 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setJsonImportError("Archivo de gráfico inválido");
     }
   };
+
+  const handleExperimentalImport = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    const source = getExperimentalDataSource(selectedDataSourceId);
+    if (!source?.enabled) return;
+
+    try {
+      const text = await file.text();
+      const series = parseExperimentalDataFile(
+        selectedDataSourceId,
+        text,
+        file.name
+      );
+
+      if (!series) {
+        setExperimentalImportError("Archivo de datos inválido");
+        return;
+      }
+
+      setExperimentalImportError(null);
+      setExperimentalSeries((prev) => [...prev, series]);
+    } catch {
+      setExperimentalImportError("Archivo de datos inválido");
+    }
+  };
+
+  const selectedDataSource = getExperimentalDataSource(selectedDataSourceId);
+  const canImportExperimentalData = selectedDataSource?.enabled ?? false;
 
   const generateGraph = (curveSource?: Curve[]) => {
     try {
@@ -1457,6 +1508,75 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 ))}
               </div>
+            )}
+          </section>
+
+          <section className={`${card}`}>
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
+              <div className="min-w-0 flex-1 sm:max-w-xs">
+                <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-2">
+                  📊 Fuentes de datos
+                </h3>
+                <label
+                  htmlFor="experimental-data-source"
+                  className="sr-only"
+                >
+                  Fuente de datos
+                </label>
+                <select
+                  id="experimental-data-source"
+                  value={selectedDataSourceId}
+                  onChange={(e) => {
+                    setSelectedDataSourceId(
+                      e.target.value as ExperimentalDataSourceId
+                    );
+                    setExperimentalImportError(null);
+                  }}
+                  className={inputField}
+                >
+                  {EXPERIMENTAL_DATA_SOURCES.map((source) => (
+                    <option
+                      key={source.id}
+                      value={source.id}
+                      disabled={!source.enabled}
+                    >
+                      {source.label}
+                      {!source.enabled ? " (próximamente)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => experimentalFileInputRef.current?.click()}
+                disabled={!canImportExperimentalData}
+                className={`${btnOutline} sm:min-w-[160px] px-5 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                Importar archivo
+              </button>
+
+              <input
+                ref={experimentalFileInputRef}
+                type="file"
+                accept={selectedDataSource?.accept ?? undefined}
+                className="hidden"
+                onChange={handleExperimentalImport}
+              />
+            </div>
+
+            {experimentalImportError && (
+              <p className="mt-3 text-sm font-medium text-red-600">
+                {experimentalImportError}
+              </p>
+            )}
+
+            {experimentalSeries.length > 0 && (
+              <p className="mt-3 text-sm text-slate-500">
+                {experimentalSeries.length} serie
+                {experimentalSeries.length === 1 ? "" : "s"} experimental
+                {experimentalSeries.length === 1 ? "" : "es"} en memoria
+              </p>
             )}
           </section>
 
