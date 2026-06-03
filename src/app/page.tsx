@@ -2507,6 +2507,134 @@ const getNonParametricRecommendation = (
   return "Esta prueba es apropiada para datos que no cumplen supuestos de normalidad.";
 };
 
+type StatisticalRecommendationConfidence = "high" | "medium" | "low";
+
+type StatisticalRecommendation = {
+  recommendedTest: string;
+  confidence: StatisticalRecommendationConfidence;
+  reasoning: string[];
+  assumptionsPassed: string[];
+  assumptionsFailed: string[];
+  warnings: string[];
+};
+
+const getStatisticalAdvisorConfidenceLabel = (
+  confidence: StatisticalRecommendationConfidence
+) =>
+  confidence === "high" ? "Alta" : confidence === "medium" ? "Media" : "Baja";
+
+const buildStatisticalRecommendation = (
+  series: ExperimentalSeries[],
+  normalityAnalyses: NormalityAnalysis[],
+  correlationRequested: boolean
+): StatisticalRecommendation | null => {
+  const groupCount = series.length;
+  const totalSampleSize = series.reduce(
+    (sum, item) => sum + getSeriesYValues(item).length,
+    0
+  );
+
+  if (groupCount === 0 || totalSampleSize === 0) return null;
+
+  const seriesNames = series.map((item) => item.name);
+  const relevantNormality = normalityAnalyses.filter((item) =>
+    seriesNames.includes(item.seriesName)
+  );
+
+  const allNormal =
+    relevantNormality.length === groupCount &&
+    relevantNormality.every(
+      (item) =>
+        item.classification === "normal" ||
+        item.classification === "approximately-normal"
+    );
+  const anyNonNormal = relevantNormality.some(
+    (item) =>
+      item.classification === "non-normal" || item.classification === null
+  );
+
+  const confidence: StatisticalRecommendationConfidence =
+    totalSampleSize >= 30 ? "high" : totalSampleSize >= 15 ? "medium" : "low";
+
+  const assumptionsPassed: string[] = [];
+  const assumptionsFailed: string[] = [];
+  const warnings: string[] = [];
+  const reasoning: string[] = [];
+
+  if (groupCount >= 2) {
+    assumptionsPassed.push("Número suficiente de grupos");
+  } else {
+    assumptionsFailed.push("Número suficiente de grupos");
+  }
+
+  if (allNormal && !anyNonNormal) {
+    assumptionsPassed.push("Normalidad");
+  } else {
+    assumptionsFailed.push("Normalidad no cumplida");
+  }
+
+  if (totalSampleSize >= 15) {
+    assumptionsPassed.push("Tamaño muestral adecuado");
+  } else {
+    assumptionsFailed.push("Muestras pequeñas");
+    warnings.push("Las muestras son pequeñas.");
+  }
+
+  if (anyNonNormal) {
+    warnings.push("Una serie presenta distribución no normal.");
+  }
+
+  if (confidence === "low") {
+    warnings.push("Los resultados deben interpretarse con cautela.");
+  }
+
+  let recommendedTest = "";
+
+  if (correlationRequested && groupCount >= 2) {
+    recommendedTest = allNormal && !anyNonNormal ? "Pearson" : "Spearman";
+    reasoning.push(
+      allNormal && !anyNonNormal
+        ? "Se recomienda Pearson porque se solicitó correlación y las series visibles cumplen supuestos de normalidad."
+        : "Se recomienda Spearman porque se solicitó correlación y una o más series no cumplen normalidad."
+    );
+  } else if (groupCount === 2) {
+    if (allNormal && !anyNonNormal) {
+      recommendedTest = "t-Test";
+      reasoning.push(
+        "Se recomienda t-Test porque existen dos grupos visibles y ambos presentan distribución compatible con la normalidad."
+      );
+    } else {
+      recommendedTest = "Mann-Whitney U";
+      reasoning.push(
+        "Se recomienda Mann-Whitney debido a que una o más series no cumplen supuestos de normalidad."
+      );
+    }
+  } else if (groupCount >= 3) {
+    if (allNormal && !anyNonNormal) {
+      recommendedTest = "ANOVA";
+      reasoning.push(
+        `Se recomienda utilizar ANOVA porque existen ${groupCount} grupos visibles y todos presentan una distribución aproximadamente normal.`
+      );
+    } else {
+      recommendedTest = "Kruskal-Wallis";
+      reasoning.push(
+        `Se recomienda Kruskal-Wallis porque existen ${groupCount} grupos visibles y al menos una serie no cumple normalidad.`
+      );
+    }
+  } else {
+    return null;
+  }
+
+  return {
+    recommendedTest,
+    confidence,
+    reasoning,
+    assumptionsPassed,
+    assumptionsFailed,
+    warnings: [...new Set(warnings)],
+  };
+};
+
 const getNonParametricModeLabel = (mode: NonParametricMode) =>
   mode === "mann-whitney" ? "Mann-Whitney U" : "Kruskal-Wallis H";
 
@@ -3533,6 +3661,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   >(null);
   const [selectedMannWhitneySeriesB, setSelectedMannWhitneySeriesB] =
     useState<string | null>(null);
+  const [showStatisticalAdvisor, setShowStatisticalAdvisor] = useState(false);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -4428,6 +4557,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => calculateKruskalWallis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const statisticalRecommendation = useMemo(
+    () =>
+      buildStatisticalRecommendation(
+        visibleExperimentalSeries,
+        normalityAnalyses,
+        showCorrelation
+      ),
+    [visibleExperimentalSeries, normalityAnalyses, showCorrelation]
+  );
   const overlayMathYValues = useMemo(
     () => [
       ...visibleDerivativeCurves.flatMap((curve) =>
@@ -5026,6 +5164,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showAnova ||
     showPostHoc ||
     showNonParametric ||
+    showStatisticalAdvisor ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -6523,6 +6662,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           </>
                         )}
                       </div>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Advisor Estadístico
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showStatisticalAdvisor}
+                            onChange={(e) =>
+                              setShowStatisticalAdvisor(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -8287,6 +8451,103 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     ) : (
                       <p className={emptyState}>
                         Resultado no disponible para las series seleccionadas.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showStatisticalAdvisor && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🧠 Advisor Estadístico</p>
+                    {statisticalRecommendation ? (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">
+                            Prueba recomendada:
+                          </span>{" "}
+                          {statisticalRecommendation.recommendedTest}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">
+                            Nivel de confianza:
+                          </span>{" "}
+                          {getStatisticalAdvisorConfidenceLabel(
+                            statisticalRecommendation.confidence
+                          )}
+                        </p>
+
+                        {statisticalRecommendation.assumptionsPassed.length >
+                          0 && (
+                          <div className="mt-3">
+                            <p className="font-semibold text-sm mb-1">
+                              Supuestos cumplidos
+                            </p>
+                            {statisticalRecommendation.assumptionsPassed.map(
+                              (assumption) => (
+                                <p
+                                  key={`passed-${assumption}`}
+                                  className="text-sm"
+                                >
+                                  ✓ {assumption}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {statisticalRecommendation.assumptionsFailed.length >
+                          0 && (
+                          <div className="mt-3">
+                            <p className="font-semibold text-sm mb-1">
+                              Supuestos incumplidos
+                            </p>
+                            {statisticalRecommendation.assumptionsFailed.map(
+                              (assumption) => (
+                                <p
+                                  key={`failed-${assumption}`}
+                                  className="text-sm"
+                                >
+                                  ✗ {assumption}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {statisticalRecommendation.warnings.length > 0 && (
+                          <div className="mt-3">
+                            <p className="font-semibold text-sm mb-1">
+                              Advertencias
+                            </p>
+                            {statisticalRecommendation.warnings.map(
+                              (warning) => (
+                                <p key={warning} className={`text-sm ${emptyState}`}>
+                                  {warning}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {statisticalRecommendation.reasoning.length > 0 && (
+                          <div className="mt-3">
+                            <p className="font-semibold text-sm mb-1">
+                              Justificación automática
+                            </p>
+                            {statisticalRecommendation.reasoning.map(
+                              (reason) => (
+                                <p key={reason} className="text-sm mt-1">
+                                  {reason}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        No hay información suficiente para generar una
+                        recomendación estadística.
                       </p>
                     )}
                   </div>
