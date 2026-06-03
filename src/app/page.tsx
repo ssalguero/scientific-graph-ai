@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useEffect,
@@ -42,25 +42,36 @@ import {
 } from "recharts";
 
 const appShell =
-  "bg-slate-50 text-slate-700 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-heading:#0f172a] [--app-accent:#2563eb]";
+  "bg-slate-50 text-slate-700 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-text-muted:#64748b] [--app-heading:#0f172a] [--app-accent:#2563eb] [--app-danger-bg:#fef2f2] [--app-danger-border:#fecaca] [--app-danger-text:#b91c1c] [--app-warning-bg:#fffbeb] [--app-warning-border:#fde68a] [--app-warning-text:#92400e]";
 const card =
   "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-4 sm:p-5";
-const cardCompact =
-  "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-3 sm:p-4";
-const panelInset =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-2.5 text-sm text-[var(--app-text)]";
-const inputField =
-  "w-full border border-[var(--app-border)] rounded-lg px-3 py-2.5 text-sm sm:text-base text-[var(--app-heading)] bg-[var(--app-surface)] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500";
-const btnPrimary =
-  "inline-flex items-center justify-center font-semibold text-white text-sm sm:text-base px-5 py-2.5 rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.98]";
-const btnOutline =
-  "border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 rounded-lg text-sm sm:text-base text-[var(--app-text)] shadow-sm transition-all hover:bg-[var(--app-surface-muted)] hover:border-slate-300 hover:shadow";
-const sectionTitle =
-  "text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3";
-const subsectionTitle =
-  "text-sm font-semibold text-[var(--app-heading)] mb-2";
-const vizToolSection =
+const panelHeading =
+  "text-base sm:text-lg font-semibold text-[var(--app-heading)] tracking-tight";
+const panelHeadingSubtext = "text-sm text-[var(--app-text-muted)] mt-1";
+const sectionLabel =
+  "text-xs sm:text-sm font-semibold uppercase tracking-wider text-[var(--app-text-muted)] mb-3";
+const subsectionCard =
   "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3 space-y-3";
+const subsectionHeading =
+  "text-sm font-semibold text-[var(--app-heading)]";
+const contentPanel =
+  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2.5 text-sm text-[var(--app-text)]";
+const emptyState =
+  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-4 text-sm text-[var(--app-text-muted)] text-center";
+const fieldLabel =
+  "block text-sm font-medium text-[var(--app-heading)] mb-1.5";
+const inputField =
+  "w-full h-10 border border-[var(--app-border)] rounded-lg px-3 text-sm sm:text-base text-[var(--app-heading)] bg-[var(--app-surface)] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500";
+const btnPrimary =
+  "inline-flex h-10 items-center justify-center font-semibold text-white text-sm sm:text-base px-5 rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.98]";
+const btnOutline =
+  "inline-flex h-10 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-4 rounded-lg text-sm sm:text-base text-[var(--app-text)] shadow-sm transition-all hover:bg-[var(--app-surface-muted)] hover:border-slate-300 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed";
+const btnOutlineSm =
+  "inline-flex h-8 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 rounded-lg text-xs text-[var(--app-text)] shadow-sm transition-all hover:bg-[var(--app-surface-muted)] hover:border-slate-300";
+const alertBase =
+  "rounded-lg border px-4 py-3 text-sm font-medium";
+const alertError = `${alertBase} border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] text-[var(--app-danger-text)]`;
+const alertWarning = `${alertBase} border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] text-[var(--app-warning-text)]`;
 const toggleInput = "peer sr-only";
 const toggleShell =
   "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full";
@@ -2474,6 +2485,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     (showDerivative && derivativeCurves.length > 0) ||
     (showIntegral && integralCurves.length > 0) ||
     (showIntegral && curveAreaResults.length > 0);
+  const showMathResultsPanel =
+    hasMathResults ||
+    showDerivative ||
+    showIntegral ||
+    regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
 
@@ -2660,7 +2676,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           </header>
 
           <section>
-            <h2 className={sectionTitle}>Panel de control</h2>
+            <h2 className={sectionLabel}>Panel de control</h2>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4">
               <div className={`${card} lg:col-span-8 flex flex-col gap-4`}>
                 <div
@@ -2696,9 +2712,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 <>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-semibold text-[var(--app-heading)]">
-                      Información del gráfico
-                    </h3>
+                    <h3 className={panelHeading}>📐 Constructor de gráfico</h3>
                     <span
                       className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
                         isEditing
@@ -2709,14 +2723,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       {isEditing ? "Editando gráfico" : "Nuevo gráfico"}
                     </span>
                   </div>
-                  <p className="text-base text-slate-500 mt-2">
+                  <p className={panelHeadingSubtext}>
                     Define título y expresión matemática
                   </p>
                 </div>
 
                 <div className="space-y-5 flex-1">
                   <div>
-                    <label className="block text-base font-medium text-slate-700 mb-2">
+                    <label className={fieldLabel}>
                       Título
                     </label>
                     <input
@@ -2729,7 +2743,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
 
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-base font-medium text-slate-700">
+                    <p className={`${fieldLabel} mb-0`}>
                       Curvas
                     </p>
                     <button
@@ -2745,7 +2759,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     {curves.map((curve, idx) => (
                       <div key={curve.id}>
                         <div className="flex items-center justify-between gap-3 mb-2">
-                          <label className="block text-base font-medium text-slate-700">
+                          <label className={`${fieldLabel} mb-0`}>
                             Expresión {idx + 1}
                           </label>
                           <div className="flex items-center gap-3">
@@ -2937,10 +2951,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 )}
 
                 {controlPanelTab === "library" && (
-                  <div className="max-h-72 overflow-y-auto pr-1">
-                    <p className="text-sm text-slate-500 mb-2">
+                  <div>
+                    <h3 className={panelHeading}>📚 Biblioteca de funciones</h3>
+                    <p className={`${panelHeadingSubtext} mb-3`}>
                       Busca y haz clic para insertar en la curva activa
                     </p>
+                  <div className="max-h-72 overflow-y-auto pr-1">
                     <input
                       type="search"
                       value={functionSearch}
@@ -2966,7 +2982,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                   key={`${category.category}-${fn.expression}`}
                                   type="button"
                                   onClick={() => graphExpression(fn.expression)}
-                                  className={`${btnOutline} font-mono text-xs px-2 py-1`}
+                                  className={`${btnOutlineSm} font-mono`}
                                 >
                                   {fn.label}
                                 </button>
@@ -2977,11 +2993,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </div>
                     )}
                   </div>
+                  </div>
                 )}
 
                 {controlPanelTab === "data" && (
                   <div>
-                    <p className="text-sm text-slate-500 mb-3">
+                    <h3 className={panelHeading}>📊 Fuentes de datos</h3>
+                    <p className={`${panelHeadingSubtext} mb-3`}>
                       Importa series experimentales desde CSV, TXT, XLSX u ODS
                     </p>
                     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
@@ -3078,8 +3096,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </div>
 
                 <div className="space-y-3">
-                  <div className={vizToolSection}>
-                    <p className={subsectionTitle}>📏 Rango</p>
+                  <div className={subsectionCard}>
+                    <p className={subsectionHeading}>📏 Rango</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1.5">
@@ -3108,8 +3126,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </div>
                   </div>
 
-                  <div className={vizToolSection}>
-                    <p className={subsectionTitle}>📊 Ejes</p>
+                  <div className={subsectionCard}>
+                    <p className={subsectionHeading}>📊 Ejes</p>
                     <div className="space-y-3">
                       <label className={toggleLabel}>
                         <span className="flex-1 min-w-0">
@@ -3147,8 +3165,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </div>
                   </div>
 
-                  <div className={vizToolSection}>
-                    <p className={subsectionTitle}>📈 Análisis</p>
+                  <div className={subsectionCard}>
+                    <p className={subsectionHeading}>📈 Análisis</p>
                     <div className="space-y-3">
                       <div>
                         <label
@@ -3221,10 +3239,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
 
                   <div
-                    className={`${vizToolSection} border-dashed opacity-70`}
+                    className={`${subsectionCard} border-dashed opacity-70`}
                     aria-hidden
                   >
-                    <p className={subsectionTitle}>Próximamente</p>
+                    <p className={subsectionHeading}>Próximamente</p>
                     <ul className="space-y-1.5 text-xs text-slate-500">
                       <li>Intersecciones</li>
                       <li>Máximos y mínimos</li>
@@ -3239,7 +3257,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
           <section>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <h2 className={`${sectionTitle} mb-0`}>Visualización</h2>
+              <h2 className={`${sectionLabel} mb-0`}>Visualización</h2>
               <button
                 type="button"
                 onClick={resetVisibleRange}
@@ -3563,19 +3581,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           </section>
 
           {hasMathResults && (
-            <section className={cardCompact}>
+            <section className={card}>
               <h3 className="text-base sm:text-lg font-semibold text-[var(--app-heading)] mb-3">
                 📊 Resultados matemáticos
               </h3>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                 {showDerivative && derivativeCurves.length > 0 && (
                   <div className="space-y-2">
-                    <p className={subsectionTitle}>📘 Derivadas</p>
+                    <p className={subsectionHeading}>📘 Derivadas</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {derivativeCurves.map((curve) => (
                   <div
                     key={curve.id}
-                    className={panelInset}
+                    className={contentPanel}
                   >
                     <p>
                       <span className="font-semibold">Función:</span>{" "}
@@ -3593,12 +3611,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showIntegral && integralCurves.length > 0 && (
                   <div className="space-y-2">
-                    <p className={subsectionTitle}>📗 Integrales</p>
+                    <p className={subsectionHeading}>📗 Integrales</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {integralCurves.map((curve) => (
                   <div
                     key={curve.id}
-                    className={panelInset}
+                    className={contentPanel}
                   >
                     <p>
                       <span className="font-semibold">Función:</span>{" "}
@@ -3616,12 +3634,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showIntegral && curveAreaResults.length > 0 && (
                   <div className="space-y-2 lg:col-span-2">
-                    <p className={subsectionTitle}>📐 Área bajo la curva</p>
+                    <p className={subsectionHeading}>📐 Área bajo la curva</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
                       {curveAreaResults.map((item) => (
                   <div
                     key={item.id}
-                    className={panelInset}
+                    className={contentPanel}
                   >
                     <p>
                       <span className="font-semibold">Función:</span>{" "}
@@ -3643,7 +3661,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {regressionModel === "compare" && regressionComparisons.length > 0 && (
                   <div className="space-y-2 lg:col-span-2">
-                    <p className={subsectionTitle}>📈 Regresiones</p>
+                    <p className={subsectionHeading}>📈 Regresiones</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {regressionComparisons.map((comparison) => {
                         const bestQuality =
@@ -3651,7 +3669,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             ? getFitQuality(comparison.bestR2)
                             : null;
                         return (
-                          <div key={comparison.id} className={panelInset}>
+                          <div key={comparison.id} className={contentPanel}>
                             <p>
                               <span className="font-semibold">Serie:</span>{" "}
                               {comparison.name}
@@ -3740,12 +3758,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {regressionModel !== "compare" &&
                   selectedRegressionSeriesStatus.length > 0 && (
                   <div className="space-y-2 lg:col-span-2">
-                    <p className={subsectionTitle}>📈 Regresiones</p>
+                    <p className={subsectionHeading}>📈 Regresiones</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {selectedRegressionSeriesStatus.map((status) => {
                         if (!status.curve) {
                           return (
-                            <div key={status.id} className={panelInset}>
+                            <div key={status.id} className={contentPanel}>
                               <p>
                                 <span className="font-semibold">Serie:</span>{" "}
                                 {status.name}
@@ -3773,7 +3791,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         const quality = getFitQuality(regression.r2);
 
                         return (
-                          <div key={status.id} className={panelInset}>
+                          <div key={status.id} className={contentPanel}>
                             <p>
                               <span className="font-semibold">Serie:</span>{" "}
                               {status.name}
