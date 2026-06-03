@@ -2038,6 +2038,169 @@ const getTTestInterpretation = (result: TTestResult) =>
     ? "Diferencia estadísticamente significativa entre las medias."
     : "No se detectó diferencia significativa.";
 
+const ANOVA_ALPHA = 0.05;
+
+type AnovaResult = {
+  groupCount: number;
+  totalSampleSize: number;
+  betweenGroupsSS: number;
+  withinGroupsSS: number;
+  totalSS: number;
+  betweenGroupsDF: number;
+  withinGroupsDF: number;
+  totalDF: number;
+  meanSquareBetween: number;
+  meanSquareWithin: number;
+  fStatistic: number;
+  pValue: number;
+  significant: boolean;
+};
+
+type AnovaGroupSummary = {
+  seriesId: string;
+  seriesName: string;
+  sampleSize: number;
+  mean: number;
+  standardDeviation: number;
+};
+
+type AnovaAnalysis = {
+  result: AnovaResult;
+  groups: AnovaGroupSummary[];
+};
+
+const approximateUpperTailFPValue = (
+  fStatistic: number,
+  dfBetween: number,
+  dfWithin: number
+): number => {
+  if (
+    !Number.isFinite(fStatistic) ||
+    fStatistic < 0 ||
+    dfBetween <= 0 ||
+    dfWithin <= 0
+  ) {
+    return Number.NaN;
+  }
+
+  if (fStatistic === 0) return 1;
+
+  const x = (dfBetween * fStatistic) / (dfBetween * fStatistic + dfWithin);
+  const cumulativeProbability = regularizedIncompleteBeta(
+    dfBetween / 2,
+    dfWithin / 2,
+    x
+  );
+
+  return 1 - cumulativeProbability;
+};
+
+const calculateOneWayAnova = (
+  series: ExperimentalSeries[]
+): AnovaAnalysis | null => {
+  const groups = series
+    .map((item) => {
+      const values = getSeriesYValues(item);
+      const stats = getSampleMeanAndStdDev(values);
+      if (!stats || stats.count === 0) return null;
+
+      return {
+        seriesId: item.id,
+        seriesName: item.name,
+        values,
+        sampleSize: stats.count,
+        mean: stats.mean,
+        standardDeviation: stats.stdDev,
+      };
+    })
+    .filter((group): group is NonNullable<typeof group> => group !== null);
+
+  const groupCount = groups.length;
+  if (groupCount < 3) return null;
+
+  const totalSampleSize = groups.reduce(
+    (sum, group) => sum + group.sampleSize,
+    0
+  );
+  const betweenGroupsDF = groupCount - 1;
+  const withinGroupsDF = totalSampleSize - groupCount;
+  const totalDF = totalSampleSize - 1;
+
+  if (withinGroupsDF <= 0) return null;
+
+  const allValues = groups.flatMap((group) => group.values);
+  const grandMean =
+    allValues.reduce((sum, value) => sum + value, 0) / totalSampleSize;
+  const betweenGroupsSS = groups.reduce(
+    (sum, group) =>
+      sum + group.sampleSize * (group.mean - grandMean) ** 2,
+    0
+  );
+  const withinGroupsSS = groups.reduce(
+    (sum, group) =>
+      sum +
+      group.values.reduce(
+        (innerSum, value) => innerSum + (value - group.mean) ** 2,
+        0
+      ),
+    0
+  );
+  const totalSS = allValues.reduce(
+    (sum, value) => sum + (value - grandMean) ** 2,
+    0
+  );
+
+  if (withinGroupsSS === 0) return null;
+
+  const meanSquareBetween = betweenGroupsSS / betweenGroupsDF;
+  const meanSquareWithin = withinGroupsSS / withinGroupsDF;
+  const fStatistic = meanSquareBetween / meanSquareWithin;
+  const pValue = approximateUpperTailFPValue(
+    fStatistic,
+    betweenGroupsDF,
+    withinGroupsDF
+  );
+
+  if (!Number.isFinite(pValue)) return null;
+
+  return {
+    result: {
+      groupCount,
+      totalSampleSize,
+      betweenGroupsSS,
+      withinGroupsSS,
+      totalSS,
+      betweenGroupsDF,
+      withinGroupsDF,
+      totalDF,
+      meanSquareBetween,
+      meanSquareWithin,
+      fStatistic,
+      pValue,
+      significant: pValue < ANOVA_ALPHA,
+    },
+    groups: groups.map(
+      ({ seriesId, seriesName, sampleSize, mean, standardDeviation }) => ({
+        seriesId,
+        seriesName,
+        sampleSize,
+        mean,
+        standardDeviation,
+      })
+    ),
+  };
+};
+
+const getAnovaBadge = (result: AnovaResult) =>
+  result.significant
+    ? "🟢 Diferencias significativas detectadas"
+    : "⚪ No se detectaron diferencias significativas";
+
+const getAnovaInterpretation = (result: AnovaResult) =>
+  result.significant
+    ? "Al menos una media difiere significativamente del resto."
+    : "No se detectan diferencias estadísticamente significativas entre las medias.";
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -3051,6 +3214,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [selectedTTestSeriesB, setSelectedTTestSeriesB] = useState<
     string | null
   >(null);
+  const [showAnova, setShowAnova] = useState(false);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -3906,8 +4070,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     if (tTestSeriesA.id === tTestSeriesB.id) return null;
     return calculateIndependentTTest(tTestSeriesA, tTestSeriesB);
   }, [tTestSeriesA, tTestSeriesB]);
+  const anovaAnalysis = useMemo(
+    () => calculateOneWayAnova(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
+  const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const overlayMathYValues = useMemo(
     () => [
       ...visibleDerivativeCurves.flatMap((curve) =>
@@ -4503,6 +4672,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showBoxPlot ||
     showNormality ||
     showTTest ||
+    showAnova ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -5842,6 +6012,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           ))}
                         </select>
                       </div>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForAnova
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">Mostrar ANOVA</span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showAnova}
+                            onChange={(e) => setShowAnova(e.target.checked)}
+                            disabled={!hasEnoughSeriesForAnova}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -7266,6 +7457,105 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         {tTestSeriesA?.id === tTestSeriesB?.id
                           ? "Seleccione dos series distintas para comparar."
                           : "Resultado no disponible para las series seleccionadas."}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showAnova && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🧪 ANOVA</p>
+                    {!hasEnoughSeriesForAnova ? (
+                      <p className={emptyState}>
+                        Se requieren al menos tres series experimentales
+                        visibles para ejecutar ANOVA.
+                      </p>
+                    ) : anovaAnalysis ? (
+                      <>
+                        <div className={contentPanel}>
+                          <p>
+                            <span className="font-semibold">
+                              Número de grupos:
+                            </span>{" "}
+                            {anovaAnalysis.result.groupCount}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">N total:</span>{" "}
+                            {anovaAnalysis.result.totalSampleSize}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">SS Between:</span>{" "}
+                            {formatExperimentalStat(
+                              anovaAnalysis.result.betweenGroupsSS
+                            )}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">SS Within:</span>{" "}
+                            {formatExperimentalStat(
+                              anovaAnalysis.result.withinGroupsSS
+                            )}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">SS Total:</span>{" "}
+                            {formatExperimentalStat(anovaAnalysis.result.totalSS)}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">DF Between:</span>{" "}
+                            {anovaAnalysis.result.betweenGroupsDF}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">DF Within:</span>{" "}
+                            {anovaAnalysis.result.withinGroupsDF}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">F:</span>{" "}
+                            {formatExperimentalStat(
+                              anovaAnalysis.result.fStatistic
+                            )}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">p:</span>{" "}
+                            {formatPValue(anovaAnalysis.result.pValue)}
+                          </p>
+
+                          <p className="mt-2 font-semibold">
+                            {getAnovaBadge(anovaAnalysis.result)}
+                          </p>
+                          <p className={`mt-2 text-sm ${emptyState}`}>
+                            {getAnovaInterpretation(anovaAnalysis.result)}
+                          </p>
+                          <p className={`mt-2 text-sm ${emptyState}`}>
+                            ANOVA asume independencia, normalidad aproximada y
+                            homogeneidad de varianzas.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+                          {anovaAnalysis.groups.map((group) => (
+                            <div key={group.seriesId} className={contentPanel}>
+                              <p>
+                                <span className="font-semibold">Serie:</span>{" "}
+                                {group.seriesName}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">N:</span>{" "}
+                                {group.sampleSize}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Media:</span>{" "}
+                                {formatExperimentalStat(group.mean)}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">SD:</span>{" "}
+                                {formatExperimentalStat(group.standardDeviation)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <p className={emptyState}>
+                        Resultado no disponible para las series seleccionadas.
                       </p>
                     )}
                   </div>
