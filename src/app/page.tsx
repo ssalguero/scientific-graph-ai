@@ -852,6 +852,144 @@ const calculateCurveRoots = (
   return dedupeRoots(roots);
 };
 
+type ExperimentalStatistics = {
+  seriesId: string;
+  seriesName: string;
+  count: number;
+  meanX: number;
+  meanY: number;
+  medianY: number;
+  minY: number;
+  maxY: number;
+  rangeY: number;
+  varianceY: number;
+  stdDevY: number;
+  coefficientOfVariation: number | null;
+};
+
+type ErrorBarMode = "sd" | "sem" | "ci95";
+
+type ErrorBarSeries = {
+  seriesId: string;
+  seriesName: string;
+  meanX: number;
+  meanY: number;
+  lower: number;
+  upper: number;
+  mode: ErrorBarMode;
+  stdDevY: number;
+  semY: number;
+  ci95Y: number;
+  color: string;
+};
+
+const getStandardError = (stats: ExperimentalStatistics): number =>
+  stats.count > 0 ? stats.stdDevY / Math.sqrt(stats.count) : 0;
+
+const getCi95Margin = (stats: ExperimentalStatistics): number =>
+  1.96 * getStandardError(stats);
+
+const buildErrorBarSeries = (
+  stats: ExperimentalStatistics[],
+  series: ExperimentalSeries[],
+  mode: ErrorBarMode
+): ErrorBarSeries[] => {
+  const colorById = new Map(series.map((item) => [item.id, item.color]));
+
+  return stats.map((stat) => {
+    const semY = getStandardError(stat);
+    const ci95Y = getCi95Margin(stat);
+    const margin =
+      mode === "sd" ? stat.stdDevY : mode === "sem" ? semY : ci95Y;
+
+    return {
+      seriesId: stat.seriesId,
+      seriesName: stat.seriesName,
+      meanX: stat.meanX,
+      meanY: stat.meanY,
+      lower: stat.meanY - margin,
+      upper: stat.meanY + margin,
+      mode,
+      stdDevY: stat.stdDevY,
+      semY,
+      ci95Y,
+      color: colorById.get(stat.seriesId) ?? "#64748b",
+    };
+  });
+};
+
+const getErrorBarModeLabel = (mode: ErrorBarMode) =>
+  mode === "sd" ? "SD" : mode === "sem" ? "SEM" : "IC95%";
+
+const calculateExperimentalStatistics = (
+  series: ExperimentalSeries[]
+): ExperimentalStatistics[] =>
+  series.map((item) => {
+    const values = item.points
+      .map((point) => point.y)
+      .filter((y) => Number.isFinite(y));
+    const xValues = item.points
+      .map((point) => point.x)
+      .filter((x) => Number.isFinite(x));
+    const count = values.length;
+
+    if (count === 0) {
+      return {
+        seriesId: item.id,
+        seriesName: item.name,
+        count: 0,
+        meanX: 0,
+        meanY: 0,
+        medianY: 0,
+        minY: 0,
+        maxY: 0,
+        rangeY: 0,
+        varianceY: 0,
+        stdDevY: 0,
+        coefficientOfVariation: null,
+      };
+    }
+
+    const sorted = [...values].sort((a, b) => a - b);
+    const meanY = values.reduce((sum, value) => sum + value, 0) / count;
+    const meanX =
+      xValues.length > 0
+        ? xValues.reduce((sum, value) => sum + value, 0) / xValues.length
+        : 0;
+    const medianY =
+      count % 2 === 0
+        ? (sorted[count / 2 - 1] + sorted[count / 2]) / 2
+        : sorted[Math.floor(count / 2)];
+    const minY = sorted[0];
+    const maxY = sorted[count - 1];
+    const rangeY = maxY - minY;
+    const varianceY =
+      count > 1
+        ? values.reduce((sum, value) => sum + (value - meanY) ** 2, 0) /
+          (count - 1)
+        : 0;
+    const stdDevY = Math.sqrt(varianceY);
+    const coefficientOfVariation =
+      meanY === 0 ? null : (stdDevY / meanY) * 100;
+
+    return {
+      seriesId: item.id,
+      seriesName: item.name,
+      count,
+      meanX,
+      meanY,
+      medianY,
+      minY,
+      maxY,
+      rangeY,
+      varianceY,
+      stdDevY,
+      coefficientOfVariation,
+    };
+  });
+
+const formatExperimentalStat = (value: number) => value.toFixed(4);
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -1629,6 +1767,134 @@ const computeYAxisDomain = (
   ];
 };
 
+type AxisScaleMode = "linear" | "logX" | "logY" | "logLog";
+
+type ChartScaleSample = { x: number; y: number };
+
+const getAxisScaleModeLabel = (mode: AxisScaleMode): string => {
+  if (mode === "logX") return "Semilog X";
+  if (mode === "logY") return "Semilog Y";
+  if (mode === "logLog") return "Log-Log";
+  return "Lineal";
+};
+
+const usesLogXScale = (mode: AxisScaleMode) =>
+  mode === "logX" || mode === "logLog";
+
+const usesLogYScale = (mode: AxisScaleMode) =>
+  mode === "logY" || mode === "logLog";
+
+const getAxisScaleViolations = (
+  samples: ChartScaleSample[],
+  mode: AxisScaleMode
+) => {
+  const checkLogX = usesLogXScale(mode);
+  const checkLogY = usesLogYScale(mode);
+
+  return {
+    hasNonPositiveX: checkLogX && samples.some((sample) => sample.x <= 0),
+    hasNonPositiveY: checkLogY && samples.some((sample) => sample.y <= 0),
+  };
+};
+
+const getAxisScaleWarnings = (
+  mode: AxisScaleMode,
+  violations: { hasNonPositiveX: boolean; hasNonPositiveY: boolean }
+): string[] => {
+  const warnings: string[] = [];
+
+  if (violations.hasNonPositiveX && violations.hasNonPositiveY) {
+    warnings.push(
+      "Existen valores X o Y ≤ 0 incompatibles con escala logarítmica."
+    );
+    return warnings;
+  }
+
+  if (violations.hasNonPositiveX) {
+    warnings.push(
+      "Existen valores X ≤ 0 que no pueden mostrarse en escala logarítmica."
+    );
+  }
+
+  if (violations.hasNonPositiveY) {
+    warnings.push(
+      "Existen valores Y ≤ 0 que no pueden mostrarse en escala logarítmica."
+    );
+  }
+
+  return warnings;
+};
+
+const clampPositiveLogDomain = (
+  min: number,
+  max: number,
+  fallbackMin = 1e-6
+): [number, number] | undefined => {
+  if (!Number.isFinite(min) || !Number.isFinite(max) || max <= 0) {
+    return undefined;
+  }
+
+  const safeMin = min > 0 ? min : fallbackMin;
+  const safeMax = max > safeMin ? max : safeMin * 10;
+  return [safeMin, safeMax];
+};
+
+const adaptYDomainForLogScale = (
+  domain: [number, number] | undefined
+): [number, number] | undefined => {
+  if (!domain) return undefined;
+  return clampPositiveLogDomain(domain[0], domain[1]);
+};
+
+const collectChartScaleSamples = (
+  chartData: Record<string, number>[],
+  visibleMinX: number,
+  visibleMaxX: number,
+  curveIndices: number[],
+  experimentalSeries: ExperimentalSeries[],
+  extraPoints: { x: number; y: number }[]
+): ChartScaleSample[] => {
+  const samples: ChartScaleSample[] = [];
+
+  for (const point of chartData) {
+    if (point.x < visibleMinX || point.x > visibleMaxX) continue;
+    if (!Number.isFinite(point.x)) continue;
+
+    for (const idx of curveIndices) {
+      const y = point[`y${idx + 1}`];
+      if (typeof y === "number" && Number.isFinite(y)) {
+        samples.push({ x: point.x, y });
+      }
+    }
+  }
+
+  for (const series of experimentalSeries) {
+    for (const point of series.points) {
+      if (
+        point.x >= visibleMinX &&
+        point.x <= visibleMaxX &&
+        Number.isFinite(point.x) &&
+        Number.isFinite(point.y)
+      ) {
+        samples.push({ x: point.x, y: point.y });
+      }
+    }
+  }
+
+  for (const point of extraPoints) {
+    if (
+      point.x >= visibleMinX &&
+      point.x <= visibleMaxX &&
+      Number.isFinite(point.x) &&
+      Number.isFinite(point.y)
+    ) {
+      samples.push({ x: point.x, y: point.y });
+    }
+  }
+
+  return samples;
+};
+
 const formatScaleWarning = (yMetrics: YMetrics): string | null => {
   const { minObservedY, maxObservedY, perCurve } = yMetrics;
 
@@ -1718,6 +1984,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showIntersections, setShowIntersections] = useState(false);
   const [showCriticalPoints, setShowCriticalPoints] = useState(false);
   const [showRoots, setShowRoots] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false);
+  const [showErrorBars, setShowErrorBars] = useState(false);
+  const [errorBarMode, setErrorBarMode] = useState<ErrorBarMode>("sd");
+  const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
   // Curva actualmente seleccionada para los botones de ejemplos
@@ -2488,6 +2758,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => curveRoots.map(({ x, y }) => ({ x, y })),
     [curveRoots]
   );
+  const experimentalStatistics = useMemo(
+    () => calculateExperimentalStatistics(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
+  const errorBarSeries = useMemo(
+    () =>
+      buildErrorBarSeries(
+        experimentalStatistics,
+        visibleExperimentalSeries,
+        errorBarMode
+      ),
+    [experimentalStatistics, visibleExperimentalSeries, errorBarMode]
+  );
+  const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const overlayMathYValues = useMemo(
     () => [
       ...visibleDerivativeCurves.flatMap((curve) =>
@@ -2972,6 +3256,86 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const yAxisDomain = autoScaleY
     ? computeYAxisDomain(displayYMetrics)
     : undefined;
+  const usesLogX = usesLogXScale(axisScaleMode);
+  const usesLogY = usesLogYScale(axisScaleMode);
+  const chartScaleSamples = useMemo(
+    () =>
+      collectChartScaleSamples(
+        chartData,
+        visibleMinX,
+        visibleMaxX,
+        visibleActiveCurves.map((curve) => curve.idx),
+        visibleExperimentalSeries,
+        [
+          ...visibleDerivativeCurves.flatMap((curve) => curve.points),
+          ...visibleIntegralCurves.flatMap((curve) => curve.points),
+          ...regressionCurves.flatMap((curve) => curve.points),
+          ...curveIntersections.map(({ x, y }) => ({ x, y })),
+          ...criticalPoints.map(({ x, y }) => ({ x, y })),
+          ...curveRoots.map(({ x, y }) => ({ x, y })),
+          ...errorBarSeries.flatMap((bar) => [
+            { x: bar.meanX, y: bar.meanY },
+            { x: bar.meanX, y: bar.lower },
+            { x: bar.meanX, y: bar.upper },
+          ]),
+        ]
+      ),
+    [
+      chartData,
+      visibleMinX,
+      visibleMaxX,
+      visibleActiveCurves,
+      visibleExperimentalSeries,
+      visibleDerivativeCurves,
+      visibleIntegralCurves,
+      regressionCurves,
+      curveIntersections,
+      criticalPoints,
+      curveRoots,
+      errorBarSeries,
+    ]
+  );
+  const axisScaleViolations = useMemo(
+    () => getAxisScaleViolations(chartScaleSamples, axisScaleMode),
+    [chartScaleSamples, axisScaleMode]
+  );
+  const axisScaleWarnings = useMemo(
+    () => getAxisScaleWarnings(axisScaleMode, axisScaleViolations),
+    [axisScaleMode, axisScaleViolations]
+  );
+  const xAxisDomain = useMemo((): [number, number] => {
+    if (!usesLogX) {
+      return [visibleMinX, visibleMaxX];
+    }
+
+    const clamped = clampPositiveLogDomain(visibleMinX, visibleMaxX);
+    if (clamped) return clamped;
+
+    const positiveX = chartScaleSamples
+      .filter((sample) => sample.x > 0)
+      .map((sample) => sample.x);
+    if (positiveX.length === 0) {
+      return [1e-6, 1];
+    }
+
+    return [Math.min(...positiveX), Math.max(...positiveX)];
+  }, [usesLogX, visibleMinX, visibleMaxX, chartScaleSamples]);
+  const mathYAxisDomainForChart = useMemo(
+    () =>
+      usesLogY ? adaptYDomainForLogScale(mathYAxisDomain) : mathYAxisDomain,
+    [usesLogY, mathYAxisDomain]
+  );
+  const experimentalYAxisDomainForChart = useMemo(
+    () =>
+      usesLogY
+        ? adaptYDomainForLogScale(experimentalYAxisDomain)
+        : experimentalYAxisDomain,
+    [usesLogY, experimentalYAxisDomain]
+  );
+  const yAxisDomainForChart = useMemo(
+    () => (usesLogY ? adaptYDomainForLogScale(yAxisDomain) : yAxisDomain),
+    [usesLogY, yAxisDomain]
+  );
   const hasChartContent =
     chartData.length > 0 || experimentalSeries.length > 0;
   const hasLegendItems =
@@ -2995,6 +3359,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showIntersections ||
     showCriticalPoints ||
     showRoots ||
+    showStatistics ||
+    showErrorBars ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -3793,6 +4159,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
 
                   <div className={subsectionCard}>
+                    <p className={subsectionHeading}>📐 Escalas</p>
+                    <div>
+                      <label
+                        htmlFor="axis-scale-mode-select"
+                        className={fieldLabel}
+                      >
+                        Escala
+                      </label>
+                      <select
+                        id="axis-scale-mode-select"
+                        value={axisScaleMode}
+                        onChange={(e) =>
+                          setAxisScaleMode(e.target.value as AxisScaleMode)
+                        }
+                        className={inputField}
+                      >
+                        <option value="linear">Lineal</option>
+                        <option value="logX">Semilog X</option>
+                        <option value="logY">Semilog Y</option>
+                        <option value="logLog">Log-Log</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className={subsectionCard}>
                     <p className={subsectionHeading}>📈 Análisis</p>
                     <div className="space-y-3">
                       <div>
@@ -3942,18 +4333,87 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
-                    </div>
-                  </div>
 
-                  <div
-                    className={`${subsectionCard} border-dashed opacity-70`}
-                    aria-hidden
-                  >
-                    <p className={subsectionHeading}>Próximamente</p>
-                    <ul className="space-y-1.5 text-xs text-[var(--app-text-muted)]">
-                      <li>Estadística</li>
-                      <li>Barras de error</li>
-                    </ul>
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar estadísticas
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showStatistics}
+                            onChange={(e) =>
+                              setShowStatistics(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar barras de error
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showErrorBars}
+                            onChange={(e) =>
+                              setShowErrorBars(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <div
+                        className={
+                          !hasVisibleExperimentalSeries || !showErrorBars
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      >
+                        <label
+                          htmlFor="error-bar-mode-select"
+                          className={fieldLabel}
+                        >
+                          Tipo
+                        </label>
+                        <select
+                          id="error-bar-mode-select"
+                          value={errorBarMode}
+                          onChange={(e) =>
+                            setErrorBarMode(e.target.value as ErrorBarMode)
+                          }
+                          disabled={
+                            !hasVisibleExperimentalSeries || !showErrorBars
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <option value="sd">SD</option>
+                          <option value="sem">SEM</option>
+                          <option value="ci95">IC95%</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3962,7 +4422,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
           <section>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <h2 className={`${panelHeading} mb-0`}>📈 Visualización</h2>
+              <div>
+                <h2 className={`${panelHeading} mb-0`}>📈 Visualización</h2>
+                <p className={`${panelHeadingSubtext} mb-0`}>
+                  Escala actual: {getAxisScaleModeLabel(axisScaleMode)}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={resetVisibleRange}
@@ -4160,7 +4625,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <XAxis
                       dataKey="x"
                       type="number"
-                      domain={[visibleMinX, visibleMaxX]}
+                      scale={usesLogX ? "log" : "linear"}
+                      domain={xAxisDomain}
                       allowDataOverflow
                       stroke={chartTheme.axis}
                       tick={{ fill: chartTheme.axis }}
@@ -4171,38 +4637,103 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         <YAxis
                           yAxisId="left"
                           orientation="left"
+                          scale={usesLogY ? "log" : "linear"}
                           stroke={chartTheme.axis}
                           tick={{ fill: chartTheme.axis }}
                           fontSize={14}
-                          domain={mathYAxisDomain}
+                          domain={mathYAxisDomainForChart}
                         />
                         <YAxis
                           yAxisId="right"
                           orientation="right"
+                          scale={usesLogY ? "log" : "linear"}
                           stroke={chartTheme.axis}
                           tick={{ fill: chartTheme.axis }}
                           fontSize={14}
-                          domain={experimentalYAxisDomain}
+                          domain={experimentalYAxisDomainForChart}
                         />
                       </>
                     ) : (
                       <YAxis
+                        scale={usesLogY ? "log" : "linear"}
                         stroke={chartTheme.axis}
                         tick={{ fill: chartTheme.axis }}
                         fontSize={14}
-                        domain={yAxisDomain}
+                        domain={yAxisDomainForChart}
                       />
                     )}
                     <Tooltip
-                      contentStyle={{
-                        borderRadius: "0.5rem",
-                        border: `1px solid ${chartTheme.tooltipBorder}`,
-                        backgroundColor: chartTheme.tooltipBg,
-                        color: chartTheme.tooltipColor,
-                        boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null;
+
+                        const pointPayload = payload[0]?.payload as
+                          | {
+                              __errorBar?: boolean;
+                              seriesName?: string;
+                              meanY?: number;
+                              stdDevY?: number;
+                              semY?: number;
+                              ci95Y?: number;
+                            }
+                          | undefined;
+
+                        if (pointPayload?.__errorBar) {
+                          return (
+                            <div
+                              className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                              style={{
+                                borderColor: chartTheme.tooltipBorder,
+                                backgroundColor: chartTheme.tooltipBg,
+                                color: chartTheme.tooltipColor,
+                              }}
+                            >
+                              <p className="font-semibold">
+                                Serie: {pointPayload.seriesName}
+                              </p>
+                              <p>
+                                Media:{" "}
+                                {formatExperimentalStat(pointPayload.meanY ?? 0)}
+                              </p>
+                              <p>
+                                SD:{" "}
+                                {formatExperimentalStat(
+                                  pointPayload.stdDevY ?? 0
+                                )}
+                              </p>
+                              <p>
+                                SEM:{" "}
+                                {formatExperimentalStat(pointPayload.semY ?? 0)}
+                              </p>
+                              <p>
+                                IC95:{" "}
+                                {formatExperimentalStat(
+                                  pointPayload.ci95Y ?? 0
+                                )}
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div
+                            className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                            style={{
+                              borderColor: chartTheme.tooltipBorder,
+                              backgroundColor: chartTheme.tooltipBg,
+                              color: chartTheme.tooltipColor,
+                            }}
+                          >
+                            {label != null && (
+                              <p className="font-semibold mb-1">{label}</p>
+                            )}
+                            {payload.map((entry) => (
+                              <p key={`${entry.name}-${entry.value}`}>
+                                {entry.name}: {entry.value}
+                              </p>
+                            ))}
+                          </div>
+                        );
                       }}
-                      labelStyle={{ color: chartTheme.tooltipColor }}
-                      itemStyle={{ color: chartTheme.tooltipColor }}
                     />
                     {activeCurves.map((curve) =>
                       hiddenLegendKeys.includes(curveLegendKey(curve.idx)) ? null : (
@@ -4272,6 +4803,50 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                       )
                     )}
+                    {showErrorBars &&
+                      errorBarSeries.map((bar) => (
+                        <Line
+                          key={`error-bar-line-${bar.seriesId}`}
+                          data={[
+                            { x: bar.meanX, y: bar.lower },
+                            { x: bar.meanX, y: bar.upper },
+                          ]}
+                          type="linear"
+                          dataKey="y"
+                          stroke={bar.color}
+                          strokeWidth={2}
+                          dot={false}
+                          activeDot={false}
+                          isAnimationActive={false}
+                          legendType="none"
+                          yAxisId={useDualYAxis ? "right" : undefined}
+                        />
+                      ))}
+                    {showErrorBars &&
+                      errorBarSeries.map((bar) => (
+                        <Scatter
+                          key={`error-bar-mean-${bar.seriesId}`}
+                          name={bar.seriesName}
+                          data={[
+                            {
+                              x: bar.meanX,
+                              y: bar.meanY,
+                              __errorBar: true,
+                              seriesName: bar.seriesName,
+                              meanY: bar.meanY,
+                              stdDevY: bar.stdDevY,
+                              semY: bar.semY,
+                              ci95Y: bar.ci95Y,
+                            },
+                          ]}
+                          dataKey="y"
+                          yAxisId={useDualYAxis ? "right" : undefined}
+                          fill={bar.color}
+                          line={false}
+                          isAnimationActive={false}
+                          r={5}
+                        />
+                      ))}
                     {regressionCurves.map((regression) =>
                       hiddenLegendKeys.includes(
                         regressionLegendKey(regression.id)
@@ -4346,6 +4921,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </div>
             </div>
           </section>
+
+          {axisScaleWarnings.map((warning, index) => (
+            <div key={`axis-scale-warning-${index}`} className={alertWarning}>
+              {warning}
+            </div>
+          ))}
 
           {showMathResultsPanel && (
             <section className={card}>
@@ -4530,6 +5111,112 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     ) : (
                       <p className={emptyState}>
                         No se detectaron raíces en el rango visible.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showStatistics && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      📊 Estadística experimental
+                    </p>
+                    {experimentalStatistics.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {experimentalStatistics.map((stats) => (
+                          <div key={stats.seriesId} className={contentPanel}>
+                            <p>
+                              <span className="font-semibold">Serie:</span>{" "}
+                              {stats.seriesName}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">N:</span>{" "}
+                              {stats.count}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Media:</span>{" "}
+                              {formatExperimentalStat(stats.meanY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Mediana:</span>{" "}
+                              {formatExperimentalStat(stats.medianY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Mínimo:</span>{" "}
+                              {formatExperimentalStat(stats.minY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Máximo:</span>{" "}
+                              {formatExperimentalStat(stats.maxY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Rango:</span>{" "}
+                              {formatExperimentalStat(stats.rangeY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Varianza:</span>{" "}
+                              {formatExperimentalStat(stats.varianceY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">
+                                Desv. estándar:
+                              </span>{" "}
+                              {formatExperimentalStat(stats.stdDevY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">CV:</span>{" "}
+                              {stats.coefficientOfVariation == null
+                                ? "N/A"
+                                : `${formatExperimentalStat(stats.coefficientOfVariation)}%`}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        No hay series experimentales visibles.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showErrorBars && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📉 Barras de error</p>
+                    {errorBarSeries.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {errorBarSeries.map((bar) => (
+                          <div key={bar.seriesId} className={contentPanel}>
+                            <p>
+                              <span className="font-semibold">Serie:</span>{" "}
+                              {bar.seriesName}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Media:</span>{" "}
+                              {formatExperimentalStat(bar.meanY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">SD:</span>{" "}
+                              {formatExperimentalStat(bar.stdDevY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">SEM:</span>{" "}
+                              {formatExperimentalStat(bar.semY)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">IC95:</span>{" "}
+                              {formatExperimentalStat(bar.ci95Y)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Modo activo:</span>{" "}
+                              {getErrorBarModeLabel(bar.mode)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        No hay series experimentales visibles.
                       </p>
                     )}
                   </div>
