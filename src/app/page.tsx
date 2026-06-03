@@ -539,6 +539,346 @@ const expressionsAreEquivalent = (left: string, right: string): boolean =>
   left.trim().replace(/\s+/g, "").toLowerCase() ===
   right.trim().replace(/\s+/g, "").toLowerCase();
 
+type CurveIntersection = {
+  id: string;
+  curveA: string;
+  curveB: string;
+  x: number;
+  y: number;
+};
+
+type CurveIntersectionInput = {
+  idx: number;
+  expression: string;
+};
+
+const INTERSECTION_DEDUP_X = 0.001;
+
+const getChartYValue = (
+  point: Record<string, number>,
+  curveIdx: number
+): number | undefined => {
+  const y = point[`y${curveIdx + 1}`];
+  return typeof y === "number" && Number.isFinite(y) ? y : undefined;
+};
+
+const interpolateIntersectionX = (
+  x0: number,
+  d0: number,
+  x1: number,
+  d1: number
+): number | null => {
+  if (d0 === 0 && d1 === 0) return null;
+  if (d0 === 0) return x0;
+  if (d1 === 0) return x1;
+  if (d0 * d1 > 0) return null;
+  const denominator = d0 - d1;
+  if (denominator === 0) return null;
+  const t = d0 / denominator;
+  return x0 + t * (x1 - x0);
+};
+
+const dedupeIntersections = (items: CurveIntersection[]): CurveIntersection[] => {
+  const deduped: CurveIntersection[] = [];
+
+  for (const item of items) {
+    const isDuplicate = deduped.some(
+      (existing) => Math.abs(existing.x - item.x) < INTERSECTION_DEDUP_X
+    );
+    if (!isDuplicate) {
+      deduped.push(item);
+    }
+  }
+
+  return deduped.sort((a, b) => a.x - b.x);
+};
+
+const calculateCurveIntersections = (
+  chartData: Record<string, number>[],
+  curves: CurveIntersectionInput[],
+  visibleMinX: number,
+  visibleMaxX: number
+): { intersections: CurveIntersection[]; identicalPairMessage: string | null } => {
+  const visiblePoints = chartData.filter(
+    (point) => point.x >= visibleMinX && point.x <= visibleMaxX
+  );
+
+  if (curves.length < 2 || visiblePoints.length < 2) {
+    return { intersections: [], identicalPairMessage: null };
+  }
+
+  const intersections: CurveIntersection[] = [];
+  let identicalPairMessage: string | null = null;
+
+  for (let ai = 0; ai < curves.length; ai++) {
+    for (let bi = ai + 1; bi < curves.length; bi++) {
+      const curveA = curves[ai];
+      const curveB = curves[bi];
+
+      if (expressionsAreEquivalent(curveA.expression, curveB.expression)) {
+        identicalPairMessage =
+          "No se detectan intersecciones discretas entre curvas idénticas.";
+        continue;
+      }
+
+      for (let i = 0; i < visiblePoints.length - 1; i++) {
+        const p0 = visiblePoints[i];
+        const p1 = visiblePoints[i + 1];
+        const yA0 = getChartYValue(p0, curveA.idx);
+        const yA1 = getChartYValue(p1, curveA.idx);
+        const yB0 = getChartYValue(p0, curveB.idx);
+        const yB1 = getChartYValue(p1, curveB.idx);
+
+        if (
+          yA0 === undefined ||
+          yA1 === undefined ||
+          yB0 === undefined ||
+          yB1 === undefined
+        ) {
+          continue;
+        }
+
+        const d0 = yA0 - yB0;
+        const d1 = yA1 - yB1;
+
+        if (d0 === 0 && d1 === 0) {
+          continue;
+        }
+
+        if (d0 * d1 <= 0) {
+          const xIntersection = interpolateIntersectionX(p0.x, d0, p1.x, d1);
+          if (xIntersection === null) continue;
+          if (
+            xIntersection < visibleMinX - 1e-9 ||
+            xIntersection > visibleMaxX + 1e-9
+          ) {
+            continue;
+          }
+
+          const span = p1.x - p0.x;
+          const t = span === 0 ? 0 : (xIntersection - p0.x) / span;
+          const yIntersection = yA0 + t * (yA1 - yA0);
+
+          intersections.push({
+            id: `${curveA.idx}-${curveB.idx}-${xIntersection.toFixed(6)}`,
+            curveA: curveA.expression,
+            curveB: curveB.expression,
+            x: xIntersection,
+            y: yIntersection,
+          });
+        }
+      }
+    }
+  }
+
+  return {
+    intersections: dedupeIntersections(intersections),
+    identicalPairMessage,
+  };
+};
+
+type CriticalPoint = {
+  id: string;
+  curve: string;
+  type: "maximum" | "minimum";
+  x: number;
+  y: number;
+};
+
+const CRITICAL_POINT_DEDUP_X = 0.001;
+
+const dedupeCriticalPoints = (items: CriticalPoint[]): CriticalPoint[] => {
+  const deduped: CriticalPoint[] = [];
+
+  for (const item of items) {
+    const isDuplicate = deduped.some(
+      (existing) =>
+        existing.curve === item.curve &&
+        existing.type === item.type &&
+        Math.abs(existing.x - item.x) < CRITICAL_POINT_DEDUP_X
+    );
+    if (!isDuplicate) {
+      deduped.push(item);
+    }
+  }
+
+  return deduped.sort((a, b) => a.x - b.x);
+};
+
+const calculateCriticalPoints = (
+  chartData: Record<string, number>[],
+  curves: CurveIntersectionInput[],
+  visibleMinX: number,
+  visibleMaxX: number
+): CriticalPoint[] => {
+  const visiblePoints = chartData.filter(
+    (point) => point.x >= visibleMinX && point.x <= visibleMaxX
+  );
+
+  if (curves.length === 0 || visiblePoints.length < 3) {
+    return [];
+  }
+
+  const criticalPoints: CriticalPoint[] = [];
+
+  for (const curve of curves) {
+    for (let i = 1; i < visiblePoints.length - 1; i++) {
+      const pPrev = visiblePoints[i - 1];
+      const pCenter = visiblePoints[i];
+      const pNext = visiblePoints[i + 1];
+
+      const yPrev = getChartYValue(pPrev, curve.idx);
+      const yCenter = getChartYValue(pCenter, curve.idx);
+      const yNext = getChartYValue(pNext, curve.idx);
+
+      if (yPrev === undefined || yCenter === undefined || yNext === undefined) {
+        continue;
+      }
+
+      const slopeBefore = yCenter - yPrev;
+      const slopeAfter = yNext - yCenter;
+
+      if (slopeBefore === 0 && slopeAfter === 0) {
+        continue;
+      }
+
+      let type: CriticalPoint["type"] | null = null;
+      if (slopeBefore > 0 && slopeAfter < 0) {
+        type = "maximum";
+      } else if (slopeBefore < 0 && slopeAfter > 0) {
+        type = "minimum";
+      }
+
+      if (!type) continue;
+
+      criticalPoints.push({
+        id: `${curve.idx}-${type}-${pCenter.x.toFixed(6)}`,
+        curve: curve.expression,
+        type,
+        x: pCenter.x,
+        y: yCenter,
+      });
+    }
+  }
+
+  return dedupeCriticalPoints(criticalPoints);
+};
+
+type CurveRoot = {
+  id: string;
+  curve: string;
+  x: number;
+  y: number;
+};
+
+const ROOT_DEDUP_X = 0.001;
+
+const interpolateRootX = (
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number
+): number | null => {
+  if (y0 === 0 && y1 === 0) return null;
+  if (y0 === 0) return x0;
+  if (y1 === 0) return x1;
+  if (y0 * y1 > 0) return null;
+  const denominator = y1 - y0;
+  if (denominator === 0) return null;
+  return x0 - (y0 * (x1 - x0)) / denominator;
+};
+
+const dedupeRoots = (items: CurveRoot[]): CurveRoot[] => {
+  const deduped: CurveRoot[] = [];
+
+  for (const item of items) {
+    const isDuplicate = deduped.some(
+      (existing) =>
+        existing.curve === item.curve &&
+        Math.abs(existing.x - item.x) < ROOT_DEDUP_X
+    );
+    if (!isDuplicate) {
+      deduped.push(item);
+    }
+  }
+
+  return deduped.sort((a, b) => a.x - b.x);
+};
+
+const calculateCurveRoots = (
+  chartData: Record<string, number>[],
+  curves: CurveIntersectionInput[],
+  visibleMinX: number,
+  visibleMaxX: number
+): CurveRoot[] => {
+  const visiblePoints = chartData.filter(
+    (point) => point.x >= visibleMinX && point.x <= visibleMaxX
+  );
+
+  if (curves.length === 0 || visiblePoints.length < 2) {
+    return [];
+  }
+
+  const roots: CurveRoot[] = [];
+
+  for (const curve of curves) {
+    for (let i = 0; i < visiblePoints.length - 1; i++) {
+      const p0 = visiblePoints[i];
+      const p1 = visiblePoints[i + 1];
+      const y0 = getChartYValue(p0, curve.idx);
+      const y1 = getChartYValue(p1, curve.idx);
+
+      if (y0 === undefined || y1 === undefined) {
+        continue;
+      }
+
+      if (y0 * y1 <= 0) {
+        const xRoot = interpolateRootX(p0.x, y0, p1.x, y1);
+        if (xRoot === null) continue;
+        if (xRoot < visibleMinX - 1e-9 || xRoot > visibleMaxX + 1e-9) {
+          continue;
+        }
+
+        roots.push({
+          id: `${curve.idx}-root-${xRoot.toFixed(6)}`,
+          curve: curve.expression,
+          x: xRoot,
+          y: 0,
+        });
+      }
+    }
+  }
+
+  return dedupeRoots(roots);
+};
+
+type ScatterMarkerProps = {
+  cx?: number;
+  cy?: number;
+};
+
+const renderMaximumMarker = ({ cx, cy }: ScatterMarkerProps) => {
+  if (cx == null || cy == null) return null;
+
+  return (
+    <polygon
+      points={`${cx},${cy - 6} ${cx - 5},${cy + 4} ${cx + 5},${cy + 4}`}
+      fill="var(--app-success)"
+    />
+  );
+};
+
+const renderMinimumMarker = ({ cx, cy }: ScatterMarkerProps) => {
+  if (cx == null || cy == null) return null;
+
+  return (
+    <polygon
+      points={`${cx},${cy + 6} ${cx - 5},${cy - 4} ${cx + 5},${cy - 4}`}
+      fill="var(--app-danger)"
+    />
+  );
+};
+
 const evaluateExpression = (expression: string, scope: { x: number }) =>
   evaluate(normalizeExpressionForMath(expression), scope);
 
@@ -1375,6 +1715,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [regressionModel, setRegressionModel] = useState<RegressionModel>("none");
   const [showDerivative, setShowDerivative] = useState(false);
   const [showIntegral, setShowIntegral] = useState(false);
+  const [showIntersections, setShowIntersections] = useState(false);
+  const [showCriticalPoints, setShowCriticalPoints] = useState(false);
+  const [showRoots, setShowRoots] = useState(false);
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
   // Curva actualmente seleccionada para los botones de ejemplos
@@ -2072,6 +2415,79 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           item.area !== null
       );
   }, [showIntegral, visibleActiveCurves, visibleMinX, visibleMaxX]);
+  const intersectionAnalysis = useMemo(() => {
+    if (!showIntersections || chartData.length === 0) {
+      return { intersections: [], identicalPairMessage: null };
+    }
+
+    return calculateCurveIntersections(
+      chartData,
+      visibleActiveCurves,
+      visibleMinX,
+      visibleMaxX
+    );
+  }, [
+    showIntersections,
+    chartData,
+    visibleActiveCurves,
+    visibleMinX,
+    visibleMaxX,
+  ]);
+  const curveIntersections = intersectionAnalysis.intersections;
+  const identicalCurvesIntersectionMessage =
+    intersectionAnalysis.identicalPairMessage;
+  const intersectionChartPoints = useMemo(
+    () => curveIntersections.map(({ x, y }) => ({ x, y })),
+    [curveIntersections]
+  );
+  const criticalPoints = useMemo(() => {
+    if (!showCriticalPoints || chartData.length === 0) {
+      return [];
+    }
+
+    return calculateCriticalPoints(
+      chartData,
+      visibleActiveCurves,
+      visibleMinX,
+      visibleMaxX
+    );
+  }, [
+    showCriticalPoints,
+    chartData,
+    visibleActiveCurves,
+    visibleMinX,
+    visibleMaxX,
+  ]);
+  const criticalMaxChartPoints = useMemo(
+    () =>
+      criticalPoints
+        .filter((point) => point.type === "maximum")
+        .map(({ x, y }) => ({ x, y })),
+    [criticalPoints]
+  );
+  const criticalMinChartPoints = useMemo(
+    () =>
+      criticalPoints
+        .filter((point) => point.type === "minimum")
+        .map(({ x, y }) => ({ x, y })),
+    [criticalPoints]
+  );
+  const curveRoots = useMemo(() => {
+    if (!showRoots || chartData.length === 0) {
+      return [];
+    }
+
+    return calculateCurveRoots(
+      chartData,
+      visibleActiveCurves,
+      visibleMinX,
+      visibleMaxX
+    );
+  }, [showRoots, chartData, visibleActiveCurves, visibleMinX, visibleMaxX]);
+  const rootChartPoints = useMemo(
+    () => curveRoots.map(({ x, y }) => ({ x, y })),
+    [curveRoots]
+  );
   const overlayMathYValues = useMemo(
     () => [
       ...visibleDerivativeCurves.flatMap((curve) =>
@@ -2576,6 +2992,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     hasMathResults ||
     showDerivative ||
     showIntegral ||
+    showIntersections ||
+    showCriticalPoints ||
+    showRoots ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -3443,6 +3862,86 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          visibleActiveCurves.length < 2 || chartData.length === 0
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar intersecciones
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showIntersections}
+                            onChange={(e) =>
+                              setShowIntersections(e.target.checked)
+                            }
+                            disabled={
+                              visibleActiveCurves.length < 2 ||
+                              chartData.length === 0
+                            }
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          visibleActiveCurves.length === 0 || chartData.length === 0
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar máximos y mínimos
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showCriticalPoints}
+                            onChange={(e) =>
+                              setShowCriticalPoints(e.target.checked)
+                            }
+                            disabled={
+                              visibleActiveCurves.length === 0 ||
+                              chartData.length === 0
+                            }
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          visibleActiveCurves.length === 0 || chartData.length === 0
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">Mostrar raíces</span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showRoots}
+                            onChange={(e) => setShowRoots(e.target.checked)}
+                            disabled={
+                              visibleActiveCurves.length === 0 ||
+                              chartData.length === 0
+                            }
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
                     </div>
                   </div>
 
@@ -3452,8 +3951,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   >
                     <p className={subsectionHeading}>Próximamente</p>
                     <ul className="space-y-1.5 text-xs text-[var(--app-text-muted)]">
-                      <li>Intersecciones</li>
-                      <li>Máximos y mínimos</li>
                       <li>Estadística</li>
                       <li>Barras de error</li>
                     </ul>
@@ -3800,6 +4297,50 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                       )
                     )}
+                    {showIntersections && intersectionChartPoints.length > 0 && (
+                      <Scatter
+                        name="Intersección"
+                        data={intersectionChartPoints}
+                        dataKey="y"
+                        fill="var(--app-accent)"
+                        line={false}
+                        isAnimationActive={false}
+                        r={6}
+                      />
+                    )}
+                    {showCriticalPoints && criticalMaxChartPoints.length > 0 && (
+                      <Scatter
+                        name="Máximo local"
+                        data={criticalMaxChartPoints}
+                        dataKey="y"
+                        fill="var(--app-success)"
+                        line={false}
+                        isAnimationActive={false}
+                        shape={renderMaximumMarker}
+                      />
+                    )}
+                    {showCriticalPoints && criticalMinChartPoints.length > 0 && (
+                      <Scatter
+                        name="Mínimo local"
+                        data={criticalMinChartPoints}
+                        dataKey="y"
+                        fill="var(--app-danger)"
+                        line={false}
+                        isAnimationActive={false}
+                        shape={renderMinimumMarker}
+                      />
+                    )}
+                    {showRoots && rootChartPoints.length > 0 && (
+                      <Scatter
+                        name="Raíz"
+                        data={rootChartPoints}
+                        dataKey="y"
+                        fill="var(--app-warning)"
+                        line={false}
+                        isAnimationActive={false}
+                        r={6}
+                      />
+                    )}
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -3894,6 +4435,101 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     ) : (
                       <p className={emptyState}>
                         No hay datos suficientes para calcular áreas.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showIntersections && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>✳ Intersecciones</p>
+                    {curveIntersections.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                        {curveIntersections.map((intersection) => (
+                          <div key={intersection.id} className={contentPanel}>
+                            <p>
+                              <span className="font-semibold">Curvas:</span>{" "}
+                              <span className="font-mono">
+                                {intersection.curveA} ↔ {intersection.curveB}
+                              </span>
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">x =</span>{" "}
+                              {intersection.x.toFixed(4)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">y =</span>{" "}
+                              {intersection.y.toFixed(4)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        {identicalCurvesIntersectionMessage ??
+                          "No se encontraron intersecciones en el rango visible."}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showCriticalPoints && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📍 Puntos críticos</p>
+                    {criticalPoints.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                        {criticalPoints.map((point) => (
+                          <div key={point.id} className={contentPanel}>
+                            <p>
+                              <span className="font-semibold">Curva:</span>{" "}
+                              <span className="font-mono">{point.curve}</span>
+                            </p>
+                            <p className="mt-1 font-semibold">
+                              {point.type === "maximum"
+                                ? "Máximo local"
+                                : "Mínimo local"}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">x =</span>{" "}
+                              {point.x.toFixed(4)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">y =</span>{" "}
+                              {point.y.toFixed(4)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        No se detectaron puntos críticos en el rango visible.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showRoots && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>⚫ Raíces</p>
+                    {curveRoots.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                        {curveRoots.map((root) => (
+                          <div key={root.id} className={contentPanel}>
+                            <p>
+                              <span className="font-semibold">Curva:</span>{" "}
+                              <span className="font-mono">{root.curve}</span>
+                            </p>
+                            <p className="mt-1 font-semibold">Raíz:</p>
+                            <p className="mt-1">
+                              <span className="font-semibold">x =</span>{" "}
+                              {root.x.toFixed(4)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        No se detectaron raíces en el rango visible.
                       </p>
                     )}
                   </div>
