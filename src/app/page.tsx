@@ -1208,6 +1208,140 @@ const buildCorrelationAnalysis = (
   return { results, unavailablePairs, matrix };
 };
 
+type OutlierMethod = "iqr" | "zscore";
+
+type ExperimentalOutlier = {
+  id: string;
+  seriesId: string;
+  seriesName: string;
+  x: number;
+  y: number;
+  method: OutlierMethod;
+  score: number;
+};
+
+const getQuantile = (sortedValues: number[], quantile: number): number => {
+  if (sortedValues.length === 0) return 0;
+
+  const position = (sortedValues.length - 1) * quantile;
+  const lowerIndex = Math.floor(position);
+  const upperIndex = Math.ceil(position);
+
+  if (lowerIndex === upperIndex) return sortedValues[lowerIndex];
+
+  const weight = position - lowerIndex;
+  return (
+    sortedValues[lowerIndex] * (1 - weight) +
+    sortedValues[upperIndex] * weight
+  );
+};
+
+const calculateIQROutliers = (
+  series: ExperimentalSeries
+): ExperimentalOutlier[] => {
+  const finitePoints = series.points.filter(
+    (point) => Number.isFinite(point.x) && Number.isFinite(point.y)
+  );
+
+  if (finitePoints.length === 0) return [];
+
+  const sortedY = [...finitePoints.map((point) => point.y)].sort(
+    (left, right) => left - right
+  );
+  const q1 = getQuantile(sortedY, 0.25);
+  const q3 = getQuantile(sortedY, 0.75);
+  const iqr = q3 - q1;
+
+  if (iqr === 0) return [];
+
+  const lowerBound = q1 - 1.5 * iqr;
+  const upperBound = q3 + 1.5 * iqr;
+
+  return finitePoints.reduce<ExperimentalOutlier[]>((outliers, point, index) => {
+    if (point.y >= lowerBound && point.y <= upperBound) return outliers;
+
+    const score =
+      point.y > upperBound
+        ? (point.y - upperBound) / iqr
+        : (lowerBound - point.y) / iqr;
+
+    outliers.push({
+      id: `${series.id}-iqr-${index}-${point.x}-${point.y}`,
+      seriesId: series.id,
+      seriesName: series.name,
+      x: point.x,
+      y: point.y,
+      method: "iqr",
+      score,
+    });
+
+    return outliers;
+  }, []);
+};
+
+const calculateZScoreOutliers = (
+  series: ExperimentalSeries
+): ExperimentalOutlier[] => {
+  const finitePoints = series.points.filter(
+    (point) => Number.isFinite(point.x) && Number.isFinite(point.y)
+  );
+  const values = finitePoints.map((point) => point.y);
+  const count = values.length;
+
+  if (count < 2) return [];
+
+  const mean = values.reduce((sum, value) => sum + value, 0) / count;
+  const variance =
+    count > 1
+      ? values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (count - 1)
+      : 0;
+  const stdDev = Math.sqrt(variance);
+
+  if (stdDev === 0) return [];
+
+  return finitePoints.reduce<ExperimentalOutlier[]>((outliers, point, index) => {
+    const zScore = (point.y - mean) / stdDev;
+    if (Math.abs(zScore) <= 3) return outliers;
+
+    outliers.push({
+      id: `${series.id}-zscore-${index}-${point.x}-${point.y}`,
+      seriesId: series.id,
+      seriesName: series.name,
+      x: point.x,
+      y: point.y,
+      method: "zscore",
+      score: zScore,
+    });
+
+    return outliers;
+  }, []);
+};
+
+const detectExperimentalOutliers = (
+  series: ExperimentalSeries[],
+  method: OutlierMethod
+): ExperimentalOutlier[] =>
+  series.flatMap((item) =>
+    method === "iqr"
+      ? calculateIQROutliers(item)
+      : calculateZScoreOutliers(item)
+  );
+
+const summarizeOutliersBySeries = (
+  series: ExperimentalSeries[],
+  outliers: ExperimentalOutlier[]
+) =>
+  series.map((item) => ({
+    seriesId: item.id,
+    seriesName: item.name,
+    count: outliers.filter((outlier) => outlier.seriesId === item.id).length,
+  }));
+
+const getOutlierMethodLabel = (method: OutlierMethod) =>
+  method === "iqr" ? "IQR" : "Z-Score";
+
+const formatOutlierScore = (score: number) => score.toFixed(4);
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -2208,6 +2342,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showCorrelation, setShowCorrelation] = useState(false);
   const [correlationMethod, setCorrelationMethod] =
     useState<CorrelationMethod>("pearson");
+  const [showOutliers, setShowOutliers] = useState(false);
+  const [outlierMethod, setOutlierMethod] = useState<OutlierMethod>("iqr");
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -3002,6 +3138,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         : { results: [], unavailablePairs: [], matrix: [] },
     [visibleExperimentalSeries, correlationMethod]
   );
+  const experimentalOutliers = useMemo(
+    () =>
+      detectExperimentalOutliers(visibleExperimentalSeries, outlierMethod),
+    [visibleExperimentalSeries, outlierMethod]
+  );
+  const outlierSummaryBySeries = useMemo(
+    () =>
+      summarizeOutliersBySeries(
+        visibleExperimentalSeries,
+        experimentalOutliers
+      ),
+    [visibleExperimentalSeries, experimentalOutliers]
+  );
+  const outlierChartPoints = useMemo(
+    () =>
+      experimentalOutliers.map((outlier) => ({
+        x: outlier.x,
+        y: outlier.y,
+        __outlier: true as const,
+        seriesName: outlier.seriesName,
+        method: outlier.method,
+        score: outlier.score,
+      })),
+    [experimentalOutliers]
+  );
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
   const overlayMathYValues = useMemo(
@@ -3594,6 +3755,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showStatistics ||
     showErrorBars ||
     showCorrelation ||
+    showOutliers ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -4702,6 +4864,58 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <option value="spearman">Spearman</option>
                         </select>
                       </div>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar outliers
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showOutliers}
+                            onChange={(e) => setShowOutliers(e.target.checked)}
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <div
+                        className={
+                          !hasVisibleExperimentalSeries || !showOutliers
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      >
+                        <label
+                          htmlFor="outlier-method-select"
+                          className={fieldLabel}
+                        >
+                          Método
+                        </label>
+                        <select
+                          id="outlier-method-select"
+                          value={outlierMethod}
+                          onChange={(e) =>
+                            setOutlierMethod(e.target.value as OutlierMethod)
+                          }
+                          disabled={
+                            !hasVisibleExperimentalSeries || !showOutliers
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <option value="iqr">IQR</option>
+                          <option value="zscore">Z-Score</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -4958,11 +5172,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         const pointPayload = payload[0]?.payload as
                           | {
                               __errorBar?: boolean;
+                              __outlier?: boolean;
                               seriesName?: string;
                               meanY?: number;
                               stdDevY?: number;
                               semY?: number;
                               ci95Y?: number;
+                              method?: OutlierMethod;
+                              score?: number;
                             }
                           | undefined;
 
@@ -4998,6 +5215,41 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 {formatExperimentalStat(
                                   pointPayload.ci95Y ?? 0
                                 )}
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        if (pointPayload?.__outlier) {
+                          return (
+                            <div
+                              className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                              style={{
+                                borderColor: chartTheme.tooltipBorder,
+                                backgroundColor: chartTheme.tooltipBg,
+                                color: chartTheme.tooltipColor,
+                              }}
+                            >
+                              <p className="font-semibold">Outlier</p>
+                              <p>
+                                Serie: {pointPayload.seriesName}
+                              </p>
+                              <p>X: {formatExperimentalStat(label as number)}</p>
+                              <p>
+                                Y:{" "}
+                                {formatExperimentalStat(
+                                  Number(payload[0]?.value ?? 0)
+                                )}
+                              </p>
+                              <p>
+                                Método:{" "}
+                                {getOutlierMethodLabel(
+                                  pointPayload.method ?? outlierMethod
+                                )}
+                              </p>
+                              <p>
+                                Score:{" "}
+                                {formatOutlierScore(pointPayload.score ?? 0)}
                               </p>
                             </div>
                           );
@@ -5203,6 +5455,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         line={false}
                         isAnimationActive={false}
                         r={6}
+                      />
+                    )}
+                    {showOutliers && outlierChartPoints.length > 0 && (
+                      <Scatter
+                        name="Outlier"
+                        data={outlierChartPoints}
+                        dataKey="y"
+                        yAxisId={useDualYAxis ? "right" : undefined}
+                        fill="#dc2626"
+                        stroke="#ffffff"
+                        strokeWidth={2}
+                        line={false}
+                        isAnimationActive={false}
+                        r={7}
                       />
                     )}
                   </ComposedChart>
@@ -5641,6 +5907,75 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               calcular correlaciones.
                             </p>
                           )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {showOutliers && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🚨 Outliers</p>
+                    {!hasVisibleExperimentalSeries ? (
+                      <p className={emptyState}>
+                        No hay series experimentales visibles.
+                      </p>
+                    ) : (
+                      <>
+                        {outlierSummaryBySeries.length > 0 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                            {outlierSummaryBySeries.map((summary) => (
+                              <div
+                                key={summary.seriesId}
+                                className={contentPanel}
+                              >
+                                <p>
+                                  <span className="font-semibold">Serie:</span>{" "}
+                                  {summary.seriesName}
+                                </p>
+                                <p className="mt-1">
+                                  <span className="font-semibold">
+                                    Outliers detectados:
+                                  </span>{" "}
+                                  {summary.count}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {experimentalOutliers.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {experimentalOutliers.map((outlier) => (
+                              <div key={outlier.id} className={contentPanel}>
+                                <p>
+                                  <span className="font-semibold">Serie:</span>{" "}
+                                  {outlier.seriesName}
+                                </p>
+                                <p className="mt-1">
+                                  <span className="font-semibold">X:</span>{" "}
+                                  {formatExperimentalStat(outlier.x)}
+                                </p>
+                                <p className="mt-1">
+                                  <span className="font-semibold">Y:</span>{" "}
+                                  {formatExperimentalStat(outlier.y)}
+                                </p>
+                                <p className="mt-1">
+                                  <span className="font-semibold">Método:</span>{" "}
+                                  {getOutlierMethodLabel(outlier.method)}
+                                </p>
+                                <p className="mt-1">
+                                  <span className="font-semibold">Score:</span>{" "}
+                                  {formatOutlierScore(outlier.score)}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className={emptyState}>
+                            No se detectaron valores atípicos con el método
+                            seleccionado.
+                          </p>
+                        )}
                       </>
                     )}
                   </div>
