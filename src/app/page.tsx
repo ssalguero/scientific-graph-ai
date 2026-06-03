@@ -5209,16 +5209,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [experimentalImportError, setExperimentalImportError] = useState<
     string | null
   >(null);
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-    if (typeof window === "undefined") return "light";
-    try {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY);
-      if (stored === "light" || stored === "dark") return stored;
-    } catch {
-      // ignore storage errors
-    }
-    return "light";
-  });
+  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
+  const [themeLoaded, setThemeLoaded] = useState(false);
 
   useEffect(() => {
     const visible = ANALYSIS_INSPECTOR_CATEGORIES.filter((category) =>
@@ -6917,11 +6909,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
   useEffect(() => {
     try {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      if (savedTheme === "dark") {
+        setThemeMode("dark");
+      }
+    } catch {
+      // ignore storage errors
+    }
+    setThemeLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!themeLoaded) return;
+
+    try {
       localStorage.setItem(THEME_STORAGE_KEY, themeMode);
     } catch {
       // ignore storage errors
     }
-  }, [themeMode]);
+  }, [themeMode, themeLoaded]);
 
   useEffect(() => {
     loadGraphs();
