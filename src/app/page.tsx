@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type ReactNode,
 } from "react";
 import { toPng, toSvg } from "html-to-image";
 import { supabase } from "../lib/supabase";
@@ -120,6 +121,56 @@ const actionBarGroup =
   "flex flex-wrap items-center gap-2";
 const actionBarDivider =
   "hidden sm:block h-8 w-px shrink-0 bg-[var(--app-border)]";
+const sidebarDivider = "border-t border-[var(--app-border)] my-2";
+const sidebarNavItem =
+  "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm text-[var(--app-text)] transition-all duration-200";
+const sidebarSoonBadge =
+  "inline-flex shrink-0 items-center rounded-full border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]";
+
+type DashboardSectionProps = {
+  title: string;
+  icon: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+};
+
+function DashboardSection({
+  title,
+  icon,
+  defaultOpen = false,
+  children,
+}: DashboardSectionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className={sidebarDivider}>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center gap-2 py-1.5 text-left text-sm font-semibold text-[var(--app-heading)] transition-all duration-200"
+        aria-expanded={open}
+      >
+        <span
+          className="w-3 text-xs text-[var(--app-text-muted)]"
+          aria-hidden
+        >
+          {open ? "▼" : "▶"}
+        </span>
+        <span aria-hidden>{icon}</span>
+        <span>{title}</span>
+      </button>
+      <div
+        className={`grid transition-all duration-200 ${
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="space-y-1 pb-1 pt-1">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const getChartExportFileName = (
   title: string,
@@ -2670,80 +2721,119 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
   return (
     <main className={`flex min-h-screen flex-col lg:flex-row ${getAppShell(themeMode)}`}>
-      <aside className="w-full lg:w-[280px] lg:min-h-screen shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col transition-colors duration-200">
-        <div className="p-5 border-b border-[var(--app-border)]">
-          <h2 className="text-xl font-semibold text-[var(--app-heading)] tracking-tight">
-            Gráficos
-          </h2>
-          <p className="text-base text-[var(--app-text-muted)] mt-1">
-            {graphs.length}{" "}
-            {graphs.length === 1 ? "gráfico guardado" : "gráficos guardados"}
-          </p>
+      <aside className="w-full lg:w-[280px] lg:max-w-[300px] lg:min-h-screen shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col transition-colors duration-200">
+        <div className="px-4 py-3 border-b border-[var(--app-border)]">
+          <h2 className={`${panelHeading} text-base`}>📊 Dashboard Científico</h2>
         </div>
 
-        <div className="p-5">
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
           <button
             onClick={newGraph}
-            className={`w-full bg-emerald-600 hover:bg-emerald-700 ${btnPrimary} py-3.5 text-base font-semibold mb-4`}
+            className={`w-full bg-emerald-600 hover:bg-emerald-700 ${btnPrimary} text-sm font-semibold`}
           >
             + Nuevo gráfico
           </button>
 
-          <div
-            className="mb-6 flex items-center justify-between gap-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-2.5 transition-colors duration-200"
-            role="group"
-            aria-label="Tema de la aplicación"
-          >
-            <span
-              className={`text-sm font-medium transition-colors duration-200 ${
-                themeMode === "light"
-                  ? "text-[var(--app-heading)]"
-                  : "text-[var(--app-text-muted)]"
-              }`}
-            >
-              ☀ Claro
-            </span>
-            <label className={`${toggleShell} cursor-pointer`}>
-              <input
-                type="checkbox"
-                className={toggleInput}
-                checked={themeMode === "dark"}
-                onChange={(e) =>
-                  setThemeMode(e.target.checked ? "dark" : "light")
-                }
-                aria-label="Alternar tema oscuro"
-              />
-              <span className={toggleTrackBg} aria-hidden />
-              <span className={toggleThumb} aria-hidden />
-            </label>
-            <span
-              className={`text-sm font-medium transition-colors duration-200 ${
-                themeMode === "dark"
-                  ? "text-[var(--app-heading)]"
-                  : "text-[var(--app-text-muted)]"
-              }`}
-            >
-              🌙 Oscuro
-            </span>
+          <div className={sidebarDivider} />
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+              📈 Mis gráficos
+            </p>
+            <p className="text-xs text-[var(--app-text-muted)]">
+              {graphs.length}{" "}
+              {graphs.length === 1 ? "gráfico guardado" : "gráficos guardados"}
+            </p>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
+              {graphs.map((graph) => (
+                <button
+                  key={graph.id}
+                  onClick={() => loadGraph(graph)}
+                  className={`w-full text-left border rounded-lg px-2.5 py-2 text-sm transition-all duration-200 ${
+                    selectedGraphId === graph.id
+                      ? "bg-[var(--app-accent)]/10 border-[var(--app-accent)] text-[var(--app-heading)] shadow-sm ring-1 ring-[var(--app-accent)]/25 font-medium"
+                      : "border-[var(--app-border)] text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]"
+                  }`}
+                >
+                  <span className="line-clamp-2">
+                    {getGraphDisplayTitle(graph)}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
-            {graphs.map((graph) => (
-              <button
-                key={graph.id}
-                onClick={() => loadGraph(graph)}
-                className={`w-full text-left border rounded-lg px-3 py-3.5 text-base transition-colors duration-200 ${
-                  selectedGraphId === graph.id
-                    ? "bg-[var(--app-accent)]/10 border-[var(--app-accent)] text-[var(--app-heading)] shadow-sm ring-1 ring-[var(--app-accent)]/25 font-medium"
-                    : "border-[var(--app-border)] text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)] hover:shadow-sm"
-                }`}
-              >
-                <span className="line-clamp-2">
-                  {getGraphDisplayTitle(graph)}
-                </span>
-              </button>
-            ))}
-          </div>
+          <DashboardSection title="Herramientas" icon="🧠" defaultOpen={false}>
+            <div
+              className={`${sidebarNavItem} opacity-60 cursor-not-allowed`}
+              aria-disabled
+            >
+              <span>🧠 Asistente IA</span>
+              <span className={sidebarSoonBadge}>Soon</span>
+            </div>
+            <div
+              className={`${sidebarNavItem} opacity-60 cursor-not-allowed`}
+              aria-disabled
+            >
+              <span>📄 Reportes</span>
+              <span className="text-xs text-[var(--app-text-muted)]">
+                Próximamente
+              </span>
+            </div>
+          </DashboardSection>
+
+          <DashboardSection title="Recursos" icon="📚" defaultOpen={false}>
+            <button
+              type="button"
+              onClick={() => setControlPanelTab("library")}
+              className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left`}
+            >
+              Biblioteca de funciones
+            </button>
+            <div
+              className={`${sidebarNavItem} opacity-60 cursor-not-allowed`}
+              aria-disabled
+            >
+              <span>🕘 Historial</span>
+              <span className="text-xs text-[var(--app-text-muted)]">
+                Próximamente
+              </span>
+            </div>
+          </DashboardSection>
+
+          <DashboardSection title="Sistema" icon="⚙" defaultOpen>
+            <div
+              className={`${contentPanel} flex items-center justify-between gap-2 py-2`}
+            >
+              <span className="text-sm text-[var(--app-text)]">Tema oscuro</span>
+              <label className={`${toggleShell} cursor-pointer shrink-0`}>
+                <input
+                  type="checkbox"
+                  className={toggleInput}
+                  checked={themeMode === "dark"}
+                  onChange={(e) =>
+                    setThemeMode(e.target.checked ? "dark" : "light")
+                  }
+                  aria-label="Alternar tema oscuro"
+                />
+                <span className={toggleTrackBg} aria-hidden />
+                <span className={toggleThumb} aria-hidden />
+              </label>
+            </div>
+            <div className="flex items-center justify-between gap-2 px-2.5 py-1 text-xs text-[var(--app-text-muted)]">
+              <span>☀ Claro</span>
+              <span>🌙 Oscuro</span>
+            </div>
+            <div
+              className={`${sidebarNavItem} opacity-60 cursor-not-allowed`}
+              aria-disabled
+            >
+              <span>Configuración</span>
+              <span className="text-xs text-[var(--app-text-muted)]">
+                Próximamente
+              </span>
+            </div>
+          </DashboardSection>
         </div>
       </aside>
 
@@ -2757,6 +2847,43 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               Visualiza, guarda y gestiona tus funciones matemáticas
             </p>
           </header>
+
+          {!isEditing && (
+            <>
+              <section className={card}>
+                <h2 className={panelHeading}>Bienvenido a Scientific Graph</h2>
+                <ul className="mt-3 space-y-2 text-sm text-[var(--app-text)]">
+                  <li>• Crear gráficos matemáticos</li>
+                  <li>• Analizar datos experimentales</li>
+                  <li>• Ajustar regresiones</li>
+                  <li>• Calcular derivadas</li>
+                  <li>• Calcular integrales</li>
+                </ul>
+              </section>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                {(
+                  [
+                    ["📈", "Funciones"],
+                    ["📊", "Datos"],
+                    ["📐", "Análisis"],
+                    ["📄", "Exportación"],
+                  ] as const
+                ).map(([icon, label]) => (
+                  <div
+                    key={label}
+                    className={`${contentPanel} flex items-center gap-2 opacity-60 cursor-not-allowed`}
+                    aria-disabled
+                  >
+                    <span aria-hidden>{icon}</span>
+                    <span className="font-medium text-[var(--app-heading)]">
+                      {label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           <section>
             <h2 className={sectionLabel}>Panel de control</h2>
