@@ -253,6 +253,75 @@ function WorkspaceTab({
   );
 }
 
+type NotebookSectionProps = {
+  title: string;
+  subtitle?: string;
+  defaultOpen?: boolean;
+  icon?: string;
+  badge?: string;
+  children: ReactNode;
+};
+
+function NotebookSection({
+  title,
+  subtitle,
+  defaultOpen = true,
+  icon,
+  badge,
+  children,
+}: NotebookSectionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className={`${subsectionCard} w-full`}>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-start gap-2 text-left"
+        aria-expanded={open}
+      >
+        <span
+          className="mt-0.5 w-3 shrink-0 text-xs text-[var(--app-text-muted)]"
+          aria-hidden
+        >
+          {open ? "▼" : "▶"}
+        </span>
+        {icon ? (
+          <span className="shrink-0 text-base leading-none" aria-hidden>
+            {icon}
+          </span>
+        ) : null}
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-semibold text-[var(--app-heading)] sm:text-base">
+            {title}
+          </span>
+          {subtitle ? (
+            <span className="block text-xs text-[var(--app-text-muted)] mt-0.5">
+              {subtitle}
+            </span>
+          ) : null}
+        </span>
+        {badge ? (
+          <span className="shrink-0 inline-flex rounded-full border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]">
+            {badge}
+          </span>
+        ) : null}
+      </button>
+      <div
+        className={`grid transition-all duration-200 ${
+          open
+            ? "grid-rows-[1fr] opacity-100 mt-3"
+            : "grid-rows-[0fr] opacity-0 mt-0"
+        }`}
+      >
+        <div className="overflow-hidden min-h-0">
+          <div className="space-y-3 pb-0.5">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const getChartExportFileName = (
   title: string,
   extension: "png" | "svg" | "json"
@@ -6733,7 +6802,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           <DashboardSection title="Recursos" icon="📚" defaultOpen={false}>
             <button
               type="button"
-              onClick={() => setControlPanelTab("library")}
+              onClick={() => {
+                setActiveWorkspaceSection("data");
+                setControlPanelTab("library");
+              }}
               className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left`}
             >
               Biblioteca de funciones
@@ -6857,57 +6929,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             <p className={`${panelHeadingSubtext} -mt-2 mb-3`}>
               Funciones, biblioteca, series experimentales e importaciones
             </p>
-            <div className={`${card} flex flex-col gap-4`}>
-                <div
-                  className="flex flex-wrap gap-1 border-b border-[var(--app-border)] pb-2"
-                  role="tablist"
-                  aria-label="Secciones del panel"
-                >
-                  {(
-                    [
-                      ["graph", "Información del gráfico"],
-                      ["library", "Biblioteca"],
-                      ["data", "Fuentes de datos"],
-                    ] as const
-                  ).map(([tab, label]) => (
-                    <button
-                      key={tab}
-                      type="button"
-                      role="tab"
-                      aria-selected={controlPanelTab === tab}
-                      onClick={() => setControlPanelTab(tab)}
-                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                        controlPanelTab === tab
-                          ? "bg-[var(--app-accent)] text-white shadow-sm"
-                          : "text-[var(--app-text)] hover:bg-[var(--app-surface-muted)]"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                {controlPanelTab === "graph" && (
-                <>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className={panelHeading}>📐 Constructor de gráfico</h3>
-                    <span
-                      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-                        isEditing
-                          ? "bg-[var(--app-info-bg)] text-[var(--app-info-text)]"
-                          : "bg-[var(--app-success-bg)] text-[var(--app-success-text)]"
-                      }`}
-                    >
-                      {isEditing ? "Editando gráfico" : "Nuevo gráfico"}
-                    </span>
-                  </div>
-                  <p className={panelHeadingSubtext}>
-                    Define título y expresión matemática
-                  </p>
-                </div>
-
-                <div className="space-y-5 flex-1">
+            <div className="space-y-3">
+              <NotebookSection
+                title="Constructor de gráfico"
+                icon="📐"
+                subtitle="Define título y expresión matemática"
+                defaultOpen
+                badge={isEditing ? "Editando" : "Nuevo"}
+              >
+                <div className="space-y-5">
                   <div>
                     <label className={fieldLabel}>
                       Título
@@ -7088,15 +7118,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </div>
                   )}
                 </div>
-                </>
-                )}
+              </NotebookSection>
 
-                {controlPanelTab === "library" && (
-                  <div>
-                    <h3 className={panelHeading}>📚 Biblioteca de funciones</h3>
-                    <p className={`${panelHeadingSubtext} mb-3`}>
-                      Busca y haz clic para insertar en la curva activa
-                    </p>
+              <NotebookSection
+                title="Biblioteca de funciones"
+                icon="📚"
+                subtitle="Busca y haz clic para insertar en la curva activa"
+                defaultOpen
+              >
                   <div className="max-h-72 overflow-y-auto pr-1">
                     <input
                       type="search"
@@ -7134,15 +7163,52 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </div>
                     )}
                   </div>
-                  </div>
-                )}
+              </NotebookSection>
 
-                {controlPanelTab === "data" && (
-                  <div>
-                    <h3 className={panelHeading}>📊 Fuentes de datos</h3>
-                    <p className={`${panelHeadingSubtext} mb-3`}>
-                      Importa series experimentales desde CSV, TXT, XLSX u ODS
-                    </p>
+              <NotebookSection
+                title="Series experimentales"
+                icon="📊"
+                subtitle="Series importadas visibles en el gráfico"
+                defaultOpen={false}
+                badge={
+                  experimentalSeries.length > 0
+                    ? String(experimentalSeries.length)
+                    : undefined
+                }
+              >
+                    {experimentalSeries.length > 0 ? (
+                      <ul className="space-y-2">
+                        {experimentalSeries.map((series) => (
+                          <li
+                            key={series.id}
+                            className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--app-text)]"
+                          >
+                            <span>
+                              {series.name} ({series.points.length} puntos)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeExperimentalSeries(series.id)}
+                              className={`${btnOutlineSm} text-[var(--app-danger-text)] border-[var(--app-danger-border)] hover:bg-[var(--app-danger-bg)]`}
+                            >
+                              Eliminar serie
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className={emptyState}>
+                        No hay series experimentales importadas.
+                      </p>
+                    )}
+              </NotebookSection>
+
+              <NotebookSection
+                title="Importación de datos"
+                icon="📥"
+                subtitle="CSV, TXT, XLSX u ODS"
+                defaultOpen={false}
+              >
                     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
                       <div className="min-w-0 flex-1 sm:max-w-xs">
                         <label
@@ -7198,30 +7264,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         {experimentalImportError}
                       </p>
                     )}
-
-                    {experimentalSeries.length > 0 && (
-                      <ul className="mt-3 space-y-2">
-                        {experimentalSeries.map((series) => (
-                          <li
-                            key={series.id}
-                            className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--app-text)]"
-                          >
-                            <span>
-                              {series.name} ({series.points.length} puntos)
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeExperimentalSeries(series.id)}
-                              className={`${btnOutlineSm} text-[var(--app-danger-text)] border-[var(--app-danger-border)] hover:bg-[var(--app-danger-bg)]`}
-                            >
-                              Eliminar serie
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
+              </NotebookSection>
             </div>
           </section>
 
@@ -7233,14 +7276,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             <p className={`${panelHeadingSubtext} -mt-2 mb-3`}>
               Visualización, estadística, pruebas y asistentes (solo controles)
             </p>
-            <div className={`${card} flex flex-col gap-4 lg:min-w-[280px]`}>
-                <div>
-                  <h3 className={panelHeading}>🔧 Herramientas de visualización</h3>
-                  <p className={panelHeadingSubtext}>
-                    Rango, ejes y opciones de análisis
-                  </p>
-                </div>
-
+            <div className="space-y-3 w-full">
+              <NotebookSection
+                title="Herramientas de visualización"
+                icon="🔧"
+                subtitle="Rango, ejes y escalas"
+                defaultOpen
+              >
                 <div className="space-y-3">
                   <div className={subsectionCard}>
                     <p className={subsectionHeading}>📏 Rango</p>
@@ -7335,10 +7377,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </select>
                     </div>
                   </div>
+                </div>
+              </NotebookSection>
 
-                  <div className={subsectionCard}>
-                    <p className={subsectionHeading}>📈 Análisis</p>
-                    <div className="space-y-3">
+              <NotebookSection
+                title="Matemática"
+                icon="📐"
+                subtitle="Regresiones, derivadas e integrales"
+                defaultOpen={false}
+              >
+                <div className="space-y-3">
                       <div>
                         <label
                           htmlFor="regression-model-select"
@@ -7486,7 +7534,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                </div>
+              </NotebookSection>
 
+              <NotebookSection
+                title="Estadística"
+                icon="📊"
+                subtitle="Descriptiva, correlación y distribución"
+                defaultOpen={false}
+              >
+                <div className="space-y-3">
                       <label
                         className={`${toggleLabel} ${
                           !hasVisibleExperimentalSeries
@@ -7776,7 +7833,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                </div>
+              </NotebookSection>
 
+              <NotebookSection
+                title="Inferencia"
+                icon="🧪"
+                subtitle="t-Test, ANOVA, Tukey y no paramétricas"
+                defaultOpen={false}
+              >
+                <div className="space-y-3">
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForCorrelation
@@ -8011,7 +8077,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           </>
                         )}
                       </div>
+                </div>
+              </NotebookSection>
 
+              <NotebookSection
+                title="Advisor"
+                icon="🧠"
+                subtitle="Recomendación estadística automática"
+                defaultOpen={false}
+              >
+                <div className="space-y-3">
                       <label
                         className={`${toggleLabel} ${
                           !hasVisibleExperimentalSeries
@@ -8036,7 +8111,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                </div>
+              </NotebookSection>
 
+              <NotebookSection
+                title="Asistente científico"
+                icon="🧪"
+                subtitle="Reporte, interpretación y asistente"
+                defaultOpen={false}
+              >
+                <div className="space-y-3">
                       <label
                         className={`${toggleLabel} ${
                           !hasVisibleExperimentalSeries
@@ -8111,9 +8195,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
-                    </div>
-                  </div>
                 </div>
+              </NotebookSection>
             </div>
           </section>
 
@@ -8122,13 +8205,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             aria-hidden={activeWorkspaceSection !== "results"}
           >
             <h2 className={`${sectionLabel} mb-3`}>📈 Resultados</h2>
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <div>
-                <h3 className={`${panelHeading} mb-0`}>Gráfico principal</h3>
-                <p className={`${panelHeadingSubtext} mb-0`}>
-                  Escala actual: {getAxisScaleModeLabel(axisScaleMode)}
-                </p>
-              </div>
+            <div className="space-y-3">
+            <NotebookSection
+              title="Gráfico principal"
+              icon="📈"
+              subtitle={`Escala actual: ${getAxisScaleModeLabel(axisScaleMode)}`}
+              defaultOpen
+            >
+            <div className="flex flex-wrap items-center justify-end gap-2 mb-3">
               <button
                 type="button"
                 onClick={resetVisibleRange}
@@ -8673,6 +8757,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </ResponsiveContainer>
               </div>
             </div>
+            </NotebookSection>
 
           {axisScaleWarnings.map((warning, index) => (
             <div key={`axis-scale-warning-${index}`} className={alertWarning}>
@@ -8681,10 +8766,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           ))}
 
           {showMathResultsPanel && (
-            <section className={`${card} mt-4`}>
-              <h3 className={`${panelHeading} mb-3`}>
-                📊 Resultados matemáticos
-              </h3>
+            <NotebookSection
+              title="Resultados matemáticos"
+              icon="📊"
+              subtitle="Salidas de análisis activas"
+              defaultOpen
+            >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                 {showDerivative && (
                   <div className={subsectionCard}>
@@ -9979,184 +10066,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 )}
 
-                {showScientificInterpretation && (
-                  <div className={`${subsectionCard} lg:col-span-2`}>
-                    <p className={subsectionHeading}>
-                      🧠 Interpretación científica
-                    </p>
-                    {scientificInterpretation ? (
-                      <div className={contentPanel}>
-                        {scientificInterpretation.summary.length > 0 && (
-                          <div className="mb-4">
-                            <p className="font-semibold text-sm mb-2">
-                              Resumen general
-                            </p>
-                            {scientificInterpretation.summary.map((line) => (
-                              <p key={`summary-${line}`} className="text-sm mt-1">
-                                {line}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-
-                        {scientificInterpretation.findings.length > 0 && (
-                          <div className="mb-4">
-                            <p className="font-semibold text-sm mb-2">
-                              Hallazgos principales
-                            </p>
-                            {scientificInterpretation.findings.map((line) => (
-                              <p key={`finding-${line}`} className="text-sm mt-1">
-                                {line}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-
-                        {scientificInterpretation.recommendations.length > 0 && (
-                          <div className="mb-4">
-                            <p className="font-semibold text-sm mb-2">
-                              Recomendaciones
-                            </p>
-                            {scientificInterpretation.recommendations.map(
-                              (line) => (
-                                <p
-                                  key={`recommendation-${line}`}
-                                  className="text-sm mt-1"
-                                >
-                                  {line}
-                                </p>
-                              )
-                            )}
-                          </div>
-                        )}
-
-                        {scientificInterpretation.warnings.length > 0 && (
-                          <div>
-                            <p className="font-semibold text-sm mb-2">
-                              Advertencias
-                            </p>
-                            {scientificInterpretation.warnings.map((line) => (
-                              <p
-                                key={`warning-${line}`}
-                                className={`text-sm mt-1 ${emptyState}`}
-                              >
-                                {line}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className={emptyState}>
-                        No hay información suficiente para generar una
-                        interpretación científica.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {showScientificAssistant && (
-                  <div className={`${subsectionCard} lg:col-span-2`}>
-                    <p className={subsectionHeading}>🧪 Asistente científico</p>
-                    {scientificAssistantReport ? (
-                      <div className={contentPanel}>
-                        <div className="mb-4">
-                          <p className="font-semibold text-sm mb-2">
-                            Evaluación general
-                          </p>
-                          <p className="text-sm">
-                            {scientificAssistantReport.overallAssessment}
-                          </p>
-                          <p className="text-sm mt-2">
-                            <span className="font-semibold">
-                              Nivel de confianza:
-                            </span>{" "}
-                            {getScientificAssistantConfidenceLabel(
-                              scientificAssistantReport.confidenceLevel
-                            )}
-                          </p>
-                        </div>
-
-                        {scientificAssistantReport.keyFindings.length > 0 && (
-                          <div className="mb-4">
-                            <p className="font-semibold text-sm mb-2">
-                              Hallazgos clave
-                            </p>
-                            {scientificAssistantReport.keyFindings.map(
-                              (finding) => (
-                                <p
-                                  key={`assistant-finding-${finding}`}
-                                  className="text-sm mt-1"
-                                >
-                                  • {finding}
-                                </p>
-                              )
-                            )}
-                          </div>
-                        )}
-
-                        {scientificAssistantReport.recommendedWorkflow.length >
-                          0 && (
-                          <div className="mb-4">
-                            <p className="font-semibold text-sm mb-2">
-                              Flujo recomendado
-                            </p>
-                            {scientificAssistantReport.recommendedWorkflow.map(
-                              (step, index) => (
-                                <p
-                                  key={`assistant-workflow-${step}`}
-                                  className="text-sm mt-1"
-                                >
-                                  {index + 1}. {step}
-                                </p>
-                              )
-                            )}
-                          </div>
-                        )}
-
-                        {scientificAssistantReport.nextSteps.length > 0 && (
-                          <div className="mb-4">
-                            <p className="font-semibold text-sm mb-2">
-                              Próximos pasos
-                            </p>
-                            {scientificAssistantReport.nextSteps.map((step) => (
-                              <p
-                                key={`assistant-next-${step}`}
-                                className="text-sm mt-1"
-                              >
-                                • {step}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-
-                        {scientificAssistantReport.cautions.length > 0 && (
-                          <div>
-                            <p className="font-semibold text-sm mb-2">
-                              Advertencias
-                            </p>
-                            {scientificAssistantReport.cautions.map(
-                              (caution) => (
-                                <p
-                                  key={`assistant-caution-${caution}`}
-                                  className={`text-sm mt-1 ${emptyState}`}
-                                >
-                                  {caution}
-                                </p>
-                              )
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className={emptyState}>
-                        No existe información suficiente para generar
-                        recomendaciones científicas.
-                      </p>
-                    )}
-                  </div>
-                )}
-
                 {regressionModel === "compare" && (
                   <div className={`${subsectionCard} lg:col-span-2`}>
                     <p className={subsectionHeading}>📈 Regresiones</p>
@@ -10364,8 +10273,191 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 )}
               </div>
-            </section>
+            </NotebookSection>
           )}
+
+            {showScientificInterpretation && (
+              <NotebookSection
+                title="Interpretación científica"
+                icon="🧠"
+                subtitle="Lenguaje natural a partir de resultados"
+                defaultOpen={false}
+              >
+                {scientificInterpretation ? (
+                  <div className={contentPanel}>
+                    {scientificInterpretation.summary.length > 0 && (
+                      <div className="mb-4">
+                        <p className="font-semibold text-sm mb-2">
+                          Resumen general
+                        </p>
+                        {scientificInterpretation.summary.map((line) => (
+                          <p key={`summary-${line}`} className="text-sm mt-1">
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {scientificInterpretation.findings.length > 0 && (
+                      <div className="mb-4">
+                        <p className="font-semibold text-sm mb-2">
+                          Hallazgos principales
+                        </p>
+                        {scientificInterpretation.findings.map((line) => (
+                          <p key={`finding-${line}`} className="text-sm mt-1">
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {scientificInterpretation.recommendations.length > 0 && (
+                      <div className="mb-4">
+                        <p className="font-semibold text-sm mb-2">
+                          Recomendaciones
+                        </p>
+                        {scientificInterpretation.recommendations.map(
+                          (line) => (
+                            <p
+                              key={`recommendation-${line}`}
+                              className="text-sm mt-1"
+                            >
+                              {line}
+                            </p>
+                          )
+                        )}
+                      </div>
+                    )}
+
+                    {scientificInterpretation.warnings.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-sm mb-2">
+                          Advertencias
+                        </p>
+                        {scientificInterpretation.warnings.map((line) => (
+                          <p
+                            key={`warning-${line}`}
+                            className={`text-sm mt-1 ${emptyState}`}
+                          >
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className={emptyState}>
+                    No hay información suficiente para generar una
+                    interpretación científica.
+                  </p>
+                )}
+              </NotebookSection>
+            )}
+
+            {showScientificAssistant && (
+              <NotebookSection
+                title="Asistente científico"
+                icon="🧪"
+                subtitle="Conclusiones y flujo recomendado"
+                defaultOpen={false}
+              >
+                {scientificAssistantReport ? (
+                  <div className={contentPanel}>
+                    <div className="mb-4">
+                      <p className="font-semibold text-sm mb-2">
+                        Evaluación general
+                      </p>
+                      <p className="text-sm">
+                        {scientificAssistantReport.overallAssessment}
+                      </p>
+                      <p className="text-sm mt-2">
+                        <span className="font-semibold">
+                          Nivel de confianza:
+                        </span>{" "}
+                        {getScientificAssistantConfidenceLabel(
+                          scientificAssistantReport.confidenceLevel
+                        )}
+                      </p>
+                    </div>
+
+                    {scientificAssistantReport.keyFindings.length > 0 && (
+                      <div className="mb-4">
+                        <p className="font-semibold text-sm mb-2">
+                          Hallazgos clave
+                        </p>
+                        {scientificAssistantReport.keyFindings.map(
+                          (finding) => (
+                            <p
+                              key={`assistant-finding-${finding}`}
+                              className="text-sm mt-1"
+                            >
+                              • {finding}
+                            </p>
+                          )
+                        )}
+                      </div>
+                    )}
+
+                    {scientificAssistantReport.recommendedWorkflow.length >
+                      0 && (
+                      <div className="mb-4">
+                        <p className="font-semibold text-sm mb-2">
+                          Flujo recomendado
+                        </p>
+                        {scientificAssistantReport.recommendedWorkflow.map(
+                          (step, index) => (
+                            <p
+                              key={`assistant-workflow-${step}`}
+                              className="text-sm mt-1"
+                            >
+                              {index + 1}. {step}
+                            </p>
+                          )
+                        )}
+                      </div>
+                    )}
+
+                    {scientificAssistantReport.nextSteps.length > 0 && (
+                      <div className="mb-4">
+                        <p className="font-semibold text-sm mb-2">
+                          Próximos pasos
+                        </p>
+                        {scientificAssistantReport.nextSteps.map((step) => (
+                          <p
+                            key={`assistant-next-${step}`}
+                            className="text-sm mt-1"
+                          >
+                            • {step}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {scientificAssistantReport.cautions.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-sm mb-2">
+                          Advertencias
+                        </p>
+                        {scientificAssistantReport.cautions.map((caution) => (
+                          <p
+                            key={`assistant-caution-${caution}`}
+                            className={`text-sm mt-1 ${emptyState}`}
+                          >
+                            {caution}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className={emptyState}>
+                    No existe información suficiente para generar
+                    recomendaciones científicas.
+                  </p>
+                )}
+              </NotebookSection>
+            )}
+            </div>
           </section>
 
           <section
@@ -10377,13 +10469,57 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               Exportaciones, reporte científico y copia de análisis
             </p>
 
-            <div className={`${card} space-y-4`}>
-              <div>
-                <h3 className={panelHeading}>Exportación</h3>
-                <p className={panelHeadingSubtext}>
-                  Gráfico y documento científico
-                </p>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4 mt-3">
+            <div className="space-y-3">
+              {showScientificReport && (
+                <NotebookSection
+                  title="Reporte científico"
+                  icon="📄"
+                  subtitle="Documento generado automáticamente"
+                  defaultOpen
+                >
+                  {scientificReport ? (
+                    <div className={contentPanel}>
+                      <p className="font-semibold text-base">
+                        {scientificReport.title}
+                      </p>
+                      <p className="text-sm text-[var(--app-text-muted)] mt-1">
+                        {formatScientificReportDate(
+                          scientificReport.generatedAt
+                        )}
+                      </p>
+                      <div className={`${contentPanel} mt-3`}>
+                        <p className="font-semibold text-sm">
+                          Resumen ejecutivo
+                        </p>
+                        <p className="text-sm mt-1">
+                          {scientificReport.summary}
+                        </p>
+                      </div>
+                      <div className="mt-3">
+                        {scientificReport.sections.map((section) => (
+                          <ScientificReportSectionCollapsible
+                            key={section.title}
+                            title={section.title}
+                            content={section.content}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className={emptyState}>
+                      No hay datos suficientes para generar un reporte.
+                    </p>
+                  )}
+                </NotebookSection>
+              )}
+
+              <NotebookSection
+                title="Exportaciones"
+                icon="📤"
+                subtitle="Gráfico y documento científico"
+                defaultOpen={false}
+              >
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
                   <div className={actionBarGroup}>
                     <button
                       type="button"
@@ -10431,14 +10567,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     {scientificReportPdfMessage}
                   </p>
                 )}
-              </div>
+              </NotebookSection>
 
-              <div className="pt-3 border-t border-[var(--app-border)]">
-                <h3 className={panelHeading}>Copiar contenido</h3>
-                <p className={panelHeadingSubtext}>
-                  Portapapeles para reporte, interpretación y asistente
-                </p>
-                <div className="flex flex-wrap gap-2 mt-3">
+              <NotebookSection
+                title="Copiar contenido"
+                icon="📋"
+                subtitle="Portapapeles para reporte, interpretación y asistente"
+                defaultOpen={false}
+              >
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -10474,46 +10611,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       : "📋 Copiar análisis"}
                   </button>
                 </div>
-              </div>
-
-              {showScientificReport && (
-                <div className={subsectionCard}>
-                  <p className={subsectionHeading}>📄 Reporte científico</p>
-                  {scientificReport ? (
-                    <div className={contentPanel}>
-                      <p className="font-semibold text-base">
-                        {scientificReport.title}
-                      </p>
-                      <p className="text-sm text-[var(--app-text-muted)] mt-1">
-                        {formatScientificReportDate(
-                          scientificReport.generatedAt
-                        )}
-                      </p>
-                      <div className={`${contentPanel} mt-3`}>
-                        <p className="font-semibold text-sm">
-                          Resumen ejecutivo
-                        </p>
-                        <p className="text-sm mt-1">
-                          {scientificReport.summary}
-                        </p>
-                      </div>
-                      <div className="mt-3">
-                        {scientificReport.sections.map((section) => (
-                          <ScientificReportSectionCollapsible
-                            key={section.title}
-                            title={section.title}
-                            content={section.content}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className={emptyState}>
-                      No hay datos suficientes para generar un reporte.
-                    </p>
-                  )}
-                </div>
-              )}
+              </NotebookSection>
 
               {!showScientificReport &&
                 !showScientificInterpretation &&
