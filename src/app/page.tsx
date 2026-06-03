@@ -990,6 +990,224 @@ const calculateExperimentalStatistics = (
 
 const formatExperimentalStat = (value: number) => value.toFixed(4);
 
+type CorrelationMethod = "pearson" | "spearman";
+
+type CorrelationStrength =
+  | "very-weak"
+  | "weak"
+  | "moderate"
+  | "strong"
+  | "very-strong";
+
+type CorrelationDirection = "positive" | "negative";
+
+type CorrelationResult = {
+  seriesA: string;
+  seriesB: string;
+  method: CorrelationMethod;
+  coefficient: number;
+  strength: CorrelationStrength;
+  direction: CorrelationDirection;
+};
+
+type CorrelationMatrixRow = {
+  seriesName: string;
+  correlations: number[];
+};
+
+type CorrelationUnavailablePair = {
+  seriesA: string;
+  seriesB: string;
+  method: CorrelationMethod;
+};
+
+const getPairedSeriesYValues = (
+  seriesA: ExperimentalSeries,
+  seriesB: ExperimentalSeries
+): { valuesA: number[]; valuesB: number[] } | null => {
+  const pairCount = Math.min(seriesA.points.length, seriesB.points.length);
+  const valuesA: number[] = [];
+  const valuesB: number[] = [];
+
+  for (let index = 0; index < pairCount; index += 1) {
+    const valueA = seriesA.points[index]?.y;
+    const valueB = seriesB.points[index]?.y;
+    if (!Number.isFinite(valueA) || !Number.isFinite(valueB)) continue;
+    valuesA.push(valueA);
+    valuesB.push(valueB);
+  }
+
+  return valuesA.length >= 2 ? { valuesA, valuesB } : null;
+};
+
+const calculatePearsonCorrelation = (
+  xValues: number[],
+  yValues: number[]
+): number | null => {
+  const count = xValues.length;
+  if (count < 2 || count !== yValues.length) return null;
+
+  const meanX = xValues.reduce((sum, value) => sum + value, 0) / count;
+  const meanY = yValues.reduce((sum, value) => sum + value, 0) / count;
+
+  let covariance = 0;
+  let varianceX = 0;
+  let varianceY = 0;
+
+  for (let index = 0; index < count; index += 1) {
+    const deltaX = xValues[index] - meanX;
+    const deltaY = yValues[index] - meanY;
+    covariance += deltaX * deltaY;
+    varianceX += deltaX * deltaX;
+    varianceY += deltaY * deltaY;
+  }
+
+  if (varianceX === 0 || varianceY === 0) return null;
+
+  return covariance / Math.sqrt(varianceX * varianceY);
+};
+
+const rankValues = (values: number[]): number[] => {
+  const indexed = values.map((value, index) => ({ value, index }));
+  indexed.sort((left, right) => left.value - right.value);
+
+  const ranks = new Array<number>(values.length);
+  let start = 0;
+
+  while (start < indexed.length) {
+    let end = start;
+    while (
+      end + 1 < indexed.length &&
+      indexed[end + 1].value === indexed[start].value
+    ) {
+      end += 1;
+    }
+
+    const averageRank = (start + end + 2) / 2;
+    for (let index = start; index <= end; index += 1) {
+      ranks[indexed[index].index] = averageRank;
+    }
+    start = end + 1;
+  }
+
+  return ranks;
+};
+
+const calculateSpearmanCorrelation = (
+  xValues: number[],
+  yValues: number[]
+): number | null =>
+  calculatePearsonCorrelation(rankValues(xValues), rankValues(yValues));
+
+const classifyCorrelationStrength = (
+  coefficient: number
+): CorrelationStrength => {
+  const absolute = Math.abs(coefficient);
+  if (absolute < 0.2) return "very-weak";
+  if (absolute < 0.4) return "weak";
+  if (absolute < 0.6) return "moderate";
+  if (absolute < 0.8) return "strong";
+  return "very-strong";
+};
+
+const getCorrelationDirection = (
+  coefficient: number
+): CorrelationDirection => (coefficient >= 0 ? "positive" : "negative");
+
+const getCorrelationMethodLabel = (method: CorrelationMethod) =>
+  method === "pearson" ? "Pearson" : "Spearman";
+
+const getCorrelationStrengthLabel = (
+  strength: CorrelationStrength,
+  direction: CorrelationDirection
+) => {
+  const strengthLabels: Record<CorrelationStrength, string> = {
+    "very-weak": "Muy débil",
+    weak: "Débil",
+    moderate: "Moderada",
+    strong: "Fuerte",
+    "very-strong": "Muy fuerte",
+  };
+  const directionLabel = direction === "positive" ? "positiva" : "negativa";
+  return `${strengthLabels[strength]} ${directionLabel}`;
+};
+
+const formatCorrelationCoefficient = (value: number) => value.toFixed(4);
+
+const formatCorrelationMatrixValue = (value: number) =>
+  Number.isFinite(value) ? value.toFixed(2) : "N/A";
+
+const computeSeriesPairCorrelation = (
+  seriesA: ExperimentalSeries,
+  seriesB: ExperimentalSeries,
+  method: CorrelationMethod
+): number | null => {
+  const paired = getPairedSeriesYValues(seriesA, seriesB);
+  if (!paired) return null;
+
+  return method === "pearson"
+    ? calculatePearsonCorrelation(paired.valuesA, paired.valuesB)
+    : calculateSpearmanCorrelation(paired.valuesA, paired.valuesB);
+};
+
+const buildCorrelationAnalysis = (
+  series: ExperimentalSeries[],
+  method: CorrelationMethod
+): {
+  results: CorrelationResult[];
+  unavailablePairs: CorrelationUnavailablePair[];
+  matrix: CorrelationMatrixRow[];
+} => {
+  const results: CorrelationResult[] = [];
+  const unavailablePairs: CorrelationUnavailablePair[] = [];
+
+  for (let indexA = 0; indexA < series.length; indexA += 1) {
+    for (let indexB = indexA + 1; indexB < series.length; indexB += 1) {
+      const coefficient = computeSeriesPairCorrelation(
+        series[indexA],
+        series[indexB],
+        method
+      );
+
+      if (coefficient == null) {
+        unavailablePairs.push({
+          seriesA: series[indexA].name,
+          seriesB: series[indexB].name,
+          method,
+        });
+        continue;
+      }
+
+      results.push({
+        seriesA: series[indexA].name,
+        seriesB: series[indexB].name,
+        method,
+        coefficient,
+        strength: classifyCorrelationStrength(coefficient),
+        direction: getCorrelationDirection(coefficient),
+      });
+    }
+  }
+
+  const matrix: CorrelationMatrixRow[] =
+    series.length >= 3
+      ? series.map((rowSeries, rowIndex) => ({
+          seriesName: rowSeries.name,
+          correlations: series.map((columnSeries, columnIndex) => {
+            if (rowIndex === columnIndex) return 1;
+            const coefficient = computeSeriesPairCorrelation(
+              rowSeries,
+              columnSeries,
+              method
+            );
+            return coefficient ?? Number.NaN;
+          }),
+        }))
+      : [];
+
+  return { results, unavailablePairs, matrix };
+};
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -1987,6 +2205,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showErrorBars, setShowErrorBars] = useState(false);
   const [errorBarMode, setErrorBarMode] = useState<ErrorBarMode>("sd");
+  const [showCorrelation, setShowCorrelation] = useState(false);
+  const [correlationMethod, setCorrelationMethod] =
+    useState<CorrelationMethod>("pearson");
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -2771,7 +2992,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [experimentalStatistics, visibleExperimentalSeries, errorBarMode]
   );
+  const correlationAnalysis = useMemo(
+    () =>
+      visibleExperimentalSeries.length >= 2
+        ? buildCorrelationAnalysis(
+            visibleExperimentalSeries,
+            correlationMethod
+          )
+        : { results: [], unavailablePairs: [], matrix: [] },
+    [visibleExperimentalSeries, correlationMethod]
+  );
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
+  const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
   const overlayMathYValues = useMemo(
     () => [
       ...visibleDerivativeCurves.flatMap((curve) =>
@@ -3361,6 +3593,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showRoots ||
     showStatistics ||
     showErrorBars ||
+    showCorrelation ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -4413,6 +4646,62 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <option value="ci95">IC95%</option>
                         </select>
                       </div>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForCorrelation
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar correlación
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showCorrelation}
+                            onChange={(e) =>
+                              setShowCorrelation(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForCorrelation}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <div
+                        className={
+                          !hasEnoughSeriesForCorrelation || !showCorrelation
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      >
+                        <label
+                          htmlFor="correlation-method-select"
+                          className={fieldLabel}
+                        >
+                          Método
+                        </label>
+                        <select
+                          id="correlation-method-select"
+                          value={correlationMethod}
+                          onChange={(e) =>
+                            setCorrelationMethod(
+                              e.target.value as CorrelationMethod
+                            )
+                          }
+                          disabled={
+                            !hasEnoughSeriesForCorrelation || !showCorrelation
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <option value="pearson">Pearson</option>
+                          <option value="spearman">Spearman</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -5218,6 +5507,141 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <p className={emptyState}>
                         No hay series experimentales visibles.
                       </p>
+                    )}
+                  </div>
+                )}
+
+                {showCorrelation && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🔗 Correlación</p>
+                    {!hasEnoughSeriesForCorrelation ? (
+                      <p className={emptyState}>
+                        Se requieren al menos dos series experimentales visibles
+                        para calcular correlaciones.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {correlationAnalysis.results.map((result) => (
+                            <div
+                              key={`${result.seriesA}-${result.seriesB}-${result.method}`}
+                              className={contentPanel}
+                            >
+                              <p>
+                                <span className="font-semibold">
+                                  {result.seriesA}
+                                </span>{" "}
+                                ↔{" "}
+                                <span className="font-semibold">
+                                  {result.seriesB}
+                                </span>
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Método:</span>{" "}
+                                {getCorrelationMethodLabel(result.method)}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">
+                                  Coeficiente:
+                                </span>{" "}
+                                {formatCorrelationCoefficient(
+                                  result.coefficient
+                                )}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">
+                                  Correlación:
+                                </span>{" "}
+                                {getCorrelationStrengthLabel(
+                                  result.strength,
+                                  result.direction
+                                )}
+                              </p>
+                            </div>
+                          ))}
+                          {correlationAnalysis.unavailablePairs.map((pair) => (
+                            <div
+                              key={`${pair.seriesA}-${pair.seriesB}-unavailable`}
+                              className={contentPanel}
+                            >
+                              <p>
+                                <span className="font-semibold">
+                                  {pair.seriesA}
+                                </span>{" "}
+                                ↔{" "}
+                                <span className="font-semibold">
+                                  {pair.seriesB}
+                                </span>
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Método:</span>{" "}
+                                {getCorrelationMethodLabel(pair.method)}
+                              </p>
+                              <p className={`mt-1 ${emptyState}`}>
+                                Correlación no disponible.
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {correlationAnalysis.matrix.length >= 3 && (
+                          <div className={`${contentPanel} mt-3`}>
+                            <p className={subsectionHeading}>
+                              📋 Matriz de correlación
+                            </p>
+                            <div className="overflow-x-auto mt-2">
+                              <table className="min-w-full text-sm border-collapse">
+                                <thead>
+                                  <tr>
+                                    <th className="px-2 py-1 text-left font-semibold" />
+                                    {correlationAnalysis.matrix.map((row) => (
+                                      <th
+                                        key={`header-${row.seriesName}`}
+                                        className="px-2 py-1 text-center font-semibold"
+                                        title={row.seriesName}
+                                      >
+                                        {row.seriesName}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {correlationAnalysis.matrix.map((row) => (
+                                    <tr key={`row-${row.seriesName}`}>
+                                      <th
+                                        className="px-2 py-1 text-left font-semibold"
+                                        title={row.seriesName}
+                                      >
+                                        {row.seriesName}
+                                      </th>
+                                      {row.correlations.map(
+                                        (value, columnIndex) => (
+                                          <td
+                                            key={`${row.seriesName}-${columnIndex}`}
+                                            className="px-2 py-1 text-center tabular-nums"
+                                          >
+                                            {formatCorrelationMatrixValue(
+                                              value
+                                            )}
+                                          </td>
+                                        )
+                                      )}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
+                        {correlationAnalysis.results.length === 0 &&
+                          correlationAnalysis.unavailablePairs.length === 0 && (
+                            <p className={`${emptyState} mt-2`}>
+                              No hay pares de series con datos suficientes para
+                              calcular correlaciones.
+                            </p>
+                          )}
+                      </>
                     )}
                   </div>
                 )}
