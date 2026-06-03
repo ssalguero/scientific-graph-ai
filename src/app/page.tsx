@@ -41,48 +41,74 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const appShell =
-  "bg-slate-50 text-slate-700 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-text-muted:#64748b] [--app-heading:#0f172a] [--app-accent:#2563eb] [--app-danger-bg:#fef2f2] [--app-danger-border:#fecaca] [--app-danger-text:#b91c1c] [--app-warning-bg:#fffbeb] [--app-warning-border:#fde68a] [--app-warning-text:#92400e]";
+const THEME_STORAGE_KEY = "scientific-graph-theme";
+type ThemeMode = "light" | "dark";
+
+const appShellLight =
+  "bg-slate-50 text-[var(--app-text)] transition-colors duration-200 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-text-muted:#64748b] [--app-heading:#0f172a] [--app-accent:#2563eb] [--app-success:#16a34a] [--app-warning:#d97706] [--app-danger:#dc2626] [--app-success-bg:#dcfce7] [--app-success-text:#166534] [--app-info-bg:#fef3c7] [--app-info-text:#92400e] [--app-danger-bg:#fef2f2] [--app-danger-border:#fecaca] [--app-danger-text:#b91c1c] [--app-warning-bg:#fffbeb] [--app-warning-border:#fde68a] [--app-warning-text:#92400e] [--app-toggle-track:#e2e8f0] [--app-toggle-thumb:#ffffff]";
+const appShellDark =
+  "bg-[#0f172a] text-[var(--app-text)] transition-colors duration-200 [--app-surface:#111827] [--app-surface-muted:#1f2937] [--app-border:#334155] [--app-text:#e5e7eb] [--app-text-muted:#94a3b8] [--app-heading:#e5e7eb] [--app-accent:#3b82f6] [--app-success:#22c55e] [--app-warning:#f59e0b] [--app-danger:#ef4444] [--app-success-bg:#052e16] [--app-success-text:#86efac] [--app-info-bg:#451a03] [--app-info-text:#fcd34d] [--app-danger-bg:#450a0a] [--app-danger-border:#7f1d1d] [--app-danger-text:#fca5a5] [--app-warning-bg:#422006] [--app-warning-border:#78350f] [--app-warning-text:#fcd34d] [--app-toggle-track:#334155] [--app-toggle-thumb:#e5e7eb]";
+
+const getAppShell = (mode: ThemeMode) =>
+  mode === "dark" ? appShellDark : appShellLight;
+
+const getChartTheme = (mode: ThemeMode) =>
+  mode === "dark"
+    ? {
+        grid: "#334155",
+        axis: "#94a3b8",
+        tooltipBg: "#111827",
+        tooltipBorder: "#334155",
+        tooltipColor: "#e5e7eb",
+      }
+    : {
+        grid: "#e2e8f0",
+        axis: "#64748b",
+        tooltipBg: "#ffffff",
+        tooltipBorder: "#e2e8f0",
+        tooltipColor: "#334155",
+      };
+
 const card =
-  "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-4 sm:p-5";
+  "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-4 sm:p-5 transition-colors duration-200";
 const panelHeading =
   "text-base sm:text-lg font-semibold text-[var(--app-heading)] tracking-tight";
 const panelHeadingSubtext = "text-sm text-[var(--app-text-muted)] mt-1";
 const sectionLabel =
   "text-xs sm:text-sm font-semibold uppercase tracking-wider text-[var(--app-text-muted)] mb-3";
 const subsectionCard =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3 space-y-3";
+  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3 space-y-3 transition-colors duration-200";
 const subsectionHeading =
   "text-sm font-semibold text-[var(--app-heading)]";
 const contentPanel =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2.5 text-sm text-[var(--app-text)]";
+  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2.5 text-sm text-[var(--app-text)] transition-colors duration-200";
 const emptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-4 text-sm text-[var(--app-text-muted)] text-center";
+  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-4 text-sm text-[var(--app-text-muted)] text-center transition-colors duration-200";
 const fieldLabel =
   "block text-sm font-medium text-[var(--app-heading)] mb-1.5";
 const inputField =
-  "w-full h-10 border border-[var(--app-border)] rounded-lg px-3 text-sm sm:text-base text-[var(--app-heading)] bg-[var(--app-surface)] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500";
+  "w-full h-10 border border-[var(--app-border)] rounded-lg px-3 text-sm sm:text-base text-[var(--app-heading)] bg-[var(--app-surface)] placeholder:text-[var(--app-text-muted)] shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 focus:border-[var(--app-accent)]";
 const btnPrimary =
-  "inline-flex h-10 items-center justify-center font-semibold text-white text-sm sm:text-base px-5 rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.98]";
+  "inline-flex h-10 items-center justify-center font-semibold text-white text-sm sm:text-base px-5 rounded-lg shadow-sm transition-colors duration-200 hover:shadow-md active:scale-[0.98]";
 const btnOutline =
-  "inline-flex h-10 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-4 rounded-lg text-sm sm:text-base text-[var(--app-text)] shadow-sm transition-all hover:bg-[var(--app-surface-muted)] hover:border-slate-300 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex h-10 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-4 rounded-lg text-sm sm:text-base text-[var(--app-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)] hover:shadow disabled:opacity-50 disabled:cursor-not-allowed";
 const btnOutlineSm =
-  "inline-flex h-8 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 rounded-lg text-xs text-[var(--app-text)] shadow-sm transition-all hover:bg-[var(--app-surface-muted)] hover:border-slate-300";
+  "inline-flex h-8 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 rounded-lg text-xs text-[var(--app-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]";
 const alertBase =
-  "rounded-lg border px-4 py-3 text-sm font-medium";
+  "rounded-lg border px-4 py-3 text-sm font-medium transition-colors duration-200";
 const alertError = `${alertBase} border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] text-[var(--app-danger-text)]`;
 const alertWarning = `${alertBase} border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] text-[var(--app-warning-text)]`;
 const toggleInput = "peer sr-only";
 const toggleShell =
   "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full";
 const toggleTrackBg =
-  "pointer-events-none absolute inset-0 rounded-full border border-[var(--app-border)] bg-slate-200 transition-colors peer-checked:border-[var(--app-accent)] peer-checked:bg-[var(--app-accent)] peer-disabled:opacity-50";
+  "pointer-events-none absolute inset-0 rounded-full border border-[var(--app-border)] bg-[var(--app-toggle-track)] transition-colors duration-200 peer-checked:border-[var(--app-accent)] peer-checked:bg-[var(--app-accent)] peer-disabled:opacity-50";
 const toggleThumb =
-  "pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5 peer-disabled:opacity-50";
+  "pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-[var(--app-toggle-thumb)] shadow-sm transition-transform duration-200 peer-checked:translate-x-5 peer-disabled:opacity-50";
 const toggleLabel =
   "flex items-start justify-between gap-3 cursor-pointer text-sm text-[var(--app-text)] leading-snug";
 const actionBarBtn =
-  "inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-semibold shadow-sm transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm";
+  "inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-semibold shadow-sm transition-colors duration-200 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm";
 const actionBarBtnPrimary =
   `${actionBarBtn} bg-emerald-600 text-white hover:bg-emerald-700 min-w-[7.5rem]`;
 const actionBarBtnSave =
@@ -1314,6 +1340,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [experimentalImportError, setExperimentalImportError] = useState<
     string | null
   >(null);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") return "light";
+    try {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY);
+      if (stored === "light" || stored === "dark") return stored;
+    } catch {
+      // ignore storage errors
+    }
+    return "light";
+  });
 
   const nextCurveIdRef = useRef(2);
   const chartExportRef = useRef<HTMLDivElement>(null);
@@ -2499,6 +2535,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
     return visiblePoints.length > 0 ? visiblePoints : chartData;
   }, [chartData, visibleExperimentalSeries]);
+  const chartTheme = useMemo(() => getChartTheme(themeMode), [themeMode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+    } catch {
+      // ignore storage errors
+    }
+  }, [themeMode]);
 
   useEffect(() => {
     loadGraphs();
@@ -2624,13 +2669,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   };
 
   return (
-    <main className={`flex min-h-screen flex-col lg:flex-row ${appShell}`}>
-      <aside className="w-full lg:w-[280px] lg:min-h-screen shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col">
-        <div className="p-5 border-b border-slate-100">
-          <h2 className="text-xl font-semibold text-slate-900 tracking-tight">
+    <main className={`flex min-h-screen flex-col lg:flex-row ${getAppShell(themeMode)}`}>
+      <aside className="w-full lg:w-[280px] lg:min-h-screen shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col transition-colors duration-200">
+        <div className="p-5 border-b border-[var(--app-border)]">
+          <h2 className="text-xl font-semibold text-[var(--app-heading)] tracking-tight">
             Gráficos
           </h2>
-          <p className="text-base text-slate-500 mt-1">
+          <p className="text-base text-[var(--app-text-muted)] mt-1">
             {graphs.length}{" "}
             {graphs.length === 1 ? "gráfico guardado" : "gráficos guardados"}
           </p>
@@ -2639,20 +2684,58 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         <div className="p-5">
           <button
             onClick={newGraph}
-            className={`w-full bg-emerald-600 hover:bg-emerald-700 ${btnPrimary} py-3.5 text-base font-semibold mb-6`}
+            className={`w-full bg-emerald-600 hover:bg-emerald-700 ${btnPrimary} py-3.5 text-base font-semibold mb-4`}
           >
             + Nuevo gráfico
           </button>
+
+          <div
+            className="mb-6 flex items-center justify-between gap-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-2.5 transition-colors duration-200"
+            role="group"
+            aria-label="Tema de la aplicación"
+          >
+            <span
+              className={`text-sm font-medium transition-colors duration-200 ${
+                themeMode === "light"
+                  ? "text-[var(--app-heading)]"
+                  : "text-[var(--app-text-muted)]"
+              }`}
+            >
+              ☀ Claro
+            </span>
+            <label className={`${toggleShell} cursor-pointer`}>
+              <input
+                type="checkbox"
+                className={toggleInput}
+                checked={themeMode === "dark"}
+                onChange={(e) =>
+                  setThemeMode(e.target.checked ? "dark" : "light")
+                }
+                aria-label="Alternar tema oscuro"
+              />
+              <span className={toggleTrackBg} aria-hidden />
+              <span className={toggleThumb} aria-hidden />
+            </label>
+            <span
+              className={`text-sm font-medium transition-colors duration-200 ${
+                themeMode === "dark"
+                  ? "text-[var(--app-heading)]"
+                  : "text-[var(--app-text-muted)]"
+              }`}
+            >
+              🌙 Oscuro
+            </span>
+          </div>
 
           <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
             {graphs.map((graph) => (
               <button
                 key={graph.id}
                 onClick={() => loadGraph(graph)}
-                className={`w-full text-left border rounded-lg px-3 py-3.5 text-base transition-all ${
+                className={`w-full text-left border rounded-lg px-3 py-3.5 text-base transition-colors duration-200 ${
                   selectedGraphId === graph.id
-                    ? "bg-blue-50 border-blue-500 text-blue-900 shadow-sm ring-1 ring-blue-500/20 font-medium"
-                    : "border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm"
+                    ? "bg-[var(--app-accent)]/10 border-[var(--app-accent)] text-[var(--app-heading)] shadow-sm ring-1 ring-[var(--app-accent)]/25 font-medium"
+                    : "border-[var(--app-border)] text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)] hover:shadow-sm"
                 }`}
               >
                 <span className="line-clamp-2">
@@ -2670,7 +2753,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--app-heading)] tracking-tight">
               Scientific Graph AI
             </h1>
-            <p className="text-slate-500 mt-1 text-sm sm:text-base">
+            <p className="text-[var(--app-text-muted)] mt-1 text-sm sm:text-base">
               Visualiza, guarda y gestiona tus funciones matemáticas
             </p>
           </header>
@@ -2716,8 +2799,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <span
                       className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
                         isEditing
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-emerald-100 text-emerald-800"
+                          ? "bg-[var(--app-info-bg)] text-[var(--app-info-text)]"
+                          : "bg-[var(--app-success-bg)] text-[var(--app-success-text)]"
                       }`}
                     >
                       {isEditing ? "Editando gráfico" : "Nuevo gráfico"}
@@ -2749,7 +2832,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <button
                       type="button"
                       onClick={addCurve}
-                      className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline"
+                      className="text-sm font-semibold text-[var(--app-accent)] hover:opacity-80 hover:underline"
                     >
                       + Agregar curva
                     </button>
@@ -2763,14 +2846,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             Expresión {idx + 1}
                           </label>
                           <div className="flex items-center gap-3">
-                            <label className="inline-flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
+                            <label className="inline-flex items-center gap-2 text-sm text-[var(--app-text-muted)] cursor-pointer">
                               <input
                                 type="color"
                                 value={curve.color}
                                 onChange={(e) =>
                                   updateCurveColor(curve.id, e.target.value)
                                 }
-                                className="h-9 w-12 cursor-pointer rounded border border-slate-200 bg-white p-0.5"
+                                className="h-9 w-12 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)] p-0.5"
                                 title="Color de la curva"
                               />
                               Color
@@ -2779,7 +2862,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               <button
                                 type="button"
                                 onClick={() => removeCurve(curve.id)}
-                                className="text-sm font-semibold text-slate-500 hover:text-slate-700 hover:underline"
+                                className="text-sm font-semibold text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:underline"
                                 title="Eliminar curva"
                               >
                                 Eliminar
@@ -2802,7 +2885,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                         {idx === activeCurveIndex &&
                           activeCurveNaturalLanguagePreview && (
-                            <p className="mt-2 text-sm text-slate-600">
+                            <p className="mt-2 text-sm text-[var(--app-text)]">
                               <span className="font-semibold">Interpretado como:</span>{" "}
                               <button
                                 type="button"
@@ -2812,7 +2895,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                     activeCurveNaturalLanguagePreview
                                   )
                                 }
-                                className="font-mono text-blue-700 cursor-pointer rounded px-1 -mx-1 transition-colors hover:bg-blue-50 hover:text-blue-800"
+                                className="font-mono text-[var(--app-accent)] cursor-pointer rounded px-1 -mx-1 transition-colors hover:bg-[var(--app-surface-muted)] hover:opacity-90"
                                 title="Usar esta expresión en el campo"
                               >
                                 {activeCurveNaturalLanguagePreview}
@@ -2824,18 +2907,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
+                    <label className="inline-flex items-center gap-2.5 text-base text-[var(--app-text)] cursor-pointer">
                       <input
                         type="checkbox"
                         checked={naturalLanguageEnabled}
                         onChange={(e) =>
                           setNaturalLanguageEnabled(e.target.checked)
                         }
-                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                        className="h-4 w-4 rounded border-[var(--app-border)] text-[var(--app-accent)] focus:ring-[var(--app-accent)]/20"
                       />
                       Interpretar lenguaje natural
                     </label>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-[var(--app-text-muted)]">
                       Permite escribir expresiones como &apos;seno de x&apos;,
                       &apos;x al cuadrado más 3&apos;, etc.
                     </p>
@@ -2912,7 +2995,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </div>
 
                     <span
-                      className="hidden lg:inline text-xs text-slate-400 ml-auto"
+                      className="hidden lg:inline text-xs text-[var(--app-text-muted)] ml-auto"
                       aria-hidden
                     >
                       Compartir · IA · Reportes
@@ -2966,14 +3049,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       aria-label="Buscar función"
                     />
                     {functionSearch.trim() && !functionLibraryHasResults ? (
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-[var(--app-text-muted)]">
                         No se encontraron funciones
                       </p>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                         {filteredFunctionLibrary.map((category) => (
                           <div key={category.category} className="min-w-0">
-                            <p className="text-xs font-semibold text-slate-600 mb-1.5">
+                            <p className="text-xs font-semibold text-[var(--app-text)] mb-1.5">
                               {category.category}
                             </p>
                             <div className="flex flex-wrap gap-1.5">
@@ -3063,7 +3146,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         {experimentalSeries.map((series) => (
                           <li
                             key={series.id}
-                            className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600"
+                            className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--app-text)]"
                           >
                             <span>
                               {series.name} ({series.points.length} puntos)
@@ -3241,7 +3324,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     aria-hidden
                   >
                     <p className={subsectionHeading}>Próximamente</p>
-                    <ul className="space-y-1.5 text-xs text-slate-500">
+                    <ul className="space-y-1.5 text-xs text-[var(--app-text-muted)]">
                       <li>Intersecciones</li>
                       <li>Máximos y mínimos</li>
                       <li>Estadística</li>
@@ -3291,7 +3374,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                         <span
                           className={`text-sm font-mono ${
-                            isHidden ? "text-slate-400" : "text-slate-700"
+                            isHidden
+                              ? "text-[var(--app-text-muted)] opacity-60"
+                              : "text-[var(--app-text)]"
                           }`}
                         >
                           {curve.expression}
@@ -3324,7 +3409,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                         <span
                           className={`text-sm font-mono ${
-                            isHidden ? "text-slate-400" : "text-slate-700"
+                            isHidden
+                              ? "text-[var(--app-text-muted)] opacity-60"
+                              : "text-[var(--app-text)]"
                           }`}
                         >
                           f&apos;({curve.sourceExpression})
@@ -3358,7 +3445,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                         <span
                           className={`text-sm font-mono ${
-                            isHidden ? "text-slate-400" : "text-slate-700"
+                            isHidden
+                              ? "text-[var(--app-text-muted)] opacity-60"
+                              : "text-[var(--app-text)]"
                           }`}
                         >
                           ∫({curve.sourceExpression})
@@ -3386,7 +3475,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                         <span
                           className={`text-sm ${
-                            isHidden ? "text-slate-400" : "text-slate-700"
+                            isHidden
+                              ? "text-[var(--app-text-muted)] opacity-60"
+                              : "text-[var(--app-text)]"
                           }`}
                         >
                           {series.name}
@@ -3418,7 +3509,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                         <span
                           className={`text-sm ${
-                            isHidden ? "text-slate-400" : "text-slate-700"
+                            isHidden
+                              ? "text-[var(--app-text-muted)] opacity-60"
+                              : "text-[var(--app-text)]"
                           }`}
                         >
                           📈 Regresión - {regression.name}
@@ -3439,13 +3532,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={composedChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
                     <XAxis
                       dataKey="x"
                       type="number"
                       domain={[visibleMinX, visibleMaxX]}
                       allowDataOverflow
-                      stroke="#64748b"
+                      stroke={chartTheme.axis}
+                      tick={{ fill: chartTheme.axis }}
                       fontSize={14}
                     />
                     {useDualYAxis ? (
@@ -3453,21 +3547,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         <YAxis
                           yAxisId="left"
                           orientation="left"
-                          stroke="#64748b"
+                          stroke={chartTheme.axis}
+                          tick={{ fill: chartTheme.axis }}
                           fontSize={14}
                           domain={mathYAxisDomain}
                         />
                         <YAxis
                           yAxisId="right"
                           orientation="right"
-                          stroke="#64748b"
+                          stroke={chartTheme.axis}
+                          tick={{ fill: chartTheme.axis }}
                           fontSize={14}
                           domain={experimentalYAxisDomain}
                         />
                       </>
                     ) : (
                       <YAxis
-                        stroke="#64748b"
+                        stroke={chartTheme.axis}
+                        tick={{ fill: chartTheme.axis }}
                         fontSize={14}
                         domain={yAxisDomain}
                       />
@@ -3475,9 +3572,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <Tooltip
                       contentStyle={{
                         borderRadius: "0.5rem",
-                        border: "1px solid #e2e8f0",
+                        border: `1px solid ${chartTheme.tooltipBorder}`,
+                        backgroundColor: chartTheme.tooltipBg,
+                        color: chartTheme.tooltipColor,
                         boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                       }}
+                      labelStyle={{ color: chartTheme.tooltipColor }}
+                      itemStyle={{ color: chartTheme.tooltipColor }}
                     />
                     {activeCurves.map((curve) =>
                       hiddenLegendKeys.includes(curveLegendKey(curve.idx)) ? null : (
@@ -3733,7 +3834,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 : "No disponible"}
                             </p>
                             {comparison.bestModel && comparison.bestR2 != null && (
-                              <div className="mt-2 rounded-md bg-slate-100 px-3 py-2">
+                              <div className="mt-2 rounded-md bg-[var(--app-surface-muted)] px-3 py-2">
                                 <p className="font-semibold">🏆 Mejor ajuste:</p>
                                 <p>
                                   {comparison.bestModel === "linear"
@@ -3755,7 +3856,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                   {bestQuality?.label}
                                 </p>
                                 {bestQuality && (
-                                  <span className="mt-1 inline-flex rounded-md bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
+                                  <span className="mt-1 inline-flex rounded-md bg-[var(--app-surface)] border border-[var(--app-border)] px-2.5 py-1 text-xs font-medium text-[var(--app-text)]">
                                     {bestQuality.badge}
                                   </span>
                                 )}
@@ -3793,7 +3894,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 No disponible
                               </p>
                               {status.unavailableReason && (
-                                <p className="mt-1 text-slate-600">
+                                <p className="mt-1 text-[var(--app-text-muted)]">
                                   <span className="font-semibold">Motivo:</span>{" "}
                                   {status.unavailableReason}
                                 </p>
@@ -3865,7 +3966,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               <span className="font-semibold">Calidad:</span>{" "}
                               {quality.label}
                             </p>
-                            <span className="mt-1 inline-flex rounded-md bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
+                            <span className="mt-1 inline-flex rounded-md bg-[var(--app-surface)] border border-[var(--app-border)] px-2.5 py-1 text-xs font-medium text-[var(--app-text)]">
                               {quality.badge}
                             </span>
                           </div>
