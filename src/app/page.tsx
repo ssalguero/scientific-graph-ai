@@ -214,6 +214,45 @@ function ScientificReportSectionCollapsible({
   );
 }
 
+type WorkspaceSection = "data" | "analysis" | "results" | "reports";
+
+const WORKSPACE_TABS: { id: WorkspaceSection; label: string }[] = [
+  { id: "data", label: "Datos" },
+  { id: "analysis", label: "Análisis" },
+  { id: "results", label: "Resultados" },
+  { id: "reports", label: "Reportes" },
+];
+
+type WorkspaceTabProps = {
+  section: WorkspaceSection;
+  label: string;
+  isActive: boolean;
+  onSelect: (section: WorkspaceSection) => void;
+};
+
+function WorkspaceTab({
+  section,
+  label,
+  isActive,
+  onSelect,
+}: WorkspaceTabProps) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={isActive}
+      onClick={() => onSelect(section)}
+      className={
+        isActive
+          ? "rounded-lg border border-[var(--app-accent)] bg-[var(--app-accent)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+          : `${btnOutline} px-3 py-2 text-sm font-medium`
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
 const getChartExportFileName = (
   title: string,
   extension: "png" | "svg" | "json"
@@ -3442,6 +3481,320 @@ const generateScientificInterpretation = (input: {
   };
 };
 
+type ScientificAssistantConfidenceLevel = "high" | "medium" | "low";
+
+type ScientificAssistantReport = {
+  overallAssessment: string;
+  keyFindings: string[];
+  recommendedWorkflow: string[];
+  confidenceLevel: ScientificAssistantConfidenceLevel;
+  nextSteps: string[];
+  cautions: string[];
+};
+
+const getScientificAssistantConfidenceLabel = (
+  level: ScientificAssistantConfidenceLevel
+) =>
+  level === "high" ? "Alta" : level === "medium" ? "Media" : "Baja";
+
+const buildCorrelationKeyFinding = (result: CorrelationResult): string | null => {
+  const absolute = Math.abs(result.coefficient);
+  if (absolute < 0.4) return null;
+
+  const directionLabel = getCorrelationDirectionLabel(result.coefficient);
+  const strengthLabel =
+    absolute >= 0.8 ? "muy fuerte" : absolute >= 0.6 ? "fuerte" : "moderada";
+
+  return `Se detectó una correlación ${directionLabel} ${strengthLabel} entre ${result.seriesA} y ${result.seriesB}.`;
+};
+
+const formatScientificAssistantReportAsText = (
+  report: ScientificAssistantReport
+): string => {
+  const lines = [
+    "=== Evaluación general ===",
+    report.overallAssessment,
+    "",
+    `Nivel de confianza: ${getScientificAssistantConfidenceLabel(report.confidenceLevel)}`,
+    "",
+    "=== Hallazgos clave ===",
+    ...report.keyFindings,
+    "",
+    "=== Flujo recomendado ===",
+    ...report.recommendedWorkflow.map((step, index) => `${index + 1}. ${step}`),
+    "",
+    "=== Próximos pasos ===",
+    ...report.nextSteps,
+  ];
+
+  if (report.cautions.length > 0) {
+    lines.push("", "=== Advertencias ===", ...report.cautions);
+  }
+
+  return lines.join("\n").trim();
+};
+
+const generateScientificAssistantReport = (input: {
+  series: ExperimentalSeries[];
+  experimentalStatistics: ExperimentalStatistics[];
+  correlationAnalysis: {
+    results: CorrelationResult[];
+    unavailablePairs: CorrelationUnavailablePair[];
+    matrix: CorrelationMatrixRow[];
+  };
+  normalityAnalyses: NormalityAnalysis[];
+  experimentalOutliers: ExperimentalOutlier[];
+  tTestResult: TTestResult | null;
+  anovaAnalysis: AnovaAnalysis | null;
+  postHocComparisons: PostHocComparison[];
+  mannWhitneyResult: MannWhitneyResult | null;
+  kruskalWallisResult: KruskalWallisResult | null;
+  statisticalRecommendation: StatisticalRecommendation | null;
+  scientificReport: ScientificReport | null;
+  scientificInterpretation: ScientificInterpretation | null;
+}): ScientificAssistantReport | null => {
+  const seriesCount = input.series.length;
+  const totalObservations = input.series.reduce(
+    (sum, item) => sum + getSeriesYValues(item).length,
+    0
+  );
+
+  if (seriesCount === 0 || totalObservations === 0) return null;
+
+  const hasSmallSamples = input.series.some(
+    (item) => getSeriesYValues(item).length < SMALL_SAMPLE_WARNING_THRESHOLD
+  );
+  const hasOutliers = input.experimentalOutliers.length > 0;
+  const hasNonNormal = input.normalityAnalyses.some(
+    (analysis) => analysis.classification === "non-normal"
+  );
+  const allNormal =
+    input.normalityAnalyses.length > 0 &&
+    input.normalityAnalyses.every(
+      (analysis) =>
+        analysis.classification === "normal" ||
+        analysis.classification === "approximately-normal"
+    ) &&
+    !hasNonNormal;
+
+  let confidenceLevel: ScientificAssistantConfidenceLevel =
+    input.statisticalRecommendation?.confidence ?? "medium";
+
+  if (hasSmallSamples && confidenceLevel === "high") {
+    confidenceLevel = "medium";
+  }
+  if (
+    (hasSmallSamples && hasOutliers) ||
+    (hasNonNormal && hasSmallSamples && confidenceLevel !== "low")
+  ) {
+    confidenceLevel = "low";
+  }
+  if (
+    !input.statisticalRecommendation &&
+    hasSmallSamples &&
+    !hasOutliers &&
+    !hasNonNormal
+  ) {
+    confidenceLevel = "medium";
+  }
+  if (
+    !input.statisticalRecommendation &&
+    allNormal &&
+    !hasOutliers &&
+    !hasSmallSamples
+  ) {
+    confidenceLevel = "high";
+  }
+
+  const cautiousReasons: string[] = [];
+  if (hasOutliers) cautiousReasons.push("valores atípicos");
+  if (hasSmallSamples) cautiousReasons.push("muestras pequeñas");
+  if (hasNonNormal) cautiousReasons.push("desviaciones de normalidad");
+  if (confidenceLevel === "low") cautiousReasons.push("baja confianza estadística");
+
+  const overallAssessment =
+    cautiousReasons.length > 0
+      ? `Los resultados deben interpretarse con cautela debido a la presencia de ${cautiousReasons.join(", ")}.`
+      : "Los datos presentan calidad adecuada para análisis estadístico.";
+
+  const keyFindings: string[] = [];
+  const pushUniqueFinding = (finding: string) => {
+    if (!keyFindings.includes(finding)) keyFindings.push(finding);
+  };
+
+  input.correlationAnalysis.results.forEach((result) => {
+    const finding = buildCorrelationKeyFinding(result);
+    if (finding) pushUniqueFinding(finding);
+  });
+
+  if (input.anovaAnalysis?.result.significant) {
+    pushUniqueFinding("ANOVA mostró diferencias significativas.");
+  }
+
+  const significantPostHocCount = input.postHocComparisons.filter(
+    (comparison) => comparison.significant
+  ).length;
+  if (significantPostHocCount === 1) {
+    pushUniqueFinding("Una comparación post-hoc fue significativa.");
+  } else if (significantPostHocCount > 1) {
+    pushUniqueFinding(
+      `${significantPostHocCount} comparaciones post-hoc fueron significativas.`
+    );
+  }
+
+  if (hasOutliers) {
+    pushUniqueFinding("Se identificaron valores atípicos.");
+  }
+
+  if (input.tTestResult?.significant) {
+    pushUniqueFinding(
+      `El t-Test entre ${input.tTestResult.seriesA} y ${input.tTestResult.seriesB} fue significativo.`
+    );
+  }
+
+  if (input.mannWhitneyResult?.significant) {
+    pushUniqueFinding("Mann-Whitney detectó diferencias significativas.");
+  }
+
+  if (input.kruskalWallisResult?.significant) {
+    pushUniqueFinding("Kruskal-Wallis detectó diferencias significativas.");
+  }
+
+  if (allNormal) {
+    pushUniqueFinding("Las series cumplen supuestos de normalidad.");
+  } else if (hasNonNormal) {
+    pushUniqueFinding("Se detectaron series con distribución no normal.");
+  }
+
+  input.scientificInterpretation?.findings
+    .slice(0, 4)
+    .forEach((finding) => pushUniqueFinding(finding));
+
+  if (keyFindings.length === 0 && input.scientificReport?.summary) {
+    pushUniqueFinding(input.scientificReport.summary);
+  }
+
+  if (keyFindings.length === 0) {
+    pushUniqueFinding(
+      `Se analizaron ${seriesCount} series con ${totalObservations} observaciones.`
+    );
+  }
+
+  const recommendedWorkflow: string[] = [];
+  const pushWorkflowStep = (step: string) => {
+    if (!recommendedWorkflow.includes(step)) recommendedWorkflow.push(step);
+  };
+
+  if (hasOutliers) {
+    pushWorkflowStep("Verificar outliers y decidir si excluirlos o corregirlos.");
+  }
+
+  const recommendedTest = input.statisticalRecommendation?.recommendedTest;
+
+  if (recommendedTest === "ANOVA" || input.anovaAnalysis) {
+    pushWorkflowStep("Utilizar ANOVA como análisis principal de comparación.");
+  } else if (recommendedTest === "t-Test" || input.tTestResult) {
+    pushWorkflowStep("Utilizar t-Test para comparar los dos grupos seleccionados.");
+  } else if (recommendedTest === "Mann-Whitney U" || input.mannWhitneyResult) {
+    pushWorkflowStep("Utilizar Mann-Whitney por falta de normalidad.");
+  } else if (
+    recommendedTest === "Kruskal-Wallis" ||
+    input.kruskalWallisResult
+  ) {
+    pushWorkflowStep("Utilizar Kruskal-Wallis para comparar múltiples grupos.");
+  } else if (recommendedTest === "Pearson" || recommendedTest === "Spearman") {
+    pushWorkflowStep(`Aplicar correlación de ${recommendedTest}.`);
+  } else if (allNormal && seriesCount >= 3) {
+    pushWorkflowStep("Utilizar ANOVA para comparar tres o más grupos.");
+  } else if (allNormal && seriesCount === 2) {
+    pushWorkflowStep("Utilizar t-Test para comparar dos grupos.");
+  } else if (hasNonNormal && seriesCount >= 3) {
+    pushWorkflowStep("Utilizar Kruskal-Wallis como alternativa no paramétrica.");
+  } else if (hasNonNormal && seriesCount === 2) {
+    pushWorkflowStep("Utilizar Mann-Whitney como alternativa no paramétrica.");
+  }
+
+  if (input.anovaAnalysis?.result.significant) {
+    pushWorkflowStep("Analizar comparaciones post-hoc con Tukey.");
+  }
+
+  if (input.experimentalStatistics.length > 0) {
+    pushWorkflowStep("Revisar estadística descriptiva antes de inferencia.");
+  }
+
+  pushWorkflowStep("Incorporar resultados al reporte científico.");
+  pushWorkflowStep("Revisar la interpretación científica automática.");
+
+  const nextSteps: string[] = [];
+  const pushNextStep = (step: string) => {
+    if (!nextSteps.includes(step)) nextSteps.push(step);
+  };
+
+  if (hasSmallSamples) {
+    pushNextStep("Incrementar tamaño muestral.");
+  }
+  if (hasOutliers) {
+    pushNextStep("Repetir mediciones para validar valores atípicos.");
+  }
+  if (seriesCount >= 2 && input.correlationAnalysis.results.length === 0) {
+    pushNextStep("Evaluar variables adicionales para ampliar el análisis.");
+  } else if (seriesCount < 3) {
+    pushNextStep("Evaluar variables adicionales o nuevas series experimentales.");
+  }
+  if (confidenceLevel === "low" || confidenceLevel === "medium") {
+    pushNextStep("Confirmar resultados con nuevos experimentos.");
+  }
+  if (input.anovaAnalysis?.result.significant && significantPostHocCount === 0) {
+    pushNextStep("Profundizar comparaciones entre pares con análisis post-hoc.");
+  }
+
+  if (nextSteps.length === 0) {
+    pushNextStep("Documentar conclusiones y planificar la siguiente ronda experimental.");
+  }
+
+  const cautions: string[] = [];
+  const pushCaution = (caution: string) => {
+    if (!cautions.includes(caution)) cautions.push(caution);
+  };
+
+  input.statisticalRecommendation?.warnings.forEach((warning) =>
+    pushCaution(warning)
+  );
+  input.scientificInterpretation?.warnings.forEach((warning) =>
+    pushCaution(warning)
+  );
+
+  if (hasNonNormal) {
+    pushCaution(
+      "La normalidad no se cumple en todas las series; priorice métodos no paramétricos."
+    );
+  }
+  if (hasOutliers) {
+    pushCaution(
+      "Los valores atípicos pueden sesgar medias y pruebas paramétricas."
+    );
+  }
+  if (hasSmallSamples) {
+    pushCaution(
+      "El tamaño muestral reducido limita la potencia estadística de las pruebas."
+    );
+  }
+  if (confidenceLevel === "low") {
+    pushCaution(
+      "La confianza del análisis es baja; valide hallazgos antes de tomar decisiones."
+    );
+  }
+
+  return {
+    overallAssessment,
+    keyFindings,
+    recommendedWorkflow,
+    confidenceLevel,
+    nextSteps,
+    cautions,
+  };
+};
+
 const getNonParametricModeLabel = (mode: NonParametricMode) =>
   mode === "mann-whitney" ? "Mann-Whitney U" : "Kruskal-Wallis H";
 
@@ -4472,8 +4825,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showScientificReport, setShowScientificReport] = useState(false);
   const [showScientificInterpretation, setShowScientificInterpretation] =
     useState(false);
+  const [showScientificAssistant, setShowScientificAssistant] = useState(false);
   const [scientificReportCopied, setScientificReportCopied] = useState(false);
   const [scientificInterpretationCopied, setScientificInterpretationCopied] =
+    useState(false);
+  const [scientificAssistantCopied, setScientificAssistantCopied] =
     useState(false);
   const [scientificReportPdfExporting, setScientificReportPdfExporting] =
     useState(false);
@@ -4486,6 +4842,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
   const [functionSearch, setFunctionSearch] = useState("");
+  const [activeWorkspaceSection, setActiveWorkspaceSection] =
+    useState<WorkspaceSection>("data");
   const [controlPanelTab, setControlPanelTab] = useState<
     "graph" | "library" | "data"
   >("graph");
@@ -5492,6 +5850,39 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       scientificReport,
     ]
   );
+  const scientificAssistantReport = useMemo(
+    () =>
+      generateScientificAssistantReport({
+        series: visibleExperimentalSeries,
+        experimentalStatistics,
+        correlationAnalysis,
+        normalityAnalyses,
+        experimentalOutliers,
+        tTestResult,
+        anovaAnalysis,
+        postHocComparisons,
+        mannWhitneyResult,
+        kruskalWallisResult,
+        statisticalRecommendation,
+        scientificReport,
+        scientificInterpretation,
+      }),
+    [
+      visibleExperimentalSeries,
+      experimentalStatistics,
+      correlationAnalysis,
+      normalityAnalyses,
+      experimentalOutliers,
+      tTestResult,
+      anovaAnalysis,
+      postHocComparisons,
+      mannWhitneyResult,
+      kruskalWallisResult,
+      statisticalRecommendation,
+      scientificReport,
+      scientificInterpretation,
+    ]
+  );
   const handleCopyScientificReport = async () => {
     if (!scientificReport) return;
 
@@ -5514,6 +5905,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       );
       setScientificInterpretationCopied(true);
       window.setTimeout(() => setScientificInterpretationCopied(false), 2000);
+    } catch {
+      // ignore clipboard errors
+    }
+  };
+  const handleCopyScientificAssistantReport = async () => {
+    if (!scientificAssistantReport) return;
+
+    try {
+      await navigator.clipboard.writeText(
+        formatScientificAssistantReportAsText(scientificAssistantReport)
+      );
+      setScientificAssistantCopied(true);
+      window.setTimeout(() => setScientificAssistantCopied(false), 2000);
     } catch {
       // ignore clipboard errors
     }
@@ -6119,6 +6523,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showStatisticalAdvisor ||
     showScientificReport ||
     showScientificInterpretation ||
+    showScientificAssistant ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -6391,7 +6796,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </p>
           </header>
 
-          {!isEditing && (
+          <nav
+            className="flex flex-wrap gap-2 border-b border-[var(--app-border)] pb-3"
+            role="tablist"
+            aria-label="Workspace científico"
+          >
+            {WORKSPACE_TABS.map((tab) => (
+              <WorkspaceTab
+                key={tab.id}
+                section={tab.id}
+                label={tab.label}
+                isActive={activeWorkspaceSection === tab.id}
+                onSelect={setActiveWorkspaceSection}
+              />
+            ))}
+          </nav>
+
+          {!isEditing && activeWorkspaceSection === "data" && (
             <>
               <section className={card}>
                 <h2 className={panelHeading}>Bienvenido a Scientific Graph</h2>
@@ -6428,10 +6849,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </>
           )}
 
-          <section>
-            <h2 className={sectionLabel}>Panel de control</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4">
-              <div className={`${card} lg:col-span-8 flex flex-col gap-4`}>
+          <section
+            className={activeWorkspaceSection === "data" ? "" : "hidden"}
+            aria-hidden={activeWorkspaceSection !== "data"}
+          >
+            <h2 className={sectionLabel}>📁 Datos</h2>
+            <p className={`${panelHeadingSubtext} -mt-2 mb-3`}>
+              Funciones, biblioteca, series experimentales e importaciones
+            </p>
+            <div className={`${card} flex flex-col gap-4`}>
                 <div
                   className="flex flex-wrap gap-1 border-b border-[var(--app-border)] pb-2"
                   role="tablist"
@@ -6632,68 +7058,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         onChange={handleJsonImport}
                       />
                     </div>
-
-                    <span className={actionBarDivider} aria-hidden />
-
-                    <div className={actionBarGroup}>
-                      <button
-                        type="button"
-                        onClick={exportChartPng}
-                        disabled={!hasChartContent}
-                        title="Exportar PNG"
-                        className={actionBarBtnExport}
-                      >
-                        PNG
-                      </button>
-                      <button
-                        type="button"
-                        onClick={exportChartSvg}
-                        disabled={!hasChartContent}
-                        title="Exportar SVG"
-                        className={actionBarBtnExport}
-                      >
-                        SVG
-                      </button>
-                      <button
-                        type="button"
-                        onClick={exportChartJson}
-                        title="Exportar JSON"
-                        className={actionBarBtnExport}
-                      >
-                        JSON
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void handleExportScientificReportPdf();
-                        }}
-                        disabled={scientificReportPdfExporting}
-                        title="Exportar reporte científico en PDF"
-                        className={`${actionBarBtnExport} disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        {scientificReportPdfExporting
-                          ? "Exportando PDF..."
-                          : "📄 Exportar PDF"}
-                      </button>
-                    </div>
-
-                    <span
-                      className="hidden lg:inline text-xs text-[var(--app-text-muted)] ml-auto"
-                      aria-hidden
-                    >
-                      Compartir · IA · Reportes
-                    </span>
                   </div>
-
-                  {scientificReportPdfMessage && (
-                    <p className="text-xs text-[var(--app-text-muted)] mt-2 w-full">
-                      {scientificReportPdfMessage}
-                    </p>
-                  )}
 
                   {isEditing && selectedGraphId && (
                     <div
-                      className={`${actionBarGroup} mt-2 pt-2 border-t border-dashed border-[var(--app-border)]`}
+                      className={`${actionBarGroup} mt-2 pt-2 border-t border-dashed border-[var(--app-border)] w-full`}
                     >
                       <button
                         type="button"
@@ -6853,11 +7222,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     )}
                   </div>
                 )}
-              </div>
+            </div>
+          </section>
 
-              <div
-                className={`${card} lg:col-span-4 flex flex-col gap-4 lg:min-w-[280px]`}
-              >
+          <section
+            className={activeWorkspaceSection === "analysis" ? "" : "hidden"}
+            aria-hidden={activeWorkspaceSection !== "analysis"}
+          >
+            <h2 className={sectionLabel}>🔬 Análisis</h2>
+            <p className={`${panelHeadingSubtext} -mt-2 mb-3`}>
+              Visualización, estadística, pruebas y asistentes (solo controles)
+            </p>
+            <div className={`${card} flex flex-col gap-4 lg:min-w-[280px]`}>
                 <div>
                   <h3 className={panelHeading}>🔧 Herramientas de visualización</h3>
                   <p className={panelHeadingSubtext}>
@@ -7710,17 +8086,45 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar asistente científico
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showScientificAssistant}
+                            onChange={(e) =>
+                              setShowScientificAssistant(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
-              </div>
             </div>
           </section>
 
-          <section>
+          <section
+            className={activeWorkspaceSection === "results" ? "" : "hidden"}
+            aria-hidden={activeWorkspaceSection !== "results"}
+          >
+            <h2 className={`${sectionLabel} mb-3`}>📈 Resultados</h2>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <div>
-                <h2 className={`${panelHeading} mb-0`}>📈 Visualización</h2>
+                <h3 className={`${panelHeading} mb-0`}>Gráfico principal</h3>
                 <p className={`${panelHeadingSubtext} mb-0`}>
                   Escala actual: {getAxisScaleModeLabel(axisScaleMode)}
                 </p>
@@ -8269,7 +8673,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </ResponsiveContainer>
               </div>
             </div>
-          </section>
 
           {axisScaleWarnings.map((warning, index) => (
             <div key={`axis-scale-warning-${index}`} className={alertWarning}>
@@ -8278,7 +8681,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           ))}
 
           {showMathResultsPanel && (
-            <section className={card}>
+            <section className={`${card} mt-4`}>
               <h3 className={`${panelHeading} mb-3`}>
                 📊 Resultados matemáticos
               </h3>
@@ -9576,82 +9979,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 )}
 
-                {showScientificReport && (
-                  <div className={`${subsectionCard} lg:col-span-2`}>
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                      <p className={`${subsectionHeading} mb-0`}>
-                        📄 Reporte científico
-                      </p>
-                      {scientificReport && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void handleCopyScientificReport();
-                          }}
-                          className={btnOutline}
-                        >
-                          {scientificReportCopied
-                            ? "Copiado"
-                            : "Copiar reporte"}
-                        </button>
-                      )}
-                    </div>
-                    {scientificReport ? (
-                      <div className={contentPanel}>
-                        <p className="font-semibold text-base">
-                          {scientificReport.title}
-                        </p>
-                        <p className="text-sm text-[var(--app-text-muted)] mt-1">
-                          {formatScientificReportDate(
-                            scientificReport.generatedAt
-                          )}
-                        </p>
-                        <div className={`${contentPanel} mt-3`}>
-                          <p className="font-semibold text-sm">
-                            Resumen ejecutivo
-                          </p>
-                          <p className="text-sm mt-1">
-                            {scientificReport.summary}
-                          </p>
-                        </div>
-                        <div className="mt-3">
-                          {scientificReport.sections.map((section) => (
-                            <ScientificReportSectionCollapsible
-                              key={section.title}
-                              title={section.title}
-                              content={section.content}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <p className={emptyState}>
-                        No hay datos suficientes para generar un reporte.
-                      </p>
-                    )}
-                  </div>
-                )}
-
                 {showScientificInterpretation && (
                   <div className={`${subsectionCard} lg:col-span-2`}>
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                      <p className={`${subsectionHeading} mb-0`}>
-                        🧠 Interpretación científica
-                      </p>
-                      {scientificInterpretation && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void handleCopyScientificInterpretation();
-                          }}
-                          className={btnOutline}
-                        >
-                          {scientificInterpretationCopied
-                            ? "Copiado"
-                            : "📋 Copiar interpretación"}
-                        </button>
-                      )}
-                    </div>
+                    <p className={subsectionHeading}>
+                      🧠 Interpretación científica
+                    </p>
                     {scientificInterpretation ? (
                       <div className={contentPanel}>
                         {scientificInterpretation.summary.length > 0 && (
@@ -9718,6 +10050,108 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <p className={emptyState}>
                         No hay información suficiente para generar una
                         interpretación científica.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showScientificAssistant && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🧪 Asistente científico</p>
+                    {scientificAssistantReport ? (
+                      <div className={contentPanel}>
+                        <div className="mb-4">
+                          <p className="font-semibold text-sm mb-2">
+                            Evaluación general
+                          </p>
+                          <p className="text-sm">
+                            {scientificAssistantReport.overallAssessment}
+                          </p>
+                          <p className="text-sm mt-2">
+                            <span className="font-semibold">
+                              Nivel de confianza:
+                            </span>{" "}
+                            {getScientificAssistantConfidenceLabel(
+                              scientificAssistantReport.confidenceLevel
+                            )}
+                          </p>
+                        </div>
+
+                        {scientificAssistantReport.keyFindings.length > 0 && (
+                          <div className="mb-4">
+                            <p className="font-semibold text-sm mb-2">
+                              Hallazgos clave
+                            </p>
+                            {scientificAssistantReport.keyFindings.map(
+                              (finding) => (
+                                <p
+                                  key={`assistant-finding-${finding}`}
+                                  className="text-sm mt-1"
+                                >
+                                  • {finding}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {scientificAssistantReport.recommendedWorkflow.length >
+                          0 && (
+                          <div className="mb-4">
+                            <p className="font-semibold text-sm mb-2">
+                              Flujo recomendado
+                            </p>
+                            {scientificAssistantReport.recommendedWorkflow.map(
+                              (step, index) => (
+                                <p
+                                  key={`assistant-workflow-${step}`}
+                                  className="text-sm mt-1"
+                                >
+                                  {index + 1}. {step}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {scientificAssistantReport.nextSteps.length > 0 && (
+                          <div className="mb-4">
+                            <p className="font-semibold text-sm mb-2">
+                              Próximos pasos
+                            </p>
+                            {scientificAssistantReport.nextSteps.map((step) => (
+                              <p
+                                key={`assistant-next-${step}`}
+                                className="text-sm mt-1"
+                              >
+                                • {step}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+
+                        {scientificAssistantReport.cautions.length > 0 && (
+                          <div>
+                            <p className="font-semibold text-sm mb-2">
+                              Advertencias
+                            </p>
+                            {scientificAssistantReport.cautions.map(
+                              (caution) => (
+                                <p
+                                  key={`assistant-caution-${caution}`}
+                                  className={`text-sm mt-1 ${emptyState}`}
+                                >
+                                  {caution}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        No existe información suficiente para generar
+                        recomendaciones científicas.
                       </p>
                     )}
                   </div>
@@ -9932,6 +10366,165 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </div>
             </section>
           )}
+          </section>
+
+          <section
+            className={activeWorkspaceSection === "reports" ? "" : "hidden"}
+            aria-hidden={activeWorkspaceSection !== "reports"}
+          >
+            <h2 className={sectionLabel}>📄 Reportes</h2>
+            <p className={`${panelHeadingSubtext} -mt-2 mb-3`}>
+              Exportaciones, reporte científico y copia de análisis
+            </p>
+
+            <div className={`${card} space-y-4`}>
+              <div>
+                <h3 className={panelHeading}>Exportación</h3>
+                <p className={panelHeadingSubtext}>
+                  Gráfico y documento científico
+                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4 mt-3">
+                  <div className={actionBarGroup}>
+                    <button
+                      type="button"
+                      onClick={exportChartPng}
+                      disabled={!hasChartContent}
+                      title="Exportar PNG"
+                      className={actionBarBtnExport}
+                    >
+                      PNG
+                    </button>
+                    <button
+                      type="button"
+                      onClick={exportChartSvg}
+                      disabled={!hasChartContent}
+                      title="Exportar SVG"
+                      className={actionBarBtnExport}
+                    >
+                      SVG
+                    </button>
+                    <button
+                      type="button"
+                      onClick={exportChartJson}
+                      title="Exportar JSON"
+                      className={actionBarBtnExport}
+                    >
+                      JSON
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleExportScientificReportPdf();
+                      }}
+                      disabled={scientificReportPdfExporting}
+                      title="Exportar reporte científico en PDF"
+                      className={`${actionBarBtnExport} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {scientificReportPdfExporting
+                        ? "Exportando PDF..."
+                        : "📄 Exportar PDF"}
+                    </button>
+                  </div>
+                </div>
+                {scientificReportPdfMessage && (
+                  <p className="text-xs text-[var(--app-text-muted)] mt-2">
+                    {scientificReportPdfMessage}
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-3 border-t border-[var(--app-border)]">
+                <h3 className={panelHeading}>Copiar contenido</h3>
+                <p className={panelHeadingSubtext}>
+                  Portapapeles para reporte, interpretación y asistente
+                </p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCopyScientificReport();
+                    }}
+                    disabled={!scientificReport}
+                    className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {scientificReportCopied ? "Copiado" : "Copiar reporte"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCopyScientificInterpretation();
+                    }}
+                    disabled={!scientificInterpretation}
+                    className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {scientificInterpretationCopied
+                      ? "Copiado"
+                      : "📋 Copiar interpretación"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCopyScientificAssistantReport();
+                    }}
+                    disabled={!scientificAssistantReport}
+                    className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {scientificAssistantCopied
+                      ? "Copiado"
+                      : "📋 Copiar análisis"}
+                  </button>
+                </div>
+              </div>
+
+              {showScientificReport && (
+                <div className={subsectionCard}>
+                  <p className={subsectionHeading}>📄 Reporte científico</p>
+                  {scientificReport ? (
+                    <div className={contentPanel}>
+                      <p className="font-semibold text-base">
+                        {scientificReport.title}
+                      </p>
+                      <p className="text-sm text-[var(--app-text-muted)] mt-1">
+                        {formatScientificReportDate(
+                          scientificReport.generatedAt
+                        )}
+                      </p>
+                      <div className={`${contentPanel} mt-3`}>
+                        <p className="font-semibold text-sm">
+                          Resumen ejecutivo
+                        </p>
+                        <p className="text-sm mt-1">
+                          {scientificReport.summary}
+                        </p>
+                      </div>
+                      <div className="mt-3">
+                        {scientificReport.sections.map((section) => (
+                          <ScientificReportSectionCollapsible
+                            key={section.title}
+                            title={section.title}
+                            content={section.content}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className={emptyState}>
+                      No hay datos suficientes para generar un reporte.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!showScientificReport &&
+                !showScientificInterpretation &&
+                !showScientificAssistant && (
+                  <p className={emptyState}>
+                    Active reporte, interpretación o asistente en la pestaña
+                    Análisis para ver contenido aquí.
+                  </p>
+                )}
+            </div>
+          </section>
 
           {shareNotFound && (
             <div className={alertError}>
