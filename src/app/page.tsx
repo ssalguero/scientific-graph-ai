@@ -41,16 +41,48 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+const appShell =
+  "bg-slate-50 text-slate-700 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-heading:#0f172a] [--app-accent:#2563eb]";
 const card =
-  "bg-white rounded-xl border border-slate-200 shadow-sm p-6 lg:p-8";
+  "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-4 sm:p-5";
+const cardCompact =
+  "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-3 sm:p-4";
+const panelInset =
+  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-2.5 text-sm text-[var(--app-text)]";
 const inputField =
-  "w-full border border-slate-200 rounded-lg px-4 py-3 text-base text-slate-900 bg-white shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500";
+  "w-full border border-[var(--app-border)] rounded-lg px-3 py-2.5 text-sm sm:text-base text-[var(--app-heading)] bg-[var(--app-surface)] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500";
 const btnPrimary =
-  "inline-flex items-center justify-center font-semibold text-white text-base px-7 py-3 rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.98]";
+  "inline-flex items-center justify-center font-semibold text-white text-sm sm:text-base px-5 py-2.5 rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.98]";
 const btnOutline =
-  "border border-slate-200 bg-white px-4 py-2 rounded-lg text-base text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow";
+  "border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 rounded-lg text-sm sm:text-base text-[var(--app-text)] shadow-sm transition-all hover:bg-[var(--app-surface-muted)] hover:border-slate-300 hover:shadow";
 const sectionTitle =
-  "text-sm sm:text-base font-semibold uppercase tracking-wider text-slate-500 mb-5";
+  "text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3";
+const subsectionTitle =
+  "text-sm font-semibold text-[var(--app-heading)] mb-2";
+const vizToolSection =
+  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3 space-y-3";
+const toggleInput = "peer sr-only";
+const toggleShell =
+  "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full";
+const toggleTrackBg =
+  "pointer-events-none absolute inset-0 rounded-full border border-[var(--app-border)] bg-slate-200 transition-colors peer-checked:border-[var(--app-accent)] peer-checked:bg-[var(--app-accent)] peer-disabled:opacity-50";
+const toggleThumb =
+  "pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5 peer-disabled:opacity-50";
+const toggleLabel =
+  "flex items-start justify-between gap-3 cursor-pointer text-sm text-[var(--app-text)] leading-snug";
+const actionBarBtn =
+  "inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-semibold shadow-sm transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm";
+const actionBarBtnPrimary =
+  `${actionBarBtn} bg-emerald-600 text-white hover:bg-emerald-700 min-w-[7.5rem]`;
+const actionBarBtnSave =
+  `${actionBarBtn} border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 min-w-[7.5rem]`;
+const actionBarBtnNeutral = `${actionBarBtn} ${btnOutline} hover:shadow-sm`;
+const actionBarBtnExport =
+  `${actionBarBtn} ${btnOutline} min-w-[3.25rem] px-3 font-medium hover:shadow-sm`;
+const actionBarGroup =
+  "flex flex-wrap items-center gap-2";
+const actionBarDivider =
+  "hidden sm:block h-8 w-px shrink-0 bg-[var(--app-border)]";
 
 const getChartExportFileName = (
   title: string,
@@ -1260,6 +1292,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
   const [functionSearch, setFunctionSearch] = useState("");
+  const [controlPanelTab, setControlPanelTab] = useState<
+    "graph" | "library" | "data"
+  >("graph");
   const [experimentalSeries, setExperimentalSeries] = useState<
     ExperimentalSeries[]
   >([]);
@@ -1322,6 +1357,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setCurves((prev) =>
       prev.map((c) => (c.id === id ? { ...c, expression: value } : c))
     );
+  };
+
+  const applyInterpretedExpression = (curveId: number, interpreted: string) => {
+    const curveIndex = curves.findIndex((curve) => curve.id === curveId);
+    if (curveIndex >= 0) {
+      setActiveCurveIndex(curveIndex);
+    }
+    updateCurveExpression(curveId, interpreted);
+    setErrorMessage("");
+    setFunctionSearch("");
   };
 
   const updateCurveColor = (id: number, value: string) => {
@@ -2422,6 +2467,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     experimentalSeries.length > 0 ||
     regressionCurves.length > 0;
   const hasActiveMathCurves = activeCurves.length > 0;
+  const hasMathResults =
+    (regressionModel === "compare" && regressionComparisons.length > 0) ||
+    (regressionModel !== "compare" &&
+      selectedRegressionSeriesStatus.length > 0) ||
+    (showDerivative && derivativeCurves.length > 0) ||
+    (showIntegral && integralCurves.length > 0) ||
+    (showIntegral && curveAreaResults.length > 0);
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
 
@@ -2556,7 +2608,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   };
 
   return (
-    <main className="flex min-h-screen flex-col lg:flex-row bg-slate-50">
+    <main className={`flex min-h-screen flex-col lg:flex-row ${appShell}`}>
       <aside className="w-full lg:w-[280px] lg:min-h-screen shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col">
         <div className="p-5 border-b border-slate-100">
           <h2 className="text-xl font-semibold text-slate-900 tracking-tight">
@@ -2597,23 +2649,54 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       </aside>
 
       <div className="flex-1 min-w-0 overflow-auto">
-        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-8 lg:py-10 space-y-8 lg:space-y-12">
-          <header>
-            <h1 className="text-4xl sm:text-5xl xl:text-6xl font-bold text-slate-900 tracking-tight">
+        <div className="w-full px-3 sm:px-5 lg:px-6 xl:px-8 py-4 sm:py-6 space-y-4 sm:space-y-5">
+          <header className="pb-1">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--app-heading)] tracking-tight">
               Scientific Graph AI
             </h1>
-            <p className="text-slate-500 mt-3 text-lg sm:text-xl">
+            <p className="text-slate-500 mt-1 text-sm sm:text-base">
               Visualiza, guarda y gestiona tus funciones matemáticas
             </p>
           </header>
 
           <section>
             <h2 className={sectionTitle}>Panel de control</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
-              <div className={`${card} lg:col-span-9 flex flex-col gap-6`}>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4">
+              <div className={`${card} lg:col-span-8 flex flex-col gap-4`}>
+                <div
+                  className="flex flex-wrap gap-1 border-b border-[var(--app-border)] pb-2"
+                  role="tablist"
+                  aria-label="Secciones del panel"
+                >
+                  {(
+                    [
+                      ["graph", "Información del gráfico"],
+                      ["library", "Biblioteca"],
+                      ["data", "Fuentes de datos"],
+                    ] as const
+                  ).map(([tab, label]) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      role="tab"
+                      aria-selected={controlPanelTab === tab}
+                      onClick={() => setControlPanelTab(tab)}
+                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        controlPanelTab === tab
+                          ? "bg-[var(--app-accent)] text-white shadow-sm"
+                          : "text-[var(--app-text)] hover:bg-[var(--app-surface-muted)]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {controlPanelTab === "graph" && (
+                <>
                 <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-lg xl:text-xl font-semibold text-slate-900">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-[var(--app-heading)]">
                       Información del gráfico
                     </h3>
                     <span
@@ -2706,10 +2789,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         {idx === activeCurveIndex &&
                           activeCurveNaturalLanguagePreview && (
                             <p className="mt-2 text-sm text-slate-600">
-                              <span className="font-semibold">Interpretación:</span>{" "}
-                              <span className="font-mono">
+                              <span className="font-semibold">Interpretado como:</span>{" "}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  applyInterpretedExpression(
+                                    curve.id,
+                                    activeCurveNaturalLanguagePreview
+                                  )
+                                }
+                                className="font-mono text-blue-700 cursor-pointer rounded px-1 -mx-1 transition-colors hover:bg-blue-50 hover:text-blue-800"
+                                title="Usar esta expresión en el campo"
+                              >
                                 {activeCurveNaturalLanguagePreview}
-                              </span>
+                              </button>
                             </p>
                           )}
                       </div>
@@ -2735,640 +2828,417 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row flex-wrap gap-4 pt-2">
-                  <button
-                    onClick={() => generateGraph()}
-                    className={`bg-emerald-600 hover:bg-emerald-700 ${btnPrimary} sm:min-w-[160px]`}
-                  >
-                    Graficar
-                  </button>
-                  <button
-                    onClick={saveGraph}
-                    className={`bg-blue-600 hover:bg-blue-700 ${btnPrimary} sm:min-w-[160px]`}
-                  >
-                    {isEditing ? "Actualizar" : "Guardar"}
-                  </button>
+                <div className="pt-3 mt-1 border-t border-[var(--app-border)]">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
+                    <div className={actionBarGroup}>
+                      <button
+                        type="button"
+                        onClick={() => generateGraph()}
+                        className={actionBarBtnPrimary}
+                      >
+                        Graficar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveGraph}
+                        className={actionBarBtnSave}
+                      >
+                        {isEditing ? "Actualizar" : "Guardar"}
+                      </button>
+                    </div>
+
+                    <span className={actionBarDivider} aria-hidden />
+
+                    <div className={actionBarGroup}>
+                      <button
+                        type="button"
+                        onClick={() => jsonImportInputRef.current?.click()}
+                        className={`${actionBarBtnNeutral} min-w-[8.5rem]`}
+                      >
+                        Importar JSON
+                      </button>
+                      <input
+                        ref={jsonImportInputRef}
+                        type="file"
+                        accept=".json,application/json"
+                        className="hidden"
+                        onChange={handleJsonImport}
+                      />
+                    </div>
+
+                    <span className={actionBarDivider} aria-hidden />
+
+                    <div className={actionBarGroup}>
+                      <button
+                        type="button"
+                        onClick={exportChartPng}
+                        disabled={!hasChartContent}
+                        title="Exportar PNG"
+                        className={actionBarBtnExport}
+                      >
+                        PNG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={exportChartSvg}
+                        disabled={!hasChartContent}
+                        title="Exportar SVG"
+                        className={actionBarBtnExport}
+                      >
+                        SVG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={exportChartJson}
+                        title="Exportar JSON"
+                        className={actionBarBtnExport}
+                      >
+                        JSON
+                      </button>
+                    </div>
+
+                    <span
+                      className="hidden lg:inline text-xs text-slate-400 ml-auto"
+                      aria-hidden
+                    >
+                      Compartir · IA · Reportes
+                    </span>
+                  </div>
+
                   {isEditing && selectedGraphId && (
-                    <>
+                    <div
+                      className={`${actionBarGroup} mt-2 pt-2 border-t border-dashed border-[var(--app-border)]`}
+                    >
                       <button
                         type="button"
                         onClick={copyShareLink}
-                        className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold`}
+                        className={`${actionBarBtnNeutral} min-w-[8.5rem]`}
                       >
                         {linkCopied ? "Enlace copiado" : "Copiar enlace"}
                       </button>
                       <button
                         type="button"
                         onClick={duplicateGraph}
-                        className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold`}
+                        className={`${actionBarBtnNeutral} min-w-[7.5rem]`}
                       >
                         Duplicar
                       </button>
                       <button
+                        type="button"
                         onClick={() => deleteGraph(selectedGraphId)}
-                        className={`bg-red-600 hover:bg-red-700 ${btnPrimary} sm:min-w-[160px]`}
+                        className={`${actionBarBtn} bg-red-600 text-white hover:bg-red-700 min-w-[7.5rem]`}
                       >
                         Eliminar
                       </button>
-                    </>
+                    </div>
                   )}
-                  <button
-                    type="button"
-                    onClick={exportChartPng}
-                    disabled={!hasChartContent}
-                    className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    Exportar PNG
-                  </button>
-                  <button
-                    type="button"
-                    onClick={exportChartSvg}
-                    disabled={!hasChartContent}
-                    className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    Exportar SVG
-                  </button>
-                  <button
-                    type="button"
-                    onClick={exportChartJson}
-                    className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold`}
-                  >
-                    Exportar JSON
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => jsonImportInputRef.current?.click()}
-                    className={`${btnOutline} sm:min-w-[160px] px-7 py-3 font-semibold`}
-                  >
-                    Importar JSON
-                  </button>
-                  <input
-                    ref={jsonImportInputRef}
-                    type="file"
-                    accept=".json,application/json"
-                    className="hidden"
-                    onChange={handleJsonImport}
-                  />
                 </div>
+                </>
+                )}
+
+                {controlPanelTab === "library" && (
+                  <div className="max-h-72 overflow-y-auto pr-1">
+                    <p className="text-sm text-slate-500 mb-2">
+                      Busca y haz clic para insertar en la curva activa
+                    </p>
+                    <input
+                      type="search"
+                      value={functionSearch}
+                      onChange={(e) => setFunctionSearch(e.target.value)}
+                      placeholder="Buscar función..."
+                      className={`${inputField} mb-3`}
+                      aria-label="Buscar función"
+                    />
+                    {functionSearch.trim() && !functionLibraryHasResults ? (
+                      <p className="text-sm text-slate-500">
+                        No se encontraron funciones
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                        {filteredFunctionLibrary.map((category) => (
+                          <div key={category.category} className="min-w-0">
+                            <p className="text-xs font-semibold text-slate-600 mb-1.5">
+                              {category.category}
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {category.functions.map((fn) => (
+                                <button
+                                  key={`${category.category}-${fn.expression}`}
+                                  type="button"
+                                  onClick={() => graphExpression(fn.expression)}
+                                  className={`${btnOutline} font-mono text-xs px-2 py-1`}
+                                >
+                                  {fn.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {controlPanelTab === "data" && (
+                  <div>
+                    <p className="text-sm text-slate-500 mb-3">
+                      Importa series experimentales desde CSV, TXT, XLSX u ODS
+                    </p>
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
+                      <div className="min-w-0 flex-1 sm:max-w-xs">
+                        <label
+                          htmlFor="experimental-data-source"
+                          className="block text-sm font-medium text-[var(--app-heading)] mb-2"
+                        >
+                          Fuente de datos
+                        </label>
+                        <select
+                          id="experimental-data-source"
+                          value={selectedDataSourceId}
+                          onChange={(e) => {
+                            setSelectedDataSourceId(
+                              e.target.value as ExperimentalDataSourceId
+                            );
+                            setExperimentalImportError(null);
+                          }}
+                          className={inputField}
+                        >
+                          {EXPERIMENTAL_DATA_SOURCES.map((source) => (
+                            <option
+                              key={source.id}
+                              value={source.id}
+                              disabled={!source.enabled}
+                            >
+                              {source.label}
+                              {!source.enabled ? " (próximamente)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => experimentalFileInputRef.current?.click()}
+                        disabled={!canImportExperimentalData}
+                        className={`${btnOutline} sm:min-w-[160px] px-5 py-2.5 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        Importar archivo
+                      </button>
+
+                      <input
+                        ref={experimentalFileInputRef}
+                        type="file"
+                        accept={selectedDataSource?.accept ?? undefined}
+                        className="hidden"
+                        onChange={handleExperimentalImport}
+                      />
+                    </div>
+
+                    {experimentalImportError && (
+                      <p className="mt-3 text-sm font-medium text-red-600">
+                        {experimentalImportError}
+                      </p>
+                    )}
+
+                    {experimentalSeries.length > 0 && (
+                      <ul className="mt-3 space-y-2">
+                        {experimentalSeries.map((series) => (
+                          <li
+                            key={series.id}
+                            className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600"
+                          >
+                            <span>
+                              {series.name} ({series.points.length} puntos)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeExperimentalSeries(series.id)}
+                              className={`${btnOutline} px-3 py-1.5 text-sm font-medium text-red-700 border-red-200 hover:bg-red-50`}
+                            >
+                              Eliminar serie
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
 
-              <div className={`${card} lg:col-span-3 flex flex-col gap-6`}>
+              <div
+                className={`${card} lg:col-span-4 flex flex-col gap-4 lg:min-w-[280px]`}
+              >
                 <div>
-                  <h3 className="text-lg xl:text-xl font-semibold text-slate-900">
-                    Rango
+                  <h3 className="text-base sm:text-lg font-semibold text-[var(--app-heading)]">
+                    🔧 Herramientas de visualización
                   </h3>
-                  <p className="text-base text-slate-500 mt-2">
-                    Define el intervalo del eje X
+                  <p className="text-sm text-slate-500 mt-1">
+                    Rango, ejes y opciones de análisis
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-5 flex-1 content-start">
-                  <div>
-                    <label className="block text-base font-medium text-slate-700 mb-2">
-                      Min X
-                    </label>
-                    <input
-                      type="number"
-                      value={minX}
-                      onChange={(e) => setMinX(Number(e.target.value))}
-                      placeholder="Desde"
-                      className={inputField}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-base font-medium text-slate-700 mb-2">
-                      Max X
-                    </label>
-                    <input
-                      type="number"
-                      value={maxX}
-                      onChange={(e) => setMaxX(Number(e.target.value))}
-                      placeholder="Hasta"
-                      className={inputField}
-                    />
-                  </div>
-                </div>
-
-                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={autoScaleY}
-                    onChange={(e) => setAutoScaleY(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
-                  />
-                  Ajustar eje Y automáticamente
-                </label>
-
-                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useSecondaryYAxis}
-                    onChange={(e) => setUseSecondaryYAxis(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
-                  />
-                  Usar eje Y secundario para datos experimentales
-                </label>
-
-                <div>
-                  <label className="block text-base font-medium text-slate-700 mb-2">
-                    Mostrar regresión
-                  </label>
-                  <select
-                    value={regressionModel}
-                    onChange={(e) =>
-                      setRegressionModel(e.target.value as RegressionModel)
-                    }
-                    disabled={experimentalSeries.length === 0}
-                    className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <option value="none">Ninguna</option>
-                    <option value="linear">Lineal</option>
-                    <option value="quadratic">Polinómica grado 2</option>
-                    <option value="exponential">Exponencial</option>
-                    <option value="logarithmic">Logarítmica</option>
-                    <option value="power">Potencial</option>
-                    <option value="compare">Comparar modelos</option>
-                  </select>
-                </div>
-
-                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showDerivative}
-                    onChange={(e) => setShowDerivative(e.target.checked)}
-                    disabled={!hasActiveMathCurves}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  Mostrar derivada
-                </label>
-
-                <label className="inline-flex items-center gap-2.5 text-base text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showIntegral}
-                    onChange={(e) => setShowIntegral(e.target.checked)}
-                    disabled={!hasActiveMathCurves}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  Mostrar integral
-                </label>
-              </div>
-            </div>
-          </section>
-
-          {showDerivative && derivativeCurves.length > 0 && (
-            <section className={`${card}`}>
-              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
-                📘 Derivadas
-              </h3>
-              <div className="space-y-3">
-                {derivativeCurves.map((curve) => (
-                  <div
-                    key={curve.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-                  >
-                    <p>
-                      <span className="font-semibold">Función:</span>{" "}
-                      <span className="font-mono">{curve.sourceExpression}</span>
-                    </p>
-                    <p className="mt-1">
-                      <span className="font-semibold">Derivada:</span>{" "}
-                      <span className="font-mono">{curve.expression}</span>
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {showIntegral && integralCurves.length > 0 && (
-            <section className={`${card}`}>
-              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
-                📗 Integrales
-              </h3>
-              <div className="space-y-3">
-                {integralCurves.map((curve) => (
-                  <div
-                    key={curve.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-                  >
-                    <p>
-                      <span className="font-semibold">Función:</span>{" "}
-                      <span className="font-mono">{curve.sourceExpression}</span>
-                    </p>
-                    <p className="mt-1">
-                      <span className="font-semibold">Integral:</span>{" "}
-                      <span className="font-mono">{curve.expression}</span>
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {showIntegral && curveAreaResults.length > 0 && (
-            <section className={`${card}`}>
-              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
-                📐 Área bajo la curva
-              </h3>
-              <div className="space-y-3">
-                {curveAreaResults.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-                  >
-                    <p>
-                      <span className="font-semibold">Función:</span>{" "}
-                      <span className="font-mono">{item.expression}</span>
-                    </p>
-                    <p className="mt-1">
-                      <span className="font-semibold">Intervalo:</span> [
-                      {visibleMinX.toFixed(4)}, {visibleMaxX.toFixed(4)}]
-                    </p>
-                    <p className="mt-1">
-                      <span className="font-semibold">Área:</span>{" "}
-                      {item.area.toFixed(4)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section className={`${card}`}>
-            <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-2">
-              📚 Biblioteca de funciones
-            </h3>
-            <p className="text-base text-slate-500 mb-4">
-              Busca y haz clic para insertar en la curva activa
-            </p>
-
-            <input
-              type="search"
-              value={functionSearch}
-              onChange={(e) => setFunctionSearch(e.target.value)}
-              placeholder="Buscar función..."
-              className={`${inputField} mb-5`}
-              aria-label="Buscar función"
-            />
-
-            {functionSearch.trim() && !functionLibraryHasResults ? (
-              <p className="text-base text-slate-500">
-                No se encontraron funciones
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {filteredFunctionLibrary.map((category) => (
-                  <div key={category.category}>
-                    <p className="text-sm font-semibold text-slate-700 mb-2">
-                      {category.category}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {category.functions.map((fn) => (
-                        <button
-                          key={`${category.category}-${fn.expression}`}
-                          type="button"
-                          onClick={() => graphExpression(fn.expression)}
-                          className={`${btnOutline} font-mono text-sm px-3 py-1.5`}
-                        >
-                          {fn.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {regressionModel === "compare" && regressionComparisons.length > 0 && (
-            <section className={`${card}`}>
-              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
-                📈 Regresiones
-              </h3>
-              <div className="space-y-3">
-                {regressionComparisons.map((comparison) => {
-                  const bestQuality =
-                    comparison.bestR2 != null ? getFitQuality(comparison.bestR2) : null;
-                  return (
-                    <div
-                      key={comparison.id}
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-                    >
-                      <p>
-                        <span className="font-semibold">Serie:</span>{" "}
-                        {comparison.name}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Lineal:</span>
-                      </p>
-                      <p>
-                        R² ={" "}
-                        {comparison.linear ? comparison.linear.r2.toFixed(4) : "No disponible"}
-                      </p>
-                      <p className="mt-1">
-                        <span className="font-semibold">Logarítmica:</span>
-                      </p>
-                      <p>
-                        R² ={" "}
-                        {comparison.logarithmic
-                          ? comparison.logarithmic.r2.toFixed(4)
-                          : "No disponible"}
-                      </p>
-                      <p className="mt-1">
-                        <span className="font-semibold">Exponencial:</span>
-                      </p>
-                      <p>
-                        R² ={" "}
-                        {comparison.exponential
-                          ? comparison.exponential.r2.toFixed(4)
-                          : "No disponible"}
-                      </p>
-                      <p className="mt-1">
-                        <span className="font-semibold">Potencial:</span>
-                      </p>
-                      <p>
-                        R² ={" "}
-                        {comparison.power
-                          ? comparison.power.r2.toFixed(4)
-                          : "No disponible"}
-                      </p>
-                      <p className="mt-1">
-                        <span className="font-semibold">Cuadrática:</span>
-                      </p>
-                      <p>
-                        R² ={" "}
-                        {comparison.quadratic
-                          ? comparison.quadratic.r2.toFixed(4)
-                          : "No disponible"}
-                      </p>
-                      {comparison.bestModel && comparison.bestR2 != null && (
-                        <div className="mt-2 rounded-md bg-slate-100 px-3 py-2">
-                          <p className="font-semibold">🏆 Mejor ajuste:</p>
-                          <p>
-                            {comparison.bestModel === "linear"
-                              ? "Lineal"
-                              : comparison.bestModel === "logarithmic"
-                                ? "Logarítmica"
-                              : comparison.bestModel === "exponential"
-                                ? "Exponencial"
-                              : comparison.bestModel === "power"
-                                ? "Potencial"
-                                : "Cuadrática"}
-                          </p>
-                          <p>
-                            <span className="font-semibold">R² ganador:</span>{" "}
-                            {comparison.bestR2.toFixed(4)}
-                          </p>
-                          <p>
-                            <span className="font-semibold">Calidad:</span>{" "}
-                            {bestQuality?.label}
-                          </p>
-                          {bestQuality && (
-                            <span className="mt-1 inline-flex rounded-md bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
-                              {bestQuality.badge}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {regressionModel !== "compare" && selectedRegressionSeriesStatus.length > 0 && (
-            <section className={`${card}`}>
-              <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-3">
-                📈 Regresiones
-              </h3>
-              <div className="space-y-3">
-                {selectedRegressionSeriesStatus.map((status) => {
-                  if (!status.curve) {
-                    return (
-                      <div
-                        key={status.id}
-                        className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-                      >
-                        <p>
-                          <span className="font-semibold">Serie:</span> {status.name}
-                        </p>
-                        <p>
-                          <span className="font-semibold">Modelo:</span>{" "}
-                          {getRegressionModelLabel(status.model)}
-                        </p>
-                        <p>
-                          <span className="font-semibold">Estado:</span> No disponible
-                        </p>
-                        {status.unavailableReason && (
-                          <p className="mt-1 text-slate-600">
-                            <span className="font-semibold">Motivo:</span>{" "}
-                            {status.unavailableReason}
-                          </p>
-                        )}
+                <div className="space-y-3">
+                  <div className={vizToolSection}>
+                    <p className={subsectionTitle}>📏 Rango</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                          Min X
+                        </label>
+                        <input
+                          type="number"
+                          value={minX}
+                          onChange={(e) => setMinX(Number(e.target.value))}
+                          placeholder="Desde"
+                          className={inputField}
+                        />
                       </div>
-                    );
-                  }
-
-                  const regression = status.curve;
-                  const r2Text = regression.r2.toFixed(4);
-                  const quality = getFitQuality(regression.r2);
-
-                  return (
-                    <div
-                      key={status.id}
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-                    >
-                      <p>
-                        <span className="font-semibold">Serie:</span>{" "}
-                        {status.name}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Modelo:</span> y ={" "}
-                        {regression.model === "linear" &&
-                        regression.slope != null &&
-                        regression.intercept != null ? (
-                          <>
-                            {regression.slope.toFixed(4)}x{" "}
-                            {regression.intercept >= 0 ? "+" : "-"}{" "}
-                            {Math.abs(regression.intercept).toFixed(4)}
-                          </>
-                        ) : regression.model === "exponential" &&
-                          regression.a != null &&
-                          regression.b != null ? (
-                          <>
-                            {regression.a.toFixed(4)} · e^({regression.b.toFixed(4)}x)
-                          </>
-                        ) : regression.model === "logarithmic" &&
-                          regression.slope != null &&
-                          regression.intercept != null ? (
-                          <>
-                            {regression.intercept.toFixed(4)}{" "}
-                            {regression.slope >= 0 ? "+" : "-"}{" "}
-                            {Math.abs(regression.slope).toFixed(4)}·ln(x)
-                          </>
-                        ) : regression.model === "power" &&
-                          regression.a != null &&
-                          regression.b != null ? (
-                          <>
-                            {regression.a.toFixed(4)} · x^{regression.b.toFixed(4)}
-                          </>
-                        ) : regression.a != null &&
-                          regression.b != null &&
-                          regression.c != null ? (
-                          <>
-                            {regression.a.toFixed(4)}x²{" "}
-                            {regression.b >= 0 ? "+" : "-"}{" "}
-                            {Math.abs(regression.b).toFixed(4)}x{" "}
-                            {regression.c >= 0 ? "+" : "-"}{" "}
-                            {Math.abs(regression.c).toFixed(4)}
-                          </>
-                        ) : (
-                          "N/A"
-                        )}
-                      </p>
-                      <p>
-                        <span className="font-semibold">R²:</span> {r2Text}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Calidad:</span>{" "}
-                        {quality.label}
-                      </p>
-                      <span className="mt-1 inline-flex rounded-md bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
-                        {quality.badge}
-                      </span>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                          Max X
+                        </label>
+                        <input
+                          type="number"
+                          value={maxX}
+                          onChange={(e) => setMaxX(Number(e.target.value))}
+                          placeholder="Hasta"
+                          className={inputField}
+                        />
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+                  </div>
 
-          <section className={`${card}`}>
-            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
-              <div className="min-w-0 flex-1 sm:max-w-xs">
-                <h3 className="text-lg xl:text-xl font-semibold text-slate-900 mb-2">
-                  📊 Fuentes de datos
-                </h3>
-                <label
-                  htmlFor="experimental-data-source"
-                  className="sr-only"
-                >
-                  Fuente de datos
-                </label>
-                <select
-                  id="experimental-data-source"
-                  value={selectedDataSourceId}
-                  onChange={(e) => {
-                    setSelectedDataSourceId(
-                      e.target.value as ExperimentalDataSourceId
-                    );
-                    setExperimentalImportError(null);
-                  }}
-                  className={inputField}
-                >
-                  {EXPERIMENTAL_DATA_SOURCES.map((source) => (
-                    <option
-                      key={source.id}
-                      value={source.id}
-                      disabled={!source.enabled}
-                    >
-                      {source.label}
-                      {!source.enabled ? " (próximamente)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <div className={vizToolSection}>
+                    <p className={subsectionTitle}>📊 Ejes</p>
+                    <div className="space-y-3">
+                      <label className={toggleLabel}>
+                        <span className="flex-1 min-w-0">
+                          Ajustar eje Y automáticamente
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={autoScaleY}
+                            onChange={(e) => setAutoScaleY(e.target.checked)}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
 
-              <button
-                type="button"
-                onClick={() => experimentalFileInputRef.current?.click()}
-                disabled={!canImportExperimentalData}
-                className={`${btnOutline} sm:min-w-[160px] px-5 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                Importar archivo
-              </button>
+                      <label className={toggleLabel}>
+                        <span className="flex-1 min-w-0">
+                          Usar eje Y secundario para datos experimentales
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={useSecondaryYAxis}
+                            onChange={(e) =>
+                              setUseSecondaryYAxis(e.target.checked)
+                            }
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                    </div>
+                  </div>
 
-              <input
-                ref={experimentalFileInputRef}
-                type="file"
-                accept={selectedDataSource?.accept ?? undefined}
-                className="hidden"
-                onChange={handleExperimentalImport}
-              />
-            </div>
+                  <div className={vizToolSection}>
+                    <p className={subsectionTitle}>📈 Análisis</p>
+                    <div className="space-y-3">
+                      <div>
+                        <label
+                          htmlFor="regression-model-select"
+                          className="block text-xs font-medium text-slate-600 mb-1.5"
+                        >
+                          Mostrar regresión
+                        </label>
+                        <select
+                          id="regression-model-select"
+                          value={regressionModel}
+                          onChange={(e) =>
+                            setRegressionModel(e.target.value as RegressionModel)
+                          }
+                          disabled={experimentalSeries.length === 0}
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <option value="none">Ninguna</option>
+                          <option value="linear">Lineal</option>
+                          <option value="quadratic">Polinómica grado 2</option>
+                          <option value="exponential">Exponencial</option>
+                          <option value="logarithmic">Logarítmica</option>
+                          <option value="power">Potencial</option>
+                          <option value="compare">Comparar modelos</option>
+                        </select>
+                      </div>
 
-            {experimentalImportError && (
-              <p className="mt-3 text-sm font-medium text-red-600">
-                {experimentalImportError}
-              </p>
-            )}
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasActiveMathCurves
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">Mostrar derivada</span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showDerivative}
+                            onChange={(e) => setShowDerivative(e.target.checked)}
+                            disabled={!hasActiveMathCurves}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
 
-            {experimentalSeries.length > 0 && (
-              <ul className="mt-3 space-y-2">
-                {experimentalSeries.map((series) => (
-                  <li
-                    key={series.id}
-                    className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600"
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasActiveMathCurves
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">Mostrar integral</span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showIntegral}
+                            onChange={(e) => setShowIntegral(e.target.checked)}
+                            disabled={!hasActiveMathCurves}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`${vizToolSection} border-dashed opacity-70`}
+                    aria-hidden
                   >
-                    <span>
-                      {series.name} ({series.points.length} puntos)
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeExperimentalSeries(series.id)}
-                      className={`${btnOutline} px-3 py-1.5 text-sm font-medium text-red-700 border-red-200 hover:bg-red-50`}
-                    >
-                      Eliminar serie
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+                    <p className={subsectionTitle}>Próximamente</p>
+                    <ul className="space-y-1.5 text-xs text-slate-500">
+                      <li>Intersecciones</li>
+                      <li>Máximos y mínimos</li>
+                      <li>Estadística</li>
+                      <li>Barras de error</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
-
-          {shareNotFound && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
-              Gráfico no encontrado
-            </div>
-          )}
-
-          {jsonImportError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
-              {jsonImportError}
-            </div>
-          )}
-
-          {errorMessage && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
-              {errorMessage}
-            </div>
-          )}
-
-          {mathWarning && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium">
-              {mathWarning}
-            </div>
-          )}
-
-          {rangeWarning.map((warning, index) => (
-            <div
-              key={index}
-              className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium"
-            >
-              {warning}
-            </div>
-          ))}
-
-          {scaleWarning && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium whitespace-pre-line">
-              {scaleWarning}
-            </div>
-          )}
 
           <section>
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <h2 className={`${sectionTitle} mb-0`}>Visualización</h2>
               <button
                 type="button"
@@ -3381,10 +3251,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </div>
             <div
               ref={chartExportRef}
-              className={`${card} p-5 sm:p-6 lg:p-8 w-full`}
+              className={`${card} p-3 sm:p-4 w-full`}
             >
               {hasLegendItems && (
-                <div className="flex flex-wrap gap-5 mb-5 pb-5 border-b border-slate-100">
+                <div className="flex flex-wrap gap-3 mb-3 pb-3 border-b border-[var(--app-border)]">
                   {activeCurves.map((curve) => {
                     const legendKey = curveLegendKey(curve.idx);
                     const isHidden = hiddenLegendKeys.includes(legendKey);
@@ -3394,7 +3264,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         key={legendKey}
                         type="button"
                         onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
                           isHidden ? "opacity-50" : "opacity-100"
                         }`}
                         title={isHidden ? "Mostrar curva" : "Ocultar curva"}
@@ -3422,7 +3292,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         key={legendKey}
                         type="button"
                         onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
                           isHidden ? "opacity-50" : "opacity-100"
                         }`}
                         title={
@@ -3456,7 +3326,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         key={legendKey}
                         type="button"
                         onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
                           isHidden ? "opacity-50" : "opacity-100"
                         }`}
                         title={
@@ -3489,7 +3359,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         key={legendKey}
                         type="button"
                         onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
                           isHidden ? "opacity-50" : "opacity-100"
                         }`}
                         title={isHidden ? "Mostrar serie" : "Ocultar serie"}
@@ -3517,7 +3387,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         key={legendKey}
                         type="button"
                         onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2.5 transition-opacity cursor-pointer ${
+                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
                           isHidden ? "opacity-50" : "opacity-100"
                         }`}
                         title={
@@ -3545,7 +3415,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
               <div
                 ref={chartInteractionRef}
-                className="w-full min-h-[600px] h-[600px] sm:h-[650px] lg:h-[700px] max-h-[700px] select-none cursor-grab active:cursor-grabbing"
+                className="w-full min-h-[360px] h-[min(42vh,480px)] sm:min-h-[400px] sm:h-[min(48vh,520px)] max-h-[520px] select-none cursor-grab active:cursor-grabbing"
                 onMouseDown={handleChartMouseDown}
                 onMouseMove={handleChartMouseMove}
                 onMouseUp={handleChartMouseUp}
@@ -3691,6 +3561,329 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </div>
             </div>
           </section>
+
+          {hasMathResults && (
+            <section className={cardCompact}>
+              <h3 className="text-base sm:text-lg font-semibold text-[var(--app-heading)] mb-3">
+                📊 Resultados matemáticos
+              </h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+                {showDerivative && derivativeCurves.length > 0 && (
+                  <div className="space-y-2">
+                    <p className={subsectionTitle}>📘 Derivadas</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {derivativeCurves.map((curve) => (
+                  <div
+                    key={curve.id}
+                    className={panelInset}
+                  >
+                    <p>
+                      <span className="font-semibold">Función:</span>{" "}
+                      <span className="font-mono">{curve.sourceExpression}</span>
+                    </p>
+                    <p className="mt-1">
+                      <span className="font-semibold">Derivada:</span>{" "}
+                      <span className="font-mono">{curve.expression}</span>
+                    </p>
+                  </div>
+                ))}
+                    </div>
+                  </div>
+                )}
+
+                {showIntegral && integralCurves.length > 0 && (
+                  <div className="space-y-2">
+                    <p className={subsectionTitle}>📗 Integrales</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {integralCurves.map((curve) => (
+                  <div
+                    key={curve.id}
+                    className={panelInset}
+                  >
+                    <p>
+                      <span className="font-semibold">Función:</span>{" "}
+                      <span className="font-mono">{curve.sourceExpression}</span>
+                    </p>
+                    <p className="mt-1">
+                      <span className="font-semibold">Integral:</span>{" "}
+                      <span className="font-mono">{curve.expression}</span>
+                    </p>
+                  </div>
+                ))}
+                    </div>
+                  </div>
+                )}
+
+                {showIntegral && curveAreaResults.length > 0 && (
+                  <div className="space-y-2 lg:col-span-2">
+                    <p className={subsectionTitle}>📐 Área bajo la curva</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                      {curveAreaResults.map((item) => (
+                  <div
+                    key={item.id}
+                    className={panelInset}
+                  >
+                    <p>
+                      <span className="font-semibold">Función:</span>{" "}
+                      <span className="font-mono">{item.expression}</span>
+                    </p>
+                    <p className="mt-1">
+                      <span className="font-semibold">Intervalo:</span> [
+                      {visibleMinX.toFixed(4)}, {visibleMaxX.toFixed(4)}]
+                    </p>
+                    <p className="mt-1">
+                      <span className="font-semibold">Área:</span>{" "}
+                      {item.area.toFixed(4)}
+                    </p>
+                  </div>
+                ))}
+                    </div>
+                  </div>
+                )}
+
+                {regressionModel === "compare" && regressionComparisons.length > 0 && (
+                  <div className="space-y-2 lg:col-span-2">
+                    <p className={subsectionTitle}>📈 Regresiones</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {regressionComparisons.map((comparison) => {
+                        const bestQuality =
+                          comparison.bestR2 != null
+                            ? getFitQuality(comparison.bestR2)
+                            : null;
+                        return (
+                          <div key={comparison.id} className={panelInset}>
+                            <p>
+                              <span className="font-semibold">Serie:</span>{" "}
+                              {comparison.name}
+                            </p>
+                            <p>
+                              <span className="font-semibold">Lineal:</span>
+                            </p>
+                            <p>
+                              R² ={" "}
+                              {comparison.linear
+                                ? comparison.linear.r2.toFixed(4)
+                                : "No disponible"}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Logarítmica:</span>
+                            </p>
+                            <p>
+                              R² ={" "}
+                              {comparison.logarithmic
+                                ? comparison.logarithmic.r2.toFixed(4)
+                                : "No disponible"}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Exponencial:</span>
+                            </p>
+                            <p>
+                              R² ={" "}
+                              {comparison.exponential
+                                ? comparison.exponential.r2.toFixed(4)
+                                : "No disponible"}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Potencial:</span>
+                            </p>
+                            <p>
+                              R² ={" "}
+                              {comparison.power
+                                ? comparison.power.r2.toFixed(4)
+                                : "No disponible"}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Cuadrática:</span>
+                            </p>
+                            <p>
+                              R² ={" "}
+                              {comparison.quadratic
+                                ? comparison.quadratic.r2.toFixed(4)
+                                : "No disponible"}
+                            </p>
+                            {comparison.bestModel && comparison.bestR2 != null && (
+                              <div className="mt-2 rounded-md bg-slate-100 px-3 py-2">
+                                <p className="font-semibold">🏆 Mejor ajuste:</p>
+                                <p>
+                                  {comparison.bestModel === "linear"
+                                    ? "Lineal"
+                                    : comparison.bestModel === "logarithmic"
+                                      ? "Logarítmica"
+                                    : comparison.bestModel === "exponential"
+                                      ? "Exponencial"
+                                    : comparison.bestModel === "power"
+                                      ? "Potencial"
+                                      : "Cuadrática"}
+                                </p>
+                                <p>
+                                  <span className="font-semibold">R² ganador:</span>{" "}
+                                  {comparison.bestR2.toFixed(4)}
+                                </p>
+                                <p>
+                                  <span className="font-semibold">Calidad:</span>{" "}
+                                  {bestQuality?.label}
+                                </p>
+                                {bestQuality && (
+                                  <span className="mt-1 inline-flex rounded-md bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
+                                    {bestQuality.badge}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {regressionModel !== "compare" &&
+                  selectedRegressionSeriesStatus.length > 0 && (
+                  <div className="space-y-2 lg:col-span-2">
+                    <p className={subsectionTitle}>📈 Regresiones</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {selectedRegressionSeriesStatus.map((status) => {
+                        if (!status.curve) {
+                          return (
+                            <div key={status.id} className={panelInset}>
+                              <p>
+                                <span className="font-semibold">Serie:</span>{" "}
+                                {status.name}
+                              </p>
+                              <p>
+                                <span className="font-semibold">Modelo:</span>{" "}
+                                {getRegressionModelLabel(status.model)}
+                              </p>
+                              <p>
+                                <span className="font-semibold">Estado:</span>{" "}
+                                No disponible
+                              </p>
+                              {status.unavailableReason && (
+                                <p className="mt-1 text-slate-600">
+                                  <span className="font-semibold">Motivo:</span>{" "}
+                                  {status.unavailableReason}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        const regression = status.curve;
+                        const r2Text = regression.r2.toFixed(4);
+                        const quality = getFitQuality(regression.r2);
+
+                        return (
+                          <div key={status.id} className={panelInset}>
+                            <p>
+                              <span className="font-semibold">Serie:</span>{" "}
+                              {status.name}
+                            </p>
+                            <p>
+                              <span className="font-semibold">Modelo:</span> y ={" "}
+                              {regression.model === "linear" &&
+                              regression.slope != null &&
+                              regression.intercept != null ? (
+                                <>
+                                  {regression.slope.toFixed(4)}x{" "}
+                                  {regression.intercept >= 0 ? "+" : "-"}{" "}
+                                  {Math.abs(regression.intercept).toFixed(4)}
+                                </>
+                              ) : regression.model === "exponential" &&
+                                regression.a != null &&
+                                regression.b != null ? (
+                                <>
+                                  {regression.a.toFixed(4)} · e^(
+                                  {regression.b.toFixed(4)}x)
+                                </>
+                              ) : regression.model === "logarithmic" &&
+                                regression.slope != null &&
+                                regression.intercept != null ? (
+                                <>
+                                  {regression.intercept.toFixed(4)}{" "}
+                                  {regression.slope >= 0 ? "+" : "-"}{" "}
+                                  {Math.abs(regression.slope).toFixed(4)}·ln(x)
+                                </>
+                              ) : regression.model === "power" &&
+                                regression.a != null &&
+                                regression.b != null ? (
+                                <>
+                                  {regression.a.toFixed(4)} · x^
+                                  {regression.b.toFixed(4)}
+                                </>
+                              ) : regression.a != null &&
+                                regression.b != null &&
+                                regression.c != null ? (
+                                <>
+                                  {regression.a.toFixed(4)}x²{" "}
+                                  {regression.b >= 0 ? "+" : "-"}{" "}
+                                  {Math.abs(regression.b).toFixed(4)}x{" "}
+                                  {regression.c >= 0 ? "+" : "-"}{" "}
+                                  {Math.abs(regression.c).toFixed(4)}
+                                </>
+                              ) : (
+                                "N/A"
+                              )}
+                            </p>
+                            <p>
+                              <span className="font-semibold">R²:</span> {r2Text}
+                            </p>
+                            <p>
+                              <span className="font-semibold">Calidad:</span>{" "}
+                              {quality.label}
+                            </p>
+                            <span className="mt-1 inline-flex rounded-md bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
+                              {quality.badge}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {shareNotFound && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
+              Gráfico no encontrado
+            </div>
+          )}
+
+          {jsonImportError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
+              {jsonImportError}
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
+              {errorMessage}
+            </div>
+          )}
+
+          {mathWarning && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium">
+              {mathWarning}
+            </div>
+          )}
+
+          {rangeWarning.map((warning, index) => (
+            <div
+              key={index}
+              className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium"
+            >
+              {warning}
+            </div>
+          ))}
+
+          {scaleWarning && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium whitespace-pre-line">
+              {scaleWarning}
+            </div>
+          )}
+
+
         </div>
       </div>
     </main>
