@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useEffect,
@@ -3053,7 +3053,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </div>
 
                     {experimentalImportError && (
-                      <p className="mt-3 text-sm font-medium text-red-600">
+                      <p className={`mt-3 ${alertError}`}>
                         {experimentalImportError}
                       </p>
                     )}
@@ -3071,7 +3071,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             <button
                               type="button"
                               onClick={() => removeExperimentalSeries(series.id)}
-                              className={`${btnOutline} px-3 py-1.5 text-sm font-medium text-red-700 border-red-200 hover:bg-red-50`}
+                              className={`${btnOutlineSm} text-[var(--app-danger-text)] border-[var(--app-danger-border)] hover:bg-[var(--app-danger-bg)]`}
                             >
                               Eliminar serie
                             </button>
@@ -3087,10 +3087,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 className={`${card} lg:col-span-4 flex flex-col gap-4 lg:min-w-[280px]`}
               >
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-[var(--app-heading)]">
-                    🔧 Herramientas de visualización
-                  </h3>
-                  <p className="text-sm text-slate-500 mt-1">
+                  <h3 className={panelHeading}>🔧 Herramientas de visualización</h3>
+                  <p className={panelHeadingSubtext}>
                     Rango, ejes y opciones de análisis
                   </p>
                 </div>
@@ -3100,7 +3098,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <p className={subsectionHeading}>📏 Rango</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                        <label className={fieldLabel}>
                           Min X
                         </label>
                         <input
@@ -3112,7 +3110,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                        <label className={fieldLabel}>
                           Max X
                         </label>
                         <input
@@ -3171,7 +3169,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div>
                         <label
                           htmlFor="regression-model-select"
-                          className="block text-xs font-medium text-slate-600 mb-1.5"
+                          className={fieldLabel}
                         >
                           Mostrar regresión
                         </label>
@@ -3257,7 +3255,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
           <section>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <h2 className={`${sectionLabel} mb-0`}>Visualización</h2>
+              <h2 className={`${panelHeading} mb-0`}>📈 Visualización</h2>
               <button
                 type="button"
                 onClick={resetVisibleRange}
@@ -3269,7 +3267,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </div>
             <div
               ref={chartExportRef}
-              className={`${card} p-3 sm:p-4 w-full`}
+              className={`${card} w-full`}
             >
               {hasLegendItems && (
                 <div className="flex flex-wrap gap-3 mb-3 pb-3 border-b border-[var(--app-border)]">
@@ -3580,15 +3578,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </div>
           </section>
 
-          {hasMathResults && (
+          {showMathResultsPanel && (
             <section className={card}>
-              <h3 className="text-base sm:text-lg font-semibold text-[var(--app-heading)] mb-3">
+              <h3 className={`${panelHeading} mb-3`}>
                 📊 Resultados matemáticos
               </h3>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-                {showDerivative && derivativeCurves.length > 0 && (
-                  <div className="space-y-2">
+                {showDerivative && (
+                  <div className={subsectionCard}>
                     <p className={subsectionHeading}>📘 Derivadas</p>
+                    {derivativeCurves.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {derivativeCurves.map((curve) => (
                   <div
@@ -3606,12 +3605,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 ))}
                     </div>
+                    ) : (
+                      <p className={emptyState}>No hay derivadas activas.</p>
+                    )}
                   </div>
                 )}
 
-                {showIntegral && integralCurves.length > 0 && (
-                  <div className="space-y-2">
+                {showIntegral && (
+                  <div className={subsectionCard}>
                     <p className={subsectionHeading}>📗 Integrales</p>
+                    {integralCurves.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {integralCurves.map((curve) => (
                   <div
@@ -3629,12 +3632,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 ))}
                     </div>
+                    ) : (
+                      <p className={emptyState}>No hay integrales activas.</p>
+                    )}
                   </div>
                 )}
 
-                {showIntegral && curveAreaResults.length > 0 && (
-                  <div className="space-y-2 lg:col-span-2">
+                {showIntegral && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
                     <p className={subsectionHeading}>📐 Área bajo la curva</p>
+                    {curveAreaResults.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
                       {curveAreaResults.map((item) => (
                   <div
@@ -3656,12 +3663,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 ))}
                     </div>
+                    ) : (
+                      <p className={emptyState}>
+                        No hay datos suficientes para calcular áreas.
+                      </p>
+                    )}
                   </div>
                 )}
 
-                {regressionModel === "compare" && regressionComparisons.length > 0 && (
-                  <div className="space-y-2 lg:col-span-2">
+                {regressionModel === "compare" && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
                     <p className={subsectionHeading}>📈 Regresiones</p>
+                    {regressionComparisons.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {regressionComparisons.map((comparison) => {
                         const bestQuality =
@@ -3752,13 +3765,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         );
                       })}
                     </div>
+                    ) : (
+                      <p className={emptyState}>No hay regresiones activas.</p>
+                    )}
                   </div>
                 )}
 
-                {regressionModel !== "compare" &&
-                  selectedRegressionSeriesStatus.length > 0 && (
-                  <div className="space-y-2 lg:col-span-2">
+                {regressionModel !== "compare" && regressionModel !== "none" && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
                     <p className={subsectionHeading}>📈 Regresiones</p>
+                    {selectedRegressionSeriesStatus.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {selectedRegressionSeriesStatus.map((status) => {
                         if (!status.curve) {
@@ -3856,6 +3872,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         );
                       })}
                     </div>
+                    ) : (
+                      <p className={emptyState}>No hay regresiones activas.</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -3863,25 +3882,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           )}
 
           {shareNotFound && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
+            <div className={alertError}>
               Gráfico no encontrado
             </div>
           )}
 
           {jsonImportError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
+            <div className={alertError}>
               {jsonImportError}
             </div>
           )}
 
           {errorMessage && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-red-700 text-base font-medium">
+            <div className={alertError}>
               {errorMessage}
             </div>
           )}
 
           {mathWarning && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium">
+            <div className={alertWarning}>
               {mathWarning}
             </div>
           )}
@@ -3889,14 +3908,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           {rangeWarning.map((warning, index) => (
             <div
               key={index}
-              className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium"
+              className={alertWarning}
             >
               {warning}
             </div>
           ))}
 
           {scaleWarning && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base font-medium whitespace-pre-line">
+            <div className={`${alertWarning} whitespace-pre-line`}>
               {scaleWarning}
             </div>
           )}
