@@ -1438,6 +1438,214 @@ const toHistogramChartData = (histogram: SeriesHistogram) =>
     index,
   }));
 
+type BoxPlotStatistics = {
+  seriesId: string;
+  seriesName: string;
+  min: number;
+  q1: number;
+  median: number;
+  q3: number;
+  max: number;
+  iqr: number;
+  lowerWhisker: number;
+  upperWhisker: number;
+  outlierCount: number;
+};
+
+type BoxPlotAnalysis = BoxPlotStatistics & {
+  sampleSize: number;
+  outliers: number[];
+};
+
+const calculateBoxPlotStatistics = (
+  series: ExperimentalSeries
+): BoxPlotAnalysis => {
+  const values = series.points
+    .map((point) => point.y)
+    .filter((value) => Number.isFinite(value));
+  const sampleSize = values.length;
+
+  if (sampleSize === 0) {
+    return {
+      seriesId: series.id,
+      seriesName: series.name,
+      min: 0,
+      q1: 0,
+      median: 0,
+      q3: 0,
+      max: 0,
+      iqr: 0,
+      lowerWhisker: 0,
+      upperWhisker: 0,
+      outlierCount: 0,
+      sampleSize: 0,
+      outliers: [],
+    };
+  }
+
+  const sorted = [...values].sort((left, right) => left - right);
+  const min = sorted[0];
+  const max = sorted[sorted.length - 1];
+  const q1 = getQuantile(sorted, 0.25);
+  const median = getQuantile(sorted, 0.5);
+  const q3 = getQuantile(sorted, 0.75);
+  const iqr = q3 - q1;
+
+  if (iqr === 0) {
+    return {
+      seriesId: series.id,
+      seriesName: series.name,
+      min,
+      q1,
+      median,
+      q3,
+      max,
+      iqr: 0,
+      lowerWhisker: min,
+      upperWhisker: max,
+      outlierCount: 0,
+      sampleSize,
+      outliers: [],
+    };
+  }
+
+  const lowerFence = q1 - 1.5 * iqr;
+  const upperFence = q3 + 1.5 * iqr;
+  const inlierValues = sorted.filter(
+    (value) => value >= lowerFence && value <= upperFence
+  );
+  const outliers = sorted.filter(
+    (value) => value < lowerFence || value > upperFence
+  );
+  const lowerWhisker =
+    inlierValues.length > 0 ? Math.min(...inlierValues) : min;
+  const upperWhisker =
+    inlierValues.length > 0 ? Math.max(...inlierValues) : max;
+
+  return {
+    seriesId: series.id,
+    seriesName: series.name,
+    min,
+    q1,
+    median,
+    q3,
+    max,
+    iqr,
+    lowerWhisker,
+    upperWhisker,
+    outlierCount: outliers.length,
+    sampleSize,
+    outliers,
+  };
+};
+
+const calculateBoxPlotStatisticsForSeries = (
+  series: ExperimentalSeries[]
+): BoxPlotAnalysis[] => series.map((item) => calculateBoxPlotStatistics(item));
+
+const MiniBoxPlot = ({ analysis }: { analysis: BoxPlotAnalysis }) => {
+  const width = 280;
+  const height = 140;
+  const padding = 20;
+  const centerX = width / 2;
+  const boxWidth = 52;
+  const capWidth = boxWidth * 0.65;
+
+  if (analysis.sampleSize === 0) {
+    return (
+      <p className={emptyState}>Sin datos válidos para el box plot.</p>
+    );
+  }
+
+  const scaleValues = [
+    analysis.min,
+    analysis.max,
+    analysis.lowerWhisker,
+    analysis.upperWhisker,
+    analysis.q1,
+    analysis.q3,
+    analysis.median,
+    ...analysis.outliers,
+  ];
+  const plotMin = Math.min(...scaleValues);
+  const plotMax = Math.max(...scaleValues);
+  const range = plotMax - plotMin || 1;
+
+  const scaleY = (value: number) =>
+    padding + ((plotMax - value) / range) * (height - padding * 2);
+
+  const yQ1 = scaleY(analysis.q1);
+  const yQ3 = scaleY(analysis.q3);
+  const yMedian = scaleY(analysis.median);
+  const yLowerWhisker = scaleY(analysis.lowerWhisker);
+  const yUpperWhisker = scaleY(analysis.upperWhisker);
+  const boxTop = Math.min(yQ1, yQ3);
+  const boxHeight = Math.max(Math.abs(yQ1 - yQ3), 1);
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="w-full h-full"
+      role="img"
+      aria-label={`Box plot de ${analysis.seriesName}`}
+    >
+      <line
+        x1={centerX}
+        y1={yUpperWhisker}
+        x2={centerX}
+        y2={yLowerWhisker}
+        stroke="var(--app-text-muted)"
+        strokeWidth={2}
+      />
+      <line
+        x1={centerX - capWidth / 2}
+        y1={yUpperWhisker}
+        x2={centerX + capWidth / 2}
+        y2={yUpperWhisker}
+        stroke="var(--app-text-muted)"
+        strokeWidth={2}
+      />
+      <line
+        x1={centerX - capWidth / 2}
+        y1={yLowerWhisker}
+        x2={centerX + capWidth / 2}
+        y2={yLowerWhisker}
+        stroke="var(--app-text-muted)"
+        strokeWidth={2}
+      />
+      <rect
+        x={centerX - boxWidth / 2}
+        y={boxTop}
+        width={boxWidth}
+        height={boxHeight}
+        fill="var(--app-accent)"
+        fillOpacity={0.22}
+        stroke="var(--app-accent)"
+        strokeWidth={2}
+      />
+      <line
+        x1={centerX - boxWidth / 2}
+        y1={yMedian}
+        x2={centerX + boxWidth / 2}
+        y2={yMedian}
+        stroke="var(--app-heading)"
+        strokeWidth={2}
+      />
+      {analysis.outliers.map((value, index) => (
+        <circle
+          key={`${analysis.seriesId}-outlier-${index}-${value}`}
+          cx={centerX}
+          cy={scaleY(value)}
+          r={4}
+          fill="#dc2626"
+          stroke="#ffffff"
+          strokeWidth={1.5}
+        />
+      ))}
+    </svg>
+  );
+};
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -2442,6 +2650,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [outlierMethod, setOutlierMethod] = useState<OutlierMethod>("iqr");
   const [showHistogram, setShowHistogram] = useState(false);
   const [histogramBins, setHistogramBins] = useState(HISTOGRAM_BINS_DEFAULT);
+  const [showBoxPlot, setShowBoxPlot] = useState(false);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -3265,6 +3474,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => generateSeriesHistograms(visibleExperimentalSeries, histogramBins),
     [visibleExperimentalSeries, histogramBins]
   );
+  const boxPlotAnalyses = useMemo(
+    () => calculateBoxPlotStatisticsForSeries(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
   const overlayMathYValues = useMemo(
@@ -3859,6 +4072,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showCorrelation ||
     showOutliers ||
     showHistogram ||
+    showBoxPlot ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -5073,6 +5287,29 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
                         />
                       </div>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Box Plot
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showBoxPlot}
+                            onChange={(e) => setShowBoxPlot(e.target.checked)}
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -6264,6 +6501,85 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 Sin datos válidos en esta serie.
                               </p>
                             )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showBoxPlot && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📦 Box Plot</p>
+                    {!hasVisibleExperimentalSeries ? (
+                      <p className={emptyState}>
+                        No hay series experimentales visibles.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {boxPlotAnalyses.map((analysis) => (
+                          <div
+                            key={analysis.seriesId}
+                            className={contentPanel}
+                          >
+                            <p>
+                              <span className="font-semibold">Serie:</span>{" "}
+                              {analysis.seriesName}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">N:</span>{" "}
+                              {analysis.sampleSize}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Q1:</span>{" "}
+                              {formatExperimentalStat(analysis.q1)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Mediana:</span>{" "}
+                              {formatExperimentalStat(analysis.median)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Q3:</span>{" "}
+                              {formatExperimentalStat(analysis.q3)}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">IQR:</span>{" "}
+                              {formatExperimentalStat(analysis.iqr)}
+                            </p>
+
+                            <div className="h-40 mt-3">
+                              <MiniBoxPlot analysis={analysis} />
+                            </div>
+
+                            <div className="mt-3">
+                              <p className="font-semibold text-sm mb-1">
+                                Resumen
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-semibold">Mínimo:</span>{" "}
+                                {formatExperimentalStat(analysis.min)}
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-semibold">Q1:</span>{" "}
+                                {formatExperimentalStat(analysis.q1)}
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-semibold">Mediana:</span>{" "}
+                                {formatExperimentalStat(analysis.median)}
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-semibold">Q3:</span>{" "}
+                                {formatExperimentalStat(analysis.q3)}
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-semibold">Máximo:</span>{" "}
+                                {formatExperimentalStat(analysis.max)}
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-semibold">Outliers:</span>{" "}
+                                {analysis.outlierCount}
+                              </p>
+                            </div>
                           </div>
                         ))}
                       </div>
