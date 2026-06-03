@@ -2201,6 +2201,77 @@ const getAnovaInterpretation = (result: AnovaResult) =>
     ? "Al menos una media difiere significativamente del resto."
     : "No se detectan diferencias estadísticamente significativas entre las medias.";
 
+const TUKEY_HSD_Q_CRITICAL = 3.314;
+
+type PostHocComparison = {
+  seriesA: string;
+  seriesB: string;
+  meanDifference: number;
+  standardError: number;
+  qStatistic: number;
+  significant: boolean;
+};
+
+const calculateTukeyComparisons = (
+  analysis: AnovaAnalysis
+): PostHocComparison[] => {
+  const meanSquareWithin = analysis.result.meanSquareWithin;
+  if (meanSquareWithin <= 0) return [];
+
+  const comparisons: PostHocComparison[] = [];
+
+  for (let indexA = 0; indexA < analysis.groups.length; indexA += 1) {
+    for (let indexB = indexA + 1; indexB < analysis.groups.length; indexB += 1) {
+      const groupA = analysis.groups[indexA];
+      const groupB = analysis.groups[indexB];
+      const meanDifference = groupA.mean - groupB.mean;
+      const standardError = Math.sqrt(
+        (meanSquareWithin / 2) *
+          (1 / groupA.sampleSize + 1 / groupB.sampleSize)
+      );
+
+      if (standardError === 0) continue;
+
+      const qStatistic = Math.abs(meanDifference) / standardError;
+
+      comparisons.push({
+        seriesA: groupA.seriesName,
+        seriesB: groupB.seriesName,
+        meanDifference,
+        standardError,
+        qStatistic,
+        significant: qStatistic > TUKEY_HSD_Q_CRITICAL,
+      });
+    }
+  }
+
+  return comparisons;
+};
+
+const getPostHocComparisonResultLabel = (significant: boolean) =>
+  significant
+    ? "🟢 Diferencia significativa"
+    : "⚪ No significativa";
+
+const buildPostHocSummary = (comparisons: PostHocComparison[]): string => {
+  const significantPairs = comparisons.filter((comparison) => comparison.significant);
+
+  if (significantPairs.length === 0) {
+    return "No se detectaron diferencias significativas entre pares.";
+  }
+
+  const pairDescriptions = significantPairs.map(
+    (comparison) => `${comparison.seriesA} y ${comparison.seriesB}`
+  );
+
+  if (pairDescriptions.length === 1) {
+    return `Las diferencias significativas se detectaron entre ${pairDescriptions[0]}.`;
+  }
+
+  const lastPair = pairDescriptions.pop();
+  return `Las diferencias significativas se detectaron entre ${pairDescriptions.join(", ")}, y entre ${lastPair}.`;
+};
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -3215,6 +3286,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     string | null
   >(null);
   const [showAnova, setShowAnova] = useState(false);
+  const [showPostHoc, setShowPostHoc] = useState(false);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -4074,9 +4146,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => calculateOneWayAnova(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const postHocComparisons = useMemo(
+    () => (anovaAnalysis ? calculateTukeyComparisons(anovaAnalysis) : []),
+    [anovaAnalysis]
+  );
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
+  const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const overlayMathYValues = useMemo(
     () => [
       ...visibleDerivativeCurves.flatMap((curve) =>
@@ -4673,6 +4750,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showNormality ||
     showTTest ||
     showAnova ||
+    showPostHoc ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -6028,6 +6106,29 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             checked={showAnova}
                             onChange={(e) => setShowAnova(e.target.checked)}
                             disabled={!hasEnoughSeriesForAnova}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !isPostHocAvailable
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar comparaciones múltiples
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showPostHoc}
+                            onChange={(e) => setShowPostHoc(e.target.checked)}
+                            disabled={!isPostHocAvailable}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -7557,6 +7658,140 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <p className={emptyState}>
                         Resultado no disponible para las series seleccionadas.
                       </p>
+                    )}
+                  </div>
+                )}
+
+                {showPostHoc && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      🔬 Comparaciones múltiples
+                    </p>
+                    {!isPostHocAvailable ? (
+                      <p className={emptyState}>
+                        Se requieren al menos tres series experimentales
+                        visibles con ANOVA disponible.
+                      </p>
+                    ) : (
+                      <>
+                        {anovaAnalysis && !anovaAnalysis.result.significant && (
+                          <p className={`${emptyState} mb-3`}>
+                            ANOVA no detectó diferencias globales
+                            significativas. Las comparaciones múltiples pueden
+                            no ser necesarias.
+                          </p>
+                        )}
+
+                        {postHocComparisons.length > 0 ? (
+                          <>
+                            <p className={`text-sm mb-3 ${emptyState}`}>
+                              {buildPostHocSummary(postHocComparisons)}
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {postHocComparisons.map((comparison) => (
+                                <div
+                                  key={`${comparison.seriesA}-${comparison.seriesB}`}
+                                  className={contentPanel}
+                                >
+                                  <p>
+                                    <span className="font-semibold">
+                                      {comparison.seriesA}
+                                    </span>{" "}
+                                    ↔{" "}
+                                    <span className="font-semibold">
+                                      {comparison.seriesB}
+                                    </span>
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">
+                                      Diferencia de medias:
+                                    </span>{" "}
+                                    {formatExperimentalStat(
+                                      comparison.meanDifference
+                                    )}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">SE:</span>{" "}
+                                    {formatExperimentalStat(
+                                      comparison.standardError
+                                    )}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">q:</span>{" "}
+                                    {formatExperimentalStat(
+                                      comparison.qStatistic
+                                    )}
+                                  </p>
+                                  <p className="mt-1 font-semibold">
+                                    {getPostHocComparisonResultLabel(
+                                      comparison.significant
+                                    )}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className={`${contentPanel} mt-3 overflow-x-auto`}>
+                              <table className="min-w-full text-sm border-collapse">
+                                <thead>
+                                  <tr>
+                                    <th className="px-2 py-1 text-left font-semibold">
+                                      Grupo A
+                                    </th>
+                                    <th className="px-2 py-1 text-left font-semibold">
+                                      Grupo B
+                                    </th>
+                                    <th className="px-2 py-1 text-right font-semibold">
+                                      Δ Media
+                                    </th>
+                                    <th className="px-2 py-1 text-right font-semibold">
+                                      q
+                                    </th>
+                                    <th className="px-2 py-1 text-left font-semibold">
+                                      Resultado
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {postHocComparisons.map((comparison) => (
+                                    <tr
+                                      key={`table-${comparison.seriesA}-${comparison.seriesB}`}
+                                    >
+                                      <td className="px-2 py-1">
+                                        {comparison.seriesA}
+                                      </td>
+                                      <td className="px-2 py-1">
+                                        {comparison.seriesB}
+                                      </td>
+                                      <td className="px-2 py-1 text-right tabular-nums">
+                                        {formatExperimentalStat(
+                                          comparison.meanDifference
+                                        )}
+                                      </td>
+                                      <td className="px-2 py-1 text-right tabular-nums">
+                                        {formatExperimentalStat(
+                                          comparison.qStatistic
+                                        )}
+                                      </td>
+                                      <td className="px-2 py-1">
+                                        {comparison.significant
+                                          ? "Significativa"
+                                          : "No significativa"}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </>
+                        ) : (
+                          <p className={emptyState}>
+                            No hay comparaciones disponibles para las series
+                            actuales.
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
