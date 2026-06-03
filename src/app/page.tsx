@@ -1646,6 +1646,182 @@ const MiniBoxPlot = ({ analysis }: { analysis: BoxPlotAnalysis }) => {
   );
 };
 
+type NormalityClassification =
+  | "normal"
+  | "approximately-normal"
+  | "non-normal";
+
+type NormalityConfidence = "high" | "medium" | "low";
+
+type NormalityAnalysis = {
+  seriesId: string;
+  seriesName: string;
+  sampleSize: number;
+  mean: number;
+  standardDeviation: number;
+  skewness: number;
+  kurtosis: number;
+  classification: NormalityClassification | null;
+  confidence: NormalityConfidence;
+};
+
+const calculateCentralMoments = (values: number[]) => {
+  const count = values.length;
+  if (count === 0) return null;
+
+  const mean = values.reduce((sum, value) => sum + value, 0) / count;
+  const deviations = values.map((value) => value - mean);
+  const m2 = deviations.reduce((sum, deviation) => sum + deviation ** 2, 0) / count;
+  const m3 = deviations.reduce((sum, deviation) => sum + deviation ** 3, 0) / count;
+  const m4 = deviations.reduce((sum, deviation) => sum + deviation ** 4, 0) / count;
+
+  return { mean, m2, m3, m4, count };
+};
+
+const calculateSkewness = (values: number[]): number | null => {
+  const moments = calculateCentralMoments(values);
+  if (!moments || moments.m2 === 0) return null;
+
+  return moments.m3 / moments.m2 ** 1.5;
+};
+
+const calculateKurtosis = (values: number[]): number | null => {
+  const moments = calculateCentralMoments(values);
+  if (!moments || moments.m2 === 0) return null;
+
+  return moments.m4 / (moments.m2 * moments.m2) - 3;
+};
+
+const classifyNormality = (
+  skewness: number,
+  kurtosis: number
+): NormalityClassification => {
+  const absoluteSkewness = Math.abs(skewness);
+  const absoluteKurtosis = Math.abs(kurtosis);
+
+  if (absoluteSkewness < 0.5 && absoluteKurtosis < 1) return "normal";
+  if (absoluteSkewness < 1 && absoluteKurtosis < 2) {
+    return "approximately-normal";
+  }
+
+  return "non-normal";
+};
+
+const getNormalityConfidence = (
+  sampleSize: number
+): NormalityConfidence => {
+  if (sampleSize >= 30) return "high";
+  if (sampleSize >= 15) return "medium";
+  return "low";
+};
+
+const getNormalityConfidenceLabel = (confidence: NormalityConfidence) =>
+  confidence === "high" ? "Alta" : confidence === "medium" ? "Media" : "Baja";
+
+const getNormalityClassificationLabel = (
+  classification: NormalityClassification | null
+) => {
+  if (classification === null) return "No disponible";
+  if (classification === "normal") return "Normal";
+  if (classification === "approximately-normal") return "Aproximadamente normal";
+  return "No normal";
+};
+
+const getNormalityClassificationBadge = (
+  classification: NormalityClassification | null
+) => {
+  if (classification === null) return null;
+  if (classification === "normal") return "🟢 Distribución normal";
+  if (classification === "approximately-normal") {
+    return "🟡 Aproximadamente normal";
+  }
+  return "🔴 Distribución no normal";
+};
+
+const getNormalityRecommendation = (
+  classification: NormalityClassification | null
+) => {
+  if (classification === null) {
+    return "No hay variabilidad suficiente para evaluar la normalidad.";
+  }
+  if (classification === "normal") {
+    return "Los datos son compatibles con análisis paramétricos.";
+  }
+  if (classification === "approximately-normal") {
+    return "Los datos podrían utilizar análisis paramétricos con precaución.";
+  }
+  return "Se recomiendan pruebas no paramétricas.";
+};
+
+const analyzeSeriesNormality = (
+  series: ExperimentalSeries
+): NormalityAnalysis => {
+  const values = series.points
+    .map((point) => point.y)
+    .filter((value) => Number.isFinite(value));
+  const sampleSize = values.length;
+  const confidence = getNormalityConfidence(sampleSize);
+
+  if (sampleSize === 0) {
+    return {
+      seriesId: series.id,
+      seriesName: series.name,
+      sampleSize: 0,
+      mean: 0,
+      standardDeviation: 0,
+      skewness: 0,
+      kurtosis: 0,
+      classification: null,
+      confidence,
+    };
+  }
+
+  const mean = values.reduce((sum, value) => sum + value, 0) / sampleSize;
+  const variance =
+    sampleSize > 1
+      ? values.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+        (sampleSize - 1)
+      : 0;
+  const standardDeviation = Math.sqrt(variance);
+  const skewness = calculateSkewness(values);
+  const kurtosis = calculateKurtosis(values);
+
+  if (skewness == null || kurtosis == null) {
+    return {
+      seriesId: series.id,
+      seriesName: series.name,
+      sampleSize,
+      mean,
+      standardDeviation,
+      skewness: 0,
+      kurtosis: 0,
+      classification: null,
+      confidence,
+    };
+  }
+
+  return {
+    seriesId: series.id,
+    seriesName: series.name,
+    sampleSize,
+    mean,
+    standardDeviation,
+    skewness,
+    kurtosis,
+    classification: classifyNormality(skewness, kurtosis),
+    confidence,
+  };
+};
+
+const analyzeNormalityForSeries = (
+  series: ExperimentalSeries[]
+): NormalityAnalysis[] => series.map((item) => analyzeSeriesNormality(item));
+
+const formatNormalityMoment = (
+  value: number,
+  classification: NormalityClassification | null
+) => (classification === null ? "N/A" : formatExperimentalStat(value));
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -2651,6 +2827,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showHistogram, setShowHistogram] = useState(false);
   const [histogramBins, setHistogramBins] = useState(HISTOGRAM_BINS_DEFAULT);
   const [showBoxPlot, setShowBoxPlot] = useState(false);
+  const [showNormality, setShowNormality] = useState(false);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -3478,6 +3655,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => calculateBoxPlotStatisticsForSeries(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const normalityAnalyses = useMemo(
+    () => analyzeNormalityForSeries(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
   const overlayMathYValues = useMemo(
@@ -4073,6 +4254,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showOutliers ||
     showHistogram ||
     showBoxPlot ||
+    showNormality ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -5304,6 +5486,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             className={toggleInput}
                             checked={showBoxPlot}
                             onChange={(e) => setShowBoxPlot(e.target.checked)}
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar normalidad
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showNormality}
+                            onChange={(e) =>
+                              setShowNormality(e.target.checked)
+                            }
                             disabled={!hasVisibleExperimentalSeries}
                           />
                           <span className={toggleTrackBg} aria-hidden />
@@ -6582,6 +6789,87 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showNormality && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📈 Normalidad</p>
+                    {!hasVisibleExperimentalSeries ? (
+                      <p className={emptyState}>
+                        No hay series experimentales visibles.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {normalityAnalyses.map((analysis) => {
+                          const badge = getNormalityClassificationBadge(
+                            analysis.classification
+                          );
+
+                          return (
+                            <div
+                              key={analysis.seriesId}
+                              className={contentPanel}
+                            >
+                              <p>
+                                <span className="font-semibold">Serie:</span>{" "}
+                                {analysis.seriesName}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">N:</span>{" "}
+                                {analysis.sampleSize}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Media:</span>{" "}
+                                {formatExperimentalStat(analysis.mean)}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">SD:</span>{" "}
+                                {formatExperimentalStat(
+                                  analysis.standardDeviation
+                                )}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Skewness:</span>{" "}
+                                {formatNormalityMoment(
+                                  analysis.skewness,
+                                  analysis.classification
+                                )}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Kurtosis:</span>{" "}
+                                {formatNormalityMoment(
+                                  analysis.kurtosis,
+                                  analysis.classification
+                                )}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">
+                                  Clasificación:
+                                </span>{" "}
+                                {getNormalityClassificationLabel(
+                                  analysis.classification
+                                )}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Confianza:</span>{" "}
+                                {getNormalityConfidenceLabel(analysis.confidence)}
+                              </p>
+
+                              {badge && (
+                                <p className="mt-2 font-semibold">{badge}</p>
+                              )}
+
+                              <p className={`mt-2 text-sm ${emptyState}`}>
+                                {getNormalityRecommendation(
+                                  analysis.classification
+                                )}
+                              </p>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
