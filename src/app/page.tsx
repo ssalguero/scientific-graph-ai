@@ -174,6 +174,46 @@ function DashboardSection({
   );
 }
 
+type ScientificReportSectionCollapsibleProps = {
+  title: string;
+  content: string[];
+  defaultOpen?: boolean;
+};
+
+function ScientificReportSectionCollapsible({
+  title,
+  content,
+  defaultOpen = false,
+}: ScientificReportSectionCollapsibleProps) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className={`${contentPanel} mb-2`}>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center gap-2 text-left text-sm font-semibold text-[var(--app-heading)]"
+        aria-expanded={open}
+      >
+        <span
+          className="w-3 text-xs text-[var(--app-text-muted)]"
+          aria-hidden
+        >
+          {open ? "▼" : "▶"}
+        </span>
+        <span>{title}</span>
+      </button>
+      {open && (
+        <div className="mt-2 space-y-1 text-sm text-[var(--app-text)]">
+          {content.map((line, index) => (
+            <p key={`${title}-${index}`}>{line}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const getChartExportFileName = (
   title: string,
   extension: "png" | "svg" | "json"
@@ -2518,6 +2558,18 @@ type StatisticalRecommendation = {
   warnings: string[];
 };
 
+type ScientificReportSection = {
+  title: string;
+  content: string[];
+};
+
+type ScientificReport = {
+  title: string;
+  generatedAt: string;
+  summary: string;
+  sections: ScientificReportSection[];
+};
+
 const getStatisticalAdvisorConfidenceLabel = (
   confidence: StatisticalRecommendationConfidence
 ) =>
@@ -2632,6 +2684,283 @@ const buildStatisticalRecommendation = (
     assumptionsPassed,
     assumptionsFailed,
     warnings: [...new Set(warnings)],
+  };
+};
+
+const formatScientificReportDate = (isoDate: string) => {
+  try {
+    return new Date(isoDate).toLocaleString();
+  } catch {
+    return isoDate;
+  }
+};
+
+const formatScientificReportAsText = (report: ScientificReport): string => {
+  const lines = [
+    report.title,
+    `Generado: ${formatScientificReportDate(report.generatedAt)}`,
+    "",
+    "=== Resumen ejecutivo ===",
+    report.summary,
+    "",
+  ];
+
+  report.sections.forEach((section) => {
+    lines.push(`=== ${section.title} ===`);
+    section.content.forEach((line) => lines.push(line));
+    lines.push("");
+  });
+
+  return lines.join("\n");
+};
+
+const generateScientificReport = (input: {
+  graphTitle: string;
+  series: ExperimentalSeries[];
+  experimentalStatistics: ExperimentalStatistics[];
+  normalityAnalyses: NormalityAnalysis[];
+  correlationAnalysis: {
+    results: CorrelationResult[];
+    unavailablePairs: CorrelationUnavailablePair[];
+    matrix: CorrelationMatrixRow[];
+  };
+  correlationMethod: CorrelationMethod;
+  experimentalOutliers: ExperimentalOutlier[];
+  outlierMethod: OutlierMethod;
+  tTestResult: TTestResult | null;
+  anovaAnalysis: AnovaAnalysis | null;
+  postHocComparisons: PostHocComparison[];
+  mannWhitneyResult: MannWhitneyResult | null;
+  kruskalWallisResult: KruskalWallisResult | null;
+  statisticalRecommendation: StatisticalRecommendation | null;
+}): ScientificReport | null => {
+  const seriesCount = input.series.length;
+  const totalObservations = input.series.reduce(
+    (sum, item) => sum + getSeriesYValues(item).length,
+    0
+  );
+
+  if (seriesCount === 0 || totalObservations === 0) return null;
+
+  const reportTitle = input.graphTitle.trim() || "Reporte científico";
+  const generatedAt = new Date().toISOString();
+  const sections: ScientificReportSection[] = [];
+  const summaryLines: string[] = [];
+
+  summaryLines.push(
+    `Se analizaron ${seriesCount} series experimentales con un total de ${totalObservations} observaciones.`
+  );
+
+  const dataLines = [
+    `Número de series visibles: ${seriesCount}.`,
+    `Número total de observaciones: ${totalObservations}.`,
+    ...input.series.map((item) => {
+      const count = getSeriesYValues(item).length;
+      return `Serie "${item.name}": ${count} observaciones.`;
+    }),
+  ];
+
+  if (input.experimentalStatistics.length > 0) {
+    dataLines.push("Estadística descriptiva por serie:");
+    input.experimentalStatistics.forEach((stats) => {
+      dataLines.push(
+        `"${stats.seriesName}": media Y = ${formatExperimentalStat(stats.meanY)}, SD = ${formatExperimentalStat(stats.stdDevY)}, N = ${stats.count}.`
+      );
+    });
+  }
+
+  sections.push({ title: "Descripción de datos", content: dataLines });
+
+  const normalityLines: string[] = [];
+  if (input.normalityAnalyses.length === 0) {
+    normalityLines.push("No hay series disponibles para evaluar normalidad.");
+  } else {
+    const allNormal = input.normalityAnalyses.every(
+      (analysis) =>
+        analysis.classification === "normal" ||
+        analysis.classification === "approximately-normal"
+    );
+    const anyNonNormal = input.normalityAnalyses.some(
+      (analysis) =>
+        analysis.classification === "non-normal" || analysis.classification === null
+    );
+
+    if (allNormal && !anyNonNormal) {
+      normalityLines.push(
+        "Las distribuciones fueron compatibles con normalidad."
+      );
+      summaryLines.push(
+        "Las distribuciones fueron compatibles con normalidad."
+      );
+    } else {
+      normalityLines.push(
+        "Al menos una serie no cumple supuestos de normalidad."
+      );
+      summaryLines.push(
+        "Se detectaron desviaciones respecto a la normalidad en una o más series."
+      );
+    }
+
+    input.normalityAnalyses.forEach((analysis) => {
+      normalityLines.push(
+        `"${analysis.seriesName}" (N=${analysis.sampleSize}): ${getNormalityClassificationLabel(analysis.classification)} (confianza ${getNormalityConfidenceLabel(analysis.confidence)}).`
+      );
+    });
+  }
+
+  sections.push({ title: "Normalidad", content: normalityLines });
+
+  const correlationLines: string[] = [];
+  if (seriesCount < 2) {
+    correlationLines.push(
+      "Se requieren al menos dos series para analizar correlaciones."
+    );
+  } else {
+    correlationLines.push(
+      `Método de correlación evaluado: ${getCorrelationMethodLabel(input.correlationMethod)}.`
+    );
+
+    if (input.correlationAnalysis.results.length > 0) {
+      input.correlationAnalysis.results.forEach((result) => {
+        correlationLines.push(
+          `${result.seriesA} ↔ ${result.seriesB}: r = ${formatCorrelationCoefficient(result.coefficient)} (${getCorrelationStrengthLabel(result.strength, result.direction)}).`
+        );
+      });
+    }
+
+    if (input.correlationAnalysis.unavailablePairs.length > 0) {
+      input.correlationAnalysis.unavailablePairs.forEach((pair) => {
+        correlationLines.push(
+          `${pair.seriesA} ↔ ${pair.seriesB}: correlación no disponible.`
+        );
+      });
+    }
+
+    if (
+      input.correlationAnalysis.results.length === 0 &&
+      input.correlationAnalysis.unavailablePairs.length === 0
+    ) {
+      correlationLines.push(
+        "No hay pares con datos suficientes para correlación."
+      );
+    }
+  }
+
+  sections.push({ title: "Correlaciones", content: correlationLines });
+
+  const outlierLines = [
+    `Método de detección: ${getOutlierMethodLabel(input.outlierMethod)}.`,
+  ];
+
+  if (input.experimentalOutliers.length === 0) {
+    outlierLines.push(
+      "No se detectaron valores atípicos con el método indicado."
+    );
+  } else {
+    outlierLines.push(
+      `Total de valores atípicos detectados: ${input.experimentalOutliers.length}.`
+    );
+    input.experimentalOutliers.forEach((outlier) => {
+      outlierLines.push(
+        `"${outlier.seriesName}" en (X=${formatExperimentalStat(outlier.x)}, Y=${formatExperimentalStat(outlier.y)}), score = ${formatOutlierScore(outlier.score)}.`
+      );
+    });
+  }
+
+  sections.push({ title: "Valores atípicos", content: outlierLines });
+
+  const testLines: string[] = [];
+
+  if (input.tTestResult) {
+    testLines.push(
+      `t-Test (${input.tTestResult.seriesA} vs ${input.tTestResult.seriesB}): t = ${formatExperimentalStat(input.tTestResult.tStatistic)}, p = ${formatPValue(input.tTestResult.pValue)} (${input.tTestResult.significant ? "significativo" : "no significativo"}).`
+    );
+    if (input.tTestResult.significant) {
+      summaryLines.push(
+        "El t-test detectó diferencia significativa entre dos grupos."
+      );
+    }
+  } else if (seriesCount === 2) {
+    testLines.push("t-Test: no disponible para las series actuales.");
+  }
+
+  if (input.anovaAnalysis) {
+    const anovaResult = input.anovaAnalysis.result;
+    testLines.push(
+      `ANOVA de una vía (${anovaResult.groupCount} grupos): F = ${formatExperimentalStat(anovaResult.fStatistic)}, p = ${formatPValue(anovaResult.pValue)} (${anovaResult.significant ? "significativo" : "no significativo"}).`
+    );
+    if (anovaResult.significant) {
+      summaryLines.push(
+        "ANOVA detectó diferencias significativas entre grupos."
+      );
+    }
+    input.anovaAnalysis.groups.forEach((group) => {
+      testLines.push(
+        `"${group.seriesName}": media = ${formatExperimentalStat(group.mean)}, SD = ${formatExperimentalStat(group.standardDeviation)}, N = ${group.sampleSize}.`
+      );
+    });
+    if (input.postHocComparisons.length > 0) {
+      testLines.push("Comparaciones múltiples (Tukey HSD simplificado):");
+      input.postHocComparisons.forEach((comparison) => {
+        testLines.push(
+          `${comparison.seriesA} ↔ ${comparison.seriesB}: Δ = ${formatExperimentalStat(comparison.meanDifference)}, q = ${formatExperimentalStat(comparison.qStatistic)} (${comparison.significant ? "significativa" : "no significativa"}).`
+        );
+      });
+    }
+  } else if (seriesCount >= 3) {
+    testLines.push("ANOVA: no disponible para las series actuales.");
+  }
+
+  if (input.mannWhitneyResult) {
+    testLines.push(
+      `Mann-Whitney U (${input.mannWhitneyResult.seriesA} vs ${input.mannWhitneyResult.seriesB}): U = ${formatExperimentalStat(input.mannWhitneyResult.uStatistic)}, p = ${formatPValue(input.mannWhitneyResult.pValue)} (${input.mannWhitneyResult.significant ? "significativo" : "no significativo"}).`
+    );
+  }
+
+  if (input.kruskalWallisResult) {
+    testLines.push(
+      `Kruskal-Wallis (${input.kruskalWallisResult.groupCount} grupos): H = ${formatExperimentalStat(input.kruskalWallisResult.hStatistic)}, p = ${formatPValue(input.kruskalWallisResult.pValue)} (${input.kruskalWallisResult.significant ? "significativo" : "no significativo"}).`
+    );
+  }
+
+  if (testLines.length === 0) {
+    testLines.push(
+      "No hay pruebas paramétricas o no paramétricas calculables con los datos actuales."
+    );
+  }
+
+  sections.push({ title: "Pruebas estadísticas", content: testLines });
+
+  const recommendationLines: string[] = [];
+  if (input.statisticalRecommendation) {
+    recommendationLines.push(
+      `Prueba recomendada por el Advisor: ${input.statisticalRecommendation.recommendedTest} (confianza ${getStatisticalAdvisorConfidenceLabel(input.statisticalRecommendation.confidence)}).`
+    );
+    summaryLines.push(
+      `El Advisor Estadístico recomienda utilizar ${input.statisticalRecommendation.recommendedTest} como análisis principal.`
+    );
+    input.statisticalRecommendation.reasoning.forEach((reason) =>
+      recommendationLines.push(reason)
+    );
+    if (input.statisticalRecommendation.warnings.length > 0) {
+      recommendationLines.push("Advertencias del Advisor:");
+      input.statisticalRecommendation.warnings.forEach((warning) =>
+        recommendationLines.push(warning)
+      );
+    }
+  } else {
+    recommendationLines.push(
+      "El Advisor Estadístico no pudo generar una recomendación con los datos actuales."
+    );
+  }
+
+  sections.push({ title: "Recomendación final", content: recommendationLines });
+
+  return {
+    title: reportTitle,
+    generatedAt,
+    summary: summaryLines.join(" "),
+    sections,
   };
 };
 
@@ -3662,6 +3991,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [selectedMannWhitneySeriesB, setSelectedMannWhitneySeriesB] =
     useState<string | null>(null);
   const [showStatisticalAdvisor, setShowStatisticalAdvisor] = useState(false);
+  const [showScientificReport, setShowScientificReport] = useState(false);
+  const [scientificReportCopied, setScientificReportCopied] = useState(false);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -4566,6 +4897,54 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [visibleExperimentalSeries, normalityAnalyses, showCorrelation]
   );
+  const scientificReport = useMemo(
+    () =>
+      generateScientificReport({
+        graphTitle: title,
+        series: visibleExperimentalSeries,
+        experimentalStatistics,
+        normalityAnalyses,
+        correlationAnalysis,
+        correlationMethod,
+        experimentalOutliers,
+        outlierMethod,
+        tTestResult,
+        anovaAnalysis,
+        postHocComparisons,
+        mannWhitneyResult,
+        kruskalWallisResult,
+        statisticalRecommendation,
+      }),
+    [
+      title,
+      visibleExperimentalSeries,
+      experimentalStatistics,
+      normalityAnalyses,
+      correlationAnalysis,
+      correlationMethod,
+      experimentalOutliers,
+      outlierMethod,
+      tTestResult,
+      anovaAnalysis,
+      postHocComparisons,
+      mannWhitneyResult,
+      kruskalWallisResult,
+      statisticalRecommendation,
+    ]
+  );
+  const handleCopyScientificReport = async () => {
+    if (!scientificReport) return;
+
+    try {
+      await navigator.clipboard.writeText(
+        formatScientificReportAsText(scientificReport)
+      );
+      setScientificReportCopied(true);
+      window.setTimeout(() => setScientificReportCopied(false), 2000);
+    } catch {
+      // ignore clipboard errors
+    }
+  };
   const overlayMathYValues = useMemo(
     () => [
       ...visibleDerivativeCurves.flatMap((curve) =>
@@ -5165,6 +5544,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showPostHoc ||
     showNonParametric ||
     showStatisticalAdvisor ||
+    showScientificReport ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -6680,6 +7060,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             checked={showStatisticalAdvisor}
                             onChange={(e) =>
                               setShowStatisticalAdvisor(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar reporte científico
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showScientificReport}
+                            onChange={(e) =>
+                              setShowScientificReport(e.target.checked)
                             }
                             disabled={!hasVisibleExperimentalSeries}
                           />
@@ -8548,6 +8953,62 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <p className={emptyState}>
                         No hay información suficiente para generar una
                         recomendación estadística.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showScientificReport && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <p className={`${subsectionHeading} mb-0`}>
+                        📄 Reporte científico
+                      </p>
+                      {scientificReport && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleCopyScientificReport();
+                          }}
+                          className={btnOutline}
+                        >
+                          {scientificReportCopied
+                            ? "Copiado"
+                            : "Copiar reporte"}
+                        </button>
+                      )}
+                    </div>
+                    {scientificReport ? (
+                      <div className={contentPanel}>
+                        <p className="font-semibold text-base">
+                          {scientificReport.title}
+                        </p>
+                        <p className="text-sm text-[var(--app-text-muted)] mt-1">
+                          {formatScientificReportDate(
+                            scientificReport.generatedAt
+                          )}
+                        </p>
+                        <div className={`${contentPanel} mt-3`}>
+                          <p className="font-semibold text-sm">
+                            Resumen ejecutivo
+                          </p>
+                          <p className="text-sm mt-1">
+                            {scientificReport.summary}
+                          </p>
+                        </div>
+                        <div className="mt-3">
+                          {scientificReport.sections.map((section) => (
+                            <ScientificReportSectionCollapsible
+                              key={section.title}
+                              title={section.title}
+                              content={section.content}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar un reporte.
                       </p>
                     )}
                   </div>
