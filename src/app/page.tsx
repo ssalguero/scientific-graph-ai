@@ -3163,6 +3163,285 @@ const generateScientificReport = (input: {
   };
 };
 
+type ScientificInterpretation = {
+  summary: string[];
+  findings: string[];
+  recommendations: string[];
+  warnings: string[];
+};
+
+const SMALL_SAMPLE_WARNING_THRESHOLD = 30;
+
+const interpretCorrelationMagnitude = (coefficient: number): string => {
+  const absolute = Math.abs(coefficient);
+  if (absolute < 0.2) return "No se observa una correlación relevante.";
+  if (absolute < 0.4) return "Se observa una correlación débil.";
+  if (absolute < 0.6) return "Se observa una correlación moderada.";
+  if (absolute < 0.8) return "Se observa una correlación fuerte.";
+  return "Se observa una correlación muy fuerte.";
+};
+
+const getCorrelationDirectionLabel = (coefficient: number) =>
+  coefficient >= 0 ? "positiva" : "negativa";
+
+const formatTukeySignificantPairsInterpretation = (
+  comparisons: PostHocComparison[]
+): string => {
+  const significantPairs = comparisons.filter(
+    (comparison) => comparison.significant
+  );
+
+  if (significantPairs.length === 0) {
+    return "No se identificaron diferencias significativas entre pares.";
+  }
+
+  const pairLabels = significantPairs.map(
+    (comparison) => `${comparison.seriesA} y ${comparison.seriesB}`
+  );
+
+  return `Las diferencias significativas se observaron entre ${pairLabels.join(", ")}.`;
+};
+
+const formatScientificInterpretationAsText = (
+  interpretation: ScientificInterpretation
+): string => {
+  const blocks: string[] = [];
+
+  if (interpretation.summary.length > 0) {
+    blocks.push("=== Resumen general ===");
+    interpretation.summary.forEach((line) => blocks.push(line));
+    blocks.push("");
+  }
+
+  if (interpretation.findings.length > 0) {
+    blocks.push("=== Hallazgos principales ===");
+    interpretation.findings.forEach((line) => blocks.push(line));
+    blocks.push("");
+  }
+
+  if (interpretation.recommendations.length > 0) {
+    blocks.push("=== Recomendaciones ===");
+    interpretation.recommendations.forEach((line) => blocks.push(line));
+    blocks.push("");
+  }
+
+  if (interpretation.warnings.length > 0) {
+    blocks.push("=== Advertencias ===");
+    interpretation.warnings.forEach((line) => blocks.push(line));
+  }
+
+  return blocks.join("\n").trim();
+};
+
+const generateScientificInterpretation = (input: {
+  series: ExperimentalSeries[];
+  correlationAnalysis: {
+    results: CorrelationResult[];
+    unavailablePairs: CorrelationUnavailablePair[];
+    matrix: CorrelationMatrixRow[];
+  };
+  normalityAnalyses: NormalityAnalysis[];
+  experimentalOutliers: ExperimentalOutlier[];
+  tTestResult: TTestResult | null;
+  anovaAnalysis: AnovaAnalysis | null;
+  postHocComparisons: PostHocComparison[];
+  mannWhitneyResult: MannWhitneyResult | null;
+  kruskalWallisResult: KruskalWallisResult | null;
+  statisticalRecommendation: StatisticalRecommendation | null;
+  scientificReport: ScientificReport | null;
+}): ScientificInterpretation | null => {
+  const seriesCount = input.series.length;
+  const totalObservations = input.series.reduce(
+    (sum, item) => sum + getSeriesYValues(item).length,
+    0
+  );
+
+  if (seriesCount === 0 || totalObservations === 0) return null;
+
+  const summary: string[] = [];
+  const findings: string[] = [];
+  const recommendations: string[] = [];
+  const warnings: string[] = [];
+
+  if (input.scientificReport?.summary) {
+    summary.push(input.scientificReport.summary);
+  } else {
+    summary.push(
+      `Se analizaron ${seriesCount} series experimentales con ${totalObservations} observaciones en total.`
+    );
+  }
+
+  if (input.correlationAnalysis.results.length > 0) {
+    input.correlationAnalysis.results.forEach((result) => {
+      const magnitudeText = interpretCorrelationMagnitude(result.coefficient);
+      const directionLabel = getCorrelationDirectionLabel(result.coefficient);
+      findings.push(
+        `${magnitudeText} La correlación es ${directionLabel} entre ${result.seriesA} y ${result.seriesB} (r = ${formatCorrelationCoefficient(result.coefficient)}).`
+      );
+    });
+  } else if (seriesCount >= 2) {
+    findings.push(
+      "No hay pares con datos suficientes para interpretar correlaciones."
+    );
+  }
+
+  if (input.normalityAnalyses.length > 0) {
+    const allNormal = input.normalityAnalyses.every(
+      (analysis) =>
+        analysis.classification === "normal" ||
+        analysis.classification === "approximately-normal"
+    );
+    const anyNonNormal = input.normalityAnalyses.some(
+      (analysis) => analysis.classification === "non-normal"
+    );
+
+    if (allNormal && !anyNonNormal) {
+      findings.push(
+        "Los datos son compatibles con los supuestos de normalidad."
+      );
+    } else {
+      findings.push(
+        "Se detectaron desviaciones respecto a una distribución normal."
+      );
+    }
+  }
+
+  if (input.experimentalOutliers.length === 0) {
+    findings.push("No se detectaron valores atípicos relevantes.");
+  } else {
+    findings.push(
+      `Se detectaron ${input.experimentalOutliers.length} valores atípicos que podrían influir en los resultados.`
+    );
+  }
+
+  if (input.tTestResult) {
+    findings.push(
+      input.tTestResult.pValue < 0.05
+        ? "Existe evidencia estadísticamente significativa de diferencias entre los grupos comparados."
+        : "No se detectaron diferencias estadísticamente significativas."
+    );
+    findings.push(
+      `Comparación t-Test (${input.tTestResult.seriesA} vs ${input.tTestResult.seriesB}): p = ${formatPValue(input.tTestResult.pValue)}.`
+    );
+  }
+
+  if (input.anovaAnalysis) {
+    findings.push(
+      input.anovaAnalysis.result.pValue < 0.05
+        ? "Existen diferencias significativas entre al menos dos grupos."
+        : "No se detectan diferencias significativas entre los grupos analizados."
+    );
+    findings.push(
+      `ANOVA de una vía: p = ${formatPValue(input.anovaAnalysis.result.pValue)}.`
+    );
+  }
+
+  if (input.postHocComparisons.length > 0) {
+    findings.push(
+      formatTukeySignificantPairsInterpretation(input.postHocComparisons)
+    );
+  }
+
+  if (input.mannWhitneyResult?.significant) {
+    findings.push(
+      "Diferencias significativas detectadas mediante Mann-Whitney."
+    );
+    findings.push(
+      `Mann-Whitney (${input.mannWhitneyResult.seriesA} vs ${input.mannWhitneyResult.seriesB}): p = ${formatPValue(input.mannWhitneyResult.pValue)}.`
+    );
+  }
+
+  if (input.kruskalWallisResult?.significant) {
+    findings.push(
+      "Diferencias significativas detectadas mediante Kruskal-Wallis."
+    );
+    findings.push(
+      `Kruskal-Wallis (${input.kruskalWallisResult.groupCount} grupos): p = ${formatPValue(input.kruskalWallisResult.pValue)}.`
+    );
+  }
+
+  if (input.statisticalRecommendation) {
+    const { recommendedTest, confidence, reasoning, warnings: advisorWarnings } =
+      input.statisticalRecommendation;
+
+    if (recommendedTest === "ANOVA") {
+      recommendations.push("Se recomienda ANOVA como análisis principal.");
+    } else if (recommendedTest === "t-Test") {
+      recommendations.push("Se recomienda t-Test como análisis principal.");
+    } else if (recommendedTest === "Mann-Whitney U") {
+      recommendations.push(
+        "Se recomienda Mann-Whitney debido a la falta de normalidad."
+      );
+    } else if (recommendedTest === "Kruskal-Wallis") {
+      recommendations.push(
+        "Se recomienda Kruskal-Wallis debido a la falta de normalidad."
+      );
+    } else if (recommendedTest === "Pearson") {
+      recommendations.push("Se recomienda correlación de Pearson.");
+    } else if (recommendedTest === "Spearman") {
+      recommendations.push("Se recomienda correlación de Spearman.");
+    } else {
+      recommendations.push(
+        `Se recomienda ${recommendedTest} como análisis principal.`
+      );
+    }
+
+    reasoning.forEach((reason) => {
+      if (!recommendations.includes(reason)) {
+        recommendations.push(reason);
+      }
+    });
+
+    advisorWarnings.forEach((warning) => {
+      if (!warnings.includes(warning)) {
+        warnings.push(warning);
+      }
+    });
+
+    if (confidence === "low") {
+      warnings.push(
+        "La confianza del Advisor Estadístico es baja; conviene validar los resultados con datos adicionales."
+      );
+    }
+  }
+
+  const smallSampleSeries = input.series.filter(
+    (item) => getSeriesYValues(item).length < SMALL_SAMPLE_WARNING_THRESHOLD
+  );
+  if (smallSampleSeries.length > 0) {
+    warnings.push(
+      `Muestras pequeñas detectadas en: ${smallSampleSeries.map((item) => `"${item.name}"`).join(", ")}. Los resultados pueden ser inestables.`
+    );
+  }
+
+  if (
+    input.normalityAnalyses.some(
+      (analysis) => analysis.classification === "non-normal"
+    )
+  ) {
+    warnings.push(
+      "Una o más series no cumplen el supuesto de normalidad; considere pruebas no paramétricas."
+    );
+  }
+
+  if (input.experimentalOutliers.length > 0) {
+    warnings.push(
+      "La presencia de valores atípicos puede afectar pruebas paramétricas y medidas de tendencia central."
+    );
+  }
+
+  if (summary.length === 0 && findings.length === 0) {
+    return null;
+  }
+
+  return {
+    summary,
+    findings,
+    recommendations,
+    warnings,
+  };
+};
+
 const getNonParametricModeLabel = (mode: NonParametricMode) =>
   mode === "mann-whitney" ? "Mann-Whitney U" : "Kruskal-Wallis H";
 
@@ -4191,7 +4470,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState<string | null>(null);
   const [showStatisticalAdvisor, setShowStatisticalAdvisor] = useState(false);
   const [showScientificReport, setShowScientificReport] = useState(false);
+  const [showScientificInterpretation, setShowScientificInterpretation] =
+    useState(false);
   const [scientificReportCopied, setScientificReportCopied] = useState(false);
+  const [scientificInterpretationCopied, setScientificInterpretationCopied] =
+    useState(false);
   const [scientificReportPdfExporting, setScientificReportPdfExporting] =
     useState(false);
   const [scientificReportPdfMessage, setScientificReportPdfMessage] = useState<
@@ -5180,6 +5463,35 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       statisticalRecommendation,
     ]
   );
+  const scientificInterpretation = useMemo(
+    () =>
+      generateScientificInterpretation({
+        series: visibleExperimentalSeries,
+        correlationAnalysis,
+        normalityAnalyses,
+        experimentalOutliers,
+        tTestResult,
+        anovaAnalysis,
+        postHocComparisons,
+        mannWhitneyResult,
+        kruskalWallisResult,
+        statisticalRecommendation,
+        scientificReport,
+      }),
+    [
+      visibleExperimentalSeries,
+      correlationAnalysis,
+      normalityAnalyses,
+      experimentalOutliers,
+      tTestResult,
+      anovaAnalysis,
+      postHocComparisons,
+      mannWhitneyResult,
+      kruskalWallisResult,
+      statisticalRecommendation,
+      scientificReport,
+    ]
+  );
   const handleCopyScientificReport = async () => {
     if (!scientificReport) return;
 
@@ -5189,6 +5501,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       );
       setScientificReportCopied(true);
       window.setTimeout(() => setScientificReportCopied(false), 2000);
+    } catch {
+      // ignore clipboard errors
+    }
+  };
+  const handleCopyScientificInterpretation = async () => {
+    if (!scientificInterpretation) return;
+
+    try {
+      await navigator.clipboard.writeText(
+        formatScientificInterpretationAsText(scientificInterpretation)
+      );
+      setScientificInterpretationCopied(true);
+      window.setTimeout(() => setScientificInterpretationCopied(false), 2000);
     } catch {
       // ignore clipboard errors
     }
@@ -5793,6 +6118,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showNonParametric ||
     showStatisticalAdvisor ||
     showScientificReport ||
+    showScientificInterpretation ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -7352,6 +7678,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             checked={showScientificReport}
                             onChange={(e) =>
                               setShowScientificReport(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar interpretación científica
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showScientificInterpretation}
+                            onChange={(e) =>
+                              setShowScientificInterpretation(e.target.checked)
                             }
                             disabled={!hasVisibleExperimentalSeries}
                           />
@@ -9276,6 +9627,97 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     ) : (
                       <p className={emptyState}>
                         No hay datos suficientes para generar un reporte.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showScientificInterpretation && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <p className={`${subsectionHeading} mb-0`}>
+                        🧠 Interpretación científica
+                      </p>
+                      {scientificInterpretation && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleCopyScientificInterpretation();
+                          }}
+                          className={btnOutline}
+                        >
+                          {scientificInterpretationCopied
+                            ? "Copiado"
+                            : "📋 Copiar interpretación"}
+                        </button>
+                      )}
+                    </div>
+                    {scientificInterpretation ? (
+                      <div className={contentPanel}>
+                        {scientificInterpretation.summary.length > 0 && (
+                          <div className="mb-4">
+                            <p className="font-semibold text-sm mb-2">
+                              Resumen general
+                            </p>
+                            {scientificInterpretation.summary.map((line) => (
+                              <p key={`summary-${line}`} className="text-sm mt-1">
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+
+                        {scientificInterpretation.findings.length > 0 && (
+                          <div className="mb-4">
+                            <p className="font-semibold text-sm mb-2">
+                              Hallazgos principales
+                            </p>
+                            {scientificInterpretation.findings.map((line) => (
+                              <p key={`finding-${line}`} className="text-sm mt-1">
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+
+                        {scientificInterpretation.recommendations.length > 0 && (
+                          <div className="mb-4">
+                            <p className="font-semibold text-sm mb-2">
+                              Recomendaciones
+                            </p>
+                            {scientificInterpretation.recommendations.map(
+                              (line) => (
+                                <p
+                                  key={`recommendation-${line}`}
+                                  className="text-sm mt-1"
+                                >
+                                  {line}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {scientificInterpretation.warnings.length > 0 && (
+                          <div>
+                            <p className="font-semibold text-sm mb-2">
+                              Advertencias
+                            </p>
+                            {scientificInterpretation.warnings.map((line) => (
+                              <p
+                                key={`warning-${line}`}
+                                className={`text-sm mt-1 ${emptyState}`}
+                              >
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        No hay información suficiente para generar una
+                        interpretación científica.
                       </p>
                     )}
                   </div>
