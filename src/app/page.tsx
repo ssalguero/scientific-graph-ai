@@ -322,6 +322,76 @@ function NotebookSection({
   );
 }
 
+type ScientificModuleBadge = "soon" | "experimental" | "beta" | "pro";
+
+type ScientificModule = {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  enabled: boolean;
+  badge?: ScientificModuleBadge;
+};
+
+const SCIENTIFIC_MODULES: Omit<ScientificModule, "enabled">[] = [
+  {
+    id: "basic",
+    name: "Análisis básico",
+    icon: "📊",
+    description: "Visualización, rango, ejes y escalas",
+  },
+  {
+    id: "mathematics",
+    name: "Análisis matemático",
+    icon: "🧮",
+    description: "Funciones, derivadas e integrales",
+  },
+  {
+    id: "statistics",
+    name: "Análisis estadístico",
+    icon: "📉",
+    description: "Distribuciones y estadística descriptiva",
+  },
+  {
+    id: "inference",
+    name: "Inferencia",
+    icon: "🧪",
+    description: "t-Test, ANOVA, Tukey y no paramétricas",
+  },
+  {
+    id: "assistant",
+    name: "Asistente científico",
+    icon: "🧠",
+    description: "Interpretación y recomendaciones",
+  },
+  {
+    id: "reports",
+    name: "Reportes",
+    icon: "📄",
+    description: "Exportación y reporte científico",
+  },
+];
+
+const createDefaultEnabledModules = (): Record<string, boolean> =>
+  Object.fromEntries(
+    SCIENTIFIC_MODULES.map((module) => [module.id, true])
+  ) as Record<string, boolean>;
+
+const isScientificModuleEnabled = (
+  enabledModules: Record<string, boolean>,
+  moduleId: string
+) => enabledModules[moduleId] !== false;
+
+const getScientificModuleBadgeLabel = (badge: ScientificModuleBadge) => {
+  const labels: Record<ScientificModuleBadge, string> = {
+    soon: "Soon",
+    experimental: "Experimental",
+    beta: "Beta",
+    pro: "Pro",
+  };
+  return labels[badge];
+};
+
 type AnalysisInspectorSection =
   | "visualization"
   | "mathematics"
@@ -329,43 +399,116 @@ type AnalysisInspectorSection =
   | "inference"
   | "advisor";
 
+const INSPECTOR_SECTION_MODULE_ID: Record<AnalysisInspectorSection, string> = {
+  visualization: "basic",
+  mathematics: "mathematics",
+  statistics: "statistics",
+  inference: "inference",
+  advisor: "assistant",
+};
+
 const ANALYSIS_INSPECTOR_CATEGORIES: {
   id: AnalysisInspectorSection;
   label: string;
   icon: string;
   description: string;
+  moduleId: string;
 }[] = [
   {
     id: "visualization",
     label: "Visualización",
     icon: "📊",
     description: "Rango, ejes y escalas del gráfico.",
+    moduleId: "basic",
   },
   {
     id: "mathematics",
     label: "Matemática",
     icon: "📈",
     description: "Regresiones, derivadas e integrales.",
+    moduleId: "mathematics",
   },
   {
     id: "statistics",
     label: "Estadística",
     icon: "📉",
     description: "Descriptiva, correlación, outliers y distribución.",
+    moduleId: "statistics",
   },
   {
     id: "inference",
     label: "Inferencia",
     icon: "🧪",
     description: "t-Test, ANOVA, Tukey y pruebas no paramétricas.",
+    moduleId: "inference",
   },
   {
     id: "advisor",
     label: "Advisor",
     icon: "🧠",
-    description: "Advisor, interpretación, asistente y reporte.",
+    description: "Advisor, interpretación y asistente.",
+    moduleId: "assistant",
   },
 ];
+
+const WORKSPACE_SECTION_MODULE_GATE: Partial<
+  Record<WorkspaceSection, string>
+> = {
+  reports: "reports",
+};
+
+type ScientificModuleCardProps = {
+  module: Omit<ScientificModule, "enabled">;
+  enabled: boolean;
+  onToggle: () => void;
+};
+
+function ScientificModuleCard({
+  module,
+  enabled,
+  onToggle,
+}: ScientificModuleCardProps) {
+  return (
+    <div
+      className={`${contentPanel} flex flex-col gap-2 border ${
+        enabled
+          ? "border-[var(--app-accent)]/30 bg-[var(--app-accent)]/5"
+          : "border-[var(--app-border)] opacity-80"
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <span className="text-base leading-none shrink-0" aria-hidden>
+          {module.icon}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            {module.name}
+          </p>
+          <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+            {module.description}
+          </p>
+        </div>
+        {module.badge ? (
+          <span className={sidebarSoonBadge}>
+            {getScientificModuleBadgeLabel(module.badge)}
+          </span>
+        ) : null}
+      </div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`${btnOutlineSm} self-start ${
+          enabled
+            ? "border-[var(--app-accent)]/40 text-[var(--app-accent)]"
+            : ""
+        }`}
+        aria-pressed={enabled}
+      >
+        {enabled ? "Activo" : "Inactivo"}
+      </button>
+    </div>
+  );
+}
 
 const getAnalysisInspectorCategory = (section: AnalysisInspectorSection) =>
   ANALYSIS_INSPECTOR_CATEGORIES.find((category) => category.id === section) ??
@@ -5000,10 +5143,60 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [functionSearch, setFunctionSearch] = useState("");
   const [activeWorkspaceSection, setActiveWorkspaceSection] =
     useState<WorkspaceSection>("data");
+  const [enabledModules, setEnabledModules] = useState<Record<string, boolean>>(
+    () => createDefaultEnabledModules()
+  );
   const [analysisInspectorSection, setAnalysisInspectorSection] =
     useState<AnalysisInspectorSection>("visualization");
+  const visibleInspectorCategories = useMemo(
+    () =>
+      ANALYSIS_INSPECTOR_CATEGORIES.filter((category) =>
+        isScientificModuleEnabled(enabledModules, category.moduleId)
+      ),
+    [enabledModules]
+  );
+  const visibleWorkspaceTabs = useMemo(
+    () =>
+      WORKSPACE_TABS.filter(
+        (tab) =>
+          !WORKSPACE_SECTION_MODULE_GATE[tab.id] ||
+          isScientificModuleEnabled(
+            enabledModules,
+            WORKSPACE_SECTION_MODULE_GATE[tab.id]!
+          )
+      ),
+    [enabledModules]
+  );
+  const activeModuleCount = useMemo(
+    () =>
+      SCIENTIFIC_MODULES.filter((module) =>
+        isScientificModuleEnabled(enabledModules, module.id)
+      ).length,
+    [enabledModules]
+  );
   const activeAnalysisInspectorCategory = getAnalysisInspectorCategory(
     analysisInspectorSection
+  );
+  const isBasicModuleEnabled = isScientificModuleEnabled(enabledModules, "basic");
+  const isMathematicsModuleEnabled = isScientificModuleEnabled(
+    enabledModules,
+    "mathematics"
+  );
+  const isStatisticsModuleEnabled = isScientificModuleEnabled(
+    enabledModules,
+    "statistics"
+  );
+  const isInferenceModuleEnabled = isScientificModuleEnabled(
+    enabledModules,
+    "inference"
+  );
+  const isAssistantModuleEnabled = isScientificModuleEnabled(
+    enabledModules,
+    "assistant"
+  );
+  const isReportsModuleEnabled = isScientificModuleEnabled(
+    enabledModules,
+    "reports"
   );
   const [controlPanelTab, setControlPanelTab] = useState<
     "graph" | "library" | "data"
@@ -5026,6 +5219,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
     return "light";
   });
+
+  useEffect(() => {
+    const visible = ANALYSIS_INSPECTOR_CATEGORIES.filter((category) =>
+      isScientificModuleEnabled(enabledModules, category.moduleId)
+    );
+    if (
+      visible.length > 0 &&
+      !visible.some((category) => category.id === analysisInspectorSection)
+    ) {
+      setAnalysisInspectorSection(visible[0].id);
+    }
+  }, [enabledModules, analysisInspectorSection]);
+
+  useEffect(() => {
+    if (activeWorkspaceSection === "reports" && !isReportsModuleEnabled) {
+      setActiveWorkspaceSection("data");
+    }
+  }, [activeWorkspaceSection, isReportsModuleEnabled]);
+
+  const toggleScientificModule = (moduleId: string) => {
+    setEnabledModules((previous) => ({
+      ...previous,
+      [moduleId]: !isScientificModuleEnabled(previous, moduleId),
+    }));
+  };
 
   const nextCurveIdRef = useRef(2);
   const chartExportRef = useRef<HTMLDivElement>(null);
@@ -6664,28 +6882,28 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     (showIntegral && integralCurves.length > 0) ||
     (showIntegral && curveAreaResults.length > 0);
   const showMathResultsPanel =
-    hasMathResults ||
-    showDerivative ||
-    showIntegral ||
-    showIntersections ||
-    showCriticalPoints ||
-    showRoots ||
-    showStatistics ||
-    showErrorBars ||
-    showCorrelation ||
-    showOutliers ||
-    showHistogram ||
-    showBoxPlot ||
-    showNormality ||
-    showTTest ||
-    showAnova ||
-    showPostHoc ||
-    showNonParametric ||
-    showStatisticalAdvisor ||
-    showScientificReport ||
-    showScientificInterpretation ||
-    showScientificAssistant ||
-    regressionModel !== "none";
+    (isMathematicsModuleEnabled &&
+      (hasMathResults ||
+        showDerivative ||
+        showIntegral ||
+        showIntersections ||
+        showCriticalPoints ||
+        showRoots ||
+        regressionModel !== "none")) ||
+    (isStatisticsModuleEnabled &&
+      (showStatistics ||
+        showErrorBars ||
+        showCorrelation ||
+        showOutliers ||
+        showHistogram ||
+        showBoxPlot ||
+        showNormality)) ||
+    (isInferenceModuleEnabled &&
+      (showTTest || showAnova || showPostHoc || showNonParametric)) ||
+    (isAssistantModuleEnabled &&
+      (showStatisticalAdvisor ||
+        showScientificInterpretation ||
+        showScientificAssistant));
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
 
@@ -6872,6 +7090,22 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </div>
           </div>
 
+          <DashboardSection title="Módulos" icon="🧩" defaultOpen>
+            <p className="text-xs text-[var(--app-text-muted)] mb-2">
+              Módulos activos: {activeModuleCount} de {SCIENTIFIC_MODULES.length}
+            </p>
+            <div className="space-y-2">
+              {SCIENTIFIC_MODULES.map((module) => (
+                <ScientificModuleCard
+                  key={module.id}
+                  module={module}
+                  enabled={isScientificModuleEnabled(enabledModules, module.id)}
+                  onToggle={() => toggleScientificModule(module.id)}
+                />
+              ))}
+            </div>
+          </DashboardSection>
+
           <DashboardSection title="Herramientas" icon="🧠" defaultOpen={false}>
             <div
               className={`${sidebarNavItem} opacity-60 cursor-not-allowed`}
@@ -6965,7 +7199,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             role="tablist"
             aria-label="Workspace científico"
           >
-            {WORKSPACE_TABS.map((tab) => (
+            {visibleWorkspaceTabs.map((tab) => (
               <WorkspaceTab
                 key={tab.id}
                 section={tab.id}
@@ -7376,7 +7610,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   role="tablist"
                   aria-label="Categorías del inspector"
                 >
-                  {ANALYSIS_INSPECTOR_CATEGORIES.map((category) => (
+                  {visibleInspectorCategories.map((category) => (
                     <InspectorCategoryButton
                       key={category.id}
                       icon={category.icon}
@@ -7390,6 +7624,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </nav>
 
                 <div className="min-w-0 flex-1">
+                  {visibleInspectorCategories.length === 0 ? (
+                    <p className={emptyState}>
+                      No hay categorías de análisis activas. Active módulos en
+                      el panel Módulos del dashboard.
+                    </p>
+                  ) : (
+                  <>
                   <div className="mb-4 border-b border-[var(--app-border)] pb-3">
                     <h3 className={panelHeading}>
                       <span aria-hidden>
@@ -8308,6 +8549,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         </span>
                       </label>
                   </div>
+                  </>
+                  )}
                 </div>
               </div>
             </div>
@@ -8319,6 +8562,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             <h2 className={`${sectionLabel} mb-3`}>📈 Resultados</h2>
             <div className="space-y-3">
+            {isBasicModuleEnabled && (
             <NotebookSection
               title="Gráfico principal"
               icon="📈"
@@ -8871,8 +9115,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </div>
             </div>
             </NotebookSection>
+            )}
 
-          {axisScaleWarnings.map((warning, index) => (
+          {isBasicModuleEnabled &&
+            axisScaleWarnings.map((warning, index) => (
             <div key={`axis-scale-warning-${index}`} className={alertWarning}>
               {warning}
             </div>
@@ -10389,7 +10635,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </NotebookSection>
           )}
 
-            {showScientificInterpretation && (
+            {isAssistantModuleEnabled && showScientificInterpretation && (
               <NotebookSection
                 title="Interpretación científica"
                 icon="🧠"
@@ -10467,7 +10713,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </NotebookSection>
             )}
 
-            {showScientificAssistant && (
+            {isAssistantModuleEnabled && showScientificAssistant && (
               <NotebookSection
                 title="Asistente científico"
                 icon="🧪"
@@ -10574,8 +10820,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           </section>
 
           <section
-            className={activeWorkspaceSection === "reports" ? "" : "hidden"}
-            aria-hidden={activeWorkspaceSection !== "reports"}
+            className={
+              activeWorkspaceSection === "reports" && isReportsModuleEnabled
+                ? ""
+                : "hidden"
+            }
+            aria-hidden={
+              activeWorkspaceSection !== "reports" || !isReportsModuleEnabled
+            }
           >
             <h2 className={sectionLabel}>📄 Reportes</h2>
             <p className={`${panelHeadingSubtext} -mt-2 mb-3`}>
