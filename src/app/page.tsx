@@ -32,6 +32,8 @@ import {
 } from "mathjs";
 
 import {
+  Bar,
+  BarChart,
   ComposedChart,
   Line,
   Scatter,
@@ -1342,6 +1344,100 @@ const getOutlierMethodLabel = (method: OutlierMethod) =>
 
 const formatOutlierScore = (score: number) => score.toFixed(4);
 
+const HISTOGRAM_BINS_MIN = 5;
+const HISTOGRAM_BINS_MAX = 30;
+const HISTOGRAM_BINS_DEFAULT = 10;
+
+type HistogramBin = {
+  min: number;
+  max: number;
+  count: number;
+};
+
+type SeriesHistogram = {
+  seriesId: string;
+  seriesName: string;
+  bins: HistogramBin[];
+  sampleSize: number;
+};
+
+const clampHistogramBins = (bins: number) =>
+  Math.min(
+    HISTOGRAM_BINS_MAX,
+    Math.max(HISTOGRAM_BINS_MIN, Math.round(bins))
+  );
+
+const generateHistogram = (
+  series: ExperimentalSeries,
+  binCount: number
+): SeriesHistogram => {
+  const values = series.points
+    .map((point) => point.y)
+    .filter((value) => Number.isFinite(value));
+  const sampleSize = values.length;
+  const sanitizedBinCount = clampHistogramBins(binCount);
+
+  if (sampleSize === 0) {
+    return {
+      seriesId: series.id,
+      seriesName: series.name,
+      bins: [],
+      sampleSize: 0,
+    };
+  }
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+
+  if (min === max) {
+    return {
+      seriesId: series.id,
+      seriesName: series.name,
+      bins: [{ min, max, count: sampleSize }],
+      sampleSize,
+    };
+  }
+
+  const binWidth = (max - min) / sanitizedBinCount;
+  const counts = new Array<number>(sanitizedBinCount).fill(0);
+
+  values.forEach((value) => {
+    let index = Math.floor((value - min) / binWidth);
+    if (index >= sanitizedBinCount) index = sanitizedBinCount - 1;
+    if (index < 0) index = 0;
+    counts[index] += 1;
+  });
+
+  const bins: HistogramBin[] = counts.map((count, index) => ({
+    min: min + index * binWidth,
+    max: index === sanitizedBinCount - 1 ? max : min + (index + 1) * binWidth,
+    count,
+  }));
+
+  return {
+    seriesId: series.id,
+    seriesName: series.name,
+    bins,
+    sampleSize,
+  };
+};
+
+const generateSeriesHistograms = (
+  series: ExperimentalSeries[],
+  binCount: number
+): SeriesHistogram[] =>
+  series.map((item) => generateHistogram(item, binCount));
+
+const formatHistogramBinRange = (bin: HistogramBin) =>
+  `${formatExperimentalStat(bin.min)}–${formatExperimentalStat(bin.max)}`;
+
+const toHistogramChartData = (histogram: SeriesHistogram) =>
+  histogram.bins.map((bin, index) => ({
+    label: formatHistogramBinRange(bin),
+    count: bin.count,
+    index,
+  }));
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -2344,6 +2440,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState<CorrelationMethod>("pearson");
   const [showOutliers, setShowOutliers] = useState(false);
   const [outlierMethod, setOutlierMethod] = useState<OutlierMethod>("iqr");
+  const [showHistogram, setShowHistogram] = useState(false);
+  const [histogramBins, setHistogramBins] = useState(HISTOGRAM_BINS_DEFAULT);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -3163,6 +3261,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       })),
     [experimentalOutliers]
   );
+  const seriesHistograms = useMemo(
+    () => generateSeriesHistograms(visibleExperimentalSeries, histogramBins),
+    [visibleExperimentalSeries, histogramBins]
+  );
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
   const overlayMathYValues = useMemo(
@@ -3756,6 +3858,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showErrorBars ||
     showCorrelation ||
     showOutliers ||
+    showHistogram ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -4916,6 +5019,60 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <option value="zscore">Z-Score</option>
                         </select>
                       </div>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar histogramas
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showHistogram}
+                            onChange={(e) => setShowHistogram(e.target.checked)}
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <div
+                        className={
+                          !hasVisibleExperimentalSeries || !showHistogram
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      >
+                        <label
+                          htmlFor="histogram-bins-input"
+                          className={fieldLabel}
+                        >
+                          Número de bins
+                        </label>
+                        <input
+                          id="histogram-bins-input"
+                          type="number"
+                          min={HISTOGRAM_BINS_MIN}
+                          max={HISTOGRAM_BINS_MAX}
+                          value={histogramBins}
+                          onChange={(event) => {
+                            const parsed = Number(event.target.value);
+                            if (!Number.isFinite(parsed)) return;
+                            setHistogramBins(clampHistogramBins(parsed));
+                          }}
+                          disabled={
+                            !hasVisibleExperimentalSeries || !showHistogram
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -5977,6 +6134,139 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           </p>
                         )}
                       </>
+                    )}
+                  </div>
+                )}
+
+                {showHistogram && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📊 Histogramas</p>
+                    {!hasVisibleExperimentalSeries ? (
+                      <p className={emptyState}>
+                        No hay series experimentales visibles.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {seriesHistograms.map((histogram) => (
+                          <div
+                            key={histogram.seriesId}
+                            className={contentPanel}
+                          >
+                            <p>
+                              <span className="font-semibold">Serie:</span>{" "}
+                              {histogram.seriesName}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Muestras:</span>{" "}
+                              {histogram.sampleSize}
+                            </p>
+                            <p className="mt-1">
+                              <span className="font-semibold">Bins:</span>{" "}
+                              {histogram.bins.length}
+                            </p>
+
+                            {histogram.sampleSize > 0 ? (
+                              <>
+                                <div className="h-48 mt-3">
+                                  <ResponsiveContainer
+                                    width="100%"
+                                    height="100%"
+                                  >
+                                    <BarChart
+                                      data={toHistogramChartData(histogram)}
+                                      margin={{
+                                        top: 8,
+                                        right: 8,
+                                        left: 0,
+                                        bottom: 0,
+                                      }}
+                                    >
+                                      <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke={chartTheme.grid}
+                                      />
+                                      <XAxis
+                                        dataKey="label"
+                                        tick={{
+                                          fill: chartTheme.axis,
+                                          fontSize: 10,
+                                        }}
+                                        interval={0}
+                                        angle={-25}
+                                        textAnchor="end"
+                                        height={56}
+                                      />
+                                      <YAxis
+                                        allowDecimals={false}
+                                        tick={{
+                                          fill: chartTheme.axis,
+                                          fontSize: 12,
+                                        }}
+                                      />
+                                      <Tooltip
+                                        content={({ active, payload }) => {
+                                          if (!active || !payload?.length) {
+                                            return null;
+                                          }
+
+                                          const item = payload[0]?.payload as
+                                            | { label?: string; count?: number }
+                                            | undefined;
+
+                                          return (
+                                            <div
+                                              className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                                              style={{
+                                                borderColor:
+                                                  chartTheme.tooltipBorder,
+                                                backgroundColor:
+                                                  chartTheme.tooltipBg,
+                                                color: chartTheme.tooltipColor,
+                                              }}
+                                            >
+                                              <p className="font-semibold">
+                                                {item?.label}
+                                              </p>
+                                              <p>
+                                                Frecuencia: {item?.count ?? 0}
+                                              </p>
+                                            </div>
+                                          );
+                                        }}
+                                      />
+                                      <Bar
+                                        dataKey="count"
+                                        fill="var(--app-accent)"
+                                        radius={[4, 4, 0, 0]}
+                                        isAnimationActive={false}
+                                      />
+                                    </BarChart>
+                                  </ResponsiveContainer>
+                                </div>
+
+                                <div className="mt-3">
+                                  <p className="font-semibold text-sm mb-1">
+                                    Bin / Frecuencia
+                                  </p>
+                                  {histogram.bins.map((bin, index) => (
+                                    <p
+                                      key={`${histogram.seriesId}-bin-${index}`}
+                                      className="text-sm"
+                                    >
+                                      {formatHistogramBinRange(bin)} →{" "}
+                                      {bin.count}
+                                    </p>
+                                  ))}
+                                </div>
+                              </>
+                            ) : (
+                              <p className={`${emptyState} mt-2`}>
+                                Sin datos válidos en esta serie.
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
