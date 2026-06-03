@@ -1822,6 +1822,222 @@ const formatNormalityMoment = (
   classification: NormalityClassification | null
 ) => (classification === null ? "N/A" : formatExperimentalStat(value));
 
+const T_TEST_ALPHA = 0.05;
+
+type TTestResult = {
+  seriesA: string;
+  seriesB: string;
+  sampleSizeA: number;
+  sampleSizeB: number;
+  meanA: number;
+  meanB: number;
+  standardDeviationA: number;
+  standardDeviationB: number;
+  tStatistic: number;
+  degreesOfFreedom: number;
+  pValue: number;
+  significant: boolean;
+};
+
+const getSeriesYValues = (series: ExperimentalSeries): number[] =>
+  series.points
+    .map((point) => point.y)
+    .filter((value) => Number.isFinite(value));
+
+const getSampleMeanAndStdDev = (values: number[]) => {
+  const count = values.length;
+  if (count === 0) return null;
+
+  const mean = values.reduce((sum, value) => sum + value, 0) / count;
+  if (count === 1) {
+    return { mean, stdDev: 0, count };
+  }
+
+  const variance =
+    values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (count - 1);
+
+  return { mean, stdDev: Math.sqrt(variance), count };
+};
+
+const logGamma = (value: number): number => {
+  const coefficients = [
+    0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+    771.32342877765313, -176.61502916214059, 12.507343278686905,
+    -0.13857109526572012, 9.984369578019571e-6, 1.5056327351493116e-7,
+  ];
+
+  if (value < 0.5) {
+    return (
+      Math.log(Math.PI / Math.sin(Math.PI * value)) - logGamma(1 - value)
+    );
+  }
+
+  let z = value - 1;
+  let sum = coefficients[0];
+  for (let index = 1; index < 9; index += 1) {
+    sum += coefficients[index] / (z + index);
+  }
+
+  const t = z + 7.5;
+  return (
+    0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(sum)
+  );
+};
+
+const betacf = (a: number, b: number, x: number): number => {
+  const maxIterations = 200;
+  const epsilon = 3e-7;
+  let am = 1;
+  let bm = 1;
+  let az = 1;
+  let bz = 1 - ((a + b) * x) / (a + 1);
+
+  for (let iteration = 1; iteration <= maxIterations; iteration += 1) {
+    const em = iteration;
+    const tem = em + em;
+    let d =
+      (em * (b - em) * x) / ((a + tem - 1) * (a + tem));
+    let ap = az + d * am;
+    let bp = bz + d * bm;
+    d = (-(a + em) * (a + b + em) * x) / ((a + tem) * (a + tem + 1));
+    az = ap + d * az;
+    bz = bp + d * bz;
+    am = ap;
+    bm = bp;
+
+    if (Math.abs(bz) > 1e-30) {
+      am /= bz;
+      az /= bz;
+      bm = 1;
+      bz = 1;
+    }
+
+    if (Math.abs(az) < epsilon * Math.abs(bz)) {
+      return az / bz;
+    }
+  }
+
+  return az / bz;
+};
+
+const regularizedIncompleteBeta = (
+  a: number,
+  b: number,
+  x: number
+): number => {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+
+  const lnBeta = logGamma(a) + logGamma(b) - logGamma(a + b);
+  const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - lnBeta) / a;
+
+  if (x < (a + 1) / (a + b + 2)) {
+    return front * betacf(a, b, x);
+  }
+
+  return (
+    1 -
+    (Math.exp(Math.log(1 - x) * b + Math.log(x) * a - lnBeta) / b) *
+      betacf(b, a, 1 - x)
+  );
+};
+
+const approximateTwoTailedTPValue = (
+  tStatistic: number,
+  degreesOfFreedom: number
+): number => {
+  if (!Number.isFinite(tStatistic) || degreesOfFreedom <= 0) {
+    return Number.NaN;
+  }
+
+  const absoluteT = Math.abs(tStatistic);
+  if (absoluteT === 0) return 1;
+
+  const x = degreesOfFreedom / (degreesOfFreedom + absoluteT * absoluteT);
+  return regularizedIncompleteBeta(degreesOfFreedom / 2, 0.5, x);
+};
+
+const calculateIndependentTTest = (
+  seriesA: ExperimentalSeries,
+  seriesB: ExperimentalSeries
+): TTestResult | null => {
+  const statsA = getSampleMeanAndStdDev(getSeriesYValues(seriesA));
+  const statsB = getSampleMeanAndStdDev(getSeriesYValues(seriesB));
+
+  if (!statsA || !statsB || statsA.count < 2 || statsB.count < 2) {
+    return null;
+  }
+
+  const sampleSizeA = statsA.count;
+  const sampleSizeB = statsB.count;
+  const degreesOfFreedom = sampleSizeA + sampleSizeB - 2;
+
+  if (degreesOfFreedom <= 0) return null;
+
+  const varianceA = statsA.stdDev ** 2;
+  const varianceB = statsB.stdDev ** 2;
+  const pooledVariance =
+    ((sampleSizeA - 1) * varianceA + (sampleSizeB - 1) * varianceB) /
+    degreesOfFreedom;
+
+  if (pooledVariance === 0) return null;
+
+  const tStatistic =
+    (statsA.mean - statsB.mean) /
+    Math.sqrt(pooledVariance * (1 / sampleSizeA + 1 / sampleSizeB));
+  const pValue = approximateTwoTailedTPValue(tStatistic, degreesOfFreedom);
+
+  if (!Number.isFinite(pValue)) return null;
+
+  return {
+    seriesA: seriesA.name,
+    seriesB: seriesB.name,
+    sampleSizeA,
+    sampleSizeB,
+    meanA: statsA.mean,
+    meanB: statsB.mean,
+    standardDeviationA: statsA.stdDev,
+    standardDeviationB: statsB.stdDev,
+    tStatistic,
+    degreesOfFreedom,
+    pValue,
+    significant: pValue < T_TEST_ALPHA,
+  };
+};
+
+const resolveTTestSeriesSelection = (
+  series: ExperimentalSeries[],
+  selectedId: string | null,
+  fallbackIndex: number,
+  excludedId?: string | null
+): ExperimentalSeries | null => {
+  if (series.length === 0) return null;
+
+  if (selectedId) {
+    const selected = series.find((item) => item.id === selectedId);
+    if (selected && selected.id !== excludedId) return selected;
+  }
+
+  return (
+    series.find((item, index) => index >= fallbackIndex && item.id !== excludedId) ??
+    series.find((item) => item.id !== excludedId) ??
+    null
+  );
+};
+
+const formatPValue = (pValue: number) =>
+  pValue < 0.0001 ? "< 0.0001" : pValue.toFixed(4);
+
+const getTTestBadge = (result: TTestResult) =>
+  result.significant
+    ? "🟢 Diferencia significativa"
+    : "⚪ Sin diferencia significativa";
+
+const getTTestInterpretation = (result: TTestResult) =>
+  result.significant
+    ? "Diferencia estadísticamente significativa entre las medias."
+    : "No se detectó diferencia significativa.";
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -2828,6 +3044,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [histogramBins, setHistogramBins] = useState(HISTOGRAM_BINS_DEFAULT);
   const [showBoxPlot, setShowBoxPlot] = useState(false);
   const [showNormality, setShowNormality] = useState(false);
+  const [showTTest, setShowTTest] = useState(false);
+  const [selectedTTestSeriesA, setSelectedTTestSeriesA] = useState<
+    string | null
+  >(null);
+  const [selectedTTestSeriesB, setSelectedTTestSeriesB] = useState<
+    string | null
+  >(null);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -3659,6 +3882,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => analyzeNormalityForSeries(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const tTestSeriesA = useMemo(
+    () =>
+      resolveTTestSeriesSelection(
+        visibleExperimentalSeries,
+        selectedTTestSeriesA,
+        0
+      ),
+    [visibleExperimentalSeries, selectedTTestSeriesA]
+  );
+  const tTestSeriesB = useMemo(
+    () =>
+      resolveTTestSeriesSelection(
+        visibleExperimentalSeries,
+        selectedTTestSeriesB,
+        1,
+        tTestSeriesA?.id ?? null
+      ),
+    [visibleExperimentalSeries, selectedTTestSeriesB, tTestSeriesA]
+  );
+  const tTestResult = useMemo(() => {
+    if (!tTestSeriesA || !tTestSeriesB) return null;
+    if (tTestSeriesA.id === tTestSeriesB.id) return null;
+    return calculateIndependentTTest(tTestSeriesA, tTestSeriesB);
+  }, [tTestSeriesA, tTestSeriesB]);
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
   const overlayMathYValues = useMemo(
@@ -4255,6 +4502,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showHistogram ||
     showBoxPlot ||
     showNormality ||
+    showTTest ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -5517,6 +5765,83 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForCorrelation
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">Mostrar t-test</span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showTTest}
+                            onChange={(e) => setShowTTest(e.target.checked)}
+                            disabled={!hasEnoughSeriesForCorrelation}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <div
+                        className={
+                          !hasEnoughSeriesForCorrelation || !showTTest
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      >
+                        <label
+                          htmlFor="ttest-series-a-select"
+                          className={fieldLabel}
+                        >
+                          Serie A
+                        </label>
+                        <select
+                          id="ttest-series-a-select"
+                          value={tTestSeriesA?.id ?? ""}
+                          onChange={(event) =>
+                            setSelectedTTestSeriesA(event.target.value)
+                          }
+                          disabled={
+                            !hasEnoughSeriesForCorrelation || !showTTest
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          {visibleExperimentalSeries.map((series) => (
+                            <option key={series.id} value={series.id}>
+                              {series.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        <label
+                          htmlFor="ttest-series-b-select"
+                          className={`${fieldLabel} mt-2`}
+                        >
+                          Serie B
+                        </label>
+                        <select
+                          id="ttest-series-b-select"
+                          value={tTestSeriesB?.id ?? ""}
+                          onChange={(event) =>
+                            setSelectedTTestSeriesB(event.target.value)
+                          }
+                          disabled={
+                            !hasEnoughSeriesForCorrelation || !showTTest
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          {visibleExperimentalSeries.map((series) => (
+                            <option key={series.id} value={series.id}>
+                              {series.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -6871,6 +7196,77 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           );
                         })}
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {showTTest && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🧪 t-Test</p>
+                    {!hasEnoughSeriesForCorrelation ? (
+                      <p className={emptyState}>
+                        Se requieren dos series experimentales visibles.
+                      </p>
+                    ) : tTestResult ? (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">Serie A:</span>{" "}
+                          {tTestResult.seriesA}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Serie B:</span>{" "}
+                          {tTestResult.seriesB}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Media A:</span>{" "}
+                          {formatExperimentalStat(tTestResult.meanA)}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Media B:</span>{" "}
+                          {formatExperimentalStat(tTestResult.meanB)}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">SD A:</span>{" "}
+                          {formatExperimentalStat(
+                            tTestResult.standardDeviationA
+                          )}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">SD B:</span>{" "}
+                          {formatExperimentalStat(
+                            tTestResult.standardDeviationB
+                          )}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">t:</span>{" "}
+                          {formatExperimentalStat(tTestResult.tStatistic)}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">gl:</span>{" "}
+                          {tTestResult.degreesOfFreedom}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">p:</span>{" "}
+                          {formatPValue(tTestResult.pValue)}
+                        </p>
+
+                        <p className="mt-2 font-semibold">
+                          {getTTestBadge(tTestResult)}
+                        </p>
+                        <p className={`mt-2 text-sm ${emptyState}`}>
+                          {getTTestInterpretation(tTestResult)}
+                        </p>
+                        <p className={`mt-2 text-sm ${emptyState}`}>
+                          El t-test asume independencia y distribución
+                          aproximadamente normal.
+                        </p>
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        {tTestSeriesA?.id === tTestSeriesB?.id
+                          ? "Seleccione dos series distintas para comparar."
+                          : "Resultado no disponible para las series seleccionadas."}
+                      </p>
                     )}
                   </div>
                 )}
