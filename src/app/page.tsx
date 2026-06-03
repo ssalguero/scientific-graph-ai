@@ -2272,6 +2272,244 @@ const buildPostHocSummary = (comparisons: PostHocComparison[]): string => {
   return `Las diferencias significativas se detectaron entre ${pairDescriptions.join(", ")}, y entre ${lastPair}.`;
 };
 
+const NON_PARAMETRIC_ALPHA = 0.05;
+
+type NonParametricMode = "mann-whitney" | "kruskal-wallis";
+
+type MannWhitneyResult = {
+  seriesA: string;
+  seriesB: string;
+  sampleSizeA: number;
+  sampleSizeB: number;
+  uStatistic: number;
+  zScore: number;
+  pValue: number;
+  significant: boolean;
+};
+
+type KruskalWallisResult = {
+  groupCount: number;
+  totalSampleSize: number;
+  hStatistic: number;
+  degreesOfFreedom: number;
+  pValue: number;
+  significant: boolean;
+};
+
+type PooledRankEntry = {
+  value: number;
+  group: number;
+  rank: number;
+};
+
+const assignPooledRanks = (
+  entries: { value: number; group: number }[]
+): PooledRankEntry[] => {
+  const ranked = entries.map((entry) => ({ ...entry, rank: 0 }));
+  ranked.sort((left, right) => left.value - right.value);
+
+  let start = 0;
+  while (start < ranked.length) {
+    let end = start;
+    while (
+      end + 1 < ranked.length &&
+      ranked[end + 1].value === ranked[start].value
+    ) {
+      end += 1;
+    }
+
+    const averageRank = (start + end + 2) / 2;
+    for (let index = start; index <= end; index += 1) {
+      ranked[index].rank = averageRank;
+    }
+    start = end + 1;
+  }
+
+  return ranked;
+};
+
+const approximateStandardNormalCdf = (z: number): number => {
+  const absoluteZ = Math.abs(z);
+  const t = 1 / (1 + 0.2316419 * absoluteZ);
+  const density = 0.3989423 * Math.exp((-absoluteZ * absoluteZ) / 2);
+  const probability =
+    density *
+    t *
+    (0.3193815 +
+      t *
+        (-0.3565638 +
+          t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return z >= 0 ? 1 - probability : probability;
+};
+
+const approximateTwoTailedNormalPValue = (zScore: number): number => {
+  if (!Number.isFinite(zScore)) return Number.NaN;
+  const absoluteZ = Math.abs(zScore);
+  return 2 * (1 - approximateStandardNormalCdf(absoluteZ));
+};
+
+const regularizedLowerIncompleteGamma = (shape: number, x: number): number => {
+  if (x <= 0) return 0;
+
+  let term = 1 / shape;
+  let sum = term;
+
+  for (let index = 1; index < 200; index += 1) {
+    term *= x / (shape + index);
+    sum += term;
+    if (Math.abs(term) < 1e-12 * Math.abs(sum)) break;
+  }
+
+  return Math.exp(-x + shape * Math.log(x) - logGamma(shape)) * sum;
+};
+
+const approximateUpperTailChiSquarePValue = (
+  chiSquare: number,
+  degreesOfFreedom: number
+): number => {
+  if (!Number.isFinite(chiSquare) || chiSquare < 0 || degreesOfFreedom <= 0) {
+    return Number.NaN;
+  }
+
+  const cumulativeProbability = regularizedLowerIncompleteGamma(
+    degreesOfFreedom / 2,
+    chiSquare / 2
+  );
+
+  return Math.max(0, Math.min(1, 1 - cumulativeProbability));
+};
+
+const calculateMannWhitney = (
+  seriesA: ExperimentalSeries,
+  seriesB: ExperimentalSeries
+): MannWhitneyResult | null => {
+  const valuesA = getSeriesYValues(seriesA);
+  const valuesB = getSeriesYValues(seriesB);
+  const sampleSizeA = valuesA.length;
+  const sampleSizeB = valuesB.length;
+
+  if (sampleSizeA === 0 || sampleSizeB === 0) return null;
+
+  const ranked = assignPooledRanks([
+    ...valuesA.map((value) => ({ value, group: 0 })),
+    ...valuesB.map((value) => ({ value, group: 1 })),
+  ]);
+
+  const rankSumA = ranked
+    .filter((entry) => entry.group === 0)
+    .reduce((sum, entry) => sum + entry.rank, 0);
+  const u1 =
+    sampleSizeA * sampleSizeB +
+    (sampleSizeA * (sampleSizeA + 1)) / 2 -
+    rankSumA;
+  const u2 = sampleSizeA * sampleSizeB - u1;
+  const uStatistic = Math.min(u1, u2);
+
+  const meanU = (sampleSizeA * sampleSizeB) / 2;
+  const standardErrorU = Math.sqrt(
+    (sampleSizeA * sampleSizeB * (sampleSizeA + sampleSizeB + 1)) / 12
+  );
+
+  if (standardErrorU === 0) return null;
+
+  const zScore = (uStatistic - meanU) / standardErrorU;
+  const pValue = approximateTwoTailedNormalPValue(zScore);
+
+  if (!Number.isFinite(pValue)) return null;
+
+  return {
+    seriesA: seriesA.name,
+    seriesB: seriesB.name,
+    sampleSizeA,
+    sampleSizeB,
+    uStatistic,
+    zScore,
+    pValue,
+    significant: pValue < NON_PARAMETRIC_ALPHA,
+  };
+};
+
+const calculateKruskalWallis = (
+  series: ExperimentalSeries[]
+): KruskalWallisResult | null => {
+  const groups = series
+    .map((item, groupIndex) => ({
+      values: getSeriesYValues(item),
+      groupIndex,
+    }))
+    .filter((group) => group.values.length > 0);
+
+  const groupCount = groups.length;
+  if (groupCount < 3) return null;
+
+  const ranked = assignPooledRanks(
+    groups.flatMap((group) =>
+      group.values.map((value) => ({ value, group: group.groupIndex }))
+    )
+  );
+  const totalSampleSize = ranked.length;
+  const rankSums = new Array<number>(groupCount).fill(0);
+  const groupSizes = new Array<number>(groupCount).fill(0);
+
+  ranked.forEach((entry) => {
+    rankSums[entry.group] += entry.rank;
+    groupSizes[entry.group] += 1;
+  });
+
+  let hStatistic = 0;
+  for (let index = 0; index < groupCount; index += 1) {
+    if (groupSizes[index] === 0) return null;
+    hStatistic += (rankSums[index] ** 2) / groupSizes[index];
+  }
+
+  hStatistic =
+    (12 / (totalSampleSize * (totalSampleSize + 1))) * hStatistic -
+    3 * (totalSampleSize + 1);
+
+  const degreesOfFreedom = groupCount - 1;
+  const pValue = approximateUpperTailChiSquarePValue(
+    hStatistic,
+    degreesOfFreedom
+  );
+
+  if (!Number.isFinite(pValue)) return null;
+
+  return {
+    groupCount,
+    totalSampleSize,
+    hStatistic,
+    degreesOfFreedom,
+    pValue,
+    significant: pValue < NON_PARAMETRIC_ALPHA,
+  };
+};
+
+const getNonParametricBadge = (significant: boolean) =>
+  significant
+    ? "🟢 Diferencia significativa"
+    : "⚪ Sin diferencia significativa";
+
+const getNonParametricRecommendation = (
+  analyses: NormalityAnalysis[],
+  seriesNames: string[]
+): string => {
+  const relevant = analyses.filter((item) =>
+    seriesNames.includes(item.seriesName)
+  );
+  const allClearlyNormal =
+    relevant.length > 0 &&
+    relevant.every((item) => item.classification === "normal");
+
+  if (allClearlyNormal) {
+    return "Considere también pruebas paramétricas para comparación.";
+  }
+
+  return "Esta prueba es apropiada para datos que no cumplen supuestos de normalidad.";
+};
+
+const getNonParametricModeLabel = (mode: NonParametricMode) =>
+  mode === "mann-whitney" ? "Mann-Whitney U" : "Kruskal-Wallis H";
+
 type ScatterMarkerProps = {
   cx?: number;
   cy?: number;
@@ -3287,6 +3525,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   >(null);
   const [showAnova, setShowAnova] = useState(false);
   const [showPostHoc, setShowPostHoc] = useState(false);
+  const [showNonParametric, setShowNonParametric] = useState(false);
+  const [nonParametricMode, setNonParametricMode] =
+    useState<NonParametricMode>("mann-whitney");
+  const [selectedMannWhitneySeriesA, setSelectedMannWhitneySeriesA] = useState<
+    string | null
+  >(null);
+  const [selectedMannWhitneySeriesB, setSelectedMannWhitneySeriesB] =
+    useState<string | null>(null);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -4154,6 +4400,34 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
+  const mannWhitneySeriesA = useMemo(
+    () =>
+      resolveTTestSeriesSelection(
+        visibleExperimentalSeries,
+        selectedMannWhitneySeriesA,
+        0
+      ),
+    [visibleExperimentalSeries, selectedMannWhitneySeriesA]
+  );
+  const mannWhitneySeriesB = useMemo(
+    () =>
+      resolveTTestSeriesSelection(
+        visibleExperimentalSeries,
+        selectedMannWhitneySeriesB,
+        1,
+        mannWhitneySeriesA?.id ?? null
+      ),
+    [visibleExperimentalSeries, selectedMannWhitneySeriesB, mannWhitneySeriesA]
+  );
+  const mannWhitneyResult = useMemo(() => {
+    if (!mannWhitneySeriesA || !mannWhitneySeriesB) return null;
+    if (mannWhitneySeriesA.id === mannWhitneySeriesB.id) return null;
+    return calculateMannWhitney(mannWhitneySeriesA, mannWhitneySeriesB);
+  }, [mannWhitneySeriesA, mannWhitneySeriesB]);
+  const kruskalWallisResult = useMemo(
+    () => calculateKruskalWallis(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const overlayMathYValues = useMemo(
     () => [
       ...visibleDerivativeCurves.flatMap((curve) =>
@@ -4751,6 +5025,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showTTest ||
     showAnova ||
     showPostHoc ||
+    showNonParametric ||
     regressionModel !== "none";
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
@@ -6134,6 +6409,120 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar pruebas no paramétricas
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showNonParametric}
+                            onChange={(e) =>
+                              setShowNonParametric(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <div
+                        className={
+                          !hasVisibleExperimentalSeries || !showNonParametric
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      >
+                        <label
+                          htmlFor="non-parametric-mode-select"
+                          className={fieldLabel}
+                        >
+                          Método
+                        </label>
+                        <select
+                          id="non-parametric-mode-select"
+                          value={nonParametricMode}
+                          onChange={(event) =>
+                            setNonParametricMode(
+                              event.target.value as NonParametricMode
+                            )
+                          }
+                          disabled={
+                            !hasVisibleExperimentalSeries || !showNonParametric
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <option value="mann-whitney">Mann-Whitney U</option>
+                          <option value="kruskal-wallis">Kruskal-Wallis H</option>
+                        </select>
+
+                        {nonParametricMode === "mann-whitney" && (
+                          <>
+                            <label
+                              htmlFor="mann-whitney-series-a-select"
+                              className={`${fieldLabel} mt-2`}
+                            >
+                              Serie A
+                            </label>
+                            <select
+                              id="mann-whitney-series-a-select"
+                              value={mannWhitneySeriesA?.id ?? ""}
+                              onChange={(event) =>
+                                setSelectedMannWhitneySeriesA(
+                                  event.target.value
+                                )
+                              }
+                              disabled={
+                                !hasEnoughSeriesForCorrelation ||
+                                !showNonParametric
+                              }
+                              className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              {visibleExperimentalSeries.map((series) => (
+                                <option key={series.id} value={series.id}>
+                                  {series.name}
+                                </option>
+                              ))}
+                            </select>
+
+                            <label
+                              htmlFor="mann-whitney-series-b-select"
+                              className={`${fieldLabel} mt-2`}
+                            >
+                              Serie B
+                            </label>
+                            <select
+                              id="mann-whitney-series-b-select"
+                              value={mannWhitneySeriesB?.id ?? ""}
+                              onChange={(event) =>
+                                setSelectedMannWhitneySeriesB(
+                                  event.target.value
+                                )
+                              }
+                              disabled={
+                                !hasEnoughSeriesForCorrelation ||
+                                !showNonParametric
+                              }
+                              className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              {visibleExperimentalSeries.map((series) => (
+                                <option key={series.id} value={series.id}>
+                                  {series.name}
+                                </option>
+                              ))}
+                            </select>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -7792,6 +8181,113 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           </p>
                         )}
                       </>
+                    )}
+                  </div>
+                )}
+
+                {showNonParametric && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      📊 Pruebas no paramétricas
+                    </p>
+                    <p className={`text-sm mb-3 ${emptyState}`}>
+                      Método activo:{" "}
+                      {getNonParametricModeLabel(nonParametricMode)}
+                    </p>
+
+                    {nonParametricMode === "mann-whitney" ? (
+                      !hasEnoughSeriesForCorrelation ? (
+                        <p className={emptyState}>
+                          Se requieren dos series visibles.
+                        </p>
+                      ) : mannWhitneyResult ? (
+                        <div className={contentPanel}>
+                          <p>
+                            <span className="font-semibold">Serie A:</span>{" "}
+                            {mannWhitneyResult.seriesA}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">Serie B:</span>{" "}
+                            {mannWhitneyResult.seriesB}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">U:</span>{" "}
+                            {formatExperimentalStat(mannWhitneyResult.uStatistic)}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">Z:</span>{" "}
+                            {formatExperimentalStat(mannWhitneyResult.zScore)}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-semibold">p:</span>{" "}
+                            {formatPValue(mannWhitneyResult.pValue)}
+                          </p>
+                          <p className="mt-2 font-semibold">
+                            {getNonParametricBadge(mannWhitneyResult.significant)}
+                          </p>
+                          <p className={`mt-2 text-sm ${emptyState}`}>
+                            {getNonParametricRecommendation(
+                              normalityAnalyses,
+                              [
+                                mannWhitneyResult.seriesA,
+                                mannWhitneyResult.seriesB,
+                              ]
+                            )}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className={emptyState}>
+                          {mannWhitneySeriesA?.id === mannWhitneySeriesB?.id
+                            ? "Seleccione dos series distintas para comparar."
+                            : "Resultado no disponible para las series seleccionadas."}
+                        </p>
+                      )
+                    ) : !hasEnoughSeriesForAnova ? (
+                      <p className={emptyState}>
+                        Se requieren tres series visibles.
+                      </p>
+                    ) : kruskalWallisResult ? (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">
+                            Número de grupos:
+                          </span>{" "}
+                          {kruskalWallisResult.groupCount}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">N total:</span>{" "}
+                          {kruskalWallisResult.totalSampleSize}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">H:</span>{" "}
+                          {formatExperimentalStat(
+                            kruskalWallisResult.hStatistic
+                          )}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">gl:</span>{" "}
+                          {kruskalWallisResult.degreesOfFreedom}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">p:</span>{" "}
+                          {formatPValue(kruskalWallisResult.pValue)}
+                        </p>
+                        <p className="mt-2 font-semibold">
+                          {getNonParametricBadge(kruskalWallisResult.significant)}
+                        </p>
+                        <p className={`mt-2 text-sm ${emptyState}`}>
+                          {getNonParametricRecommendation(
+                            normalityAnalyses,
+                            visibleExperimentalSeries.map(
+                              (series) => series.name
+                            )
+                          )}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className={emptyState}>
+                        Resultado no disponible para las series seleccionadas.
+                      </p>
                     )}
                   </div>
                 )}
