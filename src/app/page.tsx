@@ -322,6 +322,93 @@ function NotebookSection({
   );
 }
 
+type AnalysisInspectorSection =
+  | "visualization"
+  | "mathematics"
+  | "statistics"
+  | "inference"
+  | "advisor";
+
+const ANALYSIS_INSPECTOR_CATEGORIES: {
+  id: AnalysisInspectorSection;
+  label: string;
+  icon: string;
+  description: string;
+}[] = [
+  {
+    id: "visualization",
+    label: "Visualización",
+    icon: "📊",
+    description: "Rango, ejes y escalas del gráfico.",
+  },
+  {
+    id: "mathematics",
+    label: "Matemática",
+    icon: "📈",
+    description: "Regresiones, derivadas e integrales.",
+  },
+  {
+    id: "statistics",
+    label: "Estadística",
+    icon: "📉",
+    description: "Descriptiva, correlación, outliers y distribución.",
+  },
+  {
+    id: "inference",
+    label: "Inferencia",
+    icon: "🧪",
+    description: "t-Test, ANOVA, Tukey y pruebas no paramétricas.",
+  },
+  {
+    id: "advisor",
+    label: "Advisor",
+    icon: "🧠",
+    description: "Advisor, interpretación, asistente y reporte.",
+  },
+];
+
+const getAnalysisInspectorCategory = (section: AnalysisInspectorSection) =>
+  ANALYSIS_INSPECTOR_CATEGORIES.find((category) => category.id === section) ??
+  ANALYSIS_INSPECTOR_CATEGORIES[0];
+
+type InspectorCategoryButtonProps = {
+  icon: string;
+  label: string;
+  isActive: boolean;
+  onSelect: () => void;
+};
+
+function InspectorCategoryButton({
+  icon,
+  label,
+  isActive,
+  onSelect,
+}: InspectorCategoryButtonProps) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={isActive}
+      onClick={onSelect}
+      className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+        isActive
+          ? "bg-[var(--app-accent)]/10 text-[var(--app-heading)] ring-1 ring-[var(--app-accent)]/30 border border-[var(--app-accent)]/40"
+          : "border border-transparent text-[var(--app-text)] hover:bg-[var(--app-surface-muted)]"
+      }`}
+    >
+      <span className="text-base leading-none shrink-0" aria-hidden>
+        {icon}
+      </span>
+      <span>{label}</span>
+    </button>
+  );
+}
+
+const getAnalysisInspectorPanelClass = (
+  panel: AnalysisInspectorSection,
+  active: AnalysisInspectorSection
+) => (panel === active ? "space-y-3" : "hidden");
+
 const getChartExportFileName = (
   title: string,
   extension: "png" | "svg" | "json"
@@ -4913,6 +5000,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [functionSearch, setFunctionSearch] = useState("");
   const [activeWorkspaceSection, setActiveWorkspaceSection] =
     useState<WorkspaceSection>("data");
+  const [analysisInspectorSection, setAnalysisInspectorSection] =
+    useState<AnalysisInspectorSection>("visualization");
+  const activeAnalysisInspectorCategory = getAnalysisInspectorCategory(
+    analysisInspectorSection
+  );
   const [controlPanelTab, setControlPanelTab] = useState<
     "graph" | "library" | "data"
   >("graph");
@@ -7274,16 +7366,49 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             <h2 className={sectionLabel}>🔬 Análisis</h2>
             <p className={`${panelHeadingSubtext} -mt-2 mb-3`}>
-              Visualización, estadística, pruebas y asistentes (solo controles)
+              Inspector contextual: seleccione una categoría para ver sus
+              controles
             </p>
-            <div className="space-y-3 w-full">
-              <NotebookSection
-                title="Herramientas de visualización"
-                icon="🔧"
-                subtitle="Rango, ejes y escalas"
-                defaultOpen
-              >
-                <div className="space-y-3">
+            <div className={`${card} w-full`}>
+              <div className="flex flex-col gap-4 lg:flex-row">
+                <nav
+                  className="w-full shrink-0 space-y-1 lg:w-[30%] xl:w-[35%]"
+                  role="tablist"
+                  aria-label="Categorías del inspector"
+                >
+                  {ANALYSIS_INSPECTOR_CATEGORIES.map((category) => (
+                    <InspectorCategoryButton
+                      key={category.id}
+                      icon={category.icon}
+                      label={category.label}
+                      isActive={analysisInspectorSection === category.id}
+                      onSelect={() =>
+                        setAnalysisInspectorSection(category.id)
+                      }
+                    />
+                  ))}
+                </nav>
+
+                <div className="min-w-0 flex-1">
+                  <div className="mb-4 border-b border-[var(--app-border)] pb-3">
+                    <h3 className={panelHeading}>
+                      <span aria-hidden>
+                        {activeAnalysisInspectorCategory.icon}{" "}
+                      </span>
+                      {activeAnalysisInspectorCategory.label}
+                    </h3>
+                    <p className={panelHeadingSubtext}>
+                      {activeAnalysisInspectorCategory.description}
+                    </p>
+                  </div>
+
+                  <div
+                    className={getAnalysisInspectorPanelClass(
+                      "visualization",
+                      analysisInspectorSection
+                    )}
+                    aria-hidden={analysisInspectorSection !== "visualization"}
+                  >
                   <div className={subsectionCard}>
                     <p className={subsectionHeading}>📏 Rango</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -7377,16 +7502,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </select>
                     </div>
                   </div>
-                </div>
-              </NotebookSection>
+                  </div>
 
-              <NotebookSection
-                title="Matemática"
-                icon="📐"
-                subtitle="Regresiones, derivadas e integrales"
-                defaultOpen={false}
-              >
-                <div className="space-y-3">
+                  <div
+                    className={getAnalysisInspectorPanelClass(
+                      "mathematics",
+                      analysisInspectorSection
+                    )}
+                    aria-hidden={analysisInspectorSection !== "mathematics"}
+                  >
                       <div>
                         <label
                           htmlFor="regression-model-select"
@@ -7534,16 +7658,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
-                </div>
-              </NotebookSection>
+                  </div>
 
-              <NotebookSection
-                title="Estadística"
-                icon="📊"
-                subtitle="Descriptiva, correlación y distribución"
-                defaultOpen={false}
-              >
-                <div className="space-y-3">
+                  <div
+                    className={getAnalysisInspectorPanelClass(
+                      "statistics",
+                      analysisInspectorSection
+                    )}
+                    aria-hidden={analysisInspectorSection !== "statistics"}
+                  >
                       <label
                         className={`${toggleLabel} ${
                           !hasVisibleExperimentalSeries
@@ -7833,16 +7956,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
-                </div>
-              </NotebookSection>
+                  </div>
 
-              <NotebookSection
-                title="Inferencia"
-                icon="🧪"
-                subtitle="t-Test, ANOVA, Tukey y no paramétricas"
-                defaultOpen={false}
-              >
-                <div className="space-y-3">
+                  <div
+                    className={getAnalysisInspectorPanelClass(
+                      "inference",
+                      analysisInspectorSection
+                    )}
+                    aria-hidden={analysisInspectorSection !== "inference"}
+                  >
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForCorrelation
@@ -8077,16 +8199,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           </>
                         )}
                       </div>
-                </div>
-              </NotebookSection>
+                  </div>
 
-              <NotebookSection
-                title="Advisor"
-                icon="🧠"
-                subtitle="Recomendación estadística automática"
-                defaultOpen={false}
-              >
-                <div className="space-y-3">
+                  <div
+                    className={getAnalysisInspectorPanelClass(
+                      "advisor",
+                      analysisInspectorSection
+                    )}
+                    aria-hidden={analysisInspectorSection !== "advisor"}
+                  >
                       <label
                         className={`${toggleLabel} ${
                           !hasVisibleExperimentalSeries
@@ -8111,16 +8232,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
-                </div>
-              </NotebookSection>
 
-              <NotebookSection
-                title="Asistente científico"
-                icon="🧪"
-                subtitle="Reporte, interpretación y asistente"
-                defaultOpen={false}
-              >
-                <div className="space-y-3">
                       <label
                         className={`${toggleLabel} ${
                           !hasVisibleExperimentalSeries
@@ -8195,8 +8307,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                  </div>
                 </div>
-              </NotebookSection>
+              </div>
             </div>
           </section>
 
