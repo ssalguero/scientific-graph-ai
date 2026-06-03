@@ -2714,6 +2714,205 @@ const formatScientificReportAsText = (report: ScientificReport): string => {
   return lines.join("\n");
 };
 
+const PDF_MARGIN_MM = 20;
+const PDF_PAGE_WIDTH_MM = 210;
+const PDF_PAGE_HEIGHT_MM = 297;
+const PDF_CONTENT_WIDTH_MM = PDF_PAGE_WIDTH_MM - PDF_MARGIN_MM * 2;
+const PDF_BODY_BOTTOM_MM = PDF_PAGE_HEIGHT_MM - PDF_MARGIN_MM - 15;
+
+const getScientificReportPdfFileName = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `scientific-report-${year}-${month}-${day}.pdf`;
+};
+
+type ScientificReportPdfInput = {
+  report: ScientificReport;
+  chartImageDataUrl: string | null;
+  statisticalRecommendation: StatisticalRecommendation | null;
+};
+
+const buildAdvisorPdfSectionLines = (
+  recommendation: StatisticalRecommendation | null
+): string[] => {
+  if (!recommendation) {
+    return [
+      "No hay información suficiente para generar una recomendación estadística.",
+    ];
+  }
+
+  const lines = [
+    `Prueba recomendada: ${recommendation.recommendedTest}`,
+    `Nivel de confianza: ${getStatisticalAdvisorConfidenceLabel(recommendation.confidence)}`,
+  ];
+
+  if (recommendation.assumptionsPassed.length > 0) {
+    lines.push("Supuestos cumplidos:");
+    recommendation.assumptionsPassed.forEach((assumption) =>
+      lines.push(`✓ ${assumption}`)
+    );
+  }
+
+  if (recommendation.assumptionsFailed.length > 0) {
+    lines.push("Supuestos incumplidos:");
+    recommendation.assumptionsFailed.forEach((assumption) =>
+      lines.push(`✗ ${assumption}`)
+    );
+  }
+
+  if (recommendation.warnings.length > 0) {
+    lines.push("Advertencias:");
+    recommendation.warnings.forEach((warning) => lines.push(warning));
+  }
+
+  if (recommendation.reasoning.length > 0) {
+    lines.push("Justificación automática:");
+    recommendation.reasoning.forEach((reason) => lines.push(reason));
+  }
+
+  return lines;
+};
+
+const exportScientificReportPdf = async (
+  input: ScientificReportPdfInput
+): Promise<void> => {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const footerTimestamp = new Date().toLocaleString();
+  let cursorY = PDF_MARGIN_MM;
+
+  const addPageIfNeeded = (requiredHeightMm: number) => {
+    if (cursorY + requiredHeightMm > PDF_BODY_BOTTOM_MM) {
+      doc.addPage();
+      cursorY = PDF_MARGIN_MM;
+    }
+  };
+
+  const drawWrappedParagraph = (
+    text: string,
+    fontSizePt: number,
+    fontStyle: "normal" | "bold" = "normal",
+    lineSpacingMm = 1.5
+  ) => {
+    doc.setFont("helvetica", fontStyle);
+    doc.setFontSize(fontSizePt);
+    const lineHeightMm = fontSizePt * 0.3528 + lineSpacingMm;
+    const wrappedLines = doc.splitTextToSize(
+      text,
+      PDF_CONTENT_WIDTH_MM
+    ) as string[];
+    const blockHeight = wrappedLines.length * lineHeightMm;
+    addPageIfNeeded(blockHeight);
+    doc.text(wrappedLines, PDF_MARGIN_MM, cursorY);
+    cursorY += blockHeight;
+  };
+
+  const drawSectionHeading = (heading: string) => {
+    addPageIfNeeded(10);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(heading, PDF_MARGIN_MM, cursorY);
+    cursorY += 7;
+  };
+
+  const drawReportSection = (section: ScientificReportSection) => {
+    drawSectionHeading(section.title);
+    section.content.forEach((line) => {
+      drawWrappedParagraph(line, 11, "normal");
+      cursorY += 1;
+    });
+    cursorY += 3;
+  };
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  addPageIfNeeded(12);
+  const titleLines = doc.splitTextToSize(
+    input.report.title,
+    PDF_CONTENT_WIDTH_MM
+  ) as string[];
+  doc.text(titleLines, PDF_MARGIN_MM, cursorY);
+  cursorY += titleLines.length * 8 + 2;
+
+  drawWrappedParagraph(
+    `Fecha: ${formatScientificReportDate(input.report.generatedAt)}`,
+    11,
+    "normal"
+  );
+  cursorY += 2;
+
+  drawSectionHeading("Resumen ejecutivo");
+  drawWrappedParagraph(input.report.summary, 11, "normal");
+  cursorY += 4;
+
+  if (input.chartImageDataUrl) {
+    drawSectionHeading("Gráfico principal");
+    try {
+      const imageFormat = input.chartImageDataUrl.includes("image/jpeg")
+        ? "JPEG"
+        : "PNG";
+      const imageProps = doc.getImageProperties(input.chartImageDataUrl);
+      const maxChartHeightMm = 100;
+      let displayWidthMm = PDF_CONTENT_WIDTH_MM;
+      let displayHeightMm =
+        (imageProps.height / imageProps.width) * displayWidthMm;
+
+      if (displayHeightMm > maxChartHeightMm) {
+        displayHeightMm = maxChartHeightMm;
+        displayWidthMm =
+          (imageProps.width / imageProps.height) * displayHeightMm;
+      }
+
+      addPageIfNeeded(displayHeightMm + 4);
+      doc.addImage(
+        input.chartImageDataUrl,
+        imageFormat,
+        PDF_MARGIN_MM,
+        cursorY,
+        displayWidthMm,
+        displayHeightMm
+      );
+      cursorY += displayHeightMm + 6;
+    } catch {
+      // continuar sin gráfico si la imagen no es válida
+    }
+  }
+
+  doc.addPage();
+  cursorY = PDF_MARGIN_MM;
+
+  input.report.sections.forEach((section) => {
+    drawReportSection(section);
+  });
+
+  drawSectionHeading("Advisor Estadístico");
+  buildAdvisorPdfSectionLines(input.statisticalRecommendation).forEach(
+    (line) => {
+      drawWrappedParagraph(line, 11, "normal");
+      cursorY += 1;
+    }
+  );
+
+  const pageCount = doc.getNumberOfPages();
+  for (let pageIndex = 1; pageIndex <= pageCount; pageIndex += 1) {
+    doc.setPage(pageIndex);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(90, 90, 90);
+    doc.text(
+      "Generado por: Scientific Graph Platform",
+      PDF_MARGIN_MM,
+      PDF_PAGE_HEIGHT_MM - 12
+    );
+    doc.text(footerTimestamp, PDF_MARGIN_MM, PDF_PAGE_HEIGHT_MM - 8);
+    doc.setTextColor(0, 0, 0);
+  }
+
+  doc.save(getScientificReportPdfFileName());
+};
+
 const generateScientificReport = (input: {
   graphTitle: string;
   series: ExperimentalSeries[];
@@ -3993,6 +4192,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showStatisticalAdvisor, setShowStatisticalAdvisor] = useState(false);
   const [showScientificReport, setShowScientificReport] = useState(false);
   const [scientificReportCopied, setScientificReportCopied] = useState(false);
+  const [scientificReportPdfExporting, setScientificReportPdfExporting] =
+    useState(false);
+  const [scientificReportPdfMessage, setScientificReportPdfMessage] = useState<
+    string | null
+  >(null);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -4186,6 +4390,50 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     link.href = url;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportScientificReportPdf = async () => {
+    if (!scientificReport) {
+      setScientificReportPdfMessage(
+        "No hay reporte disponible para exportar."
+      );
+      window.setTimeout(() => setScientificReportPdfMessage(null), 4000);
+      return;
+    }
+
+    setScientificReportPdfExporting(true);
+    setScientificReportPdfMessage("Exportando PDF...");
+
+    let chartImageDataUrl: string | null = null;
+    if (
+      chartExportRef.current &&
+      (chartData.length > 0 || experimentalSeries.length > 0)
+    ) {
+      try {
+        chartImageDataUrl = await toPng(chartExportRef.current, {
+          cacheBust: true,
+          pixelRatio: 2,
+          backgroundColor: "#ffffff",
+        });
+      } catch {
+        chartImageDataUrl = null;
+      }
+    }
+
+    try {
+      await exportScientificReportPdf({
+        report: scientificReport,
+        chartImageDataUrl,
+        statisticalRecommendation,
+      });
+      setScientificReportPdfMessage("PDF descargado correctamente.");
+    } catch (error) {
+      console.error("Error al exportar PDF científico:", error);
+      setScientificReportPdfMessage("Error al generar el PDF.");
+    } finally {
+      setScientificReportPdfExporting(false);
+      window.setTimeout(() => setScientificReportPdfMessage(null), 4000);
+    }
   };
 
   const handleJsonImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -6088,6 +6336,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       >
                         JSON
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleExportScientificReportPdf();
+                        }}
+                        disabled={scientificReportPdfExporting}
+                        title="Exportar reporte científico en PDF"
+                        className={`${actionBarBtnExport} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {scientificReportPdfExporting
+                          ? "Exportando PDF..."
+                          : "📄 Exportar PDF"}
+                      </button>
                     </div>
 
                     <span
@@ -6097,6 +6358,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       Compartir · IA · Reportes
                     </span>
                   </div>
+
+                  {scientificReportPdfMessage && (
+                    <p className="text-xs text-[var(--app-text-muted)] mt-2 w-full">
+                      {scientificReportPdfMessage}
+                    </p>
+                  )}
 
                   {isEditing && selectedGraphId && (
                     <div
