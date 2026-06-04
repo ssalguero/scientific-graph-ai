@@ -3287,6 +3287,263 @@ function ScientificKernelDensityPlotChart({
   );
 }
 
+type ForestPlotEntry = {
+  seriesName: string;
+  sampleSize: number;
+  mean: number;
+  standardDeviation: number;
+  standardError: number;
+  confidence95Lower: number;
+  confidence95Upper: number;
+};
+
+type ForestPlotAnalysis = {
+  entries: ForestPlotEntry[];
+};
+
+const buildForestPlotEntry = (
+  stats: ExperimentalStatistics
+): ForestPlotEntry | null => {
+  if (stats.count === 0) return null;
+
+  const mean = stats.meanY;
+  const standardDeviation = stats.stdDevY;
+  const standardError = getStandardError(stats);
+  const margin = getCi95Margin(stats);
+
+  return {
+    seriesName: stats.seriesName,
+    sampleSize: stats.count,
+    mean,
+    standardDeviation,
+    standardError,
+    confidence95Lower: mean - margin,
+    confidence95Upper: mean + margin,
+  };
+};
+
+const buildForestPlotAnalysis = (
+  experimentalStatistics: ExperimentalStatistics[]
+): ForestPlotAnalysis | null => {
+  const entries = experimentalStatistics
+    .map((stats) => buildForestPlotEntry(stats))
+    .filter((entry): entry is ForestPlotEntry => entry !== null);
+
+  if (entries.length === 0) return null;
+  return { entries };
+};
+
+const forestPlotIntervalsOverlap = (
+  left: ForestPlotEntry,
+  right: ForestPlotEntry
+) =>
+  !(
+    left.confidence95Upper < right.confidence95Lower ||
+    right.confidence95Upper < left.confidence95Lower
+  );
+
+const getForestPlotGlobalMean = (entries: ForestPlotEntry[]) => {
+  if (entries.length === 0) return 0;
+  return (
+    entries.reduce((sum, entry) => sum + entry.mean, 0) / entries.length
+  );
+};
+
+const getForestPlotInterpretationLines = (
+  analysis: ForestPlotAnalysis | null
+): string[] => {
+  if (!analysis || analysis.entries.length === 0) {
+    return ["No hay datos suficientes para generar un Forest Plot."];
+  }
+
+  const { entries } = analysis;
+  const lines: string[] = [];
+
+  entries.forEach((entry) => {
+    lines.push(
+      `"${entry.seriesName}" (N=${entry.sampleSize}): media=${formatExperimentalStat(entry.mean)}, SD=${formatExperimentalStat(entry.standardDeviation)}, SE=${formatExperimentalStat(entry.standardError)}, IC95% [${formatExperimentalStat(entry.confidence95Lower)}, ${formatExperimentalStat(entry.confidence95Upper)}].`
+    );
+  });
+
+  const ciWidths = entries.map(
+    (entry) => entry.confidence95Upper - entry.confidence95Lower
+  );
+  const averageCiWidth =
+    ciWidths.reduce((sum, width) => sum + width, 0) / ciWidths.length;
+  const means = entries.map((entry) => entry.mean);
+  const meanSpread = Math.max(...means) - Math.min(...means);
+  const relativeCiWidth =
+    meanSpread > 0 ? averageCiWidth / meanSpread : averageCiWidth;
+
+  if (relativeCiWidth > 0.85 || averageCiWidth > meanSpread * 0.85) {
+    lines.push(
+      "Los intervalos de confianza son amplios, lo que indica elevada incertidumbre en las medias."
+    );
+  } else if (relativeCiWidth < 0.25) {
+    lines.push(
+      "Los intervalos de confianza son estrechos, lo que sugiere alta precisión en las estimaciones."
+    );
+  }
+
+  const smallSampleCount = entries.filter((entry) => entry.sampleSize <= 3)
+    .length;
+  if (smallSampleCount > 0) {
+    lines.push(
+      `${smallSampleCount} serie(s) tienen tamaño muestral pequeño (N≤3), lo que amplía los IC95%.`
+    );
+  }
+
+  if (entries.length >= 2) {
+    let overlappingPairs = 0;
+    let totalPairs = 0;
+
+    for (let indexA = 0; indexA < entries.length; indexA += 1) {
+      for (let indexB = indexA + 1; indexB < entries.length; indexB += 1) {
+        totalPairs += 1;
+        if (
+          forestPlotIntervalsOverlap(entries[indexA], entries[indexB])
+        ) {
+          overlappingPairs += 1;
+        }
+      }
+    }
+
+    if (overlappingPairs === totalPairs) {
+      lines.push("Las series presentan amplia superposición.");
+    } else if (overlappingPairs === 0 && meanSpread > averageCiWidth) {
+      lines.push("Las medias muestran separación consistente.");
+    } else if (overlappingPairs > 0 && overlappingPairs < totalPairs) {
+      lines.push(
+        "Se observa solapamiento parcial entre intervalos de confianza."
+      );
+    }
+  }
+
+  return lines;
+};
+
+type ScientificForestPlotProps = {
+  analysis: ForestPlotAnalysis;
+  seriesColors: Map<string, string>;
+};
+
+function ScientificForestPlot({
+  analysis,
+  seriesColors,
+}: ScientificForestPlotProps) {
+  const width = 520;
+  const rowHeight = 44;
+  const labelWidth = 128;
+  const paddingX = 16;
+  const paddingY = 20;
+  const plotLeft = labelWidth + paddingX;
+  const plotRight = width - paddingX;
+  const plotWidth = plotRight - plotLeft;
+  const height = paddingY * 2 + analysis.entries.length * rowHeight;
+  const globalMean = getForestPlotGlobalMean(analysis.entries);
+
+  const domainMin = Math.min(
+    ...analysis.entries.map((entry) => entry.confidence95Lower),
+    globalMean
+  );
+  const domainMax = Math.max(
+    ...analysis.entries.map((entry) => entry.confidence95Upper),
+    globalMean
+  );
+  const domainRange = domainMax - domainMin || 1;
+
+  const scaleX = (value: number) =>
+    plotLeft + ((value - domainMin) / domainRange) * plotWidth;
+
+  const globalMeanX = scaleX(globalMean);
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="w-full max-w-xl"
+      role="img"
+      aria-label="Forest plot de medias e intervalos de confianza"
+    >
+      <line
+        x1={globalMeanX}
+        y1={paddingY - 4}
+        x2={globalMeanX}
+        y2={height - paddingY + 4}
+        stroke="var(--app-text-muted)"
+        strokeWidth={1.5}
+        strokeDasharray="4 4"
+      />
+      <text
+        x={globalMeanX}
+        y={12}
+        textAnchor="middle"
+        fill="var(--app-text-muted)"
+        fontSize={10}
+      >
+        Media global
+      </text>
+
+      {analysis.entries.map((entry, index) => {
+        const rowCenterY = paddingY + index * rowHeight + rowHeight / 2;
+        const lowerX = scaleX(entry.confidence95Lower);
+        const upperX = scaleX(entry.confidence95Upper);
+        const meanX = scaleX(entry.mean);
+        const color =
+          seriesColors.get(entry.seriesName) ?? "var(--app-accent)";
+
+        return (
+          <g key={`forest-row-${entry.seriesName}`}>
+            <text
+              x={paddingX}
+              y={rowCenterY + 4}
+              fill="var(--app-text)"
+              fontSize={11}
+            >
+              {entry.seriesName.length > 14
+                ? `${entry.seriesName.slice(0, 13)}…`
+                : entry.seriesName}
+            </text>
+            <line
+              x1={lowerX}
+              y1={rowCenterY}
+              x2={upperX}
+              y2={rowCenterY}
+              stroke={color}
+              strokeWidth={3}
+              strokeLinecap="round"
+            />
+            <line
+              x1={lowerX}
+              y1={rowCenterY - 6}
+              x2={lowerX}
+              y2={rowCenterY + 6}
+              stroke={color}
+              strokeWidth={2}
+            />
+            <line
+              x1={upperX}
+              y1={rowCenterY - 6}
+              x2={upperX}
+              y2={rowCenterY + 6}
+              stroke={color}
+              strokeWidth={2}
+            />
+            <rect
+              x={meanX - 5}
+              y={rowCenterY - 5}
+              width={10}
+              height={10}
+              fill={color}
+              stroke="var(--app-heading)"
+              strokeWidth={1}
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 const classifyViolinShape = (
   q1: number,
   median: number,
@@ -4829,6 +5086,7 @@ const generateScientificReport = (input: {
   bubblePlotAnalysis: BubblePlotAnalysis | null;
   radarPlotAnalysis: RadarPlotAnalysis | null;
   kernelDensityAnalyses: KernelDensityAnalysis[];
+  forestPlotAnalysis: ForestPlotAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -4979,6 +5237,11 @@ const generateScientificReport = (input: {
   sections.push({
     title: "Kernel Density Plot",
     content: getKernelDensityInterpretationLines(input.kernelDensityAnalyses),
+  });
+
+  sections.push({
+    title: "Forest Plot",
+    content: getForestPlotInterpretationLines(input.forestPlotAnalysis),
   });
 
   const correlationLines: string[] = [];
@@ -5220,6 +5483,7 @@ const generateScientificInterpretation = (input: {
   bubblePlotAnalysis: BubblePlotAnalysis | null;
   radarPlotAnalysis: RadarPlotAnalysis | null;
   kernelDensityAnalyses: KernelDensityAnalysis[];
+  forestPlotAnalysis: ForestPlotAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -5403,6 +5667,20 @@ const generateScientificInterpretation = (input: {
           line.includes("asimetría visible") ||
           line.includes("concentración de densidad") ||
           line.includes("múltiples agrupaciones")
+      )
+      .forEach((line) => findings.push(line));
+  }
+
+  if (input.forestPlotAnalysis) {
+    getForestPlotInterpretationLines(input.forestPlotAnalysis)
+      .filter(
+        (line) =>
+          line.includes("precisión") ||
+          line.includes("incertidumbre") ||
+          line.includes("superposición") ||
+          line.includes("solapamiento") ||
+          line.includes("separación consistente") ||
+          line.includes("tamaño muestral pequeño")
       )
       .forEach((line) => findings.push(line));
   }
@@ -5612,6 +5890,7 @@ const generateScientificAssistantReport = (input: {
   bubblePlotAnalysis: BubblePlotAnalysis | null;
   radarPlotAnalysis: RadarPlotAnalysis | null;
   kernelDensityAnalyses: KernelDensityAnalysis[];
+  forestPlotAnalysis: ForestPlotAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -5676,6 +5955,21 @@ const generateScientificAssistantReport = (input: {
     input.kernelDensityAnalyses.every(
       (analysis) => analysis.distributionShape === "symmetric"
     );
+  const forestInterpretationLines = getForestPlotInterpretationLines(
+    input.forestPlotAnalysis
+  );
+  const hasForestSmallSample =
+    input.forestPlotAnalysis?.entries.some((entry) => entry.sampleSize <= 3) ??
+    false;
+  const hasForestWideUncertainty = forestInterpretationLines.some((line) =>
+    line.includes("incertidumbre")
+  );
+  const hasForestOverlap = forestInterpretationLines.some((line) =>
+    line.includes("amplia superposición")
+  );
+  const hasForestSeparation = forestInterpretationLines.some((line) =>
+    line.includes("separación consistente")
+  );
   const heatmapStrongPositivePairs = (() => {
     if (!input.correlationHeatmap) return 0;
     const seenPairs = new Set<string>();
@@ -6053,6 +6347,54 @@ const generateScientificAssistantReport = (input: {
   if (hasKernelSkew && hasSkewedViolin) {
     pushUniqueFinding(
       "KDE y Violin Plot coinciden en asimetría de la distribución."
+    );
+  }
+  if (input.forestPlotAnalysis) {
+    forestInterpretationLines
+      .filter(
+        (line) =>
+          line.includes("precisión") ||
+          line.includes("superposición") ||
+          line.includes("solapamiento") ||
+          line.includes("separación consistente")
+      )
+      .forEach((line) => pushUniqueFinding(line));
+  }
+  if (
+    hasForestSeparation &&
+    input.tTestResult &&
+    input.tTestResult.pValue < 0.05
+  ) {
+    pushUniqueFinding(
+      "Forest Plot y t-test coinciden en diferencias entre grupos comparados."
+    );
+  }
+  if (
+    hasForestOverlap &&
+    input.tTestResult &&
+    input.tTestResult.pValue >= 0.05
+  ) {
+    pushUniqueFinding(
+      "Forest Plot muestra superposición de IC compatible con el t-test no significativo."
+    );
+  }
+  if (
+    hasForestSeparation &&
+    input.anovaAnalysis &&
+    input.anovaAnalysis.result.pValue < 0.05
+  ) {
+    pushUniqueFinding(
+      "Forest Plot y ANOVA sugieren separación entre grupos experimentales."
+    );
+  }
+  if (hasForestWideUncertainty) {
+    pushCaution(
+      "Los intervalos de confianza amplios en el Forest Plot indican incertidumbre elevada en las medias."
+    );
+  }
+  if (hasForestSmallSample) {
+    pushCaution(
+      "Tamaños muestrales pequeños en el Forest Plot limitan la fiabilidad de los IC95%."
     );
   }
   if (hasOutliers) {
@@ -7097,6 +7439,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showBubblePlot, setShowBubblePlot] = useState(false);
   const [showRadarPlot, setShowRadarPlot] = useState(false);
   const [showKernelDensity, setShowKernelDensity] = useState(false);
+  const [showForestPlot, setShowForestPlot] = useState(false);
   const [showTTest, setShowTTest] = useState(false);
   const [selectedTTestSeriesA, setSelectedTTestSeriesA] = useState<
     string | null
@@ -8132,6 +8475,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => calculateKernelDensityAnalysesForSeries(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const forestPlotAnalysis = useMemo(
+    () => buildForestPlotAnalysis(experimentalStatistics),
+    [experimentalStatistics]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -8219,6 +8566,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         bubblePlotAnalysis,
         radarPlotAnalysis,
         kernelDensityAnalyses,
+        forestPlotAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -8242,6 +8590,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       bubblePlotAnalysis,
       radarPlotAnalysis,
       kernelDensityAnalyses,
+      forestPlotAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -8267,6 +8616,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         bubblePlotAnalysis,
         radarPlotAnalysis,
         kernelDensityAnalyses,
+        forestPlotAnalysis,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -8287,6 +8637,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       bubblePlotAnalysis,
       radarPlotAnalysis,
       kernelDensityAnalyses,
+      forestPlotAnalysis,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -8311,6 +8662,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         bubblePlotAnalysis,
         radarPlotAnalysis,
         kernelDensityAnalyses,
+        forestPlotAnalysis,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -8333,6 +8685,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       bubblePlotAnalysis,
       radarPlotAnalysis,
       kernelDensityAnalyses,
+      forestPlotAnalysis,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -8985,7 +9338,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showHeatmap ||
         showBubblePlot ||
         showRadarPlot ||
-        showKernelDensity)) ||
+        showKernelDensity ||
+        showForestPlot)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
     (isAssistantModuleEnabled &&
@@ -10469,6 +10823,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             checked={showKernelDensity}
                             onChange={(e) =>
                               setShowKernelDensity(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Forest Plot
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showForestPlot}
+                            onChange={(e) =>
+                              setShowForestPlot(e.target.checked)
                             }
                             disabled={!hasVisibleExperimentalSeries}
                           />
@@ -12562,6 +12941,77 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 !line.startsWith("Puntos representados:") &&
                                 !line.startsWith("Rango de radios:")
                             )
+                            .map((line) => (
+                              <p key={line} className={`text-sm ${emptyState}`}>
+                                {line}
+                              </p>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showForestPlot && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🌲 Forest Plot</p>
+                    {!hasVisibleExperimentalSeries || !forestPlotAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar un Forest Plot.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificForestPlot
+                          analysis={forestPlotAnalysis}
+                          seriesColors={radarSeriesColors}
+                        />
+
+                        <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                          ■ media · ─── intervalo de confianza 95%
+                        </p>
+
+                        <div className="mt-3 space-y-3">
+                          {forestPlotAnalysis.entries.map((entry) => (
+                            <div
+                              key={`forest-info-${entry.seriesName}`}
+                              className="rounded-lg border border-[var(--app-border)] px-3 py-2"
+                            >
+                              <p>
+                                <span className="font-semibold">Serie:</span>{" "}
+                                {entry.seriesName}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">N:</span>{" "}
+                                {entry.sampleSize}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Media:</span>{" "}
+                                {formatExperimentalStat(entry.mean)}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">SD:</span>{" "}
+                                {formatExperimentalStat(
+                                  entry.standardDeviation
+                                )}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">SE:</span>{" "}
+                                {formatExperimentalStat(entry.standardError)}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">IC95%:</span>{" "}
+                                [{formatExperimentalStat(entry.confidence95Lower)}
+                                ,{" "}
+                                {formatExperimentalStat(entry.confidence95Upper)}
+                                ]
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-3 space-y-1">
+                          {getForestPlotInterpretationLines(forestPlotAnalysis)
+                            .filter((line) => !line.startsWith('"'))
                             .map((line) => (
                               <p key={line} className={`text-sm ${emptyState}`}>
                                 {line}
