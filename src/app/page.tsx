@@ -1926,6 +1926,565 @@ function ScientificHeatmapGrid({ analysis }: ScientificHeatmapGridProps) {
   );
 }
 
+type BubblePoint = {
+  x: number;
+  y: number;
+  size: number;
+  seriesName: string;
+};
+
+type BubblePlotAnalysis = {
+  points: BubblePoint[];
+  minSize: number;
+  maxSize: number;
+  totalPoints: number;
+};
+
+const BUBBLE_RADIUS_MIN = 6;
+const BUBBLE_RADIUS_MAX = 24;
+const BUBBLE_RADIUS_FIXED = 15;
+
+const normalizeBubbleRadius = (
+  value: number,
+  minValue: number,
+  maxValue: number
+): number => {
+  if (maxValue === minValue) return BUBBLE_RADIUS_FIXED;
+  const factor = (value - minValue) / (maxValue - minValue);
+  return BUBBLE_RADIUS_MIN + factor * (BUBBLE_RADIUS_MAX - BUBBLE_RADIUS_MIN);
+};
+
+const isExperimentalOutlierPoint = (
+  outliers: ExperimentalOutlier[],
+  seriesName: string,
+  x: number,
+  y: number
+) =>
+  outliers.some(
+    (outlier) =>
+      outlier.seriesName === seriesName && outlier.x === x && outlier.y === y
+  );
+
+const buildBubblePlotAnalysis = (
+  series: ExperimentalSeries[]
+): BubblePlotAnalysis | null => {
+  const finiteYValues = series.flatMap((item) =>
+    item.points
+      .map((point) => point.y)
+      .filter((value) => Number.isFinite(value))
+  );
+
+  if (finiteYValues.length === 0) return null;
+
+  const minValue = Math.min(...finiteYValues);
+  const maxValue = Math.max(...finiteYValues);
+  const points: BubblePoint[] = [];
+
+  series.forEach((item) => {
+    item.points.forEach((point) => {
+      if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
+
+      points.push({
+        x: point.x,
+        y: point.y,
+        size: normalizeBubbleRadius(point.y, minValue, maxValue),
+        seriesName: item.name,
+      });
+    });
+  });
+
+  if (points.length === 0) return null;
+
+  const sizes = points.map((point) => point.size);
+
+  return {
+    points,
+    minSize: Math.min(...sizes),
+    maxSize: Math.max(...sizes),
+    totalPoints: points.length,
+  };
+};
+
+const getBubblePlotInterpretationLines = (
+  analysis: BubblePlotAnalysis | null,
+  outlierCount: number
+): string[] => {
+  if (!analysis || analysis.totalPoints === 0) {
+    return ["No hay datos suficientes para generar un Bubble Plot."];
+  }
+
+  const lines: string[] = [
+    `Puntos representados: ${analysis.totalPoints}.`,
+    `Rango de radios: ${analysis.minSize.toFixed(1)}–${analysis.maxSize.toFixed(1)} px.`,
+  ];
+
+  const xValues = analysis.points.map((point) => point.x);
+  const yValues = analysis.points.map((point) => point.y);
+  const xSpan = Math.max(...xValues) - Math.min(...xValues);
+  const ySpan = Math.max(...yValues) - Math.min(...yValues);
+  const relativeSpread = Math.max(xSpan, ySpan);
+  const relativeScale =
+    Math.max(Math.abs(Math.max(...yValues)), Math.abs(Math.min(...yValues)), 1) ||
+    1;
+
+  if (relativeSpread / relativeScale < 0.08 && analysis.totalPoints >= 3) {
+    lines.push(
+      "Las burbujas muestran una concentración compacta en el plano experimental."
+    );
+  } else if (relativeSpread / relativeScale > 0.45) {
+    lines.push(
+      "Las burbujas están ampliamente dispersas en el dominio observado."
+    );
+  }
+
+  const sortedByY = [...analysis.points].sort((left, right) => left.y - right.y);
+  const lowerThreshold = sortedByY[Math.floor((sortedByY.length - 1) * 0.33)]?.y;
+  const upperThreshold = sortedByY[Math.floor((sortedByY.length - 1) * 0.66)]?.y;
+
+  if (lowerThreshold != null && upperThreshold != null) {
+    const largeBubbleCount = analysis.points.filter(
+      (point) => point.y >= upperThreshold
+    ).length;
+    const smallBubbleCount = analysis.points.filter(
+      (point) => point.y <= lowerThreshold
+    ).length;
+
+    if (largeBubbleCount / analysis.totalPoints >= 0.5) {
+      lines.push(
+        "Predominan burbujas de mayor tamaño, asociadas a valores Y elevados."
+      );
+    } else if (smallBubbleCount / analysis.totalPoints >= 0.5) {
+      lines.push(
+        "Predominan burbujas de menor tamaño, asociadas a valores Y bajos."
+      );
+    }
+  }
+
+  if (outlierCount > 0) {
+    lines.push(
+      `${outlierCount} burbuja(s) coinciden con outliers detectados (SCI-8).`
+    );
+  }
+
+  return lines;
+};
+
+type BubbleScatterPoint = {
+  x: number;
+  y: number;
+  size: number;
+  isOutlier: boolean;
+};
+
+type BubbleScatterShapeProps = ScatterMarkerProps & {
+  payload?: BubbleScatterPoint;
+  fill?: string;
+};
+
+const renderBubbleScatterShape = (props: BubbleScatterShapeProps) => {
+  const { cx, cy, payload, fill } = props;
+  if (cx == null || cy == null) return null;
+
+  const radius = payload?.size ?? BUBBLE_RADIUS_FIXED;
+
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={radius}
+      fill={fill ?? "var(--app-accent)"}
+      fillOpacity={0.7}
+      stroke={payload?.isOutlier ? "#dc2626" : fill ?? "var(--app-accent)"}
+      strokeWidth={payload?.isOutlier ? 2.5 : 1}
+    />
+  );
+};
+
+type ScientificBubblePlotChartProps = {
+  analysis: BubblePlotAnalysis;
+  series: ExperimentalSeries[];
+  outliers: ExperimentalOutlier[];
+  chartTheme: ReturnType<typeof getChartTheme>;
+};
+
+function ScientificBubblePlotChart({
+  analysis,
+  series,
+  outliers,
+  chartTheme,
+}: ScientificBubblePlotChartProps) {
+  const seriesColorByName = useMemo(
+    () => new Map(series.map((item) => [item.name, item.color])),
+    [series]
+  );
+
+  const pointsBySeries = useMemo(() => {
+    const grouped = new Map<string, BubbleScatterPoint[]>();
+
+    analysis.points.forEach((point) => {
+      const current = grouped.get(point.seriesName) ?? [];
+      current.push({
+        x: point.x,
+        y: point.y,
+        size: point.size,
+        isOutlier: isExperimentalOutlierPoint(
+          outliers,
+          point.seriesName,
+          point.x,
+          point.y
+        ),
+      });
+      grouped.set(point.seriesName, current);
+    });
+
+    return grouped;
+  }, [analysis.points, outliers]);
+
+  return (
+    <div className="h-[240px] mt-3">
+      <ResponsiveContainer width="100%" height="100%">
+        <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis
+            type="number"
+            dataKey="x"
+            name="X"
+            tick={{ fill: chartTheme.axis, fontSize: 11 }}
+          />
+          <YAxis
+            type="number"
+            dataKey="y"
+            name="Y"
+            tick={{ fill: chartTheme.axis, fontSize: 11 }}
+          />
+          <Tooltip
+            content={({ active, payload: tooltipPayload }) => {
+              if (!active || !tooltipPayload?.length) return null;
+
+              const point = tooltipPayload[0]?.payload as
+                | BubbleScatterPoint
+                | undefined;
+              const seriesName = tooltipPayload[0]?.name ?? "Serie";
+
+              if (!point) return null;
+
+              return (
+                <div
+                  className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                  style={{
+                    borderColor: chartTheme.tooltipBorder,
+                    backgroundColor: chartTheme.tooltipBg,
+                    color: chartTheme.tooltipColor,
+                  }}
+                >
+                  <p className="font-semibold">{seriesName}</p>
+                  <p>x = {point.x.toFixed(4)}</p>
+                  <p>y = {point.y.toFixed(4)}</p>
+                  <p>Radio = {point.size.toFixed(1)} px</p>
+                  {point.isOutlier ? <p>Outlier (SCI-8)</p> : null}
+                </div>
+              );
+            }}
+          />
+          {Array.from(pointsBySeries.entries()).map(([seriesName, data]) => (
+            <Scatter
+              key={`bubble-series-${seriesName}`}
+              name={seriesName}
+              data={data}
+              fill={seriesColorByName.get(seriesName) ?? "var(--app-accent)"}
+              shape={renderBubbleScatterShape}
+              line={false}
+              isAnimationActive={false}
+            />
+          ))}
+        </ScatterChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+type RadarMetric = {
+  label: string;
+  value: number;
+};
+
+type RadarSeriesProfile = {
+  seriesName: string;
+  metrics: RadarMetric[];
+};
+
+type RadarPlotAnalysis = {
+  profiles: RadarSeriesProfile[];
+  metricLabels: string[];
+};
+
+const RADAR_METRIC_LABELS = [
+  "Media",
+  "Mediana",
+  "SD",
+  "Mínimo",
+  "Máximo",
+  "Rango",
+] as const;
+
+const extractRadarRawMetrics = (stats: ExperimentalStatistics) => [
+  { label: "Media" as const, raw: stats.meanY },
+  { label: "Mediana" as const, raw: stats.medianY },
+  { label: "SD" as const, raw: stats.stdDevY },
+  { label: "Mínimo" as const, raw: stats.minY },
+  { label: "Máximo" as const, raw: stats.maxY },
+  { label: "Rango" as const, raw: stats.rangeY },
+];
+
+const buildRadarPlotAnalysis = (
+  statistics: ExperimentalStatistics[]
+): RadarPlotAnalysis | null => {
+  const validStatistics = statistics.filter((stats) => stats.count > 0);
+  if (validStatistics.length === 0) return null;
+
+  const rawProfiles = validStatistics.map((stats) => ({
+    seriesName: stats.seriesName,
+    raws: extractRadarRawMetrics(stats),
+  }));
+
+  const minByLabel = new Map<string, number>();
+  const maxByLabel = new Map<string, number>();
+
+  rawProfiles.forEach((profile) => {
+    profile.raws.forEach(({ label, raw }) => {
+      if (!Number.isFinite(raw)) return;
+      minByLabel.set(label, Math.min(minByLabel.get(label) ?? raw, raw));
+      maxByLabel.set(label, Math.max(maxByLabel.get(label) ?? raw, raw));
+    });
+  });
+
+  const profiles: RadarSeriesProfile[] = rawProfiles.map((profile) => ({
+    seriesName: profile.seriesName,
+    metrics: RADAR_METRIC_LABELS.map((label) => {
+      const raw =
+        profile.raws.find((metric) => metric.label === label)?.raw ?? 0;
+      const min = minByLabel.get(label) ?? raw;
+      const max = maxByLabel.get(label) ?? raw;
+      const value =
+        max === min ? 0.5 : (raw - min) / (max - min);
+
+      return { label, value: Math.max(0, Math.min(1, value)) };
+    }),
+  }));
+
+  return {
+    profiles,
+    metricLabels: [...RADAR_METRIC_LABELS],
+  };
+};
+
+const getRadarProfileDistance = (
+  left: RadarSeriesProfile,
+  right: RadarSeriesProfile
+) => {
+  let sumSquares = 0;
+
+  left.metrics.forEach((metric, index) => {
+    const otherValue = right.metrics[index]?.value ?? 0;
+    const delta = metric.value - otherValue;
+    sumSquares += delta * delta;
+  });
+
+  return Math.sqrt(sumSquares / left.metrics.length);
+};
+
+const getRadarPlotInterpretationLines = (
+  analysis: RadarPlotAnalysis | null
+): string[] => {
+  if (!analysis || analysis.profiles.length === 0) {
+    return ["No hay datos suficientes para generar un Radar Plot."];
+  }
+
+  const lines: string[] = [
+    `Series comparadas: ${analysis.profiles.length}.`,
+    `Métricas usadas: ${analysis.metricLabels.join(", ")}.`,
+  ];
+
+  if (analysis.profiles.length >= 2) {
+    const similarPairs: string[] = [];
+
+    for (let indexA = 0; indexA < analysis.profiles.length; indexA += 1) {
+      for (
+        let indexB = indexA + 1;
+        indexB < analysis.profiles.length;
+        indexB += 1
+      ) {
+        const profileA = analysis.profiles[indexA];
+        const profileB = analysis.profiles[indexB];
+        const distance = getRadarProfileDistance(profileA, profileB);
+
+        if (distance < 0.18) {
+          similarPairs.push(
+            `Las series ${profileA.seriesName} y ${profileB.seriesName} presentan perfiles estadísticos similares.`
+          );
+        } else if (distance > 0.45) {
+          lines.push(
+            `Las series ${profileA.seriesName} y ${profileB.seriesName} muestran perfiles muy distintos.`
+          );
+        }
+      }
+    }
+
+    lines.push(...similarPairs);
+  }
+
+  const standardDeviationMetricIndex = analysis.metricLabels.indexOf("SD");
+  if (standardDeviationMetricIndex >= 0) {
+    const sdValues = analysis.profiles.map(
+      (profile) => profile.metrics[standardDeviationMetricIndex]?.value ?? 0
+    );
+    const maxSd = Math.max(...sdValues);
+    const dominantSdIndex = sdValues.indexOf(maxSd);
+    const averageSd =
+      sdValues.reduce((sum, value) => sum + value, 0) / sdValues.length;
+
+    if (maxSd - averageSd >= 0.25) {
+      lines.push(
+        `La serie ${analysis.profiles[dominantSdIndex].seriesName} muestra una dispersión significativamente mayor.`
+      );
+    }
+  }
+
+  const averageScores = analysis.profiles.map((profile) => ({
+    seriesName: profile.seriesName,
+    score:
+      profile.metrics.reduce((sum, metric) => sum + metric.value, 0) /
+      profile.metrics.length,
+  }));
+  const dominantSeries = averageScores.reduce((best, current) =>
+    current.score > best.score ? current : best
+  );
+  const runnerUp = averageScores
+    .filter((item) => item.seriesName !== dominantSeries.seriesName)
+    .reduce(
+      (best, current) => (current.score > best.score ? current : best),
+      { seriesName: "", score: -1 }
+    );
+
+  if (
+    analysis.profiles.length >= 2 &&
+    dominantSeries.score - runnerUp.score >= 0.2
+  ) {
+    lines.push(
+      `La serie ${dominantSeries.seriesName} presenta un perfil estadístico dominante en el radar.`
+    );
+  }
+
+  return lines;
+};
+
+type ScientificRadarPlotProps = {
+  analysis: RadarPlotAnalysis;
+  seriesColors: Map<string, string>;
+};
+
+function ScientificRadarPlot({
+  analysis,
+  seriesColors,
+}: ScientificRadarPlotProps) {
+  const width = 320;
+  const height = 280;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = 96;
+  const metricCount = analysis.metricLabels.length;
+
+  const getPoint = (metricIndex: number, normalizedValue: number) => {
+    const angle = -Math.PI / 2 + (metricIndex * 2 * Math.PI) / metricCount;
+    const distance = normalizedValue * radius;
+    return {
+      x: centerX + Math.cos(angle) * distance,
+      y: centerY + Math.sin(angle) * distance,
+    };
+  };
+
+  const axisPoints = analysis.metricLabels.map((label, index) => {
+    const outer = getPoint(index, 1);
+    return { label, outer, index };
+  });
+
+  const gridLevels = [0.25, 0.5, 0.75, 1];
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="w-full h-full max-h-[260px]"
+      role="img"
+      aria-label="Radar plot de perfiles estadísticos"
+    >
+      {gridLevels.map((level) => {
+        const polygonPoints = axisPoints
+          .map(({ index }) => {
+            const point = getPoint(index, level);
+            return `${point.x},${point.y}`;
+          })
+          .join(" ");
+
+        return (
+          <polygon
+            key={`radar-grid-${level}`}
+            points={polygonPoints}
+            fill="none"
+            stroke="var(--app-border)"
+            strokeWidth={1}
+          />
+        );
+      })}
+
+      {axisPoints.map(({ label, outer, index }) => (
+        <g key={`radar-axis-${label}`}>
+          <line
+            x1={centerX}
+            y1={centerY}
+            x2={outer.x}
+            y2={outer.y}
+            stroke="var(--app-border)"
+            strokeWidth={1}
+          />
+          <text
+            x={getPoint(index, 1.14).x}
+            y={getPoint(index, 1.14).y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="var(--app-text-muted)"
+            fontSize={10}
+          >
+            {label}
+          </text>
+        </g>
+      ))}
+
+      {analysis.profiles.map((profile) => {
+        const color =
+          seriesColors.get(profile.seriesName) ?? "var(--app-accent)";
+        const polygonPoints = profile.metrics
+          .map((metric, index) => {
+            const point = getPoint(index, metric.value);
+            return `${point.x},${point.y}`;
+          })
+          .join(" ");
+
+        return (
+          <g key={`radar-profile-${profile.seriesName}`}>
+            <polygon
+              points={polygonPoints}
+              fill={color}
+              fillOpacity={0.22}
+              stroke={color}
+              strokeWidth={2}
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 type OutlierMethod = "iqr" | "zscore";
 
 type ExperimentalOutlier = {
@@ -3981,6 +4540,8 @@ const generateScientificReport = (input: {
   violinPlotAnalyses: ViolinPlotAnalysis[];
   correlationHeatmap: HeatmapAnalysis | null;
   valuesHeatmap: HeatmapAnalysis | null;
+  bubblePlotAnalysis: BubblePlotAnalysis | null;
+  radarPlotAnalysis: RadarPlotAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -4118,6 +4679,15 @@ const generateScientificReport = (input: {
     }
   }
   sections.push({ title: "Heatmap", content: heatmapLines });
+
+  const bubblePlotLines = getBubblePlotInterpretationLines(
+    input.bubblePlotAnalysis,
+    input.experimentalOutliers.length
+  );
+  sections.push({ title: "Bubble Plot", content: bubblePlotLines });
+
+  const radarPlotLines = getRadarPlotInterpretationLines(input.radarPlotAnalysis);
+  sections.push({ title: "Radar Plot", content: radarPlotLines });
 
   const correlationLines: string[] = [];
   if (seriesCount < 2) {
@@ -4355,6 +4925,8 @@ const generateScientificInterpretation = (input: {
   violinPlotAnalyses: ViolinPlotAnalysis[];
   correlationHeatmap: HeatmapAnalysis | null;
   valuesHeatmap: HeatmapAnalysis | null;
+  bubblePlotAnalysis: BubblePlotAnalysis | null;
+  radarPlotAnalysis: RadarPlotAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -4500,6 +5072,33 @@ const generateScientificInterpretation = (input: {
   if (input.valuesHeatmap) {
     getHeatmapInterpretationLines(input.valuesHeatmap)
       .filter((line) => line.includes("bloque de observaciones"))
+      .forEach((line) => findings.push(line));
+  }
+
+  if (input.bubblePlotAnalysis) {
+    getBubblePlotInterpretationLines(
+      input.bubblePlotAnalysis,
+      input.experimentalOutliers.length
+    )
+      .filter(
+        (line) =>
+          line.includes("concentración") ||
+          line.includes("dispersas") ||
+          line.includes("Predominan burbujas") ||
+          line.includes("outliers detectados")
+      )
+      .forEach((line) => findings.push(line));
+  }
+
+  if (input.radarPlotAnalysis) {
+    getRadarPlotInterpretationLines(input.radarPlotAnalysis)
+      .filter(
+        (line) =>
+          line.includes("perfiles estadísticos similares") ||
+          line.includes("perfiles muy distintos") ||
+          line.includes("dispersión significativamente mayor") ||
+          line.includes("perfil estadístico dominante")
+      )
       .forEach((line) => findings.push(line));
   }
 
@@ -4705,6 +5304,8 @@ const generateScientificAssistantReport = (input: {
   violinPlotAnalyses: ViolinPlotAnalysis[];
   correlationHeatmap: HeatmapAnalysis | null;
   valuesHeatmap: HeatmapAnalysis | null;
+  bubblePlotAnalysis: BubblePlotAnalysis | null;
+  radarPlotAnalysis: RadarPlotAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -5089,6 +5690,30 @@ const generateScientificAssistantReport = (input: {
     pushCaution(
       "El Heatmap de valores y los outliers coinciden en zonas de alta magnitud."
     );
+  }
+  if (input.bubblePlotAnalysis && hasOutliers) {
+    pushUniqueFinding(
+      "El Bubble Plot resalta burbujas coincidentes con outliers experimentales."
+    );
+  }
+  if (input.bubblePlotAnalysis) {
+    const bubbleLines = getBubblePlotInterpretationLines(
+      input.bubblePlotAnalysis,
+      input.experimentalOutliers.length
+    );
+    bubbleLines
+      .filter((line) => line.includes("Predominan burbujas"))
+      .forEach((line) => pushUniqueFinding(line));
+  }
+  if (input.radarPlotAnalysis) {
+    getRadarPlotInterpretationLines(input.radarPlotAnalysis)
+      .filter(
+        (line) =>
+          line.includes("perfiles estadísticos similares") ||
+          line.includes("dispersión significativamente mayor") ||
+          line.includes("perfil estadístico dominante")
+      )
+      .forEach((line) => pushUniqueFinding(line));
   }
   if (hasOutliers) {
     pushCaution(
@@ -6129,6 +6754,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showViolinPlot, setShowViolinPlot] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>("correlation");
+  const [showBubblePlot, setShowBubblePlot] = useState(false);
+  const [showRadarPlot, setShowRadarPlot] = useState(false);
   const [showTTest, setShowTTest] = useState(false);
   const [selectedTTestSeriesA, setSelectedTTestSeriesA] = useState<
     string | null
@@ -7145,6 +7772,21 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       heatmapMode === "correlation" ? correlationHeatmap : valuesHeatmap,
     [heatmapMode, correlationHeatmap, valuesHeatmap]
   );
+  const bubblePlotAnalysis = useMemo(
+    () => buildBubblePlotAnalysis(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
+  const radarPlotAnalysis = useMemo(
+    () => buildRadarPlotAnalysis(experimentalStatistics),
+    [experimentalStatistics]
+  );
+  const radarSeriesColors = useMemo(
+    () =>
+      new Map(
+        visibleExperimentalSeries.map((item) => [item.name, item.color])
+      ),
+    [visibleExperimentalSeries]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -7229,6 +7871,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         violinPlotAnalyses,
         correlationHeatmap,
         valuesHeatmap,
+        bubblePlotAnalysis,
+        radarPlotAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -7249,6 +7893,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       violinPlotAnalyses,
       correlationHeatmap,
       valuesHeatmap,
+      bubblePlotAnalysis,
+      radarPlotAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -7271,6 +7917,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         violinPlotAnalyses,
         correlationHeatmap,
         valuesHeatmap,
+        bubblePlotAnalysis,
+        radarPlotAnalysis,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -7288,6 +7936,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       violinPlotAnalyses,
       correlationHeatmap,
       valuesHeatmap,
+      bubblePlotAnalysis,
+      radarPlotAnalysis,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -7309,6 +7959,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         violinPlotAnalyses,
         correlationHeatmap,
         valuesHeatmap,
+        bubblePlotAnalysis,
+        radarPlotAnalysis,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -7328,6 +7980,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       violinPlotAnalyses,
       correlationHeatmap,
       valuesHeatmap,
+      bubblePlotAnalysis,
+      radarPlotAnalysis,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -7977,7 +8631,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showNormality ||
         showQQPlot ||
         showViolinPlot ||
-        showHeatmap)) ||
+        showHeatmap ||
+        showBubblePlot ||
+        showRadarPlot)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
     (isAssistantModuleEnabled &&
@@ -9393,6 +10049,56 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <option value="values">Valores</option>
                         </select>
                       </div>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Bubble Plot
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showBubblePlot}
+                            onChange={(e) =>
+                              setShowBubblePlot(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Radar Plot
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showRadarPlot}
+                            onChange={(e) =>
+                              setShowRadarPlot(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
                   </div>
 
                   <div
@@ -11423,6 +12129,124 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 !line.startsWith("Modo:") &&
                                 !line.startsWith("Series:") &&
                                 !line.startsWith("Dimensión:")
+                            )
+                            .map((line) => (
+                              <p key={line} className={`text-sm ${emptyState}`}>
+                                {line}
+                              </p>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showBubblePlot && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🫧 Bubble Plot</p>
+                    {!hasVisibleExperimentalSeries || !bubblePlotAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar un Bubble Plot.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">
+                            Series visibles:
+                          </span>{" "}
+                          {visibleExperimentalSeries.length}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Puntos:</span>{" "}
+                          {bubblePlotAnalysis.totalPoints}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">
+                            Rango de tamaños:
+                          </span>{" "}
+                          {bubblePlotAnalysis.minSize.toFixed(1)}–
+                          {bubblePlotAnalysis.maxSize.toFixed(1)} px
+                        </p>
+
+                        <ScientificBubblePlotChart
+                          analysis={bubblePlotAnalysis}
+                          series={visibleExperimentalSeries}
+                          outliers={experimentalOutliers}
+                          chartTheme={chartTheme}
+                        />
+
+                        <div className="mt-3 space-y-1">
+                          {getBubblePlotInterpretationLines(
+                            bubblePlotAnalysis,
+                            experimentalOutliers.length
+                          )
+                            .filter(
+                              (line) =>
+                                !line.startsWith("Puntos representados:") &&
+                                !line.startsWith("Rango de radios:")
+                            )
+                            .map((line) => (
+                              <p key={line} className={`text-sm ${emptyState}`}>
+                                {line}
+                              </p>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showRadarPlot && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🕸 Radar Plot</p>
+                    {!hasVisibleExperimentalSeries || !radarPlotAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar un Radar Plot.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">
+                            Series comparadas:
+                          </span>{" "}
+                          {radarPlotAnalysis.profiles.length}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Métricas:</span>{" "}
+                          {radarPlotAnalysis.metricLabels.join(", ")}
+                        </p>
+
+                        <ScientificRadarPlot
+                          analysis={radarPlotAnalysis}
+                          seriesColors={radarSeriesColors}
+                        />
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {radarPlotAnalysis.profiles.map((profile) => (
+                            <span
+                              key={`radar-legend-${profile.seriesName}`}
+                              className="inline-flex items-center gap-1.5 text-xs text-[var(--app-text)]"
+                            >
+                              <span
+                                className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor:
+                                    radarSeriesColors.get(
+                                      profile.seriesName
+                                    ) ?? "var(--app-accent)",
+                                }}
+                              />
+                              {profile.seriesName}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="mt-3 space-y-1">
+                          {getRadarPlotInterpretationLines(radarPlotAnalysis)
+                            .filter(
+                              (line) =>
+                                !line.startsWith("Series comparadas:") &&
+                                !line.startsWith("Métricas usadas:")
                             )
                             .map((line) => (
                               <p key={line} className={`text-sm ${emptyState}`}>
