@@ -2026,6 +2026,237 @@ const MiniBoxPlot = ({ analysis }: { analysis: BoxPlotAnalysis }) => {
   );
 };
 
+type ViolinDensityPoint = {
+  value: number;
+  density: number;
+};
+
+type ViolinShapeInterpretation = "symmetric" | "right-skewed" | "left-skewed";
+
+type ViolinPlotAnalysis = {
+  seriesName: string;
+  sampleSize: number;
+  min: number;
+  max: number;
+  q1: number;
+  median: number;
+  q3: number;
+  densityPoints: ViolinDensityPoint[];
+  shapeInterpretation: ViolinShapeInterpretation;
+};
+
+const VIOLIN_DENSITY_POINT_COUNT = 50;
+
+const gaussianKernel = (u: number) => Math.exp(-0.5 * u * u);
+
+const calculateSilvermanBandwidth = (values: number[]): number => {
+  const sampleSize = values.length;
+  if (sampleSize < 2) return 1;
+
+  const stats = getSampleMeanAndStdDev(values);
+  const standardDeviation = stats?.stdDev ?? 0;
+  if (standardDeviation === 0) {
+    const sorted = [...values].sort((left, right) => left - right);
+    const range = sorted[sorted.length - 1] - sorted[0];
+    return range > 0 ? range / 4 : 1;
+  }
+
+  return 1.06 * standardDeviation * sampleSize ** -0.2;
+};
+
+const calculateKernelDensity = (
+  values: number[],
+  min: number,
+  max: number,
+  pointCount: number = VIOLIN_DENSITY_POINT_COUNT
+): ViolinDensityPoint[] => {
+  const sampleSize = values.length;
+  if (sampleSize === 0) return [];
+
+  if (min === max) {
+    return [{ value: min, density: 1 }];
+  }
+
+  const bandwidth = Math.max(calculateSilvermanBandwidth(values), 1e-9);
+  const sanitizedPointCount = Math.min(60, Math.max(40, Math.round(pointCount)));
+  const densityPoints: ViolinDensityPoint[] = [];
+
+  for (let index = 0; index < sanitizedPointCount; index += 1) {
+    const value =
+      min + (index / (sanitizedPointCount - 1)) * (max - min);
+    let density = 0;
+
+    values.forEach((sample) => {
+      const scaledDistance = (value - sample) / bandwidth;
+      density += gaussianKernel(scaledDistance);
+    });
+
+    density /= sampleSize * bandwidth;
+    densityPoints.push({ value, density });
+  }
+
+  const maxDensity = Math.max(...densityPoints.map((point) => point.density), 0);
+  if (maxDensity <= 0) {
+    return densityPoints.map((point) => ({ ...point, density: 0 }));
+  }
+
+  return densityPoints.map((point) => ({
+    value: point.value,
+    density: point.density / maxDensity,
+  }));
+};
+
+const classifyViolinShape = (
+  q1: number,
+  median: number,
+  q3: number
+): ViolinShapeInterpretation => {
+  const upperSpread = q3 - median;
+  const lowerSpread = median - q1;
+  const tolerance = Math.max(Math.abs(q3 - q1) * 0.1, 1e-9);
+
+  if (Math.abs(upperSpread - lowerSpread) <= tolerance) return "symmetric";
+  if (upperSpread > lowerSpread * 1.15) return "right-skewed";
+  if (lowerSpread > upperSpread * 1.15) return "left-skewed";
+  return "symmetric";
+};
+
+const getViolinShapeInterpretationMessage = (
+  interpretation: ViolinShapeInterpretation
+) => {
+  if (interpretation === "symmetric") {
+    return "Distribución aproximadamente simétrica.";
+  }
+  if (interpretation === "right-skewed") {
+    return "Distribución sesgada hacia valores altos.";
+  }
+  return "Distribución sesgada hacia valores bajos.";
+};
+
+const calculateViolinPlot = (
+  series: ExperimentalSeries
+): ViolinPlotAnalysis | null => {
+  const boxStatistics = calculateBoxPlotStatistics(series);
+  if (boxStatistics.sampleSize === 0) return null;
+
+  const values = getSeriesYValues(series).sort((left, right) => left - right);
+  const densityPoints = calculateKernelDensity(
+    values,
+    boxStatistics.min,
+    boxStatistics.max
+  );
+
+  return {
+    seriesName: boxStatistics.seriesName,
+    sampleSize: boxStatistics.sampleSize,
+    min: boxStatistics.min,
+    max: boxStatistics.max,
+    q1: boxStatistics.q1,
+    median: boxStatistics.median,
+    q3: boxStatistics.q3,
+    densityPoints,
+    shapeInterpretation: classifyViolinShape(
+      boxStatistics.q1,
+      boxStatistics.median,
+      boxStatistics.q3
+    ),
+  };
+};
+
+const calculateViolinPlotsForSeries = (
+  series: ExperimentalSeries[]
+): ViolinPlotAnalysis[] =>
+  series
+    .map((item) => calculateViolinPlot(item))
+    .filter((analysis): analysis is ViolinPlotAnalysis => analysis !== null);
+
+const MiniViolinPlot = ({ analysis }: { analysis: ViolinPlotAnalysis }) => {
+  const width = 280;
+  const height = 240;
+  const padding = 20;
+  const centerX = width / 2;
+  const maxHalfWidth = 78;
+  const innerBoxWidth = 18;
+
+  if (analysis.sampleSize === 0 || analysis.densityPoints.length === 0) {
+    return (
+      <p className={emptyState}>Sin datos válidos para el violin plot.</p>
+    );
+  }
+
+  const plotMin = analysis.min;
+  const plotMax = analysis.max;
+  const range = plotMax - plotMin || 1;
+
+  const scaleY = (value: number) =>
+    padding + ((plotMax - value) / range) * (height - padding * 2);
+
+  const buildHalfPath = (side: "left" | "right") => {
+    const points = analysis.densityPoints;
+    const firstPoint = points[0];
+    const startY = scaleY(firstPoint.value);
+    let path = `M ${centerX} ${startY}`;
+
+    points.forEach((point) => {
+      const y = scaleY(point.value);
+      const offset = (side === "right" ? 1 : -1) * point.density * maxHalfWidth;
+      path += ` L ${centerX + offset} ${y}`;
+    });
+
+    const lastPoint = points[points.length - 1];
+    path += ` L ${centerX} ${scaleY(lastPoint.value)} Z`;
+    return path;
+  };
+
+  const yQ1 = scaleY(analysis.q1);
+  const yQ3 = scaleY(analysis.q3);
+  const yMedian = scaleY(analysis.median);
+  const boxTop = Math.min(yQ1, yQ3);
+  const boxHeight = Math.max(Math.abs(yQ1 - yQ3), 1);
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="w-full h-full"
+      role="img"
+      aria-label={`Violin plot de ${analysis.seriesName}`}
+    >
+      <path
+        d={buildHalfPath("left")}
+        fill="var(--app-accent)"
+        fillOpacity={0.2}
+        stroke="var(--app-accent)"
+        strokeWidth={1.5}
+      />
+      <path
+        d={buildHalfPath("right")}
+        fill="var(--app-accent)"
+        fillOpacity={0.2}
+        stroke="var(--app-accent)"
+        strokeWidth={1.5}
+      />
+      <rect
+        x={centerX - innerBoxWidth / 2}
+        y={boxTop}
+        width={innerBoxWidth}
+        height={boxHeight}
+        fill="var(--app-surface)"
+        fillOpacity={0.85}
+        stroke="var(--app-heading)"
+        strokeWidth={1.5}
+      />
+      <line
+        x1={centerX - innerBoxWidth / 2}
+        y1={yMedian}
+        x2={centerX + innerBoxWidth / 2}
+        y2={yMedian}
+        stroke="var(--app-heading)"
+        strokeWidth={2}
+      />
+    </svg>
+  );
+};
+
 type NormalityClassification =
   | "normal"
   | "approximately-normal"
@@ -3411,6 +3642,7 @@ const generateScientificReport = (input: {
   experimentalStatistics: ExperimentalStatistics[];
   normalityAnalyses: NormalityAnalysis[];
   qqPlotAnalyses: QQPlotAnalysis[];
+  violinPlotAnalyses: ViolinPlotAnalysis[];
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -3516,6 +3748,21 @@ const generateScientificReport = (input: {
     });
   }
   sections.push({ title: "Q-Q Plot", content: qqPlotLines });
+
+  const violinPlotLines: string[] = [];
+  if (input.violinPlotAnalyses.length === 0) {
+    violinPlotLines.push(
+      "No hay datos suficientes para generar un Violin Plot por serie."
+    );
+  } else {
+    input.violinPlotAnalyses.forEach((analysis) => {
+      const spread = analysis.q3 - analysis.q1;
+      violinPlotLines.push(
+        `"${analysis.seriesName}" (N=${analysis.sampleSize}): ${getViolinShapeInterpretationMessage(analysis.shapeInterpretation)} Rango [${formatExperimentalStat(analysis.min)}, ${formatExperimentalStat(analysis.max)}], IQR = ${formatExperimentalStat(spread)}.`
+      );
+    });
+  }
+  sections.push({ title: "Violin Plot", content: violinPlotLines });
 
   const correlationLines: string[] = [];
   if (seriesCount < 2) {
@@ -3750,6 +3997,7 @@ const generateScientificInterpretation = (input: {
   };
   normalityAnalyses: NormalityAnalysis[];
   qqPlotAnalyses: QQPlotAnalysis[];
+  violinPlotAnalyses: ViolinPlotAnalysis[];
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -3834,6 +4082,49 @@ const generateScientificInterpretation = (input: {
     } else {
       findings.push(
         "El análisis Q-Q indicó compatibilidad moderada con una distribución normal."
+      );
+    }
+  }
+
+  if (input.violinPlotAnalyses.length > 0) {
+    const skewedHighCount = input.violinPlotAnalyses.filter(
+      (analysis) => analysis.shapeInterpretation === "right-skewed"
+    ).length;
+    const skewedLowCount = input.violinPlotAnalyses.filter(
+      (analysis) => analysis.shapeInterpretation === "left-skewed"
+    ).length;
+    const symmetricCount = input.violinPlotAnalyses.filter(
+      (analysis) => analysis.shapeInterpretation === "symmetric"
+    ).length;
+
+    if (skewedHighCount > 0) {
+      findings.push(
+        "El Violin Plot sugiere asimetría hacia valores altos en al menos una serie."
+      );
+    }
+    if (skewedLowCount > 0) {
+      findings.push(
+        "El Violin Plot sugiere asimetría hacia valores bajos en al menos una serie."
+      );
+    }
+    if (symmetricCount === input.violinPlotAnalyses.length) {
+      findings.push(
+        "Las siluetas del Violin Plot indican distribuciones aproximadamente simétricas."
+      );
+    }
+
+    const spreads = input.violinPlotAnalyses.map(
+      (analysis) => analysis.q3 - analysis.q1
+    );
+    const maxSpread = Math.max(...spreads);
+    const minSpread = Math.min(...spreads);
+    if (maxSpread > minSpread * 2 && maxSpread > 0) {
+      findings.push(
+        "Se observa dispersión desigual entre series según el Violin Plot."
+      );
+    } else if (maxSpread > 0 && maxSpread === minSpread) {
+      findings.push(
+        "La concentración de los datos es similar entre las series analizadas."
       );
     }
   }
@@ -4037,6 +4328,7 @@ const generateScientificAssistantReport = (input: {
   };
   normalityAnalyses: NormalityAnalysis[];
   qqPlotAnalyses: QQPlotAnalysis[];
+  violinPlotAnalyses: ViolinPlotAnalysis[];
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -4080,6 +4372,14 @@ const generateScientificAssistantReport = (input: {
   const hasPoorQQNormal = input.qqPlotAnalyses.some(
     (analysis) => analysis.interpretation === "poor"
   );
+  const hasSkewedViolin = input.violinPlotAnalyses.some(
+    (analysis) => analysis.shapeInterpretation !== "symmetric"
+  );
+  const allViolinSymmetric =
+    input.violinPlotAnalyses.length > 0 &&
+    input.violinPlotAnalyses.every(
+      (analysis) => analysis.shapeInterpretation === "symmetric"
+    );
 
   let confidenceLevel: ScientificAssistantConfidenceLevel =
     input.statisticalRecommendation?.confidence ?? "medium";
@@ -4122,6 +4422,18 @@ const generateScientificAssistantReport = (input: {
   }
   if (hasPoorQQNormal && hasSmallSamples && confidenceLevel !== "low") {
     confidenceLevel = "low";
+  }
+  if (
+    hasStrongQQNormal &&
+    allViolinSymmetric &&
+    allNormal &&
+    !hasOutliers &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (hasSkewedViolin && hasPoorQQNormal && confidenceLevel === "high") {
+    confidenceLevel = "medium";
   }
 
   const cautiousReasons: string[] = [];
@@ -4191,6 +4503,16 @@ const generateScientificAssistantReport = (input: {
   } else if (hasPoorQQNormal) {
     pushUniqueFinding(
       "El Q-Q Plot muestra desviaciones importantes respecto a la normalidad."
+    );
+  }
+
+  if (allViolinSymmetric && allNormal && hasStrongQQNormal) {
+    pushUniqueFinding(
+      "Violin Plot, normalidad y Q-Q Plot son coherentes con distribuciones simétricas."
+    );
+  } else if (hasSkewedViolin) {
+    pushUniqueFinding(
+      "El Violin Plot revela asimetría en la forma de al menos una serie."
     );
   }
 
@@ -4300,6 +4622,11 @@ const generateScientificAssistantReport = (input: {
   if (hasPoorQQNormal) {
     pushCaution(
       "El Q-Q Plot sugiere desviaciones de normalidad; valide con pruebas no paramétricas."
+    );
+  }
+  if (hasSkewedViolin && (hasNonNormal || hasPoorQQNormal)) {
+    pushCaution(
+      "Violin Plot, normalidad y Q-Q Plot indican posible asimetría o desviación de normalidad."
     );
   }
   if (hasOutliers) {
@@ -5338,6 +5665,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showBoxPlot, setShowBoxPlot] = useState(false);
   const [showNormality, setShowNormality] = useState(false);
   const [showQQPlot, setShowQQPlot] = useState(false);
+  const [showViolinPlot, setShowViolinPlot] = useState(false);
   const [showTTest, setShowTTest] = useState(false);
   const [selectedTTestSeriesA, setSelectedTTestSeriesA] = useState<
     string | null
@@ -6330,6 +6658,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [qqPlotAnalyses]
   );
+  const violinPlotAnalyses = useMemo(
+    () => calculateViolinPlotsForSeries(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
+  const violinPlotAnalysesBySeriesName = useMemo(
+    () =>
+      new Map(
+        violinPlotAnalyses.map((analysis) => [analysis.seriesName, analysis])
+      ),
+    [violinPlotAnalyses]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -6411,6 +6750,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         experimentalStatistics,
         normalityAnalyses,
         qqPlotAnalyses,
+        violinPlotAnalyses,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -6428,6 +6768,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       experimentalStatistics,
       normalityAnalyses,
       qqPlotAnalyses,
+      violinPlotAnalyses,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -6447,6 +6788,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         correlationAnalysis,
         normalityAnalyses,
         qqPlotAnalyses,
+        violinPlotAnalyses,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -6461,6 +6803,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       correlationAnalysis,
       normalityAnalyses,
       qqPlotAnalyses,
+      violinPlotAnalyses,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -6479,6 +6822,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         correlationAnalysis,
         normalityAnalyses,
         qqPlotAnalyses,
+        violinPlotAnalyses,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -6495,6 +6839,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       correlationAnalysis,
       normalityAnalyses,
       qqPlotAnalyses,
+      violinPlotAnalyses,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -7142,7 +7487,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showHistogram ||
         showBoxPlot ||
         showNormality ||
-        showQQPlot)) ||
+        showQQPlot ||
+        showViolinPlot)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
     (isAssistantModuleEnabled &&
@@ -8473,6 +8819,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             className={toggleInput}
                             checked={showQQPlot}
                             onChange={(e) => setShowQQPlot(e.target.checked)}
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Violin Plot
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showViolinPlot}
+                            onChange={(e) =>
+                              setShowViolinPlot(e.target.checked)
+                            }
                             disabled={!hasVisibleExperimentalSeries}
                           />
                           <span className={toggleTrackBg} aria-hidden />
@@ -10351,6 +10722,76 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                         })()}
                                       </ScatterChart>
                                     </ResponsiveContainer>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showViolinPlot && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🎻 Violin Plot</p>
+                    {!hasVisibleExperimentalSeries ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar un Violin Plot.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {visibleExperimentalSeries.map((series) => {
+                          const analysis = violinPlotAnalysesBySeriesName.get(
+                            series.name
+                          );
+
+                          return (
+                            <div key={series.id} className={contentPanel}>
+                              <p>
+                                <span className="font-semibold">Serie:</span>{" "}
+                                {series.name}
+                              </p>
+
+                              {!analysis ? (
+                                <p className={`mt-2 text-sm ${emptyState}`}>
+                                  Resultado no disponible para esta serie.
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">N:</span>{" "}
+                                    {analysis.sampleSize}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">Mínimo:</span>{" "}
+                                    {formatExperimentalStat(analysis.min)}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">Q1:</span>{" "}
+                                    {formatExperimentalStat(analysis.q1)}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">Mediana:</span>{" "}
+                                    {formatExperimentalStat(analysis.median)}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">Q3:</span>{" "}
+                                    {formatExperimentalStat(analysis.q3)}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">Máximo:</span>{" "}
+                                    {formatExperimentalStat(analysis.max)}
+                                  </p>
+                                  <p className={`mt-2 text-sm ${emptyState}`}>
+                                    {getViolinShapeInterpretationMessage(
+                                      analysis.shapeInterpretation
+                                    )}
+                                  </p>
+
+                                  <div className="h-[240px] mt-3">
+                                    <MiniViolinPlot analysis={analysis} />
                                   </div>
                                 </>
                               )}
