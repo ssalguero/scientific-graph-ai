@@ -1590,6 +1590,342 @@ const buildCorrelationAnalysis = (
   return { results, unavailablePairs, matrix };
 };
 
+type HeatmapMode = "correlation" | "values";
+
+type HeatmapCell = {
+  row: string;
+  column: string;
+  value: number;
+};
+
+type HeatmapAnalysis = {
+  mode: HeatmapMode;
+  rows: string[];
+  columns: string[];
+  cells: HeatmapCell[];
+};
+
+const getHeatmapCellValue = (
+  analysis: HeatmapAnalysis,
+  row: string,
+  column: string
+) =>
+  analysis.cells.find(
+    (cell) => cell.row === row && cell.column === column
+  )?.value ?? Number.NaN;
+
+const buildCorrelationHeatmap = (
+  series: ExperimentalSeries[]
+): HeatmapAnalysis | null => {
+  if (series.length === 0) return null;
+
+  const rows = series.map((item) => item.name);
+  const columns = rows;
+  const cells: HeatmapCell[] = [];
+
+  for (let rowIndex = 0; rowIndex < series.length; rowIndex += 1) {
+    for (let columnIndex = 0; columnIndex < series.length; columnIndex += 1) {
+      const value =
+        rowIndex === columnIndex
+          ? 1
+          : (computeSeriesPairCorrelation(
+              series[rowIndex],
+              series[columnIndex],
+              "pearson"
+            ) ?? Number.NaN);
+
+      cells.push({
+        row: rows[rowIndex],
+        column: columns[columnIndex],
+        value,
+      });
+    }
+  }
+
+  return { mode: "correlation", rows, columns, cells };
+};
+
+const buildValuesHeatmap = (
+  series: ExperimentalSeries[]
+): HeatmapAnalysis | null => {
+  if (series.length === 0) return null;
+
+  const observationCount = Math.max(
+    ...series.map((item) =>
+      item.points.filter((point) => Number.isFinite(point.y)).length
+    ),
+    0
+  );
+
+  if (observationCount === 0) return null;
+
+  const rows = series.map((item) => item.name);
+  const columns = Array.from(
+    { length: observationCount },
+    (_, index) => `Obs ${index + 1}`
+  );
+  const cells: HeatmapCell[] = [];
+
+  series.forEach((item) => {
+    const yValues = item.points
+      .map((point) => point.y)
+      .filter((value) => Number.isFinite(value));
+
+    columns.forEach((column, columnIndex) => {
+      cells.push({
+        row: item.name,
+        column,
+        value: yValues[columnIndex] ?? Number.NaN,
+      });
+    });
+  });
+
+  return { mode: "values", rows, columns, cells };
+};
+
+const getHeatmapValuesBounds = (analysis: HeatmapAnalysis) => {
+  const finiteValues = analysis.cells
+    .map((cell) => cell.value)
+    .filter((value) => Number.isFinite(value));
+
+  if (finiteValues.length === 0) {
+    return { min: 0, max: 1 };
+  }
+
+  return {
+    min: Math.min(...finiteValues),
+    max: Math.max(...finiteValues),
+  };
+};
+
+const interpolateRgb = (
+  start: [number, number, number],
+  end: [number, number, number],
+  factor: number
+): string => {
+  const clamped = Math.max(0, Math.min(1, factor));
+  const red = Math.round(start[0] + (end[0] - start[0]) * clamped);
+  const green = Math.round(start[1] + (end[1] - start[1]) * clamped);
+  const blue = Math.round(start[2] + (end[2] - start[2]) * clamped);
+  return `rgb(${red}, ${green}, ${blue})`;
+};
+
+const getCorrelationHeatmapCellColors = (value: number) => {
+  const neutral: [number, number, number] = [148, 163, 184];
+  const positive: [number, number, number] = [37, 99, 235];
+  const negative: [number, number, number] = [220, 38, 38];
+
+  if (!Number.isFinite(value)) {
+    return {
+      backgroundColor: "rgb(148, 163, 184)",
+      color: "#ffffff",
+    };
+  }
+
+  const clamped = Math.max(-1, Math.min(1, value));
+
+  if (clamped === 0) {
+    return {
+      backgroundColor: "rgb(148, 163, 184)",
+      color: "#ffffff",
+    };
+  }
+
+  if (clamped > 0) {
+    return {
+      backgroundColor: interpolateRgb(neutral, positive, clamped),
+      color: "#ffffff",
+    };
+  }
+
+  return {
+    backgroundColor: interpolateRgb(negative, neutral, Math.abs(clamped)),
+    color: "#ffffff",
+  };
+};
+
+const getValuesHeatmapCellColors = (
+  value: number,
+  min: number,
+  max: number
+) => {
+  const light: [number, number, number] = [241, 245, 249];
+  const intense: [number, number, number] = [37, 99, 235];
+
+  if (!Number.isFinite(value)) {
+    return {
+      backgroundColor: "rgb(241, 245, 249)",
+      color: "#64748b",
+    };
+  }
+
+  const normalized = max === min ? 0.5 : (value - min) / (max - min);
+
+  return {
+    backgroundColor: interpolateRgb(light, intense, normalized),
+    color: normalized > 0.55 ? "#ffffff" : "#334155",
+  };
+};
+
+const getHeatmapModeLabel = (mode: HeatmapMode) =>
+  mode === "correlation" ? "Correlaciones" : "Valores";
+
+const formatHeatmapCellDisplayValue = (
+  analysis: HeatmapAnalysis,
+  value: number
+) => {
+  if (!Number.isFinite(value)) return "N/A";
+  if (analysis.mode === "correlation") return value.toFixed(2);
+  return formatExperimentalStat(value);
+};
+
+const getHeatmapInterpretationLines = (
+  analysis: HeatmapAnalysis | null
+): string[] => {
+  if (!analysis || analysis.rows.length === 0) {
+    return ["No hay datos suficientes para generar un Heatmap."];
+  }
+
+  const lines: string[] = [
+    `Modo: ${getHeatmapModeLabel(analysis.mode)}.`,
+    `Series: ${analysis.rows.length}.`,
+    `Dimensión: ${analysis.rows.length}×${analysis.columns.length}.`,
+  ];
+
+  if (analysis.mode === "correlation") {
+    const seenPairs = new Set<string>();
+    let strongPositiveCount = 0;
+    let strongNegativeCount = 0;
+
+    analysis.cells.forEach((cell) => {
+      if (cell.row === cell.column || !Number.isFinite(cell.value)) return;
+
+      const pairKey = [cell.row, cell.column].sort().join("|");
+      if (seenPairs.has(pairKey)) return;
+      seenPairs.add(pairKey);
+
+      if (cell.value > 0.8) {
+        strongPositiveCount += 1;
+        lines.push(
+          `Las series ${cell.row} y ${cell.column} mostraron alta asociación positiva (r = ${cell.value.toFixed(2)}).`
+        );
+      } else if (cell.value < -0.8) {
+        strongNegativeCount += 1;
+        lines.push(
+          `Las series ${cell.row} y ${cell.column} mostraron asociación negativa muy fuerte (r = ${cell.value.toFixed(2)}).`
+        );
+      }
+    });
+
+    if (
+      strongPositiveCount === 0 &&
+      strongNegativeCount === 0 &&
+      analysis.rows.length > 1
+    ) {
+      lines.push(
+        "La matriz de correlación se mantiene cercana a valores moderados o neutros."
+      );
+    }
+  } else {
+    const { min, max } = getHeatmapValuesBounds(analysis);
+    const highCells = analysis.cells.filter((cell) => {
+      if (!Number.isFinite(cell.value)) return false;
+      const normalized = max === min ? 0.5 : (cell.value - min) / (max - min);
+      return normalized >= 0.85;
+    });
+
+    if (highCells.length > 0) {
+      const sample = highCells.slice(0, 3);
+      sample.forEach((cell) => {
+        lines.push(
+          `Se observó un bloque de observaciones con valores elevados en ${cell.row} (${cell.column}).`
+        );
+      });
+    } else {
+      lines.push(
+        "No se detectaron bloques dominantes de valores extremadamente altos."
+      );
+    }
+  }
+
+  return lines;
+};
+
+type ScientificHeatmapGridProps = {
+  analysis: HeatmapAnalysis;
+};
+
+function ScientificHeatmapGrid({ analysis }: ScientificHeatmapGridProps) {
+  const valueBounds = useMemo(
+    () =>
+      analysis.mode === "values" ? getHeatmapValuesBounds(analysis) : null,
+    [analysis]
+  );
+  const showCellValues =
+    analysis.columns.length <= 14 && analysis.rows.length <= 10;
+
+  return (
+    <div className="overflow-x-auto mt-2">
+      <div
+        className="gap-0.5 min-w-max"
+        style={{
+          display: "grid",
+          gridTemplateColumns: `minmax(6.5rem, auto) repeat(${analysis.columns.length}, minmax(3rem, 1fr))`,
+        }}
+      >
+        <div className="px-2 py-1" />
+        {analysis.columns.map((column) => (
+          <div
+            key={`heatmap-col-${column}`}
+            className="px-1 py-1 text-center text-xs font-semibold text-[var(--app-heading)] truncate"
+            title={column}
+          >
+            {column}
+          </div>
+        ))}
+
+        {analysis.rows.map((row) => (
+          <div key={`heatmap-row-${row}`} className="contents">
+            <div
+              className="px-2 py-1 text-xs font-semibold text-[var(--app-heading)] truncate"
+              title={row}
+            >
+              {row}
+            </div>
+            {analysis.columns.map((column) => {
+              const value = getHeatmapCellValue(analysis, row, column);
+              const colors =
+                analysis.mode === "correlation"
+                  ? getCorrelationHeatmapCellColors(value)
+                  : getValuesHeatmapCellColors(
+                      value,
+                      valueBounds?.min ?? 0,
+                      valueBounds?.max ?? 1
+                    );
+
+              return (
+                <div
+                  key={`heatmap-cell-${row}-${column}`}
+                  className="min-h-[2.25rem] flex items-center justify-center rounded-sm px-1 py-1 text-xs tabular-nums"
+                  style={{
+                    backgroundColor: colors.backgroundColor,
+                    color: colors.color,
+                  }}
+                  title={`${row} × ${column}: ${formatHeatmapCellDisplayValue(analysis, value)}`}
+                >
+                  {showCellValues
+                    ? formatHeatmapCellDisplayValue(analysis, value)
+                    : null}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 type OutlierMethod = "iqr" | "zscore";
 
 type ExperimentalOutlier = {
@@ -3643,6 +3979,8 @@ const generateScientificReport = (input: {
   normalityAnalyses: NormalityAnalysis[];
   qqPlotAnalyses: QQPlotAnalysis[];
   violinPlotAnalyses: ViolinPlotAnalysis[];
+  correlationHeatmap: HeatmapAnalysis | null;
+  valuesHeatmap: HeatmapAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -3763,6 +4101,23 @@ const generateScientificReport = (input: {
     });
   }
   sections.push({ title: "Violin Plot", content: violinPlotLines });
+
+  const heatmapLines: string[] = [];
+  if (!input.correlationHeatmap && !input.valuesHeatmap) {
+    heatmapLines.push("No hay datos suficientes para generar un Heatmap.");
+  } else {
+    if (input.correlationHeatmap) {
+      heatmapLines.push(
+        ...getHeatmapInterpretationLines(input.correlationHeatmap)
+      );
+    }
+    if (input.valuesHeatmap) {
+      heatmapLines.push(
+        ...getHeatmapInterpretationLines(input.valuesHeatmap)
+      );
+    }
+  }
+  sections.push({ title: "Heatmap", content: heatmapLines });
 
   const correlationLines: string[] = [];
   if (seriesCount < 2) {
@@ -3998,6 +4353,8 @@ const generateScientificInterpretation = (input: {
   normalityAnalyses: NormalityAnalysis[];
   qqPlotAnalyses: QQPlotAnalysis[];
   violinPlotAnalyses: ViolinPlotAnalysis[];
+  correlationHeatmap: HeatmapAnalysis | null;
+  valuesHeatmap: HeatmapAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -4127,6 +4484,23 @@ const generateScientificInterpretation = (input: {
         "La concentración de los datos es similar entre las series analizadas."
       );
     }
+  }
+
+  if (input.correlationHeatmap) {
+    getHeatmapInterpretationLines(input.correlationHeatmap)
+      .filter(
+        (line) =>
+          line.includes("alta asociación positiva") ||
+          line.includes("asociación negativa muy fuerte") ||
+          line.includes("cercana a valores moderados")
+      )
+      .forEach((line) => findings.push(line));
+  }
+
+  if (input.valuesHeatmap) {
+    getHeatmapInterpretationLines(input.valuesHeatmap)
+      .filter((line) => line.includes("bloque de observaciones"))
+      .forEach((line) => findings.push(line));
   }
 
   if (input.experimentalOutliers.length === 0) {
@@ -4329,6 +4703,8 @@ const generateScientificAssistantReport = (input: {
   normalityAnalyses: NormalityAnalysis[];
   qqPlotAnalyses: QQPlotAnalysis[];
   violinPlotAnalyses: ViolinPlotAnalysis[];
+  correlationHeatmap: HeatmapAnalysis | null;
+  valuesHeatmap: HeatmapAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -4380,6 +4756,41 @@ const generateScientificAssistantReport = (input: {
     input.violinPlotAnalyses.every(
       (analysis) => analysis.shapeInterpretation === "symmetric"
     );
+  const heatmapStrongPositivePairs = (() => {
+    if (!input.correlationHeatmap) return 0;
+    const seenPairs = new Set<string>();
+    let count = 0;
+    input.correlationHeatmap.cells.forEach((cell) => {
+      if (cell.row === cell.column || !Number.isFinite(cell.value)) return;
+      const pairKey = [cell.row, cell.column].sort().join("|");
+      if (seenPairs.has(pairKey)) return;
+      seenPairs.add(pairKey);
+      if (cell.value > 0.8) count += 1;
+    });
+    return count;
+  })();
+  const heatmapStrongNegativePairs = (() => {
+    if (!input.correlationHeatmap) return 0;
+    const seenPairs = new Set<string>();
+    let count = 0;
+    input.correlationHeatmap.cells.forEach((cell) => {
+      if (cell.row === cell.column || !Number.isFinite(cell.value)) return;
+      const pairKey = [cell.row, cell.column].sort().join("|");
+      if (seenPairs.has(pairKey)) return;
+      seenPairs.add(pairKey);
+      if (cell.value < -0.8) count += 1;
+    });
+    return count;
+  })();
+  const hasValuesHeatmapHotspots = (() => {
+    if (!input.valuesHeatmap) return false;
+    const { min, max } = getHeatmapValuesBounds(input.valuesHeatmap);
+    return input.valuesHeatmap.cells.some((cell) => {
+      if (!Number.isFinite(cell.value)) return false;
+      const normalized = max === min ? 0.5 : (cell.value - min) / (max - min);
+      return normalized >= 0.85;
+    });
+  })();
 
   let confidenceLevel: ScientificAssistantConfidenceLevel =
     input.statisticalRecommendation?.confidence ?? "medium";
@@ -4433,6 +4844,20 @@ const generateScientificAssistantReport = (input: {
     confidenceLevel = "high";
   }
   if (hasSkewedViolin && hasPoorQQNormal && confidenceLevel === "high") {
+    confidenceLevel = "medium";
+  }
+  if (
+    heatmapStrongPositivePairs > 0 &&
+    allNormal &&
+    hasStrongQQNormal &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    (heatmapStrongNegativePairs > 0 || hasValuesHeatmapHotspots) &&
+    confidenceLevel === "high"
+  ) {
     confidenceLevel = "medium";
   }
 
@@ -4513,6 +4938,32 @@ const generateScientificAssistantReport = (input: {
   } else if (hasSkewedViolin) {
     pushUniqueFinding(
       "El Violin Plot revela asimetría en la forma de al menos una serie."
+    );
+  }
+
+  if (heatmapStrongPositivePairs > 0 && input.correlationHeatmap) {
+    const sampleCell = input.correlationHeatmap.cells.find(
+      (cell) =>
+        cell.row !== cell.column &&
+        Number.isFinite(cell.value) &&
+        cell.value > 0.8
+    );
+    if (sampleCell) {
+      pushUniqueFinding(
+        `El Heatmap confirma alta asociación positiva entre ${sampleCell.row} y ${sampleCell.column}.`
+      );
+    }
+  }
+
+  if (heatmapStrongNegativePairs > 0) {
+    pushUniqueFinding(
+      "El Heatmap evidencia pares de series con correlación negativa muy fuerte."
+    );
+  }
+
+  if (hasValuesHeatmapHotspots) {
+    pushUniqueFinding(
+      "El Heatmap de valores muestra bloques de observaciones con magnitudes elevadas."
     );
   }
 
@@ -4627,6 +5078,16 @@ const generateScientificAssistantReport = (input: {
   if (hasSkewedViolin && (hasNonNormal || hasPoorQQNormal)) {
     pushCaution(
       "Violin Plot, normalidad y Q-Q Plot indican posible asimetría o desviación de normalidad."
+    );
+  }
+  if (heatmapStrongNegativePairs > 0) {
+    pushCaution(
+      "El Heatmap de correlaciones sugiere relaciones inversas fuertes que conviene validar."
+    );
+  }
+  if (hasValuesHeatmapHotspots && hasOutliers) {
+    pushCaution(
+      "El Heatmap de valores y los outliers coinciden en zonas de alta magnitud."
     );
   }
   if (hasOutliers) {
@@ -5666,6 +6127,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showNormality, setShowNormality] = useState(false);
   const [showQQPlot, setShowQQPlot] = useState(false);
   const [showViolinPlot, setShowViolinPlot] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>("correlation");
   const [showTTest, setShowTTest] = useState(false);
   const [selectedTTestSeriesA, setSelectedTTestSeriesA] = useState<
     string | null
@@ -6669,6 +7132,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [violinPlotAnalyses]
   );
+  const correlationHeatmap = useMemo(
+    () => buildCorrelationHeatmap(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
+  const valuesHeatmap = useMemo(
+    () => buildValuesHeatmap(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
+  const heatmapAnalysis = useMemo(
+    () =>
+      heatmapMode === "correlation" ? correlationHeatmap : valuesHeatmap,
+    [heatmapMode, correlationHeatmap, valuesHeatmap]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -6751,6 +7227,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         normalityAnalyses,
         qqPlotAnalyses,
         violinPlotAnalyses,
+        correlationHeatmap,
+        valuesHeatmap,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -6769,6 +7247,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       normalityAnalyses,
       qqPlotAnalyses,
       violinPlotAnalyses,
+      correlationHeatmap,
+      valuesHeatmap,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -6789,6 +7269,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         normalityAnalyses,
         qqPlotAnalyses,
         violinPlotAnalyses,
+        correlationHeatmap,
+        valuesHeatmap,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -6804,6 +7286,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       normalityAnalyses,
       qqPlotAnalyses,
       violinPlotAnalyses,
+      correlationHeatmap,
+      valuesHeatmap,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -6823,6 +7307,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         normalityAnalyses,
         qqPlotAnalyses,
         violinPlotAnalyses,
+        correlationHeatmap,
+        valuesHeatmap,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -6840,6 +7326,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       normalityAnalyses,
       qqPlotAnalyses,
       violinPlotAnalyses,
+      correlationHeatmap,
+      valuesHeatmap,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -7488,7 +7976,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showBoxPlot ||
         showNormality ||
         showQQPlot ||
-        showViolinPlot)) ||
+        showViolinPlot ||
+        showHeatmap)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
     (isAssistantModuleEnabled &&
@@ -8850,6 +9339,60 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Heatmap
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showHeatmap}
+                            onChange={(e) => setShowHeatmap(e.target.checked)}
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <div
+                        className={`mt-2 space-y-2 ${
+                          !hasVisibleExperimentalSeries || !showHeatmap
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }`}
+                      >
+                        <label
+                          htmlFor="heatmap-mode-select"
+                          className={fieldLabel}
+                        >
+                          Modo de Heatmap
+                        </label>
+                        <select
+                          id="heatmap-mode-select"
+                          value={heatmapMode}
+                          onChange={(event) =>
+                            setHeatmapMode(
+                              event.target.value as HeatmapMode
+                            )
+                          }
+                          disabled={
+                            !hasVisibleExperimentalSeries || !showHeatmap
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <option value="correlation">Correlaciones</option>
+                          <option value="values">Valores</option>
+                        </select>
+                      </div>
                   </div>
 
                   <div
@@ -10798,6 +11341,95 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             </div>
                           );
                         })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showHeatmap && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🔥 Heatmap</p>
+                    {!hasVisibleExperimentalSeries || !heatmapAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar un Heatmap.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">Modo activo:</span>{" "}
+                          {getHeatmapModeLabel(heatmapAnalysis.mode)}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Series:</span>{" "}
+                          {heatmapAnalysis.rows.length}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Dimensión:</span>{" "}
+                          {heatmapAnalysis.rows.length}×
+                          {heatmapAnalysis.columns.length}
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--app-text-muted)]">
+                          {heatmapAnalysis.mode === "correlation" ? (
+                            <>
+                              <span className="inline-flex items-center gap-1">
+                                <span
+                                  className="inline-block h-3 w-6 rounded-sm"
+                                  style={{ backgroundColor: "rgb(220, 38, 38)" }}
+                                />
+                                -1
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <span
+                                  className="inline-block h-3 w-6 rounded-sm"
+                                  style={{ backgroundColor: "rgb(148, 163, 184)" }}
+                                />
+                                0
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <span
+                                  className="inline-block h-3 w-6 rounded-sm"
+                                  style={{ backgroundColor: "rgb(37, 99, 235)" }}
+                                />
+                                +1
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="inline-flex items-center gap-1">
+                                <span
+                                  className="inline-block h-3 w-6 rounded-sm"
+                                  style={{ backgroundColor: "rgb(241, 245, 249)" }}
+                                />
+                                Mínimo
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <span
+                                  className="inline-block h-3 w-6 rounded-sm"
+                                  style={{ backgroundColor: "rgb(37, 99, 235)" }}
+                                />
+                                Máximo
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        <ScientificHeatmapGrid analysis={heatmapAnalysis} />
+
+                        <div className="mt-3 space-y-1">
+                          {getHeatmapInterpretationLines(heatmapAnalysis)
+                            .filter(
+                              (line) =>
+                                !line.startsWith("Modo:") &&
+                                !line.startsWith("Series:") &&
+                                !line.startsWith("Dimensión:")
+                            )
+                            .map((line) => (
+                              <p key={line} className={`text-sm ${emptyState}`}>
+                                {line}
+                              </p>
+                            ))}
+                        </div>
                       </div>
                     )}
                   </div>
