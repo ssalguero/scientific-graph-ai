@@ -36,6 +36,7 @@ import {
   BarChart,
   ComposedChart,
   Line,
+  LineChart,
   Scatter,
   ScatterChart,
   XAxis,
@@ -2963,7 +2964,8 @@ const calculateKernelDensity = (
   values: number[],
   min: number,
   max: number,
-  pointCount: number = VIOLIN_DENSITY_POINT_COUNT
+  pointCount: number = VIOLIN_DENSITY_POINT_COUNT,
+  normalizeToPeak = true
 ): ViolinDensityPoint[] => {
   const sampleSize = values.length;
   if (sampleSize === 0) return [];
@@ -2973,7 +2975,7 @@ const calculateKernelDensity = (
   }
 
   const bandwidth = Math.max(calculateSilvermanBandwidth(values), 1e-9);
-  const sanitizedPointCount = Math.min(60, Math.max(40, Math.round(pointCount)));
+  const sanitizedPointCount = Math.min(80, Math.max(40, Math.round(pointCount)));
   const densityPoints: ViolinDensityPoint[] = [];
 
   for (let index = 0; index < sanitizedPointCount; index += 1) {
@@ -2995,11 +2997,295 @@ const calculateKernelDensity = (
     return densityPoints.map((point) => ({ ...point, density: 0 }));
   }
 
+  if (!normalizeToPeak) {
+    return densityPoints;
+  }
+
   return densityPoints.map((point) => ({
     value: point.value,
     density: point.density / maxDensity,
   }));
 };
+
+type KernelDensityPoint = {
+  x: number;
+  density: number;
+};
+
+type KernelDistributionShape =
+  | "symmetric"
+  | "right-skewed"
+  | "left-skewed"
+  | "multimodal";
+
+type KernelDensityAnalysis = {
+  seriesName: string;
+  sampleSize: number;
+  bandwidth: number;
+  peakDensity: number;
+  densityPoints: KernelDensityPoint[];
+  distributionShape: KernelDistributionShape;
+};
+
+const KERNEL_DENSITY_PLOT_POINT_COUNT = 80;
+
+const getKernelDistributionShapeLabel = (shape: KernelDistributionShape) => {
+  if (shape === "symmetric") return "Simétrica";
+  if (shape === "right-skewed") return "Sesgo positivo";
+  if (shape === "left-skewed") return "Sesgo negativo";
+  return "Multimodal";
+};
+
+const getKernelDistributionShapeMessage = (shape: KernelDistributionShape) => {
+  if (shape === "symmetric") {
+    return "Distribución aproximadamente simétrica.";
+  }
+  if (shape === "right-skewed") {
+    return "Distribución sesgada hacia valores altos.";
+  }
+  if (shape === "left-skewed") {
+    return "Distribución sesgada hacia valores bajos.";
+  }
+  return "Se detectan múltiples agrupaciones de datos.";
+};
+
+const detectKernelDistributionShape = (
+  points: KernelDensityPoint[]
+): KernelDistributionShape => {
+  if (points.length < 3) return "symmetric";
+
+  const peakDensity = Math.max(...points.map((point) => point.density), 0);
+  if (peakDensity <= 0) return "symmetric";
+
+  const peakThreshold = peakDensity * 0.2;
+  const localPeakIndices: number[] = [];
+
+  for (let index = 1; index < points.length - 1; index += 1) {
+    const current = points[index].density;
+    const previous = points[index - 1].density;
+    const next = points[index + 1].density;
+
+    if (
+      current >= peakThreshold &&
+      current >= previous &&
+      current > next
+    ) {
+      localPeakIndices.push(index);
+    }
+  }
+
+  if (points[0].density >= peakThreshold && points[0].density >= points[1].density) {
+    localPeakIndices.unshift(0);
+  }
+
+  const lastIndex = points.length - 1;
+  if (
+    points[lastIndex].density >= peakThreshold &&
+    points[lastIndex].density >= points[lastIndex - 1].density
+  ) {
+    localPeakIndices.push(lastIndex);
+  }
+
+  const uniquePeakIndices = [...new Set(localPeakIndices)];
+  if (uniquePeakIndices.length >= 2) return "multimodal";
+
+  const peakIndex =
+    uniquePeakIndices[0] ??
+    points.findIndex((point) => point.density === peakDensity);
+  if (peakIndex < 0) return "symmetric";
+
+  let leftMass = 0;
+  let rightMass = 0;
+
+  points.forEach((point, index) => {
+    if (index <= peakIndex) leftMass += point.density;
+    if (index >= peakIndex) rightMass += point.density;
+  });
+
+  if (rightMass > leftMass * 1.25) return "right-skewed";
+  if (leftMass > rightMass * 1.25) return "left-skewed";
+  return "symmetric";
+};
+
+const calculateKernelDensityAnalysis = (
+  series: ExperimentalSeries
+): KernelDensityAnalysis | null => {
+  const values = getSeriesYValues(series).sort((left, right) => left - right);
+  const sampleSize = values.length;
+
+  if (sampleSize === 0) return null;
+
+  const min = values[0];
+  const max = values[sampleSize - 1];
+  const bandwidth = Math.max(calculateSilvermanBandwidth(values), 1e-9);
+
+  if (sampleSize === 1 || min === max) {
+    return {
+      seriesName: series.name,
+      sampleSize,
+      bandwidth,
+      peakDensity: sampleSize === 1 ? 1 / bandwidth : 1,
+      densityPoints: [{ x: min, density: sampleSize === 1 ? 1 / bandwidth : 1 }],
+      distributionShape: "symmetric",
+    };
+  }
+
+  const rawDensity = calculateKernelDensity(
+    values,
+    min,
+    max,
+    KERNEL_DENSITY_PLOT_POINT_COUNT,
+    false
+  );
+  const densityPoints: KernelDensityPoint[] = rawDensity.map((point) => ({
+    x: point.value,
+    density: point.density,
+  }));
+  const peakDensity = Math.max(
+    ...densityPoints.map((point) => point.density),
+    0
+  );
+
+  return {
+    seriesName: series.name,
+    sampleSize,
+    bandwidth,
+    peakDensity,
+    densityPoints,
+    distributionShape: detectKernelDistributionShape(densityPoints),
+  };
+};
+
+const calculateKernelDensityAnalysesForSeries = (
+  series: ExperimentalSeries[]
+): KernelDensityAnalysis[] =>
+  series
+    .map((item) => calculateKernelDensityAnalysis(item))
+    .filter((analysis): analysis is KernelDensityAnalysis => analysis !== null);
+
+const getKernelDensityInterpretationLines = (
+  analyses: KernelDensityAnalysis[]
+): string[] => {
+  if (analyses.length === 0) {
+    return ["No hay datos suficientes para generar un Kernel Density Plot."];
+  }
+
+  const lines: string[] = [];
+
+  analyses.forEach((analysis) => {
+    lines.push(
+      `"${analysis.seriesName}" (N=${analysis.sampleSize}): h=${analysis.bandwidth.toFixed(4)}, pico=${analysis.peakDensity.toFixed(4)}, forma ${getKernelDistributionShapeLabel(analysis.distributionShape)}.`
+    );
+    lines.push(getKernelDistributionShapeMessage(analysis.distributionShape));
+  });
+
+  const multimodalCount = analyses.filter(
+    (analysis) => analysis.distributionShape === "multimodal"
+  ).length;
+  if (multimodalCount > 0) {
+    lines.push(
+      `Se detectó multimodalidad en ${multimodalCount} serie(s), lo que sugiere subpoblaciones en los datos.`
+    );
+  }
+
+  const skewedCount = analyses.filter(
+    (analysis) =>
+      analysis.distributionShape === "right-skewed" ||
+      analysis.distributionShape === "left-skewed"
+  ).length;
+  if (skewedCount > 0) {
+    lines.push(
+      "Al menos una serie presenta asimetría visible en la densidad estimada."
+    );
+  }
+
+  const peakValues = analyses.map((analysis) => analysis.peakDensity);
+  const maxPeak = Math.max(...peakValues);
+  const minPeak = Math.min(...peakValues);
+  if (maxPeak > minPeak * 2 && analyses.length >= 2) {
+    lines.push(
+      "La concentración de densidad varía notablemente entre series comparadas."
+    );
+  }
+
+  return lines;
+};
+
+type ScientificKernelDensityPlotChartProps = {
+  analyses: KernelDensityAnalysis[];
+  seriesColors: Map<string, string>;
+  chartTheme: ReturnType<typeof getChartTheme>;
+};
+
+function ScientificKernelDensityPlotChart({
+  analyses,
+  seriesColors,
+  chartTheme,
+}: ScientificKernelDensityPlotChartProps) {
+  return (
+    <div className="h-[240px] mt-3">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis
+            type="number"
+            dataKey="x"
+            name="Y"
+            tick={{ fill: chartTheme.axis, fontSize: 11 }}
+          />
+          <YAxis
+            type="number"
+            dataKey="density"
+            name="Densidad"
+            tick={{ fill: chartTheme.axis, fontSize: 11 }}
+          />
+          <Tooltip
+            content={({ active, payload: tooltipPayload }) => {
+              if (!active || !tooltipPayload?.length) return null;
+
+              const point = tooltipPayload[0]?.payload as
+                | KernelDensityPoint
+                | undefined;
+              const seriesName = tooltipPayload[0]?.name ?? "Serie";
+
+              if (!point) return null;
+
+              return (
+                <div
+                  className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                  style={{
+                    borderColor: chartTheme.tooltipBorder,
+                    backgroundColor: chartTheme.tooltipBg,
+                    color: chartTheme.tooltipColor,
+                  }}
+                >
+                  <p className="font-semibold">{seriesName}</p>
+                  <p>Y = {point.x.toFixed(4)}</p>
+                  <p>Densidad = {point.density.toFixed(4)}</p>
+                </div>
+              );
+            }}
+          />
+          {analyses.map((analysis) => (
+            <Line
+              key={`kde-line-${analysis.seriesName}`}
+              name={analysis.seriesName}
+              data={analysis.densityPoints}
+              type="monotone"
+              dataKey="density"
+              stroke={
+                seriesColors.get(analysis.seriesName) ?? "var(--app-accent)"
+              }
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={false}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 const classifyViolinShape = (
   q1: number,
@@ -4542,6 +4828,7 @@ const generateScientificReport = (input: {
   valuesHeatmap: HeatmapAnalysis | null;
   bubblePlotAnalysis: BubblePlotAnalysis | null;
   radarPlotAnalysis: RadarPlotAnalysis | null;
+  kernelDensityAnalyses: KernelDensityAnalysis[];
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -4688,6 +4975,11 @@ const generateScientificReport = (input: {
 
   const radarPlotLines = getRadarPlotInterpretationLines(input.radarPlotAnalysis);
   sections.push({ title: "Radar Plot", content: radarPlotLines });
+
+  sections.push({
+    title: "Kernel Density Plot",
+    content: getKernelDensityInterpretationLines(input.kernelDensityAnalyses),
+  });
 
   const correlationLines: string[] = [];
   if (seriesCount < 2) {
@@ -4927,6 +5219,7 @@ const generateScientificInterpretation = (input: {
   valuesHeatmap: HeatmapAnalysis | null;
   bubblePlotAnalysis: BubblePlotAnalysis | null;
   radarPlotAnalysis: RadarPlotAnalysis | null;
+  kernelDensityAnalyses: KernelDensityAnalysis[];
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -5098,6 +5391,18 @@ const generateScientificInterpretation = (input: {
           line.includes("perfiles muy distintos") ||
           line.includes("dispersión significativamente mayor") ||
           line.includes("perfil estadístico dominante")
+      )
+      .forEach((line) => findings.push(line));
+  }
+
+  if (input.kernelDensityAnalyses.length > 0) {
+    getKernelDensityInterpretationLines(input.kernelDensityAnalyses)
+      .filter(
+        (line) =>
+          line.includes("multimodalidad") ||
+          line.includes("asimetría visible") ||
+          line.includes("concentración de densidad") ||
+          line.includes("múltiples agrupaciones")
       )
       .forEach((line) => findings.push(line));
   }
@@ -5306,6 +5611,7 @@ const generateScientificAssistantReport = (input: {
   valuesHeatmap: HeatmapAnalysis | null;
   bubblePlotAnalysis: BubblePlotAnalysis | null;
   radarPlotAnalysis: RadarPlotAnalysis | null;
+  kernelDensityAnalyses: KernelDensityAnalysis[];
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -5356,6 +5662,19 @@ const generateScientificAssistantReport = (input: {
     input.violinPlotAnalyses.length > 0 &&
     input.violinPlotAnalyses.every(
       (analysis) => analysis.shapeInterpretation === "symmetric"
+    );
+  const hasKernelMultimodal = input.kernelDensityAnalyses.some(
+    (analysis) => analysis.distributionShape === "multimodal"
+  );
+  const hasKernelSkew = input.kernelDensityAnalyses.some(
+    (analysis) =>
+      analysis.distributionShape === "right-skewed" ||
+      analysis.distributionShape === "left-skewed"
+  );
+  const allKernelSymmetric =
+    input.kernelDensityAnalyses.length > 0 &&
+    input.kernelDensityAnalyses.every(
+      (analysis) => analysis.distributionShape === "symmetric"
     );
   const heatmapStrongPositivePairs = (() => {
     if (!input.correlationHeatmap) return 0;
@@ -5681,6 +6000,11 @@ const generateScientificAssistantReport = (input: {
       "Violin Plot, normalidad y Q-Q Plot indican posible asimetría o desviación de normalidad."
     );
   }
+  if (hasKernelMultimodal) {
+    pushCaution(
+      "La multimodalidad en KDE puede indicar mezcla de subpoblaciones; valide antes de inferencia paramétrica."
+    );
+  }
   if (heatmapStrongNegativePairs > 0) {
     pushCaution(
       "El Heatmap de correlaciones sugiere relaciones inversas fuertes que conviene validar."
@@ -5714,6 +6038,22 @@ const generateScientificAssistantReport = (input: {
           line.includes("perfil estadístico dominante")
       )
       .forEach((line) => pushUniqueFinding(line));
+  }
+
+  if (hasKernelMultimodal) {
+    pushUniqueFinding(
+      "El Kernel Density Plot sugiere multimodalidad en al menos una serie."
+    );
+  }
+  if (allKernelSymmetric && allViolinSymmetric && allNormal) {
+    pushUniqueFinding(
+      "KDE y Violin Plot son coherentes con distribuciones simétricas compatibles con normalidad."
+    );
+  }
+  if (hasKernelSkew && hasSkewedViolin) {
+    pushUniqueFinding(
+      "KDE y Violin Plot coinciden en asimetría de la distribución."
+    );
   }
   if (hasOutliers) {
     pushCaution(
@@ -6756,6 +7096,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>("correlation");
   const [showBubblePlot, setShowBubblePlot] = useState(false);
   const [showRadarPlot, setShowRadarPlot] = useState(false);
+  const [showKernelDensity, setShowKernelDensity] = useState(false);
   const [showTTest, setShowTTest] = useState(false);
   const [selectedTTestSeriesA, setSelectedTTestSeriesA] = useState<
     string | null
@@ -7787,6 +8128,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [visibleExperimentalSeries]
   );
+  const kernelDensityAnalyses = useMemo(
+    () => calculateKernelDensityAnalysesForSeries(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -7873,6 +8218,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         valuesHeatmap,
         bubblePlotAnalysis,
         radarPlotAnalysis,
+        kernelDensityAnalyses,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -7895,6 +8241,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       valuesHeatmap,
       bubblePlotAnalysis,
       radarPlotAnalysis,
+      kernelDensityAnalyses,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -7919,6 +8266,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         valuesHeatmap,
         bubblePlotAnalysis,
         radarPlotAnalysis,
+        kernelDensityAnalyses,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -7938,6 +8286,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       valuesHeatmap,
       bubblePlotAnalysis,
       radarPlotAnalysis,
+      kernelDensityAnalyses,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -7961,6 +8310,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         valuesHeatmap,
         bubblePlotAnalysis,
         radarPlotAnalysis,
+        kernelDensityAnalyses,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -7982,6 +8332,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       valuesHeatmap,
       bubblePlotAnalysis,
       radarPlotAnalysis,
+      kernelDensityAnalyses,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -8633,7 +8984,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showViolinPlot ||
         showHeatmap ||
         showBubblePlot ||
-        showRadarPlot)) ||
+        showRadarPlot ||
+        showKernelDensity)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
     (isAssistantModuleEnabled &&
@@ -10092,6 +10444,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             checked={showRadarPlot}
                             onChange={(e) =>
                               setShowRadarPlot(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Kernel Density Plot
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showKernelDensity}
+                            onChange={(e) =>
+                              setShowKernelDensity(e.target.checked)
                             }
                             disabled={!hasVisibleExperimentalSeries}
                           />
@@ -12190,6 +12567,92 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 {line}
                               </p>
                             ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showKernelDensity && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      📈 Kernel Density Plot
+                    </p>
+                    {!hasVisibleExperimentalSeries ||
+                    kernelDensityAnalyses.length === 0 ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar un Kernel
+                        Density Plot.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificKernelDensityPlotChart
+                          analyses={kernelDensityAnalyses}
+                          seriesColors={radarSeriesColors}
+                          chartTheme={chartTheme}
+                        />
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {kernelDensityAnalyses.map((analysis) => (
+                            <span
+                              key={`kde-legend-${analysis.seriesName}`}
+                              className="inline-flex items-center gap-1.5 text-xs text-[var(--app-text)]"
+                            >
+                              <span
+                                className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor:
+                                    radarSeriesColors.get(
+                                      analysis.seriesName
+                                    ) ?? "var(--app-accent)",
+                                }}
+                              />
+                              {analysis.seriesName}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="mt-3 space-y-3">
+                          {kernelDensityAnalyses.map((analysis) => (
+                            <div
+                              key={`kde-info-${analysis.seriesName}`}
+                              className="rounded-lg border border-[var(--app-border)] px-3 py-2"
+                            >
+                              <p>
+                                <span className="font-semibold">Serie:</span>{" "}
+                                {analysis.seriesName}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">N:</span>{" "}
+                                {analysis.sampleSize}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">
+                                  Bandwidth:
+                                </span>{" "}
+                                {analysis.bandwidth.toFixed(4)}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">
+                                  Densidad máxima:
+                                </span>{" "}
+                                {analysis.peakDensity.toFixed(4)}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">
+                                  Forma detectada:
+                                </span>{" "}
+                                {getKernelDistributionShapeLabel(
+                                  analysis.distributionShape
+                                )}
+                              </p>
+                              <p className={`mt-2 text-sm ${emptyState}`}>
+                                {getKernelDistributionShapeMessage(
+                                  analysis.distributionShape
+                                )}
+                              </p>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
