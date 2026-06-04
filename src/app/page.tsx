@@ -37,10 +37,12 @@ import {
   ComposedChart,
   Line,
   Scatter,
+  ScatterChart,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 
@@ -2195,6 +2197,158 @@ const analyzeNormalityForSeries = (
   series: ExperimentalSeries[]
 ): NormalityAnalysis[] => series.map((item) => analyzeSeriesNormality(item));
 
+type QQPoint = {
+  theoretical: number;
+  sample: number;
+};
+
+type QQPlotInterpretation = "excellent" | "good" | "moderate" | "poor";
+
+type QQPlotAnalysis = {
+  seriesName: string;
+  sampleSize: number;
+  correlation: number;
+  interpretation: QQPlotInterpretation;
+  points: QQPoint[];
+};
+
+const inverseNormalCDF = (probability: number): number | null => {
+  if (!Number.isFinite(probability) || probability <= 0 || probability >= 1) {
+    return null;
+  }
+
+  const a = [
+    -3.969683028665376e1, 2.209460984245205e2, -2.759285104469138e2,
+    1.38357751867269e2, -3.066479806614716e1, 2.506628277459239e0,
+  ];
+  const b = [
+    -5.447609879822406e1, 1.615858368152409e2, -1.556989798850864e2,
+    6.680131188771972e1, -1.328068155288572e1,
+  ];
+  const c = [
+    -7.784894002430293e-3, -3.223964580040421e-1, -2.400758277161838e0,
+    -2.549507540030974e0, 4.374664141464968e0, 2.938163982698053e0,
+  ];
+  const d = [
+    7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996e0,
+    3.754408661907416e0,
+  ];
+
+  const pLow = 0.02425;
+  const pHigh = 1 - pLow;
+  let q: number;
+  let r: number;
+
+  if (probability < pLow) {
+    q = Math.sqrt(-2 * Math.log(probability));
+    return (
+      (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+      ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1)
+    );
+  }
+
+  if (probability <= pHigh) {
+    q = probability - 0.5;
+    r = q * q;
+    return (
+      ((((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) *
+        q) /
+      (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1)
+    );
+  }
+
+  q = Math.sqrt(-2 * Math.log(1 - probability));
+  return (
+    -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+    ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1)
+  );
+};
+
+const classifyQQPlotInterpretation = (
+  correlation: number
+): QQPlotInterpretation => {
+  if (correlation >= 0.99) return "excellent";
+  if (correlation >= 0.97) return "good";
+  if (correlation >= 0.94) return "moderate";
+  return "poor";
+};
+
+const getQQPlotInterpretationLabel = (interpretation: QQPlotInterpretation) => {
+  if (interpretation === "excellent") return "Excelente ajuste normal";
+  if (interpretation === "good") return "Buen ajuste normal";
+  if (interpretation === "moderate") return "Ajuste moderado";
+  return "Ajuste deficiente";
+};
+
+const getQQPlotInterpretationMessage = (interpretation: QQPlotInterpretation) => {
+  if (interpretation === "excellent") {
+    return "Los datos siguen muy de cerca una distribución normal.";
+  }
+  if (interpretation === "good") {
+    return "Los datos son compatibles con una distribución normal.";
+  }
+  if (interpretation === "moderate") {
+    return "Se observan desviaciones moderadas respecto a la normalidad.";
+  }
+  return "Los datos muestran desviaciones importantes respecto a una distribución normal.";
+};
+
+const calculateQQPlot = (series: ExperimentalSeries): QQPlotAnalysis | null => {
+  const sortedSample = getSeriesYValues(series).sort((left, right) => left - right);
+  const sampleSize = sortedSample.length;
+
+  if (sampleSize < 2) return null;
+
+  const theoreticalValues: number[] = [];
+  const points: QQPoint[] = [];
+
+  for (let index = 0; index < sampleSize; index += 1) {
+    const probability = (index + 0.5) / sampleSize;
+    const theoretical = inverseNormalCDF(probability);
+    if (theoretical == null || !Number.isFinite(theoretical)) return null;
+
+    const sample = sortedSample[index];
+    theoreticalValues.push(theoretical);
+    points.push({ theoretical, sample });
+  }
+
+  const correlation = calculatePearsonCorrelation(
+    theoreticalValues,
+    sortedSample
+  );
+  if (correlation == null || !Number.isFinite(correlation)) return null;
+
+  return {
+    seriesName: series.name,
+    sampleSize,
+    correlation,
+    interpretation: classifyQQPlotInterpretation(correlation),
+    points,
+  };
+};
+
+const calculateQQPlotsForSeries = (
+  series: ExperimentalSeries[]
+): QQPlotAnalysis[] =>
+  series
+    .map((item) => calculateQQPlot(item))
+    .filter((analysis): analysis is QQPlotAnalysis => analysis !== null);
+
+const getQQPlotAxisBounds = (points: QQPoint[]) => {
+  if (points.length === 0) return null;
+
+  const domainValues = points.flatMap((point) => [
+    point.theoretical,
+    point.sample,
+  ]);
+  const minValue = Math.min(...domainValues);
+  const maxValue = Math.max(...domainValues);
+
+  if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) return null;
+
+  return { minValue, maxValue };
+};
+
 const formatNormalityMoment = (
   value: number,
   classification: NormalityClassification | null
@@ -3256,6 +3410,7 @@ const generateScientificReport = (input: {
   series: ExperimentalSeries[];
   experimentalStatistics: ExperimentalStatistics[];
   normalityAnalyses: NormalityAnalysis[];
+  qqPlotAnalyses: QQPlotAnalysis[];
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -3346,6 +3501,21 @@ const generateScientificReport = (input: {
   }
 
   sections.push({ title: "Normalidad", content: normalityLines });
+
+  const qqPlotLines: string[] = [];
+  if (input.qqPlotAnalyses.length === 0) {
+    qqPlotLines.push(
+      "No hay datos suficientes para generar un Q-Q Plot por serie."
+    );
+  } else {
+    input.qqPlotAnalyses.forEach((analysis) => {
+      qqPlotLines.push(
+        `"${analysis.seriesName}" (N=${analysis.sampleSize}): r = ${analysis.correlation.toFixed(4)}, ${getQQPlotInterpretationLabel(analysis.interpretation)}.`
+      );
+      qqPlotLines.push(getQQPlotInterpretationMessage(analysis.interpretation));
+    });
+  }
+  sections.push({ title: "Q-Q Plot", content: qqPlotLines });
 
   const correlationLines: string[] = [];
   if (seriesCount < 2) {
@@ -3579,6 +3749,7 @@ const generateScientificInterpretation = (input: {
     matrix: CorrelationMatrixRow[];
   };
   normalityAnalyses: NormalityAnalysis[];
+  qqPlotAnalyses: QQPlotAnalysis[];
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -3640,6 +3811,29 @@ const generateScientificInterpretation = (input: {
     } else {
       findings.push(
         "Se detectaron desviaciones respecto a una distribución normal."
+      );
+    }
+  }
+
+  if (input.qqPlotAnalyses.length > 0) {
+    const allQQExcellent = input.qqPlotAnalyses.every(
+      (analysis) => analysis.interpretation === "excellent"
+    );
+    const anyQQPoor = input.qqPlotAnalyses.some(
+      (analysis) => analysis.interpretation === "poor"
+    );
+
+    if (allQQExcellent) {
+      findings.push(
+        "El análisis Q-Q mostró excelente concordancia con una distribución normal."
+      );
+    } else if (anyQQPoor) {
+      findings.push(
+        "El análisis Q-Q evidenció desviaciones importantes de la normalidad."
+      );
+    } else {
+      findings.push(
+        "El análisis Q-Q indicó compatibilidad moderada con una distribución normal."
       );
     }
   }
@@ -3842,6 +4036,7 @@ const generateScientificAssistantReport = (input: {
     matrix: CorrelationMatrixRow[];
   };
   normalityAnalyses: NormalityAnalysis[];
+  qqPlotAnalyses: QQPlotAnalysis[];
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -3875,6 +4070,16 @@ const generateScientificAssistantReport = (input: {
         analysis.classification === "approximately-normal"
     ) &&
     !hasNonNormal;
+  const hasStrongQQNormal =
+    input.qqPlotAnalyses.length > 0 &&
+    input.qqPlotAnalyses.every(
+      (analysis) =>
+        analysis.interpretation === "excellent" ||
+        analysis.interpretation === "good"
+    );
+  const hasPoorQQNormal = input.qqPlotAnalyses.some(
+    (analysis) => analysis.interpretation === "poor"
+  );
 
   let confidenceLevel: ScientificAssistantConfidenceLevel =
     input.statisticalRecommendation?.confidence ?? "medium";
@@ -3903,6 +4108,20 @@ const generateScientificAssistantReport = (input: {
     !hasSmallSamples
   ) {
     confidenceLevel = "high";
+  }
+  if (
+    hasStrongQQNormal &&
+    allNormal &&
+    !hasOutliers &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (hasPoorQQNormal && confidenceLevel === "high") {
+    confidenceLevel = "medium";
+  }
+  if (hasPoorQQNormal && hasSmallSamples && confidenceLevel !== "low") {
+    confidenceLevel = "low";
   }
 
   const cautiousReasons: string[] = [];
@@ -3963,6 +4182,16 @@ const generateScientificAssistantReport = (input: {
     pushUniqueFinding("Las series cumplen supuestos de normalidad.");
   } else if (hasNonNormal) {
     pushUniqueFinding("Se detectaron series con distribución no normal.");
+  }
+
+  if (hasStrongQQNormal) {
+    pushUniqueFinding(
+      "El Q-Q Plot respalda la compatibilidad con una distribución normal."
+    );
+  } else if (hasPoorQQNormal) {
+    pushUniqueFinding(
+      "El Q-Q Plot muestra desviaciones importantes respecto a la normalidad."
+    );
   }
 
   input.scientificInterpretation?.findings
@@ -4066,6 +4295,11 @@ const generateScientificAssistantReport = (input: {
   if (hasNonNormal) {
     pushCaution(
       "La normalidad no se cumple en todas las series; priorice métodos no paramétricos."
+    );
+  }
+  if (hasPoorQQNormal) {
+    pushCaution(
+      "El Q-Q Plot sugiere desviaciones de normalidad; valide con pruebas no paramétricas."
     );
   }
   if (hasOutliers) {
@@ -5103,6 +5337,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [histogramBins, setHistogramBins] = useState(HISTOGRAM_BINS_DEFAULT);
   const [showBoxPlot, setShowBoxPlot] = useState(false);
   const [showNormality, setShowNormality] = useState(false);
+  const [showQQPlot, setShowQQPlot] = useState(false);
   const [showTTest, setShowTTest] = useState(false);
   const [selectedTTestSeriesA, setSelectedTTestSeriesA] = useState<
     string | null
@@ -6084,6 +6319,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => analyzeNormalityForSeries(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const qqPlotAnalyses = useMemo(
+    () => calculateQQPlotsForSeries(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
+  const qqPlotAnalysesBySeriesName = useMemo(
+    () =>
+      new Map(
+        qqPlotAnalyses.map((analysis) => [analysis.seriesName, analysis])
+      ),
+    [qqPlotAnalyses]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -6164,6 +6410,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         series: visibleExperimentalSeries,
         experimentalStatistics,
         normalityAnalyses,
+        qqPlotAnalyses,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -6180,6 +6427,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       visibleExperimentalSeries,
       experimentalStatistics,
       normalityAnalyses,
+      qqPlotAnalyses,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -6198,6 +6446,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         series: visibleExperimentalSeries,
         correlationAnalysis,
         normalityAnalyses,
+        qqPlotAnalyses,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -6211,6 +6460,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       visibleExperimentalSeries,
       correlationAnalysis,
       normalityAnalyses,
+      qqPlotAnalyses,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -6228,6 +6478,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         experimentalStatistics,
         correlationAnalysis,
         normalityAnalyses,
+        qqPlotAnalyses,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -6243,6 +6494,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       experimentalStatistics,
       correlationAnalysis,
       normalityAnalyses,
+      qqPlotAnalyses,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -6889,7 +7141,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showOutliers ||
         showHistogram ||
         showBoxPlot ||
-        showNormality)) ||
+        showNormality ||
+        showQQPlot)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
     (isAssistantModuleEnabled &&
@@ -8197,6 +8450,29 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             onChange={(e) =>
                               setShowNormality(e.target.checked)
                             }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Q-Q Plot
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showQQPlot}
+                            onChange={(e) => setShowQQPlot(e.target.checked)}
                             disabled={!hasVisibleExperimentalSeries}
                           />
                           <span className={toggleTrackBg} aria-hidden />
@@ -9915,6 +10191,169 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                   analysis.classification
                                 )}
                               </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showQQPlot && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📈 Q-Q Plot</p>
+                    {!hasVisibleExperimentalSeries ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar un Q-Q Plot.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {visibleExperimentalSeries.map((series) => {
+                          const analysis = qqPlotAnalysesBySeriesName.get(
+                            series.name
+                          );
+
+                          return (
+                            <div key={series.id} className={contentPanel}>
+                              <p>
+                                <span className="font-semibold">Serie:</span>{" "}
+                                {series.name}
+                              </p>
+
+                              {!analysis ? (
+                                <p className={`mt-2 text-sm ${emptyState}`}>
+                                  Resultado no disponible para esta serie.
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">N:</span>{" "}
+                                    {analysis.sampleSize}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">
+                                      Correlación:
+                                    </span>{" "}
+                                    r = {analysis.correlation.toFixed(4)}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">
+                                      Clasificación:
+                                    </span>{" "}
+                                    {getQQPlotInterpretationLabel(
+                                      analysis.interpretation
+                                    )}
+                                  </p>
+                                  <p className={`mt-2 text-sm ${emptyState}`}>
+                                    {getQQPlotInterpretationMessage(
+                                      analysis.interpretation
+                                    )}
+                                  </p>
+
+                                  <div className="h-[240px] mt-3">
+                                    <ResponsiveContainer
+                                      width="100%"
+                                      height="100%"
+                                    >
+                                      <ScatterChart
+                                        margin={{
+                                          top: 8,
+                                          right: 12,
+                                          left: 0,
+                                          bottom: 0,
+                                        }}
+                                      >
+                                        <CartesianGrid
+                                          strokeDasharray="3 3"
+                                          stroke={chartTheme.grid}
+                                        />
+                                        <XAxis
+                                          type="number"
+                                          dataKey="theoretical"
+                                          name="Cuantil teórico"
+                                          tick={{
+                                            fill: chartTheme.axis,
+                                            fontSize: 11,
+                                          }}
+                                        />
+                                        <YAxis
+                                          type="number"
+                                          dataKey="sample"
+                                          name="Muestra"
+                                          tick={{
+                                            fill: chartTheme.axis,
+                                            fontSize: 11,
+                                          }}
+                                        />
+                                        <Tooltip
+                                          content={({ active, payload }) => {
+                                            if (!active || !payload?.length) {
+                                              return null;
+                                            }
+
+                                            const point = payload[0]
+                                              ?.payload as QQPoint | undefined;
+                                            if (!point) return null;
+
+                                            return (
+                                              <div
+                                                className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                                                style={{
+                                                  borderColor:
+                                                    chartTheme.tooltipBorder,
+                                                  backgroundColor:
+                                                    chartTheme.tooltipBg,
+                                                  color: chartTheme.tooltipColor,
+                                                }}
+                                              >
+                                                <p>
+                                                  Teórico:{" "}
+                                                  {point.theoretical.toFixed(4)}
+                                                </p>
+                                                <p>
+                                                  Muestra:{" "}
+                                                  {point.sample.toFixed(4)}
+                                                </p>
+                                              </div>
+                                            );
+                                          }}
+                                        />
+                                        <Scatter
+                                          name="Observado"
+                                          data={analysis.points}
+                                          fill="var(--app-accent)"
+                                          line={false}
+                                          isAnimationActive={false}
+                                        />
+                                        {(() => {
+                                          const bounds = getQQPlotAxisBounds(
+                                            analysis.points
+                                          );
+                                          if (!bounds) return null;
+
+                                          return (
+                                            <ReferenceLine
+                                              segment={[
+                                                {
+                                                  x: bounds.minValue,
+                                                  y: bounds.minValue,
+                                                },
+                                                {
+                                                  x: bounds.maxValue,
+                                                  y: bounds.maxValue,
+                                                },
+                                              ]}
+                                              stroke="var(--app-text-muted)"
+                                              strokeDasharray="6 4"
+                                              ifOverflow="extendDomain"
+                                            />
+                                          );
+                                        })()}
+                                      </ScatterChart>
+                                    </ResponsiveContainer>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           );
                         })}
