@@ -3680,15 +3680,113 @@ type PCAResultPoint = {
   pc2: number;
 };
 
+type PCALoading = {
+  variable: string;
+  pc1: number;
+  pc2: number;
+  contributionPc1: number;
+  contributionPc2: number;
+};
+
 type PCAAnalysis = {
   component1Variance: number;
   component2Variance: number;
   cumulativeVariance: number;
   points: PCAResultPoint[];
   interpretation: string;
+  loadings: PCALoading[];
+  loadingsInterpretation: string[];
 };
 
+const PCA_DOMINANT_CONTRIBUTION_THRESHOLD = 40;
+const PCA_BALANCED_CONTRIBUTION_SPREAD = 20;
+
 const formatPCAVariancePercent = (value: number) => `${value.toFixed(1)}%`;
+
+const buildPCALoadings = (
+  series: ExperimentalSeries[],
+  eigenvectorPc1: number[],
+  eigenvectorPc2: number[]
+): PCALoading[] => {
+  const loadings = series.map((item, index) => ({
+    variable: item.name,
+    pc1: eigenvectorPc1[index] ?? 0,
+    pc2: eigenvectorPc2[index] ?? 0,
+    contributionPc1: 0,
+    contributionPc2: 0,
+  }));
+
+  const sumSquaredPc1 = loadings.reduce((sum, loading) => sum + loading.pc1 ** 2, 0);
+  const sumSquaredPc2 = loadings.reduce((sum, loading) => sum + loading.pc2 ** 2, 0);
+
+  return loadings.map((loading) => ({
+    ...loading,
+    contributionPc1:
+      sumSquaredPc1 > 0 ? (loading.pc1 ** 2 / sumSquaredPc1) * 100 : 0,
+    contributionPc2:
+      sumSquaredPc2 > 0 ? (loading.pc2 ** 2 / sumSquaredPc2) * 100 : 0,
+  }));
+};
+
+const hasSimilarPCAContributions = (contributions: number[]) => {
+  if (contributions.length < 2) return false;
+
+  const maxContribution = Math.max(...contributions);
+  const minContribution = Math.min(...contributions);
+
+  return (
+    maxContribution < PCA_DOMINANT_CONTRIBUTION_THRESHOLD &&
+    maxContribution - minContribution <= PCA_BALANCED_CONTRIBUTION_SPREAD
+  );
+};
+
+const getPCALoadingsInterpretation = (loadings: PCALoading[]): string[] => {
+  const lines: string[] = [];
+
+  loadings
+    .filter(
+      (loading) => loading.contributionPc1 > PCA_DOMINANT_CONTRIBUTION_THRESHOLD
+    )
+    .forEach((loading) => {
+      lines.push(`Variable dominante en PC1: "${loading.variable}".`);
+    });
+
+  loadings
+    .filter(
+      (loading) => loading.contributionPc2 > PCA_DOMINANT_CONTRIBUTION_THRESHOLD
+    )
+    .forEach((loading) => {
+      lines.push(`Variable dominante en PC2: "${loading.variable}".`);
+    });
+
+  const pc1Contributions = loadings.map((loading) => loading.contributionPc1);
+  const pc2Contributions = loadings.map((loading) => loading.contributionPc2);
+
+  if (hasSimilarPCAContributions(pc1Contributions)) {
+    lines.push(
+      "El componente PC1 representa una combinación equilibrada de variables."
+    );
+  }
+
+  if (hasSimilarPCAContributions(pc2Contributions)) {
+    lines.push(
+      "El componente PC2 representa una combinación equilibrada de variables."
+    );
+  }
+
+  return lines;
+};
+
+const hasPCADominantVariable = (analysis: PCAAnalysis | null) =>
+  analysis?.loadings.some(
+    (loading) =>
+      loading.contributionPc1 > PCA_DOMINANT_CONTRIBUTION_THRESHOLD ||
+      loading.contributionPc2 > PCA_DOMINANT_CONTRIBUTION_THRESHOLD
+  ) ?? false;
+
+const hasPCAClearStructure = (analysis: PCAAnalysis | null) =>
+  analysis !== null &&
+  (analysis.cumulativeVariance >= 80 || hasPCADominantVariable(analysis));
 
 const getPCAInterpretationMessage = (cumulativeVariance: number) => {
   if (cumulativeVariance >= 80) {
@@ -3892,12 +3990,21 @@ const buildPCAAnalysis = (
     pc2: pc2Scores[index] ?? 0,
   }));
 
+  const loadings = buildPCALoadings(
+    series,
+    firstComponent.eigenvector,
+    secondComponent.eigenvector
+  );
+  const loadingsInterpretation = getPCALoadingsInterpretation(loadings);
+
   return {
     component1Variance,
     component2Variance,
     cumulativeVariance,
     points,
     interpretation: getPCAInterpretationMessage(cumulativeVariance),
+    loadings,
+    loadingsInterpretation,
   };
 };
 
@@ -3919,6 +4026,46 @@ const getPCAInterpretationLines = (
     `Varianza acumulada: ${formatPCAVariancePercent(analysis.cumulativeVariance)}.`,
     analysis.interpretation,
   ];
+};
+
+const getPCALoadingsInterpretationLines = (
+  analysis: PCAAnalysis | null
+): string[] => {
+  if (!analysis || analysis.loadings.length === 0) {
+    return ["No hay loadings disponibles para PCA."];
+  }
+
+  const lines: string[] = [];
+  const dominantPc1 = analysis.loadings.filter(
+    (loading) => loading.contributionPc1 > PCA_DOMINANT_CONTRIBUTION_THRESHOLD
+  );
+  const dominantPc2 = analysis.loadings.filter(
+    (loading) => loading.contributionPc2 > PCA_DOMINANT_CONTRIBUTION_THRESHOLD
+  );
+
+  if (dominantPc1.length > 0) {
+    lines.push(
+      `Variable dominante en PC1: ${dominantPc1.map((loading) => loading.variable).join(", ")}.`
+    );
+  }
+
+  if (dominantPc2.length > 0) {
+    lines.push(
+      `Variable dominante en PC2: ${dominantPc2.map((loading) => loading.variable).join(", ")}.`
+    );
+  }
+
+  analysis.loadingsInterpretation.forEach((line) => {
+    if (!lines.includes(line)) lines.push(line);
+  });
+
+  analysis.loadings.forEach((loading) => {
+    lines.push(
+      `${loading.variable}: loading PC1=${formatExperimentalStat(loading.pc1)}, PC2=${formatExperimentalStat(loading.pc2)}, contribución PC1=${loading.contributionPc1.toFixed(1)}%, PC2=${loading.contributionPc2.toFixed(1)}%.`
+    );
+  });
+
+  return lines;
 };
 
 type ScientificPCAPlotChartProps = {
@@ -3984,6 +4131,184 @@ function ScientificPCAPlotChart({
         </ScatterChart>
       </ResponsiveContainer>
     </div>
+  );
+}
+
+type ScientificPCALoadingsSectionProps = {
+  analysis: PCAAnalysis;
+};
+
+function ScientificPCALoadingsSection({
+  analysis,
+}: ScientificPCALoadingsSectionProps) {
+  return (
+    <>
+      {analysis.loadingsInterpretation.length > 0 && (
+        <div className="mt-3 space-y-1">
+          {analysis.loadingsInterpretation.map((line) => (
+            <p key={line} className="text-sm text-[var(--app-text-muted)]">
+              {line}
+            </p>
+          ))}
+        </div>
+      )}
+
+      <p className={`${subsectionHeading} mt-4`}>📋 Loadings</p>
+      <div className="overflow-x-auto mt-2">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b border-[var(--app-border)]">
+              <th className="text-left py-2 pr-3 font-semibold">Variable</th>
+              <th className="text-left py-2 pr-3 font-semibold">Loading PC1</th>
+              <th className="text-left py-2 pr-3 font-semibold">Loading PC2</th>
+              <th className="text-left py-2 pr-3 font-semibold">
+                Contribución PC1 %
+              </th>
+              <th className="text-left py-2 font-semibold">
+                Contribución PC2 %
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {analysis.loadings.map((loading) => (
+              <tr
+                key={`pca-loading-${loading.variable}`}
+                className="border-b border-[var(--app-border)]"
+              >
+                <td className="py-2 pr-3">{loading.variable}</td>
+                <td className="py-2 pr-3 font-mono">
+                  {formatExperimentalStat(loading.pc1)}
+                </td>
+                <td className="py-2 pr-3 font-mono">
+                  {formatExperimentalStat(loading.pc2)}
+                </td>
+                <td className="py-2 pr-3 font-mono">
+                  {loading.contributionPc1.toFixed(1)}%
+                </td>
+                <td className="py-2 font-mono">
+                  {loading.contributionPc2.toFixed(1)}%
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className={`${subsectionHeading} mt-4`}>🧭 Biplot simplificado</p>
+      <ScientificPCABiplot analysis={analysis} />
+    </>
+  );
+}
+
+type ScientificPCABiplotProps = {
+  analysis: PCAAnalysis;
+};
+
+function ScientificPCABiplot({ analysis }: ScientificPCABiplotProps) {
+  const width = 520;
+  const height = 240;
+  const padding = 28;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const plotRadius = Math.min(width, height) / 2 - padding;
+
+  const maxMagnitude = Math.max(
+    ...analysis.loadings.map((loading) =>
+      Math.max(Math.abs(loading.pc1), Math.abs(loading.pc2))
+    ),
+    1e-9
+  );
+  const scale = plotRadius / maxMagnitude;
+
+  const renderArrowHead = (
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+    key: string
+  ) => {
+    const angle = Math.atan2(endY - startY, endX - startX);
+    const headLength = 8;
+    const headAngle = Math.PI / 7;
+
+    const pointAX = endX - headLength * Math.cos(angle - headAngle);
+    const pointAY = endY - headLength * Math.sin(angle - headAngle);
+    const pointBX = endX - headLength * Math.cos(angle + headAngle);
+    const pointBY = endY - headLength * Math.sin(angle + headAngle);
+
+    return (
+      <polygon
+        key={key}
+        points={`${endX},${endY} ${pointAX},${pointAY} ${pointBX},${pointBY}`}
+        fill="var(--app-accent)"
+      />
+    );
+  };
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="w-full max-w-xl mt-2"
+      style={{ height: 240 }}
+      role="img"
+      aria-label="Biplot simplificado de loadings PCA"
+    >
+      <line
+        x1={centerX - plotRadius}
+        y1={centerY}
+        x2={centerX + plotRadius}
+        y2={centerY}
+        stroke="var(--app-border)"
+        strokeWidth={1.5}
+      />
+      <line
+        x1={centerX}
+        y1={centerY - plotRadius}
+        x2={centerX}
+        y2={centerY + plotRadius}
+        stroke="var(--app-border)"
+        strokeWidth={1.5}
+      />
+      <circle cx={centerX} cy={centerY} r={3} fill="var(--app-text-muted)" />
+
+      {analysis.loadings.map((loading) => {
+        const endX = centerX + loading.pc1 * scale;
+        const endY = centerY - loading.pc2 * scale;
+        const label =
+          loading.variable.length > 14
+            ? `${loading.variable.slice(0, 13)}…`
+            : loading.variable;
+
+        return (
+          <g key={`pca-biplot-${loading.variable}`}>
+            <line
+              x1={centerX}
+              y1={centerY}
+              x2={endX}
+              y2={endY}
+              stroke="var(--app-accent)"
+              strokeWidth={2}
+            />
+            {renderArrowHead(
+              centerX,
+              centerY,
+              endX,
+              endY,
+              `pca-biplot-head-${loading.variable}`
+            )}
+            <text
+              x={endX + (endX >= centerX ? 6 : -6)}
+              y={endY + (endY <= centerY ? -6 : 12)}
+              textAnchor={endX >= centerX ? "start" : "end"}
+              fill="var(--app-text)"
+              fontSize={10}
+            >
+              {label}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
   );
 }
 
@@ -6114,6 +6439,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "PCA Loadings",
+    content: getPCALoadingsInterpretationLines(input.pcaAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: getHierarchicalClusteringInterpretationLines(
       input.hierarchicalClusteringAnalysis
@@ -6573,6 +6903,10 @@ const generateScientificInterpretation = (input: {
         "La estructura multivariante no queda completamente representada por dos componentes."
       );
     }
+
+    input.pcaAnalysis.loadingsInterpretation.forEach((line) => {
+      if (!findings.includes(line)) findings.push(line);
+    });
   }
 
   if (input.hierarchicalClusteringAnalysis) {
@@ -6887,8 +7221,8 @@ const generateScientificAssistantReport = (input: {
     input.hierarchicalClusteringAnalysis?.interpretation.includes(
       "claramente diferenciados"
     ) ?? false;
-  const hasClusteringPCAConsistency =
-    hasPCAHighVariance &&
+  const hasPCAAdvancedClusteringConsistency =
+    hasPCAClearStructure(input.pcaAnalysis) &&
     hasClusteringClearGroups &&
     input.hierarchicalClusteringAnalysis !== null &&
     input.pcaAnalysis !== null;
@@ -7002,7 +7336,7 @@ const generateScientificAssistantReport = (input: {
   if (hasPCALowVariance && confidenceLevel === "high") {
     confidenceLevel = "medium";
   }
-  if (hasClusteringPCAConsistency && confidenceLevel === "medium") {
+  if (hasPCAAdvancedClusteringConsistency && confidenceLevel === "medium") {
     confidenceLevel = "high";
   }
 
@@ -7301,6 +7635,15 @@ const generateScientificAssistantReport = (input: {
         "La estructura multivariante no queda completamente representada por dos componentes."
       );
     }
+
+    input.pcaAnalysis.loadingsInterpretation.forEach((line) =>
+      pushUniqueFinding(line)
+    );
+  }
+  if (hasPCAAdvancedClusteringConsistency) {
+    pushUniqueFinding(
+      "Los loadings de PCA y el clustering jerárquico coinciden en una estructura multivariante clara."
+    );
   }
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
@@ -7313,11 +7656,6 @@ const generateScientificAssistantReport = (input: {
     if (hasClusteringClearGroups) {
       pushUniqueFinding("Se observaron grupos claramente diferenciados.");
     }
-  }
-  if (hasClusteringPCAConsistency) {
-    pushUniqueFinding(
-      "El clustering jerárquico y el PCA coinciden en una estructura multivariante bien definida."
-    );
   }
   if (
     hasForestSeparation &&
@@ -12881,6 +13219,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         chartTheme={chartTheme}
                       />
                       <p className="mt-2 text-sm">{pcaAnalysis.interpretation}</p>
+                      <ScientificPCALoadingsSection analysis={pcaAnalysis} />
                     </>
                   )}
                 </div>
@@ -14200,6 +14539,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           analysis={pcaAnalysis}
                           chartTheme={chartTheme}
                         />
+                        <ScientificPCALoadingsSection analysis={pcaAnalysis} />
                       </div>
                     )}
                   </div>
