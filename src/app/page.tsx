@@ -3700,8 +3700,52 @@ type PCAAnalysis = {
 
 const PCA_DOMINANT_CONTRIBUTION_THRESHOLD = 40;
 const PCA_BALANCED_CONTRIBUTION_SPREAD = 20;
+const PCA_EIGENVALUE_EPSILON = 1e-9;
 
 const formatPCAVariancePercent = (value: number) => `${value.toFixed(1)}%`;
+
+const getPCAVariableStandardDeviations = (matrix: number[][]) => {
+  const observationCount = matrix.length;
+  const variableCount = matrix[0]?.length ?? 0;
+  const standardDeviations = Array.from({ length: variableCount }, () => 0);
+
+  for (let columnIndex = 0; columnIndex < variableCount; columnIndex += 1) {
+    const mean =
+      matrix.reduce((sum, row) => sum + row[columnIndex], 0) / observationCount;
+
+    if (observationCount <= 1) {
+      standardDeviations[columnIndex] = 0;
+      continue;
+    }
+
+    const variance =
+      matrix.reduce(
+        (sum, row) => sum + (row[columnIndex] - mean) ** 2,
+        0
+      ) / (observationCount - 1);
+    standardDeviations[columnIndex] = Math.sqrt(variance);
+  }
+
+  return standardDeviations;
+};
+
+const filterPCADataMatrixByActiveColumns = (
+  matrix: number[][],
+  activeColumnIndices: number[]
+) =>
+  matrix.map((row) => activeColumnIndices.map((columnIndex) => row[columnIndex]));
+
+const expandPCAEigenvectorToSeries = (
+  activeEigenvector: number[],
+  activeColumnIndices: number[],
+  totalVariableCount: number
+) => {
+  const expanded = Array.from({ length: totalVariableCount }, () => 0);
+  activeColumnIndices.forEach((columnIndex, activeIndex) => {
+    expanded[columnIndex] = activeEigenvector[activeIndex] ?? 0;
+  });
+  return expanded;
+};
 
 const buildPCALoadings = (
   series: ExperimentalSeries[],
@@ -3777,6 +3821,14 @@ const getPCALoadingsInterpretation = (loadings: PCALoading[]): string[] => {
   return lines;
 };
 
+const deduplicateTextLines = (lines: string[]): string[] => {
+  const uniqueLines: string[] = [];
+  lines.forEach((line) => {
+    if (!uniqueLines.includes(line)) uniqueLines.push(line);
+  });
+  return uniqueLines;
+};
+
 const hasPCADominantVariable = (analysis: PCAAnalysis | null) =>
   analysis?.loadings.some(
     (loading) =>
@@ -3807,6 +3859,47 @@ const normalizeVector = (values: number[]) => {
   const norm = vectorNorm(values);
   if (norm === 0) return values.map(() => 0);
   return values.map((value) => value / norm);
+};
+
+const isDegeneratePCAComponent = (
+  eigenvalue: number,
+  eigenvector: number[]
+) =>
+  eigenvalue <= PCA_EIGENVALUE_EPSILON ||
+  vectorNorm(eigenvector) <= PCA_EIGENVALUE_EPSILON;
+
+const normalizePCAExplainedVariance = (
+  eigenvalue1: number,
+  eigenvalue2: number,
+  totalVariance: number
+) => {
+  if (totalVariance <= PCA_EIGENVALUE_EPSILON) {
+    return {
+      component1Variance: 0,
+      component2Variance: 0,
+      cumulativeVariance: 0,
+    };
+  }
+
+  const cappedEigenvalue1 = Math.min(Math.max(0, eigenvalue1), totalVariance);
+  const remainingVariance = Math.max(0, totalVariance - cappedEigenvalue1);
+  const cappedEigenvalue2 = Math.min(Math.max(0, eigenvalue2), remainingVariance);
+
+  const component1Variance = Math.min(
+    100,
+    (cappedEigenvalue1 / totalVariance) * 100
+  );
+  const component2Variance = Math.min(
+    Math.max(0, 100 - component1Variance),
+    (cappedEigenvalue2 / totalVariance) * 100
+  );
+  const cumulativeVariance = component1Variance + component2Variance;
+
+  return {
+    component1Variance,
+    component2Variance,
+    cumulativeVariance,
+  };
 };
 
 const multiplySymmetricMatrixVector = (matrix: number[][], vector: number[]) => {
@@ -3849,6 +3942,13 @@ const powerIterationEigen = (
 
   const transformed = multiplySymmetricMatrixVector(matrix, vector);
   const eigenvalue = Math.max(0, dotProduct(vector, transformed));
+
+  if (isDegeneratePCAComponent(eigenvalue, vector)) {
+    return {
+      eigenvalue: 0,
+      eigenvector: Array.from({ length: size }, () => 0),
+    };
+  }
 
   return { eigenvalue, eigenvector: vector };
 };
@@ -3954,35 +4054,94 @@ const buildPCAAnalysis = (
   const rawMatrix = buildPCADataMatrix(series);
   if (!rawMatrix) return null;
 
-  const standardizedMatrix = standardizePCADataMatrix(rawMatrix);
+  const variableCount = rawMatrix[0]?.length ?? 0;
+  const standardDeviations = getPCAVariableStandardDeviations(rawMatrix);
+  const activeColumnIndices = standardDeviations
+    .map((standardDeviation, index) =>
+      standardDeviation > PCA_EIGENVALUE_EPSILON ? index : -1
+    )
+    .filter((index) => index >= 0);
+
+  if (activeColumnIndices.length < 2) return null;
+
+  const activeMatrix = filterPCADataMatrixByActiveColumns(
+    rawMatrix,
+    activeColumnIndices
+  );
+  const standardizedMatrix = standardizePCADataMatrix(activeMatrix);
   const covarianceMatrix = computePCACovarianceMatrix(standardizedMatrix);
   const totalVariance = covarianceMatrix.reduce(
     (sum, row, index) => sum + row[index],
     0
   );
 
-  if (totalVariance <= 0) return null;
+  if (totalVariance <= PCA_EIGENVALUE_EPSILON) return null;
 
   const firstComponent = powerIterationEigen(covarianceMatrix);
-  const secondComponent = powerIterationEigen(
+  let secondComponent = powerIterationEigen(
     covarianceMatrix,
     firstComponent.eigenvector
+  );
+
+  const remainingVariance = Math.max(
+    0,
+    totalVariance - firstComponent.eigenvalue
+  );
+
+  if (
+    isDegeneratePCAComponent(
+      secondComponent.eigenvalue,
+      secondComponent.eigenvector
+    ) ||
+    Math.abs(dotProduct(firstComponent.eigenvector, secondComponent.eigenvector)) >
+      0.99 ||
+    secondComponent.eigenvalue > remainingVariance + PCA_EIGENVALUE_EPSILON
+  ) {
+    secondComponent = {
+      eigenvalue: 0,
+      eigenvector: Array.from({ length: activeColumnIndices.length }, () => 0),
+    };
+  } else {
+    secondComponent = {
+      eigenvalue: Math.min(secondComponent.eigenvalue, remainingVariance),
+      eigenvector: secondComponent.eigenvector,
+    };
+  }
+
+  const expandedEigenvectorPc1 = expandPCAEigenvectorToSeries(
+    firstComponent.eigenvector,
+    activeColumnIndices,
+    variableCount
+  );
+  const expandedEigenvectorPc2 = expandPCAEigenvectorToSeries(
+    secondComponent.eigenvector,
+    activeColumnIndices,
+    variableCount
   );
 
   const pc1Scores = projectOntoPrincipalComponent(
     standardizedMatrix,
     firstComponent.eigenvector
   );
-  const pc2Scores = projectOntoPrincipalComponent(
-    standardizedMatrix,
+  const pc2Scores = isDegeneratePCAComponent(
+    secondComponent.eigenvalue,
     secondComponent.eigenvector
-  );
+  )
+    ? standardizedMatrix.map(() => 0)
+    : projectOntoPrincipalComponent(
+        standardizedMatrix,
+        secondComponent.eigenvector
+      );
 
-  const component1Variance =
-    (firstComponent.eigenvalue / totalVariance) * 100;
-  const component2Variance =
-    (secondComponent.eigenvalue / totalVariance) * 100;
-  const cumulativeVariance = component1Variance + component2Variance;
+  const {
+    component1Variance,
+    component2Variance,
+    cumulativeVariance,
+  } = normalizePCAExplainedVariance(
+    firstComponent.eigenvalue,
+    secondComponent.eigenvalue,
+    totalVariance
+  );
 
   const points: PCAResultPoint[] = pc1Scores.map((pc1, index) => ({
     label: `Obs ${index + 1}`,
@@ -3992,10 +4151,27 @@ const buildPCAAnalysis = (
 
   const loadings = buildPCALoadings(
     series,
-    firstComponent.eigenvector,
-    secondComponent.eigenvector
+    expandedEigenvectorPc1,
+    expandedEigenvectorPc2
   );
   const loadingsInterpretation = getPCALoadingsInterpretation(loadings);
+
+  const constantVariableNames = series
+    .filter(
+      (_, index) => standardDeviations[index] <= PCA_EIGENVALUE_EPSILON
+    )
+    .map((item) => item.name);
+  if (constantVariableNames.length > 0) {
+    loadingsInterpretation.unshift(
+      `Variables constantes excluidas del cálculo PCA (carga 0): ${constantVariableNames.join(", ")}.`
+    );
+  }
+
+  if (secondComponent.eigenvalue <= PCA_EIGENVALUE_EPSILON) {
+    loadingsInterpretation.push(
+      "PC2 no aporta varianza adicional; los datos pueden estar concentrados en una dimensión principal."
+    );
+  }
 
   return {
     component1Variance,
@@ -4035,37 +4211,13 @@ const getPCALoadingsInterpretationLines = (
     return ["No hay loadings disponibles para PCA."];
   }
 
-  const lines: string[] = [];
-  const dominantPc1 = analysis.loadings.filter(
-    (loading) => loading.contributionPc1 > PCA_DOMINANT_CONTRIBUTION_THRESHOLD
-  );
-  const dominantPc2 = analysis.loadings.filter(
-    (loading) => loading.contributionPc2 > PCA_DOMINANT_CONTRIBUTION_THRESHOLD
-  );
-
-  if (dominantPc1.length > 0) {
-    lines.push(
-      `Variable dominante en PC1: ${dominantPc1.map((loading) => loading.variable).join(", ")}.`
-    );
-  }
-
-  if (dominantPc2.length > 0) {
-    lines.push(
-      `Variable dominante en PC2: ${dominantPc2.map((loading) => loading.variable).join(", ")}.`
-    );
-  }
-
-  analysis.loadingsInterpretation.forEach((line) => {
-    if (!lines.includes(line)) lines.push(line);
-  });
-
-  analysis.loadings.forEach((loading) => {
-    lines.push(
-      `${loading.variable}: loading PC1=${formatExperimentalStat(loading.pc1)}, PC2=${formatExperimentalStat(loading.pc2)}, contribución PC1=${loading.contributionPc1.toFixed(1)}%, PC2=${loading.contributionPc2.toFixed(1)}%.`
-    );
-  });
-
-  return lines;
+  return deduplicateTextLines([
+    ...analysis.loadingsInterpretation,
+    ...analysis.loadings.map(
+      (loading) =>
+        `${loading.variable}: loading PC1=${formatExperimentalStat(loading.pc1)}, PC2=${formatExperimentalStat(loading.pc2)}, contribución PC1=${loading.contributionPc1.toFixed(1)}%, PC2=${loading.contributionPc2.toFixed(1)}%.`
+    ),
+  ]);
 };
 
 type ScientificPCAPlotChartProps = {
@@ -4145,8 +4297,11 @@ function ScientificPCALoadingsSection({
     <>
       {analysis.loadingsInterpretation.length > 0 && (
         <div className="mt-3 space-y-1">
-          {analysis.loadingsInterpretation.map((line) => (
-            <p key={line} className="text-sm text-[var(--app-text-muted)]">
+          {analysis.loadingsInterpretation.map((line, index) => (
+            <p
+              key={`pca-loading-interpretation-${index}`}
+              className="text-sm text-[var(--app-text-muted)]"
+            >
               {line}
             </p>
           ))}
@@ -4170,9 +4325,9 @@ function ScientificPCALoadingsSection({
             </tr>
           </thead>
           <tbody>
-            {analysis.loadings.map((loading) => (
+            {analysis.loadings.map((loading, index) => (
               <tr
-                key={`pca-loading-${loading.variable}`}
+                key={`pca-loading-${loading.variable}-${index}`}
                 className="border-b border-[var(--app-border)]"
               >
                 <td className="py-2 pr-3">{loading.variable}</td>
@@ -4271,7 +4426,7 @@ function ScientificPCABiplot({ analysis }: ScientificPCABiplotProps) {
       />
       <circle cx={centerX} cy={centerY} r={3} fill="var(--app-text-muted)" />
 
-      {analysis.loadings.map((loading) => {
+      {analysis.loadings.map((loading, index) => {
         const endX = centerX + loading.pc1 * scale;
         const endY = centerY - loading.pc2 * scale;
         const label =
@@ -4280,7 +4435,7 @@ function ScientificPCABiplot({ analysis }: ScientificPCABiplotProps) {
             : loading.variable;
 
         return (
-          <g key={`pca-biplot-${loading.variable}`}>
+          <g key={`pca-biplot-${loading.variable}-${index}`}>
             <line
               x1={centerX}
               y1={centerY}
@@ -4294,7 +4449,7 @@ function ScientificPCABiplot({ analysis }: ScientificPCABiplotProps) {
               centerY,
               endX,
               endY,
-              `pca-biplot-head-${loading.variable}`
+              `pca-biplot-head-${loading.variable}-${index}`
             )}
             <text
               x={endX + (endX >= centerX ? 6 : -6)}
@@ -6638,10 +6793,18 @@ const getScientificReportPdfFileName = () => {
   return `scientific-report-${year}-${month}-${day}.pdf`;
 };
 
+type ImportedDatasetInfo = {
+  fileName: string;
+  importedAt: string;
+  seriesCount: number;
+  observationCount: number;
+};
+
 type ScientificReportPdfInput = {
   report: ScientificReport;
   chartImageDataUrl: string | null;
   statisticalRecommendation: StatisticalRecommendation | null;
+  datasetInfo?: ImportedDatasetInfo | null;
 };
 
 const buildAdvisorPdfSectionLines = (
@@ -6751,6 +6914,9 @@ const exportScientificReportPdf = async (
     11,
     "normal"
   );
+  if (input.datasetInfo) {
+    drawWrappedParagraph(`Dataset: ${input.datasetInfo.fileName}`, 11, "normal");
+  }
   cursorY += 2;
 
   drawSectionHeading("Resumen ejecutivo");
@@ -6853,6 +7019,7 @@ const generateScientificReport = (input: {
   mannWhitneyResult: MannWhitneyResult | null;
   kruskalWallisResult: KruskalWallisResult | null;
   statisticalRecommendation: StatisticalRecommendation | null;
+  datasetInfo?: ImportedDatasetInfo | null;
 }): ScientificReport | null => {
   const seriesCount = input.series.length;
   const totalObservations = input.series.reduce(
@@ -6872,6 +7039,9 @@ const generateScientificReport = (input: {
   );
 
   const dataLines = [
+    ...(input.datasetInfo
+      ? [`Dataset analizado: ${input.datasetInfo.fileName}`]
+      : []),
     `Número de series visibles: ${seriesCount}.`,
     `Número total de observaciones: ${totalObservations}.`,
     ...input.series.map((item) => {
@@ -7424,9 +7594,11 @@ const generateScientificInterpretation = (input: {
       );
     }
 
-    input.pcaAnalysis.loadingsInterpretation.forEach((line) => {
-      if (!findings.includes(line)) findings.push(line);
-    });
+    deduplicateTextLines(input.pcaAnalysis.loadingsInterpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
   }
 
   if (input.hierarchicalClusteringAnalysis) {
@@ -8176,8 +8348,8 @@ const generateScientificAssistantReport = (input: {
       );
     }
 
-    input.pcaAnalysis.loadingsInterpretation.forEach((line) =>
-      pushUniqueFinding(line)
+    deduplicateTextLines(input.pcaAnalysis.loadingsInterpretation).forEach(
+      (line) => pushUniqueFinding(line)
     );
   }
   if (hasPCAAdvancedClusteringConsistency) {
@@ -9415,6 +9587,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [experimentalImportError, setExperimentalImportError] = useState<
     string | null
   >(null);
+  const [preserveAnalysisConfiguration, setPreserveAnalysisConfiguration] =
+    useState(false);
+  const [currentDatasetInfo, setCurrentDatasetInfo] =
+    useState<ImportedDatasetInfo | null>(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
   const [themeLoaded, setThemeLoaded] = useState(false);
 
@@ -9528,7 +9704,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   };
 
   const removeExperimentalSeries = (id: string) => {
-    setExperimentalSeries((prev) => prev.filter((series) => series.id !== id));
+    setExperimentalSeries((prev) => {
+      const next = prev.filter((series) => series.id !== id);
+      if (next.length === 0) {
+        setCurrentDatasetInfo(null);
+      }
+      return next;
+    });
     setHiddenLegendKeys((prev) =>
       prev.filter((key) => key !== experimentalLegendKey(id))
     );
@@ -9645,6 +9827,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         report: scientificReport,
         chartImageDataUrl,
         statisticalRecommendation,
+        datasetInfo: currentDatasetInfo,
       });
       setScientificReportPdfMessage("PDF descargado correctamente.");
     } catch (error) {
@@ -9679,6 +9862,50 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
   };
 
+  const resetAnalysisSession = () => {
+    setShowStatistics(false);
+    setShowErrorBars(false);
+    setShowCorrelation(false);
+    setShowOutliers(false);
+    setShowHistogram(false);
+    setShowBoxPlot(false);
+    setShowNormality(false);
+    setShowQQPlot(false);
+    setShowViolinPlot(false);
+    setShowHeatmap(false);
+    setShowBubblePlot(false);
+    setShowRadarPlot(false);
+    setShowKernelDensity(false);
+    setShowForestPlot(false);
+    setShowPCA(false);
+    setShowHierarchicalClustering(false);
+    setShowTTest(false);
+    setShowAnova(false);
+    setShowPostHoc(false);
+    setShowNonParametric(false);
+    setShowStatisticalAdvisor(false);
+    setShowScientificReport(false);
+    setShowScientificInterpretation(false);
+    setShowScientificAssistant(false);
+    setErrorBarMode("sd");
+    setCorrelationMethod("pearson");
+    setOutlierMethod("iqr");
+    setHeatmapMode("correlation");
+    setNonParametricMode("mann-whitney");
+    setHistogramBins(HISTOGRAM_BINS_DEFAULT);
+    setSelectedTTestSeriesA(null);
+    setSelectedTTestSeriesB(null);
+    setSelectedMannWhitneySeriesA(null);
+    setSelectedMannWhitneySeriesB(null);
+    setScientificReportCopied(false);
+    setScientificInterpretationCopied(false);
+    setScientificAssistantCopied(false);
+    setScientificReportPdfExporting(false);
+    setScientificReportPdfMessage(null);
+    setHiddenLegendKeys([]);
+    setRegressionModel("none");
+  };
+
   const handleExperimentalImport = async (
     event: ChangeEvent<HTMLInputElement>
   ) => {
@@ -9702,18 +9929,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       }
 
       setExperimentalImportError(null);
-      setExperimentalSeries((prev) => {
-        const curveCount = curves.filter((curve) => curve.expression.trim())
-          .length;
-        const baseIndex = curveCount + prev.length;
-
-        return [
-          ...prev,
-          ...importedSeries.map((series, index) => ({
-            ...series,
-            color: getDefaultColorForIndex(baseIndex + index),
-          })),
-        ];
+      if (!preserveAnalysisConfiguration) {
+        resetAnalysisSession();
+      }
+      const curveCount = curves.filter((curve) => curve.expression.trim())
+        .length;
+      const mappedSeries = importedSeries.map((series, index) => ({
+        ...series,
+        color: getDefaultColorForIndex(curveCount + index),
+      }));
+      setExperimentalSeries(mappedSeries);
+      setCurrentDatasetInfo({
+        fileName: file.name,
+        importedAt: new Date().toLocaleString(),
+        seriesCount: mappedSeries.length,
+        observationCount: mappedSeries.reduce(
+          (sum, series) => sum + series.points.length,
+          0
+        ),
       });
     } catch {
       setExperimentalImportError("Archivo de datos inválido");
@@ -10514,6 +10747,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         mannWhitneyResult,
         kruskalWallisResult,
         statisticalRecommendation,
+        datasetInfo: currentDatasetInfo,
       }),
     [
       title,
@@ -10541,6 +10775,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       mannWhitneyResult,
       kruskalWallisResult,
       statisticalRecommendation,
+      currentDatasetInfo,
     ]
   );
   const scientificInterpretation = useMemo(
@@ -11933,6 +12168,34 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     )}
               </NotebookSection>
 
+              <div className={`${subsectionCard} mt-3`}>
+                <p className={subsectionHeading}>📄 Dataset actual</p>
+                {currentDatasetInfo ? (
+                  <div className="space-y-1 text-sm text-[var(--app-text)]">
+                    <p>
+                      <span className="font-semibold">Nombre:</span>{" "}
+                      {currentDatasetInfo.fileName}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Importado:</span>{" "}
+                      {currentDatasetInfo.importedAt}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Series:</span>{" "}
+                      {currentDatasetInfo.seriesCount}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Observaciones:</span>{" "}
+                      {currentDatasetInfo.observationCount}
+                    </p>
+                  </div>
+                ) : (
+                  <p className={emptyState}>
+                    No hay dataset experimental cargado.
+                  </p>
+                )}
+              </div>
+
               <NotebookSection
                 title="Importación de datos"
                 icon="📥"
@@ -11987,6 +12250,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         className="hidden"
                         onChange={handleExperimentalImport}
                       />
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                      <label className="inline-flex items-center gap-2.5 text-base text-[var(--app-text)] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={preserveAnalysisConfiguration}
+                          onChange={(e) =>
+                            setPreserveAnalysisConfiguration(e.target.checked)
+                          }
+                          className="h-4 w-4 rounded border-[var(--app-border)] text-[var(--app-accent)] focus:ring-[var(--app-accent)]/20"
+                        />
+                        Mantener configuración de análisis al importar
+                      </label>
+                      <p className="text-sm text-[var(--app-text-muted)]">
+                        Conserva los análisis seleccionados al cargar un nuevo
+                        dataset.
+                      </p>
                     </div>
 
                     {experimentalImportError && (
