@@ -3669,6 +3669,738 @@ function ScientificForestPlot({
   );
 }
 
+type PCAObservation = {
+  label: string;
+  values: number[];
+};
+
+type PCAResultPoint = {
+  label: string;
+  pc1: number;
+  pc2: number;
+};
+
+type PCAAnalysis = {
+  component1Variance: number;
+  component2Variance: number;
+  cumulativeVariance: number;
+  points: PCAResultPoint[];
+  interpretation: string;
+};
+
+const formatPCAVariancePercent = (value: number) => `${value.toFixed(1)}%`;
+
+const getPCAInterpretationMessage = (cumulativeVariance: number) => {
+  if (cumulativeVariance >= 80) {
+    return "Los dos primeros componentes explican adecuadamente la variabilidad de los datos.";
+  }
+  if (cumulativeVariance >= 60) {
+    return "La representación bidimensional conserva una cantidad moderada de información.";
+  }
+  return "La estructura multivariante requiere más componentes para ser explicada.";
+};
+
+const dotProduct = (left: number[], right: number[]) =>
+  left.reduce((sum, value, index) => sum + value * right[index], 0);
+
+const vectorNorm = (values: number[]) => Math.sqrt(dotProduct(values, values));
+
+const normalizeVector = (values: number[]) => {
+  const norm = vectorNorm(values);
+  if (norm === 0) return values.map(() => 0);
+  return values.map((value) => value / norm);
+};
+
+const multiplySymmetricMatrixVector = (matrix: number[][], vector: number[]) => {
+  const size = vector.length;
+  const result = Array.from({ length: size }, () => 0);
+
+  for (let rowIndex = 0; rowIndex < size; rowIndex += 1) {
+    for (let columnIndex = 0; columnIndex < size; columnIndex += 1) {
+      result[rowIndex] += matrix[rowIndex][columnIndex] * vector[columnIndex];
+    }
+  }
+
+  return result;
+};
+
+const powerIterationEigen = (
+  matrix: number[][],
+  orthogonalTo: number[] | null = null,
+  iterations = 200
+) => {
+  const size = matrix.length;
+  let vector = normalizeVector(
+    Array.from({ length: size }, (_, index) => (index === 0 ? 1 : 0.1))
+  );
+
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    let nextVector = multiplySymmetricMatrixVector(matrix, vector);
+
+    if (orthogonalTo) {
+      const projection = dotProduct(nextVector, orthogonalTo);
+      nextVector = nextVector.map(
+        (value, index) => value - projection * orthogonalTo[index]
+      );
+    }
+
+    const normalized = normalizeVector(nextVector);
+    if (normalized.every((value) => value === 0)) break;
+    vector = normalized;
+  }
+
+  const transformed = multiplySymmetricMatrixVector(matrix, vector);
+  const eigenvalue = Math.max(0, dotProduct(vector, transformed));
+
+  return { eigenvalue, eigenvector: vector };
+};
+
+const buildPCADataMatrix = (
+  series: ExperimentalSeries[]
+): number[][] | null => {
+  if (series.length < 2) return null;
+
+  const observationCount = series[0].points.length;
+  if (observationCount < 3) return null;
+
+  if (!series.every((item) => item.points.length === observationCount)) {
+    return null;
+  }
+
+  const matrix: number[][] = [];
+
+  for (let observationIndex = 0; observationIndex < observationCount; observationIndex += 1) {
+    const row: number[] = [];
+
+    for (const item of series) {
+      const value = item.points[observationIndex]?.y;
+      if (!Number.isFinite(value)) return null;
+      row.push(value);
+    }
+
+    matrix.push(row);
+  }
+
+  return matrix;
+};
+
+const standardizePCADataMatrix = (matrix: number[][]) => {
+  const observationCount = matrix.length;
+  const variableCount = matrix[0]?.length ?? 0;
+
+  if (observationCount === 0 || variableCount === 0) return matrix;
+
+  const means = Array.from({ length: variableCount }, () => 0);
+  const standardDeviations = Array.from({ length: variableCount }, () => 0);
+
+  for (let columnIndex = 0; columnIndex < variableCount; columnIndex += 1) {
+    means[columnIndex] =
+      matrix.reduce((sum, row) => sum + row[columnIndex], 0) / observationCount;
+
+    if (observationCount <= 1) {
+      standardDeviations[columnIndex] = 0;
+      continue;
+    }
+
+    const variance =
+      matrix.reduce(
+        (sum, row) => sum + (row[columnIndex] - means[columnIndex]) ** 2,
+        0
+      ) / (observationCount - 1);
+    standardDeviations[columnIndex] = Math.sqrt(variance);
+  }
+
+  return matrix.map((row) =>
+    row.map((value, columnIndex) => {
+      const standardDeviation = standardDeviations[columnIndex];
+      if (standardDeviation === 0) return 0;
+      return (value - means[columnIndex]) / standardDeviation;
+    })
+  );
+};
+
+const computePCACovarianceMatrix = (matrix: number[][]) => {
+  const observationCount = matrix.length;
+  const variableCount = matrix[0]?.length ?? 0;
+  const covariance = Array.from({ length: variableCount }, () =>
+    Array.from({ length: variableCount }, () => 0)
+  );
+
+  if (observationCount <= 1) return covariance;
+
+  for (let rowIndex = 0; rowIndex < variableCount; rowIndex += 1) {
+    for (let columnIndex = rowIndex; columnIndex < variableCount; columnIndex += 1) {
+      let sum = 0;
+
+      for (let observationIndex = 0; observationIndex < observationCount; observationIndex += 1) {
+        sum += matrix[observationIndex][rowIndex] * matrix[observationIndex][columnIndex];
+      }
+
+      const value = sum / (observationCount - 1);
+      covariance[rowIndex][columnIndex] = value;
+      covariance[columnIndex][rowIndex] = value;
+    }
+  }
+
+  return covariance;
+};
+
+const projectOntoPrincipalComponent = (
+  matrix: number[][],
+  eigenvector: number[]
+) => matrix.map((row) => dotProduct(row, eigenvector));
+
+const buildPCAAnalysis = (
+  series: ExperimentalSeries[]
+): PCAAnalysis | null => {
+  const rawMatrix = buildPCADataMatrix(series);
+  if (!rawMatrix) return null;
+
+  const standardizedMatrix = standardizePCADataMatrix(rawMatrix);
+  const covarianceMatrix = computePCACovarianceMatrix(standardizedMatrix);
+  const totalVariance = covarianceMatrix.reduce(
+    (sum, row, index) => sum + row[index],
+    0
+  );
+
+  if (totalVariance <= 0) return null;
+
+  const firstComponent = powerIterationEigen(covarianceMatrix);
+  const secondComponent = powerIterationEigen(
+    covarianceMatrix,
+    firstComponent.eigenvector
+  );
+
+  const pc1Scores = projectOntoPrincipalComponent(
+    standardizedMatrix,
+    firstComponent.eigenvector
+  );
+  const pc2Scores = projectOntoPrincipalComponent(
+    standardizedMatrix,
+    secondComponent.eigenvector
+  );
+
+  const component1Variance =
+    (firstComponent.eigenvalue / totalVariance) * 100;
+  const component2Variance =
+    (secondComponent.eigenvalue / totalVariance) * 100;
+  const cumulativeVariance = component1Variance + component2Variance;
+
+  const points: PCAResultPoint[] = pc1Scores.map((pc1, index) => ({
+    label: `Obs ${index + 1}`,
+    pc1,
+    pc2: pc2Scores[index] ?? 0,
+  }));
+
+  return {
+    component1Variance,
+    component2Variance,
+    cumulativeVariance,
+    points,
+    interpretation: getPCAInterpretationMessage(cumulativeVariance),
+  };
+};
+
+const getPCAInterpretationLines = (
+  analysis: PCAAnalysis | null,
+  observationCount: number,
+  seriesCount: number
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para realizar PCA."];
+  }
+
+  return [
+    `Observaciones analizadas: ${observationCount}.`,
+    `Series (variables): ${seriesCount}.`,
+    "Componentes analizados: PC1, PC2.",
+    `Varianza explicada PC1: ${formatPCAVariancePercent(analysis.component1Variance)}.`,
+    `Varianza explicada PC2: ${formatPCAVariancePercent(analysis.component2Variance)}.`,
+    `Varianza acumulada: ${formatPCAVariancePercent(analysis.cumulativeVariance)}.`,
+    analysis.interpretation,
+  ];
+};
+
+type ScientificPCAPlotChartProps = {
+  analysis: PCAAnalysis;
+  chartTheme: ReturnType<typeof getChartTheme>;
+};
+
+function ScientificPCAPlotChart({
+  analysis,
+  chartTheme,
+}: ScientificPCAPlotChartProps) {
+  return (
+    <div className="h-[240px] mt-3">
+      <ResponsiveContainer width="100%" height="100%">
+        <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis
+            type="number"
+            dataKey="pc1"
+            name="PC1"
+            tick={{ fill: chartTheme.axis, fontSize: 11 }}
+          />
+          <YAxis
+            type="number"
+            dataKey="pc2"
+            name="PC2"
+            tick={{ fill: chartTheme.axis, fontSize: 11 }}
+          />
+          <Tooltip
+            content={({ active, payload: tooltipPayload }) => {
+              if (!active || !tooltipPayload?.length) return null;
+
+              const point = tooltipPayload[0]?.payload as
+                | PCAResultPoint
+                | undefined;
+              if (!point) return null;
+
+              return (
+                <div
+                  className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                  style={{
+                    borderColor: chartTheme.tooltipBorder,
+                    backgroundColor: chartTheme.tooltipBg,
+                    color: chartTheme.tooltipColor,
+                  }}
+                >
+                  <p className="font-semibold">Observación</p>
+                  <p>{point.label}</p>
+                  <p>PC1 = {point.pc1.toFixed(4)}</p>
+                  <p>PC2 = {point.pc2.toFixed(4)}</p>
+                </div>
+              );
+            }}
+          />
+          <Scatter
+            name="Observaciones"
+            data={analysis.points}
+            fill="var(--app-accent)"
+            line={false}
+            isAnimationActive={false}
+            r={6}
+          />
+        </ScatterChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+type ClusterNode = {
+  name: string;
+  distance: number;
+  children?: ClusterNode[];
+};
+
+type HierarchicalClusteringAnalysis = {
+  root: ClusterNode | null;
+  seriesCount: number;
+  interpretation: string;
+};
+
+type HierarchicalClusterState = {
+  indices: number[];
+  node: ClusterNode;
+};
+
+const getClusteringSeriesYValues = (
+  series: ExperimentalSeries,
+  length: number
+): number[] => {
+  const values: number[] = [];
+  for (let index = 0; index < length; index += 1) {
+    const value = series.points[index]?.y;
+    if (!Number.isFinite(value)) return [];
+    values.push(value);
+  }
+  return values;
+};
+
+const getClusteringPairwiseLength = (series: ExperimentalSeries[]) => {
+  if (series.length === 0) return 0;
+  return Math.min(...series.map((item) => item.points.length));
+};
+
+const canBuildHierarchicalClustering = (series: ExperimentalSeries[]) => {
+  if (series.length < 2) return false;
+  return series.every((item) => item.points.length >= 3);
+};
+
+const euclideanSeriesDistance = (
+  leftValues: number[],
+  rightValues: number[]
+) => {
+  const length = Math.min(leftValues.length, rightValues.length);
+  if (length === 0) return Infinity;
+
+  let sumSquares = 0;
+  for (let index = 0; index < length; index += 1) {
+    const delta = leftValues[index] - rightValues[index];
+    sumSquares += delta * delta;
+  }
+
+  return Math.sqrt(sumSquares);
+};
+
+const buildClusteringDistanceMatrix = (series: ExperimentalSeries[]) => {
+  const pairwiseLength = getClusteringPairwiseLength(series);
+  const valuesBySeries = series.map((item) =>
+    getClusteringSeriesYValues(item, pairwiseLength)
+  );
+  const size = series.length;
+  const matrix = Array.from({ length: size }, () =>
+    Array.from({ length: size }, () => 0)
+  );
+
+  for (let rowIndex = 0; rowIndex < size; rowIndex += 1) {
+    for (let columnIndex = rowIndex + 1; columnIndex < size; columnIndex += 1) {
+      const distance = euclideanSeriesDistance(
+        valuesBySeries[rowIndex],
+        valuesBySeries[columnIndex]
+      );
+      matrix[rowIndex][columnIndex] = distance;
+      matrix[columnIndex][rowIndex] = distance;
+    }
+  }
+
+  return matrix;
+};
+
+const averageLinkageDistance = (
+  leftIndices: number[],
+  rightIndices: number[],
+  distanceMatrix: number[][]
+) => {
+  let sum = 0;
+  let count = 0;
+
+  leftIndices.forEach((leftIndex) => {
+    rightIndices.forEach((rightIndex) => {
+      sum += distanceMatrix[leftIndex][rightIndex];
+      count += 1;
+    });
+  });
+
+  return count > 0 ? sum / count : Infinity;
+};
+
+const buildHierarchicalClusteringTree = (
+  series: ExperimentalSeries[],
+  distanceMatrix: number[][]
+) => {
+  const mergeDistances: number[] = [];
+  let clusters: HierarchicalClusterState[] = series.map((item, index) => ({
+    indices: [index],
+    node: { name: item.name, distance: 0 },
+  }));
+
+  while (clusters.length > 1) {
+    let bestLeft = 0;
+    let bestRight = 1;
+    let bestDistance = averageLinkageDistance(
+      clusters[0].indices,
+      clusters[1].indices,
+      distanceMatrix
+    );
+
+    for (let leftIndex = 0; leftIndex < clusters.length; leftIndex += 1) {
+      for (
+        let rightIndex = leftIndex + 1;
+        rightIndex < clusters.length;
+        rightIndex += 1
+      ) {
+        const distance = averageLinkageDistance(
+          clusters[leftIndex].indices,
+          clusters[rightIndex].indices,
+          distanceMatrix
+        );
+
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestLeft = leftIndex;
+          bestRight = rightIndex;
+        }
+      }
+    }
+
+    mergeDistances.push(bestDistance);
+
+    const mergedCluster: HierarchicalClusterState = {
+      indices: [
+        ...clusters[bestLeft].indices,
+        ...clusters[bestRight].indices,
+      ],
+      node: {
+        name: "Cluster",
+        distance: bestDistance,
+        children: [clusters[bestLeft].node, clusters[bestRight].node],
+      },
+    };
+
+    const remainingClusters = clusters.filter(
+      (_, index) => index !== bestLeft && index !== bestRight
+    );
+    remainingClusters.push(mergedCluster);
+    clusters = remainingClusters;
+  }
+
+  return {
+    root: clusters[0]?.node ?? null,
+    mergeDistances,
+    finalDistance: mergeDistances[mergeDistances.length - 1] ?? 0,
+  };
+};
+
+const getHierarchicalClusteringInterpretation = (
+  seriesCount: number,
+  mergeDistances: number[],
+  finalDistance: number
+) => {
+  const messages: string[] = [];
+
+  if (seriesCount === 2) {
+    messages.push("Se compararon dos perfiles experimentales.");
+  } else {
+    messages.push(
+      "Se identificaron grupos de series con comportamiento similar."
+    );
+  }
+
+  const meanDistance =
+    mergeDistances.length > 0
+      ? mergeDistances.reduce((sum, distance) => sum + distance, 0) /
+        mergeDistances.length
+      : 0;
+
+  if (
+    mergeDistances.length > 0 &&
+    meanDistance > 0 &&
+    finalDistance > 2 * meanDistance
+  ) {
+    messages.push("Se observaron grupos claramente diferenciados.");
+  }
+
+  return messages.join(" ");
+};
+
+const getHierarchicalClusteringStructureDescription = (
+  root: ClusterNode | null
+): string => {
+  if (!root) {
+    return "No se pudo reconstruir la estructura del dendrograma.";
+  }
+
+  if (!root.children || root.children.length < 2) {
+    return `Perfil analizado: "${root.name}".`;
+  }
+
+  const leafNames = getClusterLeavesInOrder(root).map((leaf) => leaf.name);
+  return `Estructura observada: ${leafNames.join(" → ")} (fusión final a distancia ${formatExperimentalStat(root.distance)}).`;
+};
+
+const getClusterLeavesInOrder = (node: ClusterNode): ClusterNode[] => {
+  if (!node.children || node.children.length === 0) return [node];
+  return [
+    ...getClusterLeavesInOrder(node.children[0]),
+    ...getClusterLeavesInOrder(node.children[1]),
+  ];
+};
+
+const getMaxClusterDistance = (node: ClusterNode): number => {
+  if (!node.children || node.children.length === 0) return node.distance;
+  return Math.max(
+    node.distance,
+    ...node.children.map((child) => getMaxClusterDistance(child))
+  );
+};
+
+const buildHierarchicalClusteringAnalysis = (
+  series: ExperimentalSeries[]
+): HierarchicalClusteringAnalysis | null => {
+  if (!canBuildHierarchicalClustering(series)) return null;
+
+  const distanceMatrix = buildClusteringDistanceMatrix(series);
+  const { root, mergeDistances, finalDistance } = buildHierarchicalClusteringTree(
+    series,
+    distanceMatrix
+  );
+
+  if (!root) return null;
+
+  return {
+    root,
+    seriesCount: series.length,
+    interpretation: getHierarchicalClusteringInterpretation(
+      series.length,
+      mergeDistances,
+      finalDistance
+    ),
+  };
+};
+
+const getHierarchicalClusteringInterpretationLines = (
+  analysis: HierarchicalClusteringAnalysis | null
+): string[] => {
+  if (!analysis || !analysis.root) {
+    return ["No hay datos suficientes para realizar clustering."];
+  }
+
+  return [
+    `Número de series: ${analysis.seriesCount}.`,
+    analysis.interpretation,
+    getHierarchicalClusteringStructureDescription(analysis.root),
+    "Método: clustering jerárquico aglomerativo con enlace promedio y distancia euclídea.",
+  ];
+};
+
+type DendrogramLineSegment = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
+
+const collectDendrogramSegments = (
+  node: ClusterNode,
+  leafPositions: Map<string, number>,
+  scaleY: (distance: number) => number
+): { centerX: number; segments: DendrogramLineSegment[] } => {
+  if (!node.children || node.children.length < 2) {
+    const centerX = leafPositions.get(node.name) ?? 0;
+    const bottomY = scaleY(0);
+    return {
+      centerX,
+      segments: [{ x1: centerX, y1: bottomY, x2: centerX, y2: bottomY }],
+    };
+  }
+
+  const leftBranch = collectDendrogramSegments(
+    node.children[0],
+    leafPositions,
+    scaleY
+  );
+  const rightBranch = collectDendrogramSegments(
+    node.children[1],
+    leafPositions,
+    scaleY
+  );
+  const mergeY = scaleY(node.distance);
+  const leftTopY =
+    leftBranch.segments.length > 0
+      ? Math.min(leftBranch.segments[0].y1, leftBranch.segments[0].y2)
+      : mergeY;
+  const rightTopY =
+    rightBranch.segments.length > 0
+      ? Math.min(rightBranch.segments[0].y1, rightBranch.segments[0].y2)
+      : mergeY;
+
+  const segments: DendrogramLineSegment[] = [
+    ...leftBranch.segments,
+    ...rightBranch.segments,
+    { x1: leftBranch.centerX, y1: leftTopY, x2: leftBranch.centerX, y2: mergeY },
+    { x1: rightBranch.centerX, y1: rightTopY, x2: rightBranch.centerX, y2: mergeY },
+    {
+      x1: leftBranch.centerX,
+      y1: mergeY,
+      x2: rightBranch.centerX,
+      y2: mergeY,
+    },
+  ];
+
+  return {
+    centerX: (leftBranch.centerX + rightBranch.centerX) / 2,
+    segments,
+  };
+};
+
+type ScientificHierarchicalClusteringDendrogramProps = {
+  analysis: HierarchicalClusteringAnalysis;
+};
+
+function ScientificHierarchicalClusteringDendrogram({
+  analysis,
+}: ScientificHierarchicalClusteringDendrogramProps) {
+  if (!analysis.root) {
+    return (
+      <p className={emptyState}>
+        No hay datos suficientes para realizar clustering.
+      </p>
+    );
+  }
+
+  const leaves = getClusterLeavesInOrder(analysis.root);
+  const leafCount = leaves.length;
+  const labelWidth = 132;
+  const paddingX = 20;
+  const paddingY = 24;
+  const rowHeight = 36;
+  const width = 520;
+  const height = paddingY * 2 + Math.max(leafCount * rowHeight, 96);
+  const plotLeft = labelWidth + paddingX;
+  const plotRight = width - paddingX;
+  const plotWidth = plotRight - plotLeft;
+  const plotTop = paddingY;
+  const plotBottom = height - paddingY;
+  const plotHeight = plotBottom - plotTop;
+  const maxDistance = getMaxClusterDistance(analysis.root) || 1;
+
+  const leafPositions = new Map<string, number>();
+  leaves.forEach((leaf, index) => {
+    const x =
+      leafCount === 1
+        ? (plotLeft + plotRight) / 2
+        : plotLeft + (index / (leafCount - 1)) * plotWidth;
+    leafPositions.set(leaf.name, x);
+  });
+
+  const scaleY = (distance: number) =>
+    plotBottom - (distance / maxDistance) * plotHeight;
+
+  const { segments } = collectDendrogramSegments(
+    analysis.root,
+    leafPositions,
+    scaleY
+  );
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="w-full max-w-xl mt-3"
+      role="img"
+      aria-label="Dendrograma de clustering jerárquico"
+    >
+      {segments.map((segment, index) => (
+        <line
+          key={`dendrogram-segment-${index}`}
+          x1={segment.x1}
+          y1={segment.y1}
+          x2={segment.x2}
+          y2={segment.y2}
+          stroke="var(--app-accent)"
+          strokeWidth={2}
+        />
+      ))}
+
+      {leaves.map((leaf) => {
+        const x = leafPositions.get(leaf.name) ?? plotLeft;
+        return (
+          <text
+            key={`dendrogram-leaf-${leaf.name}`}
+            x={x}
+            y={plotBottom + 16}
+            textAnchor="middle"
+            fill="var(--app-text)"
+            fontSize={10}
+          >
+            {leaf.name.length > 12 ? `${leaf.name.slice(0, 11)}…` : leaf.name}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
 const classifyViolinShape = (
   q1: number,
   median: number,
@@ -5212,6 +5944,9 @@ const generateScientificReport = (input: {
   radarPlotAnalysis: RadarPlotAnalysis | null;
   kernelDensityAnalyses: KernelDensityAnalysis[];
   forestPlotAnalysis: ForestPlotAnalysis | null;
+  pcaAnalysis: PCAAnalysis | null;
+  pcaObservationCount: number;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -5367,6 +6102,22 @@ const generateScientificReport = (input: {
   sections.push({
     title: "Forest Plot",
     content: getForestPlotInterpretationLines(input.forestPlotAnalysis),
+  });
+
+  sections.push({
+    title: "PCA",
+    content: getPCAInterpretationLines(
+      input.pcaAnalysis,
+      input.pcaObservationCount,
+      seriesCount
+    ),
+  });
+
+  sections.push({
+    title: "Clusterización jerárquica",
+    content: getHierarchicalClusteringInterpretationLines(
+      input.hierarchicalClusteringAnalysis
+    ),
   });
 
   const correlationLines: string[] = [];
@@ -5609,6 +6360,8 @@ const generateScientificInterpretation = (input: {
   radarPlotAnalysis: RadarPlotAnalysis | null;
   kernelDensityAnalyses: KernelDensityAnalysis[];
   forestPlotAnalysis: ForestPlotAnalysis | null;
+  pcaAnalysis: PCAAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -5808,6 +6561,35 @@ const generateScientificInterpretation = (input: {
           line.includes("tamaño muestral pequeño")
       )
       .forEach((line) => findings.push(line));
+  }
+
+  if (input.pcaAnalysis) {
+    if (input.pcaAnalysis.cumulativeVariance >= 80) {
+      findings.push(
+        "Los componentes principales resumen adecuadamente la estructura de los datos."
+      );
+    } else if (input.pcaAnalysis.cumulativeVariance < 60) {
+      findings.push(
+        "La estructura multivariante no queda completamente representada por dos componentes."
+      );
+    }
+  }
+
+  if (input.hierarchicalClusteringAnalysis) {
+    if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
+      findings.push("Se compararon dos perfiles experimentales.");
+    } else if (input.hierarchicalClusteringAnalysis.seriesCount >= 3) {
+      findings.push(
+        "Se identificaron grupos de series con comportamiento similar."
+      );
+    }
+    if (
+      input.hierarchicalClusteringAnalysis.interpretation.includes(
+        "claramente diferenciados"
+      )
+    ) {
+      findings.push("Se observaron grupos claramente diferenciados.");
+    }
   }
 
   if (input.experimentalOutliers.length === 0) {
@@ -6016,6 +6798,8 @@ const generateScientificAssistantReport = (input: {
   radarPlotAnalysis: RadarPlotAnalysis | null;
   kernelDensityAnalyses: KernelDensityAnalysis[];
   forestPlotAnalysis: ForestPlotAnalysis | null;
+  pcaAnalysis: PCAAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -6095,6 +6879,19 @@ const generateScientificAssistantReport = (input: {
   const hasForestSeparation = forestInterpretationLines.some((line) =>
     line.includes("separación consistente")
   );
+  const hasPCAHighVariance =
+    input.pcaAnalysis !== null && input.pcaAnalysis.cumulativeVariance >= 80;
+  const hasPCALowVariance =
+    input.pcaAnalysis !== null && input.pcaAnalysis.cumulativeVariance < 60;
+  const hasClusteringClearGroups =
+    input.hierarchicalClusteringAnalysis?.interpretation.includes(
+      "claramente diferenciados"
+    ) ?? false;
+  const hasClusteringPCAConsistency =
+    hasPCAHighVariance &&
+    hasClusteringClearGroups &&
+    input.hierarchicalClusteringAnalysis !== null &&
+    input.pcaAnalysis !== null;
   const heatmapStrongPositivePairs = (() => {
     if (!input.correlationHeatmap) return 0;
     const seenPairs = new Set<string>();
@@ -6198,6 +6995,15 @@ const generateScientificAssistantReport = (input: {
     confidenceLevel === "high"
   ) {
     confidenceLevel = "medium";
+  }
+  if (hasPCAHighVariance && confidenceLevel === "medium") {
+    confidenceLevel = "high";
+  }
+  if (hasPCALowVariance && confidenceLevel === "high") {
+    confidenceLevel = "medium";
+  }
+  if (hasClusteringPCAConsistency && confidenceLevel === "medium") {
+    confidenceLevel = "high";
   }
 
   const cautiousReasons: string[] = [];
@@ -6485,6 +7291,34 @@ const generateScientificAssistantReport = (input: {
       )
       .forEach((line) => pushUniqueFinding(line));
   }
+  if (input.pcaAnalysis) {
+    if (input.pcaAnalysis.cumulativeVariance >= 80) {
+      pushUniqueFinding(
+        "Los componentes principales resumen adecuadamente la estructura de los datos."
+      );
+    } else if (input.pcaAnalysis.cumulativeVariance < 60) {
+      pushUniqueFinding(
+        "La estructura multivariante no queda completamente representada por dos componentes."
+      );
+    }
+  }
+  if (input.hierarchicalClusteringAnalysis) {
+    if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
+      pushUniqueFinding("Se compararon dos perfiles experimentales.");
+    } else if (input.hierarchicalClusteringAnalysis.seriesCount >= 3) {
+      pushUniqueFinding(
+        "Se identificaron grupos de series con comportamiento similar."
+      );
+    }
+    if (hasClusteringClearGroups) {
+      pushUniqueFinding("Se observaron grupos claramente diferenciados.");
+    }
+  }
+  if (hasClusteringPCAConsistency) {
+    pushUniqueFinding(
+      "El clustering jerárquico y el PCA coinciden en una estructura multivariante bien definida."
+    );
+  }
   if (
     hasForestSeparation &&
     input.tTestResult &&
@@ -6520,6 +7354,20 @@ const generateScientificAssistantReport = (input: {
   if (hasForestSmallSample) {
     pushCaution(
       "Tamaños muestrales pequeños en el Forest Plot limitan la fiabilidad de los IC95%."
+    );
+  }
+  if (hasPCALowVariance) {
+    pushCaution(
+      "La estructura multivariante no queda completamente representada por dos componentes."
+    );
+  }
+  if (
+    input.hierarchicalClusteringAnalysis &&
+    input.hierarchicalClusteringAnalysis.seriesCount >= 3 &&
+    !hasClusteringClearGroups
+  ) {
+    pushCaution(
+      "El clustering jerárquico no muestra separación clara entre grupos de series."
     );
   }
   if (hasOutliers) {
@@ -7580,6 +8428,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showRadarPlot, setShowRadarPlot] = useState(false);
   const [showKernelDensity, setShowKernelDensity] = useState(false);
   const [showForestPlot, setShowForestPlot] = useState(false);
+  const [showPCA, setShowPCA] = useState(false);
+  const [showHierarchicalClustering, setShowHierarchicalClustering] =
+    useState(false);
   const [showTTest, setShowTTest] = useState(false);
   const [selectedTTestSeriesA, setSelectedTTestSeriesA] = useState<
     string | null
@@ -8625,6 +9476,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => buildForestPlotAnalysis(experimentalStatistics),
     [experimentalStatistics]
   );
+  const pcaObservationCount = useMemo(() => {
+    if (visibleExperimentalSeries.length < 2) return 0;
+    const counts = visibleExperimentalSeries.map((item) => item.points.length);
+    const firstCount = counts[0] ?? 0;
+    if (firstCount < 3) return 0;
+    if (!counts.every((count) => count === firstCount)) return 0;
+    return firstCount;
+  }, [visibleExperimentalSeries]);
+  const pcaAnalysis = useMemo(
+    () =>
+      pcaObservationCount > 0
+        ? buildPCAAnalysis(visibleExperimentalSeries)
+        : null,
+    [visibleExperimentalSeries, pcaObservationCount]
+  );
+  const hierarchicalClusteringAnalysis = useMemo(
+    () => buildHierarchicalClusteringAnalysis(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -8713,6 +9583,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         radarPlotAnalysis,
         kernelDensityAnalyses,
         forestPlotAnalysis,
+        pcaAnalysis,
+        pcaObservationCount,
+        hierarchicalClusteringAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -8737,6 +9610,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       radarPlotAnalysis,
       kernelDensityAnalyses,
       forestPlotAnalysis,
+      pcaAnalysis,
+      pcaObservationCount,
+      hierarchicalClusteringAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -8763,6 +9639,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         radarPlotAnalysis,
         kernelDensityAnalyses,
         forestPlotAnalysis,
+        pcaAnalysis,
+        hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -8784,6 +9662,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       radarPlotAnalysis,
       kernelDensityAnalyses,
       forestPlotAnalysis,
+      pcaAnalysis,
+      hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -8809,6 +9689,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         radarPlotAnalysis,
         kernelDensityAnalyses,
         forestPlotAnalysis,
+        pcaAnalysis,
+        hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -8832,6 +9714,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       radarPlotAnalysis,
       kernelDensityAnalyses,
       forestPlotAnalysis,
+      pcaAnalysis,
+      hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -9485,7 +10369,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showBubblePlot ||
         showRadarPlot ||
         showKernelDensity ||
-        showForestPlot)) ||
+        showForestPlot ||
+        showPCA ||
+        showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
     (isAssistantModuleEnabled &&
@@ -10999,6 +11885,52 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForCorrelation
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">Mostrar PCA</span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showPCA}
+                            onChange={(e) => setShowPCA(e.target.checked)}
+                            disabled={!hasEnoughSeriesForCorrelation}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForCorrelation
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar clustering jerárquico
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showHierarchicalClustering}
+                            onChange={(e) =>
+                              setShowHierarchicalClustering(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForCorrelation}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
                   </div>
 
                   <div
@@ -11920,6 +12852,63 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
+
+              {showPCA && (
+                <div className={`${contentPanel} mt-4`}>
+                  <p className={subsectionHeading}>🧭 PCA</p>
+                  {!pcaAnalysis ? (
+                    <p className={emptyState}>
+                      No hay datos suficientes para realizar PCA.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                        <p>
+                          <span className="font-semibold">Varianza PC1:</span>{" "}
+                          {formatPCAVariancePercent(pcaAnalysis.component1Variance)}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Varianza PC2:</span>{" "}
+                          {formatPCAVariancePercent(pcaAnalysis.component2Variance)}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Acumulada:</span>{" "}
+                          {formatPCAVariancePercent(pcaAnalysis.cumulativeVariance)}
+                        </p>
+                      </div>
+                      <ScientificPCAPlotChart
+                        analysis={pcaAnalysis}
+                        chartTheme={chartTheme}
+                      />
+                      <p className="mt-2 text-sm">{pcaAnalysis.interpretation}</p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {showHierarchicalClustering && (
+                <div className={`${contentPanel} mt-4`}>
+                  <p className={subsectionHeading}>🌳 Clustering jerárquico</p>
+                  {!hierarchicalClusteringAnalysis ? (
+                    <p className={emptyState}>
+                      No hay datos suficientes para realizar clustering.
+                    </p>
+                  ) : (
+                    <>
+                      <p>
+                        <span className="font-semibold">Series:</span>{" "}
+                        {hierarchicalClusteringAnalysis.seriesCount}
+                      </p>
+                      <p className="mt-2 text-sm">
+                        {hierarchicalClusteringAnalysis.interpretation}
+                      </p>
+                      <ScientificHierarchicalClusteringDendrogram
+                        analysis={hierarchicalClusteringAnalysis}
+                      />
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             </NotebookSection>
             )}
@@ -13167,6 +14156,78 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               </p>
                             ))}
                         </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showPCA && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🧭 PCA</p>
+                    {!pcaAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para realizar PCA.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">
+                            Componentes analizados:
+                          </span>{" "}
+                          PC1, PC2
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">
+                            Varianza explicada PC1:
+                          </span>{" "}
+                          {formatPCAVariancePercent(pcaAnalysis.component1Variance)}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">
+                            Varianza explicada PC2:
+                          </span>{" "}
+                          {formatPCAVariancePercent(pcaAnalysis.component2Variance)}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">
+                            Varianza acumulada:
+                          </span>{" "}
+                          {formatPCAVariancePercent(pcaAnalysis.cumulativeVariance)}
+                        </p>
+                        <p className="mt-2 text-sm">{pcaAnalysis.interpretation}</p>
+
+                        <ScientificPCAPlotChart
+                          analysis={pcaAnalysis}
+                          chartTheme={chartTheme}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showHierarchicalClustering && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      🌳 Clustering jerárquico
+                    </p>
+                    {!hierarchicalClusteringAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para realizar clustering.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">
+                            Número de series:
+                          </span>{" "}
+                          {hierarchicalClusteringAnalysis.seriesCount}
+                        </p>
+                        <p className="mt-2 text-sm">
+                          {hierarchicalClusteringAnalysis.interpretation}
+                        </p>
+                        <ScientificHierarchicalClusteringDendrogram
+                          analysis={hierarchicalClusteringAnalysis}
+                        />
                       </div>
                     )}
                   </div>
