@@ -570,6 +570,131 @@ const getChartExportFileName = (
   return safe ? `grafico-${safe}.${extension}` : `grafico.${extension}`;
 };
 
+const CHART_CAPTURE_PNG_OPTIONS = {
+  cacheBust: true,
+  pixelRatio: 2,
+  backgroundColor: "#ffffff",
+} as const;
+
+const waitForChartPaint = () =>
+  new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+
+type ChartCaptureVisibilityRestore = {
+  section: HTMLElement;
+  hadHiddenClass: boolean;
+  ariaHidden: string | null;
+  notebookPanel: HTMLElement | null;
+  notebookHadCollapsedGrid: boolean;
+};
+
+const prepareChartExportVisibility = (
+  chartNode: HTMLElement
+): ChartCaptureVisibilityRestore | null => {
+  const section = chartNode.closest<HTMLElement>("section");
+  if (!section) return null;
+
+  const restore: ChartCaptureVisibilityRestore = {
+    section,
+    hadHiddenClass: section.classList.contains("hidden"),
+    ariaHidden: section.getAttribute("aria-hidden"),
+    notebookPanel: null,
+    notebookHadCollapsedGrid: false,
+  };
+
+  if (restore.hadHiddenClass) {
+    section.classList.remove("hidden");
+    section.setAttribute("aria-hidden", "false");
+  }
+
+  const notebookGrid = chartNode.closest<HTMLElement>(".grid.transition-all");
+  if (notebookGrid?.classList.contains("grid-rows-[0fr]")) {
+    restore.notebookPanel = notebookGrid;
+    restore.notebookHadCollapsedGrid = true;
+    notebookGrid.classList.remove("grid-rows-[0fr]", "opacity-0", "mt-0");
+    notebookGrid.classList.add("grid-rows-[1fr]", "opacity-100", "mt-3");
+  }
+
+  return restore;
+};
+
+const restoreChartExportVisibility = (
+  restore: ChartCaptureVisibilityRestore | null
+) => {
+  if (!restore) return;
+
+  if (restore.notebookHadCollapsedGrid && restore.notebookPanel) {
+    restore.notebookPanel.classList.remove(
+      "grid-rows-[1fr]",
+      "opacity-100",
+      "mt-3"
+    );
+    restore.notebookPanel.classList.add("grid-rows-[0fr]", "opacity-0", "mt-0");
+  }
+
+  if (restore.hadHiddenClass) {
+    restore.section.classList.add("hidden");
+    if (restore.ariaHidden !== null) {
+      restore.section.setAttribute("aria-hidden", restore.ariaHidden);
+    } else {
+      restore.section.removeAttribute("aria-hidden");
+    }
+  }
+};
+
+const captureChartAsPngDataUrl = async (
+  chartNode: HTMLElement,
+  logContext: "png-export" | "pdf-export"
+): Promise<string | null> => {
+  const visibilityRestore = prepareChartExportVisibility(chartNode);
+
+  console.log(`[chart-capture:${logContext}] chartExportRef exists: true`);
+  console.log(
+    `[chart-capture:${logContext}] DOM node:`,
+    chartNode.tagName,
+    chartNode.className
+  );
+  console.log(
+    `[chart-capture:${logContext}] size before paint:`,
+    chartNode.offsetWidth,
+    chartNode.offsetHeight
+  );
+
+  try {
+    await waitForChartPaint();
+
+    const width = chartNode.offsetWidth;
+    const height = chartNode.offsetHeight;
+    console.log(`[chart-capture:${logContext}] size after paint:`, width, height);
+
+    if (width <= 0 || height <= 0) {
+      console.warn(
+        `[chart-capture:${logContext}] toPng skipped: zero-size container`
+      );
+      return null;
+    }
+
+    const dataUrl = await toPng(chartNode, CHART_CAPTURE_PNG_OPTIONS);
+    const captureOk =
+      dataUrl.startsWith("data:image/png") && dataUrl.length > 100;
+    console.log(
+      `[chart-capture:${logContext}] toPng success:`,
+      captureOk,
+      "length:",
+      dataUrl.length
+    );
+    return captureOk ? dataUrl : null;
+  } catch (error) {
+    console.error(`[chart-capture:${logContext}] toPng failed:`, error);
+    return null;
+  } finally {
+    restoreChartExportVisibility(visibilityRestore);
+  }
+};
+
 const DUPLICATE_TITLE_SUFFIX = " (copia)";
 
 const getDuplicateTitle = (currentTitle: string) => {
@@ -7150,6 +7275,21 @@ const integralLegendKey = (idx: number) => `integral:${idx}`;
 const experimentalLegendKey = (id: string) => `exp:${id}`;
 const regressionLegendKey = (id: string) => `regression:${id}`;
 
+const getExperimentalPointReactKey = (
+  seriesName: string,
+  point: { x: number; y: number },
+  index: number
+) => `${seriesName}-${point.x}-${point.y}-${index}`;
+
+const mapExperimentalScatterData = (
+  seriesName: string,
+  points: { x: number; y: number }[]
+) =>
+  points.map((point, index) => ({
+    ...point,
+    pointKey: getExperimentalPointReactKey(seriesName, point, index),
+  }));
+
 const DERIVATIVE_STROKE_OPACITY = 0.55;
 const INTEGRAL_STROKE_OPACITY = 0.5;
 
@@ -7674,11 +7814,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
 
     try {
-      const dataUrl = await toPng(chartExportRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        backgroundColor: "#ffffff",
-      });
+      const dataUrl = await captureChartAsPngDataUrl(
+        chartExportRef.current,
+        "png-export"
+      );
+      if (!dataUrl) return;
 
       const link = document.createElement("a");
       link.download = getChartExportFileName(title, "png");
@@ -7758,15 +7898,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       chartExportRef.current &&
       (chartData.length > 0 || experimentalSeries.length > 0)
     ) {
-      try {
-        chartImageDataUrl = await toPng(chartExportRef.current, {
-          cacheBust: true,
-          pixelRatio: 2,
-          backgroundColor: "#ffffff",
-        });
-      } catch {
-        chartImageDataUrl = null;
-      }
+      chartImageDataUrl = await captureChartAsPngDataUrl(
+        chartExportRef.current,
+        "pdf-export"
+      );
+    } else {
+      console.log(
+        "[chart-capture:pdf-export] chartExportRef exists:",
+        Boolean(chartExportRef.current),
+        "hasChartContent:",
+        chartData.length > 0 || experimentalSeries.length > 0
+      );
     }
 
     try {
@@ -7820,26 +7962,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     if (!source?.enabled) return;
 
     try {
-      const series = await importExperimentalDataFile(
+      const importedSeries = await importExperimentalDataFile(
         selectedDataSourceId,
         file
       );
 
-      if (!series) {
+      if (!importedSeries || importedSeries.length === 0) {
         setExperimentalImportError("Archivo de datos inválido");
         return;
       }
 
       setExperimentalImportError(null);
-      setExperimentalSeries((prev) => [
-        ...prev,
-        {
-          ...series,
-          color: getDefaultColorForIndex(
-            curves.filter((curve) => curve.expression.trim()).length + prev.length
-          ),
-        },
-      ]);
+      setExperimentalSeries((prev) => {
+        const curveCount = curves.filter((curve) => curve.expression.trim())
+          .length;
+        const baseIndex = curveCount + prev.length;
+
+        return [
+          ...prev,
+          ...importedSeries.map((series, index) => ({
+            ...series,
+            color: getDefaultColorForIndex(baseIndex + index),
+          })),
+        ];
+      });
     } catch {
       setExperimentalImportError("Archivo de datos inválido");
     }
@@ -9349,12 +9495,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const composedChartData = useMemo(() => {
     if (chartData.length > 0) return chartData;
 
-    const visiblePoints = visibleExperimentalSeries.flatMap(
-      (series) => series.points
-    );
-
-    return visiblePoints.length > 0 ? visiblePoints : chartData;
-  }, [chartData, visibleExperimentalSeries]);
+    // Las series experimentales se dibujan con Scatter por serie; no fusionar
+    // filas por X compartido (evita claves duplicadas en ComposedChart).
+    return chartData;
+  }, [chartData]);
   const chartTheme = useMemo(() => getChartTheme(themeMode), [themeMode]);
 
   useEffect(() => {
@@ -11564,8 +11708,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             {label != null && (
                               <p className="font-semibold mb-1">{label}</p>
                             )}
-                            {payload.map((entry) => (
-                              <p key={`${entry.name}-${entry.value}`}>
+                            {payload.map((entry, entryIndex) => (
+                              <p
+                                key={`${entry.name}-${entry.dataKey}-${entry.value}-${entryIndex}`}
+                              >
                                 {entry.name}: {entry.value}
                               </p>
                             ))}
@@ -11632,7 +11778,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         <Scatter
                           key={experimentalLegendKey(series.id)}
                           name={series.name}
-                          data={series.points}
+                          data={mapExperimentalScatterData(
+                            series.name,
+                            series.points
+                          )}
                           dataKey="y"
                           yAxisId={useDualYAxis ? "right" : undefined}
                           fill={series.color}
