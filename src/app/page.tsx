@@ -5144,6 +5144,573 @@ const getQQPlotInterpretationMessage = (interpretation: QQPlotInterpretation) =>
   return "Los datos muestran desviaciones importantes respecto a una distribución normal.";
 };
 
+type NormalityConsensus = {
+  seriesName: string;
+  conclusion: "normal" | "probably-normal" | "questionable" | "non-normal";
+  confidence: "high" | "medium" | "low";
+  reasons: string[];
+};
+
+const getNormalityConsensusConclusionLabel = (
+  conclusion: NormalityConsensus["conclusion"]
+) => {
+  if (conclusion === "normal") return "Normal";
+  if (conclusion === "probably-normal") return "Probablemente normal";
+  if (conclusion === "questionable") return "Normalidad cuestionable";
+  return "No normal";
+};
+
+const getNormalityConsensusEmoji = (
+  conclusion: NormalityConsensus["conclusion"]
+) => {
+  if (conclusion === "normal") return "🟢";
+  if (conclusion === "probably-normal") return "🟡";
+  if (conclusion === "questionable") return "🟠";
+  return "🔴";
+};
+
+const isViolinShapeSkewed = (
+  shape: ViolinShapeInterpretation | undefined
+) => shape === "right-skewed" || shape === "left-skewed";
+
+const isKernelShapeSkewed = (shape: KernelDistributionShape | undefined) =>
+  shape === "right-skewed" || shape === "left-skewed";
+
+const buildNormalityConsensusForSeries = (
+  normality: NormalityAnalysis | undefined,
+  qqPlot: QQPlotAnalysis | undefined,
+  violinPlot: ViolinPlotAnalysis | undefined,
+  kernelDensity: KernelDensityAnalysis | undefined
+): NormalityConsensus => {
+  const seriesName =
+    normality?.seriesName ??
+    qqPlot?.seriesName ??
+    violinPlot?.seriesName ??
+    kernelDensity?.seriesName ??
+    "Serie";
+
+  const sourceReasons: string[] = [];
+  if (normality) {
+    sourceReasons.push(
+      `SCI-11: ${getNormalityClassificationLabel(normality.classification)}`
+    );
+  }
+  if (qqPlot) {
+    sourceReasons.push(
+      `SCI-21: ${getQQPlotInterpretationLabel(qqPlot.interpretation)}`
+    );
+  }
+  if (violinPlot) {
+    sourceReasons.push(
+      `SCI-22: ${getViolinShapeInterpretationMessage(violinPlot.shapeInterpretation)}`
+    );
+  }
+  if (kernelDensity) {
+    sourceReasons.push(
+      `SCI-26: ${getKernelDistributionShapeMessage(kernelDensity.distributionShape)}`
+    );
+  }
+
+  if (!normality || normality.classification === null) {
+    return {
+      seriesName,
+      conclusion: "questionable",
+      confidence: "low",
+      reasons: [
+        "Datos insuficientes para evaluar normalidad.",
+        ...sourceReasons,
+      ],
+    };
+  }
+
+  if (normality.classification === "non-normal") {
+    return {
+      seriesName,
+      conclusion: "non-normal",
+      confidence: "high",
+      reasons: [
+        "SCI-11 clasifica la serie como no normal.",
+        ...sourceReasons.filter((reason) => !reason.startsWith("SCI-11:")),
+      ],
+    };
+  }
+
+  const qqPoor = qqPlot?.interpretation === "poor";
+  if (
+    (normality.classification === "normal" && qqPoor) ||
+    (normality.classification === "approximately-normal" && qqPoor)
+  ) {
+    return {
+      seriesName,
+      conclusion: "questionable",
+      confidence: "medium",
+      reasons: [
+        "La evaluación de normalidad y el Q-Q Plot no son consistentes.",
+        ...sourceReasons,
+      ],
+    };
+  }
+
+  const qqFavorable =
+    qqPlot?.interpretation === "excellent" || qqPlot?.interpretation === "good";
+  const violinSymmetric = violinPlot?.shapeInterpretation === "symmetric";
+  const kdeSymmetric = kernelDensity?.distributionShape === "symmetric";
+
+  if (
+    normality.classification === "normal" &&
+    qqFavorable &&
+    violinSymmetric &&
+    kdeSymmetric
+  ) {
+    return {
+      seriesName,
+      conclusion: "normal",
+      confidence: "high",
+      reasons: [
+        "SCI-11, Q-Q Plot, Violin Plot y KDE son coherentes con normalidad.",
+        ...sourceReasons,
+      ],
+    };
+  }
+
+  const qqModerate = qqPlot?.interpretation === "moderate";
+  const violinSkewed = isViolinShapeSkewed(violinPlot?.shapeInterpretation);
+  const kdeSkewed = isKernelShapeSkewed(kernelDensity?.distributionShape);
+
+  if (
+    normality.classification === "normal" &&
+    (qqModerate || violinSkewed || kdeSkewed)
+  ) {
+    const reasons = [
+      "SCI-11 indica normalidad, pero al menos un diagnóstico complementario muestra reservas.",
+    ];
+    if (qqModerate) reasons.push("Q-Q Plot con ajuste moderado.");
+    if (violinSkewed) reasons.push("Violin Plot con asimetría.");
+    if (kdeSkewed) reasons.push("KDE con asimetría.");
+    reasons.push(...sourceReasons);
+    return {
+      seriesName,
+      conclusion: "probably-normal",
+      confidence: "medium",
+      reasons,
+    };
+  }
+
+  return {
+    seriesName,
+    conclusion: "questionable",
+    confidence: sourceReasons.length >= 2 ? "medium" : "low",
+    reasons: [
+      "No se alcanzó un consenso claro de normalidad con los indicadores disponibles.",
+      ...sourceReasons,
+    ],
+  };
+};
+
+const buildNormalityConsensus = (
+  normalityAnalyses: NormalityAnalysis[],
+  qqPlotAnalyses: QQPlotAnalysis[],
+  violinPlotAnalyses: ViolinPlotAnalysis[],
+  kernelDensityAnalyses: KernelDensityAnalysis[]
+): NormalityConsensus[] => {
+  const seriesNames = new Set<string>();
+  normalityAnalyses.forEach((analysis) => seriesNames.add(analysis.seriesName));
+  qqPlotAnalyses.forEach((analysis) => seriesNames.add(analysis.seriesName));
+  violinPlotAnalyses.forEach((analysis) => seriesNames.add(analysis.seriesName));
+  kernelDensityAnalyses.forEach((analysis) =>
+    seriesNames.add(analysis.seriesName)
+  );
+
+  if (seriesNames.size === 0) return [];
+
+  const normalityByName = new Map(
+    normalityAnalyses.map((analysis) => [analysis.seriesName, analysis])
+  );
+  const qqByName = new Map(
+    qqPlotAnalyses.map((analysis) => [analysis.seriesName, analysis])
+  );
+  const violinByName = new Map(
+    violinPlotAnalyses.map((analysis) => [analysis.seriesName, analysis])
+  );
+  const kdeByName = new Map(
+    kernelDensityAnalyses.map((analysis) => [analysis.seriesName, analysis])
+  );
+
+  return Array.from(seriesNames).map((seriesName) =>
+    buildNormalityConsensusForSeries(
+      normalityByName.get(seriesName),
+      qqByName.get(seriesName),
+      violinByName.get(seriesName),
+      kdeByName.get(seriesName)
+    )
+  );
+};
+
+const getNormalityConsensusReportLines = (
+  consensusList: NormalityConsensus[]
+): string[] => {
+  if (consensusList.length === 0) {
+    return ["No hay series disponibles para consenso de normalidad."];
+  }
+
+  const lines: string[] = [];
+  consensusList.forEach((consensus) => {
+    lines.push(consensus.seriesName);
+    lines.push(
+      `Conclusión: ${getNormalityConsensusConclusionLabel(consensus.conclusion)}`
+    );
+    lines.push(
+      `Confianza: ${getNormalityConfidenceLabel(consensus.confidence)}`
+    );
+    consensus.reasons.forEach((reason) => lines.push(`- ${reason}`));
+  });
+  return lines;
+};
+
+const getNormalityConsensusFindingLine = (consensus: NormalityConsensus) => {
+  if (consensus.conclusion === "normal") {
+    return `La serie ${consensus.seriesName} presenta evidencia consistente de normalidad.`;
+  }
+  if (consensus.conclusion === "probably-normal") {
+    return `La serie ${consensus.seriesName} es probablemente normal según el consenso integrado.`;
+  }
+  if (consensus.conclusion === "questionable") {
+    return `La serie ${consensus.seriesName} presenta resultados ambiguos respecto a normalidad.`;
+  }
+  return `La serie ${consensus.seriesName} no cumple supuestos de normalidad.`;
+};
+
+const appendNormalityConsensusFindings = (
+  findings: string[],
+  warnings: string[],
+  consensusList: NormalityConsensus[]
+) => {
+  consensusList.forEach((consensus) => {
+    const finding = getNormalityConsensusFindingLine(consensus);
+    if (!findings.includes(finding)) findings.push(finding);
+    if (consensus.conclusion === "non-normal") {
+      const warning = `La serie ${consensus.seriesName} no cumple supuestos de normalidad; se recomienda priorizar pruebas no paramétricas.`;
+      if (!warnings.includes(warning)) warnings.push(warning);
+    }
+    if (consensus.conclusion === "questionable") {
+      const warning = `La serie ${consensus.seriesName} presenta resultados ambiguos respecto a normalidad.`;
+      if (!warnings.includes(warning)) warnings.push(warning);
+    }
+  });
+};
+
+type IntegratedNormalityVerdict =
+  | "compatible"
+  | "approximately-compatible"
+  | "inconclusive"
+  | "non-compatible"
+  | "contradictory";
+
+type IntegratedNormalitySeriesAssessment = {
+  seriesName: string;
+  verdict: IntegratedNormalityVerdict;
+  conclusion: string;
+  sourceSummary: string[];
+};
+
+type IntegratedNormalityAssessment = {
+  seriesAssessments: IntegratedNormalitySeriesAssessment[];
+  globalConclusion: string[];
+  coherenceWarnings: string[];
+};
+
+const isNormalityClassificationFavorable = (
+  classification: NormalityClassification | null | undefined
+) =>
+  classification === "normal" || classification === "approximately-normal";
+
+const isQQInterpretationFavorable = (
+  interpretation: QQPlotInterpretation | undefined
+) => interpretation === "excellent" || interpretation === "good";
+
+const isQQInterpretationUnfavorable = (
+  interpretation: QQPlotInterpretation | undefined
+) => interpretation === "poor";
+
+const isDistributionShapeFavorable = (
+  shape: ViolinShapeInterpretation | KernelDistributionShape | undefined
+) => shape === "symmetric";
+
+const isDistributionShapeUnfavorable = (
+  shape: ViolinShapeInterpretation | KernelDistributionShape | undefined
+) =>
+  shape === "right-skewed" ||
+  shape === "left-skewed" ||
+  shape === "multimodal";
+
+const getIntegratedNormalityVerdictLabel = (
+  verdict: IntegratedNormalityVerdict
+) => {
+  if (verdict === "compatible") return "Compatible con normalidad";
+  if (verdict === "approximately-compatible") {
+    return "Aproximadamente compatible";
+  }
+  if (verdict === "inconclusive") return "Inconcluso";
+  if (verdict === "non-compatible") return "No compatible con normalidad";
+  return "Señales contradictorias";
+};
+
+const getIntegratedNormalitySeriesFooterText = (
+  assessment: IntegratedNormalitySeriesAssessment | undefined
+) => {
+  if (!assessment) return null;
+  return `Coherencia integrada — ${getIntegratedNormalityVerdictLabel(assessment.verdict)}: ${assessment.conclusion}`;
+};
+
+const assessIntegratedNormalityForSeries = (
+  normality: NormalityAnalysis | undefined,
+  qqPlot: QQPlotAnalysis | undefined,
+  violinPlot: ViolinPlotAnalysis | undefined,
+  kernelDensity: KernelDensityAnalysis | undefined
+): IntegratedNormalitySeriesAssessment => {
+  const seriesName =
+    normality?.seriesName ??
+    qqPlot?.seriesName ??
+    violinPlot?.seriesName ??
+    kernelDensity?.seriesName ??
+    "Serie";
+
+  const sourceSummary: string[] = [];
+
+  if (normality) {
+    sourceSummary.push(
+      `SCI-11: ${getNormalityClassificationLabel(normality.classification)}`
+    );
+  }
+  if (qqPlot) {
+    sourceSummary.push(
+      `SCI-21: ${getQQPlotInterpretationLabel(qqPlot.interpretation)}`
+    );
+  }
+  if (violinPlot) {
+    sourceSummary.push(
+      `SCI-22: ${getViolinShapeInterpretationMessage(violinPlot.shapeInterpretation)}`
+    );
+  }
+  if (kernelDensity) {
+    sourceSummary.push(
+      `SCI-26: ${getKernelDistributionShapeMessage(kernelDensity.distributionShape)}`
+    );
+  }
+
+  const normalityFavorable = isNormalityClassificationFavorable(
+    normality?.classification
+  );
+  const normalityUnfavorable = normality?.classification === "non-normal";
+  const qqUnfavorable = isQQInterpretationUnfavorable(qqPlot?.interpretation);
+  const qqFavorable = isQQInterpretationFavorable(qqPlot?.interpretation);
+  const violinUnfavorable = violinPlot
+    ? !isDistributionShapeFavorable(violinPlot.shapeInterpretation)
+    : false;
+  const kernelUnfavorable = kernelDensity
+    ? isDistributionShapeUnfavorable(kernelDensity.distributionShape)
+    : false;
+  const visualUnfavorable = violinUnfavorable || kernelUnfavorable;
+  const visualFavorable =
+    (!violinPlot || isDistributionShapeFavorable(violinPlot.shapeInterpretation)) &&
+    (!kernelDensity ||
+      isDistributionShapeFavorable(kernelDensity.distributionShape));
+
+  if (normalityFavorable && (qqUnfavorable || visualUnfavorable)) {
+    return {
+      seriesName,
+      verdict: "contradictory",
+      conclusion:
+        "Conclusión integrada: SCI-11 indica compatibilidad con normalidad, pero el Q-Q Plot, Violin Plot o KDE evidencian desviaciones. Interprete con cautela y considere métodos no paramétricos.",
+      sourceSummary,
+    };
+  }
+
+  if (normalityUnfavorable || qqUnfavorable || kernelUnfavorable) {
+    return {
+      seriesName,
+      verdict: "non-compatible",
+      conclusion:
+        "Conclusión integrada: los indicadores disponibles no respaldan el supuesto de normalidad para esta serie.",
+      sourceSummary,
+    };
+  }
+
+  if (
+    normalityFavorable &&
+    qqFavorable &&
+    visualFavorable &&
+    sourceSummary.length >= 2
+  ) {
+    return {
+      seriesName,
+      verdict: "compatible",
+      conclusion:
+        "Conclusión integrada: SCI-11, Q-Q Plot, Violin Plot y KDE son coherentes con una distribución normal.",
+      sourceSummary,
+    };
+  }
+
+  if (normalityFavorable || qqFavorable || visualFavorable) {
+    return {
+      seriesName,
+      verdict: "approximately-compatible",
+      conclusion:
+        "Conclusión integrada: la serie muestra compatibilidad parcial con normalidad; conviene validar con métodos complementarios.",
+      sourceSummary,
+    };
+  }
+
+  return {
+    seriesName,
+    verdict: "inconclusive",
+    conclusion:
+      "Conclusión integrada: no hay evidencia suficiente para emitir un veredicto definitivo de normalidad.",
+    sourceSummary,
+  };
+};
+
+const buildIntegratedNormalityAssessment = (
+  normalityAnalyses: NormalityAnalysis[],
+  qqPlotAnalyses: QQPlotAnalysis[],
+  violinPlotAnalyses: ViolinPlotAnalysis[],
+  kernelDensityAnalyses: KernelDensityAnalysis[]
+): IntegratedNormalityAssessment => {
+  const seriesNames = new Set<string>();
+  normalityAnalyses.forEach((analysis) => seriesNames.add(analysis.seriesName));
+  qqPlotAnalyses.forEach((analysis) => seriesNames.add(analysis.seriesName));
+  violinPlotAnalyses.forEach((analysis) => seriesNames.add(analysis.seriesName));
+  kernelDensityAnalyses.forEach((analysis) =>
+    seriesNames.add(analysis.seriesName)
+  );
+
+  if (seriesNames.size === 0) {
+    return {
+      seriesAssessments: [],
+      globalConclusion: [
+        "No hay series disponibles para evaluar la coherencia de normalidad.",
+      ],
+      coherenceWarnings: [],
+    };
+  }
+
+  const normalityByName = new Map(
+    normalityAnalyses.map((analysis) => [analysis.seriesName, analysis])
+  );
+  const qqByName = new Map(
+    qqPlotAnalyses.map((analysis) => [analysis.seriesName, analysis])
+  );
+  const violinByName = new Map(
+    violinPlotAnalyses.map((analysis) => [analysis.seriesName, analysis])
+  );
+  const kdeByName = new Map(
+    kernelDensityAnalyses.map((analysis) => [analysis.seriesName, analysis])
+  );
+
+  const seriesAssessments = Array.from(seriesNames).map((seriesName) =>
+    assessIntegratedNormalityForSeries(
+      normalityByName.get(seriesName),
+      qqByName.get(seriesName),
+      violinByName.get(seriesName),
+      kdeByName.get(seriesName)
+    )
+  );
+
+  const contradictoryCount = seriesAssessments.filter(
+    (assessment) => assessment.verdict === "contradictory"
+  ).length;
+  const compatibleCount = seriesAssessments.filter(
+    (assessment) => assessment.verdict === "compatible"
+  ).length;
+  const nonCompatibleCount = seriesAssessments.filter(
+    (assessment) => assessment.verdict === "non-compatible"
+  ).length;
+
+  const globalConclusion: string[] = [];
+
+  if (compatibleCount === seriesAssessments.length) {
+    globalConclusion.push(
+      "La evaluación integrada (SCI-11, SCI-21, SCI-22 y SCI-26) es coherente con normalidad en todas las series."
+    );
+  } else if (contradictoryCount > 0) {
+    globalConclusion.push(
+      `Se detectaron ${contradictoryCount} serie(s) con señales contradictorias entre normalidad estadística y diagnósticos visuales.`
+    );
+  } else if (nonCompatibleCount === seriesAssessments.length) {
+    globalConclusion.push(
+      "La evaluación integrada indica que ninguna serie cumple de forma consistente el supuesto de normalidad."
+    );
+  } else {
+    globalConclusion.push(
+      "La evaluación integrada muestra señales mixtas de normalidad entre series y métodos."
+    );
+  }
+
+  const coherenceWarnings: string[] = [];
+  seriesAssessments
+    .filter((assessment) => assessment.verdict === "contradictory")
+    .forEach((assessment) => {
+      coherenceWarnings.push(
+        `"${assessment.seriesName}": ${assessment.conclusion}`
+      );
+    });
+
+  return {
+    seriesAssessments,
+    globalConclusion,
+    coherenceWarnings,
+  };
+};
+
+const getIntegratedNormalityInterpretationLines = (
+  assessment: IntegratedNormalityAssessment
+): string[] => {
+  const lines = [...assessment.globalConclusion];
+
+  assessment.coherenceWarnings.forEach((warning) => lines.push(warning));
+
+  assessment.seriesAssessments.forEach((seriesAssessment) => {
+    lines.push(
+      `"${seriesAssessment.seriesName}": ${getIntegratedNormalityVerdictLabel(seriesAssessment.verdict)}.`
+    );
+    lines.push(seriesAssessment.conclusion);
+    seriesAssessment.sourceSummary.forEach((sourceLine) => lines.push(sourceLine));
+  });
+
+  return lines;
+};
+
+const appendIntegratedNormalityFindings = (
+  findings: string[],
+  warnings: string[],
+  assessment: IntegratedNormalityAssessment
+) => {
+  assessment.globalConclusion.forEach((line) => {
+    if (!findings.includes(line)) findings.push(line);
+  });
+
+  assessment.coherenceWarnings.forEach((line) => {
+    if (!warnings.includes(line)) warnings.push(line);
+  });
+
+  assessment.seriesAssessments.forEach((seriesAssessment) => {
+    const finding = `"${seriesAssessment.seriesName}": ${seriesAssessment.conclusion}`;
+    if (!findings.includes(finding)) findings.push(finding);
+
+    if (seriesAssessment.verdict === "compatible") {
+      const compatibleFinding =
+        "Los indicadores integrados de normalidad son coherentes en esta serie.";
+      if (!findings.includes(compatibleFinding)) findings.push(compatibleFinding);
+    }
+
+    if (seriesAssessment.verdict === "approximately-compatible") {
+      const partialFinding =
+        "La evaluación integrada sugiere compatibilidad parcial con normalidad.";
+      if (!findings.includes(partialFinding)) findings.push(partialFinding);
+    }
+  });
+};
+
 const calculateQQPlot = (series: ExperimentalSeries): QQPlotAnalysis | null => {
   const sortedSample = getSeriesYValues(series).sort((left, right) => left - right);
   const sampleSize = sortedSample.length;
@@ -6363,6 +6930,30 @@ const generateScientificReport = (input: {
 
   sections.push({ title: "Normalidad", content: normalityLines });
 
+  sections.push({
+    title: "Consenso de normalidad",
+    content: getNormalityConsensusReportLines(
+      buildNormalityConsensus(
+        input.normalityAnalyses,
+        input.qqPlotAnalyses,
+        input.violinPlotAnalyses,
+        input.kernelDensityAnalyses
+      )
+    ),
+  });
+
+  sections.push({
+    title: "Coherencia de normalidad",
+    content: getIntegratedNormalityInterpretationLines(
+      buildIntegratedNormalityAssessment(
+        input.normalityAnalyses,
+        input.qqPlotAnalyses,
+        input.violinPlotAnalyses,
+        input.kernelDensityAnalyses
+      )
+    ),
+  });
+
   const qqPlotLines: string[] = [];
   if (input.qqPlotAnalyses.length === 0) {
     qqPlotLines.push(
@@ -6736,91 +7327,32 @@ const generateScientificInterpretation = (input: {
     );
   }
 
-  if (input.normalityAnalyses.length > 0) {
-    const allNormal = input.normalityAnalyses.every(
-      (analysis) =>
-        analysis.classification === "normal" ||
-        analysis.classification === "approximately-normal"
+  if (
+    input.normalityAnalyses.length > 0 ||
+    input.qqPlotAnalyses.length > 0 ||
+    input.violinPlotAnalyses.length > 0 ||
+    input.kernelDensityAnalyses.length > 0
+  ) {
+    appendIntegratedNormalityFindings(
+      findings,
+      warnings,
+      buildIntegratedNormalityAssessment(
+        input.normalityAnalyses,
+        input.qqPlotAnalyses,
+        input.violinPlotAnalyses,
+        input.kernelDensityAnalyses
+      )
     );
-    const anyNonNormal = input.normalityAnalyses.some(
-      (analysis) => analysis.classification === "non-normal"
+    appendNormalityConsensusFindings(
+      findings,
+      warnings,
+      buildNormalityConsensus(
+        input.normalityAnalyses,
+        input.qqPlotAnalyses,
+        input.violinPlotAnalyses,
+        input.kernelDensityAnalyses
+      )
     );
-
-    if (allNormal && !anyNonNormal) {
-      findings.push(
-        "Los datos son compatibles con los supuestos de normalidad."
-      );
-    } else {
-      findings.push(
-        "Se detectaron desviaciones respecto a una distribución normal."
-      );
-    }
-  }
-
-  if (input.qqPlotAnalyses.length > 0) {
-    const allQQExcellent = input.qqPlotAnalyses.every(
-      (analysis) => analysis.interpretation === "excellent"
-    );
-    const anyQQPoor = input.qqPlotAnalyses.some(
-      (analysis) => analysis.interpretation === "poor"
-    );
-
-    if (allQQExcellent) {
-      findings.push(
-        "El análisis Q-Q mostró excelente concordancia con una distribución normal."
-      );
-    } else if (anyQQPoor) {
-      findings.push(
-        "El análisis Q-Q evidenció desviaciones importantes de la normalidad."
-      );
-    } else {
-      findings.push(
-        "El análisis Q-Q indicó compatibilidad moderada con una distribución normal."
-      );
-    }
-  }
-
-  if (input.violinPlotAnalyses.length > 0) {
-    const skewedHighCount = input.violinPlotAnalyses.filter(
-      (analysis) => analysis.shapeInterpretation === "right-skewed"
-    ).length;
-    const skewedLowCount = input.violinPlotAnalyses.filter(
-      (analysis) => analysis.shapeInterpretation === "left-skewed"
-    ).length;
-    const symmetricCount = input.violinPlotAnalyses.filter(
-      (analysis) => analysis.shapeInterpretation === "symmetric"
-    ).length;
-
-    if (skewedHighCount > 0) {
-      findings.push(
-        "El Violin Plot sugiere asimetría hacia valores altos en al menos una serie."
-      );
-    }
-    if (skewedLowCount > 0) {
-      findings.push(
-        "El Violin Plot sugiere asimetría hacia valores bajos en al menos una serie."
-      );
-    }
-    if (symmetricCount === input.violinPlotAnalyses.length) {
-      findings.push(
-        "Las siluetas del Violin Plot indican distribuciones aproximadamente simétricas."
-      );
-    }
-
-    const spreads = input.violinPlotAnalyses.map(
-      (analysis) => analysis.q3 - analysis.q1
-    );
-    const maxSpread = Math.max(...spreads);
-    const minSpread = Math.min(...spreads);
-    if (maxSpread > minSpread * 2 && maxSpread > 0) {
-      findings.push(
-        "Se observa dispersión desigual entre series según el Violin Plot."
-      );
-    } else if (maxSpread > 0 && maxSpread === minSpread) {
-      findings.push(
-        "La concentración de los datos es similar entre las series analizadas."
-      );
-    }
   }
 
   if (input.correlationHeatmap) {
@@ -6863,18 +7395,6 @@ const generateScientificInterpretation = (input: {
           line.includes("perfiles muy distintos") ||
           line.includes("dispersión significativamente mayor") ||
           line.includes("perfil estadístico dominante")
-      )
-      .forEach((line) => findings.push(line));
-  }
-
-  if (input.kernelDensityAnalyses.length > 0) {
-    getKernelDensityInterpretationLines(input.kernelDensityAnalyses)
-      .filter(
-        (line) =>
-          line.includes("multimodalidad") ||
-          line.includes("asimetría visible") ||
-          line.includes("concentración de densidad") ||
-          line.includes("múltiples agrupaciones")
       )
       .forEach((line) => findings.push(line));
   }
@@ -7198,6 +7718,30 @@ const generateScientificAssistantReport = (input: {
     input.kernelDensityAnalyses.every(
       (analysis) => analysis.distributionShape === "symmetric"
     );
+  const integratedNormalityAssessment = buildIntegratedNormalityAssessment(
+    input.normalityAnalyses,
+    input.qqPlotAnalyses,
+    input.violinPlotAnalyses,
+    input.kernelDensityAnalyses
+  );
+  const normalityConsensus = buildNormalityConsensus(
+    input.normalityAnalyses,
+    input.qqPlotAnalyses,
+    input.violinPlotAnalyses,
+    input.kernelDensityAnalyses
+  );
+  const allConsensusNormal =
+    normalityConsensus.length > 0 &&
+    normalityConsensus.every((consensus) => consensus.conclusion === "normal");
+  const anyConsensusQuestionable = normalityConsensus.some(
+    (consensus) => consensus.conclusion === "questionable"
+  );
+  const anyConsensusNonNormal = normalityConsensus.some(
+    (consensus) => consensus.conclusion === "non-normal"
+  );
+  const hasNormalityContradictions = integratedNormalityAssessment.seriesAssessments.some(
+    (assessment) => assessment.verdict === "contradictory"
+  );
   const forestInterpretationLines = getForestPlotInterpretationLines(
     input.forestPlotAnalysis
   );
@@ -7316,6 +7860,34 @@ const generateScientificAssistantReport = (input: {
   if (hasSkewedViolin && hasPoorQQNormal && confidenceLevel === "high") {
     confidenceLevel = "medium";
   }
+  if (hasNormalityContradictions && confidenceLevel === "high") {
+    confidenceLevel = "medium";
+  }
+  if (
+    hasNormalityContradictions &&
+    hasSmallSamples &&
+    confidenceLevel !== "low"
+  ) {
+    confidenceLevel = "low";
+  }
+  if (
+    allConsensusNormal &&
+    !hasOutliers &&
+    !hasSmallSamples &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (anyConsensusQuestionable && confidenceLevel === "high") {
+    confidenceLevel = "medium";
+  }
+  if (
+    anyConsensusQuestionable &&
+    hasSmallSamples &&
+    confidenceLevel !== "low"
+  ) {
+    confidenceLevel = "low";
+  }
   if (
     heatmapStrongPositivePairs > 0 &&
     allNormal &&
@@ -7344,6 +7916,15 @@ const generateScientificAssistantReport = (input: {
   if (hasOutliers) cautiousReasons.push("valores atípicos");
   if (hasSmallSamples) cautiousReasons.push("muestras pequeñas");
   if (hasNonNormal) cautiousReasons.push("desviaciones de normalidad");
+  if (hasNormalityContradictions) {
+    cautiousReasons.push("señales contradictorias de normalidad");
+  }
+  if (anyConsensusQuestionable) {
+    cautiousReasons.push("consenso de normalidad cuestionable");
+  }
+  if (anyConsensusNonNormal) {
+    cautiousReasons.push("series con consenso no normal");
+  }
   if (confidenceLevel === "low") cautiousReasons.push("baja confianza estadística");
 
   const overallAssessment =
@@ -7392,32 +7973,6 @@ const generateScientificAssistantReport = (input: {
 
   if (input.kruskalWallisResult?.significant) {
     pushUniqueFinding("Kruskal-Wallis detectó diferencias significativas.");
-  }
-
-  if (allNormal) {
-    pushUniqueFinding("Las series cumplen supuestos de normalidad.");
-  } else if (hasNonNormal) {
-    pushUniqueFinding("Se detectaron series con distribución no normal.");
-  }
-
-  if (hasStrongQQNormal) {
-    pushUniqueFinding(
-      "El Q-Q Plot respalda la compatibilidad con una distribución normal."
-    );
-  } else if (hasPoorQQNormal) {
-    pushUniqueFinding(
-      "El Q-Q Plot muestra desviaciones importantes respecto a la normalidad."
-    );
-  }
-
-  if (allViolinSymmetric && allNormal && hasStrongQQNormal) {
-    pushUniqueFinding(
-      "Violin Plot, normalidad y Q-Q Plot son coherentes con distribuciones simétricas."
-    );
-  } else if (hasSkewedViolin) {
-    pushUniqueFinding(
-      "El Violin Plot revela asimetría en la forma de al menos una serie."
-    );
   }
 
   if (heatmapStrongPositivePairs > 0 && input.correlationHeatmap) {
@@ -7544,25 +8099,25 @@ const generateScientificAssistantReport = (input: {
     pushCaution(warning)
   );
 
-  if (hasNonNormal) {
-    pushCaution(
-      "La normalidad no se cumple en todas las series; priorice métodos no paramétricos."
+  if (
+    input.normalityAnalyses.length > 0 ||
+    input.qqPlotAnalyses.length > 0 ||
+    input.violinPlotAnalyses.length > 0 ||
+    input.kernelDensityAnalyses.length > 0
+  ) {
+    appendIntegratedNormalityFindings(
+      keyFindings,
+      cautions,
+      integratedNormalityAssessment
+    );
+    appendNormalityConsensusFindings(
+      keyFindings,
+      cautions,
+      normalityConsensus
     );
   }
-  if (hasPoorQQNormal) {
-    pushCaution(
-      "El Q-Q Plot sugiere desviaciones de normalidad; valide con pruebas no paramétricas."
-    );
-  }
-  if (hasSkewedViolin && (hasNonNormal || hasPoorQQNormal)) {
-    pushCaution(
-      "Violin Plot, normalidad y Q-Q Plot indican posible asimetría o desviación de normalidad."
-    );
-  }
-  if (hasKernelMultimodal) {
-    pushCaution(
-      "La multimodalidad en KDE puede indicar mezcla de subpoblaciones; valide antes de inferencia paramétrica."
-    );
+  if (anyConsensusNonNormal) {
+    pushCaution("Se recomienda priorizar pruebas no paramétricas.");
   }
   if (heatmapStrongNegativePairs > 0) {
     pushCaution(
@@ -7599,21 +8154,6 @@ const generateScientificAssistantReport = (input: {
       .forEach((line) => pushUniqueFinding(line));
   }
 
-  if (hasKernelMultimodal) {
-    pushUniqueFinding(
-      "El Kernel Density Plot sugiere multimodalidad en al menos una serie."
-    );
-  }
-  if (allKernelSymmetric && allViolinSymmetric && allNormal) {
-    pushUniqueFinding(
-      "KDE y Violin Plot son coherentes con distribuciones simétricas compatibles con normalidad."
-    );
-  }
-  if (hasKernelSkew && hasSkewedViolin) {
-    pushUniqueFinding(
-      "KDE y Violin Plot coinciden en asimetría de la distribución."
-    );
-  }
   if (input.forestPlotAnalysis) {
     forestInterpretationLines
       .filter(
@@ -9809,6 +10349,46 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const kernelDensityAnalyses = useMemo(
     () => calculateKernelDensityAnalysesForSeries(visibleExperimentalSeries),
     [visibleExperimentalSeries]
+  );
+  const integratedNormalityAssessment = useMemo(
+    () =>
+      buildIntegratedNormalityAssessment(
+        normalityAnalyses,
+        qqPlotAnalyses,
+        violinPlotAnalyses,
+        kernelDensityAnalyses
+      ),
+    [
+      normalityAnalyses,
+      qqPlotAnalyses,
+      violinPlotAnalyses,
+      kernelDensityAnalyses,
+    ]
+  );
+  const normalityConsensus = useMemo(
+    () =>
+      buildNormalityConsensus(
+        normalityAnalyses,
+        qqPlotAnalyses,
+        violinPlotAnalyses,
+        kernelDensityAnalyses
+      ),
+    [
+      normalityAnalyses,
+      qqPlotAnalyses,
+      violinPlotAnalyses,
+      kernelDensityAnalyses,
+    ]
+  );
+  const integratedNormalityBySeriesName = useMemo(
+    () =>
+      new Map(
+        integratedNormalityAssessment.seriesAssessments.map((assessment) => [
+          assessment.seriesName,
+          assessment,
+        ])
+      ),
+    [integratedNormalityAssessment]
   );
   const forestPlotAnalysis = useMemo(
     () => buildForestPlotAnalysis(experimentalStatistics),
@@ -13971,6 +14551,128 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 )}
 
+                {(showNormality ||
+                  showQQPlot ||
+                  showViolinPlot ||
+                  showKernelDensity) &&
+                  normalityConsensus.length > 0 && (
+                    <div className={`${subsectionCard} lg:col-span-2`}>
+                      <p className={subsectionHeading}>
+                        🧩 Consenso de normalidad
+                      </p>
+                      {!hasVisibleExperimentalSeries ? (
+                        <p className={emptyState}>
+                          No hay series disponibles para consenso de normalidad.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {normalityConsensus.map((consensus) => (
+                            <div
+                              key={`normality-consensus-${consensus.seriesName}`}
+                              className={contentPanel}
+                            >
+                              <p>
+                                <span className="font-semibold">Serie:</span>{" "}
+                                {consensus.seriesName}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Conclusión:</span>{" "}
+                                {getNormalityConsensusEmoji(consensus.conclusion)}{" "}
+                                {getNormalityConsensusConclusionLabel(
+                                  consensus.conclusion
+                                )}
+                              </p>
+                              <p className="mt-1">
+                                <span className="font-semibold">Confianza:</span>{" "}
+                                {getNormalityConfidenceLabel(consensus.confidence)}
+                              </p>
+                              <ul className={`mt-2 list-disc pl-5 text-sm ${emptyState}`}>
+                                {consensus.reasons.map((reason) => (
+                                  <li key={`${consensus.seriesName}-${reason}`}>
+                                    {reason}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                {(showNormality ||
+                  showQQPlot ||
+                  showViolinPlot ||
+                  showKernelDensity) &&
+                  integratedNormalityAssessment.seriesAssessments.length > 0 && (
+                    <div className={`${subsectionCard} lg:col-span-2`}>
+                      <p className={subsectionHeading}>
+                        🔬 Coherencia de normalidad
+                      </p>
+                      {!hasVisibleExperimentalSeries ? (
+                        <p className={emptyState}>
+                          No hay series disponibles para evaluar coherencia.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {integratedNormalityAssessment.globalConclusion.map(
+                            (line) => (
+                              <p key={line} className="text-sm">
+                                {line}
+                              </p>
+                            )
+                          )}
+                          {integratedNormalityAssessment.coherenceWarnings.map(
+                            (warning) => (
+                              <p
+                                key={warning}
+                                className="text-sm text-amber-600 dark:text-amber-400"
+                              >
+                                {warning}
+                              </p>
+                            )
+                          )}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {integratedNormalityAssessment.seriesAssessments.map(
+                              (seriesAssessment) => (
+                                <div
+                                  key={`integrated-normality-${seriesAssessment.seriesName}`}
+                                  className={contentPanel}
+                                >
+                                  <p>
+                                    <span className="font-semibold">Serie:</span>{" "}
+                                    {seriesAssessment.seriesName}
+                                  </p>
+                                  <p className="mt-1">
+                                    <span className="font-semibold">
+                                      Veredicto integrado:
+                                    </span>{" "}
+                                    {getIntegratedNormalityVerdictLabel(
+                                      seriesAssessment.verdict
+                                    )}
+                                  </p>
+                                  <p className={`mt-2 text-sm ${emptyState}`}>
+                                    {seriesAssessment.conclusion}
+                                  </p>
+                                  {seriesAssessment.sourceSummary.map(
+                                    (sourceLine) => (
+                                      <p
+                                        key={`${seriesAssessment.seriesName}-${sourceLine}`}
+                                        className={`mt-1 text-xs ${emptyState}`}
+                                      >
+                                        {sourceLine}
+                                      </p>
+                                    )
+                                  )}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                 {showNormality && (
                   <div className={`${subsectionCard} lg:col-span-2`}>
                     <p className={subsectionHeading}>📈 Normalidad</p>
@@ -14044,6 +14746,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                   analysis.classification
                                 )}
                               </p>
+                              {getIntegratedNormalitySeriesFooterText(
+                                integratedNormalityBySeriesName.get(
+                                  analysis.seriesName
+                                )
+                              ) && (
+                                <p
+                                  className={`mt-2 border-t border-[var(--app-border)] pt-2 text-sm ${
+                                    integratedNormalityBySeriesName.get(
+                                      analysis.seriesName
+                                    )?.verdict === "contradictory"
+                                      ? "text-amber-600 dark:text-amber-400"
+                                      : emptyState
+                                  }`}
+                                >
+                                  {getIntegratedNormalitySeriesFooterText(
+                                    integratedNormalityBySeriesName.get(
+                                      analysis.seriesName
+                                    )
+                                  )}
+                                </p>
+                              )}
                             </div>
                           );
                         })}
@@ -14102,6 +14825,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                       analysis.interpretation
                                     )}
                                   </p>
+                                  {getIntegratedNormalitySeriesFooterText(
+                                    integratedNormalityBySeriesName.get(
+                                      series.name
+                                    )
+                                  ) && (
+                                    <p
+                                      className={`mt-2 border-t border-[var(--app-border)] pt-2 text-sm ${
+                                        integratedNormalityBySeriesName.get(
+                                          series.name
+                                        )?.verdict === "contradictory"
+                                          ? "text-amber-600 dark:text-amber-400"
+                                          : emptyState
+                                      }`}
+                                    >
+                                      {getIntegratedNormalitySeriesFooterText(
+                                        integratedNormalityBySeriesName.get(
+                                          series.name
+                                        )
+                                      )}
+                                    </p>
+                                  )}
 
                                   <div className="h-[240px] mt-3">
                                     <ResponsiveContainer
@@ -14271,6 +15015,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                       analysis.shapeInterpretation
                                     )}
                                   </p>
+                                  {getIntegratedNormalitySeriesFooterText(
+                                    integratedNormalityBySeriesName.get(
+                                      series.name
+                                    )
+                                  ) && (
+                                    <p
+                                      className={`mt-2 border-t border-[var(--app-border)] pt-2 text-sm ${
+                                        integratedNormalityBySeriesName.get(
+                                          series.name
+                                        )?.verdict === "contradictory"
+                                          ? "text-amber-600 dark:text-amber-400"
+                                          : emptyState
+                                      }`}
+                                    >
+                                      {getIntegratedNormalitySeriesFooterText(
+                                        integratedNormalityBySeriesName.get(
+                                          series.name
+                                        )
+                                      )}
+                                    </p>
+                                  )}
 
                                   <div className="h-[240px] mt-3">
                                     <MiniViolinPlot analysis={analysis} />
@@ -14651,6 +15416,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                   analysis.distributionShape
                                 )}
                               </p>
+                              {getIntegratedNormalitySeriesFooterText(
+                                integratedNormalityBySeriesName.get(
+                                  analysis.seriesName
+                                )
+                              ) && (
+                                <p
+                                  className={`mt-2 border-t border-[var(--app-border)] pt-2 text-sm ${
+                                    integratedNormalityBySeriesName.get(
+                                      analysis.seriesName
+                                    )?.verdict === "contradictory"
+                                      ? "text-amber-600 dark:text-amber-400"
+                                      : emptyState
+                                  }`}
+                                >
+                                  {getIntegratedNormalitySeriesFooterText(
+                                    integratedNormalityBySeriesName.get(
+                                      analysis.seriesName
+                                    )
+                                  )}
+                                </p>
+                              )}
                             </div>
                           ))}
                         </div>
