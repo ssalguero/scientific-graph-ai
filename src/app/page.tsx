@@ -5457,6 +5457,21 @@ type MDSAnalysis = {
   interpretation: string[];
 };
 
+type DistanceMatrixCell = {
+  row: string;
+  column: string;
+  distance: number;
+};
+
+type DistanceMatrixAnalysis = {
+  variables: string[];
+  matrix: number[][];
+  minDistance: number;
+  maxDistance: number;
+  averageDistance: number;
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -5828,6 +5843,269 @@ function ScientificMDSPlot({
           />
         </ScatterChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+const DISTANCE_MATRIX_MIN_SERIES = 2;
+const DISTANCE_MATRIX_MIN_OBSERVATIONS = 3;
+
+const isDistanceMatrixInputValid = (series: ExperimentalSeries[]) =>
+  series.length >= DISTANCE_MATRIX_MIN_SERIES &&
+  series.every(
+    (item) =>
+      getSeriesYValues(item).length >= DISTANCE_MATRIX_MIN_OBSERVATIONS
+  );
+
+const getDistanceMatrixUniquePairs = (analysis: DistanceMatrixAnalysis) => {
+  const pairs: DistanceMatrixCell[] = [];
+
+  for (let rowIndex = 0; rowIndex < analysis.variables.length; rowIndex += 1) {
+    for (
+      let columnIndex = rowIndex + 1;
+      columnIndex < analysis.variables.length;
+      columnIndex += 1
+    ) {
+      pairs.push({
+        row: analysis.variables[rowIndex]!,
+        column: analysis.variables[columnIndex]!,
+        distance: analysis.matrix[rowIndex]?.[columnIndex] ?? 0,
+      });
+    }
+  }
+
+  return pairs;
+};
+
+const hasDistanceMatrixHighHeterogeneity = (
+  analysis: DistanceMatrixAnalysis | null
+) =>
+  analysis !== null &&
+  analysis.maxDistance > analysis.averageDistance * 2;
+
+const hasDistanceMatrixLimitedDiscrimination = (
+  analysis: DistanceMatrixAnalysis | null
+) => {
+  if (!analysis || analysis.maxDistance <= 0) return false;
+  return (
+    (analysis.maxDistance - analysis.minDistance) / analysis.maxDistance < 0.1
+  );
+};
+
+const interpolateDistanceMatrixColorChannel = (
+  start: number,
+  end: number,
+  factor: number
+) => Math.round(start + (end - start) * factor);
+
+const getDistanceMatrixCellColors = (
+  distance: number,
+  minDistance: number,
+  maxDistance: number,
+  isDiagonal: boolean
+) => {
+  if (isDiagonal) {
+    return {
+      backgroundColor: "var(--app-surface-muted)",
+      color: "var(--app-text)",
+    };
+  }
+
+  if (maxDistance === minDistance) {
+    return {
+      backgroundColor: "#94a3b8",
+      color: "#ffffff",
+    };
+  }
+
+  const normalized =
+    (distance - minDistance) / (maxDistance - minDistance);
+  let red = 29;
+  let green = 78;
+  let blue = 216;
+
+  if (normalized <= 0.5) {
+    const factor = normalized * 2;
+    red = interpolateDistanceMatrixColorChannel(29, 148, factor);
+    green = interpolateDistanceMatrixColorChannel(78, 163, factor);
+    blue = interpolateDistanceMatrixColorChannel(216, 184, factor);
+  } else {
+    const factor = (normalized - 0.5) * 2;
+    red = interpolateDistanceMatrixColorChannel(148, 220, factor);
+    green = interpolateDistanceMatrixColorChannel(163, 38, factor);
+    blue = interpolateDistanceMatrixColorChannel(184, 38, factor);
+  }
+
+  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+
+  return {
+    backgroundColor: `rgb(${red}, ${green}, ${blue})`,
+    color: luminance > 0.55 ? "#0f172a" : "#ffffff",
+  };
+};
+
+const buildDistanceMatrixInterpretation = (
+  analysis: DistanceMatrixAnalysis
+): string[] => {
+  const interpretation: string[] = [];
+  const pairs = getDistanceMatrixUniquePairs(analysis);
+  const seenSimilarPairs = new Set<string>();
+  const seenDifferentPairs = new Set<string>();
+
+  pairs.forEach((pair) => {
+    const pairKey = [pair.row, pair.column].sort().join("|");
+
+    if (
+      pair.distance <= analysis.minDistance * 1.25 &&
+      !seenSimilarPairs.has(pairKey)
+    ) {
+      seenSimilarPairs.add(pairKey);
+      interpretation.push(
+        `Las variables ${pair.row} y ${pair.column} presentan el comportamiento más similar.`
+      );
+    }
+
+    if (
+      pair.distance >= analysis.maxDistance * 0.9 &&
+      !seenDifferentPairs.has(pairKey)
+    ) {
+      seenDifferentPairs.add(pairKey);
+      interpretation.push(
+        `Las variables ${pair.row} y ${pair.column} presentan el comportamiento más diferente.`
+      );
+    }
+  });
+
+  if (analysis.maxDistance < analysis.averageDistance * 1.5) {
+    interpretation.push("La estructura global es relativamente homogénea.");
+  }
+
+  if (analysis.maxDistance > analysis.averageDistance * 2) {
+    interpretation.push("La estructura global muestra alta heterogeneidad.");
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildDistanceMatrixAnalysis = (
+  series: ExperimentalSeries[]
+): DistanceMatrixAnalysis | null => {
+  if (!isDistanceMatrixInputValid(series) || !canBuildHierarchicalClustering(series)) {
+    return null;
+  }
+
+  const matrix = buildClusteringDistanceMatrix(series);
+  const variables = series.map((item) => item.name);
+  const uniqueDistances = getDistanceMatrixUniquePairs({
+    variables,
+    matrix,
+    minDistance: 0,
+    maxDistance: 0,
+    averageDistance: 0,
+    interpretation: [],
+  }).map((pair) => pair.distance);
+
+  if (uniqueDistances.length === 0) return null;
+
+  const minDistance = Math.min(...uniqueDistances);
+  const maxDistance = Math.max(...uniqueDistances);
+  const averageDistance =
+    uniqueDistances.reduce((sum, distance) => sum + distance, 0) /
+    uniqueDistances.length;
+
+  const analysis: DistanceMatrixAnalysis = {
+    variables,
+    matrix,
+    minDistance,
+    maxDistance,
+    averageDistance,
+    interpretation: [],
+  };
+
+  analysis.interpretation = buildDistanceMatrixInterpretation(analysis);
+  return analysis;
+};
+
+const getDistanceMatrixReportLines = (
+  analysis: DistanceMatrixAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Distance Matrix."];
+  }
+
+  const lines = [
+    `Variables: ${analysis.variables.join(", ")}.`,
+    `Mínima distancia: ${analysis.minDistance.toFixed(2)}.`,
+    `Máxima distancia: ${analysis.maxDistance.toFixed(2)}.`,
+    `Promedio: ${analysis.averageDistance.toFixed(2)}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificDistanceMatrixProps = {
+  analysis: DistanceMatrixAnalysis;
+};
+
+function ScientificDistanceMatrix({ analysis }: ScientificDistanceMatrixProps) {
+  return (
+    <div className="w-full mt-3" style={{ maxHeight: 260 }}>
+      <div className="overflow-auto max-h-[260px]">
+        <div
+          className="gap-0.5 min-w-max"
+          style={{
+            display: "grid",
+            gridTemplateColumns: `minmax(6.5rem, auto) repeat(${analysis.variables.length}, minmax(3rem, 1fr))`,
+          }}
+        >
+          <div className="px-2 py-1" />
+          {analysis.variables.map((variable) => (
+            <div
+              key={`distance-matrix-col-${variable}`}
+              className="px-1 py-1 text-center text-xs font-semibold text-[var(--app-heading)] truncate"
+              title={variable}
+            >
+              {variable}
+            </div>
+          ))}
+
+          {analysis.variables.map((rowVariable, rowIndex) => (
+            <div key={`distance-matrix-row-${rowVariable}`} className="contents">
+              <div
+                className="px-2 py-1 text-xs font-semibold text-[var(--app-heading)] truncate"
+                title={rowVariable}
+              >
+                {rowVariable}
+              </div>
+              {analysis.variables.map((columnVariable, columnIndex) => {
+                const distance = analysis.matrix[rowIndex]?.[columnIndex] ?? 0;
+                const isDiagonal = rowIndex === columnIndex;
+                const colors = getDistanceMatrixCellColors(
+                  distance,
+                  analysis.minDistance,
+                  analysis.maxDistance,
+                  isDiagonal
+                );
+
+                return (
+                  <div
+                    key={`distance-matrix-cell-${rowVariable}-${columnVariable}`}
+                    className="min-h-[2.25rem] flex items-center justify-center rounded-sm px-1 py-1 text-xs tabular-nums"
+                    style={{
+                      backgroundColor: colors.backgroundColor,
+                      color: colors.color,
+                    }}
+                    title={`${rowVariable} × ${columnVariable}: ${distance.toFixed(2)}`}
+                  >
+                    {distance.toFixed(2)}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -8294,6 +8572,7 @@ const generateScientificReport = (input: {
   parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
   correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
   mdsAnalysis: MDSAnalysis | null;
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -8511,6 +8790,11 @@ const generateScientificReport = (input: {
   sections.push({
     title: "MDS",
     content: getMDSReportLines(input.mdsAnalysis),
+  });
+
+  sections.push({
+    title: "Distance Matrix",
+    content: getDistanceMatrixReportLines(input.distanceMatrixAnalysis),
   });
 
   sections.push({
@@ -8765,6 +9049,7 @@ const generateScientificInterpretation = (input: {
   parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
   correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
   mdsAnalysis: MDSAnalysis | null;
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -9004,6 +9289,23 @@ const generateScientificInterpretation = (input: {
     deduplicateTextLines(input.mdsAnalysis.interpretation).forEach((line) => {
       if (!findings.includes(line)) findings.push(line);
     });
+
+    if (
+      hasMDSAcceptableStress(input.mdsAnalysis) &&
+      input.distanceMatrixAnalysis
+    ) {
+      findings.push(
+        "La representación MDS preserva adecuadamente las distancias observadas."
+      );
+    }
+  }
+
+  if (input.distanceMatrixAnalysis) {
+    deduplicateTextLines(input.distanceMatrixAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
   }
 
   if (input.hierarchicalClusteringAnalysis) {
@@ -9035,6 +9337,14 @@ const generateScientificInterpretation = (input: {
           "Los agrupamientos identificados son coherentes con la proximidad observada en MDS."
         );
       }
+    }
+  }
+
+  if (input.hierarchicalClusteringAnalysis && input.distanceMatrixAnalysis) {
+    const clusteringDistanceFinding =
+      "Los agrupamientos observados son coherentes con la matriz de distancias.";
+    if (!findings.includes(clusteringDistanceFinding)) {
+      findings.push(clusteringDistanceFinding);
     }
   }
 
@@ -9249,7 +9559,9 @@ const generateScientificAssistantReport = (input: {
   parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
   correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
   mdsAnalysis: MDSAnalysis | null;
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  showHierarchicalClustering: boolean;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -9533,6 +9845,13 @@ const generateScientificAssistantReport = (input: {
   if (
     hasPCAHighVariance &&
     hasMDSAcceptableStress(input.mdsAnalysis) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasDistanceMatrixHighHeterogeneity(input.distanceMatrixAnalysis) &&
+    input.showHierarchicalClustering &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -9887,6 +10206,28 @@ const generateScientificAssistantReport = (input: {
     deduplicateTextLines(input.mdsAnalysis.interpretation).forEach((line) =>
       pushUniqueFinding(line)
     );
+
+    if (
+      hasMDSAcceptableStress(input.mdsAnalysis) &&
+      input.distanceMatrixAnalysis
+    ) {
+      pushUniqueFinding(
+        "La representación MDS preserva adecuadamente las distancias observadas."
+      );
+    }
+  }
+  if (input.distanceMatrixAnalysis) {
+    deduplicateTextLines(input.distanceMatrixAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+  }
+  if (
+    input.hierarchicalClusteringAnalysis &&
+    input.distanceMatrixAnalysis
+  ) {
+    pushUniqueFinding(
+      "Los agrupamientos observados son coherentes con la matriz de distancias."
+    );
   }
   if (hasPCAAdvancedClusteringConsistency) {
     pushUniqueFinding(
@@ -9951,6 +10292,11 @@ const generateScientificAssistantReport = (input: {
   if (hasMDSPoorStress(input.mdsAnalysis)) {
     pushCaution(
       "La representación bidimensional puede no reflejar adecuadamente las distancias originales."
+    );
+  }
+  if (hasDistanceMatrixLimitedDiscrimination(input.distanceMatrixAnalysis)) {
+    pushCaution(
+      "Las distancias entre variables son muy similares; la capacidad de discriminación es limitada."
     );
   }
   if (
@@ -11067,6 +11413,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showParallelCoordinates, setShowParallelCoordinates] = useState(false);
   const [showCorrelationNetwork, setShowCorrelationNetwork] = useState(false);
   const [showMDS, setShowMDS] = useState(false);
+  const [showDistanceMatrix, setShowDistanceMatrix] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -11470,6 +11817,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowParallelCoordinates(false);
     setShowCorrelationNetwork(false);
     setShowMDS(false);
+    setShowDistanceMatrix(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -12250,6 +12598,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => buildMDSAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const distanceMatrixAnalysis = useMemo(
+    () => buildDistanceMatrixAnalysis(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const hierarchicalClusteringAnalysis = useMemo(
     () => buildHierarchicalClusteringAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
@@ -12298,6 +12650,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     visibleExperimentalSeries
   );
   const hasEnoughSeriesForMDS = isMDSInputValid(visibleExperimentalSeries);
+  const hasEnoughSeriesForDistanceMatrix = isDistanceMatrixInputValid(
+    visibleExperimentalSeries
+  );
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -12359,6 +12714,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         parallelCoordinatesAnalysis,
         correlationNetworkAnalysis,
         mdsAnalysis,
+        distanceMatrixAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -12391,6 +12747,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       parallelCoordinatesAnalysis,
       correlationNetworkAnalysis,
       mdsAnalysis,
+      distanceMatrixAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -12423,6 +12780,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         parallelCoordinatesAnalysis,
         correlationNetworkAnalysis,
         mdsAnalysis,
+        distanceMatrixAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -12450,6 +12808,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       parallelCoordinatesAnalysis,
       correlationNetworkAnalysis,
       mdsAnalysis,
+      distanceMatrixAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -12481,7 +12840,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         parallelCoordinatesAnalysis,
         correlationNetworkAnalysis,
         mdsAnalysis,
+        distanceMatrixAnalysis,
         hierarchicalClusteringAnalysis,
+        showHierarchicalClustering,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -12510,7 +12871,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       parallelCoordinatesAnalysis,
       correlationNetworkAnalysis,
       mdsAnalysis,
+      distanceMatrixAnalysis,
       hierarchicalClusteringAnalysis,
+      showHierarchicalClustering,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -13170,6 +13533,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showParallelCoordinates ||
         showCorrelationNetwork ||
         showMDS ||
+        showDistanceMatrix ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -14842,6 +15206,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             checked={showMDS}
                             onChange={(e) => setShowMDS(e.target.checked)}
                             disabled={!hasEnoughSeriesForMDS}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForDistanceMatrix
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar matriz de distancias
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showDistanceMatrix}
+                            onChange={(e) =>
+                              setShowDistanceMatrix(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForDistanceMatrix}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -17505,6 +17894,48 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           analysis={mdsAnalysis}
                           seriesColors={radarSeriesColors}
                           chartTheme={chartTheme}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showDistanceMatrix && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📏 Distance Matrix</p>
+                    {!distanceMatrixAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Distance Matrix.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">Variables:</span>{" "}
+                          {distanceMatrixAnalysis.variables.join(", ")}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Rango:</span>{" "}
+                          {distanceMatrixAnalysis.minDistance.toFixed(2)} –{" "}
+                          {distanceMatrixAnalysis.maxDistance.toFixed(2)}{" "}
+                          (promedio{" "}
+                          {distanceMatrixAnalysis.averageDistance.toFixed(2)})
+                        </p>
+                        {distanceMatrixAnalysis.interpretation.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {distanceMatrixAnalysis.interpretation.map(
+                              (line, index) => (
+                                <p
+                                  key={`distance-matrix-interpretation-${index}`}
+                                  className={`text-sm ${emptyState}`}
+                                >
+                                  {line}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+                        <ScientificDistanceMatrix
+                          analysis={distanceMatrixAnalysis}
                         />
                       </div>
                     )}
