@@ -5696,6 +5696,341 @@ function ScientificSimilarityNetwork({
   );
 }
 
+type VariableImportanceEntry = {
+  variable: string;
+  score: number;
+  normalizedScore: number;
+  rank: number;
+  factors: string[];
+};
+
+type VariableImportanceAnalysis = {
+  entries: VariableImportanceEntry[];
+  interpretation: string[];
+};
+
+const VARIABLE_IMPORTANCE_MIN_SERIES = 2;
+
+const isVariableImportanceInputValid = (series: ExperimentalSeries[]) =>
+  series.length >= VARIABLE_IMPORTANCE_MIN_SERIES;
+
+const getVariableNetworkDegree = (
+  analysis: { edges: { source: string; target: string }[] } | null,
+  variable: string
+) => {
+  if (!analysis) return 0;
+  return analysis.edges.filter(
+    (edge) => edge.source === variable || edge.target === variable
+  ).length;
+};
+
+const getSimilarityNetworkCentralNode = (
+  analysis: SimilarityNetworkAnalysis | null
+): string | null => {
+  if (!analysis || analysis.edges.length === 0) return null;
+
+  const connectionCounts = new Map<string, number>();
+  analysis.nodes.forEach((node) => connectionCounts.set(node.id, 0));
+  analysis.edges.forEach((edge) => {
+    connectionCounts.set(
+      edge.source,
+      (connectionCounts.get(edge.source) ?? 0) + 1
+    );
+    connectionCounts.set(
+      edge.target,
+      (connectionCounts.get(edge.target) ?? 0) + 1
+    );
+  });
+
+  let centralNode: string | null = null;
+  let maxConnections = -1;
+  connectionCounts.forEach((count, nodeId) => {
+    if (count > maxConnections) {
+      maxConnections = count;
+      centralNode = nodeId;
+    }
+  });
+
+  return centralNode;
+};
+
+const getTopVariableImportanceEntry = (
+  analysis: VariableImportanceAnalysis | null
+) => {
+  if (!analysis || analysis.entries.length === 0) return null;
+  return (
+    analysis.entries.find((entry) => entry.rank === 1) ?? analysis.entries[0]
+  );
+};
+
+const hasVariableImportanceDominantTop = (
+  analysis: VariableImportanceAnalysis | null
+) => {
+  const topEntry = getTopVariableImportanceEntry(analysis);
+  return topEntry !== null && topEntry.normalizedScore >= 80;
+};
+
+const hasVariableImportanceDominanceGap = (
+  analysis: VariableImportanceAnalysis | null
+) => {
+  if (!analysis || analysis.entries.length < 2) return false;
+  const sortedEntries = [...analysis.entries].sort(
+    (left, right) => left.rank - right.rank
+  );
+  const topEntry = sortedEntries[0];
+  const secondEntry = sortedEntries[1];
+  if (!topEntry || !secondEntry) return false;
+  return topEntry.normalizedScore - secondEntry.normalizedScore > 50;
+};
+
+const getPcaPc1LeaderVariable = (pcaAnalysis: PCAAnalysis | null) => {
+  if (!pcaAnalysis || pcaAnalysis.loadings.length === 0) return null;
+  return pcaAnalysis.loadings.reduce((leader, loading) =>
+    loading.contributionPc1 > leader.contributionPc1 ? loading : leader
+  ).variable;
+};
+
+const buildVariableImportanceInterpretation = (
+  entries: VariableImportanceEntry[]
+): string[] => {
+  const interpretation: string[] = [];
+
+  entries.forEach((entry) => {
+    if (entry.factors.includes("Variable constante")) {
+      interpretation.push(
+        `La variable ${entry.variable} presenta variabilidad insuficiente para contribuir significativamente.`
+      );
+      return;
+    }
+
+    if (entry.normalizedScore >= 80) {
+      interpretation.push(
+        `La variable ${entry.variable} presenta una importancia dominante en el conjunto de datos.`
+      );
+    } else if (entry.normalizedScore >= 50) {
+      interpretation.push(
+        `La variable ${entry.variable} aporta información relevante al análisis.`
+      );
+    } else if (entry.normalizedScore < 30) {
+      interpretation.push(
+        `La variable ${entry.variable} tiene una contribución limitada.`
+      );
+    }
+  });
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildVariableImportanceAnalysis = (input: {
+  series: ExperimentalSeries[];
+  pcaAnalysis: PCAAnalysis | null;
+  correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
+  experimentalStatistics: ExperimentalStatistics[];
+}): VariableImportanceAnalysis | null => {
+  if (!isVariableImportanceInputValid(input.series)) return null;
+
+  const statsByName = new Map(
+    input.experimentalStatistics.map((stats) => [stats.seriesName, stats])
+  );
+  const pcaLoadingsByVariable = new Map(
+    (input.pcaAnalysis?.loadings ?? []).map((loading) => [
+      loading.variable,
+      loading,
+    ])
+  );
+
+  const rawEntries = input.series.map((item) => {
+    const variable = item.name;
+    const factors: string[] = [];
+    let score = 0;
+
+    const loading = pcaLoadingsByVariable.get(variable);
+    if (loading) {
+      score += loading.contributionPc1;
+      if (loading.contributionPc1 > 0) {
+        factors.push("PCA PC1");
+      }
+    }
+
+    const correlationDegree = getVariableNetworkDegree(
+      input.correlationNetworkAnalysis,
+      variable
+    );
+    if (correlationDegree > 0) {
+      score += correlationDegree * 10;
+      factors.push("Correlation Network");
+    }
+
+    const similarityDegree = getVariableNetworkDegree(
+      input.similarityNetworkAnalysis,
+      variable
+    );
+    if (similarityDegree > 0) {
+      score += similarityDegree * 5;
+      factors.push("Similarity Network");
+    }
+
+    if (input.distanceMatrixAnalysis) {
+      const variableIndex =
+        input.distanceMatrixAnalysis.variables.indexOf(variable);
+      if (variableIndex >= 0) {
+        const distances =
+          input.distanceMatrixAnalysis.matrix[variableIndex]?.filter(
+            (distance, index) =>
+              index !== variableIndex && Number.isFinite(distance)
+          ) ?? [];
+        if (distances.length > 0) {
+          const averageDistance =
+            distances.reduce((sum, distance) => sum + distance, 0) /
+            distances.length;
+          const normalizedAverageDistance =
+            input.distanceMatrixAnalysis.maxDistance > 0
+              ? averageDistance / input.distanceMatrixAnalysis.maxDistance
+              : 0;
+          score += normalizedAverageDistance * 15;
+          factors.push("Distance Matrix");
+        }
+      }
+    }
+
+    const stats = statsByName.get(variable);
+    if (stats && stats.stdDevY === 0) {
+      score *= 0.25;
+      factors.push("Variable constante");
+    }
+
+    return {
+      variable,
+      score,
+      factors: deduplicateTextLines(factors),
+    };
+  });
+
+  const maxScore = Math.max(...rawEntries.map((entry) => entry.score), 0);
+  const entries = rawEntries
+    .map((entry) => ({
+      variable: entry.variable,
+      score: entry.score,
+      normalizedScore: maxScore > 0 ? (entry.score / maxScore) * 100 : 0,
+      rank: 0,
+      factors: entry.factors,
+    }))
+    .sort((left, right) => right.normalizedScore - left.normalizedScore)
+    .map((entry, index) => ({
+      ...entry,
+      rank: index + 1,
+    }));
+
+  return {
+    entries,
+    interpretation: buildVariableImportanceInterpretation(entries),
+  };
+};
+
+const getVariableImportanceReportLines = (
+  analysis: VariableImportanceAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Variable Importance."];
+  }
+
+  const lines = ["Ranking:"];
+  [...analysis.entries]
+    .sort((left, right) => left.rank - right.rank)
+    .forEach((entry) => {
+      lines.push(
+        `${entry.rank}. ${entry.variable} — ${entry.normalizedScore.toFixed(0)}%.`
+      );
+      lines.push(
+        `Puntaje: ${entry.score.toFixed(2)}. Factores: ${entry.factors.join(", ") || "Ninguno"}.`
+      );
+    });
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificVariableImportanceChartProps = {
+  analysis: VariableImportanceAnalysis;
+  chartTheme: ReturnType<typeof getChartTheme>;
+};
+
+function ScientificVariableImportanceChart({
+  analysis,
+  chartTheme,
+}: ScientificVariableImportanceChartProps) {
+  const chartData = [...analysis.entries]
+    .sort((left, right) => right.normalizedScore - left.normalizedScore)
+    .map((entry) => ({
+      variable: entry.variable,
+      importance: entry.normalizedScore,
+    }));
+
+  return (
+    <div className="h-[280px] mt-3">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={chartData}
+          layout="vertical"
+          margin={{ top: 8, right: 32, left: 8, bottom: 8 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis
+            type="number"
+            domain={[0, 100]}
+            tick={{ fill: chartTheme.axis, fontSize: 11 }}
+          />
+          <YAxis
+            type="category"
+            dataKey="variable"
+            width={108}
+            tick={{ fill: chartTheme.axis, fontSize: 10 }}
+          />
+          <Tooltip
+            content={({ active, payload: tooltipPayload }) => {
+              if (!active || !tooltipPayload?.length) return null;
+
+              const item = tooltipPayload[0]?.payload as
+                | { variable?: string; importance?: number }
+                | undefined;
+              if (!item) return null;
+
+              return (
+                <div
+                  className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                  style={{
+                    borderColor: chartTheme.tooltipBorder,
+                    backgroundColor: chartTheme.tooltipBg,
+                    color: chartTheme.tooltipColor,
+                  }}
+                >
+                  <p className="font-semibold">{item.variable}</p>
+                  <p>Importancia: {item.importance?.toFixed(1) ?? "0.0"}%</p>
+                </div>
+              );
+            }}
+          />
+          <Bar
+            dataKey="importance"
+            fill="var(--app-accent)"
+            radius={[0, 4, 4, 0]}
+            isAnimationActive={false}
+            label={{
+              position: "right",
+              formatter: (value) =>
+                typeof value === "number" ? value.toFixed(1) : `${value}`,
+              fill: "var(--app-text-muted)",
+              fontSize: 10,
+            }}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 type MDSPoint = {
   seriesName: string;
   x: number;
@@ -8825,6 +9160,7 @@ const generateScientificReport = (input: {
   mdsAnalysis: MDSAnalysis | null;
   distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
   similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  variableImportanceAnalysis: VariableImportanceAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -9052,6 +9388,11 @@ const generateScientificReport = (input: {
   sections.push({
     title: "Similarity Network",
     content: getSimilarityNetworkReportLines(input.similarityNetworkAnalysis),
+  });
+
+  sections.push({
+    title: "Variable Importance",
+    content: getVariableImportanceReportLines(input.variableImportanceAnalysis),
   });
 
   sections.push({
@@ -9308,6 +9649,7 @@ const generateScientificInterpretation = (input: {
   mdsAnalysis: MDSAnalysis | null;
   distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
   similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  variableImportanceAnalysis: VariableImportanceAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -9595,6 +9937,48 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.variableImportanceAnalysis) {
+    deduplicateTextLines(
+      input.variableImportanceAnalysis.interpretation
+    ).forEach((line) => {
+      if (!findings.includes(line)) findings.push(line);
+    });
+
+    const topEntry = getTopVariableImportanceEntry(
+      input.variableImportanceAnalysis
+    );
+    if (topEntry && input.pcaAnalysis) {
+      const pc1Leader = getPcaPc1LeaderVariable(input.pcaAnalysis);
+      if (pc1Leader === topEntry.variable) {
+        findings.push(
+          "La importancia observada es consistente con PCA."
+        );
+      }
+    }
+
+    if (topEntry && input.correlationNetworkAnalysis) {
+      const centralNode = getCorrelationNetworkCentralNode(
+        input.correlationNetworkAnalysis
+      );
+      if (centralNode === topEntry.variable) {
+        findings.push(
+          "La variable actúa como eje principal de correlaciones."
+        );
+      }
+    }
+
+    if (topEntry && input.similarityNetworkAnalysis) {
+      const centralNode = getSimilarityNetworkCentralNode(
+        input.similarityNetworkAnalysis
+      );
+      if (centralNode === topEntry.variable) {
+        findings.push(
+          "La variable ocupa una posición central en la red de similitud."
+        );
+      }
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -9848,8 +10232,10 @@ const generateScientificAssistantReport = (input: {
   mdsAnalysis: MDSAnalysis | null;
   distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
   similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  variableImportanceAnalysis: VariableImportanceAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
+  showPCA: boolean;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
   anovaAnalysis: AnovaAnalysis | null;
@@ -10147,6 +10533,13 @@ const generateScientificAssistantReport = (input: {
   if (
     hasSimilarityNetworkHighAverage(input.similarityNetworkAnalysis) &&
     input.showHierarchicalClustering &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasVariableImportanceDominantTop(input.variableImportanceAnalysis) &&
+    input.showPCA &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -10542,6 +10935,45 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.variableImportanceAnalysis) {
+    deduplicateTextLines(
+      input.variableImportanceAnalysis.interpretation
+    ).forEach((line) => pushUniqueFinding(line));
+
+    const topEntry = getTopVariableImportanceEntry(
+      input.variableImportanceAnalysis
+    );
+    if (topEntry && input.pcaAnalysis) {
+      const pc1Leader = getPcaPc1LeaderVariable(input.pcaAnalysis);
+      if (pc1Leader === topEntry.variable) {
+        pushUniqueFinding(
+          "La importancia observada es consistente con PCA."
+        );
+      }
+    }
+
+    if (topEntry && input.correlationNetworkAnalysis) {
+      const centralNode = getCorrelationNetworkCentralNode(
+        input.correlationNetworkAnalysis
+      );
+      if (centralNode === topEntry.variable) {
+        pushUniqueFinding(
+          "La variable actúa como eje principal de correlaciones."
+        );
+      }
+    }
+
+    if (topEntry && input.similarityNetworkAnalysis) {
+      const centralNode = getSimilarityNetworkCentralNode(
+        input.similarityNetworkAnalysis
+      );
+      if (centralNode === topEntry.variable) {
+        pushUniqueFinding(
+          "La variable ocupa una posición central en la red de similitud."
+        );
+      }
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -10626,6 +11058,11 @@ const generateScientificAssistantReport = (input: {
   ) {
     pushCaution(
       "No se identificaron relaciones de similitud significativas."
+    );
+  }
+  if (hasVariableImportanceDominanceGap(input.variableImportanceAnalysis)) {
+    pushCaution(
+      "El análisis está fuertemente influenciado por una única variable dominante."
     );
   }
   if (
@@ -11744,6 +12181,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showMDS, setShowMDS] = useState(false);
   const [showDistanceMatrix, setShowDistanceMatrix] = useState(false);
   const [showSimilarityNetwork, setShowSimilarityNetwork] = useState(false);
+  const [showVariableImportance, setShowVariableImportance] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -12149,6 +12587,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowMDS(false);
     setShowDistanceMatrix(false);
     setShowSimilarityNetwork(false);
+    setShowVariableImportance(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -12937,6 +13376,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => buildSimilarityNetworkAnalysis(distanceMatrixAnalysis),
     [distanceMatrixAnalysis]
   );
+  const variableImportanceAnalysis = useMemo(
+    () =>
+      buildVariableImportanceAnalysis({
+        series: visibleExperimentalSeries,
+        pcaAnalysis,
+        correlationNetworkAnalysis,
+        similarityNetworkAnalysis,
+        distanceMatrixAnalysis,
+        experimentalStatistics,
+      }),
+    [
+      visibleExperimentalSeries,
+      pcaAnalysis,
+      correlationNetworkAnalysis,
+      similarityNetworkAnalysis,
+      distanceMatrixAnalysis,
+      experimentalStatistics,
+    ]
+  );
   const hierarchicalClusteringAnalysis = useMemo(
     () => buildHierarchicalClusteringAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
@@ -12989,6 +13447,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     visibleExperimentalSeries
   );
   const hasEnoughSeriesForSimilarityNetwork = isDistanceMatrixInputValid(
+    visibleExperimentalSeries
+  );
+  const hasEnoughSeriesForVariableImportance = isVariableImportanceInputValid(
     visibleExperimentalSeries
   );
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
@@ -13054,6 +13515,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         mdsAnalysis,
         distanceMatrixAnalysis,
         similarityNetworkAnalysis,
+        variableImportanceAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -13088,6 +13550,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       mdsAnalysis,
       distanceMatrixAnalysis,
       similarityNetworkAnalysis,
+      variableImportanceAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -13122,6 +13585,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         mdsAnalysis,
         distanceMatrixAnalysis,
         similarityNetworkAnalysis,
+        variableImportanceAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -13151,6 +13615,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       mdsAnalysis,
       distanceMatrixAnalysis,
       similarityNetworkAnalysis,
+      variableImportanceAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -13184,8 +13649,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         mdsAnalysis,
         distanceMatrixAnalysis,
         similarityNetworkAnalysis,
+        variableImportanceAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
+        showPCA,
         experimentalOutliers,
         tTestResult,
         anovaAnalysis,
@@ -13216,8 +13683,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       mdsAnalysis,
       distanceMatrixAnalysis,
       similarityNetworkAnalysis,
+      variableImportanceAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
+      showPCA,
       experimentalOutliers,
       tTestResult,
       anovaAnalysis,
@@ -13879,6 +14348,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showMDS ||
         showDistanceMatrix ||
         showSimilarityNetwork ||
+        showVariableImportance ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -15601,6 +16071,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowSimilarityNetwork(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForSimilarityNetwork}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForVariableImportance
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar importancia de variables
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showVariableImportance}
+                            onChange={(e) =>
+                              setShowVariableImportance(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForVariableImportance}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -18358,6 +18853,52 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         <ScientificSimilarityNetwork
                           analysis={similarityNetworkAnalysis}
                           seriesColors={radarSeriesColors}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showVariableImportance && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🏆 Variable Importance</p>
+                    {!variableImportanceAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Variable
+                        Importance.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <div className="space-y-1">
+                          {[...variableImportanceAnalysis.entries]
+                            .sort((left, right) => left.rank - right.rank)
+                            .map((entry) => (
+                              <p key={`variable-importance-rank-${entry.rank}`}>
+                                <span className="font-semibold">
+                                  {entry.rank}. {entry.variable}
+                                </span>{" "}
+                                — {entry.normalizedScore.toFixed(0)}%
+                              </p>
+                            ))}
+                        </div>
+                        {variableImportanceAnalysis.interpretation.length >
+                          0 && (
+                          <div className="mt-2 space-y-1">
+                            {variableImportanceAnalysis.interpretation.map(
+                              (line, index) => (
+                                <p
+                                  key={`variable-importance-interpretation-${index}`}
+                                  className={`text-sm ${emptyState}`}
+                                >
+                                  {line}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+                        <ScientificVariableImportanceChart
+                          analysis={variableImportanceAnalysis}
+                          chartTheme={chartTheme}
                         />
                       </div>
                     )}
