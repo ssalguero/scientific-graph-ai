@@ -5139,6 +5139,312 @@ function ScientificParallelCoordinatesPlot({
   );
 }
 
+type CorrelationNetworkNode = {
+  id: string;
+  label: string;
+};
+
+type CorrelationNetworkEdge = {
+  source: string;
+  target: string;
+  correlation: number;
+};
+
+type CorrelationNetworkAnalysis = {
+  nodes: CorrelationNetworkNode[];
+  edges: CorrelationNetworkEdge[];
+  interpretation: string[];
+};
+
+const CORRELATION_NETWORK_MIN_SERIES = 2;
+const CORRELATION_NETWORK_MIN_OBSERVATIONS = 3;
+const CORRELATION_NETWORK_EDGE_THRESHOLD = 0.5;
+
+const isCorrelationNetworkInputValid = (series: ExperimentalSeries[]) =>
+  series.length >= CORRELATION_NETWORK_MIN_SERIES &&
+  series.every(
+    (item) =>
+      getSeriesYValues(item).length >= CORRELATION_NETWORK_MIN_OBSERVATIONS
+  );
+
+const getCorrelationNetworkDensity = (analysis: CorrelationNetworkAnalysis) => {
+  const nodeCount = analysis.nodes.length;
+  if (nodeCount < 2) return 0;
+  const maxEdges = (nodeCount * (nodeCount - 1)) / 2;
+  return analysis.edges.length / maxEdges;
+};
+
+const getCorrelationNetworkCentralNode = (
+  analysis: CorrelationNetworkAnalysis
+): string | null => {
+  if (analysis.edges.length === 0) return null;
+
+  const connectionCounts = new Map<string, number>();
+  analysis.nodes.forEach((node) => connectionCounts.set(node.id, 0));
+  analysis.edges.forEach((edge) => {
+    connectionCounts.set(
+      edge.source,
+      (connectionCounts.get(edge.source) ?? 0) + 1
+    );
+    connectionCounts.set(
+      edge.target,
+      (connectionCounts.get(edge.target) ?? 0) + 1
+    );
+  });
+
+  let centralNode: string | null = null;
+  let maxConnections = -1;
+  connectionCounts.forEach((count, nodeId) => {
+    if (count > maxConnections) {
+      maxConnections = count;
+      centralNode = nodeId;
+    }
+  });
+
+  return centralNode;
+};
+
+const hasCorrelationNetworkHighDensity = (
+  analysis: CorrelationNetworkAnalysis | null
+) => {
+  if (!analysis) return false;
+  return getCorrelationNetworkDensity(analysis) > 0.6;
+};
+
+const hasCorrelationNetworkSparseStructure = (
+  analysis: CorrelationNetworkAnalysis | null
+) => {
+  if (!analysis) return false;
+  return getCorrelationNetworkDensity(analysis) < 0.25;
+};
+
+const hasCorrelationHeatmapStrongCorrelations = (
+  heatmap: HeatmapAnalysis | null
+) => {
+  if (!heatmap) return false;
+
+  const seenPairs = new Set<string>();
+  return heatmap.cells.some((cell) => {
+    if (cell.row === cell.column || !Number.isFinite(cell.value)) return false;
+    const pairKey = [cell.row, cell.column].sort().join("|");
+    if (seenPairs.has(pairKey)) return false;
+    seenPairs.add(pairKey);
+    return Math.abs(cell.value) >= 0.5;
+  });
+};
+
+const buildCorrelationNetworkInterpretation = (
+  nodes: CorrelationNetworkNode[],
+  edges: CorrelationNetworkEdge[]
+): string[] => {
+  const interpretation: string[] = [];
+  const previewAnalysis: CorrelationNetworkAnalysis = {
+    nodes,
+    edges,
+    interpretation: [],
+  };
+  const density = getCorrelationNetworkDensity(previewAnalysis);
+
+  if (density > 0.6) {
+    interpretation.push("Las variables forman una red altamente conectada.");
+  }
+
+  const centralNode = getCorrelationNetworkCentralNode(previewAnalysis);
+  if (centralNode) {
+    interpretation.push(
+      `La variable ${centralNode} actúa como nodo central de la red.`
+    );
+  }
+
+  edges.forEach((edge) => {
+    if (edge.correlation >= 0.8) {
+      interpretation.push(
+        `Existe una relación positiva muy fuerte entre ${edge.source} y ${edge.target}.`
+      );
+    } else if (edge.correlation <= -0.8) {
+      interpretation.push(
+        `Existe una relación negativa muy fuerte entre ${edge.source} y ${edge.target}.`
+      );
+    }
+  });
+
+  if (density < 0.25) {
+    interpretation.push("La estructura de correlaciones es limitada.");
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildCorrelationNetworkAnalysis = (
+  series: ExperimentalSeries[]
+): CorrelationNetworkAnalysis | null => {
+  if (!isCorrelationNetworkInputValid(series)) return null;
+
+  const nodes: CorrelationNetworkNode[] = series.map((item) => ({
+    id: item.name,
+    label: item.name,
+  }));
+  const edges: CorrelationNetworkEdge[] = [];
+
+  for (let indexA = 0; indexA < series.length; indexA += 1) {
+    for (let indexB = indexA + 1; indexB < series.length; indexB += 1) {
+      const seriesA = series[indexA];
+      const seriesB = series[indexB];
+      if (!seriesA || !seriesB) continue;
+
+      const correlation = computeSeriesPairCorrelation(
+        seriesA,
+        seriesB,
+        "pearson"
+      );
+      if (
+        correlation === null ||
+        !Number.isFinite(correlation) ||
+        Math.abs(correlation) < CORRELATION_NETWORK_EDGE_THRESHOLD
+      ) {
+        continue;
+      }
+
+      edges.push({
+        source: seriesA.name,
+        target: seriesB.name,
+        correlation,
+      });
+    }
+  }
+
+  return {
+    nodes,
+    edges,
+    interpretation: buildCorrelationNetworkInterpretation(nodes, edges),
+  };
+};
+
+const getCorrelationNetworkReportLines = (
+  analysis: CorrelationNetworkAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Correlation Network."];
+  }
+
+  const density = getCorrelationNetworkDensity(analysis);
+  const centralNode = getCorrelationNetworkCentralNode(analysis);
+  const lines = [
+    `Variables: ${analysis.nodes.map((node) => node.label).join(", ")}.`,
+    `Conexiones: ${analysis.edges.length}.`,
+    `Nodo central: ${centralNode ?? "Ninguno"}.`,
+    `Densidad: ${(density * 100).toFixed(0)}%.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificCorrelationNetworkProps = {
+  analysis: CorrelationNetworkAnalysis;
+};
+
+function ScientificCorrelationNetwork({
+  analysis,
+}: ScientificCorrelationNetworkProps) {
+  const size = 300;
+  const center = size / 2;
+  const radius = 102;
+  const nodeRadius = 6;
+  const nodeCount = analysis.nodes.length;
+
+  const nodePositions = new Map<string, { x: number; y: number }>();
+  analysis.nodes.forEach((node, index) => {
+    const angle = (2 * Math.PI * index) / Math.max(nodeCount, 1) - Math.PI / 2;
+    nodePositions.set(node.id, {
+      x: center + radius * Math.cos(angle),
+      y: center + radius * Math.sin(angle),
+    });
+  });
+
+  const getEdgeStrokeWidth = (correlation: number) =>
+    1.2 + Math.abs(correlation) * 3.2;
+
+  const getEdgeColor = (correlation: number) =>
+    correlation >= 0 ? "#2563eb" : "#dc2626";
+
+  return (
+    <div className="w-full mt-3 flex justify-center">
+      <svg
+        viewBox={`0 0 ${size} ${size}`}
+        className="w-full max-w-[300px]"
+        style={{ height: 300 }}
+        role="img"
+        aria-label="Red de correlaciones entre variables experimentales"
+      >
+        {analysis.edges.map((edge) => {
+          const source = nodePositions.get(edge.source);
+          const target = nodePositions.get(edge.target);
+          if (!source || !target) return null;
+
+          const midX = (source.x + target.x) / 2;
+          const midY = (source.y + target.y) / 2;
+
+          return (
+            <g key={`correlation-edge-${edge.source}-${edge.target}`}>
+              <line
+                x1={source.x}
+                y1={source.y}
+                x2={target.x}
+                y2={target.y}
+                stroke={getEdgeColor(edge.correlation)}
+                strokeWidth={getEdgeStrokeWidth(edge.correlation)}
+                opacity={0.82}
+              />
+              <text
+                x={midX}
+                y={midY - 4}
+                textAnchor="middle"
+                fill="var(--app-text-muted)"
+                fontSize={9}
+                fontWeight={600}
+              >
+                {edge.correlation.toFixed(2)}
+              </text>
+            </g>
+          );
+        })}
+
+        {analysis.nodes.map((node) => {
+          const position = nodePositions.get(node.id);
+          if (!position) return null;
+
+          return (
+            <g key={`correlation-node-${node.id}`}>
+              <circle
+                cx={position.x}
+                cy={position.y}
+                r={nodeRadius}
+                fill="var(--app-accent)"
+                stroke="var(--app-surface)"
+                strokeWidth={2}
+              />
+              <text
+                x={position.x}
+                y={position.y + nodeRadius + 12}
+                textAnchor="middle"
+                fill="var(--app-text)"
+                fontSize={10}
+                fontWeight={600}
+              >
+                {node.label.length > 12
+                  ? `${node.label.slice(0, 11)}…`
+                  : node.label}
+              </text>
+              <title>{node.label}</title>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -7679,6 +7985,7 @@ const generateScientificReport = (input: {
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
   parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
+  correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -7886,6 +8193,11 @@ const generateScientificReport = (input: {
   sections.push({
     title: "Parallel Coordinates Plot",
     content: getParallelCoordinatesReportLines(input.parallelCoordinatesAnalysis),
+  });
+
+  sections.push({
+    title: "Correlation Network",
+    content: getCorrelationNetworkReportLines(input.correlationNetworkAnalysis),
   });
 
   sections.push({
@@ -8138,6 +8450,7 @@ const generateScientificInterpretation = (input: {
   pcaAnalysis: PCAAnalysis | null;
   scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
   parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
+  correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -8330,6 +8643,38 @@ const generateScientificInterpretation = (input: {
         if (!findings.includes(line)) findings.push(line);
       }
     );
+
+    if (input.correlationNetworkAnalysis) {
+      findings.push(
+        "La estructura de la red coincide con los patrones multivariantes observados."
+      );
+    }
+  }
+
+  if (input.correlationNetworkAnalysis) {
+    deduplicateTextLines(input.correlationNetworkAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (
+      hasCorrelationHeatmapStrongCorrelations(input.correlationHeatmap) &&
+      input.correlationNetworkAnalysis.edges.length > 0
+    ) {
+      findings.push(
+        "La red es consistente con el Heatmap de correlaciones."
+      );
+    }
+
+    if (
+      hasScatterMatrixStrongCorrelations(input.scatterMatrixAnalysis) &&
+      input.correlationNetworkAnalysis.edges.length > 0
+    ) {
+      findings.push(
+        "Las conexiones observadas coinciden con las asociaciones bivariadas."
+      );
+    }
   }
 
   if (input.hierarchicalClusteringAnalysis) {
@@ -8568,6 +8913,7 @@ const generateScientificAssistantReport = (input: {
   pcaAnalysis: PCAAnalysis | null;
   scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
   parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
+  correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -8838,6 +9184,13 @@ const generateScientificAssistantReport = (input: {
     hasParallelCoordinatesSimilarTrajectories(
       input.parallelCoordinatesAnalysis
     ) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasPCAHighVariance &&
+    hasCorrelationNetworkHighDensity(input.correlationNetworkAnalysis) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -9149,6 +9502,35 @@ const generateScientificAssistantReport = (input: {
     deduplicateTextLines(input.parallelCoordinatesAnalysis.interpretation).forEach(
       (line) => pushUniqueFinding(line)
     );
+
+    if (input.correlationNetworkAnalysis) {
+      pushUniqueFinding(
+        "La estructura de la red coincide con los patrones multivariantes observados."
+      );
+    }
+  }
+  if (input.correlationNetworkAnalysis) {
+    deduplicateTextLines(input.correlationNetworkAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (
+      hasCorrelationHeatmapStrongCorrelations(input.correlationHeatmap) &&
+      input.correlationNetworkAnalysis.edges.length > 0
+    ) {
+      pushUniqueFinding(
+        "La red es consistente con el Heatmap de correlaciones."
+      );
+    }
+
+    if (
+      hasScatterMatrixStrongCorrelations(input.scatterMatrixAnalysis) &&
+      input.correlationNetworkAnalysis.edges.length > 0
+    ) {
+      pushUniqueFinding(
+        "Las conexiones observadas coinciden con las asociaciones bivariadas."
+      );
+    }
   }
   if (hasPCAAdvancedClusteringConsistency) {
     pushUniqueFinding(
@@ -9195,6 +9577,14 @@ const generateScientificAssistantReport = (input: {
   ) {
     pushCaution(
       "No se observa una estructura multivariante consistente."
+    );
+  }
+  if (
+    hasCorrelationNetworkSparseStructure(input.correlationNetworkAnalysis) &&
+    hasScatterMatrixMostlyWeakCorrelations(input.scatterMatrixAnalysis)
+  ) {
+    pushCaution(
+      "No se observa una estructura de correlación consistente."
     );
   }
   if (
@@ -10309,6 +10699,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showPCA, setShowPCA] = useState(false);
   const [showScatterMatrix, setShowScatterMatrix] = useState(false);
   const [showParallelCoordinates, setShowParallelCoordinates] = useState(false);
+  const [showCorrelationNetwork, setShowCorrelationNetwork] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -10710,6 +11101,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowPCA(false);
     setShowScatterMatrix(false);
     setShowParallelCoordinates(false);
+    setShowCorrelationNetwork(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -11482,6 +11874,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => buildParallelCoordinatesAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const correlationNetworkAnalysis = useMemo(
+    () => buildCorrelationNetworkAnalysis(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const hierarchicalClusteringAnalysis = useMemo(
     () => buildHierarchicalClusteringAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
@@ -11524,6 +11920,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     visibleExperimentalSeries
   );
   const hasEnoughSeriesForParallelCoordinates = isParallelCoordinatesInputValid(
+    visibleExperimentalSeries
+  );
+  const hasEnoughSeriesForCorrelationNetwork = isCorrelationNetworkInputValid(
     visibleExperimentalSeries
   );
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
@@ -11585,6 +11984,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         hierarchicalClusteringAnalysis,
         scatterMatrixAnalysis,
         parallelCoordinatesAnalysis,
+        correlationNetworkAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -11615,6 +12015,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       hierarchicalClusteringAnalysis,
       scatterMatrixAnalysis,
       parallelCoordinatesAnalysis,
+      correlationNetworkAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -11645,6 +12046,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         pcaAnalysis,
         scatterMatrixAnalysis,
         parallelCoordinatesAnalysis,
+        correlationNetworkAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -11670,6 +12072,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       pcaAnalysis,
       scatterMatrixAnalysis,
       parallelCoordinatesAnalysis,
+      correlationNetworkAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -11699,6 +12102,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         pcaAnalysis,
         scatterMatrixAnalysis,
         parallelCoordinatesAnalysis,
+        correlationNetworkAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -11726,6 +12130,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       pcaAnalysis,
       scatterMatrixAnalysis,
       parallelCoordinatesAnalysis,
+      correlationNetworkAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -12384,6 +12789,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showPCA ||
         showScatterMatrix ||
         showParallelCoordinates ||
+        showCorrelationNetwork ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -14010,6 +14416,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowParallelCoordinates(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForParallelCoordinates}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForCorrelationNetwork
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Correlation Network
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showCorrelationNetwork}
+                            onChange={(e) =>
+                              setShowCorrelationNetwork(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForCorrelationNetwork}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -16577,6 +17008,58 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         )}
                         <ScientificParallelCoordinatesPlot
                           analysis={parallelCoordinatesAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showCorrelationNetwork && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🕸 Correlation Network</p>
+                    {!correlationNetworkAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Correlation
+                        Network.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">Variables:</span>{" "}
+                          {correlationNetworkAnalysis.nodes
+                            .map((node) => node.label)
+                            .join(", ")}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Conexiones:</span>{" "}
+                          {correlationNetworkAnalysis.edges.length}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Densidad:</span>{" "}
+                          {(
+                            getCorrelationNetworkDensity(
+                              correlationNetworkAnalysis
+                            ) * 100
+                          ).toFixed(0)}
+                          %
+                        </p>
+                        {correlationNetworkAnalysis.interpretation.length >
+                          0 && (
+                          <div className="mt-2 space-y-1">
+                            {correlationNetworkAnalysis.interpretation.map(
+                              (line, index) => (
+                                <p
+                                  key={`correlation-network-interpretation-${index}`}
+                                  className={`text-sm ${emptyState}`}
+                                >
+                                  {line}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+                        <ScientificCorrelationNetwork
+                          analysis={correlationNetworkAnalysis}
                         />
                       </div>
                     )}
