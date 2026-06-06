@@ -5445,6 +5445,257 @@ function ScientificCorrelationNetwork({
   );
 }
 
+type SimilarityNetworkNode = {
+  id: string;
+};
+
+type SimilarityNetworkEdge = {
+  source: string;
+  target: string;
+  distance: number;
+  similarity: number;
+};
+
+type SimilarityNetworkAnalysis = {
+  nodes: SimilarityNetworkNode[];
+  edges: SimilarityNetworkEdge[];
+  averageSimilarity: number;
+  strongestConnection?: SimilarityNetworkEdge;
+  weakestConnection?: SimilarityNetworkEdge;
+  interpretation: string[];
+};
+
+const SIMILARITY_NETWORK_EDGE_THRESHOLD = 0.5;
+
+const hasSimilarityNetworkHighAverage = (
+  analysis: SimilarityNetworkAnalysis | null
+) => analysis !== null && analysis.averageSimilarity >= 0.75;
+
+const buildSimilarityNetworkInterpretation = (
+  analysis: SimilarityNetworkAnalysis
+): string[] => {
+  const interpretation: string[] = [];
+
+  if (analysis.averageSimilarity >= 0.75) {
+    interpretation.push("Las variables presentan una alta similitud global.");
+  } else if (analysis.averageSimilarity >= 0.5) {
+    interpretation.push("Las variables presentan similitudes moderadas.");
+  } else {
+    interpretation.push("La estructura presenta grupos diferenciados.");
+  }
+
+  if (analysis.strongestConnection) {
+    interpretation.push(
+      `La mayor similitud se observa entre ${analysis.strongestConnection.source} y ${analysis.strongestConnection.target}.`
+    );
+  }
+
+  if (analysis.weakestConnection) {
+    interpretation.push(
+      `La menor similitud se observa entre ${analysis.weakestConnection.source} y ${analysis.weakestConnection.target}.`
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildSimilarityNetworkAnalysis = (
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null
+): SimilarityNetworkAnalysis | null => {
+  if (!distanceMatrixAnalysis) return null;
+
+  const { variables, matrix, maxDistance } = distanceMatrixAnalysis;
+  const nodes: SimilarityNetworkNode[] = variables.map((variable) => ({
+    id: variable,
+  }));
+  const edges: SimilarityNetworkEdge[] = [];
+
+  for (let rowIndex = 0; rowIndex < variables.length; rowIndex += 1) {
+    for (
+      let columnIndex = rowIndex + 1;
+      columnIndex < variables.length;
+      columnIndex += 1
+    ) {
+      const distance = matrix[rowIndex]?.[columnIndex] ?? 0;
+      const similarity =
+        maxDistance === 0 ? 1 : 1 - distance / maxDistance;
+
+      if (similarity < SIMILARITY_NETWORK_EDGE_THRESHOLD) continue;
+
+      edges.push({
+        source: variables[rowIndex]!,
+        target: variables[columnIndex]!,
+        distance,
+        similarity,
+      });
+    }
+  }
+
+  let strongestConnection: SimilarityNetworkEdge | undefined;
+  let weakestConnection: SimilarityNetworkEdge | undefined;
+  edges.forEach((edge) => {
+    if (
+      !strongestConnection ||
+      edge.similarity > strongestConnection.similarity
+    ) {
+      strongestConnection = edge;
+    }
+    if (
+      !weakestConnection ||
+      edge.similarity < weakestConnection.similarity
+    ) {
+      weakestConnection = edge;
+    }
+  });
+
+  const averageSimilarity =
+    edges.length > 0
+      ? edges.reduce((sum, edge) => sum + edge.similarity, 0) / edges.length
+      : 0;
+
+  const analysis: SimilarityNetworkAnalysis = {
+    nodes,
+    edges,
+    averageSimilarity,
+    strongestConnection,
+    weakestConnection,
+    interpretation: [],
+  };
+
+  analysis.interpretation = buildSimilarityNetworkInterpretation(analysis);
+  return analysis;
+};
+
+const getSimilarityNetworkReportLines = (
+  analysis: SimilarityNetworkAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Similarity Network."];
+  }
+
+  const lines = [
+    `Variables: ${analysis.nodes.map((node) => node.id).join(", ")}.`,
+    `Conexiones: ${analysis.edges.length}.`,
+    `Similitud promedio: ${analysis.averageSimilarity.toFixed(2)}.`,
+    `Conexión más fuerte: ${
+      analysis.strongestConnection
+        ? `${analysis.strongestConnection.source} ↔ ${analysis.strongestConnection.target} (${analysis.strongestConnection.similarity.toFixed(2)}).`
+        : "Ninguna."
+    }`,
+    `Conexión más débil: ${
+      analysis.weakestConnection
+        ? `${analysis.weakestConnection.source} ↔ ${analysis.weakestConnection.target} (${analysis.weakestConnection.similarity.toFixed(2)}).`
+        : "Ninguna."
+    }`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificSimilarityNetworkProps = {
+  analysis: SimilarityNetworkAnalysis;
+  seriesColors: Map<string, string>;
+};
+
+function ScientificSimilarityNetwork({
+  analysis,
+  seriesColors,
+}: ScientificSimilarityNetworkProps) {
+  const size = 300;
+  const center = size / 2;
+  const radius = 102;
+  const nodeRadius = 6;
+  const nodeCount = analysis.nodes.length;
+
+  const nodePositions = new Map<string, { x: number; y: number }>();
+  analysis.nodes.forEach((node, index) => {
+    const angle = (2 * Math.PI * index) / Math.max(nodeCount, 1) - Math.PI / 2;
+    nodePositions.set(node.id, {
+      x: center + radius * Math.cos(angle),
+      y: center + radius * Math.sin(angle),
+    });
+  });
+
+  const getEdgeStrokeWidth = (similarity: number) => 1.2 + similarity * 3.2;
+
+  return (
+    <div className="w-full mt-3 flex justify-center">
+      <svg
+        viewBox={`0 0 ${size} ${size}`}
+        className="w-full max-w-[300px]"
+        style={{ height: 300 }}
+        role="img"
+        aria-label="Red de similitud entre variables experimentales"
+      >
+        {analysis.edges.map((edge) => {
+          const source = nodePositions.get(edge.source);
+          const target = nodePositions.get(edge.target);
+          if (!source || !target) return null;
+
+          const midX = (source.x + target.x) / 2;
+          const midY = (source.y + target.y) / 2;
+
+          return (
+            <g key={`similarity-edge-${edge.source}-${edge.target}`}>
+              <line
+                x1={source.x}
+                y1={source.y}
+                x2={target.x}
+                y2={target.y}
+                stroke="#2563eb"
+                strokeWidth={getEdgeStrokeWidth(edge.similarity)}
+                opacity={0.82}
+              />
+              <text
+                x={midX}
+                y={midY - 4}
+                textAnchor="middle"
+                fill="var(--app-text-muted)"
+                fontSize={9}
+                fontWeight={600}
+              >
+                {edge.similarity.toFixed(2)}
+              </text>
+            </g>
+          );
+        })}
+
+        {analysis.nodes.map((node) => {
+          const position = nodePositions.get(node.id);
+          if (!position) return null;
+          const nodeColor =
+            seriesColors.get(node.id) ?? "var(--app-accent)";
+
+          return (
+            <g key={`similarity-node-${node.id}`}>
+              <circle
+                cx={position.x}
+                cy={position.y}
+                r={nodeRadius}
+                fill={nodeColor}
+                stroke="var(--app-surface)"
+                strokeWidth={2}
+              />
+              <text
+                x={position.x}
+                y={position.y + nodeRadius + 12}
+                textAnchor="middle"
+                fill="var(--app-text)"
+                fontSize={10}
+                fontWeight={600}
+              >
+                {node.id.length > 12 ? `${node.id.slice(0, 11)}…` : node.id}
+              </text>
+              <title>{node.id}</title>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 type MDSPoint = {
   seriesName: string;
   x: number;
@@ -8573,6 +8824,7 @@ const generateScientificReport = (input: {
   correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
   mdsAnalysis: MDSAnalysis | null;
   distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -8795,6 +9047,11 @@ const generateScientificReport = (input: {
   sections.push({
     title: "Distance Matrix",
     content: getDistanceMatrixReportLines(input.distanceMatrixAnalysis),
+  });
+
+  sections.push({
+    title: "Similarity Network",
+    content: getSimilarityNetworkReportLines(input.similarityNetworkAnalysis),
   });
 
   sections.push({
@@ -9050,6 +9307,7 @@ const generateScientificInterpretation = (input: {
   correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
   mdsAnalysis: MDSAnalysis | null;
   distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -9306,6 +9564,35 @@ const generateScientificInterpretation = (input: {
         if (!findings.includes(line)) findings.push(line);
       }
     );
+
+    if (input.similarityNetworkAnalysis) {
+      findings.push(
+        "La red se construye a partir de la matriz de distancias y preserva sus relaciones principales."
+      );
+    }
+  }
+
+  if (input.similarityNetworkAnalysis) {
+    deduplicateTextLines(input.similarityNetworkAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (input.hierarchicalClusteringAnalysis) {
+      findings.push(
+        "La red de similitud es coherente con los agrupamientos jerárquicos observados."
+      );
+    }
+
+    if (
+      input.mdsAnalysis &&
+      hasMDSAcceptableStress(input.mdsAnalysis)
+    ) {
+      findings.push(
+        "La representación MDS respalda las relaciones de similitud observadas."
+      );
+    }
   }
 
   if (input.hierarchicalClusteringAnalysis) {
@@ -9560,6 +9847,7 @@ const generateScientificAssistantReport = (input: {
   correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
   mdsAnalysis: MDSAnalysis | null;
   distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   experimentalOutliers: ExperimentalOutlier[];
@@ -9851,6 +10139,13 @@ const generateScientificAssistantReport = (input: {
   }
   if (
     hasDistanceMatrixHighHeterogeneity(input.distanceMatrixAnalysis) &&
+    input.showHierarchicalClustering &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasSimilarityNetworkHighAverage(input.similarityNetworkAnalysis) &&
     input.showHierarchicalClustering &&
     confidenceLevel === "medium"
   ) {
@@ -10220,6 +10515,32 @@ const generateScientificAssistantReport = (input: {
     deduplicateTextLines(input.distanceMatrixAnalysis.interpretation).forEach(
       (line) => pushUniqueFinding(line)
     );
+
+    if (input.similarityNetworkAnalysis) {
+      pushUniqueFinding(
+        "La red se construye a partir de la matriz de distancias y preserva sus relaciones principales."
+      );
+    }
+  }
+  if (input.similarityNetworkAnalysis) {
+    deduplicateTextLines(input.similarityNetworkAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (input.hierarchicalClusteringAnalysis) {
+      pushUniqueFinding(
+        "La red de similitud es coherente con los agrupamientos jerárquicos observados."
+      );
+    }
+
+    if (
+      input.mdsAnalysis &&
+      hasMDSAcceptableStress(input.mdsAnalysis)
+    ) {
+      pushUniqueFinding(
+        "La representación MDS respalda las relaciones de similitud observadas."
+      );
+    }
   }
   if (
     input.hierarchicalClusteringAnalysis &&
@@ -10297,6 +10618,14 @@ const generateScientificAssistantReport = (input: {
   if (hasDistanceMatrixLimitedDiscrimination(input.distanceMatrixAnalysis)) {
     pushCaution(
       "Las distancias entre variables son muy similares; la capacidad de discriminación es limitada."
+    );
+  }
+  if (
+    input.similarityNetworkAnalysis &&
+    input.similarityNetworkAnalysis.edges.length === 0
+  ) {
+    pushCaution(
+      "No se identificaron relaciones de similitud significativas."
     );
   }
   if (
@@ -11414,6 +11743,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showCorrelationNetwork, setShowCorrelationNetwork] = useState(false);
   const [showMDS, setShowMDS] = useState(false);
   const [showDistanceMatrix, setShowDistanceMatrix] = useState(false);
+  const [showSimilarityNetwork, setShowSimilarityNetwork] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -11818,6 +12148,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowCorrelationNetwork(false);
     setShowMDS(false);
     setShowDistanceMatrix(false);
+    setShowSimilarityNetwork(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -12602,6 +12933,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => buildDistanceMatrixAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const similarityNetworkAnalysis = useMemo(
+    () => buildSimilarityNetworkAnalysis(distanceMatrixAnalysis),
+    [distanceMatrixAnalysis]
+  );
   const hierarchicalClusteringAnalysis = useMemo(
     () => buildHierarchicalClusteringAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
@@ -12651,6 +12986,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   );
   const hasEnoughSeriesForMDS = isMDSInputValid(visibleExperimentalSeries);
   const hasEnoughSeriesForDistanceMatrix = isDistanceMatrixInputValid(
+    visibleExperimentalSeries
+  );
+  const hasEnoughSeriesForSimilarityNetwork = isDistanceMatrixInputValid(
     visibleExperimentalSeries
   );
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
@@ -12715,6 +13053,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         correlationNetworkAnalysis,
         mdsAnalysis,
         distanceMatrixAnalysis,
+        similarityNetworkAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -12748,6 +13087,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       correlationNetworkAnalysis,
       mdsAnalysis,
       distanceMatrixAnalysis,
+      similarityNetworkAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -12781,6 +13121,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         correlationNetworkAnalysis,
         mdsAnalysis,
         distanceMatrixAnalysis,
+        similarityNetworkAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -12809,6 +13150,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       correlationNetworkAnalysis,
       mdsAnalysis,
       distanceMatrixAnalysis,
+      similarityNetworkAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -12841,6 +13183,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         correlationNetworkAnalysis,
         mdsAnalysis,
         distanceMatrixAnalysis,
+        similarityNetworkAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         experimentalOutliers,
@@ -12872,6 +13215,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       correlationNetworkAnalysis,
       mdsAnalysis,
       distanceMatrixAnalysis,
+      similarityNetworkAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       experimentalOutliers,
@@ -13534,6 +13878,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showCorrelationNetwork ||
         showMDS ||
         showDistanceMatrix ||
+        showSimilarityNetwork ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -15231,6 +15576,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowDistanceMatrix(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForDistanceMatrix}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForSimilarityNetwork
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Similarity Network
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showSimilarityNetwork}
+                            onChange={(e) =>
+                              setShowSimilarityNetwork(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForSimilarityNetwork}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -17936,6 +18306,58 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         )}
                         <ScientificDistanceMatrix
                           analysis={distanceMatrixAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showSimilarityNetwork && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🔗 Similarity Network</p>
+                    {!similarityNetworkAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Similarity
+                        Network.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">Variables:</span>{" "}
+                          {similarityNetworkAnalysis.nodes
+                            .map((node) => node.id)
+                            .join(", ")}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Conexiones:</span>{" "}
+                          {similarityNetworkAnalysis.edges.length}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">
+                            Similitud promedio:
+                          </span>{" "}
+                          {similarityNetworkAnalysis.averageSimilarity.toFixed(
+                            2
+                          )}
+                        </p>
+                        {similarityNetworkAnalysis.interpretation.length >
+                          0 && (
+                          <div className="mt-2 space-y-1">
+                            {similarityNetworkAnalysis.interpretation.map(
+                              (line, index) => (
+                                <p
+                                  key={`similarity-network-interpretation-${index}`}
+                                  className={`text-sm ${emptyState}`}
+                                >
+                                  {line}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+                        <ScientificSimilarityNetwork
+                          analysis={similarityNetworkAnalysis}
+                          seriesColors={radarSeriesColors}
                         />
                       </div>
                     )}
