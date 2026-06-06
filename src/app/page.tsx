@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  Fragment,
   type ChangeEvent,
   type ReactNode,
 } from "react";
@@ -4467,6 +4468,339 @@ function ScientificPCABiplot({ analysis }: ScientificPCABiplotProps) {
   );
 }
 
+type ScatterMatrixCell = {
+  xVariable: string;
+  yVariable: string;
+  points: {
+    x: number;
+    y: number;
+  }[];
+  correlation: number | null;
+};
+
+type ScatterMatrixAnalysis = {
+  variables: string[];
+  cells: ScatterMatrixCell[];
+  interpretation: string[];
+};
+
+const SCATTER_MATRIX_MIN_OBSERVATIONS = 3;
+
+const isScatterMatrixInputValid = (series: ExperimentalSeries[]) =>
+  series.length >= 2 &&
+  series.every(
+    (item) => getSeriesYValues(item).length >= SCATTER_MATRIX_MIN_OBSERVATIONS
+  );
+
+const buildScatterMatrixPairPoints = (
+  seriesA: ExperimentalSeries,
+  seriesB: ExperimentalSeries
+) => {
+  const pairCount = Math.min(seriesA.points.length, seriesB.points.length);
+  const points: { x: number; y: number }[] = [];
+
+  for (let index = 0; index < pairCount; index += 1) {
+    const x = seriesA.points[index]?.y;
+    const y = seriesB.points[index]?.y;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    points.push({ x, y });
+  }
+
+  return points;
+};
+
+const buildScatterMatrixInterpretation = (
+  cells: ScatterMatrixCell[]
+): string[] => {
+  const interpretation: string[] = [];
+  const uniqueOffDiagonalPairs = new Map<string, ScatterMatrixCell>();
+
+  cells
+    .filter((cell) => cell.xVariable !== cell.yVariable)
+    .forEach((cell) => {
+      const pairKey = [cell.xVariable, cell.yVariable].sort().join("|");
+      if (!uniqueOffDiagonalPairs.has(pairKey)) {
+        uniqueOffDiagonalPairs.set(pairKey, cell);
+      }
+    });
+
+  uniqueOffDiagonalPairs.forEach((cell) => {
+    const correlation = cell.correlation;
+    if (correlation === null || !Number.isFinite(correlation)) return;
+
+    if (correlation >= 0.8) {
+      interpretation.push(
+        `Existe una asociación positiva muy fuerte entre ${cell.xVariable} y ${cell.yVariable}.`
+      );
+    } else if (correlation <= -0.8) {
+      interpretation.push(
+        `Existe una asociación negativa muy fuerte entre ${cell.xVariable} y ${cell.yVariable}.`
+      );
+    } else if (Math.abs(correlation) < 0.3) {
+      interpretation.push(
+        `La relación entre ${cell.xVariable} y ${cell.yVariable} es débil o inexistente.`
+      );
+    }
+  });
+
+  const pairCells = Array.from(uniqueOffDiagonalPairs.values()).filter(
+    (cell) => cell.correlation !== null && Number.isFinite(cell.correlation)
+  );
+
+  if (pairCells.length > 0) {
+    const strongCount = pairCells.filter(
+      (cell) => Math.abs(cell.correlation ?? 0) > 0.7
+    ).length;
+    if (strongCount / pairCells.length > 0.6) {
+      interpretation.push(
+        "Las variables muestran una estructura altamente correlacionada."
+      );
+    }
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildScatterMatrixAnalysis = (
+  series: ExperimentalSeries[]
+): ScatterMatrixAnalysis | null => {
+  if (!isScatterMatrixInputValid(series)) return null;
+
+  const variables = series.map((item) => item.name);
+  const cells: ScatterMatrixCell[] = [];
+
+  for (let rowIndex = 0; rowIndex < series.length; rowIndex += 1) {
+    for (let columnIndex = 0; columnIndex < series.length; columnIndex += 1) {
+      const seriesA = series[rowIndex];
+      const seriesB = series[columnIndex];
+      const xVariable = seriesA.name;
+      const yVariable = seriesB.name;
+
+      if (xVariable === yVariable) {
+        cells.push({
+          xVariable,
+          yVariable,
+          points: [],
+          correlation: null,
+        });
+        continue;
+      }
+
+      cells.push({
+        xVariable,
+        yVariable,
+        points: buildScatterMatrixPairPoints(seriesA, seriesB),
+        correlation: computeSeriesPairCorrelation(seriesA, seriesB, "pearson"),
+      });
+    }
+  }
+
+  return {
+    variables,
+    cells,
+    interpretation: buildScatterMatrixInterpretation(cells),
+  };
+};
+
+const getScatterMatrixReportLines = (
+  analysis: ScatterMatrixAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Scatter Matrix."];
+  }
+
+  const pairCount =
+    (analysis.variables.length * (analysis.variables.length - 1)) / 2;
+  const lines = [
+    `Variables analizadas: ${analysis.variables.join(", ")}.`,
+    `Número de pares: ${pairCount}.`,
+  ];
+
+  const seenPairs = new Set<string>();
+  analysis.cells
+    .filter((cell) => cell.xVariable !== cell.yVariable)
+    .forEach((cell) => {
+      if (cell.correlation === null || !Number.isFinite(cell.correlation)) {
+        return;
+      }
+
+      const pairKey = [cell.xVariable, cell.yVariable].sort().join("|");
+      if (seenPairs.has(pairKey)) return;
+      seenPairs.add(pairKey);
+
+      if (Math.abs(cell.correlation) >= 0.8 || Math.abs(cell.correlation) < 0.3) {
+        lines.push(
+          `${cell.xVariable} vs ${cell.yVariable}: r = ${cell.correlation.toFixed(2)}.`
+        );
+      }
+    });
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+const hasScatterMatrixStrongCorrelations = (
+  analysis: ScatterMatrixAnalysis | null
+) => {
+  if (!analysis) return false;
+
+  const pairCells = analysis.cells.filter(
+    (cell) =>
+      cell.xVariable !== cell.yVariable &&
+      cell.correlation !== null &&
+      Number.isFinite(cell.correlation)
+  );
+
+  if (pairCells.length === 0) return false;
+
+  const strongCount = pairCells.filter(
+    (cell) => Math.abs(cell.correlation ?? 0) > 0.7
+  ).length;
+
+  return strongCount / pairCells.length > 0.6;
+};
+
+const hasScatterMatrixMostlyWeakCorrelations = (
+  analysis: ScatterMatrixAnalysis | null
+) => {
+  if (!analysis) return false;
+
+  const uniquePairs = new Map<string, number | null>();
+  analysis.cells
+    .filter((cell) => cell.xVariable !== cell.yVariable)
+    .forEach((cell) => {
+      const pairKey = [cell.xVariable, cell.yVariable].sort().join("|");
+      if (!uniquePairs.has(pairKey)) {
+        uniquePairs.set(pairKey, cell.correlation);
+      }
+    });
+
+  const correlations = Array.from(uniquePairs.values()).filter(
+    (value): value is number => value !== null && Number.isFinite(value)
+  );
+
+  if (correlations.length === 0) return false;
+
+  return correlations.every((correlation) => Math.abs(correlation) < 0.3);
+};
+
+type ScientificScatterMatrixProps = {
+  analysis: ScatterMatrixAnalysis;
+  seriesColors: Map<string, string>;
+  experimentalStatistics: ExperimentalStatistics[];
+};
+
+function ScientificScatterMatrix({
+  analysis,
+  seriesColors,
+  experimentalStatistics,
+}: ScientificScatterMatrixProps) {
+  const variableCount = analysis.variables.length;
+  const statsByName = new Map(
+    experimentalStatistics.map((stats) => [stats.seriesName, stats])
+  );
+
+  const getCell = (xVariable: string, yVariable: string) =>
+    analysis.cells.find(
+      (cell) => cell.xVariable === xVariable && cell.yVariable === yVariable
+    );
+
+  return (
+    <div className="overflow-x-auto mt-3">
+      <div
+        className="inline-grid gap-1.5"
+        style={{
+          gridTemplateColumns: `72px repeat(${variableCount}, 120px)`,
+        }}
+      >
+        <div />
+        {analysis.variables.map((variable) => (
+          <div
+            key={`scatter-matrix-col-${variable}`}
+            className="text-xs font-semibold text-center truncate px-1"
+            title={variable}
+          >
+            {variable}
+          </div>
+        ))}
+
+        {analysis.variables.map((rowVariable) => (
+          <Fragment key={`scatter-matrix-row-${rowVariable}`}>
+            <div
+              className="text-xs font-semibold flex items-center truncate pr-1"
+              title={rowVariable}
+            >
+              {rowVariable}
+            </div>
+            {analysis.variables.map((columnVariable) => {
+              const cell = getCell(rowVariable, columnVariable);
+              const isDiagonal = rowVariable === columnVariable;
+              const stats = statsByName.get(rowVariable);
+              const pointColor =
+                seriesColors.get(columnVariable) ??
+                seriesColors.get(rowVariable) ??
+                "var(--app-accent)";
+
+              return (
+                <div
+                  key={`scatter-matrix-cell-${rowVariable}-${columnVariable}`}
+                  className="rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-1 flex flex-col items-center justify-center"
+                  style={{ width: 120, minHeight: 120 }}
+                >
+                  {isDiagonal ? (
+                    <>
+                      <p
+                        className="text-[10px] font-semibold truncate w-full text-center"
+                        title={rowVariable}
+                      >
+                        {rowVariable}
+                      </p>
+                      <p className="text-[10px]">N: {stats?.count ?? "—"}</p>
+                      <p className="text-[10px]">
+                        Media:{" "}
+                        {stats ? formatExperimentalStat(stats.meanY) : "—"}
+                      </p>
+                      <p className="text-[10px]">
+                        SD: {stats ? formatExperimentalStat(stats.stdDevY) : "—"}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ width: 120, height: 88 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <ScatterChart
+                            margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+                          >
+                            <XAxis type="number" dataKey="x" hide />
+                            <YAxis type="number" dataKey="y" hide />
+                            <Scatter
+                              data={cell?.points ?? []}
+                              fill={pointColor}
+                              line={false}
+                              isAnimationActive={false}
+                              r={3}
+                            />
+                          </ScatterChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <p className="text-[10px] text-[var(--app-text-muted)] mt-0.5">
+                        {cell?.correlation != null &&
+                        Number.isFinite(cell.correlation)
+                          ? `r = ${cell.correlation.toFixed(2)}`
+                          : "r = N/A"}
+                      </p>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -7005,6 +7339,7 @@ const generateScientificReport = (input: {
   pcaAnalysis: PCAAnalysis | null;
   pcaObservationCount: number;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -7202,6 +7537,11 @@ const generateScientificReport = (input: {
   sections.push({
     title: "PCA Loadings",
     content: getPCALoadingsInterpretationLines(input.pcaAnalysis),
+  });
+
+  sections.push({
+    title: "Scatter Matrix",
+    content: getScatterMatrixReportLines(input.scatterMatrixAnalysis),
   });
 
   sections.push({
@@ -7452,6 +7792,7 @@ const generateScientificInterpretation = (input: {
   kernelDensityAnalyses: KernelDensityAnalysis[];
   forestPlotAnalysis: ForestPlotAnalysis | null;
   pcaAnalysis: PCAAnalysis | null;
+  scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -7599,6 +7940,23 @@ const generateScientificInterpretation = (input: {
         if (!findings.includes(line)) findings.push(line);
       }
     );
+
+    if (
+      input.pcaAnalysis.cumulativeVariance >= 80 &&
+      hasScatterMatrixStrongCorrelations(input.scatterMatrixAnalysis)
+    ) {
+      findings.push(
+        "La estructura observada en la Scatter Matrix es consistente con PCA."
+      );
+    }
+  }
+
+  if (input.scatterMatrixAnalysis) {
+    deduplicateTextLines(input.scatterMatrixAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
   }
 
   if (input.hierarchicalClusteringAnalysis) {
@@ -7615,6 +7973,11 @@ const generateScientificInterpretation = (input: {
       )
     ) {
       findings.push("Se observaron grupos claramente diferenciados.");
+      if (input.scatterMatrixAnalysis) {
+        findings.push(
+          "Los agrupamientos observados son coherentes con las relaciones bivariadas."
+        );
+      }
     }
   }
 
@@ -7825,6 +8188,7 @@ const generateScientificAssistantReport = (input: {
   kernelDensityAnalyses: KernelDensityAnalysis[];
   forestPlotAnalysis: ForestPlotAnalysis | null;
   pcaAnalysis: PCAAnalysis | null;
+  scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -8081,6 +8445,13 @@ const generateScientificAssistantReport = (input: {
     confidenceLevel = "medium";
   }
   if (hasPCAAdvancedClusteringConsistency && confidenceLevel === "medium") {
+    confidenceLevel = "high";
+  }
+  if (
+    hasPCAHighVariance &&
+    hasScatterMatrixStrongCorrelations(input.scatterMatrixAnalysis) &&
+    confidenceLevel === "medium"
+  ) {
     confidenceLevel = "high";
   }
 
@@ -8351,6 +8722,20 @@ const generateScientificAssistantReport = (input: {
     deduplicateTextLines(input.pcaAnalysis.loadingsInterpretation).forEach(
       (line) => pushUniqueFinding(line)
     );
+
+    if (
+      input.pcaAnalysis.cumulativeVariance >= 80 &&
+      hasScatterMatrixStrongCorrelations(input.scatterMatrixAnalysis)
+    ) {
+      pushUniqueFinding(
+        "La estructura observada en la Scatter Matrix es consistente con PCA."
+      );
+    }
+  }
+  if (input.scatterMatrixAnalysis) {
+    deduplicateTextLines(input.scatterMatrixAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
   }
   if (hasPCAAdvancedClusteringConsistency) {
     pushUniqueFinding(
@@ -8367,7 +8752,20 @@ const generateScientificAssistantReport = (input: {
     }
     if (hasClusteringClearGroups) {
       pushUniqueFinding("Se observaron grupos claramente diferenciados.");
+      if (input.scatterMatrixAnalysis) {
+        pushUniqueFinding(
+          "Los agrupamientos observados son coherentes con las relaciones bivariadas."
+        );
+      }
     }
+  }
+  if (
+    hasPCALowVariance &&
+    hasScatterMatrixMostlyWeakCorrelations(input.scatterMatrixAnalysis)
+  ) {
+    pushCaution(
+      "No se observa una estructura multivariante claramente definida."
+    );
   }
   if (
     hasForestSeparation &&
@@ -9479,6 +9877,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showKernelDensity, setShowKernelDensity] = useState(false);
   const [showForestPlot, setShowForestPlot] = useState(false);
   const [showPCA, setShowPCA] = useState(false);
+  const [showScatterMatrix, setShowScatterMatrix] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -9878,6 +10277,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowKernelDensity(false);
     setShowForestPlot(false);
     setShowPCA(false);
+    setShowScatterMatrix(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -10642,6 +11042,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         : null,
     [visibleExperimentalSeries, pcaObservationCount]
   );
+  const scatterMatrixAnalysis = useMemo(
+    () => buildScatterMatrixAnalysis(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const hierarchicalClusteringAnalysis = useMemo(
     () => buildHierarchicalClusteringAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
@@ -10680,6 +11084,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   );
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
+  const hasEnoughSeriesForScatterMatrix = isScatterMatrixInputValid(
+    visibleExperimentalSeries
+  );
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -10737,6 +11144,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         pcaAnalysis,
         pcaObservationCount,
         hierarchicalClusteringAnalysis,
+        scatterMatrixAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -10765,6 +11173,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       pcaAnalysis,
       pcaObservationCount,
       hierarchicalClusteringAnalysis,
+      scatterMatrixAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -10793,6 +11202,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         kernelDensityAnalyses,
         forestPlotAnalysis,
         pcaAnalysis,
+        scatterMatrixAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -10816,6 +11226,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       kernelDensityAnalyses,
       forestPlotAnalysis,
       pcaAnalysis,
+      scatterMatrixAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -10843,6 +11254,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         kernelDensityAnalyses,
         forestPlotAnalysis,
         pcaAnalysis,
+        scatterMatrixAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -10868,6 +11280,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       kernelDensityAnalyses,
       forestPlotAnalysis,
       pcaAnalysis,
+      scatterMatrixAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -11524,6 +11937,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showKernelDensity ||
         showForestPlot ||
         showPCA ||
+        showScatterMatrix ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -13100,6 +13514,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             checked={showPCA}
                             onChange={(e) => setShowPCA(e.target.checked)}
                             disabled={!hasEnoughSeriesForCorrelation}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForScatterMatrix
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Scatter Matrix
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showScatterMatrix}
+                            onChange={(e) =>
+                              setShowScatterMatrix(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForScatterMatrix}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -15586,6 +16025,43 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           chartTheme={chartTheme}
                         />
                         <ScientificPCALoadingsSection analysis={pcaAnalysis} />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showScatterMatrix && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🔳 Scatter Matrix</p>
+                    {!scatterMatrixAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Scatter Matrix.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">Variables:</span>{" "}
+                          {scatterMatrixAnalysis.variables.join(", ")}
+                        </p>
+                        {scatterMatrixAnalysis.interpretation.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {scatterMatrixAnalysis.interpretation.map(
+                              (line, index) => (
+                                <p
+                                  key={`scatter-matrix-interpretation-${index}`}
+                                  className={`text-sm ${emptyState}`}
+                                >
+                                  {line}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+                        <ScientificScatterMatrix
+                          analysis={scatterMatrixAnalysis}
+                          seriesColors={radarSeriesColors}
+                          experimentalStatistics={experimentalStatistics}
+                        />
                       </div>
                     )}
                   </div>
