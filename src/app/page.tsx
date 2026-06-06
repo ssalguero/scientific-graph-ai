@@ -5445,6 +5445,18 @@ function ScientificCorrelationNetwork({
   );
 }
 
+type MDSPoint = {
+  seriesName: string;
+  x: number;
+  y: number;
+};
+
+type MDSAnalysis = {
+  points: MDSPoint[];
+  stress: number;
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -5524,6 +5536,301 @@ const buildClusteringDistanceMatrix = (series: ExperimentalSeries[]) => {
 
   return matrix;
 };
+
+const MDS_MIN_SERIES = 2;
+const MDS_MIN_OBSERVATIONS = 3;
+
+const isMDSInputValid = (series: ExperimentalSeries[]) =>
+  series.length >= MDS_MIN_SERIES &&
+  series.every(
+    (item) => getSeriesYValues(item).length >= MDS_MIN_OBSERVATIONS
+  );
+
+const powerIterationEigenpair = (matrix: number[][], iterations = 200) => {
+  const size = matrix.length;
+  let vector = normalizeVector(
+    Array.from({ length: size }, (_, index) => (index + 1) / size)
+  );
+  let eigenvalue = 0;
+
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    const nextVector = multiplySymmetricMatrixVector(matrix, vector);
+    eigenvalue = dotProduct(vector, nextVector);
+    vector = normalizeVector(nextVector);
+  }
+
+  return { eigenvalue, eigenvector: vector };
+};
+
+const deflateSymmetricMatrix = (
+  matrix: number[][],
+  eigenvalue: number,
+  eigenvector: number[]
+) =>
+  matrix.map((row, rowIndex) =>
+    row.map(
+      (value, columnIndex) =>
+        value -
+        eigenvalue * (eigenvector[rowIndex] ?? 0) * (eigenvector[columnIndex] ?? 0)
+    )
+  );
+
+const buildDoubleCenteredMatrix = (distanceMatrix: number[][]) => {
+  const size = distanceMatrix.length;
+  const squaredDistances = distanceMatrix.map((row) =>
+    row.map((distance) => distance * distance)
+  );
+  const rowMeans = squaredDistances.map(
+    (row) => row.reduce((sum, value) => sum + value, 0) / size
+  );
+  const columnMeans = Array.from({ length: size }, (_, columnIndex) =>
+    squaredDistances.reduce((sum, row) => sum + row[columnIndex]!, 0) / size
+  );
+  const grandMean =
+    rowMeans.reduce((sum, value) => sum + value, 0) / Math.max(size, 1);
+
+  return squaredDistances.map((row, rowIndex) =>
+    row.map(
+      (value, columnIndex) =>
+        -0.5 *
+        (value - rowMeans[rowIndex]! - columnMeans[columnIndex]! + grandMean)
+    )
+  );
+};
+
+const computeMDSStress = (
+  originalDistances: number[][],
+  points: MDSPoint[]
+) => {
+  const size = points.length;
+  let sumSquaredDiff = 0;
+  let sumSquaredOriginal = 0;
+
+  for (let rowIndex = 0; rowIndex < size; rowIndex += 1) {
+    for (let columnIndex = rowIndex + 1; columnIndex < size; columnIndex += 1) {
+      const originalDistance = originalDistances[rowIndex]?.[columnIndex] ?? 0;
+      const pointA = points[rowIndex];
+      const pointB = points[columnIndex];
+      if (!pointA || !pointB) continue;
+
+      const deltaX = pointA.x - pointB.x;
+      const deltaY = pointA.y - pointB.y;
+      const mappedDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const diff = originalDistance - mappedDistance;
+      sumSquaredDiff += diff * diff;
+      sumSquaredOriginal += originalDistance * originalDistance;
+    }
+  }
+
+  if (sumSquaredOriginal <= 0) return 0;
+  return Math.sqrt(sumSquaredDiff / sumSquaredOriginal);
+};
+
+const getMDSStressClassification = (stress: number) => {
+  if (stress < 0.05) return "Excelente";
+  if (stress < 0.1) return "Muy bueno";
+  if (stress < 0.2) return "Aceptable";
+  return "Deficiente";
+};
+
+const hasMDSAcceptableStress = (analysis: MDSAnalysis | null) =>
+  analysis !== null && analysis.stress < 0.1;
+
+const hasMDSPoorStress = (analysis: MDSAnalysis | null) =>
+  analysis !== null && analysis.stress >= 0.2;
+
+const getMDSPairwiseDistances = (points: MDSPoint[]) => {
+  const distances: number[] = [];
+  for (let rowIndex = 0; rowIndex < points.length; rowIndex += 1) {
+    for (let columnIndex = rowIndex + 1; columnIndex < points.length; columnIndex += 1) {
+      const pointA = points[rowIndex];
+      const pointB = points[columnIndex];
+      if (!pointA || !pointB) continue;
+      const deltaX = pointA.x - pointB.x;
+      const deltaY = pointA.y - pointB.y;
+      distances.push(Math.sqrt(deltaX * deltaX + deltaY * deltaY));
+    }
+  }
+  return distances;
+};
+
+const buildMDSInterpretation = (
+  points: MDSPoint[],
+  stress: number
+): string[] => {
+  const interpretation: string[] = [];
+
+  if (stress < 0.1) {
+    interpretation.push(
+      "El mapa MDS preserva adecuadamente las distancias originales."
+    );
+  }
+
+  const pairwiseDistances = getMDSPairwiseDistances(points);
+  if (pairwiseDistances.length > 0) {
+    const maxDistance = Math.max(...pairwiseDistances);
+    if (pairwiseDistances.some((distance) => distance < 0.25 * maxDistance)) {
+      interpretation.push("Se observan grupos de variables similares.");
+    }
+    if (pairwiseDistances.some((distance) => distance > 0.75 * maxDistance)) {
+      interpretation.push("Se observan variables claramente diferenciadas.");
+    }
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildMDSAnalysis = (series: ExperimentalSeries[]): MDSAnalysis | null => {
+  if (!isMDSInputValid(series) || !canBuildHierarchicalClustering(series)) {
+    return null;
+  }
+
+  const distanceMatrix = buildClusteringDistanceMatrix(series);
+  const centeredMatrix = buildDoubleCenteredMatrix(distanceMatrix);
+  const firstEigenpair = powerIterationEigenpair(centeredMatrix);
+  const deflatedMatrix = deflateSymmetricMatrix(
+    centeredMatrix,
+    firstEigenpair.eigenvalue,
+    firstEigenpair.eigenvector
+  );
+  const secondEigenpair = powerIterationEigenpair(deflatedMatrix);
+
+  const firstScale =
+    firstEigenpair.eigenvalue > 0 ? Math.sqrt(firstEigenpair.eigenvalue) : 0;
+  const secondScale =
+    secondEigenpair.eigenvalue > 0 ? Math.sqrt(secondEigenpair.eigenvalue) : 0;
+
+  const points: MDSPoint[] = series.map((item, index) => ({
+    seriesName: item.name,
+    x: (firstEigenpair.eigenvector[index] ?? 0) * firstScale,
+    y: (secondEigenpair.eigenvector[index] ?? 0) * secondScale,
+  }));
+
+  const stress = computeMDSStress(distanceMatrix, points);
+
+  return {
+    points,
+    stress,
+    interpretation: buildMDSInterpretation(points, stress),
+  };
+};
+
+const getMDSReportLines = (analysis: MDSAnalysis | null): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar MDS."];
+  }
+
+  const lines = [
+    `Variables: ${analysis.points.map((point) => point.seriesName).join(", ")}.`,
+    `Stress: ${analysis.stress.toFixed(3)}.`,
+    `Clasificación: ${getMDSStressClassification(analysis.stress)}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificMDSPlotProps = {
+  analysis: MDSAnalysis;
+  seriesColors: Map<string, string>;
+  chartTheme: ReturnType<typeof getChartTheme>;
+};
+
+function ScientificMDSPlot({
+  analysis,
+  seriesColors,
+  chartTheme,
+}: ScientificMDSPlotProps) {
+  const chartData = analysis.points.map((point) => ({
+    ...point,
+    mds1: point.x,
+    mds2: point.y,
+    fill: seriesColors.get(point.seriesName) ?? "var(--app-accent)",
+  }));
+
+  return (
+    <div className="h-[260px] mt-3">
+      <ResponsiveContainer width="100%" height="100%">
+        <ScatterChart margin={{ top: 12, right: 24, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis
+            type="number"
+            dataKey="mds1"
+            name="MDS1"
+            tick={{ fill: chartTheme.axis, fontSize: 11 }}
+          />
+          <YAxis
+            type="number"
+            dataKey="mds2"
+            name="MDS2"
+            tick={{ fill: chartTheme.axis, fontSize: 11 }}
+          />
+          <Tooltip
+            content={({ active, payload: tooltipPayload }) => {
+              if (!active || !tooltipPayload?.length) return null;
+
+              const point = tooltipPayload[0]?.payload as
+                | (MDSPoint & { mds1: number; mds2: number })
+                | undefined;
+              if (!point) return null;
+
+              return (
+                <div
+                  className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                  style={{
+                    borderColor: chartTheme.tooltipBorder,
+                    backgroundColor: chartTheme.tooltipBg,
+                    color: chartTheme.tooltipColor,
+                  }}
+                >
+                  <p className="font-semibold">{point.seriesName}</p>
+                  <p>MDS1 = {point.mds1.toFixed(4)}</p>
+                  <p>MDS2 = {point.mds2.toFixed(4)}</p>
+                </div>
+              );
+            }}
+          />
+          <Scatter
+            name="Series"
+            data={chartData}
+            line={false}
+            isAnimationActive={false}
+            shape={(props) => {
+              const { cx, cy, payload } = props as {
+                cx?: number;
+                cy?: number;
+                payload?: MDSPoint & { fill?: string };
+              };
+              if (cx == null || cy == null || !payload) return null;
+
+              return (
+                <g>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={6}
+                    fill={payload.fill ?? "var(--app-accent)"}
+                  />
+                  <text
+                    x={cx + 8}
+                    y={cy + 4}
+                    fill="var(--app-text)"
+                    fontSize={10}
+                    fontWeight={600}
+                  >
+                    {payload.seriesName.length > 14
+                      ? `${payload.seriesName.slice(0, 13)}…`
+                      : payload.seriesName}
+                  </text>
+                </g>
+              );
+            }}
+          />
+        </ScatterChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 const averageLinkageDistance = (
   leftIndices: number[],
@@ -7986,6 +8293,7 @@ const generateScientificReport = (input: {
   scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
   parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
   correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
+  mdsAnalysis: MDSAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -8198,6 +8506,11 @@ const generateScientificReport = (input: {
   sections.push({
     title: "Correlation Network",
     content: getCorrelationNetworkReportLines(input.correlationNetworkAnalysis),
+  });
+
+  sections.push({
+    title: "MDS",
+    content: getMDSReportLines(input.mdsAnalysis),
   });
 
   sections.push({
@@ -8451,6 +8764,7 @@ const generateScientificInterpretation = (input: {
   scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
   parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
   correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
+  mdsAnalysis: MDSAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -8618,6 +8932,15 @@ const generateScientificInterpretation = (input: {
         "Los patrones observados son consistentes con la estructura identificada por PCA."
       );
     }
+
+    if (
+      input.pcaAnalysis.cumulativeVariance >= 80 &&
+      hasMDSAcceptableStress(input.mdsAnalysis)
+    ) {
+      findings.push(
+        "La estructura observada es consistente entre PCA y MDS."
+      );
+    }
   }
 
   if (input.scatterMatrixAnalysis) {
@@ -8677,6 +9000,12 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.mdsAnalysis) {
+    deduplicateTextLines(input.mdsAnalysis.interpretation).forEach((line) => {
+      if (!findings.includes(line)) findings.push(line);
+    });
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -8699,6 +9028,11 @@ const generateScientificInterpretation = (input: {
       if (input.parallelCoordinatesAnalysis) {
         findings.push(
           "Las trayectorias observadas son coherentes con la agrupación jerárquica."
+        );
+      }
+      if (input.mdsAnalysis) {
+        findings.push(
+          "Los agrupamientos identificados son coherentes con la proximidad observada en MDS."
         );
       }
     }
@@ -8914,6 +9248,7 @@ const generateScientificAssistantReport = (input: {
   scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
   parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
   correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
+  mdsAnalysis: MDSAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -9191,6 +9526,13 @@ const generateScientificAssistantReport = (input: {
   if (
     hasPCAHighVariance &&
     hasCorrelationNetworkHighDensity(input.correlationNetworkAnalysis) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasPCAHighVariance &&
+    hasMDSAcceptableStress(input.mdsAnalysis) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -9483,6 +9825,15 @@ const generateScientificAssistantReport = (input: {
         "Los patrones observados son consistentes con la estructura identificada por PCA."
       );
     }
+
+    if (
+      input.pcaAnalysis.cumulativeVariance >= 80 &&
+      hasMDSAcceptableStress(input.mdsAnalysis)
+    ) {
+      pushUniqueFinding(
+        "La estructura observada es consistente entre PCA y MDS."
+      );
+    }
   }
   if (input.scatterMatrixAnalysis) {
     deduplicateTextLines(input.scatterMatrixAnalysis.interpretation).forEach(
@@ -9532,6 +9883,11 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.mdsAnalysis) {
+    deduplicateTextLines(input.mdsAnalysis.interpretation).forEach((line) =>
+      pushUniqueFinding(line)
+    );
+  }
   if (hasPCAAdvancedClusteringConsistency) {
     pushUniqueFinding(
       "Los loadings de PCA y el clustering jerárquico coinciden en una estructura multivariante clara."
@@ -9555,6 +9911,11 @@ const generateScientificAssistantReport = (input: {
       if (input.parallelCoordinatesAnalysis) {
         pushUniqueFinding(
           "Las trayectorias observadas son coherentes con la agrupación jerárquica."
+        );
+      }
+      if (input.mdsAnalysis) {
+        pushUniqueFinding(
+          "Los agrupamientos identificados son coherentes con la proximidad observada en MDS."
         );
       }
     }
@@ -9585,6 +9946,11 @@ const generateScientificAssistantReport = (input: {
   ) {
     pushCaution(
       "No se observa una estructura de correlación consistente."
+    );
+  }
+  if (hasMDSPoorStress(input.mdsAnalysis)) {
+    pushCaution(
+      "La representación bidimensional puede no reflejar adecuadamente las distancias originales."
     );
   }
   if (
@@ -10700,6 +11066,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showScatterMatrix, setShowScatterMatrix] = useState(false);
   const [showParallelCoordinates, setShowParallelCoordinates] = useState(false);
   const [showCorrelationNetwork, setShowCorrelationNetwork] = useState(false);
+  const [showMDS, setShowMDS] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -11102,6 +11469,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowScatterMatrix(false);
     setShowParallelCoordinates(false);
     setShowCorrelationNetwork(false);
+    setShowMDS(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -11878,6 +12246,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => buildCorrelationNetworkAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const mdsAnalysis = useMemo(
+    () => buildMDSAnalysis(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const hierarchicalClusteringAnalysis = useMemo(
     () => buildHierarchicalClusteringAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
@@ -11925,6 +12297,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const hasEnoughSeriesForCorrelationNetwork = isCorrelationNetworkInputValid(
     visibleExperimentalSeries
   );
+  const hasEnoughSeriesForMDS = isMDSInputValid(visibleExperimentalSeries);
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -11985,6 +12358,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         scatterMatrixAnalysis,
         parallelCoordinatesAnalysis,
         correlationNetworkAnalysis,
+        mdsAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -12016,6 +12390,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       scatterMatrixAnalysis,
       parallelCoordinatesAnalysis,
       correlationNetworkAnalysis,
+      mdsAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -12047,6 +12422,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         scatterMatrixAnalysis,
         parallelCoordinatesAnalysis,
         correlationNetworkAnalysis,
+        mdsAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -12073,6 +12449,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       scatterMatrixAnalysis,
       parallelCoordinatesAnalysis,
       correlationNetworkAnalysis,
+      mdsAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -12103,6 +12480,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         scatterMatrixAnalysis,
         parallelCoordinatesAnalysis,
         correlationNetworkAnalysis,
+        mdsAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -12131,6 +12509,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       scatterMatrixAnalysis,
       parallelCoordinatesAnalysis,
       correlationNetworkAnalysis,
+      mdsAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -12790,6 +13169,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showScatterMatrix ||
         showParallelCoordinates ||
         showCorrelationNetwork ||
+        showMDS ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -14441,6 +14821,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowCorrelationNetwork(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForCorrelationNetwork}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForMDS
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">Mostrar MDS</span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showMDS}
+                            onChange={(e) => setShowMDS(e.target.checked)}
+                            disabled={!hasEnoughSeriesForMDS}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -17060,6 +17461,50 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         )}
                         <ScientificCorrelationNetwork
                           analysis={correlationNetworkAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showMDS && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      🧭 Multidimensional Scaling (MDS)
+                    </p>
+                    {!mdsAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar MDS.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">Variables:</span>{" "}
+                          {mdsAnalysis.points
+                            .map((point) => point.seriesName)
+                            .join(", ")}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Stress:</span>{" "}
+                          {mdsAnalysis.stress.toFixed(3)} (
+                          {getMDSStressClassification(mdsAnalysis.stress)})
+                        </p>
+                        {mdsAnalysis.interpretation.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {mdsAnalysis.interpretation.map((line, index) => (
+                              <p
+                                key={`mds-interpretation-${index}`}
+                                className={`text-sm ${emptyState}`}
+                              >
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                        <ScientificMDSPlot
+                          analysis={mdsAnalysis}
+                          seriesColors={radarSeriesColors}
+                          chartTheme={chartTheme}
                         />
                       </div>
                     )}
