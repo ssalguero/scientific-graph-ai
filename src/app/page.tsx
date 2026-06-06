@@ -4801,6 +4801,344 @@ function ScientificScatterMatrix({
   );
 }
 
+type ParallelCoordinateAxis = {
+  variable: string;
+  min: number;
+  max: number;
+};
+
+type ParallelCoordinateObservation = {
+  observationIndex: number;
+  values: number[];
+};
+
+type ParallelCoordinatesAnalysis = {
+  axes: ParallelCoordinateAxis[];
+  observations: ParallelCoordinateObservation[];
+  interpretation: string[];
+};
+
+const PARALLEL_COORDINATES_MIN_SERIES = 3;
+const PARALLEL_COORDINATES_MIN_OBSERVATIONS = 3;
+
+const isParallelCoordinatesInputValid = (series: ExperimentalSeries[]) =>
+  series.length >= PARALLEL_COORDINATES_MIN_SERIES &&
+  series.every(
+    (item) =>
+      getSeriesYValues(item).length >= PARALLEL_COORDINATES_MIN_OBSERVATIONS
+  );
+
+const normalizeParallelCoordinateValue = (
+  value: number,
+  axis: ParallelCoordinateAxis
+) => {
+  if (axis.max === axis.min) return 0.5;
+  return (value - axis.min) / (axis.max - axis.min);
+};
+
+const computeParallelCoordinateEuclideanDistance = (
+  profileA: number[],
+  profileB: number[]
+) => {
+  let sumSquares = 0;
+  for (let index = 0; index < profileA.length; index += 1) {
+    const delta = (profileA[index] ?? 0) - (profileB[index] ?? 0);
+    sumSquares += delta * delta;
+  }
+  return Math.sqrt(sumSquares);
+};
+
+const buildParallelCoordinatesNormalizedProfiles = (
+  analysis: ParallelCoordinatesAnalysis
+) =>
+  analysis.observations.map((observation) =>
+    observation.values.map((value, index) =>
+      normalizeParallelCoordinateValue(value, analysis.axes[index]!)
+    )
+  );
+
+const hasParallelCoordinatesSimilarTrajectories = (
+  analysis: ParallelCoordinatesAnalysis | null
+) => {
+  if (!analysis || analysis.observations.length < 2) return false;
+
+  const profiles = buildParallelCoordinatesNormalizedProfiles(analysis);
+  const variableCount = analysis.axes.length;
+  const distanceThreshold = 0.3 * Math.sqrt(Math.max(variableCount, 1));
+  const similarCount = profiles.filter((profile, index) => {
+    let minDistance = Number.POSITIVE_INFINITY;
+    for (let otherIndex = 0; otherIndex < profiles.length; otherIndex += 1) {
+      if (otherIndex === index) continue;
+      minDistance = Math.min(
+        minDistance,
+        computeParallelCoordinateEuclideanDistance(
+          profile,
+          profiles[otherIndex] ?? []
+        )
+      );
+    }
+    return minDistance < distanceThreshold;
+  }).length;
+
+  return similarCount / profiles.length > 0.6;
+};
+
+const hasParallelCoordinatesHeterogeneousTrajectories = (
+  analysis: ParallelCoordinatesAnalysis | null
+) => {
+  if (!analysis || analysis.observations.length === 0) return false;
+  return !hasParallelCoordinatesSimilarTrajectories(analysis);
+};
+
+const getParallelCoordinatesDominantVariables = (
+  analysis: ParallelCoordinatesAnalysis
+) => {
+  const ranges = analysis.axes.map((axis) => axis.max - axis.min);
+  const averageRange =
+    ranges.reduce((sum, range) => sum + range, 0) / Math.max(ranges.length, 1);
+
+  return analysis.axes
+    .filter((_axis, index) => ranges[index]! > 2 * averageRange)
+    .map((axis) => axis.variable);
+};
+
+const buildParallelCoordinatesInterpretation = (
+  axes: ParallelCoordinateAxis[],
+  observations: ParallelCoordinateObservation[]
+): string[] => {
+  const interpretation: string[] = [];
+
+  axes.forEach((axis, axisIndex) => {
+    const values = observations
+      .map((observation) => observation.values[axisIndex])
+      .filter((value): value is number => Number.isFinite(value));
+    if (values.length === 0) return;
+
+    const mean =
+      values.reduce((sum, value) => sum + value, 0) / values.length;
+    const variance =
+      values.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+      values.length;
+    const stdDev = Math.sqrt(variance);
+    const range = axis.max - axis.min;
+    const relativeStdDev =
+      range > 0 ? stdDev / range : Math.abs(mean) > 0 ? stdDev / Math.abs(mean) : 0;
+
+    if (relativeStdDev < 0.1) {
+      interpretation.push(
+        `La variable ${axis.variable} presenta baja variabilidad entre observaciones.`
+      );
+    }
+  });
+
+  getParallelCoordinatesDominantVariables({ axes, observations, interpretation: [] })
+    .forEach((variable) => {
+      interpretation.push(
+        `La variable ${variable} domina la variabilidad del conjunto.`
+      );
+    });
+
+  const previewAnalysis: ParallelCoordinatesAnalysis = {
+    axes,
+    observations,
+    interpretation: [],
+  };
+
+  if (hasParallelCoordinatesSimilarTrajectories(previewAnalysis)) {
+    interpretation.push(
+      "Las observaciones muestran patrones multivariantes similares."
+    );
+  } else if (observations.length > 0) {
+    interpretation.push(
+      "Las observaciones presentan perfiles multivariantes heterogéneos."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildParallelCoordinatesAnalysis = (
+  series: ExperimentalSeries[]
+): ParallelCoordinatesAnalysis | null => {
+  if (!isParallelCoordinatesInputValid(series)) return null;
+
+  const observationCount = Math.min(...series.map((item) => item.points.length));
+  if (observationCount < PARALLEL_COORDINATES_MIN_OBSERVATIONS) return null;
+
+  const axes: ParallelCoordinateAxis[] = series.map((item) => ({
+    variable: item.name,
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+  }));
+  const observations: ParallelCoordinateObservation[] = [];
+
+  for (let observationIndex = 0; observationIndex < observationCount; observationIndex += 1) {
+    const values: number[] = [];
+    let isValidObservation = true;
+
+    for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex += 1) {
+      const value = series[seriesIndex]?.points[observationIndex]?.y;
+      if (!Number.isFinite(value)) {
+        isValidObservation = false;
+        break;
+      }
+      values.push(value);
+    }
+
+    if (!isValidObservation) continue;
+
+    values.forEach((value, seriesIndex) => {
+      const axis = axes[seriesIndex];
+      if (!axis) return;
+      axis.min = Math.min(axis.min, value);
+      axis.max = Math.max(axis.max, value);
+    });
+
+    observations.push({ observationIndex, values });
+  }
+
+  if (observations.length < PARALLEL_COORDINATES_MIN_OBSERVATIONS) return null;
+
+  return {
+    axes,
+    observations,
+    interpretation: buildParallelCoordinatesInterpretation(axes, observations),
+  };
+};
+
+const getParallelCoordinatesReportLines = (
+  analysis: ParallelCoordinatesAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return [
+      "No hay datos suficientes para generar Parallel Coordinates Plot.",
+    ];
+  }
+
+  const dominantVariables = getParallelCoordinatesDominantVariables(analysis);
+  const lines = [
+    `Variables analizadas: ${analysis.axes.map((axis) => axis.variable).join(", ")}.`,
+    `Observaciones: ${analysis.observations.length}.`,
+  ];
+
+  if (dominantVariables.length > 0) {
+    lines.push(
+      `Variables dominantes: ${dominantVariables.join(", ")}.`
+    );
+  } else {
+    lines.push("Variables dominantes: ninguna detectada.");
+  }
+
+  if (hasParallelCoordinatesSimilarTrajectories(analysis)) {
+    lines.push("Patrones detectados: trayectorias multivariantes similares.");
+  } else {
+    lines.push("Patrones detectados: perfiles multivariantes heterogéneos.");
+  }
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificParallelCoordinatesPlotProps = {
+  analysis: ParallelCoordinatesAnalysis;
+};
+
+function ScientificParallelCoordinatesPlot({
+  analysis,
+}: ScientificParallelCoordinatesPlotProps) {
+  const height = 260;
+  const paddingTop = 24;
+  const paddingBottom = 8;
+  const paddingX = 48;
+  const plotHeight = height - paddingTop - paddingBottom;
+  const axisCount = analysis.axes.length;
+  const width = Math.max(320, paddingX * 2 + Math.max(axisCount - 1, 1) * 72);
+
+  const getAxisX = (index: number) =>
+    axisCount <= 1
+      ? width / 2
+      : paddingX +
+        (index / (axisCount - 1)) * (width - paddingX * 2);
+
+  const getAxisY = (value: number, axis: ParallelCoordinateAxis) => {
+    const normalized = normalizeParallelCoordinateValue(value, axis);
+    return paddingTop + (1 - normalized) * plotHeight;
+  };
+
+  const getObservationColor = (index: number, total: number) => {
+    const ratio = total <= 1 ? 0 : index / (total - 1);
+    const hue = 205 + ratio * 95;
+    const lightness = 42 + ratio * 12;
+    return `hsl(${hue}, 68%, ${lightness}%)`;
+  };
+
+  return (
+    <div className="w-full mt-3">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full"
+        style={{ height: 260 }}
+        role="img"
+        aria-label="Parallel coordinates plot de variables experimentales"
+      >
+        {analysis.axes.map((axis, index) => {
+          const axisX = getAxisX(index);
+          return (
+            <g key={`parallel-axis-${axis.variable}`}>
+              <line
+                x1={axisX}
+                y1={paddingTop}
+                x2={axisX}
+                y2={paddingTop + plotHeight}
+                stroke="var(--app-border)"
+                strokeWidth={1.5}
+              />
+              <text
+                x={axisX}
+                y={14}
+                textAnchor="middle"
+                fill="var(--app-text)"
+                fontSize={10}
+                fontWeight={600}
+              >
+                {axis.variable.length > 10
+                  ? `${axis.variable.slice(0, 9)}…`
+                  : axis.variable}
+              </text>
+              <title>{axis.variable}</title>
+            </g>
+          );
+        })}
+
+        {analysis.observations.map((observation) => {
+          const points = observation.values
+            .map((value, index) => {
+              const axis = analysis.axes[index];
+              if (!axis) return null;
+              return `${getAxisX(index)},${getAxisY(value, axis)}`;
+            })
+            .filter((point): point is string => point !== null)
+            .join(" ");
+
+          return (
+            <polyline
+              key={`parallel-observation-${observation.observationIndex}`}
+              points={points}
+              fill="none"
+              stroke={getObservationColor(
+                observation.observationIndex,
+                analysis.observations.length
+              )}
+              strokeWidth={1.5}
+              opacity={0.78}
+            />
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -7340,6 +7678,7 @@ const generateScientificReport = (input: {
   pcaObservationCount: number;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
+  parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -7542,6 +7881,11 @@ const generateScientificReport = (input: {
   sections.push({
     title: "Scatter Matrix",
     content: getScatterMatrixReportLines(input.scatterMatrixAnalysis),
+  });
+
+  sections.push({
+    title: "Parallel Coordinates Plot",
+    content: getParallelCoordinatesReportLines(input.parallelCoordinatesAnalysis),
   });
 
   sections.push({
@@ -7793,6 +8137,7 @@ const generateScientificInterpretation = (input: {
   forestPlotAnalysis: ForestPlotAnalysis | null;
   pcaAnalysis: PCAAnalysis | null;
   scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
+  parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -7949,10 +8294,38 @@ const generateScientificInterpretation = (input: {
         "La estructura observada en la Scatter Matrix es consistente con PCA."
       );
     }
+
+    if (
+      input.pcaAnalysis.cumulativeVariance >= 80 &&
+      hasParallelCoordinatesSimilarTrajectories(
+        input.parallelCoordinatesAnalysis
+      )
+    ) {
+      findings.push(
+        "Los patrones observados son consistentes con la estructura identificada por PCA."
+      );
+    }
   }
 
   if (input.scatterMatrixAnalysis) {
     deduplicateTextLines(input.scatterMatrixAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (
+      hasScatterMatrixStrongCorrelations(input.scatterMatrixAnalysis) &&
+      input.parallelCoordinatesAnalysis
+    ) {
+      findings.push(
+        "Las asociaciones bivariadas observadas coinciden con los patrones multivariantes."
+      );
+    }
+  }
+
+  if (input.parallelCoordinatesAnalysis) {
+    deduplicateTextLines(input.parallelCoordinatesAnalysis.interpretation).forEach(
       (line) => {
         if (!findings.includes(line)) findings.push(line);
       }
@@ -7976,6 +8349,11 @@ const generateScientificInterpretation = (input: {
       if (input.scatterMatrixAnalysis) {
         findings.push(
           "Los agrupamientos observados son coherentes con las relaciones bivariadas."
+        );
+      }
+      if (input.parallelCoordinatesAnalysis) {
+        findings.push(
+          "Las trayectorias observadas son coherentes con la agrupación jerárquica."
         );
       }
     }
@@ -8189,6 +8567,7 @@ const generateScientificAssistantReport = (input: {
   forestPlotAnalysis: ForestPlotAnalysis | null;
   pcaAnalysis: PCAAnalysis | null;
   scatterMatrixAnalysis: ScatterMatrixAnalysis | null;
+  parallelCoordinatesAnalysis: ParallelCoordinatesAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -8450,6 +8829,15 @@ const generateScientificAssistantReport = (input: {
   if (
     hasPCAHighVariance &&
     hasScatterMatrixStrongCorrelations(input.scatterMatrixAnalysis) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasPCAHighVariance &&
+    hasParallelCoordinatesSimilarTrajectories(
+      input.parallelCoordinatesAnalysis
+    ) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -8731,9 +9119,34 @@ const generateScientificAssistantReport = (input: {
         "La estructura observada en la Scatter Matrix es consistente con PCA."
       );
     }
+
+    if (
+      input.pcaAnalysis.cumulativeVariance >= 80 &&
+      hasParallelCoordinatesSimilarTrajectories(
+        input.parallelCoordinatesAnalysis
+      )
+    ) {
+      pushUniqueFinding(
+        "Los patrones observados son consistentes con la estructura identificada por PCA."
+      );
+    }
   }
   if (input.scatterMatrixAnalysis) {
     deduplicateTextLines(input.scatterMatrixAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (
+      hasScatterMatrixStrongCorrelations(input.scatterMatrixAnalysis) &&
+      input.parallelCoordinatesAnalysis
+    ) {
+      pushUniqueFinding(
+        "Las asociaciones bivariadas observadas coinciden con los patrones multivariantes."
+      );
+    }
+  }
+  if (input.parallelCoordinatesAnalysis) {
+    deduplicateTextLines(input.parallelCoordinatesAnalysis.interpretation).forEach(
       (line) => pushUniqueFinding(line)
     );
   }
@@ -8757,6 +9170,11 @@ const generateScientificAssistantReport = (input: {
           "Los agrupamientos observados son coherentes con las relaciones bivariadas."
         );
       }
+      if (input.parallelCoordinatesAnalysis) {
+        pushUniqueFinding(
+          "Las trayectorias observadas son coherentes con la agrupación jerárquica."
+        );
+      }
     }
   }
   if (
@@ -8765,6 +9183,18 @@ const generateScientificAssistantReport = (input: {
   ) {
     pushCaution(
       "No se observa una estructura multivariante claramente definida."
+    );
+  }
+  if (
+    hasParallelCoordinatesHeterogeneousTrajectories(
+      input.parallelCoordinatesAnalysis
+    ) &&
+    input.hierarchicalClusteringAnalysis &&
+    input.hierarchicalClusteringAnalysis.seriesCount >= 3 &&
+    !hasClusteringClearGroups
+  ) {
+    pushCaution(
+      "No se observa una estructura multivariante consistente."
     );
   }
   if (
@@ -9878,6 +10308,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showForestPlot, setShowForestPlot] = useState(false);
   const [showPCA, setShowPCA] = useState(false);
   const [showScatterMatrix, setShowScatterMatrix] = useState(false);
+  const [showParallelCoordinates, setShowParallelCoordinates] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -10278,6 +10709,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowForestPlot(false);
     setShowPCA(false);
     setShowScatterMatrix(false);
+    setShowParallelCoordinates(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -11046,6 +11478,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => buildScatterMatrixAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const parallelCoordinatesAnalysis = useMemo(
+    () => buildParallelCoordinatesAnalysis(visibleExperimentalSeries),
+    [visibleExperimentalSeries]
+  );
   const hierarchicalClusteringAnalysis = useMemo(
     () => buildHierarchicalClusteringAnalysis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
@@ -11085,6 +11521,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const hasVisibleExperimentalSeries = visibleExperimentalSeries.length > 0;
   const hasEnoughSeriesForCorrelation = visibleExperimentalSeries.length >= 2;
   const hasEnoughSeriesForScatterMatrix = isScatterMatrixInputValid(
+    visibleExperimentalSeries
+  );
+  const hasEnoughSeriesForParallelCoordinates = isParallelCoordinatesInputValid(
     visibleExperimentalSeries
   );
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
@@ -11145,6 +11584,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         pcaObservationCount,
         hierarchicalClusteringAnalysis,
         scatterMatrixAnalysis,
+        parallelCoordinatesAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -11174,6 +11614,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       pcaObservationCount,
       hierarchicalClusteringAnalysis,
       scatterMatrixAnalysis,
+      parallelCoordinatesAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -11203,6 +11644,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         forestPlotAnalysis,
         pcaAnalysis,
         scatterMatrixAnalysis,
+        parallelCoordinatesAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -11227,6 +11669,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       forestPlotAnalysis,
       pcaAnalysis,
       scatterMatrixAnalysis,
+      parallelCoordinatesAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -11255,6 +11698,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         forestPlotAnalysis,
         pcaAnalysis,
         scatterMatrixAnalysis,
+        parallelCoordinatesAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -11281,6 +11725,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       forestPlotAnalysis,
       pcaAnalysis,
       scatterMatrixAnalysis,
+      parallelCoordinatesAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -11938,6 +12383,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showForestPlot ||
         showPCA ||
         showScatterMatrix ||
+        showParallelCoordinates ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -13539,6 +13985,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowScatterMatrix(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForScatterMatrix}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForParallelCoordinates
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Parallel Coordinates Plot
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showParallelCoordinates}
+                            onChange={(e) =>
+                              setShowParallelCoordinates(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForParallelCoordinates}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -16061,6 +16532,51 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           analysis={scatterMatrixAnalysis}
                           seriesColors={radarSeriesColors}
                           experimentalStatistics={experimentalStatistics}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showParallelCoordinates && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      🧬 Parallel Coordinates Plot
+                    </p>
+                    {!parallelCoordinatesAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Parallel
+                        Coordinates Plot.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">Variables:</span>{" "}
+                          {parallelCoordinatesAnalysis.axes
+                            .map((axis) => axis.variable)
+                            .join(", ")}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold">Observaciones:</span>{" "}
+                          {parallelCoordinatesAnalysis.observations.length}
+                        </p>
+                        {parallelCoordinatesAnalysis.interpretation.length >
+                          0 && (
+                          <div className="mt-2 space-y-1">
+                            {parallelCoordinatesAnalysis.interpretation.map(
+                              (line, index) => (
+                                <p
+                                  key={`parallel-coordinates-interpretation-${index}`}
+                                  className={`text-sm ${emptyState}`}
+                                >
+                                  {line}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+                        <ScientificParallelCoordinatesPlot
+                          analysis={parallelCoordinatesAnalysis}
                         />
                       </div>
                     )}
