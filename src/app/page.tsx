@@ -6114,6 +6114,13 @@ type CanonicalCorrelationExplorerAnalysis = {
   interpretation: string[];
 };
 
+type PcrExplorerAnalysis = {
+  predictiveScore: number;
+  classification: "excellent" | "good" | "moderate" | "poor";
+  predictiveVariables: string[];
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -8179,6 +8186,252 @@ function ScientificCanonicalCorrelationExplorer({
             {analysis.interpretation.map((line, index) => (
               <li
                 key={`canonical-correlation-explorer-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const getPcrPredictiveVariables = (
+  variableImportanceAnalysis: VariableImportanceAnalysis
+) =>
+  variableImportanceAnalysis.entries
+    .filter((entry) => entry.normalizedScore >= 75)
+    .map((entry) => entry.variable);
+
+const getPcrTop3AverageImportance = (
+  variableImportanceAnalysis: VariableImportanceAnalysis
+) => {
+  const topEntries = [...variableImportanceAnalysis.entries]
+    .sort((left, right) => left.rank - right.rank)
+    .slice(0, 3);
+  if (topEntries.length === 0) return 0;
+  return (
+    topEntries.reduce((sum, entry) => sum + entry.normalizedScore, 0) /
+    topEntries.length
+  );
+};
+
+const getPcrExplorerClassificationLabel = (
+  classification: PcrExplorerAnalysis["classification"]
+) => {
+  if (classification === "excellent") return "Excellent";
+  if (classification === "good") return "Good";
+  if (classification === "moderate") return "Moderate";
+  return "Poor";
+};
+
+const classifyPcrExplorerPredictive = (
+  predictiveScore: number
+): PcrExplorerAnalysis["classification"] => {
+  if (predictiveScore >= 85) return "excellent";
+  if (predictiveScore >= 70) return "good";
+  if (predictiveScore >= 50) return "moderate";
+  return "poor";
+};
+
+const getPcrExplorerClassificationText = (
+  classification: PcrExplorerAnalysis["classification"]
+) => {
+  if (classification === "excellent") {
+    return "Los componentes principales presentan una capacidad predictiva excelente.";
+  }
+  if (classification === "good") {
+    return "Los componentes principales presentan una capacidad predictiva buena.";
+  }
+  if (classification === "moderate") {
+    return "Los componentes principales presentan una capacidad predictiva moderada.";
+  }
+  return "La capacidad predictiva observada es limitada.";
+};
+
+const hasPcrExplorerExcellentPredictive = (
+  analysis: PcrExplorerAnalysis | null
+) => analysis !== null && analysis.predictiveScore >= 85;
+
+const hasPcrExplorerPoorPredictive = (analysis: PcrExplorerAnalysis | null) =>
+  analysis !== null && analysis.classification === "poor";
+
+const buildPcrExplorerInterpretation = (input: {
+  classification: PcrExplorerAnalysis["classification"];
+  predictiveVariables: string[];
+  pcaAnalysis: PCAAnalysis;
+  ldaExplorerAnalysis: LdaExplorerAnalysis | null;
+  canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
+}): string[] => {
+  const interpretation: string[] = [
+    getPcrExplorerClassificationText(input.classification),
+  ];
+
+  if (input.pcaAnalysis.cumulativeVariance >= 80) {
+    interpretation.push(
+      "La mayor parte de la variabilidad se encuentra capturada por los componentes principales."
+    );
+  }
+
+  if (input.predictiveVariables.length > 0) {
+    interpretation.push(
+      `Las variables ${formatLdaDominantVariablesList(input.predictiveVariables)} contribuyen principalmente al potencial predictivo observado.`
+    );
+  }
+
+  if (
+    input.ldaExplorerAnalysis &&
+    input.ldaExplorerAnalysis.discriminantScore >= 85
+  ) {
+    interpretation.push(
+      "La capacidad predictiva es consistente con la separación observada en LDA Explorer."
+    );
+  }
+
+  if (
+    input.canonicalCorrelationExplorerAnalysis &&
+    input.canonicalCorrelationExplorerAnalysis.canonicalScore >= 85
+  ) {
+    interpretation.push(
+      "Las relaciones multivariantes observadas respaldan la capacidad predictiva estimada."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildPcrExplorerAnalysis = (input: {
+  pcaAnalysis: PCAAnalysis | null;
+  variableImportanceAnalysis: VariableImportanceAnalysis | null;
+  ldaExplorerAnalysis: LdaExplorerAnalysis | null;
+  canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
+}): PcrExplorerAnalysis | null => {
+  if (!input.pcaAnalysis || !input.variableImportanceAnalysis) {
+    return null;
+  }
+
+  const top3AverageImportance = getPcrTop3AverageImportance(
+    input.variableImportanceAnalysis
+  );
+  const predictiveScore =
+    (input.pcaAnalysis.cumulativeVariance + top3AverageImportance) / 2;
+  const classification = classifyPcrExplorerPredictive(predictiveScore);
+  const predictiveVariables = getPcrPredictiveVariables(
+    input.variableImportanceAnalysis
+  );
+
+  return {
+    predictiveScore,
+    classification,
+    predictiveVariables,
+    interpretation: buildPcrExplorerInterpretation({
+      classification,
+      predictiveVariables,
+      pcaAnalysis: input.pcaAnalysis,
+      ldaExplorerAnalysis: input.ldaExplorerAnalysis,
+      canonicalCorrelationExplorerAnalysis:
+        input.canonicalCorrelationExplorerAnalysis,
+    }),
+  };
+};
+
+const getPcrExplorerReportLines = (
+  analysis: PcrExplorerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar PCR Explorer."];
+  }
+
+  const lines = [
+    `Predictive Score: ${analysis.predictiveScore.toFixed(1)}.`,
+    `Clasificación: ${getPcrExplorerClassificationLabel(analysis.classification)}.`,
+    `Variables predictivas: ${
+      analysis.predictiveVariables.length > 0
+        ? analysis.predictiveVariables.join(", ")
+        : "Ninguna."
+    }.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificPcrExplorerProps = {
+  analysis: PcrExplorerAnalysis;
+  pcaVariance: number;
+};
+
+function ScientificPcrExplorer({
+  analysis,
+  pcaVariance,
+}: ScientificPcrExplorerProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "📈",
+      title: "Predictive Score",
+      value: analysis.predictiveScore.toFixed(1),
+      subtitle: "Capacidad predictiva",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Calidad",
+      value: getPcrExplorerClassificationLabel(analysis.classification),
+      subtitle: "Potencial predictivo",
+    },
+    {
+      key: "predictive-variables",
+      icon: "🏆",
+      title: "Variables predictivas",
+      value:
+        analysis.predictiveVariables.length > 0
+          ? analysis.predictiveVariables.join(", ")
+          : "—",
+      subtitle: "Contribución principal",
+    },
+    {
+      key: "pca",
+      icon: "🧭",
+      title: "PCA",
+      value: `${pcaVariance.toFixed(0)}%`,
+      subtitle: "Varianza acumulada",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`pcr-explorer-interpretation-${index}`}
                 className={`text-sm ${emptyState}`}
               >
                 • {line}
@@ -10621,6 +10874,7 @@ const generateScientificReport = (input: {
   manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
   ldaExplorerAnalysis: LdaExplorerAnalysis | null;
   canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
+  pcrExplorerAnalysis: PcrExplorerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -10923,6 +11177,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "PCR Explorer",
+    content: getPcrExplorerReportLines(input.pcrExplorerAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -11195,6 +11454,7 @@ const generateScientificInterpretation = (input: {
   manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
   ldaExplorerAnalysis: LdaExplorerAnalysis | null;
   canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
+  pcrExplorerAnalysis: PcrExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -11673,6 +11933,26 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.pcrExplorerAnalysis) {
+    deduplicateTextLines(input.pcrExplorerAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (input.pcrExplorerAnalysis.classification === "excellent") {
+      findings.push(
+        "Los componentes principales presentan una capacidad predictiva excelente."
+      );
+    }
+
+    if (input.pcrExplorerAnalysis.predictiveVariables.length > 0) {
+      findings.push(
+        `Las variables ${formatLdaDominantVariablesList(input.pcrExplorerAnalysis.predictiveVariables)} contribuyen principalmente al potencial predictivo observado.`
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -11933,6 +12213,7 @@ const generateScientificAssistantReport = (input: {
   manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
   ldaExplorerAnalysis: LdaExplorerAnalysis | null;
   canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
+  pcrExplorerAnalysis: PcrExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -12287,6 +12568,12 @@ const generateScientificAssistantReport = (input: {
     hasCanonicalCorrelationExplorerVeryStrong(
       input.canonicalCorrelationExplorerAnalysis
     ) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasPcrExplorerExcellentPredictive(input.pcrExplorerAnalysis) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -12851,6 +13138,23 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.pcrExplorerAnalysis) {
+    deduplicateTextLines(input.pcrExplorerAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (input.pcrExplorerAnalysis.classification === "excellent") {
+      pushUniqueFinding(
+        "Los componentes principales presentan una capacidad predictiva excelente."
+      );
+    }
+
+    if (input.pcrExplorerAnalysis.predictiveVariables.length > 0) {
+      pushUniqueFinding(
+        `Las variables ${formatLdaDominantVariablesList(input.pcrExplorerAnalysis.predictiveVariables)} contribuyen principalmente al potencial predictivo observado.`
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -12974,6 +13278,9 @@ const generateScientificAssistantReport = (input: {
   }
   if (hasCanonicalCorrelationExplorerWeak(input.canonicalCorrelationExplorerAnalysis)) {
     pushCaution("Las relaciones multivariantes detectadas son limitadas.");
+  }
+  if (hasPcrExplorerPoorPredictive(input.pcrExplorerAnalysis)) {
+    pushCaution("La capacidad predictiva observada es limitada.");
   }
   if (
     hasForestSeparation &&
@@ -14101,6 +14408,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showLdaExplorer, setShowLdaExplorer] = useState(false);
   const [showCanonicalCorrelationExplorer, setShowCanonicalCorrelationExplorer] =
     useState(false);
+  const [showPcrExplorer, setShowPcrExplorer] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -14513,6 +14821,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowManovaExplorer(false);
     setShowLdaExplorer(false);
     setShowCanonicalCorrelationExplorer(false);
+    setShowPcrExplorer(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -15415,6 +15724,21 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ldaExplorerAnalysis,
     ]
   );
+  const pcrExplorerAnalysis = useMemo(
+    () =>
+      buildPcrExplorerAnalysis({
+        pcaAnalysis,
+        variableImportanceAnalysis,
+        ldaExplorerAnalysis,
+        canonicalCorrelationExplorerAnalysis,
+      }),
+    [
+      pcaAnalysis,
+      variableImportanceAnalysis,
+      ldaExplorerAnalysis,
+      canonicalCorrelationExplorerAnalysis,
+    ]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -15488,6 +15812,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const hasEnoughSeriesForCanonicalCorrelationExplorer =
     correlationNetworkAnalysis !== null &&
     variableImportanceAnalysis !== null;
+  const hasEnoughSeriesForPcrExplorer =
+    pcaAnalysis !== null && variableImportanceAnalysis !== null;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -15558,6 +15884,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         manovaExplorerAnalysis,
         ldaExplorerAnalysis,
         canonicalCorrelationExplorerAnalysis,
+        pcrExplorerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -15599,6 +15926,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       manovaExplorerAnalysis,
       ldaExplorerAnalysis,
       canonicalCorrelationExplorerAnalysis,
+      pcrExplorerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -15640,6 +15968,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         manovaExplorerAnalysis,
         ldaExplorerAnalysis,
         canonicalCorrelationExplorerAnalysis,
+        pcrExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -15676,6 +16005,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       manovaExplorerAnalysis,
       ldaExplorerAnalysis,
       canonicalCorrelationExplorerAnalysis,
+      pcrExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -15716,6 +16046,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         manovaExplorerAnalysis,
         ldaExplorerAnalysis,
         canonicalCorrelationExplorerAnalysis,
+        pcrExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -15758,6 +16089,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       manovaExplorerAnalysis,
       ldaExplorerAnalysis,
       canonicalCorrelationExplorerAnalysis,
+      pcrExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -16431,6 +16763,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showManovaExplorer ||
         showLdaExplorer ||
         showCanonicalCorrelationExplorer ||
+        showPcrExplorer ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -18332,6 +18665,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             disabled={
                               !hasEnoughSeriesForCanonicalCorrelationExplorer
                             }
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForPcrExplorer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar PCR Explorer
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showPcrExplorer}
+                            onChange={(e) =>
+                              setShowPcrExplorer(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForPcrExplorer}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -21328,6 +21686,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           correlationDensity={getCorrelationNetworkDensity(
                             correlationNetworkAnalysis
                           )}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showPcrExplorer && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📈 PCR Explorer</p>
+                    {!pcrExplorerAnalysis || !pcaAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar PCR Explorer.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificPcrExplorer
+                          analysis={pcrExplorerAnalysis}
+                          pcaVariance={pcaAnalysis.cumulativeVariance}
                         />
                       </div>
                     )}
