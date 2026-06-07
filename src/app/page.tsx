@@ -6107,6 +6107,13 @@ type LdaExplorerAnalysis = {
   interpretation: string[];
 };
 
+type CanonicalCorrelationExplorerAnalysis = {
+  canonicalScore: number;
+  classification: "very-strong" | "strong" | "moderate" | "weak";
+  leadingVariables: string[];
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -7916,6 +7923,262 @@ function ScientificLdaExplorer({
             {analysis.interpretation.map((line, index) => (
               <li
                 key={`lda-explorer-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const getCanonicalCorrelationLeadingVariables = (
+  variableImportanceAnalysis: VariableImportanceAnalysis
+) =>
+  variableImportanceAnalysis.entries
+    .filter((entry) => entry.normalizedScore >= 70)
+    .map((entry) => entry.variable);
+
+const getCanonicalCorrelationExplorerClassificationLabel = (
+  classification: CanonicalCorrelationExplorerAnalysis["classification"]
+) => {
+  if (classification === "very-strong") return "Very Strong";
+  if (classification === "strong") return "Strong";
+  if (classification === "moderate") return "Moderate";
+  return "Weak";
+};
+
+const classifyCanonicalCorrelationExplorer = (
+  canonicalScore: number
+): CanonicalCorrelationExplorerAnalysis["classification"] => {
+  if (canonicalScore >= 85) return "very-strong";
+  if (canonicalScore >= 70) return "strong";
+  if (canonicalScore >= 50) return "moderate";
+  return "weak";
+};
+
+const getCanonicalCorrelationExplorerClassificationText = (
+  classification: CanonicalCorrelationExplorerAnalysis["classification"]
+) => {
+  if (classification === "very-strong") {
+    return "Las relaciones multivariantes son muy fuertes.";
+  }
+  if (classification === "strong") {
+    return "Las relaciones multivariantes son fuertes.";
+  }
+  if (classification === "moderate") {
+    return "Las relaciones multivariantes son moderadas.";
+  }
+  return "Las relaciones multivariantes son limitadas.";
+};
+
+const hasCanonicalCorrelationExplorerVeryStrong = (
+  analysis: CanonicalCorrelationExplorerAnalysis | null
+) => analysis !== null && analysis.canonicalScore >= 85;
+
+const hasCanonicalCorrelationExplorerWeak = (
+  analysis: CanonicalCorrelationExplorerAnalysis | null
+) => analysis !== null && analysis.classification === "weak";
+
+const buildCanonicalCorrelationExplorerInterpretation = (input: {
+  classification: CanonicalCorrelationExplorerAnalysis["classification"];
+  leadingVariables: string[];
+  correlationDensity: number;
+  averageSimilarity: number;
+  manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
+  ldaExplorerAnalysis: LdaExplorerAnalysis | null;
+}): string[] => {
+  const interpretation: string[] = [
+    getCanonicalCorrelationExplorerClassificationText(input.classification),
+  ];
+
+  if (input.correlationDensity >= 0.6) {
+    interpretation.push(
+      "La red de correlaciones presenta una conectividad elevada."
+    );
+  }
+
+  if (input.averageSimilarity >= 0.75) {
+    interpretation.push(
+      "Las variables muestran una estructura de similitud consistente."
+    );
+  }
+
+  if (input.leadingVariables.length > 0) {
+    interpretation.push(
+      `Las variables ${formatLdaDominantVariablesList(input.leadingVariables)} lideran las relaciones multivariantes observadas.`
+    );
+  }
+
+  if (
+    input.manovaExplorerAnalysis &&
+    input.manovaExplorerAnalysis.separationScore >= 0.75
+  ) {
+    interpretation.push(
+      "La estructura relacional coincide con la separación observada en MANOVA Explorer."
+    );
+  }
+
+  if (
+    input.ldaExplorerAnalysis &&
+    input.ldaExplorerAnalysis.discriminantScore >= 85
+  ) {
+    interpretation.push(
+      "Las relaciones observadas son consistentes con la capacidad discriminante detectada por LDA Explorer."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildCanonicalCorrelationExplorerAnalysis = (input: {
+  correlationNetworkAnalysis: CorrelationNetworkAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  variableImportanceAnalysis: VariableImportanceAnalysis | null;
+  manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
+  ldaExplorerAnalysis: LdaExplorerAnalysis | null;
+}): CanonicalCorrelationExplorerAnalysis | null => {
+  if (
+    !input.correlationNetworkAnalysis ||
+    !input.variableImportanceAnalysis
+  ) {
+    return null;
+  }
+
+  const correlationDensity = getCorrelationNetworkDensity(
+    input.correlationNetworkAnalysis
+  );
+  const averageSimilarity =
+    input.similarityNetworkAnalysis?.averageSimilarity ?? 0.5;
+  const canonicalScore =
+    (correlationDensity * 100 + averageSimilarity * 100) / 2;
+  const classification = classifyCanonicalCorrelationExplorer(canonicalScore);
+  const leadingVariables = getCanonicalCorrelationLeadingVariables(
+    input.variableImportanceAnalysis
+  );
+
+  return {
+    canonicalScore,
+    classification,
+    leadingVariables,
+    interpretation: buildCanonicalCorrelationExplorerInterpretation({
+      classification,
+      leadingVariables,
+      correlationDensity,
+      averageSimilarity,
+      manovaExplorerAnalysis: input.manovaExplorerAnalysis,
+      ldaExplorerAnalysis: input.ldaExplorerAnalysis,
+    }),
+  };
+};
+
+const getCanonicalCorrelationExplorerReportLines = (
+  analysis: CanonicalCorrelationExplorerAnalysis | null,
+  correlationDensity: number | null
+): string[] => {
+  if (!analysis) {
+    return [
+      "No hay datos suficientes para generar Canonical Correlation Explorer.",
+    ];
+  }
+
+  const lines = [
+    `Canonical Score: ${analysis.canonicalScore.toFixed(1)}.`,
+    `Clasificación: ${getCanonicalCorrelationExplorerClassificationLabel(analysis.classification)}.`,
+    `Variables líderes: ${
+      analysis.leadingVariables.length > 0
+        ? analysis.leadingVariables.join(", ")
+        : "Ninguna."
+    }.`,
+  ];
+
+  if (correlationDensity !== null) {
+    lines.push(`Correlation Density: ${correlationDensity.toFixed(2)}.`);
+  }
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificCanonicalCorrelationExplorerProps = {
+  analysis: CanonicalCorrelationExplorerAnalysis;
+  correlationDensity: number;
+};
+
+function ScientificCanonicalCorrelationExplorer({
+  analysis,
+  correlationDensity,
+}: ScientificCanonicalCorrelationExplorerProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "🔗",
+      title: "Canonical Score",
+      value: analysis.canonicalScore.toFixed(1),
+      subtitle: "Índice relacional",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Calidad",
+      value: getCanonicalCorrelationExplorerClassificationLabel(
+        analysis.classification
+      ),
+      subtitle: "Relaciones multivariantes",
+    },
+    {
+      key: "leading-variables",
+      icon: "🏆",
+      title: "Variables líderes",
+      value:
+        analysis.leadingVariables.length > 0
+          ? analysis.leadingVariables.join(", ")
+          : "—",
+      subtitle: "Estructura relacional",
+    },
+    {
+      key: "density",
+      icon: "🕸",
+      title: "Correlation Density",
+      value: correlationDensity.toFixed(2),
+      subtitle: "Conectividad de red",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`canonical-correlation-explorer-interpretation-${index}`}
                 className={`text-sm ${emptyState}`}
               >
                 • {line}
@@ -10357,6 +10620,7 @@ const generateScientificReport = (input: {
   multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
   manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
   ldaExplorerAnalysis: LdaExplorerAnalysis | null;
+  canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -10649,6 +10913,16 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Canonical Correlation Explorer",
+    content: getCanonicalCorrelationExplorerReportLines(
+      input.canonicalCorrelationExplorerAnalysis,
+      input.correlationNetworkAnalysis
+        ? getCorrelationNetworkDensity(input.correlationNetworkAnalysis)
+        : null
+    ),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -10920,6 +11194,7 @@ const generateScientificInterpretation = (input: {
   multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
   manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
   ldaExplorerAnalysis: LdaExplorerAnalysis | null;
+  canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -11377,6 +11652,27 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.canonicalCorrelationExplorerAnalysis) {
+    deduplicateTextLines(
+      input.canonicalCorrelationExplorerAnalysis.interpretation
+    ).forEach((line) => {
+      if (!findings.includes(line)) findings.push(line);
+    });
+
+    if (
+      input.canonicalCorrelationExplorerAnalysis.classification ===
+      "very-strong"
+    ) {
+      findings.push("Las relaciones multivariantes son muy fuertes.");
+    }
+
+    if (input.canonicalCorrelationExplorerAnalysis.leadingVariables.length > 0) {
+      findings.push(
+        `Las variables ${formatLdaDominantVariablesList(input.canonicalCorrelationExplorerAnalysis.leadingVariables)} lideran la estructura relacional observada.`
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -11636,6 +11932,7 @@ const generateScientificAssistantReport = (input: {
   multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
   manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
   ldaExplorerAnalysis: LdaExplorerAnalysis | null;
+  canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -11982,6 +12279,14 @@ const generateScientificAssistantReport = (input: {
   }
   if (
     hasLdaExplorerExcellentDiscrimination(input.ldaExplorerAnalysis) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasCanonicalCorrelationExplorerVeryStrong(
+      input.canonicalCorrelationExplorerAnalysis
+    ) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -12529,6 +12834,23 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.canonicalCorrelationExplorerAnalysis) {
+    deduplicateTextLines(
+      input.canonicalCorrelationExplorerAnalysis.interpretation
+    ).forEach((line) => pushUniqueFinding(line));
+
+    if (
+      input.canonicalCorrelationExplorerAnalysis.classification === "very-strong"
+    ) {
+      pushUniqueFinding("Las relaciones multivariantes son muy fuertes.");
+    }
+
+    if (input.canonicalCorrelationExplorerAnalysis.leadingVariables.length > 0) {
+      pushUniqueFinding(
+        `Las variables ${formatLdaDominantVariablesList(input.canonicalCorrelationExplorerAnalysis.leadingVariables)} lideran la estructura relacional observada.`
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -12649,6 +12971,9 @@ const generateScientificAssistantReport = (input: {
   }
   if (hasLdaExplorerPoorDiscrimination(input.ldaExplorerAnalysis)) {
     pushCaution("La diferenciación entre grupos es limitada.");
+  }
+  if (hasCanonicalCorrelationExplorerWeak(input.canonicalCorrelationExplorerAnalysis)) {
+    pushCaution("Las relaciones multivariantes detectadas son limitadas.");
   }
   if (
     hasForestSeparation &&
@@ -13774,6 +14099,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState(false);
   const [showManovaExplorer, setShowManovaExplorer] = useState(false);
   const [showLdaExplorer, setShowLdaExplorer] = useState(false);
+  const [showCanonicalCorrelationExplorer, setShowCanonicalCorrelationExplorer] =
+    useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -14185,6 +14512,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowMultivariateDashboard(false);
     setShowManovaExplorer(false);
     setShowLdaExplorer(false);
+    setShowCanonicalCorrelationExplorer(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -15070,6 +15398,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       hierarchicalClusteringAnalysis,
     ]
   );
+  const canonicalCorrelationExplorerAnalysis = useMemo(
+    () =>
+      buildCanonicalCorrelationExplorerAnalysis({
+        correlationNetworkAnalysis,
+        similarityNetworkAnalysis,
+        variableImportanceAnalysis,
+        manovaExplorerAnalysis,
+        ldaExplorerAnalysis,
+      }),
+    [
+      correlationNetworkAnalysis,
+      similarityNetworkAnalysis,
+      variableImportanceAnalysis,
+      manovaExplorerAnalysis,
+      ldaExplorerAnalysis,
+    ]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -15140,6 +15485,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     visibleExperimentalSeries.length >= 2 && pcaAnalysis !== null;
   const hasEnoughSeriesForLdaExplorer =
     pcaAnalysis !== null && variableImportanceAnalysis !== null;
+  const hasEnoughSeriesForCanonicalCorrelationExplorer =
+    correlationNetworkAnalysis !== null &&
+    variableImportanceAnalysis !== null;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -15209,6 +15557,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         multivariateDashboardAnalysis,
         manovaExplorerAnalysis,
         ldaExplorerAnalysis,
+        canonicalCorrelationExplorerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -15249,6 +15598,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       multivariateDashboardAnalysis,
       manovaExplorerAnalysis,
       ldaExplorerAnalysis,
+      canonicalCorrelationExplorerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -15289,6 +15639,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         multivariateDashboardAnalysis,
         manovaExplorerAnalysis,
         ldaExplorerAnalysis,
+        canonicalCorrelationExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -15324,6 +15675,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       multivariateDashboardAnalysis,
       manovaExplorerAnalysis,
       ldaExplorerAnalysis,
+      canonicalCorrelationExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -15363,6 +15715,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         multivariateDashboardAnalysis,
         manovaExplorerAnalysis,
         ldaExplorerAnalysis,
+        canonicalCorrelationExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -15404,6 +15757,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       multivariateDashboardAnalysis,
       manovaExplorerAnalysis,
       ldaExplorerAnalysis,
+      canonicalCorrelationExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -16076,6 +16430,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showMultivariateDashboard ||
         showManovaExplorer ||
         showLdaExplorer ||
+        showCanonicalCorrelationExplorer ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -17948,6 +18303,35 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowLdaExplorer(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForLdaExplorer}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForCanonicalCorrelationExplorer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Canonical Correlation Explorer
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showCanonicalCorrelationExplorer}
+                            onChange={(e) =>
+                              setShowCanonicalCorrelationExplorer(
+                                e.target.checked
+                              )
+                            }
+                            disabled={
+                              !hasEnoughSeriesForCanonicalCorrelationExplorer
+                            }
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -20920,6 +21304,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         <ScientificLdaExplorer
                           analysis={ldaExplorerAnalysis}
                           pcaVariance={pcaAnalysis.cumulativeVariance}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showCanonicalCorrelationExplorer && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      🔗 Canonical Correlation Explorer
+                    </p>
+                    {!canonicalCorrelationExplorerAnalysis ||
+                    !correlationNetworkAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Canonical
+                        Correlation Explorer.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificCanonicalCorrelationExplorer
+                          analysis={canonicalCorrelationExplorerAnalysis}
+                          correlationDensity={getCorrelationNetworkDensity(
+                            correlationNetworkAnalysis
+                          )}
                         />
                       </div>
                     )}
