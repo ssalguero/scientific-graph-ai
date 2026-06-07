@@ -6071,6 +6071,14 @@ type ClusterHeatmapAnalysis = {
   interpretation: string[];
 };
 
+type ClusteredDistanceHeatmapAnalysis = {
+  orderedVariables: string[];
+  matrix: number[][];
+  averageDistance: number;
+  maxDistance: number;
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -6987,6 +6995,169 @@ const getClusterHeatmapReportLines = (
   analysis.interpretation.forEach((line) => lines.push(line));
   return deduplicateTextLines(lines);
 };
+
+const getReorderedMatrixDistanceStats = (matrix: number[][]) => {
+  const distances: number[] = [];
+  for (let rowIndex = 0; rowIndex < matrix.length; rowIndex += 1) {
+    for (
+      let columnIndex = rowIndex + 1;
+      columnIndex < matrix.length;
+      columnIndex += 1
+    ) {
+      distances.push(matrix[rowIndex]?.[columnIndex] ?? 0);
+    }
+  }
+
+  if (distances.length === 0) {
+    return { minDistance: 0, maxDistance: 0, averageDistance: 0 };
+  }
+
+  const sum = distances.reduce((total, distance) => total + distance, 0);
+  return {
+    minDistance: Math.min(...distances),
+    maxDistance: Math.max(...distances),
+    averageDistance: sum / distances.length,
+  };
+};
+
+const getClusteredDistanceHeatmapAdjacentDistances = (
+  analysis: ClusteredDistanceHeatmapAnalysis
+): number[] => {
+  const distances: number[] = [];
+  for (
+    let index = 0;
+    index < analysis.orderedVariables.length - 1;
+    index += 1
+  ) {
+    distances.push(analysis.matrix[index]?.[index + 1] ?? 0);
+  }
+  return distances;
+};
+
+const buildClusteredDistanceHeatmapInterpretation = (
+  analysis: ClusteredDistanceHeatmapAnalysis
+): string[] => {
+  const interpretation: string[] = [];
+  const adjacentDistances = getClusteredDistanceHeatmapAdjacentDistances(analysis);
+  const hasCompactBlocks = adjacentDistances.some(
+    (distance) => distance < analysis.averageDistance
+  );
+
+  if (hasCompactBlocks) {
+    interpretation.push(
+      "Se observan bloques compactos de variables similares."
+    );
+  }
+
+  if (analysis.maxDistance > analysis.averageDistance * 2) {
+    interpretation.push("Los grupos presentan una separación marcada.");
+  } else if (analysis.maxDistance > analysis.averageDistance * 1.5) {
+    interpretation.push("Los grupos presentan una diferenciación moderada.");
+  }
+
+  interpretation.push(
+    "La estructura observada es coherente con el clustering jerárquico."
+  );
+
+  return deduplicateTextLines(interpretation);
+};
+
+const hasClusteredDistanceHeatmapCompactBlocks = (
+  analysis: ClusteredDistanceHeatmapAnalysis | null
+) => {
+  if (!analysis) return false;
+  return getClusteredDistanceHeatmapAdjacentDistances(analysis).some(
+    (distance) => distance < analysis.averageDistance
+  );
+};
+
+const hasClusteredDistanceHeatmapStrongSeparation = (
+  analysis: ClusteredDistanceHeatmapAnalysis | null
+) =>
+  analysis !== null &&
+  analysis.maxDistance > analysis.averageDistance * 2;
+
+const hasClusteredDistanceHeatmapLimitedSeparation = (
+  analysis: ClusteredDistanceHeatmapAnalysis | null
+) =>
+  analysis !== null &&
+  analysis.maxDistance < analysis.averageDistance * 1.2;
+
+const buildClusteredDistanceHeatmapAnalysis = (
+  clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null,
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null,
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null
+): ClusteredDistanceHeatmapAnalysis | null => {
+  if (
+    !clusterHeatmapAnalysis ||
+    !hierarchicalClusteringAnalysis ||
+    !distanceMatrixAnalysis
+  ) {
+    return null;
+  }
+
+  const { averageDistance, maxDistance } = getReorderedMatrixDistanceStats(
+    clusterHeatmapAnalysis.matrix
+  );
+
+  const analysis: ClusteredDistanceHeatmapAnalysis = {
+    orderedVariables: clusterHeatmapAnalysis.orderedVariables,
+    matrix: clusterHeatmapAnalysis.matrix,
+    averageDistance,
+    maxDistance,
+    interpretation: [],
+  };
+
+  analysis.interpretation = buildClusteredDistanceHeatmapInterpretation(analysis);
+  return analysis;
+};
+
+const getClusteredDistanceHeatmapReportLines = (
+  analysis: ClusteredDistanceHeatmapAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return [
+      "No hay datos suficientes para generar Clustered Distance Heatmap.",
+    ];
+  }
+
+  const lines = [
+    `Variables: ${analysis.orderedVariables.join(", ")}.`,
+    `Orden: ${analysis.orderedVariables.join(" → ")}.`,
+    `Distancia media: ${analysis.averageDistance.toFixed(2)}.`,
+    `Distancia máxima: ${analysis.maxDistance.toFixed(2)}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificClusteredDistanceHeatmapProps = {
+  clusteringAnalysis: HierarchicalClusteringAnalysis;
+  clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
+  analysis: ClusteredDistanceHeatmapAnalysis;
+};
+
+function ScientificClusteredDistanceHeatmap({
+  clusteringAnalysis,
+  clusterHeatmapAnalysis,
+  analysis,
+}: ScientificClusteredDistanceHeatmapProps) {
+  const { minDistance } = getReorderedMatrixDistanceStats(analysis.matrix);
+
+  return (
+    <div className="w-full mt-3" style={{ maxHeight: 320 }}>
+      <div className="overflow-auto max-h-[320px] space-y-2">
+        <ScientificHierarchicalClusteringDendrogram analysis={clusteringAnalysis} />
+        <ScientificClusterHeatmap
+          analysis={clusterHeatmapAnalysis}
+          minDistance={minDistance}
+          maxDistance={analysis.maxDistance}
+        />
+      </div>
+    </div>
+  );
+}
 
 type ScientificClusterHeatmapProps = {
   analysis: ClusterHeatmapAnalysis;
@@ -9386,6 +9557,7 @@ const generateScientificReport = (input: {
   similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
   variableImportanceAnalysis: VariableImportanceAnalysis | null;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null;
+  clusteredDistanceHeatmapAnalysis: ClusteredDistanceHeatmapAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -9614,6 +9786,11 @@ const generateScientificReport = (input: {
             "La intensidad de color refleja las distancias observadas entre variables.",
           ]
         : []),
+      ...(input.clusteredDistanceHeatmapAnalysis
+        ? [
+            "Las distancias mostradas corresponden a la matriz utilizada por el clustering.",
+          ]
+        : []),
     ]),
   });
 
@@ -9638,7 +9815,21 @@ const generateScientificReport = (input: {
 
   sections.push({
     title: "Cluster Heatmap",
-    content: getClusterHeatmapReportLines(input.clusterHeatmapAnalysis),
+    content: deduplicateTextLines([
+      ...getClusterHeatmapReportLines(input.clusterHeatmapAnalysis),
+      ...(input.clusteredDistanceHeatmapAnalysis
+        ? [
+            "El heatmap reordenado facilita la identificación visual de grupos.",
+          ]
+        : []),
+    ]),
+  });
+
+  sections.push({
+    title: "Clustered Distance Heatmap",
+    content: getClusteredDistanceHeatmapReportLines(
+      input.clusteredDistanceHeatmapAnalysis
+    ),
   });
 
   sections.push({
@@ -9650,6 +9841,11 @@ const generateScientificReport = (input: {
       ...(input.clusterHeatmapAnalysis
         ? [
             "El orden del heatmap proviene directamente del dendrograma jerárquico.",
+          ]
+        : []),
+      ...(input.clusteredDistanceHeatmapAnalysis
+        ? [
+            "El dendrograma superior refleja la estructura jerárquica observada.",
           ]
         : []),
     ]),
@@ -9904,6 +10100,7 @@ const generateScientificInterpretation = (input: {
   similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
   variableImportanceAnalysis: VariableImportanceAnalysis | null;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null;
+  clusteredDistanceHeatmapAnalysis: ClusteredDistanceHeatmapAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -10258,6 +10455,38 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.clusteredDistanceHeatmapAnalysis) {
+    deduplicateTextLines(
+      input.clusteredDistanceHeatmapAnalysis.interpretation
+    ).forEach((line) => {
+      if (!findings.includes(line)) findings.push(line);
+    });
+
+    if (
+      hasClusteredDistanceHeatmapCompactBlocks(
+        input.clusteredDistanceHeatmapAnalysis
+      )
+    ) {
+      findings.push(
+        "Se observan bloques compactos de variables similares."
+      );
+    }
+
+    if (
+      hasClusteredDistanceHeatmapStrongSeparation(
+        input.clusteredDistanceHeatmapAnalysis
+      )
+    ) {
+      findings.push("Los grupos presentan una separación marcada.");
+    }
+
+    if (input.hierarchicalClusteringAnalysis) {
+      findings.push(
+        "La organización visual coincide con el clustering jerárquico."
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -10513,9 +10742,11 @@ const generateScientificAssistantReport = (input: {
   similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
   variableImportanceAnalysis: VariableImportanceAnalysis | null;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null;
+  clusteredDistanceHeatmapAnalysis: ClusteredDistanceHeatmapAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
+  showClusteredDistanceHeatmap: boolean;
   showPCA: boolean;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -10829,6 +11060,15 @@ const generateScientificAssistantReport = (input: {
     hasClusterHeatmapClearSeparation(input.distanceMatrixAnalysis) &&
     input.showHierarchicalClustering &&
     input.showClusterHeatmap &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasClusteredDistanceHeatmapStrongSeparation(
+      input.clusteredDistanceHeatmapAnalysis
+    ) &&
+    input.showHierarchicalClustering &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -11285,6 +11525,35 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.clusteredDistanceHeatmapAnalysis) {
+    deduplicateTextLines(
+      input.clusteredDistanceHeatmapAnalysis.interpretation
+    ).forEach((line) => pushUniqueFinding(line));
+
+    if (
+      hasClusteredDistanceHeatmapCompactBlocks(
+        input.clusteredDistanceHeatmapAnalysis
+      )
+    ) {
+      pushUniqueFinding(
+        "Se observan bloques compactos de variables similares."
+      );
+    }
+
+    if (
+      hasClusteredDistanceHeatmapStrongSeparation(
+        input.clusteredDistanceHeatmapAnalysis
+      )
+    ) {
+      pushUniqueFinding("Los grupos presentan una separación marcada.");
+    }
+
+    if (input.hierarchicalClusteringAnalysis) {
+      pushUniqueFinding(
+        "La organización visual coincide con el clustering jerárquico."
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -11381,6 +11650,14 @@ const generateScientificAssistantReport = (input: {
     hasClusterHeatmapLimitedSeparation(input.distanceMatrixAnalysis)
   ) {
     pushCaution("No se observan separaciones marcadas entre grupos.");
+  }
+  if (
+    input.showClusteredDistanceHeatmap &&
+    hasClusteredDistanceHeatmapLimitedSeparation(
+      input.clusteredDistanceHeatmapAnalysis
+    )
+  ) {
+    pushCaution("La separación entre grupos es limitada.");
   }
   if (
     hasForestSeparation &&
@@ -12500,6 +12777,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showSimilarityNetwork, setShowSimilarityNetwork] = useState(false);
   const [showVariableImportance, setShowVariableImportance] = useState(false);
   const [showClusterHeatmap, setShowClusterHeatmap] = useState(false);
+  const [showClusteredDistanceHeatmap, setShowClusteredDistanceHeatmap] =
+    useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -12907,6 +13186,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowSimilarityNetwork(false);
     setShowVariableImportance(false);
     setShowClusterHeatmap(false);
+    setShowClusteredDistanceHeatmap(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -13726,6 +14006,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [distanceMatrixAnalysis, hierarchicalClusteringAnalysis]
   );
+  const clusteredDistanceHeatmapAnalysis = useMemo(
+    () =>
+      buildClusteredDistanceHeatmapAnalysis(
+        clusterHeatmapAnalysis,
+        hierarchicalClusteringAnalysis,
+        distanceMatrixAnalysis
+      ),
+    [
+      clusterHeatmapAnalysis,
+      hierarchicalClusteringAnalysis,
+      distanceMatrixAnalysis,
+    ]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -13782,6 +14075,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const hasEnoughSeriesForClusterHeatmap =
     visibleExperimentalSeries.length >= 2 &&
     hierarchicalClusteringAnalysis !== null;
+  const hasEnoughSeriesForClusteredDistanceHeatmap =
+    hierarchicalClusteringAnalysis !== null &&
+    distanceMatrixAnalysis !== null;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -13847,6 +14143,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         similarityNetworkAnalysis,
         variableImportanceAnalysis,
         clusterHeatmapAnalysis,
+        clusteredDistanceHeatmapAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -13883,6 +14180,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       similarityNetworkAnalysis,
       variableImportanceAnalysis,
       clusterHeatmapAnalysis,
+      clusteredDistanceHeatmapAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -13919,6 +14217,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         similarityNetworkAnalysis,
         variableImportanceAnalysis,
         clusterHeatmapAnalysis,
+        clusteredDistanceHeatmapAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -13950,6 +14249,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       similarityNetworkAnalysis,
       variableImportanceAnalysis,
       clusterHeatmapAnalysis,
+      clusteredDistanceHeatmapAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -13985,9 +14285,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         similarityNetworkAnalysis,
         variableImportanceAnalysis,
         clusterHeatmapAnalysis,
+        clusteredDistanceHeatmapAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
+        showClusteredDistanceHeatmap,
         showPCA,
         experimentalOutliers,
         tTestResult,
@@ -14021,9 +14323,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       similarityNetworkAnalysis,
       variableImportanceAnalysis,
       clusterHeatmapAnalysis,
+      clusteredDistanceHeatmapAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
+      showClusteredDistanceHeatmap,
       showPCA,
       experimentalOutliers,
       tTestResult,
@@ -14688,6 +14992,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showSimilarityNetwork ||
         showVariableImportance ||
         showClusterHeatmap ||
+        showClusteredDistanceHeatmap ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -16460,6 +16765,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowClusterHeatmap(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForClusterHeatmap}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForClusteredDistanceHeatmap
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Clustered Distance Heatmap
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showClusteredDistanceHeatmap}
+                            onChange={(e) =>
+                              setShowClusteredDistanceHeatmap(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForClusteredDistanceHeatmap}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -19309,6 +19639,75 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             maxDistance={distanceMatrixAnalysis.maxDistance}
                           />
                         )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showClusteredDistanceHeatmap && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      🌡️ Clustered Distance Heatmap
+                    </p>
+                    {!clusteredDistanceHeatmapAnalysis ||
+                    !hierarchicalClusteringAnalysis ||
+                    !clusterHeatmapAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Clustered
+                        Distance Heatmap.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p>
+                          <span className="font-semibold">Variables:</span>{" "}
+                          {clusteredDistanceHeatmapAnalysis.orderedVariables.join(
+                            ", "
+                          )}
+                        </p>
+                        <p className="mt-2">
+                          <span className="font-semibold">
+                            Orden del clustering:
+                          </span>{" "}
+                          {clusteredDistanceHeatmapAnalysis.orderedVariables.join(
+                            " → "
+                          )}
+                        </p>
+                        <p className="mt-2">
+                          <span className="font-semibold">
+                            Distancia media:
+                          </span>{" "}
+                          {clusteredDistanceHeatmapAnalysis.averageDistance.toFixed(
+                            2
+                          )}
+                        </p>
+                        <p className="mt-2">
+                          <span className="font-semibold">
+                            Distancia máxima:
+                          </span>{" "}
+                          {clusteredDistanceHeatmapAnalysis.maxDistance.toFixed(
+                            2
+                          )}
+                        </p>
+                        {clusteredDistanceHeatmapAnalysis.interpretation
+                          .length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {clusteredDistanceHeatmapAnalysis.interpretation.map(
+                              (line, index) => (
+                                <p
+                                  key={`clustered-distance-heatmap-interpretation-${index}`}
+                                  className={`text-sm ${emptyState}`}
+                                >
+                                  {line}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
+                        <ScientificClusteredDistanceHeatmap
+                          clusteringAnalysis={hierarchicalClusteringAnalysis}
+                          clusterHeatmapAnalysis={clusterHeatmapAnalysis}
+                          analysis={clusteredDistanceHeatmapAnalysis}
+                        />
                       </div>
                     )}
                   </div>
