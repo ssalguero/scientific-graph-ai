@@ -6079,6 +6079,18 @@ type ClusteredDistanceHeatmapAnalysis = {
   interpretation: string[];
 };
 
+type MultivariateDashboardAnalysis = {
+  summaryCards: {
+    pcaVariance?: number;
+    clusterCount?: number;
+    mdsStress?: number;
+    topVariable?: string;
+    topVariableScore?: number;
+    averageSimilarity?: number;
+  };
+  diagnosis: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -7131,6 +7143,318 @@ const getClusteredDistanceHeatmapReportLines = (
   analysis.interpretation.forEach((line) => lines.push(line));
   return deduplicateTextLines(lines);
 };
+
+const canBuildMultivariateDashboard = (
+  pcaAnalysis: PCAAnalysis | null,
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null,
+  mdsAnalysis: MDSAnalysis | null,
+  variableImportanceAnalysis: VariableImportanceAnalysis | null,
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null
+) =>
+  pcaAnalysis !== null ||
+  hierarchicalClusteringAnalysis !== null ||
+  mdsAnalysis !== null ||
+  variableImportanceAnalysis !== null ||
+  similarityNetworkAnalysis !== null;
+
+const getHierarchicalClusterLeafCount = (
+  analysis: HierarchicalClusteringAnalysis | null
+) => {
+  if (!analysis?.root) return undefined;
+  return getClusterLeavesInOrder(analysis.root).length;
+};
+
+const buildMultivariateDashboardDiagnosis = (input: {
+  pcaAnalysis: PCAAnalysis | null;
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
+  mdsAnalysis: MDSAnalysis | null;
+  averageSimilarity?: number;
+  topVariable?: string;
+  topVariableScore?: number;
+}): string[] => {
+  const diagnosis: string[] = [];
+
+  if (input.pcaAnalysis && input.pcaAnalysis.cumulativeVariance >= 80) {
+    diagnosis.push(
+      "La estructura multivariante se encuentra bien explicada por los primeros componentes principales."
+    );
+  }
+
+  if (input.pcaAnalysis && input.pcaAnalysis.cumulativeVariance < 60) {
+    diagnosis.push(
+      "La estructura multivariante requiere múltiples dimensiones para su explicación."
+    );
+  }
+
+  if (
+    input.distanceMatrixAnalysis &&
+    input.distanceMatrixAnalysis.maxDistance >
+      input.distanceMatrixAnalysis.averageDistance * 2
+  ) {
+    diagnosis.push("Se observan grupos claramente diferenciados.");
+  }
+
+  if (
+    input.averageSimilarity !== undefined &&
+    input.averageSimilarity >= 0.75
+  ) {
+    diagnosis.push("Las variables presentan una elevada coherencia interna.");
+  }
+
+  if (input.mdsAnalysis && input.mdsAnalysis.stress < 0.1) {
+    diagnosis.push(
+      "La representación MDS preserva adecuadamente las relaciones observadas."
+    );
+  }
+
+  if (
+    input.topVariable &&
+    input.topVariableScore !== undefined &&
+    input.topVariableScore >= 80
+  ) {
+    diagnosis.push(
+      `La variable ${input.topVariable} domina la estructura informativa del conjunto.`
+    );
+  }
+
+  return deduplicateTextLines(diagnosis);
+};
+
+const hasMultivariateDashboardStrongPca = (analysis: PCAAnalysis | null) =>
+  analysis !== null && analysis.cumulativeVariance >= 80;
+
+const hasMultivariateDashboardWeakPca = (analysis: PCAAnalysis | null) =>
+  analysis !== null && analysis.cumulativeVariance < 60;
+
+const hasMultivariateDashboardHighComplexity = (
+  pcaAnalysis: PCAAnalysis | null,
+  mdsAnalysis: MDSAnalysis | null
+) =>
+  hasMultivariateDashboardWeakPca(pcaAnalysis) &&
+  mdsAnalysis !== null &&
+  mdsAnalysis.stress > 0.2;
+
+const buildMultivariateDashboardAnalysis = (input: {
+  pcaAnalysis: PCAAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  mdsAnalysis: MDSAnalysis | null;
+  variableImportanceAnalysis: VariableImportanceAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
+}): MultivariateDashboardAnalysis | null => {
+  if (
+    !canBuildMultivariateDashboard(
+      input.pcaAnalysis,
+      input.hierarchicalClusteringAnalysis,
+      input.mdsAnalysis,
+      input.variableImportanceAnalysis,
+      input.similarityNetworkAnalysis
+    )
+  ) {
+    return null;
+  }
+
+  const topEntry = input.variableImportanceAnalysis?.entries[0];
+  const summaryCards: MultivariateDashboardAnalysis["summaryCards"] = {};
+
+  if (input.pcaAnalysis) {
+    summaryCards.pcaVariance = input.pcaAnalysis.cumulativeVariance;
+  }
+
+  const clusterCount = getHierarchicalClusterLeafCount(
+    input.hierarchicalClusteringAnalysis
+  );
+  if (clusterCount !== undefined) {
+    summaryCards.clusterCount = clusterCount;
+  }
+
+  if (input.mdsAnalysis) {
+    summaryCards.mdsStress = input.mdsAnalysis.stress;
+  }
+
+  if (topEntry) {
+    summaryCards.topVariable = topEntry.variable;
+    summaryCards.topVariableScore = topEntry.normalizedScore;
+  }
+
+  if (input.similarityNetworkAnalysis) {
+    summaryCards.averageSimilarity =
+      input.similarityNetworkAnalysis.averageSimilarity;
+  }
+
+  const diagnosis = buildMultivariateDashboardDiagnosis({
+    pcaAnalysis: input.pcaAnalysis,
+    distanceMatrixAnalysis: input.distanceMatrixAnalysis,
+    mdsAnalysis: input.mdsAnalysis,
+    averageSimilarity: summaryCards.averageSimilarity,
+    topVariable: summaryCards.topVariable,
+    topVariableScore: summaryCards.topVariableScore,
+  });
+
+  return { summaryCards, diagnosis };
+};
+
+const getMultivariateDashboardReportLines = (
+  analysis: MultivariateDashboardAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return [
+      "No hay datos suficientes para generar Multivariate Dashboard.",
+    ];
+  }
+
+  const lines: string[] = [];
+  const { summaryCards } = analysis;
+
+  if (summaryCards.pcaVariance !== undefined) {
+    lines.push(
+      `PCA: ${formatPCAVariancePercent(summaryCards.pcaVariance)} varianza acumulada.`
+    );
+  }
+
+  if (summaryCards.clusterCount !== undefined) {
+    lines.push(`Clustering: ${summaryCards.clusterCount} grupos.`);
+  }
+
+  if (summaryCards.mdsStress !== undefined) {
+    lines.push(`MDS: stress ${summaryCards.mdsStress.toFixed(2)}.`);
+  }
+
+  if (summaryCards.topVariable !== undefined) {
+    lines.push(
+      `Variable líder: ${summaryCards.topVariable}${
+        summaryCards.topVariableScore !== undefined
+          ? ` — ${summaryCards.topVariableScore.toFixed(0)}%`
+          : ""
+      }.`
+    );
+  }
+
+  if (summaryCards.averageSimilarity !== undefined) {
+    lines.push(
+      `Similaridad: ${summaryCards.averageSimilarity.toFixed(2)}.`
+    );
+  }
+
+  if (analysis.diagnosis.length > 0) {
+    lines.push("Diagnóstico global:");
+    analysis.diagnosis.forEach((line) => lines.push(line));
+  }
+
+  return deduplicateTextLines(lines);
+};
+
+type ScientificMultivariateDashboardProps = {
+  analysis: MultivariateDashboardAnalysis;
+};
+
+function ScientificMultivariateDashboard({
+  analysis,
+}: ScientificMultivariateDashboardProps) {
+  const { summaryCards, diagnosis } = analysis;
+  const cards: {
+    key: string;
+    icon: string;
+    title: string;
+    value: string;
+    subtitle: string;
+  }[] = [];
+
+  if (summaryCards.pcaVariance !== undefined) {
+    cards.push({
+      key: "pca",
+      icon: "🧭",
+      title: "PCA",
+      value: `${summaryCards.pcaVariance.toFixed(0)}%`,
+      subtitle: "Varianza acumulada",
+    });
+  }
+
+  if (summaryCards.clusterCount !== undefined) {
+    cards.push({
+      key: "clustering",
+      icon: "🌳",
+      title: "Clustering",
+      value: `${summaryCards.clusterCount} grupos`,
+      subtitle: "Estructura jerárquica",
+    });
+  }
+
+  if (summaryCards.mdsStress !== undefined) {
+    cards.push({
+      key: "mds",
+      icon: "📍",
+      title: "MDS",
+      value: summaryCards.mdsStress.toFixed(2),
+      subtitle: "Stress",
+    });
+  }
+
+  if (
+    summaryCards.topVariable !== undefined &&
+    summaryCards.topVariableScore !== undefined
+  ) {
+    cards.push({
+      key: "top-variable",
+      icon: "🏆",
+      title: "Variable líder",
+      value: summaryCards.topVariable,
+      subtitle: `${summaryCards.topVariableScore.toFixed(0)}%`,
+    });
+  }
+
+  if (summaryCards.averageSimilarity !== undefined) {
+    cards.push({
+      key: "similarity",
+      icon: "🔗",
+      title: "Similaridad",
+      value: summaryCards.averageSimilarity.toFixed(2),
+      subtitle: "Promedio de red",
+    });
+  }
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {diagnosis.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Diagnóstico
+          </p>
+          <ul className="mt-2 space-y-1">
+            {diagnosis.map((line, index) => (
+              <li
+                key={`multivariate-dashboard-diagnosis-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
@@ -9558,6 +9882,7 @@ const generateScientificReport = (input: {
   variableImportanceAnalysis: VariableImportanceAnalysis | null;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null;
   clusteredDistanceHeatmapAnalysis: ClusteredDistanceHeatmapAnalysis | null;
+  multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -9833,6 +10158,13 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Multivariate Dashboard",
+    content: getMultivariateDashboardReportLines(
+      input.multivariateDashboardAnalysis
+    ),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -10101,6 +10433,7 @@ const generateScientificInterpretation = (input: {
   variableImportanceAnalysis: VariableImportanceAnalysis | null;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null;
   clusteredDistanceHeatmapAnalysis: ClusteredDistanceHeatmapAnalysis | null;
+  multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -10487,6 +10820,35 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.multivariateDashboardAnalysis) {
+    deduplicateTextLines(input.multivariateDashboardAnalysis.diagnosis).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (hasMultivariateDashboardStrongPca(input.pcaAnalysis)) {
+      findings.push(
+        "La estructura multivariante se encuentra bien explicada por PCA."
+      );
+    }
+
+    if (hasDistanceMatrixHighHeterogeneity(input.distanceMatrixAnalysis)) {
+      findings.push(
+        "Los grupos identificados presentan una separación clara."
+      );
+    }
+
+    const topVariable = input.multivariateDashboardAnalysis.summaryCards.topVariable;
+    const topVariableScore =
+      input.multivariateDashboardAnalysis.summaryCards.topVariableScore;
+    if (topVariable && topVariableScore !== undefined && topVariableScore >= 80) {
+      findings.push(
+        `La variable ${topVariable} domina la estructura informativa.`
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -10743,6 +11105,7 @@ const generateScientificAssistantReport = (input: {
   variableImportanceAnalysis: VariableImportanceAnalysis | null;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null;
   clusteredDistanceHeatmapAnalysis: ClusteredDistanceHeatmapAnalysis | null;
+  multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -11069,6 +11432,14 @@ const generateScientificAssistantReport = (input: {
       input.clusteredDistanceHeatmapAnalysis
     ) &&
     input.showHierarchicalClustering &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasMultivariateDashboardStrongPca(input.pcaAnalysis) &&
+    input.mdsAnalysis !== null &&
+    input.mdsAnalysis.stress < 0.1 &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -11554,6 +11925,32 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.multivariateDashboardAnalysis) {
+    deduplicateTextLines(input.multivariateDashboardAnalysis.diagnosis).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (hasMultivariateDashboardStrongPca(input.pcaAnalysis)) {
+      pushUniqueFinding(
+        "La estructura multivariante se encuentra bien explicada por PCA."
+      );
+    }
+
+    if (hasDistanceMatrixHighHeterogeneity(input.distanceMatrixAnalysis)) {
+      pushUniqueFinding(
+        "Los grupos identificados presentan una separación clara."
+      );
+    }
+
+    const topVariable = input.multivariateDashboardAnalysis.summaryCards.topVariable;
+    const topVariableScore =
+      input.multivariateDashboardAnalysis.summaryCards.topVariableScore;
+    if (topVariable && topVariableScore !== undefined && topVariableScore >= 80) {
+      pushUniqueFinding(
+        `La variable ${topVariable} domina la estructura informativa.`
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -11658,6 +12055,16 @@ const generateScientificAssistantReport = (input: {
     )
   ) {
     pushCaution("La separación entre grupos es limitada.");
+  }
+  if (
+    hasMultivariateDashboardHighComplexity(
+      input.pcaAnalysis,
+      input.mdsAnalysis
+    )
+  ) {
+    pushCaution(
+      "La estructura multivariante presenta complejidad elevada y debe interpretarse con cautela."
+    );
   }
   if (
     hasForestSeparation &&
@@ -12779,6 +13186,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showClusterHeatmap, setShowClusterHeatmap] = useState(false);
   const [showClusteredDistanceHeatmap, setShowClusteredDistanceHeatmap] =
     useState(false);
+  const [showMultivariateDashboard, setShowMultivariateDashboard] =
+    useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -13187,6 +13596,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowVariableImportance(false);
     setShowClusterHeatmap(false);
     setShowClusteredDistanceHeatmap(false);
+    setShowMultivariateDashboard(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -14019,6 +14429,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       distanceMatrixAnalysis,
     ]
   );
+  const multivariateDashboardAnalysis = useMemo(
+    () =>
+      buildMultivariateDashboardAnalysis({
+        pcaAnalysis,
+        hierarchicalClusteringAnalysis,
+        mdsAnalysis,
+        variableImportanceAnalysis,
+        similarityNetworkAnalysis,
+        distanceMatrixAnalysis,
+      }),
+    [
+      pcaAnalysis,
+      hierarchicalClusteringAnalysis,
+      mdsAnalysis,
+      variableImportanceAnalysis,
+      similarityNetworkAnalysis,
+      distanceMatrixAnalysis,
+    ]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -14078,6 +14507,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const hasEnoughSeriesForClusteredDistanceHeatmap =
     hierarchicalClusteringAnalysis !== null &&
     distanceMatrixAnalysis !== null;
+  const hasEnoughSeriesForMultivariateDashboard = canBuildMultivariateDashboard(
+    pcaAnalysis,
+    hierarchicalClusteringAnalysis,
+    mdsAnalysis,
+    variableImportanceAnalysis,
+    similarityNetworkAnalysis
+  );
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -14144,6 +14580,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         variableImportanceAnalysis,
         clusterHeatmapAnalysis,
         clusteredDistanceHeatmapAnalysis,
+        multivariateDashboardAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -14181,6 +14618,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       variableImportanceAnalysis,
       clusterHeatmapAnalysis,
       clusteredDistanceHeatmapAnalysis,
+      multivariateDashboardAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -14218,6 +14656,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         variableImportanceAnalysis,
         clusterHeatmapAnalysis,
         clusteredDistanceHeatmapAnalysis,
+        multivariateDashboardAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -14250,6 +14689,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       variableImportanceAnalysis,
       clusterHeatmapAnalysis,
       clusteredDistanceHeatmapAnalysis,
+      multivariateDashboardAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -14286,6 +14726,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         variableImportanceAnalysis,
         clusterHeatmapAnalysis,
         clusteredDistanceHeatmapAnalysis,
+        multivariateDashboardAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -14324,6 +14765,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       variableImportanceAnalysis,
       clusterHeatmapAnalysis,
       clusteredDistanceHeatmapAnalysis,
+      multivariateDashboardAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -14993,6 +15435,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showVariableImportance ||
         showClusterHeatmap ||
         showClusteredDistanceHeatmap ||
+        showMultivariateDashboard ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -16790,6 +17233,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowClusteredDistanceHeatmap(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForClusteredDistanceHeatmap}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForMultivariateDashboard
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Dashboard Multivariante
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showMultivariateDashboard}
+                            onChange={(e) =>
+                              setShowMultivariateDashboard(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForMultivariateDashboard}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -19707,6 +20175,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           clusteringAnalysis={hierarchicalClusteringAnalysis}
                           clusterHeatmapAnalysis={clusterHeatmapAnalysis}
                           analysis={clusteredDistanceHeatmapAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showMultivariateDashboard && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      📊 Multivariate Summary Dashboard
+                    </p>
+                    {!multivariateDashboardAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Multivariate
+                        Dashboard.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificMultivariateDashboard
+                          analysis={multivariateDashboardAnalysis}
                         />
                       </div>
                     )}
