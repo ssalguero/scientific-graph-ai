@@ -6091,6 +6091,15 @@ type MultivariateDashboardAnalysis = {
   diagnosis: string[];
 };
 
+type ManovaExplorerAnalysis = {
+  groupCount: number;
+  variableCount: number;
+  observationCount: number;
+  separationScore: number;
+  classification: "strong" | "moderate" | "weak";
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -7444,6 +7453,225 @@ function ScientificMultivariateDashboard({
             {diagnosis.map((line, index) => (
               <li
                 key={`multivariate-dashboard-diagnosis-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const getManovaExplorerClassificationLabel = (
+  classification: ManovaExplorerAnalysis["classification"]
+) => {
+  if (classification === "strong") return "Fuerte";
+  if (classification === "moderate") return "Moderada";
+  return "Débil";
+};
+
+const classifyManovaExplorerSeparation = (
+  separationScore: number
+): ManovaExplorerAnalysis["classification"] => {
+  if (separationScore >= 0.75) return "strong";
+  if (separationScore >= 0.5) return "moderate";
+  return "weak";
+};
+
+const getManovaExplorerClassificationText = (
+  classification: ManovaExplorerAnalysis["classification"]
+) => {
+  if (classification === "strong") {
+    return "Los grupos presentan una separación multivariante fuerte.";
+  }
+  if (classification === "moderate") {
+    return "Se observa una diferenciación multivariante moderada.";
+  }
+  return "La separación multivariante observada es limitada.";
+};
+
+const hasManovaExplorerStrongSeparation = (
+  analysis: ManovaExplorerAnalysis | null
+) => analysis !== null && analysis.separationScore >= 0.75;
+
+const hasManovaExplorerLimitedSeparation = (
+  analysis: ManovaExplorerAnalysis | null
+) => analysis !== null && analysis.separationScore < 0.5;
+
+const buildManovaExplorerInterpretation = (input: {
+  classification: ManovaExplorerAnalysis["classification"];
+  pcaAnalysis: PCAAnalysis;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+}): string[] => {
+  const interpretation: string[] = [
+    getManovaExplorerClassificationText(input.classification),
+  ];
+
+  if (input.pcaAnalysis.cumulativeVariance >= 80) {
+    interpretation.push(
+      "La separación observada se encuentra bien representada por PCA."
+    );
+  }
+
+  if (input.hierarchicalClusteringAnalysis) {
+    interpretation.push(
+      "La estructura detectada es consistente con el clustering jerárquico."
+    );
+  }
+
+  if (
+    input.similarityNetworkAnalysis &&
+    input.similarityNetworkAnalysis.averageSimilarity >= 0.75
+  ) {
+    interpretation.push("Las variables presentan alta coherencia interna.");
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildManovaExplorerAnalysis = (input: {
+  series: ExperimentalSeries[];
+  pcaAnalysis: PCAAnalysis | null;
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  observationCount: number;
+}): ManovaExplorerAnalysis | null => {
+  if (input.series.length < 2 || !input.pcaAnalysis) {
+    return null;
+  }
+
+  const normalizedPCA = input.pcaAnalysis.cumulativeVariance / 100;
+  let normalizedDistanceRatio = 0;
+
+  if (
+    input.distanceMatrixAnalysis &&
+    input.distanceMatrixAnalysis.averageDistance > 0
+  ) {
+    const distanceRatio =
+      input.distanceMatrixAnalysis.maxDistance /
+      input.distanceMatrixAnalysis.averageDistance;
+    normalizedDistanceRatio = Math.min(distanceRatio / 3, 1);
+  }
+
+  const separationScore = (normalizedPCA + normalizedDistanceRatio) / 2;
+  const classification = classifyManovaExplorerSeparation(separationScore);
+  const groupCount =
+    input.hierarchicalClusteringAnalysis?.seriesCount ?? input.series.length;
+  const variableCount = input.series.length;
+  const observationCount =
+    input.observationCount > 0
+      ? input.observationCount
+      : input.series.reduce(
+          (sum, item) => sum + getSeriesYValues(item).length,
+          0
+        );
+
+  return {
+    groupCount,
+    variableCount,
+    observationCount,
+    separationScore,
+    classification,
+    interpretation: buildManovaExplorerInterpretation({
+      classification,
+      pcaAnalysis: input.pcaAnalysis,
+      hierarchicalClusteringAnalysis: input.hierarchicalClusteringAnalysis,
+      similarityNetworkAnalysis: input.similarityNetworkAnalysis,
+    }),
+  };
+};
+
+const getManovaExplorerReportLines = (
+  analysis: ManovaExplorerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar MANOVA Explorer."];
+  }
+
+  const lines = [
+    `Variables: ${analysis.variableCount}.`,
+    `Observaciones: ${analysis.observationCount}.`,
+    `Grupos: ${analysis.groupCount}.`,
+    `Separation Score: ${analysis.separationScore.toFixed(2)}.`,
+    `Clasificación: ${getManovaExplorerClassificationLabel(analysis.classification)}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificManovaExplorerProps = {
+  analysis: ManovaExplorerAnalysis;
+};
+
+function ScientificManovaExplorer({ analysis }: ScientificManovaExplorerProps) {
+  const cards = [
+    {
+      key: "separation",
+      icon: "🎯",
+      title: "Separation Score",
+      value: analysis.separationScore.toFixed(2),
+      subtitle: "Separación multivariante",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Clasificación",
+      value: getManovaExplorerClassificationLabel(analysis.classification),
+      subtitle: "Nivel de diferenciación",
+    },
+    {
+      key: "variables",
+      icon: "📈",
+      title: "Variables",
+      value: `${analysis.variableCount}`,
+      subtitle: "Dimensiones analizadas",
+    },
+    {
+      key: "observations",
+      icon: "🔬",
+      title: "Observaciones",
+      value: `${analysis.observationCount}`,
+      subtitle: "Datos considerados",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`manova-explorer-interpretation-${index}`}
                 className={`text-sm ${emptyState}`}
               >
                 • {line}
@@ -9883,6 +10111,7 @@ const generateScientificReport = (input: {
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null;
   clusteredDistanceHeatmapAnalysis: ClusteredDistanceHeatmapAnalysis | null;
   multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
+  manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -10165,6 +10394,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "MANOVA Explorer",
+    content: getManovaExplorerReportLines(input.manovaExplorerAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -10434,6 +10668,7 @@ const generateScientificInterpretation = (input: {
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null;
   clusteredDistanceHeatmapAnalysis: ClusteredDistanceHeatmapAnalysis | null;
   multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
+  manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -10849,6 +11084,30 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.manovaExplorerAnalysis) {
+    deduplicateTextLines(input.manovaExplorerAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (input.manovaExplorerAnalysis.classification === "strong") {
+      findings.push(
+        "Los grupos presentan una separación multivariante fuerte."
+      );
+    }
+
+    if (hasMultivariateDashboardStrongPca(input.pcaAnalysis)) {
+      findings.push("La estructura observada es consistente con PCA.");
+    }
+
+    if (input.hierarchicalClusteringAnalysis) {
+      findings.push(
+        "La estructura observada coincide con el clustering jerárquico."
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -11106,6 +11365,7 @@ const generateScientificAssistantReport = (input: {
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis | null;
   clusteredDistanceHeatmapAnalysis: ClusteredDistanceHeatmapAnalysis | null;
   multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
+  manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -11440,6 +11700,12 @@ const generateScientificAssistantReport = (input: {
     hasMultivariateDashboardStrongPca(input.pcaAnalysis) &&
     input.mdsAnalysis !== null &&
     input.mdsAnalysis.stress < 0.1 &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasManovaExplorerStrongSeparation(input.manovaExplorerAnalysis) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -11951,6 +12217,27 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.manovaExplorerAnalysis) {
+    deduplicateTextLines(input.manovaExplorerAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (input.manovaExplorerAnalysis.classification === "strong") {
+      pushUniqueFinding(
+        "Los grupos presentan una separación multivariante fuerte."
+      );
+    }
+
+    if (hasMultivariateDashboardStrongPca(input.pcaAnalysis)) {
+      pushUniqueFinding("La estructura observada es consistente con PCA.");
+    }
+
+    if (input.hierarchicalClusteringAnalysis) {
+      pushUniqueFinding(
+        "La estructura observada coincide con el clustering jerárquico."
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -12065,6 +12352,9 @@ const generateScientificAssistantReport = (input: {
     pushCaution(
       "La estructura multivariante presenta complejidad elevada y debe interpretarse con cautela."
     );
+  }
+  if (hasManovaExplorerLimitedSeparation(input.manovaExplorerAnalysis)) {
+    pushCaution("La diferenciación multivariante observada es limitada.");
   }
   if (
     hasForestSeparation &&
@@ -13188,6 +13478,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState(false);
   const [showMultivariateDashboard, setShowMultivariateDashboard] =
     useState(false);
+  const [showManovaExplorer, setShowManovaExplorer] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -13597,6 +13888,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowClusterHeatmap(false);
     setShowClusteredDistanceHeatmap(false);
     setShowMultivariateDashboard(false);
+    setShowManovaExplorer(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -14448,6 +14740,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       distanceMatrixAnalysis,
     ]
   );
+  const manovaExplorerAnalysis = useMemo(
+    () =>
+      buildManovaExplorerAnalysis({
+        series: visibleExperimentalSeries,
+        pcaAnalysis,
+        distanceMatrixAnalysis,
+        hierarchicalClusteringAnalysis,
+        similarityNetworkAnalysis,
+        observationCount: pcaObservationCount,
+      }),
+    [
+      visibleExperimentalSeries,
+      pcaAnalysis,
+      distanceMatrixAnalysis,
+      hierarchicalClusteringAnalysis,
+      similarityNetworkAnalysis,
+      pcaObservationCount,
+    ]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -14514,6 +14825,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     variableImportanceAnalysis,
     similarityNetworkAnalysis
   );
+  const hasEnoughSeriesForManovaExplorer =
+    visibleExperimentalSeries.length >= 2 && pcaAnalysis !== null;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -14581,6 +14894,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         clusterHeatmapAnalysis,
         clusteredDistanceHeatmapAnalysis,
         multivariateDashboardAnalysis,
+        manovaExplorerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -14619,6 +14933,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       clusterHeatmapAnalysis,
       clusteredDistanceHeatmapAnalysis,
       multivariateDashboardAnalysis,
+      manovaExplorerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -14657,6 +14972,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         clusterHeatmapAnalysis,
         clusteredDistanceHeatmapAnalysis,
         multivariateDashboardAnalysis,
+        manovaExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -14690,6 +15006,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       clusterHeatmapAnalysis,
       clusteredDistanceHeatmapAnalysis,
       multivariateDashboardAnalysis,
+      manovaExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -14727,6 +15044,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         clusterHeatmapAnalysis,
         clusteredDistanceHeatmapAnalysis,
         multivariateDashboardAnalysis,
+        manovaExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -14766,6 +15084,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       clusterHeatmapAnalysis,
       clusteredDistanceHeatmapAnalysis,
       multivariateDashboardAnalysis,
+      manovaExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -15436,6 +15755,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showClusterHeatmap ||
         showClusteredDistanceHeatmap ||
         showMultivariateDashboard ||
+        showManovaExplorer ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -17258,6 +17578,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowMultivariateDashboard(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForMultivariateDashboard}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForManovaExplorer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar MANOVA Explorer
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showManovaExplorer}
+                            onChange={(e) =>
+                              setShowManovaExplorer(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForManovaExplorer}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -20195,6 +20540,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className={contentPanel}>
                         <ScientificMultivariateDashboard
                           analysis={multivariateDashboardAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showManovaExplorer && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🎯 MANOVA Explorer</p>
+                    {!manovaExplorerAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar MANOVA Explorer.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificManovaExplorer
+                          analysis={manovaExplorerAnalysis}
                         />
                       </div>
                     )}
