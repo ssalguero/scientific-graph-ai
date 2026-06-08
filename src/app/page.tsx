@@ -6128,6 +6128,13 @@ type PlsExplorerAnalysis = {
   interpretation: string[];
 };
 
+type BootstrapExplorerAnalysis = {
+  stabilityScore: number;
+  classification: "very-stable" | "stable" | "moderately-stable" | "unstable";
+  stabilityFactors: string[];
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -8699,6 +8706,288 @@ function ScientificPlsExplorer({
   );
 }
 
+const getBootstrapSampleSizeScore = (count: number) => {
+  if (count >= 30) return 100;
+  if (count >= 15) return 80;
+  if (count >= 10) return 60;
+  return 40;
+};
+
+const getBootstrapNormalityConsensusScore = (
+  conclusion: NormalityConsensus["conclusion"]
+) => {
+  if (conclusion === "normal") return 100;
+  if (conclusion === "probably-normal") return 80;
+  if (conclusion === "questionable") return 50;
+  return 20;
+};
+
+const getBootstrapAverageSampleScore = (
+  experimentalStatistics: ExperimentalStatistics[]
+) => {
+  if (experimentalStatistics.length === 0) return 0;
+  return (
+    experimentalStatistics.reduce(
+      (sum, stats) => sum + getBootstrapSampleSizeScore(stats.count),
+      0
+    ) / experimentalStatistics.length
+  );
+};
+
+const getBootstrapAverageNormalityScore = (
+  consensusList: NormalityConsensus[]
+) => {
+  if (consensusList.length === 0) return 50;
+  return (
+    consensusList.reduce(
+      (sum, consensus) =>
+        sum + getBootstrapNormalityConsensusScore(consensus.conclusion),
+      0
+    ) / consensusList.length
+  );
+};
+
+const getBootstrapExplorerClassificationLabel = (
+  classification: BootstrapExplorerAnalysis["classification"]
+) => {
+  if (classification === "very-stable") return "Very Stable";
+  if (classification === "stable") return "Stable";
+  if (classification === "moderately-stable") return "Moderately Stable";
+  return "Unstable";
+};
+
+const classifyBootstrapExplorerStability = (
+  stabilityScore: number
+): BootstrapExplorerAnalysis["classification"] => {
+  if (stabilityScore >= 85) return "very-stable";
+  if (stabilityScore >= 70) return "stable";
+  if (stabilityScore >= 50) return "moderately-stable";
+  return "unstable";
+};
+
+const getBootstrapExplorerClassificationText = (
+  classification: BootstrapExplorerAnalysis["classification"]
+) => {
+  if (classification === "very-stable") {
+    return "Los resultados presentan una estabilidad muy elevada.";
+  }
+  if (classification === "stable") {
+    return "Los resultados presentan una estabilidad adecuada.";
+  }
+  if (classification === "moderately-stable") {
+    return "Los resultados presentan estabilidad moderada.";
+  }
+  return "Los resultados presentan una estabilidad limitada.";
+};
+
+const hasBootstrapExplorerVeryStable = (
+  analysis: BootstrapExplorerAnalysis | null
+) => analysis !== null && analysis.stabilityScore >= 85;
+
+const hasBootstrapExplorerUnstable = (
+  analysis: BootstrapExplorerAnalysis | null
+) => analysis !== null && analysis.classification === "unstable";
+
+const buildBootstrapExplorerInterpretation = (input: {
+  classification: BootstrapExplorerAnalysis["classification"];
+  averageSampleSize: number;
+  normalityScore: number;
+  pcaAnalysis: PCAAnalysis | null;
+  pcrExplorerAnalysis: PcrExplorerAnalysis | null;
+  plsExplorerAnalysis: PlsExplorerAnalysis | null;
+}): string[] => {
+  const interpretation: string[] = [
+    getBootstrapExplorerClassificationText(input.classification),
+  ];
+
+  if (input.averageSampleSize >= 15) {
+    interpretation.push(
+      "El tamaño muestral favorece la estabilidad de los resultados."
+    );
+  }
+
+  if (input.normalityScore >= 80) {
+    interpretation.push(
+      "La distribución de los datos favorece la estabilidad estadística."
+    );
+  }
+
+  if (input.pcaAnalysis && input.pcaAnalysis.cumulativeVariance >= 80) {
+    interpretation.push(
+      "La estructura principal de variabilidad se mantiene bien definida."
+    );
+  }
+
+  if (
+    input.pcrExplorerAnalysis &&
+    input.pcrExplorerAnalysis.predictiveScore >= 85
+  ) {
+    interpretation.push("La capacidad predictiva observada resulta consistente.");
+  }
+
+  if (
+    input.plsExplorerAnalysis &&
+    input.plsExplorerAnalysis.explanatoryScore >= 85
+  ) {
+    interpretation.push("La capacidad explicativa observada resulta consistente.");
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildBootstrapExplorerAnalysis = (input: {
+  experimentalStatistics: ExperimentalStatistics[];
+  normalityAnalyses: NormalityAnalysis[];
+  qqPlotAnalyses: QQPlotAnalysis[];
+  violinPlotAnalyses: ViolinPlotAnalysis[];
+  kernelDensityAnalyses: KernelDensityAnalysis[];
+  pcaAnalysis: PCAAnalysis | null;
+  pcrExplorerAnalysis: PcrExplorerAnalysis | null;
+  plsExplorerAnalysis: PlsExplorerAnalysis | null;
+}): BootstrapExplorerAnalysis | null => {
+  if (input.experimentalStatistics.length === 0) {
+    return null;
+  }
+
+  const sampleScore = getBootstrapAverageSampleScore(input.experimentalStatistics);
+  const normalityConsensus = buildNormalityConsensus(
+    input.normalityAnalyses,
+    input.qqPlotAnalyses,
+    input.violinPlotAnalyses,
+    input.kernelDensityAnalyses
+  );
+  const normalityScore = getBootstrapAverageNormalityScore(normalityConsensus);
+  const pcaScore = input.pcaAnalysis?.cumulativeVariance ?? 50;
+  const pcrScore = input.pcrExplorerAnalysis?.predictiveScore ?? 50;
+  const stabilityScore = (sampleScore + normalityScore + pcaScore + pcrScore) / 4;
+  const classification = classifyBootstrapExplorerStability(stabilityScore);
+  const averageSampleSize =
+    input.experimentalStatistics.reduce((sum, stats) => sum + stats.count, 0) /
+    input.experimentalStatistics.length;
+
+  return {
+    stabilityScore,
+    classification,
+    stabilityFactors: [
+      `Tamaño muestral: ${sampleScore.toFixed(1)}`,
+      `Normalidad: ${normalityScore.toFixed(1)}`,
+      `PCA: ${pcaScore.toFixed(1)}`,
+      `PCR: ${pcrScore.toFixed(1)}`,
+    ],
+    interpretation: buildBootstrapExplorerInterpretation({
+      classification,
+      averageSampleSize,
+      normalityScore,
+      pcaAnalysis: input.pcaAnalysis,
+      pcrExplorerAnalysis: input.pcrExplorerAnalysis,
+      plsExplorerAnalysis: input.plsExplorerAnalysis,
+    }),
+  };
+};
+
+const getBootstrapExplorerReportLines = (
+  analysis: BootstrapExplorerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Bootstrap Explorer."];
+  }
+
+  const lines = [
+    `Stability Score: ${analysis.stabilityScore.toFixed(1)}.`,
+    `Clasificación: ${getBootstrapExplorerClassificationLabel(analysis.classification)}.`,
+    "Factores de estabilidad:",
+    ...analysis.stabilityFactors,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificBootstrapExplorerProps = {
+  analysis: BootstrapExplorerAnalysis;
+  sampleScore: number;
+  normalityScore: number;
+};
+
+function ScientificBootstrapExplorer({
+  analysis,
+  sampleScore,
+  normalityScore,
+}: ScientificBootstrapExplorerProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "🎲",
+      title: "Stability Score",
+      value: analysis.stabilityScore.toFixed(1),
+      subtitle: "Estabilidad global",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Calidad",
+      value: getBootstrapExplorerClassificationLabel(analysis.classification),
+      subtitle: "Robustez observada",
+    },
+    {
+      key: "sample",
+      icon: "👥",
+      title: "Sample Quality",
+      value: sampleScore.toFixed(0),
+      subtitle: "Tamaño muestral",
+    },
+    {
+      key: "normality",
+      icon: "📈",
+      title: "Distribution Quality",
+      value: normalityScore.toFixed(0),
+      subtitle: "Consenso de normalidad",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`bootstrap-explorer-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -11131,6 +11420,7 @@ const generateScientificReport = (input: {
   canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
   pcrExplorerAnalysis: PcrExplorerAnalysis | null;
   plsExplorerAnalysis: PlsExplorerAnalysis | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -11443,6 +11733,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Bootstrap Explorer",
+    content: getBootstrapExplorerReportLines(input.bootstrapExplorerAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -11717,6 +12012,7 @@ const generateScientificInterpretation = (input: {
   canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
   pcrExplorerAnalysis: PcrExplorerAnalysis | null;
   plsExplorerAnalysis: PlsExplorerAnalysis | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -12235,6 +12531,18 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.bootstrapExplorerAnalysis) {
+    deduplicateTextLines(input.bootstrapExplorerAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (input.bootstrapExplorerAnalysis.classification === "very-stable") {
+      findings.push("Los resultados presentan una estabilidad muy elevada.");
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -12497,6 +12805,7 @@ const generateScientificAssistantReport = (input: {
   canonicalCorrelationExplorerAnalysis: CanonicalCorrelationExplorerAnalysis | null;
   pcrExplorerAnalysis: PcrExplorerAnalysis | null;
   plsExplorerAnalysis: PlsExplorerAnalysis | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -12863,6 +13172,12 @@ const generateScientificAssistantReport = (input: {
   }
   if (
     hasPlsExplorerExcellentExplanatory(input.plsExplorerAnalysis) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasBootstrapExplorerVeryStable(input.bootstrapExplorerAnalysis) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -13461,6 +13776,15 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.bootstrapExplorerAnalysis) {
+    deduplicateTextLines(input.bootstrapExplorerAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (input.bootstrapExplorerAnalysis.classification === "very-stable") {
+      pushUniqueFinding("Los resultados presentan una estabilidad muy elevada.");
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -13590,6 +13914,9 @@ const generateScientificAssistantReport = (input: {
   }
   if (hasPlsExplorerPoorExplanatory(input.plsExplorerAnalysis)) {
     pushCaution("La capacidad explicativa observada es limitada.");
+  }
+  if (hasBootstrapExplorerUnstable(input.bootstrapExplorerAnalysis)) {
+    pushCaution("La estabilidad global de los resultados es limitada.");
   }
   if (
     hasForestSeparation &&
@@ -14719,6 +15046,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState(false);
   const [showPcrExplorer, setShowPcrExplorer] = useState(false);
   const [showPlsExplorer, setShowPlsExplorer] = useState(false);
+  const [showBootstrapExplorer, setShowBootstrapExplorer] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -15133,6 +15461,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowCanonicalCorrelationExplorer(false);
     setShowPcrExplorer(false);
     setShowPlsExplorer(false);
+    setShowBootstrapExplorer(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -16067,6 +16396,37 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       canonicalCorrelationExplorerAnalysis,
     ]
   );
+  const bootstrapExplorerAnalysis = useMemo(
+    () =>
+      buildBootstrapExplorerAnalysis({
+        experimentalStatistics,
+        normalityAnalyses,
+        qqPlotAnalyses,
+        violinPlotAnalyses,
+        kernelDensityAnalyses,
+        pcaAnalysis,
+        pcrExplorerAnalysis,
+        plsExplorerAnalysis,
+      }),
+    [
+      experimentalStatistics,
+      normalityAnalyses,
+      qqPlotAnalyses,
+      violinPlotAnalyses,
+      kernelDensityAnalyses,
+      pcaAnalysis,
+      pcrExplorerAnalysis,
+      plsExplorerAnalysis,
+    ]
+  );
+  const bootstrapSampleScore = useMemo(
+    () => getBootstrapAverageSampleScore(experimentalStatistics),
+    [experimentalStatistics]
+  );
+  const bootstrapNormalityScore = useMemo(
+    () => getBootstrapAverageNormalityScore(normalityConsensus),
+    [normalityConsensus]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -16146,6 +16506,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     pcaAnalysis !== null &&
     variableImportanceAnalysis !== null &&
     pcrExplorerAnalysis !== null;
+  const hasEnoughSeriesForBootstrapExplorer =
+    experimentalStatistics.length > 0;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -16218,6 +16580,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         canonicalCorrelationExplorerAnalysis,
         pcrExplorerAnalysis,
         plsExplorerAnalysis,
+        bootstrapExplorerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -16261,6 +16624,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       canonicalCorrelationExplorerAnalysis,
       pcrExplorerAnalysis,
       plsExplorerAnalysis,
+      bootstrapExplorerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -16304,6 +16668,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         canonicalCorrelationExplorerAnalysis,
         pcrExplorerAnalysis,
         plsExplorerAnalysis,
+        bootstrapExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -16342,6 +16707,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       canonicalCorrelationExplorerAnalysis,
       pcrExplorerAnalysis,
       plsExplorerAnalysis,
+      bootstrapExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -16384,6 +16750,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         canonicalCorrelationExplorerAnalysis,
         pcrExplorerAnalysis,
         plsExplorerAnalysis,
+        bootstrapExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -16428,6 +16795,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       canonicalCorrelationExplorerAnalysis,
       pcrExplorerAnalysis,
       plsExplorerAnalysis,
+      bootstrapExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -17103,6 +17471,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showCanonicalCorrelationExplorer ||
         showPcrExplorer ||
         showPlsExplorer ||
+        showBootstrapExplorer ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -19054,6 +19423,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowPlsExplorer(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForPlsExplorer}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForBootstrapExplorer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Bootstrap Explorer
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showBootstrapExplorer}
+                            onChange={(e) =>
+                              setShowBootstrapExplorer(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForBootstrapExplorer}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -22086,6 +22480,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         <ScientificPlsExplorer
                           analysis={plsExplorerAnalysis}
                           pcrScore={pcrExplorerAnalysis.predictiveScore}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showBootstrapExplorer && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🎲 Bootstrap Explorer</p>
+                    {!bootstrapExplorerAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Bootstrap
+                        Explorer.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificBootstrapExplorer
+                          analysis={bootstrapExplorerAnalysis}
+                          sampleScore={bootstrapSampleScore}
+                          normalityScore={bootstrapNormalityScore}
                         />
                       </div>
                     )}
