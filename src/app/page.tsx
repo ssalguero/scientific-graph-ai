@@ -6180,6 +6180,13 @@ type ConsistencyEngineAnalysis = {
   interpretation: string[];
 };
 
+type ReportQualityEngineAnalysis = {
+  qualityScore: number;
+  classification: "excellent" | "good" | "acceptable" | "limited";
+  evaluatedCriteria: number;
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -10290,6 +10297,351 @@ function ScientificConsistencyEngine({
   );
 }
 
+const hasReportQualityEngineInput = (input: {
+  experimentalStatistics: ExperimentalStatistics[];
+  normalityAnalyses: NormalityAnalysis[];
+  normalityConsensus: NormalityConsensus[];
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+}) =>
+  input.experimentalStatistics.length > 0 ||
+  input.normalityAnalyses.length > 0 ||
+  input.normalityConsensus.length > 0 ||
+  input.consistencyEngineAnalysis !== null ||
+  input.bootstrapExplorerAnalysis !== null;
+
+const getReportQualitySampleSizeScore = (
+  experimentalStatistics: ExperimentalStatistics[]
+) => {
+  if (experimentalStatistics.length === 0) return null;
+
+  const averageSampleSize =
+    experimentalStatistics.reduce((sum, stats) => sum + stats.count, 0) /
+    experimentalStatistics.length;
+
+  if (averageSampleSize >= 30) return 1;
+  if (averageSampleSize >= 15) return 0.75;
+  if (averageSampleSize >= 10) return 0.5;
+  return 0;
+};
+
+const getReportQualityNormalityScoreFromAnalyses = (
+  normalityAnalyses: NormalityAnalysis[]
+) => {
+  if (normalityAnalyses.length === 0) return null;
+
+  const allNormalOrProbablyNormal = normalityAnalyses.every(
+    (analysis) =>
+      analysis.classification === "normal" ||
+      analysis.classification === "approximately-normal"
+  );
+  const hasQuestionable = normalityAnalyses.some(
+    (analysis) => analysis.classification === null
+  );
+
+  if (allNormalOrProbablyNormal) return 1;
+  if (hasQuestionable) return 0.5;
+  return 0;
+};
+
+const getReportQualityNormalityScore = (
+  normalityConsensus: NormalityConsensus[],
+  normalityAnalyses: NormalityAnalysis[]
+) => {
+  if (normalityConsensus.length > 0) {
+    const allNormalOrProbablyNormal = normalityConsensus.every(
+      (consensus) =>
+        consensus.conclusion === "normal" ||
+        consensus.conclusion === "probably-normal"
+    );
+    const hasQuestionable = normalityConsensus.some(
+      (consensus) => consensus.conclusion === "questionable"
+    );
+
+    if (allNormalOrProbablyNormal) return 1;
+    if (hasQuestionable) return 0.5;
+    return 0;
+  }
+
+  return getReportQualityNormalityScoreFromAnalyses(normalityAnalyses);
+};
+
+const getReportQualityInferenceScore = (input: {
+  anovaAnalysis: AnovaAnalysis | null;
+  mannWhitneyResult: MannWhitneyResult | null;
+  kruskalWallisResult: KruskalWallisResult | null;
+}) => {
+  if (
+    input.anovaAnalysis ||
+    input.mannWhitneyResult ||
+    input.kruskalWallisResult
+  ) {
+    return 1;
+  }
+  return null;
+};
+
+const getReportQualityBootstrapScore = (
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null
+) => {
+  if (!bootstrapExplorerAnalysis) return null;
+  return bootstrapExplorerAnalysis.stabilityScore >= 70 ? 1 : 0;
+};
+
+const getReportQualityConsistencyScore = (
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null
+) => {
+  if (!consistencyEngineAnalysis) return null;
+  if (consistencyEngineAnalysis.consistencyScore >= 85) return 1;
+  if (consistencyEngineAnalysis.consistencyScore >= 70) return 0.75;
+  return 0;
+};
+
+const getReportQualityEngineClassificationLabel = (
+  classification: ReportQualityEngineAnalysis["classification"]
+) => {
+  if (classification === "excellent") return "Excellent";
+  if (classification === "good") return "Good";
+  if (classification === "acceptable") return "Acceptable";
+  return "Limited";
+};
+
+const classifyReportQualityEngine = (
+  qualityScore: number
+): ReportQualityEngineAnalysis["classification"] => {
+  if (qualityScore >= 85) return "excellent";
+  if (qualityScore >= 70) return "good";
+  if (qualityScore >= 50) return "acceptable";
+  return "limited";
+};
+
+const getReportQualityEngineClassificationText = (
+  classification: ReportQualityEngineAnalysis["classification"]
+) => {
+  if (classification === "excellent") {
+    return "La calidad metodológica global del análisis es excelente.";
+  }
+  if (classification === "good") {
+    return "La calidad metodológica global del análisis es buena.";
+  }
+  if (classification === "acceptable") {
+    return "La calidad metodológica global del análisis es aceptable.";
+  }
+  return "La calidad metodológica global del análisis es limitada.";
+};
+
+const hasReportQualityEngineExcellent = (
+  analysis: ReportQualityEngineAnalysis | null
+) => analysis !== null && analysis.qualityScore >= 85;
+
+const hasReportQualityEngineLimited = (
+  analysis: ReportQualityEngineAnalysis | null
+) => analysis !== null && analysis.classification === "limited";
+
+const buildReportQualityEngineInterpretation = (input: {
+  classification: ReportQualityEngineAnalysis["classification"];
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  hasInferentialTests: boolean;
+}): string[] => {
+  const interpretation: string[] = [
+    getReportQualityEngineClassificationText(input.classification),
+  ];
+
+  if (
+    input.bootstrapExplorerAnalysis &&
+    input.bootstrapExplorerAnalysis.stabilityScore >= 70
+  ) {
+    interpretation.push("Los resultados muestran estabilidad adecuada.");
+  }
+
+  if (
+    input.consistencyEngineAnalysis &&
+    input.consistencyEngineAnalysis.consistencyScore >= 85
+  ) {
+    interpretation.push(
+      "La evidencia científica presenta alta coherencia interna."
+    );
+  }
+
+  if (input.hasInferentialTests) {
+    interpretation.push(
+      "Las conclusiones se encuentran respaldadas por análisis inferenciales."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildReportQualityEngineAnalysis = (input: {
+  experimentalStatistics: ExperimentalStatistics[];
+  normalityAnalyses: NormalityAnalysis[];
+  normalityConsensus: NormalityConsensus[];
+  anovaAnalysis: AnovaAnalysis | null;
+  mannWhitneyResult: MannWhitneyResult | null;
+  kruskalWallisResult: KruskalWallisResult | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+}): ReportQualityEngineAnalysis | null => {
+  if (!hasReportQualityEngineInput(input)) {
+    return null;
+  }
+
+  let score = 0;
+  let criteriaEvaluated = 0;
+
+  const sampleSizeScore = getReportQualitySampleSizeScore(
+    input.experimentalStatistics
+  );
+  if (sampleSizeScore !== null) {
+    criteriaEvaluated += 1;
+    score += sampleSizeScore;
+  }
+
+  const normalityScore = getReportQualityNormalityScore(
+    input.normalityConsensus,
+    input.normalityAnalyses
+  );
+  if (normalityScore !== null) {
+    criteriaEvaluated += 1;
+    score += normalityScore;
+  }
+
+  const inferenceScore = getReportQualityInferenceScore({
+    anovaAnalysis: input.anovaAnalysis,
+    mannWhitneyResult: input.mannWhitneyResult,
+    kruskalWallisResult: input.kruskalWallisResult,
+  });
+  const hasInferentialTests = inferenceScore !== null;
+  if (inferenceScore !== null) {
+    criteriaEvaluated += 1;
+    score += inferenceScore;
+  }
+
+  const bootstrapScore = getReportQualityBootstrapScore(
+    input.bootstrapExplorerAnalysis
+  );
+  if (bootstrapScore !== null) {
+    criteriaEvaluated += 1;
+    score += bootstrapScore;
+  }
+
+  const consistencyScore = getReportQualityConsistencyScore(
+    input.consistencyEngineAnalysis
+  );
+  if (consistencyScore !== null) {
+    criteriaEvaluated += 1;
+    score += consistencyScore;
+  }
+
+  const qualityScore =
+    criteriaEvaluated > 0 ? (score / criteriaEvaluated) * 100 : 0;
+  const classification = classifyReportQualityEngine(qualityScore);
+
+  return {
+    qualityScore,
+    classification,
+    evaluatedCriteria: criteriaEvaluated,
+    interpretation: buildReportQualityEngineInterpretation({
+      classification,
+      bootstrapExplorerAnalysis: input.bootstrapExplorerAnalysis,
+      consistencyEngineAnalysis: input.consistencyEngineAnalysis,
+      hasInferentialTests,
+    }),
+  };
+};
+
+const getReportQualityEngineReportLines = (
+  analysis: ReportQualityEngineAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Report Quality Engine."];
+  }
+
+  const lines = [
+    `Quality Score: ${analysis.qualityScore.toFixed(1)}.`,
+    `Clasificación: ${getReportQualityEngineClassificationLabel(analysis.classification)}.`,
+    `Criterios evaluados: ${analysis.evaluatedCriteria}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificReportQualityEngineProps = {
+  analysis: ReportQualityEngineAnalysis;
+};
+
+function ScientificReportQualityEngine({
+  analysis,
+}: ScientificReportQualityEngineProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "📄",
+      title: "Quality Score",
+      value: analysis.qualityScore.toFixed(1),
+      subtitle: "Calidad metodológica",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Clasificación",
+      value: getReportQualityEngineClassificationLabel(analysis.classification),
+      subtitle: "Evaluación global",
+    },
+    {
+      key: "criteria",
+      icon: "📚",
+      title: "Criterios evaluados",
+      value: String(analysis.evaluatedCriteria),
+      subtitle: "Dimensiones analizadas",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`report-quality-engine-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -12727,6 +13079,7 @@ const generateScientificReport = (input: {
   tsneExplorerAnalysis: TsneExplorerAnalysis | null;
   umapExplorerAnalysis: UmapExplorerAnalysis | null;
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -13064,6 +13417,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Report Quality Engine",
+    content: getReportQualityEngineReportLines(input.reportQualityEngineAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -13343,6 +13701,7 @@ const generateScientificInterpretation = (input: {
   tsneExplorerAnalysis: TsneExplorerAnalysis | null;
   umapExplorerAnalysis: UmapExplorerAnalysis | null;
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -13963,6 +14322,14 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.reportQualityEngineAnalysis) {
+    deduplicateTextLines(input.reportQualityEngineAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -14230,6 +14597,7 @@ const generateScientificAssistantReport = (input: {
   tsneExplorerAnalysis: TsneExplorerAnalysis | null;
   umapExplorerAnalysis: UmapExplorerAnalysis | null;
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -14625,6 +14993,9 @@ const generateScientificAssistantReport = (input: {
     confidenceLevel = "high";
   }
   if (hasConsistencyEngineVeryStrong(input.consistencyEngineAnalysis)) {
+    confidenceLevel = "high";
+  }
+  if (hasReportQualityEngineExcellent(input.reportQualityEngineAnalysis)) {
     confidenceLevel = "high";
   }
 
@@ -15305,6 +15676,11 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.reportQualityEngineAnalysis) {
+    deduplicateTextLines(input.reportQualityEngineAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -15457,6 +15833,9 @@ const generateScientificAssistantReport = (input: {
     pushCaution(
       "Los resultados presentan evidencia inconsistente entre distintos enfoques analíticos."
     );
+  }
+  if (hasReportQualityEngineLimited(input.reportQualityEngineAnalysis)) {
+    pushCaution("La calidad metodológica global del análisis es limitada.");
   }
   if (
     hasForestSeparation &&
@@ -16591,6 +16970,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showTsneExplorer, setShowTsneExplorer] = useState(false);
   const [showUmapExplorer, setShowUmapExplorer] = useState(false);
   const [showConsistencyEngine, setShowConsistencyEngine] = useState(false);
+  const [showReportQualityEngine, setShowReportQualityEngine] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -17010,6 +17390,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowTsneExplorer(false);
     setShowUmapExplorer(false);
     setShowConsistencyEngine(false);
+    setShowReportQualityEngine(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -18157,6 +18538,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     tsneExplorerAnalysis,
     umapExplorerAnalysis,
   });
+  const hasEnoughSeriesForReportQualityEngine = hasReportQualityEngineInput({
+    experimentalStatistics,
+    normalityAnalyses,
+    normalityConsensus,
+    consistencyEngineAnalysis,
+    bootstrapExplorerAnalysis,
+  });
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -18186,6 +18574,29 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const kruskalWallisResult = useMemo(
     () => calculateKruskalWallis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
+  );
+  const reportQualityEngineAnalysis = useMemo(
+    () =>
+      buildReportQualityEngineAnalysis({
+        experimentalStatistics,
+        normalityAnalyses,
+        normalityConsensus,
+        anovaAnalysis,
+        mannWhitneyResult,
+        kruskalWallisResult,
+        bootstrapExplorerAnalysis,
+        consistencyEngineAnalysis,
+      }),
+    [
+      experimentalStatistics,
+      normalityAnalyses,
+      normalityConsensus,
+      anovaAnalysis,
+      mannWhitneyResult,
+      kruskalWallisResult,
+      bootstrapExplorerAnalysis,
+      consistencyEngineAnalysis,
+    ]
   );
   const statisticalRecommendation = useMemo(
     () =>
@@ -18234,6 +18645,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         tsneExplorerAnalysis,
         umapExplorerAnalysis,
         consistencyEngineAnalysis,
+        reportQualityEngineAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -18282,6 +18694,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       tsneExplorerAnalysis,
       umapExplorerAnalysis,
       consistencyEngineAnalysis,
+      reportQualityEngineAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -18330,6 +18743,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         tsneExplorerAnalysis,
         umapExplorerAnalysis,
         consistencyEngineAnalysis,
+        reportQualityEngineAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -18373,6 +18787,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       tsneExplorerAnalysis,
       umapExplorerAnalysis,
       consistencyEngineAnalysis,
+      reportQualityEngineAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -18420,6 +18835,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         tsneExplorerAnalysis,
         umapExplorerAnalysis,
         consistencyEngineAnalysis,
+        reportQualityEngineAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -18469,6 +18885,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       tsneExplorerAnalysis,
       umapExplorerAnalysis,
       consistencyEngineAnalysis,
+      reportQualityEngineAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -19149,6 +19566,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showTsneExplorer ||
         showUmapExplorer ||
         showConsistencyEngine ||
+        showReportQualityEngine ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -21225,6 +21643,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowConsistencyEngine(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForConsistencyEngine}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForReportQualityEngine
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Report Quality Engine
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showReportQualityEngine}
+                            onChange={(e) =>
+                              setShowReportQualityEngine(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForReportQualityEngine}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -24362,6 +24805,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className={contentPanel}>
                         <ScientificConsistencyEngine
                           analysis={consistencyEngineAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showReportQualityEngine && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📄 Report Quality Engine</p>
+                    {!reportQualityEngineAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Report Quality
+                        Engine.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificReportQualityEngine
+                          analysis={reportQualityEngineAnalysis}
                         />
                       </div>
                     )}
