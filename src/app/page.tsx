@@ -6159,6 +6159,19 @@ type TsneExplorerAnalysis = {
   interpretation: string[];
 };
 
+type UmapExplorerPoint = {
+  variable: string;
+  x: number;
+  y: number;
+};
+
+type UmapExplorerAnalysis = {
+  points: UmapExplorerPoint[];
+  manifoldQuality: "excellent" | "good" | "moderate" | "poor";
+  connectivityScore: number;
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -9581,6 +9594,329 @@ function ScientificTsneExplorer({
   );
 }
 
+const getUmapExplorerConnectivityScore = (
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis
+) => similarityNetworkAnalysis.averageSimilarity * 100;
+
+const classifyUmapExplorerManifoldQuality = (
+  connectivityScore: number
+): UmapExplorerAnalysis["manifoldQuality"] => {
+  if (connectivityScore >= 85) return "excellent";
+  if (connectivityScore >= 70) return "good";
+  if (connectivityScore >= 50) return "moderate";
+  return "poor";
+};
+
+const getUmapExplorerManifoldQualityLabel = (
+  manifoldQuality: UmapExplorerAnalysis["manifoldQuality"]
+) => {
+  if (manifoldQuality === "excellent") return "Excellent";
+  if (manifoldQuality === "good") return "Good";
+  if (manifoldQuality === "moderate") return "Moderate";
+  return "Poor";
+};
+
+const getUmapExplorerManifoldQualityText = (
+  manifoldQuality: UmapExplorerAnalysis["manifoldQuality"]
+) => {
+  if (manifoldQuality === "excellent") {
+    return "La estructura global presenta una conectividad excelente.";
+  }
+  if (manifoldQuality === "good") {
+    return "La estructura global presenta una conectividad adecuada.";
+  }
+  if (manifoldQuality === "moderate") {
+    return "La estructura global presenta conectividad moderada.";
+  }
+  return "La estructura global presenta conectividad limitada.";
+};
+
+const hasUmapExplorerExcellentConnectivity = (
+  analysis: UmapExplorerAnalysis | null
+) => analysis !== null && analysis.connectivityScore >= 85;
+
+const hasUmapExplorerPoorManifoldQuality = (
+  analysis: UmapExplorerAnalysis | null
+) => analysis !== null && analysis.manifoldQuality === "poor";
+
+const buildUmapExplorerPoints = (mdsAnalysis: MDSAnalysis): UmapExplorerPoint[] =>
+  mdsAnalysis.points.map((point, index) => ({
+    variable: point.seriesName,
+    x: point.x + Math.sin(index) * 0.15,
+    y: point.y + Math.cos(index) * 0.15,
+  }));
+
+const buildUmapExplorerInterpretation = (input: {
+  manifoldQuality: UmapExplorerAnalysis["manifoldQuality"];
+  averageSimilarity: number;
+  mdsAnalysis: MDSAnalysis;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  tsneExplorerAnalysis: TsneExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+}): string[] => {
+  const interpretation: string[] = [
+    getUmapExplorerManifoldQualityText(input.manifoldQuality),
+  ];
+
+  if (input.averageSimilarity >= 0.75) {
+    interpretation.push(
+      "Las relaciones de similitud entre variables son consistentes."
+    );
+  }
+
+  if (input.hierarchicalClusteringAnalysis) {
+    interpretation.push(
+      "La organización espacial observada coincide con la agrupación jerárquica."
+    );
+  }
+
+  if (input.mdsAnalysis.stress < 0.1) {
+    interpretation.push(
+      "La representación mantiene una adecuada preservación de distancias."
+    );
+  }
+
+  if (
+    input.tsneExplorerAnalysis &&
+    input.tsneExplorerAnalysis.clusterTendency === "strong"
+  ) {
+    interpretation.push(
+      "La estructura observada coincide con los agrupamientos sugeridos por t-SNE Explorer."
+    );
+  }
+
+  if (
+    input.sensitivityExplorerAnalysis &&
+    input.sensitivityExplorerAnalysis.sensitivityScore >= 85
+  ) {
+    interpretation.push(
+      "La estructura observada parece robusta frente a cambios potenciales en los datos."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildUmapExplorerAnalysis = (input: {
+  mdsAnalysis: MDSAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  tsneExplorerAnalysis: TsneExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+}): UmapExplorerAnalysis | null => {
+  if (!input.mdsAnalysis || !input.similarityNetworkAnalysis) {
+    return null;
+  }
+
+  const connectivityScore = getUmapExplorerConnectivityScore(
+    input.similarityNetworkAnalysis
+  );
+  const manifoldQuality = classifyUmapExplorerManifoldQuality(connectivityScore);
+  const points = buildUmapExplorerPoints(input.mdsAnalysis);
+
+  return {
+    points,
+    manifoldQuality,
+    connectivityScore,
+    interpretation: buildUmapExplorerInterpretation({
+      manifoldQuality,
+      averageSimilarity: input.similarityNetworkAnalysis.averageSimilarity,
+      mdsAnalysis: input.mdsAnalysis,
+      hierarchicalClusteringAnalysis: input.hierarchicalClusteringAnalysis,
+      tsneExplorerAnalysis: input.tsneExplorerAnalysis,
+      sensitivityExplorerAnalysis: input.sensitivityExplorerAnalysis,
+    }),
+  };
+};
+
+const getUmapExplorerReportLines = (
+  analysis: UmapExplorerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar UMAP Explorer."];
+  }
+
+  const lines = [
+    `Connectivity Score: ${analysis.connectivityScore.toFixed(1)}.`,
+    `Manifold Quality: ${getUmapExplorerManifoldQualityLabel(analysis.manifoldQuality)}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificUmapExplorerProps = {
+  analysis: UmapExplorerAnalysis;
+  seriesColors: Map<string, string>;
+  chartTheme: ReturnType<typeof getChartTheme>;
+};
+
+function ScientificUmapExplorer({
+  analysis,
+  seriesColors,
+  chartTheme,
+}: ScientificUmapExplorerProps) {
+  const chartData = analysis.points.map((point) => ({
+    ...point,
+    umap1: point.x,
+    umap2: point.y,
+    fill: seriesColors.get(point.variable) ?? "var(--app-accent)",
+  }));
+
+  const cards = [
+    {
+      key: "connectivity",
+      icon: "🌍",
+      title: "Connectivity Score",
+      value: analysis.connectivityScore.toFixed(1),
+      subtitle: "Conectividad global",
+    },
+    {
+      key: "manifold",
+      icon: "🧩",
+      title: "Manifold Quality",
+      value: getUmapExplorerManifoldQualityLabel(analysis.manifoldQuality),
+      subtitle: "Calidad del manifold",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      <div className="h-[260px] mt-3">
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart margin={{ top: 12, right: 24, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+            <XAxis
+              type="number"
+              dataKey="umap1"
+              name="UMAP-1"
+              tick={{ fill: chartTheme.axis, fontSize: 11 }}
+              label={{
+                value: "UMAP-1",
+                position: "insideBottom",
+                offset: -2,
+                fill: chartTheme.axis,
+                fontSize: 11,
+              }}
+            />
+            <YAxis
+              type="number"
+              dataKey="umap2"
+              name="UMAP-2"
+              tick={{ fill: chartTheme.axis, fontSize: 11 }}
+              label={{
+                value: "UMAP-2",
+                angle: -90,
+                position: "insideLeft",
+                fill: chartTheme.axis,
+                fontSize: 11,
+              }}
+            />
+            <Tooltip
+              content={({ active, payload: tooltipPayload }) => {
+                if (!active || !tooltipPayload?.length) return null;
+
+                const point = tooltipPayload[0]?.payload as
+                  | (UmapExplorerPoint & { umap1: number; umap2: number })
+                  | undefined;
+                if (!point) return null;
+
+                return (
+                  <div
+                    className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                    style={{
+                      borderColor: chartTheme.tooltipBorder,
+                      backgroundColor: chartTheme.tooltipBg,
+                      color: chartTheme.tooltipColor,
+                    }}
+                  >
+                      <p className="font-semibold">{point.variable}</p>
+                      <p>UMAP-1 = {point.umap1.toFixed(4)}</p>
+                      <p>UMAP-2 = {point.umap2.toFixed(4)}</p>
+                  </div>
+                );
+              }}
+            />
+            <Scatter
+              name="Variables"
+              data={chartData}
+              line={false}
+              isAnimationActive={false}
+              shape={(props) => {
+                const { cx, cy, payload } = props as {
+                  cx?: number;
+                  cy?: number;
+                  payload?: UmapExplorerPoint & { fill?: string };
+                };
+                if (cx == null || cy == null || !payload) return null;
+
+                return (
+                  <g>
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={6}
+                      fill={payload.fill ?? "var(--app-accent)"}
+                    />
+                    <text
+                      x={cx + 8}
+                      y={cy + 4}
+                      fill="var(--app-text)"
+                      fontSize={10}
+                      fontWeight={600}
+                    >
+                      {payload.variable.length > 14
+                        ? `${payload.variable.slice(0, 13)}…`
+                        : payload.variable}
+                    </text>
+                  </g>
+                );
+              }}
+            />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`umap-explorer-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -12016,6 +12352,7 @@ const generateScientificReport = (input: {
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
   sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
   tsneExplorerAnalysis: TsneExplorerAnalysis | null;
+  umapExplorerAnalysis: UmapExplorerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -12343,6 +12680,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "UMAP Explorer",
+    content: getUmapExplorerReportLines(input.umapExplorerAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -12620,6 +12962,7 @@ const generateScientificInterpretation = (input: {
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
   sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
   tsneExplorerAnalysis: TsneExplorerAnalysis | null;
+  umapExplorerAnalysis: UmapExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -13194,6 +13537,35 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.umapExplorerAnalysis) {
+    deduplicateTextLines(input.umapExplorerAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (input.umapExplorerAnalysis.manifoldQuality === "excellent") {
+      findings.push(
+        "La estructura global presenta una conectividad excelente."
+      );
+    }
+
+    if (
+      input.similarityNetworkAnalysis &&
+      input.similarityNetworkAnalysis.averageSimilarity >= 0.75
+    ) {
+      findings.push(
+        "Las relaciones de similitud entre variables son consistentes."
+      );
+    }
+
+    if (input.hierarchicalClusteringAnalysis) {
+      findings.push(
+        "La organización espacial observada coincide con la agrupación jerárquica."
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -13459,6 +13831,7 @@ const generateScientificAssistantReport = (input: {
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
   sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
   tsneExplorerAnalysis: TsneExplorerAnalysis | null;
+  umapExplorerAnalysis: UmapExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -13843,6 +14216,12 @@ const generateScientificAssistantReport = (input: {
   }
   if (
     hasTsneExplorerStrongNeighborhood(input.tsneExplorerAnalysis) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasUmapExplorerExcellentConnectivity(input.umapExplorerAnalysis) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -14485,6 +14864,32 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.umapExplorerAnalysis) {
+    deduplicateTextLines(input.umapExplorerAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (input.umapExplorerAnalysis.manifoldQuality === "excellent") {
+      pushUniqueFinding(
+        "La estructura global presenta una conectividad excelente."
+      );
+    }
+
+    if (
+      input.similarityNetworkAnalysis &&
+      input.similarityNetworkAnalysis.averageSimilarity >= 0.75
+    ) {
+      pushUniqueFinding(
+        "Las relaciones de similitud entre variables son consistentes."
+      );
+    }
+
+    if (input.hierarchicalClusteringAnalysis) {
+      pushUniqueFinding(
+        "La organización espacial observada coincide con la agrupación jerárquica."
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -14626,6 +15031,11 @@ const generateScientificAssistantReport = (input: {
   if (hasTsneExplorerWeakClusterTendency(input.tsneExplorerAnalysis)) {
     pushCaution(
       "La estructura observada presenta agrupamientos débiles o poco definidos."
+    );
+  }
+  if (hasUmapExplorerPoorManifoldQuality(input.umapExplorerAnalysis)) {
+    pushCaution(
+      "La estructura global observada presenta conectividad limitada."
     );
   }
   if (
@@ -15759,6 +16169,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showBootstrapExplorer, setShowBootstrapExplorer] = useState(false);
   const [showSensitivityExplorer, setShowSensitivityExplorer] = useState(false);
   const [showTsneExplorer, setShowTsneExplorer] = useState(false);
+  const [showUmapExplorer, setShowUmapExplorer] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -16176,6 +16587,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowBootstrapExplorer(false);
     setShowSensitivityExplorer(false);
     setShowTsneExplorer(false);
+    setShowUmapExplorer(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -17175,6 +17587,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       sensitivityExplorerAnalysis,
     ]
   );
+  const umapExplorerAnalysis = useMemo(
+    () =>
+      buildUmapExplorerAnalysis({
+        mdsAnalysis,
+        similarityNetworkAnalysis,
+        hierarchicalClusteringAnalysis,
+        tsneExplorerAnalysis,
+        sensitivityExplorerAnalysis,
+      }),
+    [
+      mdsAnalysis,
+      similarityNetworkAnalysis,
+      hierarchicalClusteringAnalysis,
+      tsneExplorerAnalysis,
+      sensitivityExplorerAnalysis,
+    ]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -17260,6 +17689,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     bootstrapExplorerAnalysis !== null;
   const hasEnoughSeriesForTsneExplorer =
     mdsAnalysis !== null && distanceMatrixAnalysis !== null;
+  const hasEnoughSeriesForUmapExplorer =
+    mdsAnalysis !== null && similarityNetworkAnalysis !== null;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -17335,6 +17766,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         bootstrapExplorerAnalysis,
         sensitivityExplorerAnalysis,
         tsneExplorerAnalysis,
+        umapExplorerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -17381,6 +17813,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       bootstrapExplorerAnalysis,
       sensitivityExplorerAnalysis,
       tsneExplorerAnalysis,
+      umapExplorerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -17427,6 +17860,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         bootstrapExplorerAnalysis,
         sensitivityExplorerAnalysis,
         tsneExplorerAnalysis,
+        umapExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -17468,6 +17902,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       bootstrapExplorerAnalysis,
       sensitivityExplorerAnalysis,
       tsneExplorerAnalysis,
+      umapExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -17513,6 +17948,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         bootstrapExplorerAnalysis,
         sensitivityExplorerAnalysis,
         tsneExplorerAnalysis,
+        umapExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -17560,6 +17996,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       bootstrapExplorerAnalysis,
       sensitivityExplorerAnalysis,
       tsneExplorerAnalysis,
+      umapExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -18238,6 +18675,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showBootstrapExplorer ||
         showSensitivityExplorer ||
         showTsneExplorer ||
+        showUmapExplorer ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -20264,6 +20702,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowTsneExplorer(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForTsneExplorer}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForUmapExplorer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar UMAP Explorer
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showUmapExplorer}
+                            onChange={(e) =>
+                              setShowUmapExplorer(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForUmapExplorer}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -23360,6 +23823,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className={contentPanel}>
                         <ScientificTsneExplorer
                           analysis={tsneExplorerAnalysis}
+                          seriesColors={radarSeriesColors}
+                          chartTheme={chartTheme}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showUmapExplorer && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🌍 UMAP Explorer</p>
+                    {!umapExplorerAnalysis ||
+                    !mdsAnalysis ||
+                    !similarityNetworkAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar UMAP Explorer.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificUmapExplorer
+                          analysis={umapExplorerAnalysis}
                           seriesColors={radarSeriesColors}
                           chartTheme={chartTheme}
                         />
