@@ -6187,6 +6187,13 @@ type ReportQualityEngineAnalysis = {
   interpretation: string[];
 };
 
+type ReproducibilityExplorerAnalysis = {
+  reproducibilityScore: number;
+  classification: "very-high" | "high" | "moderate" | "low";
+  evaluatedFactors: number;
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -10642,6 +10649,283 @@ function ScientificReportQualityEngine({
   );
 }
 
+const hasReproducibilityExplorerInput = (input: {
+  experimentalStatistics: ExperimentalStatistics[];
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+}) =>
+  input.experimentalStatistics.length > 0 ||
+  input.bootstrapExplorerAnalysis !== null ||
+  input.sensitivityExplorerAnalysis !== null ||
+  input.reportQualityEngineAnalysis !== null ||
+  input.consistencyEngineAnalysis !== null;
+
+const getReproducibilitySampleFactor = (
+  experimentalStatistics: ExperimentalStatistics[]
+) => {
+  if (experimentalStatistics.length === 0) return 50;
+
+  const averageSampleSize =
+    experimentalStatistics.reduce((sum, stats) => sum + stats.count, 0) /
+    experimentalStatistics.length;
+
+  if (averageSampleSize >= 30) return 100;
+  if (averageSampleSize >= 15) return 80;
+  if (averageSampleSize >= 10) return 60;
+  return 40;
+};
+
+const getReproducibilityNormalityFactor = (
+  normalityConsensus: NormalityConsensus[]
+) => {
+  if (normalityConsensus.length === 0) return 50;
+
+  return (
+    normalityConsensus.reduce(
+      (sum, consensus) =>
+        sum + getBootstrapNormalityConsensusScore(consensus.conclusion),
+      0
+    ) / normalityConsensus.length
+  );
+};
+
+const getReproducibilityExplorerClassificationLabel = (
+  classification: ReproducibilityExplorerAnalysis["classification"]
+) => {
+  if (classification === "very-high") return "Very High";
+  if (classification === "high") return "High";
+  if (classification === "moderate") return "Moderate";
+  return "Low";
+};
+
+const classifyReproducibilityExplorer = (
+  reproducibilityScore: number
+): ReproducibilityExplorerAnalysis["classification"] => {
+  if (reproducibilityScore >= 85) return "very-high";
+  if (reproducibilityScore >= 70) return "high";
+  if (reproducibilityScore >= 50) return "moderate";
+  return "low";
+};
+
+const getReproducibilityExplorerClassificationText = (
+  classification: ReproducibilityExplorerAnalysis["classification"]
+) => {
+  if (classification === "very-high") {
+    return "La reproducibilidad potencial del análisis es muy alta.";
+  }
+  if (classification === "high") {
+    return "La reproducibilidad potencial del análisis es alta.";
+  }
+  if (classification === "moderate") {
+    return "La reproducibilidad potencial del análisis es moderada.";
+  }
+  return "La reproducibilidad potencial del análisis es limitada.";
+};
+
+const hasReproducibilityExplorerVeryHigh = (
+  analysis: ReproducibilityExplorerAnalysis | null
+) => analysis !== null && analysis.reproducibilityScore >= 85;
+
+const hasReproducibilityExplorerLow = (
+  analysis: ReproducibilityExplorerAnalysis | null
+) => analysis !== null && analysis.classification === "low";
+
+const buildReproducibilityExplorerInterpretation = (input: {
+  classification: ReproducibilityExplorerAnalysis["classification"];
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+}): string[] => {
+  const interpretation: string[] = [
+    getReproducibilityExplorerClassificationText(input.classification),
+  ];
+
+  if (
+    input.bootstrapExplorerAnalysis &&
+    input.bootstrapExplorerAnalysis.stabilityScore >= 85
+  ) {
+    interpretation.push(
+      "La estabilidad observada favorece la reproducibilidad de los resultados."
+    );
+  }
+
+  if (
+    input.sensitivityExplorerAnalysis &&
+    input.sensitivityExplorerAnalysis.sensitivityScore >= 85
+  ) {
+    interpretation.push(
+      "Las conclusiones muestran robustez frente a variaciones potenciales."
+    );
+  }
+
+  if (
+    input.reportQualityEngineAnalysis &&
+    input.reportQualityEngineAnalysis.qualityScore >= 85
+  ) {
+    interpretation.push(
+      "La calidad metodológica observada respalda la reproducibilidad."
+    );
+  }
+
+  if (
+    input.consistencyEngineAnalysis &&
+    input.consistencyEngineAnalysis.consistencyScore >= 85
+  ) {
+    interpretation.push(
+      "La convergencia entre análisis fortalece la reproducibilidad potencial."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildReproducibilityExplorerAnalysis = (input: {
+  experimentalStatistics: ExperimentalStatistics[];
+  normalityConsensus: NormalityConsensus[];
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+}): ReproducibilityExplorerAnalysis | null => {
+  if (!hasReproducibilityExplorerInput(input)) {
+    return null;
+  }
+
+  const sampleFactor = getReproducibilitySampleFactor(input.experimentalStatistics);
+  const normalityFactor = getReproducibilityNormalityFactor(
+    input.normalityConsensus
+  );
+  const bootstrapFactor =
+    input.bootstrapExplorerAnalysis?.stabilityScore ?? 50;
+  const sensitivityFactor =
+    input.sensitivityExplorerAnalysis?.sensitivityScore ?? 50;
+  const qualityFactor = input.reportQualityEngineAnalysis?.qualityScore ?? 50;
+  const reproducibilityScore =
+    (sampleFactor +
+      normalityFactor +
+      bootstrapFactor +
+      sensitivityFactor +
+      qualityFactor) /
+    5;
+  const classification = classifyReproducibilityExplorer(reproducibilityScore);
+
+  return {
+    reproducibilityScore,
+    classification,
+    evaluatedFactors: 5,
+    interpretation: buildReproducibilityExplorerInterpretation({
+      classification,
+      bootstrapExplorerAnalysis: input.bootstrapExplorerAnalysis,
+      sensitivityExplorerAnalysis: input.sensitivityExplorerAnalysis,
+      reportQualityEngineAnalysis: input.reportQualityEngineAnalysis,
+      consistencyEngineAnalysis: input.consistencyEngineAnalysis,
+    }),
+  };
+};
+
+const getReproducibilityExplorerReportLines = (
+  analysis: ReproducibilityExplorerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Reproducibility Explorer."];
+  }
+
+  const lines = [
+    `Reproducibility Score: ${analysis.reproducibilityScore.toFixed(1)}.`,
+    `Clasificación: ${getReproducibilityExplorerClassificationLabel(analysis.classification)}.`,
+    `Factores evaluados: ${analysis.evaluatedFactors}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificReproducibilityExplorerProps = {
+  analysis: ReproducibilityExplorerAnalysis;
+  qualityScore: number;
+};
+
+function ScientificReproducibilityExplorer({
+  analysis,
+  qualityScore,
+}: ScientificReproducibilityExplorerProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "🔁",
+      title: "Reproducibility Score",
+      value: analysis.reproducibilityScore.toFixed(1),
+      subtitle: "Reproducibilidad potencial",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Reproducibility",
+      value: getReproducibilityExplorerClassificationLabel(analysis.classification),
+      subtitle: "Clasificación global",
+    },
+    {
+      key: "factors",
+      icon: "📚",
+      title: "Factores evaluados",
+      value: String(analysis.evaluatedFactors),
+      subtitle: "Dimensiones integradas",
+    },
+    {
+      key: "quality",
+      icon: "📄",
+      title: "Quality Score",
+      value: qualityScore.toFixed(1),
+      subtitle: "Calidad metodológica",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`reproducibility-explorer-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -13080,6 +13364,7 @@ const generateScientificReport = (input: {
   umapExplorerAnalysis: UmapExplorerAnalysis | null;
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -13422,6 +13707,13 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Reproducibility Explorer",
+    content: getReproducibilityExplorerReportLines(
+      input.reproducibilityExplorerAnalysis
+    ),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -13702,6 +13994,7 @@ const generateScientificInterpretation = (input: {
   umapExplorerAnalysis: UmapExplorerAnalysis | null;
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -14330,6 +14623,29 @@ const generateScientificInterpretation = (input: {
     );
   }
 
+  if (input.reproducibilityExplorerAnalysis) {
+    deduplicateTextLines(
+      input.reproducibilityExplorerAnalysis.interpretation
+    ).forEach((line) => {
+      if (!findings.includes(line)) findings.push(line);
+    });
+
+    if (input.reproducibilityExplorerAnalysis.classification === "very-high") {
+      findings.push(
+        "La reproducibilidad potencial del análisis es muy alta."
+      );
+    }
+
+    if (
+      input.consistencyEngineAnalysis &&
+      input.consistencyEngineAnalysis.consistencyScore >= 85
+    ) {
+      findings.push(
+        "La convergencia entre análisis fortalece la reproducibilidad potencial."
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -14598,6 +14914,7 @@ const generateScientificAssistantReport = (input: {
   umapExplorerAnalysis: UmapExplorerAnalysis | null;
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -14996,6 +15313,9 @@ const generateScientificAssistantReport = (input: {
     confidenceLevel = "high";
   }
   if (hasReportQualityEngineExcellent(input.reportQualityEngineAnalysis)) {
+    confidenceLevel = "high";
+  }
+  if (hasReproducibilityExplorerVeryHigh(input.reproducibilityExplorerAnalysis)) {
     confidenceLevel = "high";
   }
 
@@ -15681,6 +16001,26 @@ const generateScientificAssistantReport = (input: {
       (line) => pushUniqueFinding(line)
     );
   }
+  if (input.reproducibilityExplorerAnalysis) {
+    deduplicateTextLines(input.reproducibilityExplorerAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (input.reproducibilityExplorerAnalysis.classification === "very-high") {
+      pushUniqueFinding(
+        "La reproducibilidad potencial del análisis es muy alta."
+      );
+    }
+
+    if (
+      input.consistencyEngineAnalysis &&
+      input.consistencyEngineAnalysis.consistencyScore >= 85
+    ) {
+      pushUniqueFinding(
+        "La convergencia entre análisis fortalece la reproducibilidad potencial."
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -15836,6 +16176,9 @@ const generateScientificAssistantReport = (input: {
   }
   if (hasReportQualityEngineLimited(input.reportQualityEngineAnalysis)) {
     pushCaution("La calidad metodológica global del análisis es limitada.");
+  }
+  if (hasReproducibilityExplorerLow(input.reproducibilityExplorerAnalysis)) {
+    pushCaution("La reproducibilidad potencial del análisis es limitada.");
   }
   if (
     hasForestSeparation &&
@@ -16971,6 +17314,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showUmapExplorer, setShowUmapExplorer] = useState(false);
   const [showConsistencyEngine, setShowConsistencyEngine] = useState(false);
   const [showReportQualityEngine, setShowReportQualityEngine] = useState(false);
+  const [showReproducibilityExplorer, setShowReproducibilityExplorer] =
+    useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -17391,6 +17736,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowUmapExplorer(false);
     setShowConsistencyEngine(false);
     setShowReportQualityEngine(false);
+    setShowReproducibilityExplorer(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -18598,6 +18944,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       consistencyEngineAnalysis,
     ]
   );
+  const reproducibilityExplorerAnalysis = useMemo(
+    () =>
+      buildReproducibilityExplorerAnalysis({
+        experimentalStatistics,
+        normalityConsensus,
+        bootstrapExplorerAnalysis,
+        sensitivityExplorerAnalysis,
+        reportQualityEngineAnalysis,
+        consistencyEngineAnalysis,
+      }),
+    [
+      experimentalStatistics,
+      normalityConsensus,
+      bootstrapExplorerAnalysis,
+      sensitivityExplorerAnalysis,
+      reportQualityEngineAnalysis,
+      consistencyEngineAnalysis,
+    ]
+  );
+  const hasEnoughSeriesForReproducibilityExplorer =
+    reproducibilityExplorerAnalysis !== null;
   const statisticalRecommendation = useMemo(
     () =>
       buildStatisticalRecommendation(
@@ -18646,6 +19013,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         umapExplorerAnalysis,
         consistencyEngineAnalysis,
         reportQualityEngineAnalysis,
+        reproducibilityExplorerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -18695,6 +19063,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       umapExplorerAnalysis,
       consistencyEngineAnalysis,
       reportQualityEngineAnalysis,
+      reproducibilityExplorerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -18744,6 +19113,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         umapExplorerAnalysis,
         consistencyEngineAnalysis,
         reportQualityEngineAnalysis,
+        reproducibilityExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -18788,6 +19158,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       umapExplorerAnalysis,
       consistencyEngineAnalysis,
       reportQualityEngineAnalysis,
+      reproducibilityExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -18836,6 +19207,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         umapExplorerAnalysis,
         consistencyEngineAnalysis,
         reportQualityEngineAnalysis,
+        reproducibilityExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -18886,6 +19258,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       umapExplorerAnalysis,
       consistencyEngineAnalysis,
       reportQualityEngineAnalysis,
+      reproducibilityExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -19567,6 +19940,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showUmapExplorer ||
         showConsistencyEngine ||
         showReportQualityEngine ||
+        showReproducibilityExplorer ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -21668,6 +22042,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowReportQualityEngine(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForReportQualityEngine}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForReproducibilityExplorer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Reproducibility Explorer
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showReproducibilityExplorer}
+                            onChange={(e) =>
+                              setShowReproducibilityExplorer(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForReproducibilityExplorer}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -24823,6 +25222,29 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className={contentPanel}>
                         <ScientificReportQualityEngine
                           analysis={reportQualityEngineAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showReproducibilityExplorer && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      🔁 Reproducibility Explorer
+                    </p>
+                    {!reproducibilityExplorerAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Reproducibility
+                        Explorer.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificReproducibilityExplorer
+                          analysis={reproducibilityExplorerAnalysis}
+                          qualityScore={
+                            reportQualityEngineAnalysis?.qualityScore ?? 50
+                          }
                         />
                       </div>
                     )}
