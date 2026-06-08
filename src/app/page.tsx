@@ -6201,6 +6201,30 @@ type EvidenceStrengthEngineAnalysis = {
   interpretation: string[];
 };
 
+type AssumptionTrackerItem = {
+  name: string;
+  status: "satisfied" | "partially-satisfied" | "questionable" | "not-evaluated";
+  source: string;
+};
+
+type AssumptionTrackerAnalysis = {
+  overallScore: number;
+  classification: "excellent" | "good" | "moderate" | "limited";
+  assumptions: AssumptionTrackerItem[];
+  interpretation: string[];
+};
+
+type VarianceHomogeneityAnalysis = {
+  classification:
+    | "homogeneous"
+    | "approximately-homogeneous"
+    | "heterogeneous";
+};
+
+type IndependenceAnalysis = {
+  status: "satisfied" | "questionable";
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -11206,6 +11230,432 @@ function ScientificEvidenceStrengthEngine({
   );
 }
 
+const ASSUMPTION_TRACKER_STATUS_SCORES: Record<
+  AssumptionTrackerItem["status"],
+  number
+> = {
+  satisfied: 100,
+  "partially-satisfied": 75,
+  questionable: 40,
+  "not-evaluated": 50,
+};
+
+const hasAssumptionTrackerInput = (input: {
+  normalityAnalyses: NormalityAnalysis[];
+  qqPlotAnalyses: QQPlotAnalysis[];
+  violinPlotAnalyses: ViolinPlotAnalysis[];
+  kernelDensityAnalyses: KernelDensityAnalysis[];
+}) =>
+  input.normalityAnalyses.length > 0 ||
+  input.qqPlotAnalyses.length > 0 ||
+  input.violinPlotAnalyses.length > 0 ||
+  input.kernelDensityAnalyses.length > 0;
+
+const getAssumptionTrackerStatusScore = (
+  status: AssumptionTrackerItem["status"]
+) => ASSUMPTION_TRACKER_STATUS_SCORES[status];
+
+const getAssumptionTrackerStatusFromAverageScore = (
+  score: number
+): AssumptionTrackerItem["status"] => {
+  if (score >= 87.5) return "satisfied";
+  if (score >= 57.5) return "partially-satisfied";
+  if (score >= 45) return "questionable";
+  return "not-evaluated";
+};
+
+const getAssumptionTrackerClassificationLabel = (
+  classification: AssumptionTrackerAnalysis["classification"]
+) => {
+  if (classification === "excellent") return "Excellent";
+  if (classification === "good") return "Good";
+  if (classification === "moderate") return "Moderate";
+  return "Limited";
+};
+
+const classifyAssumptionTracker = (
+  overallScore: number
+): AssumptionTrackerAnalysis["classification"] => {
+  if (overallScore >= 85) return "excellent";
+  if (overallScore >= 70) return "good";
+  if (overallScore >= 50) return "moderate";
+  return "limited";
+};
+
+const getAssumptionTrackerClassificationText = (
+  classification: AssumptionTrackerAnalysis["classification"]
+) => {
+  if (classification === "excellent") {
+    return "Los supuestos estadísticos presentan una evaluación muy favorable.";
+  }
+  if (classification === "good") {
+    return "Los supuestos estadísticos presentan una evaluación adecuada.";
+  }
+  if (classification === "moderate") {
+    return "Existen supuestos que requieren revisión adicional.";
+  }
+  return "Los supuestos estadísticos presentan limitaciones importantes.";
+};
+
+const getAssumptionTrackerStatusLabel = (
+  status: AssumptionTrackerItem["status"]
+) => {
+  if (status === "satisfied") return "Satisfied";
+  if (status === "partially-satisfied") return "Partial";
+  if (status === "questionable") return "Questionable";
+  return "Not Evaluated";
+};
+
+const getAssumptionTrackerStatusIcon = (
+  status: AssumptionTrackerItem["status"]
+) => {
+  if (status === "satisfied") return "✔";
+  if (status === "partially-satisfied") return "◐";
+  if (status === "questionable") return "⚠";
+  return "?";
+};
+
+const hasAssumptionTrackerExcellent = (
+  analysis: AssumptionTrackerAnalysis | null
+) => analysis !== null && analysis.overallScore >= 85;
+
+const hasAssumptionTrackerLimited = (
+  analysis: AssumptionTrackerAnalysis | null
+) => analysis !== null && analysis.classification === "limited";
+
+const getNormalityAssumptionStatus = (
+  consensusList: NormalityConsensus[]
+): AssumptionTrackerItem["status"] => {
+  if (consensusList.length === 0) return "not-evaluated";
+
+  const averageScore =
+    consensusList.reduce((sum, consensus) => {
+      if (consensus.conclusion === "normal") {
+        return sum + ASSUMPTION_TRACKER_STATUS_SCORES.satisfied;
+      }
+      if (consensus.conclusion === "probably-normal") {
+        return sum + ASSUMPTION_TRACKER_STATUS_SCORES["partially-satisfied"];
+      }
+      return sum + ASSUMPTION_TRACKER_STATUS_SCORES.questionable;
+    }, 0) / consensusList.length;
+
+  return getAssumptionTrackerStatusFromAverageScore(averageScore);
+};
+
+const getQQPlotAssumptionStatus = (
+  qqPlotAnalyses: QQPlotAnalysis[]
+): AssumptionTrackerItem["status"] => {
+  if (qqPlotAnalyses.length === 0) return "not-evaluated";
+
+  const averageScore =
+    qqPlotAnalyses.reduce((sum, analysis) => {
+      if (
+        analysis.interpretation === "excellent" ||
+        analysis.interpretation === "good"
+      ) {
+        return sum + ASSUMPTION_TRACKER_STATUS_SCORES.satisfied;
+      }
+      if (analysis.interpretation === "moderate") {
+        return sum + ASSUMPTION_TRACKER_STATUS_SCORES["partially-satisfied"];
+      }
+      return sum + ASSUMPTION_TRACKER_STATUS_SCORES.questionable;
+    }, 0) / qqPlotAnalyses.length;
+
+  return getAssumptionTrackerStatusFromAverageScore(averageScore);
+};
+
+const getSymmetryAssumptionStatus = (input: {
+  violinPlotAnalyses: ViolinPlotAnalysis[];
+  kernelDensityAnalyses: KernelDensityAnalysis[];
+}): AssumptionTrackerItem["status"] => {
+  const shapeScores: number[] = [];
+
+  input.violinPlotAnalyses.forEach((analysis) => {
+    shapeScores.push(
+      analysis.shapeInterpretation === "symmetric"
+        ? ASSUMPTION_TRACKER_STATUS_SCORES.satisfied
+        : ASSUMPTION_TRACKER_STATUS_SCORES.questionable
+    );
+  });
+
+  input.kernelDensityAnalyses.forEach((analysis) => {
+    shapeScores.push(
+      analysis.distributionShape === "symmetric"
+        ? ASSUMPTION_TRACKER_STATUS_SCORES.satisfied
+        : ASSUMPTION_TRACKER_STATUS_SCORES.questionable
+    );
+  });
+
+  if (shapeScores.length === 0) return "not-evaluated";
+
+  const averageScore =
+    shapeScores.reduce((sum, score) => sum + score, 0) / shapeScores.length;
+  return getAssumptionTrackerStatusFromAverageScore(averageScore);
+};
+
+const getHomogeneityAssumptionStatus = (
+  varianceHomogeneityAnalysis: VarianceHomogeneityAnalysis | null
+): AssumptionTrackerItem["status"] => {
+  if (!varianceHomogeneityAnalysis) return "not-evaluated";
+  if (varianceHomogeneityAnalysis.classification === "homogeneous") {
+    return "satisfied";
+  }
+  if (
+    varianceHomogeneityAnalysis.classification === "approximately-homogeneous"
+  ) {
+    return "partially-satisfied";
+  }
+  return "questionable";
+};
+
+const getIndependenceAssumptionStatus = (
+  independenceAnalysis: IndependenceAnalysis | null
+): AssumptionTrackerItem["status"] => {
+  if (!independenceAnalysis) return "not-evaluated";
+  return independenceAnalysis.status;
+};
+
+const buildAssumptionTrackerInterpretation = (input: {
+  classification: AssumptionTrackerAnalysis["classification"];
+  assumptions: AssumptionTrackerItem[];
+}): string[] => {
+  const interpretation: string[] = [
+    getAssumptionTrackerClassificationText(input.classification),
+  ];
+
+  const normalityStatus = input.assumptions.find(
+    (item) => item.name === "Normalidad"
+  )?.status;
+  const qqStatus = input.assumptions.find(
+    (item) => item.name === "Q-Q Plot"
+  )?.status;
+  const homogeneityStatus = input.assumptions.find(
+    (item) => item.name === "Homogeneidad"
+  )?.status;
+  const independenceStatus = input.assumptions.find(
+    (item) => item.name === "Independencia"
+  )?.status;
+
+  if (normalityStatus === "satisfied") {
+    interpretation.push(
+      "La normalidad de los datos se encuentra razonablemente respaldada."
+    );
+  }
+
+  if (qqStatus === "satisfied") {
+    interpretation.push(
+      "La evaluación gráfica respalda la distribución observada."
+    );
+  }
+
+  if (homogeneityStatus === "questionable") {
+    interpretation.push("La homogeneidad de varianza requiere atención.");
+  }
+
+  if (independenceStatus === "not-evaluated") {
+    interpretation.push(
+      "La independencia de las observaciones no fue evaluada explícitamente."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildAssumptionTrackerAnalysis = (input: {
+  normalityAnalyses: NormalityAnalysis[];
+  normalityConsensus: NormalityConsensus[];
+  qqPlotAnalyses: QQPlotAnalysis[];
+  violinPlotAnalyses: ViolinPlotAnalysis[];
+  kernelDensityAnalyses: KernelDensityAnalysis[];
+  varianceHomogeneityAnalysis: VarianceHomogeneityAnalysis | null;
+  independenceAnalysis: IndependenceAnalysis | null;
+}): AssumptionTrackerAnalysis | null => {
+  if (!hasAssumptionTrackerInput(input)) {
+    return null;
+  }
+
+  const assumptions: AssumptionTrackerItem[] = [
+    {
+      name: "Normalidad",
+      status: getNormalityAssumptionStatus(input.normalityConsensus),
+      source: "SCI-11",
+    },
+    {
+      name: "Q-Q Plot",
+      status: getQQPlotAssumptionStatus(input.qqPlotAnalyses),
+      source: "SCI-21",
+    },
+    {
+      name: "Simetría",
+      status: getSymmetryAssumptionStatus({
+        violinPlotAnalyses: input.violinPlotAnalyses,
+        kernelDensityAnalyses: input.kernelDensityAnalyses,
+      }),
+      source: "SCI-22/26",
+    },
+    {
+      name: "Homogeneidad",
+      status: getHomogeneityAssumptionStatus(input.varianceHomogeneityAnalysis),
+      source: "SCI-13",
+    },
+    {
+      name: "Independencia",
+      status: getIndependenceAssumptionStatus(input.independenceAnalysis),
+      source: "SCI-14",
+    },
+  ];
+
+  const overallScore =
+    assumptions.reduce(
+      (sum, assumption) => sum + getAssumptionTrackerStatusScore(assumption.status),
+      0
+    ) / assumptions.length;
+  const classification = classifyAssumptionTracker(overallScore);
+
+  return {
+    overallScore,
+    classification,
+    assumptions,
+    interpretation: buildAssumptionTrackerInterpretation({
+      classification,
+      assumptions,
+    }),
+  };
+};
+
+const getAssumptionTrackerReportLines = (
+  analysis: AssumptionTrackerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Assumption Tracker."];
+  }
+
+  const lines = [
+    `Assumption Score: ${analysis.overallScore.toFixed(1)}.`,
+    `Clasificación: ${getAssumptionTrackerClassificationLabel(analysis.classification)}.`,
+    "Tabla de supuestos:",
+  ];
+
+  analysis.assumptions.forEach((assumption) => {
+    lines.push(
+      `${assumption.name}: ${getAssumptionTrackerStatusLabel(assumption.status)} (${assumption.source}).`
+    );
+  });
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificAssumptionTrackerProps = {
+  analysis: AssumptionTrackerAnalysis;
+};
+
+function ScientificAssumptionTracker({
+  analysis,
+}: ScientificAssumptionTrackerProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "📋",
+      title: "Assumption Score",
+      value: analysis.overallScore.toFixed(1),
+      subtitle: "Evaluación integrada",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Assumptions",
+      value: getAssumptionTrackerClassificationLabel(analysis.classification),
+      subtitle: "Clasificación",
+    },
+    {
+      key: "evaluated",
+      icon: "📚",
+      title: "Assumptions",
+      value: String(analysis.assumptions.length),
+      subtitle: "Supuestos evaluados",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b border-[var(--app-border)]">
+              <th className="py-2 pr-3 text-left font-semibold text-[var(--app-heading)]">
+                Supuesto
+              </th>
+              <th className="py-2 pr-3 text-left font-semibold text-[var(--app-heading)]">
+                Estado
+              </th>
+              <th className="py-2 text-left font-semibold text-[var(--app-heading)]">
+                Fuente
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {analysis.assumptions.map((assumption) => (
+              <tr
+                key={`assumption-tracker-row-${assumption.name}`}
+                className="border-b border-[var(--app-border)]/60"
+              >
+                <td className="py-2 pr-3 text-[var(--app-heading)]">
+                  {assumption.name}
+                </td>
+                <td className="py-2 pr-3 text-[var(--app-text-muted)]">
+                  {getAssumptionTrackerStatusIcon(assumption.status)}{" "}
+                  {getAssumptionTrackerStatusLabel(assumption.status)}
+                </td>
+                <td className="py-2 text-[var(--app-text-muted)]">
+                  {assumption.source}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`assumption-tracker-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -13646,6 +14096,7 @@ const generateScientificReport = (input: {
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -14002,6 +14453,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Assumption Tracker",
+    content: getAssumptionTrackerReportLines(input.assumptionTrackerAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -14284,6 +14740,7 @@ const generateScientificInterpretation = (input: {
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -14943,6 +15400,14 @@ const generateScientificInterpretation = (input: {
     });
   }
 
+  if (input.assumptionTrackerAnalysis) {
+    deduplicateTextLines(input.assumptionTrackerAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -15213,6 +15678,7 @@ const generateScientificAssistantReport = (input: {
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -15617,6 +16083,9 @@ const generateScientificAssistantReport = (input: {
     confidenceLevel = "high";
   }
   if (hasEvidenceStrengthEngineVeryStrong(input.evidenceStrengthEngineAnalysis)) {
+    confidenceLevel = "high";
+  }
+  if (hasAssumptionTrackerExcellent(input.assumptionTrackerAnalysis)) {
     confidenceLevel = "high";
   }
 
@@ -16327,6 +16796,11 @@ const generateScientificAssistantReport = (input: {
       input.evidenceStrengthEngineAnalysis.interpretation
     ).forEach((line) => pushUniqueFinding(line));
   }
+  if (input.assumptionTrackerAnalysis) {
+    deduplicateTextLines(input.assumptionTrackerAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -16488,6 +16962,11 @@ const generateScientificAssistantReport = (input: {
   }
   if (hasEvidenceStrengthEngineLimited(input.evidenceStrengthEngineAnalysis)) {
     pushCaution("La evidencia científica disponible es limitada.");
+  }
+  if (hasAssumptionTrackerLimited(input.assumptionTrackerAnalysis)) {
+    pushCaution(
+      "Los supuestos estadísticos presentan limitaciones importantes."
+    );
   }
   if (
     hasForestSeparation &&
@@ -17627,6 +18106,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState(false);
   const [showEvidenceStrengthEngine, setShowEvidenceStrengthEngine] =
     useState(false);
+  const [showAssumptionTracker, setShowAssumptionTracker] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -18049,6 +18529,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowReportQualityEngine(false);
     setShowReproducibilityExplorer(false);
     setShowEvidenceStrengthEngine(false);
+    setShowAssumptionTracker(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -19300,6 +19781,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   );
   const hasEnoughSeriesForEvidenceStrengthEngine =
     evidenceStrengthEngineAnalysis !== null;
+  const assumptionTrackerAnalysis = useMemo(
+    () =>
+      buildAssumptionTrackerAnalysis({
+        normalityAnalyses,
+        normalityConsensus,
+        qqPlotAnalyses,
+        violinPlotAnalyses,
+        kernelDensityAnalyses,
+        varianceHomogeneityAnalysis: null,
+        independenceAnalysis: null,
+      }),
+    [
+      normalityAnalyses,
+      normalityConsensus,
+      qqPlotAnalyses,
+      violinPlotAnalyses,
+      kernelDensityAnalyses,
+    ]
+  );
+  const hasEnoughSeriesForAssumptionTracker =
+    assumptionTrackerAnalysis !== null;
   const statisticalRecommendation = useMemo(
     () =>
       buildStatisticalRecommendation(
@@ -19350,6 +19852,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         reportQualityEngineAnalysis,
         reproducibilityExplorerAnalysis,
         evidenceStrengthEngineAnalysis,
+        assumptionTrackerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -19401,6 +19904,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       reportQualityEngineAnalysis,
       reproducibilityExplorerAnalysis,
       evidenceStrengthEngineAnalysis,
+      assumptionTrackerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -19452,6 +19956,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         reportQualityEngineAnalysis,
         reproducibilityExplorerAnalysis,
         evidenceStrengthEngineAnalysis,
+        assumptionTrackerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -19498,6 +20003,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       reportQualityEngineAnalysis,
       reproducibilityExplorerAnalysis,
       evidenceStrengthEngineAnalysis,
+      assumptionTrackerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -19548,6 +20054,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         reportQualityEngineAnalysis,
         reproducibilityExplorerAnalysis,
         evidenceStrengthEngineAnalysis,
+        assumptionTrackerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -19600,6 +20107,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       reportQualityEngineAnalysis,
       reproducibilityExplorerAnalysis,
       evidenceStrengthEngineAnalysis,
+      assumptionTrackerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -20283,6 +20791,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showReportQualityEngine ||
         showReproducibilityExplorer ||
         showEvidenceStrengthEngine ||
+        showAssumptionTracker ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -22434,6 +22943,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowEvidenceStrengthEngine(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForEvidenceStrengthEngine}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForAssumptionTracker
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Assumption Tracker
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showAssumptionTracker}
+                            onChange={(e) =>
+                              setShowAssumptionTracker(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForAssumptionTracker}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -25636,6 +26170,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             reproducibilityExplorerAnalysis?.reproducibilityScore ??
                             50
                           }
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showAssumptionTracker && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>📋 Assumption Tracker</p>
+                    {!assumptionTrackerAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Assumption
+                        Tracker.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificAssumptionTracker
+                          analysis={assumptionTrackerAnalysis}
                         />
                       </div>
                     )}
