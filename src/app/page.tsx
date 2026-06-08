@@ -6172,6 +6172,14 @@ type UmapExplorerAnalysis = {
   interpretation: string[];
 };
 
+type ConsistencyEngineAnalysis = {
+  consistencyScore: number;
+  classification: "very-strong" | "strong" | "moderate" | "weak";
+  evidenceCount: number;
+  supportingModules: string[];
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -9917,6 +9925,371 @@ function ScientificUmapExplorer({
   );
 }
 
+const hasConsistencyEngineInput = (input: {
+  pcaAnalysis: PCAAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  mdsAnalysis: MDSAnalysis | null;
+  manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
+  ldaExplorerAnalysis: LdaExplorerAnalysis | null;
+  pcrExplorerAnalysis: PcrExplorerAnalysis | null;
+  plsExplorerAnalysis: PlsExplorerAnalysis | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+  tsneExplorerAnalysis: TsneExplorerAnalysis | null;
+  umapExplorerAnalysis: UmapExplorerAnalysis | null;
+}) =>
+  input.pcaAnalysis !== null ||
+  input.hierarchicalClusteringAnalysis !== null ||
+  input.mdsAnalysis !== null ||
+  input.manovaExplorerAnalysis !== null ||
+  input.ldaExplorerAnalysis !== null ||
+  input.pcrExplorerAnalysis !== null ||
+  input.plsExplorerAnalysis !== null ||
+  input.bootstrapExplorerAnalysis !== null ||
+  input.sensitivityExplorerAnalysis !== null ||
+  input.tsneExplorerAnalysis !== null ||
+  input.umapExplorerAnalysis !== null;
+
+const getConsistencyEngineClassificationLabel = (
+  classification: ConsistencyEngineAnalysis["classification"]
+) => {
+  if (classification === "very-strong") return "Very Strong";
+  if (classification === "strong") return "Strong";
+  if (classification === "moderate") return "Moderate";
+  return "Weak";
+};
+
+const classifyConsistencyEngine = (
+  consistencyScore: number
+): ConsistencyEngineAnalysis["classification"] => {
+  if (consistencyScore >= 85) return "very-strong";
+  if (consistencyScore >= 70) return "strong";
+  if (consistencyScore >= 50) return "moderate";
+  return "weak";
+};
+
+const getConsistencyEngineClassificationText = (
+  classification: ConsistencyEngineAnalysis["classification"]
+) => {
+  if (classification === "very-strong") {
+    return "La evidencia científica presenta una consistencia muy fuerte.";
+  }
+  if (classification === "strong") {
+    return "La evidencia científica presenta una consistencia fuerte.";
+  }
+  if (classification === "moderate") {
+    return "La evidencia científica presenta consistencia moderada.";
+  }
+  return "La evidencia científica presenta consistencia limitada.";
+};
+
+const getConsistencyEngineClassificationInterpretation = (
+  classification: ConsistencyEngineAnalysis["classification"]
+) => {
+  if (classification === "very-strong") {
+    return "Los distintos enfoques analíticos convergen hacia conclusiones compatibles.";
+  }
+  if (classification === "strong") {
+    return "La mayoría de los análisis respaldan una interpretación común.";
+  }
+  if (classification === "moderate") {
+    return "Se observan coincidencias parciales entre los distintos enfoques.";
+  }
+  return "Los resultados muestran señales mixtas y deben interpretarse con cautela.";
+};
+
+const hasConsistencyEngineVeryStrong = (
+  analysis: ConsistencyEngineAnalysis | null
+) => analysis !== null && analysis.consistencyScore >= 85;
+
+const hasConsistencyEngineWeak = (analysis: ConsistencyEngineAnalysis | null) =>
+  analysis !== null && analysis.classification === "weak";
+
+const buildConsistencyEngineInterpretation = (input: {
+  classification: ConsistencyEngineAnalysis["classification"];
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+  tsneExplorerAnalysis: TsneExplorerAnalysis | null;
+  umapExplorerAnalysis: UmapExplorerAnalysis | null;
+}): string[] => {
+  const interpretation: string[] = [
+    getConsistencyEngineClassificationText(input.classification),
+    getConsistencyEngineClassificationInterpretation(input.classification),
+  ];
+
+  if (
+    input.bootstrapExplorerAnalysis &&
+    input.bootstrapExplorerAnalysis.stabilityScore >= 85
+  ) {
+    interpretation.push(
+      "La estabilidad observada respalda la consistencia global."
+    );
+  }
+
+  if (
+    input.sensitivityExplorerAnalysis &&
+    input.sensitivityExplorerAnalysis.sensitivityScore >= 85
+  ) {
+    interpretation.push(
+      "La robustez observada favorece la confiabilidad de las conclusiones."
+    );
+  }
+
+  if (
+    input.tsneExplorerAnalysis &&
+    input.tsneExplorerAnalysis.clusterTendency === "strong" &&
+    input.umapExplorerAnalysis &&
+    input.umapExplorerAnalysis.manifoldQuality === "excellent"
+  ) {
+    interpretation.push(
+      "Las representaciones espaciales muestran patrones coherentes."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildConsistencyEngineAnalysis = (input: {
+  pcaAnalysis: PCAAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  mdsAnalysis: MDSAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  manovaExplorerAnalysis: ManovaExplorerAnalysis | null;
+  ldaExplorerAnalysis: LdaExplorerAnalysis | null;
+  pcrExplorerAnalysis: PcrExplorerAnalysis | null;
+  plsExplorerAnalysis: PlsExplorerAnalysis | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+  tsneExplorerAnalysis: TsneExplorerAnalysis | null;
+  umapExplorerAnalysis: UmapExplorerAnalysis | null;
+}): ConsistencyEngineAnalysis | null => {
+  if (!hasConsistencyEngineInput(input)) {
+    return null;
+  }
+
+  const supportingModules: string[] = [];
+  let score = 0;
+  let totalEvaluatedModules = 0;
+
+  if (input.pcaAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.pcaAnalysis.cumulativeVariance >= 80) {
+      score += 1;
+      supportingModules.push("PCA");
+    }
+  }
+
+  if (input.hierarchicalClusteringAnalysis) {
+    totalEvaluatedModules += 1;
+    score += 1;
+    supportingModules.push("Clustering");
+  }
+
+  if (input.mdsAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.mdsAnalysis.stress < 0.1) {
+      score += 1;
+      supportingModules.push("MDS");
+    }
+  }
+
+  if (input.similarityNetworkAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.similarityNetworkAnalysis.averageSimilarity >= 0.75) {
+      score += 1;
+      supportingModules.push("Similarity");
+    }
+  }
+
+  if (input.manovaExplorerAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.manovaExplorerAnalysis.separationScore >= 0.75) {
+      score += 1;
+      supportingModules.push("MANOVA");
+    }
+  }
+
+  if (input.ldaExplorerAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.ldaExplorerAnalysis.discriminantScore >= 85) {
+      score += 1;
+      supportingModules.push("LDA");
+    }
+  }
+
+  if (input.pcrExplorerAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.pcrExplorerAnalysis.predictiveScore >= 85) {
+      score += 1;
+      supportingModules.push("PCR");
+    }
+  }
+
+  if (input.plsExplorerAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.plsExplorerAnalysis.explanatoryScore >= 85) {
+      score += 1;
+      supportingModules.push("PLS");
+    }
+  }
+
+  if (input.bootstrapExplorerAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.bootstrapExplorerAnalysis.stabilityScore >= 85) {
+      score += 1;
+      supportingModules.push("Bootstrap");
+    }
+  }
+
+  if (input.sensitivityExplorerAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.sensitivityExplorerAnalysis.sensitivityScore >= 85) {
+      score += 1;
+      supportingModules.push("Sensitivity");
+    }
+  }
+
+  if (input.tsneExplorerAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.tsneExplorerAnalysis.clusterTendency === "strong") {
+      score += 1;
+      supportingModules.push("t-SNE");
+    }
+  }
+
+  if (input.umapExplorerAnalysis) {
+    totalEvaluatedModules += 1;
+    if (input.umapExplorerAnalysis.manifoldQuality === "excellent") {
+      score += 1;
+      supportingModules.push("UMAP");
+    }
+  }
+
+  const consistencyScore =
+    totalEvaluatedModules > 0 ? (score / totalEvaluatedModules) * 100 : 0;
+  const classification = classifyConsistencyEngine(consistencyScore);
+
+  return {
+    consistencyScore,
+    classification,
+    evidenceCount: score,
+    supportingModules,
+    interpretation: buildConsistencyEngineInterpretation({
+      classification,
+      bootstrapExplorerAnalysis: input.bootstrapExplorerAnalysis,
+      sensitivityExplorerAnalysis: input.sensitivityExplorerAnalysis,
+      tsneExplorerAnalysis: input.tsneExplorerAnalysis,
+      umapExplorerAnalysis: input.umapExplorerAnalysis,
+    }),
+  };
+};
+
+const getConsistencyEngineReportLines = (
+  analysis: ConsistencyEngineAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Consistency Engine."];
+  }
+
+  const lines = [
+    `Consistency Score: ${analysis.consistencyScore.toFixed(1)}.`,
+    `Clasificación: ${getConsistencyEngineClassificationLabel(analysis.classification)}.`,
+    `Evidencias: ${analysis.evidenceCount}.`,
+    `Módulos de apoyo: ${
+      analysis.supportingModules.length > 0
+        ? analysis.supportingModules.join(", ")
+        : "Ninguno."
+    }.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificConsistencyEngineProps = {
+  analysis: ConsistencyEngineAnalysis;
+};
+
+function ScientificConsistencyEngine({
+  analysis,
+}: ScientificConsistencyEngineProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "🧩",
+      title: "Consistency Score",
+      value: analysis.consistencyScore.toFixed(1),
+      subtitle: "Consenso global",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Consistencia",
+      value: getConsistencyEngineClassificationLabel(analysis.classification),
+      subtitle: "Evaluación integrada",
+    },
+    {
+      key: "evidence",
+      icon: "📚",
+      title: "Evidencias",
+      value: String(analysis.evidenceCount),
+      subtitle: "Señales convergentes",
+    },
+    {
+      key: "modules",
+      icon: "🧠",
+      title: "Módulos",
+      value:
+        analysis.supportingModules.length > 0
+          ? analysis.supportingModules.join(", ")
+          : "—",
+      subtitle: "Con evidencia positiva",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`consistency-engine-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -12353,6 +12726,7 @@ const generateScientificReport = (input: {
   sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
   tsneExplorerAnalysis: TsneExplorerAnalysis | null;
   umapExplorerAnalysis: UmapExplorerAnalysis | null;
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -12685,6 +13059,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Consistency Engine",
+    content: getConsistencyEngineReportLines(input.consistencyEngineAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -12963,6 +13342,7 @@ const generateScientificInterpretation = (input: {
   sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
   tsneExplorerAnalysis: TsneExplorerAnalysis | null;
   umapExplorerAnalysis: UmapExplorerAnalysis | null;
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -13566,6 +13946,23 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.consistencyEngineAnalysis) {
+    deduplicateTextLines(input.consistencyEngineAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (input.consistencyEngineAnalysis.classification === "very-strong") {
+      findings.push(
+        "La evidencia científica presenta una consistencia muy fuerte."
+      );
+      findings.push(
+        "Los distintos enfoques analíticos convergen hacia conclusiones compatibles."
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -13832,6 +14229,7 @@ const generateScientificAssistantReport = (input: {
   sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
   tsneExplorerAnalysis: TsneExplorerAnalysis | null;
   umapExplorerAnalysis: UmapExplorerAnalysis | null;
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -14224,6 +14622,9 @@ const generateScientificAssistantReport = (input: {
     hasUmapExplorerExcellentConnectivity(input.umapExplorerAnalysis) &&
     confidenceLevel === "medium"
   ) {
+    confidenceLevel = "high";
+  }
+  if (hasConsistencyEngineVeryStrong(input.consistencyEngineAnalysis)) {
     confidenceLevel = "high";
   }
 
@@ -14890,6 +15291,20 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.consistencyEngineAnalysis) {
+    deduplicateTextLines(input.consistencyEngineAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (input.consistencyEngineAnalysis.classification === "very-strong") {
+      pushUniqueFinding(
+        "La evidencia científica presenta una consistencia muy fuerte."
+      );
+      pushUniqueFinding(
+        "Los distintos enfoques analíticos convergen hacia conclusiones compatibles."
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -15036,6 +15451,11 @@ const generateScientificAssistantReport = (input: {
   if (hasUmapExplorerPoorManifoldQuality(input.umapExplorerAnalysis)) {
     pushCaution(
       "La estructura global observada presenta conectividad limitada."
+    );
+  }
+  if (hasConsistencyEngineWeak(input.consistencyEngineAnalysis)) {
+    pushCaution(
+      "Los resultados presentan evidencia inconsistente entre distintos enfoques analíticos."
     );
   }
   if (
@@ -16170,6 +16590,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showSensitivityExplorer, setShowSensitivityExplorer] = useState(false);
   const [showTsneExplorer, setShowTsneExplorer] = useState(false);
   const [showUmapExplorer, setShowUmapExplorer] = useState(false);
+  const [showConsistencyEngine, setShowConsistencyEngine] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -16588,6 +17009,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowSensitivityExplorer(false);
     setShowTsneExplorer(false);
     setShowUmapExplorer(false);
+    setShowConsistencyEngine(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -17604,6 +18026,37 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       sensitivityExplorerAnalysis,
     ]
   );
+  const consistencyEngineAnalysis = useMemo(
+    () =>
+      buildConsistencyEngineAnalysis({
+        pcaAnalysis,
+        hierarchicalClusteringAnalysis,
+        mdsAnalysis,
+        similarityNetworkAnalysis,
+        manovaExplorerAnalysis,
+        ldaExplorerAnalysis,
+        pcrExplorerAnalysis,
+        plsExplorerAnalysis,
+        bootstrapExplorerAnalysis,
+        sensitivityExplorerAnalysis,
+        tsneExplorerAnalysis,
+        umapExplorerAnalysis,
+      }),
+    [
+      pcaAnalysis,
+      hierarchicalClusteringAnalysis,
+      mdsAnalysis,
+      similarityNetworkAnalysis,
+      manovaExplorerAnalysis,
+      ldaExplorerAnalysis,
+      pcrExplorerAnalysis,
+      plsExplorerAnalysis,
+      bootstrapExplorerAnalysis,
+      sensitivityExplorerAnalysis,
+      tsneExplorerAnalysis,
+      umapExplorerAnalysis,
+    ]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -17691,6 +18144,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     mdsAnalysis !== null && distanceMatrixAnalysis !== null;
   const hasEnoughSeriesForUmapExplorer =
     mdsAnalysis !== null && similarityNetworkAnalysis !== null;
+  const hasEnoughSeriesForConsistencyEngine = hasConsistencyEngineInput({
+    pcaAnalysis,
+    hierarchicalClusteringAnalysis,
+    mdsAnalysis,
+    manovaExplorerAnalysis,
+    ldaExplorerAnalysis,
+    pcrExplorerAnalysis,
+    plsExplorerAnalysis,
+    bootstrapExplorerAnalysis,
+    sensitivityExplorerAnalysis,
+    tsneExplorerAnalysis,
+    umapExplorerAnalysis,
+  });
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -17767,6 +18233,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         sensitivityExplorerAnalysis,
         tsneExplorerAnalysis,
         umapExplorerAnalysis,
+        consistencyEngineAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -17814,6 +18281,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       sensitivityExplorerAnalysis,
       tsneExplorerAnalysis,
       umapExplorerAnalysis,
+      consistencyEngineAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -17861,6 +18329,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         sensitivityExplorerAnalysis,
         tsneExplorerAnalysis,
         umapExplorerAnalysis,
+        consistencyEngineAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -17903,6 +18372,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       sensitivityExplorerAnalysis,
       tsneExplorerAnalysis,
       umapExplorerAnalysis,
+      consistencyEngineAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -17949,6 +18419,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         sensitivityExplorerAnalysis,
         tsneExplorerAnalysis,
         umapExplorerAnalysis,
+        consistencyEngineAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -17997,6 +18468,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       sensitivityExplorerAnalysis,
       tsneExplorerAnalysis,
       umapExplorerAnalysis,
+      consistencyEngineAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -18676,6 +19148,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showSensitivityExplorer ||
         showTsneExplorer ||
         showUmapExplorer ||
+        showConsistencyEngine ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -20727,6 +21200,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowUmapExplorer(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForUmapExplorer}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForConsistencyEngine
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Consistency Engine
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showConsistencyEngine}
+                            onChange={(e) =>
+                              setShowConsistencyEngine(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForConsistencyEngine}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -23846,6 +24344,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           analysis={umapExplorerAnalysis}
                           seriesColors={radarSeriesColors}
                           chartTheme={chartTheme}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showConsistencyEngine && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🧩 Consistency Engine</p>
+                    {!consistencyEngineAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Consistency
+                        Engine.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificConsistencyEngine
+                          analysis={consistencyEngineAnalysis}
                         />
                       </div>
                     )}
