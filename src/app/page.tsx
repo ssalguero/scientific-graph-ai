@@ -6135,6 +6135,17 @@ type BootstrapExplorerAnalysis = {
   interpretation: string[];
 };
 
+type SensitivityExplorerAnalysis = {
+  sensitivityScore: number;
+  classification:
+    | "very-robust"
+    | "robust"
+    | "moderately-sensitive"
+    | "highly-sensitive";
+  dominantFactors: string[];
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -8988,6 +8999,274 @@ function ScientificBootstrapExplorer({
   );
 }
 
+const getSensitivityImportanceGap = (
+  variableImportanceAnalysis: VariableImportanceAnalysis | null
+) => {
+  if (!variableImportanceAnalysis || variableImportanceAnalysis.entries.length < 2) {
+    return null;
+  }
+
+  const sortedEntries = [...variableImportanceAnalysis.entries].sort(
+    (left, right) => left.rank - right.rank
+  );
+  const topVariable = sortedEntries[0];
+  const secondVariable = sortedEntries[1];
+  if (!topVariable || !secondVariable) return null;
+
+  return topVariable.normalizedScore - secondVariable.normalizedScore;
+};
+
+const getSensitivityImportanceBalanceScore = (
+  variableImportanceAnalysis: VariableImportanceAnalysis | null
+) => {
+  const importanceGap = getSensitivityImportanceGap(variableImportanceAnalysis);
+  if (importanceGap === null) return 50;
+  if (importanceGap <= 10) return 100;
+  if (importanceGap <= 25) return 80;
+  if (importanceGap <= 50) return 60;
+  return 30;
+};
+
+const getSensitivityExplorerClassificationLabel = (
+  classification: SensitivityExplorerAnalysis["classification"]
+) => {
+  if (classification === "very-robust") return "Very Robust";
+  if (classification === "robust") return "Robust";
+  if (classification === "moderately-sensitive") return "Moderately Sensitive";
+  return "Highly Sensitive";
+};
+
+const classifySensitivityExplorerRobustness = (
+  sensitivityScore: number
+): SensitivityExplorerAnalysis["classification"] => {
+  if (sensitivityScore >= 85) return "very-robust";
+  if (sensitivityScore >= 70) return "robust";
+  if (sensitivityScore >= 50) return "moderately-sensitive";
+  return "highly-sensitive";
+};
+
+const getSensitivityExplorerClassificationText = (
+  classification: SensitivityExplorerAnalysis["classification"]
+) => {
+  if (classification === "very-robust") {
+    return "Las conclusiones parecen muy robustas frente a variaciones potenciales de los datos.";
+  }
+  if (classification === "robust") {
+    return "Las conclusiones parecen robustas frente a variaciones moderadas.";
+  }
+  if (classification === "moderately-sensitive") {
+    return "Las conclusiones presentan sensibilidad moderada.";
+  }
+  return "Las conclusiones podrían verse afectadas significativamente por cambios en los datos.";
+};
+
+const hasSensitivityExplorerVeryRobust = (
+  analysis: SensitivityExplorerAnalysis | null
+) => analysis !== null && analysis.sensitivityScore >= 85;
+
+const hasSensitivityExplorerHighlySensitive = (
+  analysis: SensitivityExplorerAnalysis | null
+) => analysis !== null && analysis.classification === "highly-sensitive";
+
+const buildSensitivityExplorerInterpretation = (input: {
+  classification: SensitivityExplorerAnalysis["classification"];
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis;
+  pcaAnalysis: PCAAnalysis | null;
+  plsExplorerAnalysis: PlsExplorerAnalysis | null;
+  variableImportanceAnalysis: VariableImportanceAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+}): string[] => {
+  const interpretation: string[] = [
+    getSensitivityExplorerClassificationText(input.classification),
+  ];
+  const importanceGap = getSensitivityImportanceGap(input.variableImportanceAnalysis);
+
+  if (input.bootstrapExplorerAnalysis.stabilityScore >= 85) {
+    interpretation.push(
+      "La estabilidad global observada favorece la robustez de las conclusiones."
+    );
+  }
+
+  if (input.pcaAnalysis && input.pcaAnalysis.cumulativeVariance >= 80) {
+    interpretation.push(
+      "La estructura principal de variabilidad se mantiene claramente definida."
+    );
+  }
+
+  if (
+    input.plsExplorerAnalysis &&
+    input.plsExplorerAnalysis.explanatoryScore >= 85
+  ) {
+    interpretation.push("La capacidad explicativa observada resulta consistente.");
+  }
+
+  if (importanceGap !== null && importanceGap > 50) {
+    interpretation.push(
+      "Las conclusiones dependen fuertemente de una variable dominante."
+    );
+  }
+
+  if (importanceGap !== null && importanceGap <= 25) {
+    interpretation.push(
+      "La información se encuentra distribuida entre múltiples variables relevantes."
+    );
+  }
+
+  if (input.hierarchicalClusteringAnalysis) {
+    interpretation.push(
+      "La estructura observada mantiene coherencia con la agrupación jerárquica."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildSensitivityExplorerAnalysis = (input: {
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  pcaAnalysis: PCAAnalysis | null;
+  plsExplorerAnalysis: PlsExplorerAnalysis | null;
+  variableImportanceAnalysis: VariableImportanceAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+}): SensitivityExplorerAnalysis | null => {
+  if (!input.bootstrapExplorerAnalysis) {
+    return null;
+  }
+
+  const bootstrapScore = input.bootstrapExplorerAnalysis.stabilityScore;
+  const pcaScore = input.pcaAnalysis?.cumulativeVariance ?? 50;
+  const plsScore = input.plsExplorerAnalysis?.explanatoryScore ?? 50;
+  const importanceBalanceScore = getSensitivityImportanceBalanceScore(
+    input.variableImportanceAnalysis
+  );
+  const sensitivityScore =
+    (bootstrapScore + pcaScore + plsScore + importanceBalanceScore) / 4;
+  const classification = classifySensitivityExplorerRobustness(sensitivityScore);
+
+  return {
+    sensitivityScore,
+    classification,
+    dominantFactors: [
+      `Bootstrap: ${bootstrapScore.toFixed(1)}`,
+      `PCA: ${pcaScore.toFixed(1)}`,
+      `PLS: ${plsScore.toFixed(1)}`,
+      `Balance de importancia: ${importanceBalanceScore.toFixed(1)}`,
+    ],
+    interpretation: buildSensitivityExplorerInterpretation({
+      classification,
+      bootstrapExplorerAnalysis: input.bootstrapExplorerAnalysis,
+      pcaAnalysis: input.pcaAnalysis,
+      plsExplorerAnalysis: input.plsExplorerAnalysis,
+      variableImportanceAnalysis: input.variableImportanceAnalysis,
+      hierarchicalClusteringAnalysis: input.hierarchicalClusteringAnalysis,
+    }),
+  };
+};
+
+const getSensitivityExplorerReportLines = (
+  analysis: SensitivityExplorerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return [
+      "No hay datos suficientes para generar Sensitivity Analysis Explorer.",
+    ];
+  }
+
+  const lines = [
+    `Sensitivity Score: ${analysis.sensitivityScore.toFixed(1)}.`,
+    `Clasificación: ${getSensitivityExplorerClassificationLabel(analysis.classification)}.`,
+    "Factores dominantes:",
+    ...analysis.dominantFactors,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificSensitivityExplorerProps = {
+  analysis: SensitivityExplorerAnalysis;
+  bootstrapScore: number;
+  plsScore: number;
+};
+
+function ScientificSensitivityExplorer({
+  analysis,
+  bootstrapScore,
+  plsScore,
+}: ScientificSensitivityExplorerProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "🛡️",
+      title: "Sensitivity Score",
+      value: analysis.sensitivityScore.toFixed(1),
+      subtitle: "Robustez global",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Calidad",
+      value: getSensitivityExplorerClassificationLabel(analysis.classification),
+      subtitle: "Sensibilidad observada",
+    },
+    {
+      key: "bootstrap",
+      icon: "🎲",
+      title: "Bootstrap",
+      value: bootstrapScore.toFixed(0),
+      subtitle: "Estabilidad global",
+    },
+    {
+      key: "pls",
+      icon: "🧠",
+      title: "PLS",
+      value: plsScore.toFixed(0),
+      subtitle: "Capacidad explicativa",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`sensitivity-explorer-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -11421,6 +11700,7 @@ const generateScientificReport = (input: {
   pcrExplorerAnalysis: PcrExplorerAnalysis | null;
   plsExplorerAnalysis: PlsExplorerAnalysis | null;
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -11738,6 +12018,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Sensitivity Analysis Explorer",
+    content: getSensitivityExplorerReportLines(input.sensitivityExplorerAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -12013,6 +12298,7 @@ const generateScientificInterpretation = (input: {
   pcrExplorerAnalysis: PcrExplorerAnalysis | null;
   plsExplorerAnalysis: PlsExplorerAnalysis | null;
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -12543,6 +12829,29 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.sensitivityExplorerAnalysis) {
+    deduplicateTextLines(input.sensitivityExplorerAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (input.sensitivityExplorerAnalysis.classification === "very-robust") {
+      findings.push(
+        "Las conclusiones parecen muy robustas frente a variaciones potenciales de los datos."
+      );
+    }
+
+    const importanceGap = getSensitivityImportanceGap(
+      input.variableImportanceAnalysis
+    );
+    if (importanceGap !== null && importanceGap <= 25) {
+      findings.push(
+        "La información se encuentra distribuida entre múltiples variables relevantes."
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -12806,6 +13115,7 @@ const generateScientificAssistantReport = (input: {
   pcrExplorerAnalysis: PcrExplorerAnalysis | null;
   plsExplorerAnalysis: PlsExplorerAnalysis | null;
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -13178,6 +13488,12 @@ const generateScientificAssistantReport = (input: {
   }
   if (
     hasBootstrapExplorerVeryStable(input.bootstrapExplorerAnalysis) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasSensitivityExplorerVeryRobust(input.sensitivityExplorerAnalysis) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -13785,6 +14101,26 @@ const generateScientificAssistantReport = (input: {
       pushUniqueFinding("Los resultados presentan una estabilidad muy elevada.");
     }
   }
+  if (input.sensitivityExplorerAnalysis) {
+    deduplicateTextLines(input.sensitivityExplorerAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (input.sensitivityExplorerAnalysis.classification === "very-robust") {
+      pushUniqueFinding(
+        "Las conclusiones parecen muy robustas frente a variaciones potenciales de los datos."
+      );
+    }
+
+    const importanceGap = getSensitivityImportanceGap(
+      input.variableImportanceAnalysis
+    );
+    if (importanceGap !== null && importanceGap <= 25) {
+      pushUniqueFinding(
+        "La información se encuentra distribuida entre múltiples variables relevantes."
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -13917,6 +14253,11 @@ const generateScientificAssistantReport = (input: {
   }
   if (hasBootstrapExplorerUnstable(input.bootstrapExplorerAnalysis)) {
     pushCaution("La estabilidad global de los resultados es limitada.");
+  }
+  if (hasSensitivityExplorerHighlySensitive(input.sensitivityExplorerAnalysis)) {
+    pushCaution(
+      "Las conclusiones podrían variar significativamente ante cambios en los datos."
+    );
   }
   if (
     hasForestSeparation &&
@@ -15047,6 +15388,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showPcrExplorer, setShowPcrExplorer] = useState(false);
   const [showPlsExplorer, setShowPlsExplorer] = useState(false);
   const [showBootstrapExplorer, setShowBootstrapExplorer] = useState(false);
+  const [showSensitivityExplorer, setShowSensitivityExplorer] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -15462,6 +15804,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowPcrExplorer(false);
     setShowPlsExplorer(false);
     setShowBootstrapExplorer(false);
+    setShowSensitivityExplorer(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -16427,6 +16770,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => getBootstrapAverageNormalityScore(normalityConsensus),
     [normalityConsensus]
   );
+  const sensitivityExplorerAnalysis = useMemo(
+    () =>
+      buildSensitivityExplorerAnalysis({
+        bootstrapExplorerAnalysis,
+        pcaAnalysis,
+        plsExplorerAnalysis,
+        variableImportanceAnalysis,
+        hierarchicalClusteringAnalysis,
+      }),
+    [
+      bootstrapExplorerAnalysis,
+      pcaAnalysis,
+      plsExplorerAnalysis,
+      variableImportanceAnalysis,
+      hierarchicalClusteringAnalysis,
+    ]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -16508,6 +16868,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     pcrExplorerAnalysis !== null;
   const hasEnoughSeriesForBootstrapExplorer =
     experimentalStatistics.length > 0;
+  const hasEnoughSeriesForSensitivityExplorer =
+    bootstrapExplorerAnalysis !== null;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -16581,6 +16943,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         pcrExplorerAnalysis,
         plsExplorerAnalysis,
         bootstrapExplorerAnalysis,
+        sensitivityExplorerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -16625,6 +16988,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       pcrExplorerAnalysis,
       plsExplorerAnalysis,
       bootstrapExplorerAnalysis,
+      sensitivityExplorerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -16669,6 +17033,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         pcrExplorerAnalysis,
         plsExplorerAnalysis,
         bootstrapExplorerAnalysis,
+        sensitivityExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -16708,6 +17073,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       pcrExplorerAnalysis,
       plsExplorerAnalysis,
       bootstrapExplorerAnalysis,
+      sensitivityExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -16751,6 +17117,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         pcrExplorerAnalysis,
         plsExplorerAnalysis,
         bootstrapExplorerAnalysis,
+        sensitivityExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -16796,6 +17163,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       pcrExplorerAnalysis,
       plsExplorerAnalysis,
       bootstrapExplorerAnalysis,
+      sensitivityExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -17472,6 +17840,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showPcrExplorer ||
         showPlsExplorer ||
         showBootstrapExplorer ||
+        showSensitivityExplorer ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -19448,6 +19817,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowBootstrapExplorer(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForBootstrapExplorer}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForSensitivityExplorer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Sensitivity Explorer
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showSensitivityExplorer}
+                            onChange={(e) =>
+                              setShowSensitivityExplorer(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForSensitivityExplorer}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -22500,6 +22894,33 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           analysis={bootstrapExplorerAnalysis}
                           sampleScore={bootstrapSampleScore}
                           normalityScore={bootstrapNormalityScore}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showSensitivityExplorer && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      🛡️ Sensitivity Analysis Explorer
+                    </p>
+                    {!sensitivityExplorerAnalysis ||
+                    !bootstrapExplorerAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Sensitivity
+                        Analysis Explorer.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificSensitivityExplorer
+                          analysis={sensitivityExplorerAnalysis}
+                          bootstrapScore={
+                            bootstrapExplorerAnalysis.stabilityScore
+                          }
+                          plsScore={
+                            plsExplorerAnalysis?.explanatoryScore ?? 50
+                          }
                         />
                       </div>
                     )}
