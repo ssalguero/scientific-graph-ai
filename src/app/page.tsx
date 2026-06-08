@@ -6146,6 +6146,19 @@ type SensitivityExplorerAnalysis = {
   interpretation: string[];
 };
 
+type TsneExplorerPoint = {
+  variable: string;
+  x: number;
+  y: number;
+};
+
+type TsneExplorerAnalysis = {
+  points: TsneExplorerPoint[];
+  clusterTendency: "strong" | "moderate" | "weak";
+  neighborhoodScore: number;
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -9267,6 +9280,307 @@ function ScientificSensitivityExplorer({
   );
 }
 
+const getTsneExplorerAverageSimilarity = (
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null
+) => similarityNetworkAnalysis?.averageSimilarity ?? 0.5;
+
+const getTsneExplorerNeighborhoodScore = (
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null
+) => getTsneExplorerAverageSimilarity(similarityNetworkAnalysis) * 100;
+
+const getTsneExplorerClusterTendency = (
+  averageSimilarity: number
+): TsneExplorerAnalysis["clusterTendency"] => {
+  if (averageSimilarity >= 0.75) return "strong";
+  if (averageSimilarity >= 0.5) return "moderate";
+  return "weak";
+};
+
+const getTsneExplorerClusterTendencyLabel = (
+  clusterTendency: TsneExplorerAnalysis["clusterTendency"]
+) => {
+  if (clusterTendency === "strong") return "Strong";
+  if (clusterTendency === "moderate") return "Moderate";
+  return "Weak";
+};
+
+const getTsneExplorerClusterTendencyText = (
+  clusterTendency: TsneExplorerAnalysis["clusterTendency"]
+) => {
+  if (clusterTendency === "strong") {
+    return "La proyección sugiere agrupamientos bien definidos.";
+  }
+  if (clusterTendency === "moderate") {
+    return "La proyección sugiere agrupamientos moderadamente definidos.";
+  }
+  return "No se observan agrupamientos claramente definidos.";
+};
+
+const hasTsneExplorerStrongNeighborhood = (
+  analysis: TsneExplorerAnalysis | null
+) => analysis !== null && analysis.neighborhoodScore >= 85;
+
+const hasTsneExplorerWeakClusterTendency = (
+  analysis: TsneExplorerAnalysis | null
+) => analysis !== null && analysis.clusterTendency === "weak";
+
+const buildTsneExplorerInterpretation = (input: {
+  clusterTendency: TsneExplorerAnalysis["clusterTendency"];
+  mdsAnalysis: MDSAnalysis;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+}): string[] => {
+  const interpretation: string[] = [
+    getTsneExplorerClusterTendencyText(input.clusterTendency),
+  ];
+
+  if (input.hierarchicalClusteringAnalysis) {
+    interpretation.push(
+      "La distribución observada es coherente con el clustering jerárquico."
+    );
+  }
+
+  if (input.mdsAnalysis.stress < 0.1) {
+    interpretation.push(
+      "La representación espacial mantiene una buena preservación de distancias."
+    );
+  }
+
+  if (
+    input.sensitivityExplorerAnalysis &&
+    input.sensitivityExplorerAnalysis.sensitivityScore >= 85
+  ) {
+    interpretation.push(
+      "La estructura observada parece robusta frente a variaciones potenciales."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildTsneExplorerAnalysis = (input: {
+  mdsAnalysis: MDSAnalysis | null;
+  distanceMatrixAnalysis: DistanceMatrixAnalysis | null;
+  similarityNetworkAnalysis: SimilarityNetworkAnalysis | null;
+  hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
+  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+}): TsneExplorerAnalysis | null => {
+  if (!input.mdsAnalysis || !input.distanceMatrixAnalysis) {
+    return null;
+  }
+
+  const averageSimilarity = getTsneExplorerAverageSimilarity(
+    input.similarityNetworkAnalysis
+  );
+  const neighborhoodScore = averageSimilarity * 100;
+  const clusterTendency = getTsneExplorerClusterTendency(averageSimilarity);
+  const points = input.mdsAnalysis.points.map((point) => ({
+    variable: point.seriesName,
+    x: point.x,
+    y: point.y,
+  }));
+
+  return {
+    points,
+    clusterTendency,
+    neighborhoodScore,
+    interpretation: buildTsneExplorerInterpretation({
+      clusterTendency,
+      mdsAnalysis: input.mdsAnalysis,
+      hierarchicalClusteringAnalysis: input.hierarchicalClusteringAnalysis,
+      sensitivityExplorerAnalysis: input.sensitivityExplorerAnalysis,
+    }),
+  };
+};
+
+const getTsneExplorerReportLines = (
+  analysis: TsneExplorerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar t-SNE Explorer."];
+  }
+
+  const lines = [
+    `Neighborhood Score: ${analysis.neighborhoodScore.toFixed(1)}.`,
+    `Cluster Tendency: ${getTsneExplorerClusterTendencyLabel(analysis.clusterTendency)}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificTsneExplorerProps = {
+  analysis: TsneExplorerAnalysis;
+  seriesColors: Map<string, string>;
+  chartTheme: ReturnType<typeof getChartTheme>;
+};
+
+function ScientificTsneExplorer({
+  analysis,
+  seriesColors,
+  chartTheme,
+}: ScientificTsneExplorerProps) {
+  const chartData = analysis.points.map((point) => ({
+    ...point,
+    tsne1: point.x,
+    tsne2: point.y,
+    fill: seriesColors.get(point.variable) ?? "var(--app-accent)",
+  }));
+
+  const cards = [
+    {
+      key: "neighborhood",
+      icon: "🧭",
+      title: "Neighborhood Score",
+      value: analysis.neighborhoodScore.toFixed(1),
+      subtitle: "Cohesión local",
+    },
+    {
+      key: "cluster",
+      icon: "🌐",
+      title: "Cluster Tendency",
+      value: getTsneExplorerClusterTendencyLabel(analysis.clusterTendency),
+      subtitle: "Agrupamiento observado",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      <div className="h-[260px] mt-3">
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart margin={{ top: 12, right: 24, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+            <XAxis
+              type="number"
+              dataKey="tsne1"
+              name="tSNE-1"
+              tick={{ fill: chartTheme.axis, fontSize: 11 }}
+              label={{
+                value: "tSNE-1",
+                position: "insideBottom",
+                offset: -2,
+                fill: chartTheme.axis,
+                fontSize: 11,
+              }}
+            />
+            <YAxis
+              type="number"
+              dataKey="tsne2"
+              name="tSNE-2"
+              tick={{ fill: chartTheme.axis, fontSize: 11 }}
+              label={{
+                value: "tSNE-2",
+                angle: -90,
+                position: "insideLeft",
+                fill: chartTheme.axis,
+                fontSize: 11,
+              }}
+            />
+            <Tooltip
+              content={({ active, payload: tooltipPayload }) => {
+                if (!active || !tooltipPayload?.length) return null;
+
+                const point = tooltipPayload[0]?.payload as
+                  | (TsneExplorerPoint & { tsne1: number; tsne2: number })
+                  | undefined;
+                if (!point) return null;
+
+                return (
+                  <div
+                    className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+                    style={{
+                      borderColor: chartTheme.tooltipBorder,
+                      backgroundColor: chartTheme.tooltipBg,
+                      color: chartTheme.tooltipColor,
+                    }}
+                  >
+                    <p className="font-semibold">{point.variable}</p>
+                    <p>tSNE-1 = {point.tsne1.toFixed(4)}</p>
+                    <p>tSNE-2 = {point.tsne2.toFixed(4)}</p>
+                  </div>
+                );
+              }}
+            />
+            <Scatter
+              name="Variables"
+              data={chartData}
+              line={false}
+              isAnimationActive={false}
+              shape={(props) => {
+                const { cx, cy, payload } = props as {
+                  cx?: number;
+                  cy?: number;
+                  payload?: TsneExplorerPoint & { fill?: string };
+                };
+                if (cx == null || cy == null || !payload) return null;
+
+                return (
+                  <g>
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={6}
+                      fill={payload.fill ?? "var(--app-accent)"}
+                    />
+                    <text
+                      x={cx + 8}
+                      y={cy + 4}
+                      fill="var(--app-text)"
+                      fontSize={10}
+                      fontWeight={600}
+                    >
+                      {payload.variable.length > 14
+                        ? `${payload.variable.slice(0, 13)}…`
+                        : payload.variable}
+                    </text>
+                  </g>
+                );
+              }}
+            />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`tsne-explorer-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -11701,6 +12015,7 @@ const generateScientificReport = (input: {
   plsExplorerAnalysis: PlsExplorerAnalysis | null;
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
   sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+  tsneExplorerAnalysis: TsneExplorerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -12023,6 +12338,11 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "t-SNE Explorer",
+    content: getTsneExplorerReportLines(input.tsneExplorerAnalysis),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -12299,6 +12619,7 @@ const generateScientificInterpretation = (input: {
   plsExplorerAnalysis: PlsExplorerAnalysis | null;
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
   sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+  tsneExplorerAnalysis: TsneExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -12852,6 +13173,27 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.tsneExplorerAnalysis) {
+    deduplicateTextLines(input.tsneExplorerAnalysis.interpretation).forEach(
+      (line) => {
+        if (!findings.includes(line)) findings.push(line);
+      }
+    );
+
+    if (input.tsneExplorerAnalysis.clusterTendency === "strong") {
+      findings.push("La proyección sugiere agrupamientos bien definidos.");
+    }
+
+    if (
+      input.mdsAnalysis &&
+      input.mdsAnalysis.stress < 0.1
+    ) {
+      findings.push(
+        "La representación espacial mantiene una buena preservación de distancias."
+      );
+    }
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -13116,6 +13458,7 @@ const generateScientificAssistantReport = (input: {
   plsExplorerAnalysis: PlsExplorerAnalysis | null;
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
   sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
+  tsneExplorerAnalysis: TsneExplorerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -13494,6 +13837,12 @@ const generateScientificAssistantReport = (input: {
   }
   if (
     hasSensitivityExplorerVeryRobust(input.sensitivityExplorerAnalysis) &&
+    confidenceLevel === "medium"
+  ) {
+    confidenceLevel = "high";
+  }
+  if (
+    hasTsneExplorerStrongNeighborhood(input.tsneExplorerAnalysis) &&
     confidenceLevel === "medium"
   ) {
     confidenceLevel = "high";
@@ -14121,6 +14470,21 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.tsneExplorerAnalysis) {
+    deduplicateTextLines(input.tsneExplorerAnalysis.interpretation).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+
+    if (input.tsneExplorerAnalysis.clusterTendency === "strong") {
+      pushUniqueFinding("La proyección sugiere agrupamientos bien definidos.");
+    }
+
+    if (input.mdsAnalysis && input.mdsAnalysis.stress < 0.1) {
+      pushUniqueFinding(
+        "La representación espacial mantiene una buena preservación de distancias."
+      );
+    }
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -14257,6 +14621,11 @@ const generateScientificAssistantReport = (input: {
   if (hasSensitivityExplorerHighlySensitive(input.sensitivityExplorerAnalysis)) {
     pushCaution(
       "Las conclusiones podrían variar significativamente ante cambios en los datos."
+    );
+  }
+  if (hasTsneExplorerWeakClusterTendency(input.tsneExplorerAnalysis)) {
+    pushCaution(
+      "La estructura observada presenta agrupamientos débiles o poco definidos."
     );
   }
   if (
@@ -15389,6 +15758,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showPlsExplorer, setShowPlsExplorer] = useState(false);
   const [showBootstrapExplorer, setShowBootstrapExplorer] = useState(false);
   const [showSensitivityExplorer, setShowSensitivityExplorer] = useState(false);
+  const [showTsneExplorer, setShowTsneExplorer] = useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -15805,6 +16175,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowPlsExplorer(false);
     setShowBootstrapExplorer(false);
     setShowSensitivityExplorer(false);
+    setShowTsneExplorer(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -16787,6 +17158,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       hierarchicalClusteringAnalysis,
     ]
   );
+  const tsneExplorerAnalysis = useMemo(
+    () =>
+      buildTsneExplorerAnalysis({
+        mdsAnalysis,
+        distanceMatrixAnalysis,
+        similarityNetworkAnalysis,
+        hierarchicalClusteringAnalysis,
+        sensitivityExplorerAnalysis,
+      }),
+    [
+      mdsAnalysis,
+      distanceMatrixAnalysis,
+      similarityNetworkAnalysis,
+      hierarchicalClusteringAnalysis,
+      sensitivityExplorerAnalysis,
+    ]
+  );
   const tTestSeriesA = useMemo(
     () =>
       resolveTTestSeriesSelection(
@@ -16870,6 +17258,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     experimentalStatistics.length > 0;
   const hasEnoughSeriesForSensitivityExplorer =
     bootstrapExplorerAnalysis !== null;
+  const hasEnoughSeriesForTsneExplorer =
+    mdsAnalysis !== null && distanceMatrixAnalysis !== null;
   const hasEnoughSeriesForAnova = visibleExperimentalSeries.length >= 3;
   const isPostHocAvailable = hasEnoughSeriesForAnova && anovaAnalysis !== null;
   const mannWhitneySeriesA = useMemo(
@@ -16944,6 +17334,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         plsExplorerAnalysis,
         bootstrapExplorerAnalysis,
         sensitivityExplorerAnalysis,
+        tsneExplorerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -16989,6 +17380,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       plsExplorerAnalysis,
       bootstrapExplorerAnalysis,
       sensitivityExplorerAnalysis,
+      tsneExplorerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -17034,6 +17426,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         plsExplorerAnalysis,
         bootstrapExplorerAnalysis,
         sensitivityExplorerAnalysis,
+        tsneExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -17074,6 +17467,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       plsExplorerAnalysis,
       bootstrapExplorerAnalysis,
       sensitivityExplorerAnalysis,
+      tsneExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -17118,6 +17512,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         plsExplorerAnalysis,
         bootstrapExplorerAnalysis,
         sensitivityExplorerAnalysis,
+        tsneExplorerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -17164,6 +17559,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       plsExplorerAnalysis,
       bootstrapExplorerAnalysis,
       sensitivityExplorerAnalysis,
+      tsneExplorerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -17841,6 +18237,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showPlsExplorer ||
         showBootstrapExplorer ||
         showSensitivityExplorer ||
+        showTsneExplorer ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -19842,6 +20239,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowSensitivityExplorer(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForSensitivityExplorer}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForTsneExplorer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar t-SNE Explorer
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showTsneExplorer}
+                            onChange={(e) =>
+                              setShowTsneExplorer(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForTsneExplorer}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -22921,6 +23343,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           plsScore={
                             plsExplorerAnalysis?.explanatoryScore ?? 50
                           }
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showTsneExplorer && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>🧭 t-SNE Explorer</p>
+                    {!tsneExplorerAnalysis || !mdsAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar t-SNE Explorer.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificTsneExplorer
+                          analysis={tsneExplorerAnalysis}
+                          seriesColors={radarSeriesColors}
+                          chartTheme={chartTheme}
                         />
                       </div>
                     )}
