@@ -6194,6 +6194,13 @@ type ReproducibilityExplorerAnalysis = {
   interpretation: string[];
 };
 
+type EvidenceStrengthEngineAnalysis = {
+  evidenceScore: number;
+  classification: "very-strong" | "strong" | "moderate" | "limited";
+  evidenceSources: number;
+  interpretation: string[];
+};
+
 type ClusterNode = {
   name: string;
   distance: number;
@@ -10926,6 +10933,279 @@ function ScientificReproducibilityExplorer({
   );
 }
 
+const hasEvidenceStrengthEngineInput = (input: {
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+}) =>
+  input.consistencyEngineAnalysis !== null ||
+  input.reportQualityEngineAnalysis !== null ||
+  input.reproducibilityExplorerAnalysis !== null ||
+  input.bootstrapExplorerAnalysis !== null;
+
+const getEvidenceStrengthInferenceScore = (input: {
+  anovaAnalysis: AnovaAnalysis | null;
+  mannWhitneyResult: MannWhitneyResult | null;
+  kruskalWallisResult: KruskalWallisResult | null;
+}) => {
+  if (
+    input.anovaAnalysis ||
+    input.mannWhitneyResult ||
+    input.kruskalWallisResult
+  ) {
+    return 100;
+  }
+  return 50;
+};
+
+const getEvidenceStrengthEngineClassificationLabel = (
+  classification: EvidenceStrengthEngineAnalysis["classification"]
+) => {
+  if (classification === "very-strong") return "Very Strong";
+  if (classification === "strong") return "Strong";
+  if (classification === "moderate") return "Moderate";
+  return "Limited";
+};
+
+const classifyEvidenceStrengthEngine = (
+  evidenceScore: number
+): EvidenceStrengthEngineAnalysis["classification"] => {
+  if (evidenceScore >= 85) return "very-strong";
+  if (evidenceScore >= 70) return "strong";
+  if (evidenceScore >= 50) return "moderate";
+  return "limited";
+};
+
+const getEvidenceStrengthEngineClassificationText = (
+  classification: EvidenceStrengthEngineAnalysis["classification"]
+) => {
+  if (classification === "very-strong") {
+    return "La evidencia científica global es muy fuerte.";
+  }
+  if (classification === "strong") {
+    return "La evidencia científica global es fuerte.";
+  }
+  if (classification === "moderate") {
+    return "La evidencia científica global es moderada.";
+  }
+  return "La evidencia científica global es limitada.";
+};
+
+const hasEvidenceStrengthEngineVeryStrong = (
+  analysis: EvidenceStrengthEngineAnalysis | null
+) => analysis !== null && analysis.evidenceScore >= 85;
+
+const hasEvidenceStrengthEngineLimited = (
+  analysis: EvidenceStrengthEngineAnalysis | null
+) => analysis !== null && analysis.classification === "limited";
+
+const buildEvidenceStrengthEngineInterpretation = (input: {
+  classification: EvidenceStrengthEngineAnalysis["classification"];
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  hasInferentialTests: boolean;
+}): string[] => {
+  const interpretation: string[] = [
+    getEvidenceStrengthEngineClassificationText(input.classification),
+  ];
+
+  if (
+    input.consistencyEngineAnalysis &&
+    input.consistencyEngineAnalysis.consistencyScore >= 85
+  ) {
+    interpretation.push(
+      "Los distintos enfoques analíticos muestran una elevada convergencia."
+    );
+  }
+
+  if (
+    input.reproducibilityExplorerAnalysis &&
+    input.reproducibilityExplorerAnalysis.reproducibilityScore >= 85
+  ) {
+    interpretation.push(
+      "La reproducibilidad potencial del análisis es elevada."
+    );
+  }
+
+  if (
+    input.reportQualityEngineAnalysis &&
+    input.reportQualityEngineAnalysis.qualityScore >= 85
+  ) {
+    interpretation.push(
+      "La calidad metodológica respalda las conclusiones obtenidas."
+    );
+  }
+
+  if (
+    input.bootstrapExplorerAnalysis &&
+    input.bootstrapExplorerAnalysis.stabilityScore >= 85
+  ) {
+    interpretation.push(
+      "La estabilidad observada fortalece la evidencia disponible."
+    );
+  }
+
+  if (input.hasInferentialTests) {
+    interpretation.push("Las conclusiones cuentan con respaldo inferencial.");
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildEvidenceStrengthEngineAnalysis = (input: {
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  anovaAnalysis: AnovaAnalysis | null;
+  mannWhitneyResult: MannWhitneyResult | null;
+  kruskalWallisResult: KruskalWallisResult | null;
+}): EvidenceStrengthEngineAnalysis | null => {
+  if (!hasEvidenceStrengthEngineInput(input)) {
+    return null;
+  }
+
+  const consistencyScore = input.consistencyEngineAnalysis?.consistencyScore ?? 50;
+  const qualityScore = input.reportQualityEngineAnalysis?.qualityScore ?? 50;
+  const reproducibilityScore =
+    input.reproducibilityExplorerAnalysis?.reproducibilityScore ?? 50;
+  const bootstrapScore = input.bootstrapExplorerAnalysis?.stabilityScore ?? 50;
+  const inferenceScore = getEvidenceStrengthInferenceScore({
+    anovaAnalysis: input.anovaAnalysis,
+    mannWhitneyResult: input.mannWhitneyResult,
+    kruskalWallisResult: input.kruskalWallisResult,
+  });
+  const hasInferentialTests =
+    input.anovaAnalysis !== null ||
+    input.mannWhitneyResult !== null ||
+    input.kruskalWallisResult !== null;
+  const evidenceScore =
+    (consistencyScore +
+      qualityScore +
+      reproducibilityScore +
+      bootstrapScore +
+      inferenceScore) /
+    5;
+  const classification = classifyEvidenceStrengthEngine(evidenceScore);
+
+  return {
+    evidenceScore,
+    classification,
+    evidenceSources: 5,
+    interpretation: buildEvidenceStrengthEngineInterpretation({
+      classification,
+      consistencyEngineAnalysis: input.consistencyEngineAnalysis,
+      reportQualityEngineAnalysis: input.reportQualityEngineAnalysis,
+      reproducibilityExplorerAnalysis: input.reproducibilityExplorerAnalysis,
+      bootstrapExplorerAnalysis: input.bootstrapExplorerAnalysis,
+      hasInferentialTests,
+    }),
+  };
+};
+
+const getEvidenceStrengthEngineReportLines = (
+  analysis: EvidenceStrengthEngineAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return ["No hay datos suficientes para generar Evidence Strength Engine."];
+  }
+
+  const lines = [
+    `Evidence Score: ${analysis.evidenceScore.toFixed(1)}.`,
+    `Clasificación: ${getEvidenceStrengthEngineClassificationLabel(analysis.classification)}.`,
+    `Fuentes evaluadas: ${analysis.evidenceSources}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificEvidenceStrengthEngineProps = {
+  analysis: EvidenceStrengthEngineAnalysis;
+  reproducibilityScore: number;
+};
+
+function ScientificEvidenceStrengthEngine({
+  analysis,
+  reproducibilityScore,
+}: ScientificEvidenceStrengthEngineProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "🧪",
+      title: "Evidence Score",
+      value: analysis.evidenceScore.toFixed(1),
+      subtitle: "Fuerza global",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Evidence Strength",
+      value: getEvidenceStrengthEngineClassificationLabel(analysis.classification),
+      subtitle: "Clasificación",
+    },
+    {
+      key: "sources",
+      icon: "📚",
+      title: "Sources",
+      value: String(analysis.evidenceSources),
+      subtitle: "Fuentes evaluadas",
+    },
+    {
+      key: "reproducibility",
+      icon: "🔁",
+      title: "Reproducibility",
+      value: reproducibilityScore.toFixed(1),
+      subtitle: "Reproducibilidad potencial",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`evidence-strength-engine-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -13365,6 +13645,7 @@ const generateScientificReport = (input: {
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -13714,6 +13995,13 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Evidence Strength Engine",
+    content: getEvidenceStrengthEngineReportLines(
+      input.evidenceStrengthEngineAnalysis
+    ),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -13995,6 +14283,7 @@ const generateScientificInterpretation = (input: {
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -14646,6 +14935,14 @@ const generateScientificInterpretation = (input: {
     }
   }
 
+  if (input.evidenceStrengthEngineAnalysis) {
+    deduplicateTextLines(
+      input.evidenceStrengthEngineAnalysis.interpretation
+    ).forEach((line) => {
+      if (!findings.includes(line)) findings.push(line);
+    });
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -14915,6 +15212,7 @@ const generateScientificAssistantReport = (input: {
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -15316,6 +15614,9 @@ const generateScientificAssistantReport = (input: {
     confidenceLevel = "high";
   }
   if (hasReproducibilityExplorerVeryHigh(input.reproducibilityExplorerAnalysis)) {
+    confidenceLevel = "high";
+  }
+  if (hasEvidenceStrengthEngineVeryStrong(input.evidenceStrengthEngineAnalysis)) {
     confidenceLevel = "high";
   }
 
@@ -16021,6 +16322,11 @@ const generateScientificAssistantReport = (input: {
       );
     }
   }
+  if (input.evidenceStrengthEngineAnalysis) {
+    deduplicateTextLines(
+      input.evidenceStrengthEngineAnalysis.interpretation
+    ).forEach((line) => pushUniqueFinding(line));
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -16179,6 +16485,9 @@ const generateScientificAssistantReport = (input: {
   }
   if (hasReproducibilityExplorerLow(input.reproducibilityExplorerAnalysis)) {
     pushCaution("La reproducibilidad potencial del análisis es limitada.");
+  }
+  if (hasEvidenceStrengthEngineLimited(input.evidenceStrengthEngineAnalysis)) {
+    pushCaution("La evidencia científica disponible es limitada.");
   }
   if (
     hasForestSeparation &&
@@ -17316,6 +17625,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showReportQualityEngine, setShowReportQualityEngine] = useState(false);
   const [showReproducibilityExplorer, setShowReproducibilityExplorer] =
     useState(false);
+  const [showEvidenceStrengthEngine, setShowEvidenceStrengthEngine] =
+    useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -17737,6 +18048,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowConsistencyEngine(false);
     setShowReportQualityEngine(false);
     setShowReproducibilityExplorer(false);
+    setShowEvidenceStrengthEngine(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -18965,6 +19277,29 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   );
   const hasEnoughSeriesForReproducibilityExplorer =
     reproducibilityExplorerAnalysis !== null;
+  const evidenceStrengthEngineAnalysis = useMemo(
+    () =>
+      buildEvidenceStrengthEngineAnalysis({
+        consistencyEngineAnalysis,
+        reportQualityEngineAnalysis,
+        reproducibilityExplorerAnalysis,
+        bootstrapExplorerAnalysis,
+        anovaAnalysis,
+        mannWhitneyResult,
+        kruskalWallisResult,
+      }),
+    [
+      consistencyEngineAnalysis,
+      reportQualityEngineAnalysis,
+      reproducibilityExplorerAnalysis,
+      bootstrapExplorerAnalysis,
+      anovaAnalysis,
+      mannWhitneyResult,
+      kruskalWallisResult,
+    ]
+  );
+  const hasEnoughSeriesForEvidenceStrengthEngine =
+    evidenceStrengthEngineAnalysis !== null;
   const statisticalRecommendation = useMemo(
     () =>
       buildStatisticalRecommendation(
@@ -19014,6 +19349,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         consistencyEngineAnalysis,
         reportQualityEngineAnalysis,
         reproducibilityExplorerAnalysis,
+        evidenceStrengthEngineAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -19064,6 +19400,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       consistencyEngineAnalysis,
       reportQualityEngineAnalysis,
       reproducibilityExplorerAnalysis,
+      evidenceStrengthEngineAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -19114,6 +19451,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         consistencyEngineAnalysis,
         reportQualityEngineAnalysis,
         reproducibilityExplorerAnalysis,
+        evidenceStrengthEngineAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -19159,6 +19497,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       consistencyEngineAnalysis,
       reportQualityEngineAnalysis,
       reproducibilityExplorerAnalysis,
+      evidenceStrengthEngineAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -19208,6 +19547,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         consistencyEngineAnalysis,
         reportQualityEngineAnalysis,
         reproducibilityExplorerAnalysis,
+        evidenceStrengthEngineAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -19259,6 +19599,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       consistencyEngineAnalysis,
       reportQualityEngineAnalysis,
       reproducibilityExplorerAnalysis,
+      evidenceStrengthEngineAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -19941,6 +20282,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showConsistencyEngine ||
         showReportQualityEngine ||
         showReproducibilityExplorer ||
+        showEvidenceStrengthEngine ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -22067,6 +22409,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowReproducibilityExplorer(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForReproducibilityExplorer}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForEvidenceStrengthEngine
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Evidence Strength Engine
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showEvidenceStrengthEngine}
+                            onChange={(e) =>
+                              setShowEvidenceStrengthEngine(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForEvidenceStrengthEngine}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -25244,6 +25611,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           analysis={reproducibilityExplorerAnalysis}
                           qualityScore={
                             reportQualityEngineAnalysis?.qualityScore ?? 50
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showEvidenceStrengthEngine && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      🧪 Evidence Strength Engine
+                    </p>
+                    {!evidenceStrengthEngineAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Evidence Strength
+                        Engine.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificEvidenceStrengthEngine
+                          analysis={evidenceStrengthEngineAnalysis}
+                          reproducibilityScore={
+                            reproducibilityExplorerAnalysis?.reproducibilityScore ??
+                            50
                           }
                         />
                       </div>
