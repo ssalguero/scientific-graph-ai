@@ -58,14 +58,24 @@ Reproducibility Explorer
 Evidence Strength Engine
 Assumption Tracker
 Publication Readiness Analyzer
-Backlog técnico
+POST SCI-55 HOTFIXES
+
 HOTFIX-SCI-NORMALITY-2
 
+Status: CLOSED
 
-Mejorar coherencia entre:
+Resumen:
 
-Consenso de normalidad
-Coherencia de normalidad
+Unificación Consenso/Coherencia.
+Fuente canónica única de normalidad.
+SCI-17/19/20 unificados.
+Panel integrado de normalidad.
+Score contradictory = 40.
+Validado con Dataset5 y Dataset6.
+PDF OK.
+
+Backlog técnico
+
 SCI-29B
 
 Excluir variables constantes del clustering o tratarlas separadamente.
