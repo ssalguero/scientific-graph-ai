@@ -6214,6 +6214,17 @@ type AssumptionTrackerAnalysis = {
   interpretation: string[];
 };
 
+type PublicationReadinessAnalyzerAnalysis = {
+  readinessScore: number;
+  classification:
+    | "publication-ready"
+    | "near-ready"
+    | "requires-review"
+    | "not-ready";
+  evaluatedAreas: number;
+  interpretation: string[];
+};
+
 type VarianceHomogeneityAnalysis = {
   classification:
     | "homogeneous"
@@ -11656,6 +11667,247 @@ function ScientificAssumptionTracker({
   );
 }
 
+const hasPublicationReadinessAnalyzerInput = (input: {
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
+}) =>
+  input.consistencyEngineAnalysis !== null ||
+  input.reportQualityEngineAnalysis !== null ||
+  input.reproducibilityExplorerAnalysis !== null ||
+  input.evidenceStrengthEngineAnalysis !== null ||
+  input.assumptionTrackerAnalysis !== null;
+
+const getPublicationReadinessAnalyzerClassificationLabel = (
+  classification: PublicationReadinessAnalyzerAnalysis["classification"]
+) => {
+  if (classification === "publication-ready") return "Publication Ready";
+  if (classification === "near-ready") return "Near Ready";
+  if (classification === "requires-review") return "Requires Review";
+  return "Not Ready";
+};
+
+const classifyPublicationReadinessAnalyzer = (
+  readinessScore: number
+): PublicationReadinessAnalyzerAnalysis["classification"] => {
+  if (readinessScore >= 85) return "publication-ready";
+  if (readinessScore >= 70) return "near-ready";
+  if (readinessScore >= 50) return "requires-review";
+  return "not-ready";
+};
+
+const getPublicationReadinessAnalyzerClassificationText = (
+  classification: PublicationReadinessAnalyzerAnalysis["classification"]
+) => {
+  if (classification === "publication-ready") {
+    return "El análisis presenta un nivel de preparación adecuado para comunicación científica.";
+  }
+  if (classification === "near-ready") {
+    return "El análisis se encuentra próximo a un nivel adecuado para publicación.";
+  }
+  if (classification === "requires-review") {
+    return "El análisis requiere revisión metodológica adicional.";
+  }
+  return "El análisis no presenta evidencia suficiente para publicación.";
+};
+
+const hasPublicationReadinessAnalyzerReady = (
+  analysis: PublicationReadinessAnalyzerAnalysis | null
+) => analysis !== null && analysis.readinessScore >= 85;
+
+const hasPublicationReadinessAnalyzerNotReady = (
+  analysis: PublicationReadinessAnalyzerAnalysis | null
+) => analysis !== null && analysis.classification === "not-ready";
+
+const buildPublicationReadinessAnalyzerInterpretation = (input: {
+  classification: PublicationReadinessAnalyzerAnalysis["classification"];
+  consistencyScore: number;
+  qualityScore: number;
+  reproducibilityScore: number;
+  evidenceScore: number;
+  assumptionScore: number;
+}): string[] => {
+  const interpretation: string[] = [
+    getPublicationReadinessAnalyzerClassificationText(input.classification),
+  ];
+
+  if (input.consistencyScore >= 85) {
+    interpretation.push(
+      "La consistencia global de los resultados es elevada."
+    );
+  }
+
+  if (input.qualityScore >= 85) {
+    interpretation.push(
+      "La calidad metodológica respalda la comunicación de resultados."
+    );
+  }
+
+  if (input.reproducibilityScore >= 85) {
+    interpretation.push("La reproducibilidad potencial es favorable.");
+  }
+
+  if (input.evidenceScore >= 85) {
+    interpretation.push("La evidencia científica disponible es sólida.");
+  }
+
+  if (input.assumptionScore >= 85) {
+    interpretation.push(
+      "Los supuestos estadísticos se encuentran adecuadamente respaldados."
+    );
+  }
+
+  return deduplicateTextLines(interpretation);
+};
+
+const buildPublicationReadinessAnalyzerAnalysis = (input: {
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
+}): PublicationReadinessAnalyzerAnalysis | null => {
+  if (!hasPublicationReadinessAnalyzerInput(input)) {
+    return null;
+  }
+
+  const consistencyScore =
+    input.consistencyEngineAnalysis?.consistencyScore ?? 50;
+  const qualityScore = input.reportQualityEngineAnalysis?.qualityScore ?? 50;
+  const reproducibilityScore =
+    input.reproducibilityExplorerAnalysis?.reproducibilityScore ?? 50;
+  const evidenceScore = input.evidenceStrengthEngineAnalysis?.evidenceScore ?? 50;
+  const assumptionScore = input.assumptionTrackerAnalysis?.overallScore ?? 50;
+  const readinessScore =
+    (consistencyScore +
+      qualityScore +
+      reproducibilityScore +
+      evidenceScore +
+      assumptionScore) /
+    5;
+  const classification = classifyPublicationReadinessAnalyzer(readinessScore);
+
+  return {
+    readinessScore,
+    classification,
+    evaluatedAreas: 5,
+    interpretation: buildPublicationReadinessAnalyzerInterpretation({
+      classification,
+      consistencyScore,
+      qualityScore,
+      reproducibilityScore,
+      evidenceScore,
+      assumptionScore,
+    }),
+  };
+};
+
+const getPublicationReadinessAnalyzerReportLines = (
+  analysis: PublicationReadinessAnalyzerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return [
+      "No hay datos suficientes para generar Publication Readiness Analyzer.",
+    ];
+  }
+
+  const lines = [
+    `Readiness Score: ${analysis.readinessScore.toFixed(1)}.`,
+    `Clasificación: ${getPublicationReadinessAnalyzerClassificationLabel(analysis.classification)}.`,
+    `Áreas evaluadas: ${analysis.evaluatedAreas}.`,
+  ];
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
+};
+
+type ScientificPublicationReadinessAnalyzerProps = {
+  analysis: PublicationReadinessAnalyzerAnalysis;
+  evidenceScore: number;
+};
+
+function ScientificPublicationReadinessAnalyzer({
+  analysis,
+  evidenceScore,
+}: ScientificPublicationReadinessAnalyzerProps) {
+  const cards = [
+    {
+      key: "score",
+      icon: "📄",
+      title: "Readiness Score",
+      value: analysis.readinessScore.toFixed(1),
+      subtitle: "Preparación global",
+    },
+    {
+      key: "classification",
+      icon: "📊",
+      title: "Publication Status",
+      value: getPublicationReadinessAnalyzerClassificationLabel(
+        analysis.classification
+      ),
+      subtitle: "Clasificación",
+    },
+    {
+      key: "areas",
+      icon: "📚",
+      title: "Areas Evaluated",
+      value: String(analysis.evaluatedAreas),
+      subtitle: "Áreas evaluadas",
+    },
+    {
+      key: "evidence",
+      icon: "🧪",
+      title: "Evidence Score",
+      value: evidenceScore.toFixed(1),
+      subtitle: "Evidencia científica",
+    },
+  ];
+
+  return (
+    <div className="w-full mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {analysis.interpretation.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Interpretación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.interpretation.map((line, index) => (
+              <li
+                key={`publication-readiness-analyzer-interpretation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -14097,6 +14349,7 @@ const generateScientificReport = (input: {
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
   assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
+  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -14458,6 +14711,13 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Publication Readiness Analyzer",
+    content: getPublicationReadinessAnalyzerReportLines(
+      input.publicationReadinessAnalyzerAnalysis
+    ),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -14741,6 +15001,7 @@ const generateScientificInterpretation = (input: {
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
   assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
+  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -15408,6 +15669,14 @@ const generateScientificInterpretation = (input: {
     );
   }
 
+  if (input.publicationReadinessAnalyzerAnalysis) {
+    deduplicateTextLines(
+      input.publicationReadinessAnalyzerAnalysis.interpretation
+    ).forEach((line) => {
+      if (!findings.includes(line)) findings.push(line);
+    });
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       findings.push("Se compararon dos perfiles experimentales.");
@@ -15679,6 +15948,7 @@ const generateScientificAssistantReport = (input: {
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
   assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
+  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -16086,6 +16356,9 @@ const generateScientificAssistantReport = (input: {
     confidenceLevel = "high";
   }
   if (hasAssumptionTrackerExcellent(input.assumptionTrackerAnalysis)) {
+    confidenceLevel = "high";
+  }
+  if (hasPublicationReadinessAnalyzerReady(input.publicationReadinessAnalyzerAnalysis)) {
     confidenceLevel = "high";
   }
 
@@ -16801,6 +17074,11 @@ const generateScientificAssistantReport = (input: {
       (line) => pushUniqueFinding(line)
     );
   }
+  if (input.publicationReadinessAnalyzerAnalysis) {
+    deduplicateTextLines(
+      input.publicationReadinessAnalyzerAnalysis.interpretation
+    ).forEach((line) => pushUniqueFinding(line));
+  }
   if (
     input.hierarchicalClusteringAnalysis &&
     input.distanceMatrixAnalysis
@@ -16966,6 +17244,11 @@ const generateScientificAssistantReport = (input: {
   if (hasAssumptionTrackerLimited(input.assumptionTrackerAnalysis)) {
     pushCaution(
       "Los supuestos estadísticos presentan limitaciones importantes."
+    );
+  }
+  if (hasPublicationReadinessAnalyzerNotReady(input.publicationReadinessAnalyzerAnalysis)) {
+    pushCaution(
+      "El análisis requiere fortalecimiento metodológico antes de su comunicación."
     );
   }
   if (
@@ -18107,6 +18390,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showEvidenceStrengthEngine, setShowEvidenceStrengthEngine] =
     useState(false);
   const [showAssumptionTracker, setShowAssumptionTracker] = useState(false);
+  const [showPublicationReadinessAnalyzer, setShowPublicationReadinessAnalyzer] =
+    useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -18530,6 +18815,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowReproducibilityExplorer(false);
     setShowEvidenceStrengthEngine(false);
     setShowAssumptionTracker(false);
+    setShowPublicationReadinessAnalyzer(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -19802,6 +20088,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   );
   const hasEnoughSeriesForAssumptionTracker =
     assumptionTrackerAnalysis !== null;
+  const publicationReadinessAnalyzerAnalysis = useMemo(
+    () =>
+      buildPublicationReadinessAnalyzerAnalysis({
+        consistencyEngineAnalysis,
+        reportQualityEngineAnalysis,
+        reproducibilityExplorerAnalysis,
+        evidenceStrengthEngineAnalysis,
+        assumptionTrackerAnalysis,
+      }),
+    [
+      consistencyEngineAnalysis,
+      reportQualityEngineAnalysis,
+      reproducibilityExplorerAnalysis,
+      evidenceStrengthEngineAnalysis,
+      assumptionTrackerAnalysis,
+    ]
+  );
+  const hasEnoughSeriesForPublicationReadinessAnalyzer =
+    publicationReadinessAnalyzerAnalysis !== null;
   const statisticalRecommendation = useMemo(
     () =>
       buildStatisticalRecommendation(
@@ -19853,6 +20158,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         reproducibilityExplorerAnalysis,
         evidenceStrengthEngineAnalysis,
         assumptionTrackerAnalysis,
+        publicationReadinessAnalyzerAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -19905,6 +20211,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       reproducibilityExplorerAnalysis,
       evidenceStrengthEngineAnalysis,
       assumptionTrackerAnalysis,
+      publicationReadinessAnalyzerAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -19957,6 +20264,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         reproducibilityExplorerAnalysis,
         evidenceStrengthEngineAnalysis,
         assumptionTrackerAnalysis,
+        publicationReadinessAnalyzerAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -20004,6 +20312,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       reproducibilityExplorerAnalysis,
       evidenceStrengthEngineAnalysis,
       assumptionTrackerAnalysis,
+      publicationReadinessAnalyzerAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -20055,6 +20364,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         reproducibilityExplorerAnalysis,
         evidenceStrengthEngineAnalysis,
         assumptionTrackerAnalysis,
+        publicationReadinessAnalyzerAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -20108,6 +20418,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       reproducibilityExplorerAnalysis,
       evidenceStrengthEngineAnalysis,
       assumptionTrackerAnalysis,
+      publicationReadinessAnalyzerAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -20792,6 +21103,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showReproducibilityExplorer ||
         showEvidenceStrengthEngine ||
         showAssumptionTracker ||
+        showPublicationReadinessAnalyzer ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -22968,6 +23280,35 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowAssumptionTracker(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForAssumptionTracker}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForPublicationReadinessAnalyzer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Publication Readiness Analyzer
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showPublicationReadinessAnalyzer}
+                            onChange={(e) =>
+                              setShowPublicationReadinessAnalyzer(
+                                e.target.checked
+                              )
+                            }
+                            disabled={
+                              !hasEnoughSeriesForPublicationReadinessAnalyzer
+                            }
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -26188,6 +26529,29 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className={contentPanel}>
                         <ScientificAssumptionTracker
                           analysis={assumptionTrackerAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showPublicationReadinessAnalyzer && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      📄 Publication Readiness Analyzer
+                    </p>
+                    {!publicationReadinessAnalyzerAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Publication
+                        Readiness Analyzer.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificPublicationReadinessAnalyzer
+                          analysis={publicationReadinessAnalyzerAnalysis}
+                          evidenceScore={
+                            evidenceStrengthEngineAnalysis?.evidenceScore ?? 50
+                          }
                         />
                       </div>
                     )}
