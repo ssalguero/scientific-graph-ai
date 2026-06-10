@@ -1,8 +1,8 @@
-# Scientific Graph AI — Estado del Proyecto (Cierre SCI-56)
+# Scientific Graph AI — Estado del Proyecto (Cierre SCI-56 + SCI-29B)
 
-Fecha: 2026-06-09
-Versión actual: SCI-56
-Commit de referencia: `fe4c6f2` (tag `SCI-56`)
+Fecha: 2026-06-10
+Versión actual: SCI-56 + SCI-29B
+Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B implementado sobre esta base
 
 ---
 
@@ -18,6 +18,7 @@ Hitos cerrados en este ciclo:
 | HOTFIX-SCI-NORMALITY-2 | CERRADO | Fuente canónica única de normalidad; eliminación de la dualidad Consenso/Coherencia |
 | BUGFIX SCI-19 | CERRADO | Deduplicación de hallazgos en `generateScientificInterpretation()`; warning React eliminado |
 | SCI-56 | COMPLETADO | Dashboard ejecutivo del bloque metodológico SCI-50→55 |
+| SCI-29B | COMPLETADO | Exclusión de variables constantes en el pipeline de clustering (consistencia con PCA) |
 
 Estado de calidad: Build OK, TypeScript OK, Dataset5 PASS, Dataset6 PASS, PDF OK, repositorio sincronizado con origin.
 
@@ -98,6 +99,19 @@ SCI-56 es capa de solo lectura: no recalcula algoritmos ni modifica scores upstr
 - Toggle dedicado + reset en `resetAnalysisSession()`
 - Integraciones: SCI-17 (sección propia), SCI-19/20 (diagnóstico con dedup), PDF (vía sections)
 
+**SCI-29B — Constant Variable Exclusion in Clustering (COMPLETED)**
+- Exclusión de variables constantes en Distance Matrix
+- Exclusión en Hierarchical Clustering
+- Exclusión en MDS
+- Exclusión heredada en SCI-38 (Cluster Heatmap) y SCI-39 (Clustered Distance Heatmap)
+- Consistencia metodológica con PCA (`CLUSTERING_CONSTANT_EPSILON`, partición activas/constantes)
+- Gate: < 2 variables no constantes → análisis `null`
+- Aviso explícito de exclusión en interpretación, SCI-17/19/20 y PDF
+- Dataset6 validado con exclusión de pH (clustering pasa de 4 a 3 variables)
+- SCI-40 actualizado automáticamente (Clustering 3 grupos, Similaridad 0.73 → 0.67)
+- SCI-56 sin impacto funcional relevante (variación de redondeo en Reproducibility 67.7 → 67.6)
+- Dataset5 como control negativo: comportamiento idéntico pre/post
+
 ---
 
 ## 4. Dashboards disponibles
@@ -113,10 +127,6 @@ SCI-56 muestra: Overall Health Score, número de motores evaluados, 6 tarjetas (
 ---
 
 ## 5. Backlog pendiente
-
-### SCI-29B — Variables constantes en clustering
-
-Excluir variables constantes del clustering jerárquico o tratarlas separadamente. Hoy una variable sin varianza puede distorsionar distancias y agrupamientos.
 
 ### SCI-37B — Empates en Variable Importance
 
@@ -136,7 +146,7 @@ Propuestas no aprobadas, ordenadas por valor estimado:
 
 | Candidato | Tipo | Justificación |
 |-----------|------|---------------|
-| SCI-29B / SCI-37B | Corrección | Promover el backlog existente antes de nuevas features |
+| SCI-37B | Corrección | Promover el backlog existente antes de nuevas features |
 | Dataset de regresión con caso `contradictory` | Validación | Cubrir la regla D1 del motor canónico con evidencia funcional |
 | ARCH-5 — Modularización de `page.tsx` | Arquitectura | ~28K líneas en un archivo; extraer motores y builders a módulos |
 | Drill-down en SCI-56 | UX | Click en tarjeta → navegar/expandir el panel del motor correspondiente |
@@ -155,6 +165,7 @@ Propuestas no aprobadas, ordenadas por valor estimado:
 | SCI-20 | PASS | PASS |
 | Motores SCI-46/51/52/54/55 | PASS | PASS |
 | SCI-56 dashboard (6 tarjetas + diagnóstico) | PASS | PASS |
+| SCI-29B (exclusión de constantes en clustering) | PASS (control negativo, sin cambios) | PASS (pH excluida) |
 | Export PDF (incluye sección SCI-56) | PASS | PASS |
 
 Resultados observados de SCI-56:
@@ -169,6 +180,16 @@ Resultados observados de SCI-56:
 | Assumptions | 60.0 (Moderate) | 70.0 (Good) |
 | Publication | 77.2 (Near Ready) | 67.7 (Requires Review) |
 
+Impacto observado de SCI-29B (Dataset6 pre/post):
+
+| Métrica | Pre | Post |
+|---------|-----|------|
+| Variables en clustering | 4 (incluía pH constante) | 3 (pH excluida con aviso) |
+| SCI-40 · Clustering | 4 grupos | 3 grupos |
+| SCI-40 · Similaridad | 0.73 | 0.67 |
+| SCI-56 · Overall Health Score | 67.7 | 67.7 |
+| SCI-56 · Reproducibility | 67.7 | 67.6 |
+
 Build: Compilación OK · TypeScript OK · Exportación PDF OK.
 
 Git: `main` sincronizado con origin; tags `SCI-55`, `HOTFIX-SCI-NORMALITY-2`, `SCI-56` publicados.
@@ -177,11 +198,11 @@ Git: `main` sincronizado con origin; tags `SCI-55`, `HOTFIX-SCI-NORMALITY-2`, `S
 
 ## 8. Próximos pasos recomendados
 
-1. **Definir SCI-57** a partir de los candidatos de la sección 6 (recomendado: SCI-29B + SCI-37B como par de correcciones, o ARCH-5 si se prioriza sostenibilidad).
+1. **Implementar SCI-37B** (único backlog pendiente) o definir SCI-57 a partir de los candidatos de la sección 6 (ARCH-5 si se prioriza sostenibilidad).
 2. **Validar la regla `contradictory`** con un dataset diseñado para producir contradicción SCI-11 vs. diagnósticos visuales.
 3. **Formalizar la suite de validación** (script Playwright) como herramienta de regresión para futuros bloques.
 4. **Evaluar ARCH-5** antes de que el monolito supere las ~30K líneas, para mantener la velocidad de implementación de bloques futuros.
 
 ---
 
-Documento generado al cierre de SCI-56. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
