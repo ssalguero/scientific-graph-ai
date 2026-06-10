@@ -1,0 +1,494 @@
+import { chromium } from "playwright";
+import fs from "fs";
+import path from "path";
+
+const BASE_URL = process.env.VALIDATION_BASE_URL ?? "http://localhost:3000";
+const DATASET5 = process.env.DATASET5_PATH ??
+  "C:\\Users\\Santiago Salseguero\\Desktop\\IA CIENTIFICA\\Dataset5.csv";
+const DATASET6 = process.env.DATASET6_PATH ??
+  "C:\\Users\\Santiago Salseguero\\Desktop\\IA CIENTIFICA\\Dataset6.csv";
+
+const STATISTICS_TOGGLES = [
+  "Mostrar correlación",
+  "Mostrar normalidad",
+  "Mostrar Methodological Summary Dashboard",
+  "Mostrar Q-Q Plot",
+  "Mostrar Violin Plot",
+  "Mostrar Kernel Density Plot",
+  "Mostrar PCA",
+  "Mostrar Cluster Heatmap",
+  "Mostrar Clustered Distance Heatmap",
+  "Mostrar Bootstrap Explorer",
+  "Mostrar Sensitivity Explorer",
+  "Mostrar Consistency Engine",
+  "Mostrar Report Quality Engine",
+  "Mostrar Reproducibility Explorer",
+  "Mostrar Evidence Strength Engine",
+  "Mostrar Assumption Tracker",
+  "Mostrar Publication Readiness Analyzer",
+  "Mostrar Methodological Summary Dashboard",
+];
+
+const INFERENCE_TOGGLES = ["Mostrar clustering jerárquico"];
+
+const ADVISOR_TOGGLES = [
+  "Mostrar reporte científico",
+  "Mostrar interpretación científica",
+  "Mostrar asistente científico",
+];
+
+const LEGACY_MARKERS = [
+  "Consenso de normalidad",
+  "Coherencia de normalidad",
+  "Coherencia integrada",
+];
+
+async function selectInspectorCategory(page, label) {
+  await page.getByRole("tab", { name: label, exact: true }).click();
+}
+
+async function enableToggle(page, label) {
+  const toggleLabel = page
+    .locator('div[aria-hidden="false"] label')
+    .filter({ hasText: label })
+    .first();
+  if ((await toggleLabel.count()) === 0 || !(await toggleLabel.isVisible())) {
+    return { enabled: false, label, reason: "not-visible" };
+  }
+  const checkbox = toggleLabel.locator('input[type="checkbox"]');
+  if (await checkbox.isDisabled()) {
+    return { enabled: false, label, reason: "disabled" };
+  }
+  if (!(await checkbox.isChecked())) {
+    await toggleLabel.click();
+  }
+  await page.waitForTimeout(150);
+  return { enabled: true, label };
+}
+
+async function importDataset(page, datasetPath) {
+  if (!fs.existsSync(datasetPath)) {
+    throw new Error(`Dataset not found: ${datasetPath}`);
+  }
+
+  await page.getByRole("tab", { name: "Datos" }).click();
+  const preserve = page.getByLabel("Mantener configuración de análisis al importar");
+  if (await preserve.isChecked()) {
+    await preserve.uncheck();
+  }
+  await page
+    .locator('input[type="file"][accept*=".csv"]')
+    .setInputFiles(datasetPath);
+  await page.getByText(path.basename(datasetPath)).waitFor({
+    state: "visible",
+    timeout: 15000,
+  });
+  await page.waitForTimeout(1500);
+}
+
+async function enableModules(page) {
+  await page.getByRole("tab", { name: "Análisis" }).click();
+  await selectInspectorCategory(page, "Estadística");
+  const disabledToggles = [];
+  for (const toggle of STATISTICS_TOGGLES) {
+    const state = await enableToggle(page, toggle);
+    if (state.enabled === false) disabledToggles.push(toggle);
+  }
+  await selectInspectorCategory(page, "Inferencia");
+  for (const toggle of INFERENCE_TOGGLES) {
+    const state = await enableToggle(page, toggle);
+    if (state.enabled === false) disabledToggles.push(toggle);
+  }
+  await selectInspectorCategory(page, "Advisor");
+  for (const toggle of ADVISOR_TOGGLES) {
+    const state = await enableToggle(page, toggle);
+    if (state.enabled === false) disabledToggles.push(toggle);
+  }
+  return disabledToggles;
+}
+
+async function expandNotebook(page, title) {
+  const button = page.getByRole("button", { name: new RegExp(title, "i") });
+  if ((await button.count()) === 0) {
+    return false;
+  }
+  const target = button.first();
+  const expanded = await target.getAttribute("aria-expanded");
+  if (expanded === "false") {
+    await target.click();
+  }
+  return true;
+}
+
+async function validateDataset(page, datasetPath, datasetName) {
+  const result = {
+    dataset: datasetName,
+    pass: true,
+    checks: {},
+    issues: [],
+    reactWarnings: [],
+  };
+
+  const consoleMessages = [];
+  page.on("console", (msg) => {
+    const text = msg.text();
+    if (
+      text.includes("Encountered two children with the same key") ||
+      text.includes("finding-Se observan bloques compactos")
+    ) {
+      result.reactWarnings.push(text);
+    }
+    if (msg.type() === "error" && !text.includes("width(0) and height(0)")) {
+      consoleMessages.push(text);
+    }
+  });
+
+  await page.goto(BASE_URL, { waitUntil: "networkidle" });
+  await importDataset(page, datasetPath);
+  const disabledToggles = await enableModules(page);
+  const criticalToggles = [
+    "Mostrar normalidad",
+    "Mostrar Q-Q Plot",
+    "Mostrar Bootstrap Explorer",
+    "Mostrar reporte científico",
+    "Mostrar interpretación científica",
+  ];
+  const disabledCritical = disabledToggles.filter((toggle) =>
+    criticalToggles.includes(toggle)
+  );
+  if (disabledCritical.length > 0) {
+    result.issues.push(
+      `Toggles críticos no activados: ${disabledCritical.join(", ")}`
+    );
+  }
+
+  await page.getByRole("tab", { name: "Resultados" }).click();
+  await expandNotebook(page, "Resultados matemáticos");
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(2500);
+
+  result.checks.integratedPanel = await page
+    .getByText("🔬 Evaluación integrada de normalidad")
+    .isVisible();
+  result.checks.methodologicalDashboard = await page
+    .getByText("📋 Methodological Summary Dashboard")
+    .isVisible()
+    .catch(() => false);
+  if (!result.checks.methodologicalDashboard) {
+    result.issues.push("Panel Methodological Summary Dashboard no visible");
+  }
+  if (!result.checks.integratedPanel) {
+    result.issues.push("Panel integrado no visible en Resultados");
+  }
+
+  const bodyText = await page.locator("body").innerText();
+  result.checks.noLegacyMarkers = !LEGACY_MARKERS.some((marker) =>
+    bodyText.includes(marker)
+  );
+  if (!result.checks.noLegacyMarkers) {
+    result.issues.push("Texto legacy Consenso/Coherencia detectado");
+  }
+
+  const engineTexts = [
+    "Bootstrap Explorer",
+    "Report Quality Engine",
+    "Reproducibility Explorer",
+    "Assumption Tracker",
+    "Publication Readiness Analyzer",
+    "Methodological Summary Dashboard",
+  ];
+  for (const engineText of engineTexts) {
+    const locator = page.getByText(engineText, { exact: false }).first();
+    if (await locator.count()) {
+      await locator.scrollIntoViewIfNeeded().catch(() => {});
+    }
+  }
+  await page.waitForTimeout(500);
+
+  result.checks.bootstrapEngine = await page
+    .getByText("Bootstrap Explorer", { exact: false })
+    .first()
+    .isVisible();
+  result.checks.qualityEngine = await page
+    .getByText("Report Quality Engine", { exact: false })
+    .first()
+    .isVisible();
+  result.checks.reproducibilityEngine = await page
+    .getByText("Reproducibility Explorer", { exact: false })
+    .first()
+    .isVisible();
+  result.checks.assumptionTracker = await page
+    .getByText("Assumption Tracker", { exact: false })
+    .first()
+    .isVisible();
+  result.checks.publicationReadiness = await page
+    .getByText("Publication Readiness Analyzer", { exact: false })
+    .first()
+    .isVisible();
+
+  result.checks.sci56DashboardPanel = await page
+    .getByText("📋 Methodological Summary Dashboard")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  result.checks.sci56OverallHealthScore = await page
+    .getByText("Overall Health Score", { exact: false })
+    .first()
+    .isVisible()
+    .catch(() => false);
+  const sci56Cards = await Promise.all(
+    ["Consistency", "Quality", "Reproducibility", "Evidence", "Assumptions", "Publication"].map(
+      (cardTitle) =>
+        page
+          .getByText(cardTitle, { exact: true })
+          .first()
+          .isVisible()
+          .catch(() => false)
+    )
+  );
+  result.checks.sci56EngineCards = sci56Cards.filter(Boolean).length;
+  if (!result.checks.sci56DashboardPanel) {
+    result.issues.push("SCI-56: panel del dashboard no visible");
+  }
+  if (!result.checks.sci56OverallHealthScore) {
+    result.issues.push("SCI-56: Overall Health Score no visible");
+  }
+  if (result.checks.sci56EngineCards < 4) {
+    result.issues.push(
+      `SCI-56: solo ${result.checks.sci56EngineCards}/6 tarjetas de motores visibles`
+    );
+  }
+
+  for (const [key, ok] of Object.entries({
+    bootstrapEngine: result.checks.bootstrapEngine,
+    qualityEngine: result.checks.qualityEngine,
+    reproducibilityEngine: result.checks.reproducibilityEngine,
+    assumptionTracker: result.checks.assumptionTracker,
+    publicationReadiness: result.checks.publicationReadiness,
+  })) {
+    if (!ok) result.issues.push(`Motor no visible: ${key}`);
+  }
+
+  const engineEmptyStates = [
+    "No hay datos suficientes para generar Bootstrap Explorer.",
+    "No hay datos suficientes para generar Report Quality Engine.",
+    "No hay datos suficientes para generar Reproducibility Explorer.",
+    "No hay datos suficientes para generar Assumption Tracker.",
+    "No hay datos suficientes para generar Publication Readiness",
+    "No hay datos suficientes para generar Methodological",
+  ];
+  result.checks.enginesHaveOutput = !engineEmptyStates.some((text) =>
+    bodyText.includes(text)
+  );
+  if (!result.checks.enginesHaveOutput) {
+    result.issues.push("Uno o más motores metodológicos sin salida");
+  }
+
+  result.checks.sci19PanelVisible = await page
+    .getByText("Interpretación científica", { exact: false })
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (result.checks.sci19PanelVisible) {
+    await expandNotebook(page, "Interpretación científica");
+  }
+
+  const hallazgosBlock = bodyText.split("Hallazgos principales")[1]?.split(
+    "Recomendaciones"
+  )[0];
+  const compactBlockCountInSci19 =
+    hallazgosBlock?.match(
+      /Se observan bloques compactos de variables similares\./g
+    )?.length ?? 0;
+  result.checks.sci19NoDuplicateCompactBlocks = compactBlockCountInSci19 <= 1;
+  if (!result.checks.sci19NoDuplicateCompactBlocks) {
+    result.issues.push(
+      `SCI-19: hallazgo duplicado de bloques compactos (${compactBlockCountInSci19})`
+    );
+  }
+  const hallazgoLines =
+    hallazgosBlock
+      ?.split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 20) ?? [];
+  const uniqueFindings = new Set(hallazgoLines);
+  result.checks.sci19UniqueFindings =
+    hallazgoLines.length === 0 ||
+    uniqueFindings.size === hallazgoLines.length;
+  if (!result.checks.sci19UniqueFindings) {
+    result.issues.push("SCI-19: hallazgos duplicados en texto visible");
+  }
+
+  result.checks.sci20Visible = await page
+    .getByText("Asistente científico", { exact: false })
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (result.checks.sci20Visible) {
+    await expandNotebook(page, "Asistente científico");
+  }
+
+  await page.getByRole("tab", { name: "Reportes" }).click();
+  await expandNotebook(page, "Reporte científico");
+  await expandNotebook(page, "Evaluación integrada de normalidad");
+  await page.waitForTimeout(1000);
+  const reportsText = await page.locator("body").innerText();
+  result.checks.sci17IntegratedSection = reportsText.includes(
+    "Evaluación integrada de normalidad"
+  );
+  result.checks.sci56Sci17Section = reportsText.includes(
+    "Methodological Summary Dashboard"
+  );
+  if (!result.checks.sci56Sci17Section) {
+    result.issues.push("SCI-56: sección no encontrada en SCI-17");
+  }
+  if (!result.checks.sci17IntegratedSection) {
+    result.issues.push("SCI-17: sección integrada no encontrada en reporte");
+  }
+
+  const reportSections = await page
+    .locator("button")
+    .filter({ hasText: /normalidad/i })
+    .allTextContents();
+  const normalitySectionCount = reportSections.filter((title) =>
+    /Evaluación integrada de normalidad|Consenso de normalidad|Coherencia de normalidad/i.test(
+      title
+    )
+  ).length;
+  result.checks.sci17SingleNormalitySection = normalitySectionCount <= 1;
+  if (!result.checks.sci17SingleNormalitySection) {
+    result.issues.push("SCI-17: múltiples secciones de normalidad");
+  }
+
+  if (datasetName === "Dataset6") {
+    const mergedText = `${bodyText}\n${reportsText}`;
+    result.checks.dataset6ContradictoryCase =
+      mergedText.includes("Señales contradictorias") ||
+      mergedText.includes("señales contradictorias");
+  }
+
+  result.checks.noReactDuplicateKeys = result.reactWarnings.length === 0;
+  if (!result.checks.noReactDuplicateKeys) {
+    result.issues.push(...result.reactWarnings);
+  }
+
+  result.pass = result.issues.length === 0;
+  return result;
+}
+
+async function validatePdf(page, datasetPath) {
+  await page.goto(BASE_URL, { waitUntil: "networkidle" });
+  await importDataset(page, datasetPath);
+  await enableModules(page);
+  await page.getByRole("tab", { name: "Reportes" }).click();
+  await expandNotebook(page, "Exportaciones");
+
+  const downloadPromise = page.waitForEvent("download", { timeout: 30000 });
+  await page.getByRole("button", { name: /Exportar PDF/i }).click();
+  const download = await downloadPromise;
+  const downloadPath = path.join(
+    process.cwd(),
+    "scripts",
+    `.validation-${path.basename(datasetPath, ".csv")}.pdf`
+  );
+  await download.saveAs(downloadPath);
+  const stats = fs.statSync(downloadPath);
+  const buffer = fs.readFileSync(downloadPath);
+  const pdfText = buffer.toString("latin1");
+  const hasIntegrated = pdfText.includes("Evaluación integrada de normalidad");
+  const hasLegacy =
+    pdfText.includes("Consenso de normalidad") ||
+    pdfText.includes("Coherencia de normalidad");
+  const hasSci56 = pdfText.includes("Methodological Summary Dashboard");
+  return {
+    pass: stats.size > 5000 && hasIntegrated && !hasLegacy && hasSci56,
+    size: stats.size,
+    hasIntegrated,
+    hasLegacy,
+    hasSci56,
+    path: downloadPath,
+  };
+}
+
+async function main() {
+  for (const datasetPath of [DATASET5, DATASET6]) {
+    if (!fs.existsSync(datasetPath)) {
+      console.error(`Missing dataset: ${datasetPath}`);
+      process.exit(1);
+    }
+  }
+
+  const browser = await chromium.launch({
+    headless: true,
+    channel: process.env.PLAYWRIGHT_CHANNEL ?? "msedge",
+  });
+  const context = await browser.newContext({ acceptDownloads: true });
+  const page = await context.newPage();
+
+  const dataset5 = await validateDataset(page, DATASET5, "Dataset5");
+  const dataset6 = await validateDataset(page, DATASET6, "Dataset6");
+  const pdf5 = await validatePdf(page, DATASET5);
+  const pdf6 = await validatePdf(page, DATASET6);
+
+  await browser.close();
+
+  const summary = {
+    dataset5,
+    dataset6,
+    pdf: {
+      pass: pdf5.pass && pdf6.pass,
+      dataset5: pdf5,
+      dataset6: pdf6,
+    },
+    sci17: {
+      pass:
+        dataset5.checks.sci17IntegratedSection &&
+        dataset6.checks.sci17IntegratedSection &&
+        dataset5.checks.sci17SingleNormalitySection &&
+        dataset6.checks.sci17SingleNormalitySection,
+    },
+    sci19: {
+      pass:
+        dataset5.checks.sci19UniqueFindings &&
+        dataset6.checks.sci19UniqueFindings &&
+        dataset5.checks.sci19NoDuplicateCompactBlocks &&
+        dataset6.checks.sci19NoDuplicateCompactBlocks &&
+        dataset5.checks.noReactDuplicateKeys &&
+        dataset6.checks.noReactDuplicateKeys,
+    },
+    sci20: {
+      pass: dataset5.checks.sci20Visible && dataset6.checks.sci20Visible,
+    },
+    methodologicalEngines: {
+      pass:
+        dataset5.checks.enginesHaveOutput && dataset6.checks.enginesHaveOutput,
+    },
+    noRegressions: {
+      pass:
+        dataset5.checks.noLegacyMarkers &&
+        dataset6.checks.noLegacyMarkers &&
+        dataset5.checks.integratedPanel &&
+        dataset6.checks.integratedPanel,
+    },
+    sci56: {
+      pass:
+        dataset5.checks.sci56DashboardPanel &&
+        dataset6.checks.sci56DashboardPanel &&
+        dataset5.checks.sci56OverallHealthScore &&
+        dataset6.checks.sci56OverallHealthScore &&
+        dataset5.checks.sci56Sci17Section &&
+        dataset6.checks.sci56Sci17Section &&
+        pdf5.hasSci56 &&
+        pdf6.hasSci56,
+      engineCardsDataset5: dataset5.checks.sci56EngineCards,
+      engineCardsDataset6: dataset6.checks.sci56EngineCards,
+    },
+  };
+
+  console.log(JSON.stringify(summary, null, 2));
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
