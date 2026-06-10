@@ -11910,6 +11910,434 @@ function ScientificPublicationReadinessAnalyzer({
   );
 }
 
+type MethodologicalDashboardAnalysis = {
+  summaryCards: {
+    consistencyScore?: number;
+    consistencyClassification?: ConsistencyEngineAnalysis["classification"];
+    qualityScore?: number;
+    qualityClassification?: ReportQualityEngineAnalysis["classification"];
+    reproducibilityScore?: number;
+    reproducibilityClassification?: ReproducibilityExplorerAnalysis["classification"];
+    evidenceScore?: number;
+    evidenceClassification?: EvidenceStrengthEngineAnalysis["classification"];
+    assumptionScore?: number;
+    assumptionClassification?: AssumptionTrackerAnalysis["classification"];
+    readinessScore?: number;
+    readinessClassification?: PublicationReadinessAnalyzerAnalysis["classification"];
+  };
+  overallHealthScore: number;
+  evaluatedEngines: number;
+  diagnosis: string[];
+};
+
+const canBuildMethodologicalDashboard = (input: {
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
+  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
+}) =>
+  input.consistencyEngineAnalysis !== null ||
+  input.reportQualityEngineAnalysis !== null ||
+  input.reproducibilityExplorerAnalysis !== null ||
+  input.evidenceStrengthEngineAnalysis !== null ||
+  input.assumptionTrackerAnalysis !== null ||
+  input.publicationReadinessAnalyzerAnalysis !== null;
+
+const buildMethodologicalDashboardDiagnosis = (input: {
+  summaryCards: MethodologicalDashboardAnalysis["summaryCards"];
+  overallHealthScore: number;
+}): string[] => {
+  const diagnosis: string[] = [];
+  const {
+    consistencyScore,
+    evidenceScore,
+    assumptionScore,
+    reproducibilityScore,
+    qualityScore,
+    readinessScore,
+  } = input.summaryCards;
+
+  if (readinessScore !== undefined && readinessScore >= 85) {
+    diagnosis.push(
+      "El análisis presenta preparación adecuada para publicación."
+    );
+  }
+
+  if (
+    consistencyScore !== undefined &&
+    consistencyScore >= 85 &&
+    evidenceScore !== undefined &&
+    evidenceScore >= 85
+  ) {
+    diagnosis.push(
+      "Los distintos enfoques metodológicos convergen hacia conclusiones compatibles."
+    );
+  }
+
+  if (assumptionScore !== undefined && assumptionScore < 70) {
+    diagnosis.push(
+      "Algunos supuestos estadísticos requieren revisión antes de interpretar los resultados."
+    );
+  }
+
+  if (reproducibilityScore !== undefined && reproducibilityScore < 70) {
+    diagnosis.push(
+      "La reproducibilidad potencial del análisis es limitada."
+    );
+  }
+
+  if (
+    qualityScore !== undefined &&
+    qualityScore >= 85 &&
+    assumptionScore !== undefined &&
+    assumptionScore < 70
+  ) {
+    diagnosis.push(
+      "La calidad del reporte es alta, pero los supuestos estadísticos conviene validarlos."
+    );
+  }
+
+  if (input.overallHealthScore < 70 && diagnosis.length === 0) {
+    diagnosis.push(
+      "La evaluación metodológica global sugiere revisar el diseño y los supuestos del análisis."
+    );
+  }
+
+  return deduplicateTextLines(diagnosis);
+};
+
+const buildMethodologicalDashboardAnalysis = (input: {
+  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
+  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
+  reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
+  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
+}): MethodologicalDashboardAnalysis | null => {
+  if (!canBuildMethodologicalDashboard(input)) {
+    return null;
+  }
+
+  const summaryCards: MethodologicalDashboardAnalysis["summaryCards"] = {};
+  const scores: number[] = [];
+
+  if (input.consistencyEngineAnalysis) {
+    summaryCards.consistencyScore =
+      input.consistencyEngineAnalysis.consistencyScore;
+    summaryCards.consistencyClassification =
+      input.consistencyEngineAnalysis.classification;
+    scores.push(input.consistencyEngineAnalysis.consistencyScore);
+  }
+
+  if (input.reportQualityEngineAnalysis) {
+    summaryCards.qualityScore = input.reportQualityEngineAnalysis.qualityScore;
+    summaryCards.qualityClassification =
+      input.reportQualityEngineAnalysis.classification;
+    scores.push(input.reportQualityEngineAnalysis.qualityScore);
+  }
+
+  if (input.reproducibilityExplorerAnalysis) {
+    summaryCards.reproducibilityScore =
+      input.reproducibilityExplorerAnalysis.reproducibilityScore;
+    summaryCards.reproducibilityClassification =
+      input.reproducibilityExplorerAnalysis.classification;
+    scores.push(input.reproducibilityExplorerAnalysis.reproducibilityScore);
+  }
+
+  if (input.evidenceStrengthEngineAnalysis) {
+    summaryCards.evidenceScore =
+      input.evidenceStrengthEngineAnalysis.evidenceScore;
+    summaryCards.evidenceClassification =
+      input.evidenceStrengthEngineAnalysis.classification;
+    scores.push(input.evidenceStrengthEngineAnalysis.evidenceScore);
+  }
+
+  if (input.assumptionTrackerAnalysis) {
+    summaryCards.assumptionScore = input.assumptionTrackerAnalysis.overallScore;
+    summaryCards.assumptionClassification =
+      input.assumptionTrackerAnalysis.classification;
+    scores.push(input.assumptionTrackerAnalysis.overallScore);
+  }
+
+  if (input.publicationReadinessAnalyzerAnalysis) {
+    summaryCards.readinessScore =
+      input.publicationReadinessAnalyzerAnalysis.readinessScore;
+    summaryCards.readinessClassification =
+      input.publicationReadinessAnalyzerAnalysis.classification;
+    scores.push(input.publicationReadinessAnalyzerAnalysis.readinessScore);
+  }
+
+  const overallHealthScore =
+    scores.length > 0
+      ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+      : 0;
+  const diagnosis = buildMethodologicalDashboardDiagnosis({
+    summaryCards,
+    overallHealthScore,
+  });
+
+  return {
+    summaryCards,
+    overallHealthScore,
+    evaluatedEngines: scores.length,
+    diagnosis,
+  };
+};
+
+const getMethodologicalDashboardReportLines = (
+  analysis: MethodologicalDashboardAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return [
+      "No hay datos suficientes para generar Methodological Summary Dashboard.",
+    ];
+  }
+
+  const lines = [
+    `Overall Health Score: ${analysis.overallHealthScore.toFixed(1)}.`,
+    `Motores evaluados: ${analysis.evaluatedEngines}.`,
+  ];
+  const { summaryCards } = analysis;
+
+  if (summaryCards.consistencyScore !== undefined) {
+    lines.push(
+      `Consistency: ${summaryCards.consistencyScore.toFixed(1)} — ${
+        summaryCards.consistencyClassification
+          ? getConsistencyEngineClassificationLabel(
+              summaryCards.consistencyClassification
+            )
+          : "N/A"
+      }.`
+    );
+  }
+
+  if (summaryCards.qualityScore !== undefined) {
+    lines.push(
+      `Quality: ${summaryCards.qualityScore.toFixed(1)} — ${
+        summaryCards.qualityClassification
+          ? getReportQualityEngineClassificationLabel(
+              summaryCards.qualityClassification
+            )
+          : "N/A"
+      }.`
+    );
+  }
+
+  if (summaryCards.reproducibilityScore !== undefined) {
+    lines.push(
+      `Reproducibility: ${summaryCards.reproducibilityScore.toFixed(1)} — ${
+        summaryCards.reproducibilityClassification
+          ? getReproducibilityExplorerClassificationLabel(
+              summaryCards.reproducibilityClassification
+            )
+          : "N/A"
+      }.`
+    );
+  }
+
+  if (summaryCards.evidenceScore !== undefined) {
+    lines.push(
+      `Evidence: ${summaryCards.evidenceScore.toFixed(1)} — ${
+        summaryCards.evidenceClassification
+          ? getEvidenceStrengthEngineClassificationLabel(
+              summaryCards.evidenceClassification
+            )
+          : "N/A"
+      }.`
+    );
+  }
+
+  if (summaryCards.assumptionScore !== undefined) {
+    lines.push(
+      `Assumptions: ${summaryCards.assumptionScore.toFixed(1)} — ${
+        summaryCards.assumptionClassification
+          ? getAssumptionTrackerClassificationLabel(
+              summaryCards.assumptionClassification
+            )
+          : "N/A"
+      }.`
+    );
+  }
+
+  if (summaryCards.readinessScore !== undefined) {
+    lines.push(
+      `Publication Readiness: ${summaryCards.readinessScore.toFixed(1)} — ${
+        summaryCards.readinessClassification
+          ? getPublicationReadinessAnalyzerClassificationLabel(
+              summaryCards.readinessClassification
+            )
+          : "N/A"
+      }.`
+    );
+  }
+
+  if (analysis.diagnosis.length > 0) {
+    lines.push("Diagnóstico global:");
+    analysis.diagnosis.forEach((line) => lines.push(line));
+  }
+
+  return deduplicateTextLines(lines);
+};
+
+type ScientificMethodologicalDashboardProps = {
+  analysis: MethodologicalDashboardAnalysis;
+};
+
+function ScientificMethodologicalDashboard({
+  analysis,
+}: ScientificMethodologicalDashboardProps) {
+  const { summaryCards, diagnosis } = analysis;
+  const cards: {
+    key: string;
+    icon: string;
+    title: string;
+    value: string;
+    subtitle: string;
+  }[] = [];
+
+  if (summaryCards.consistencyScore !== undefined) {
+    cards.push({
+      key: "consistency",
+      icon: "🧩",
+      title: "Consistency",
+      value: summaryCards.consistencyScore.toFixed(1),
+      subtitle: summaryCards.consistencyClassification
+        ? getConsistencyEngineClassificationLabel(
+            summaryCards.consistencyClassification
+          )
+        : "SCI-50",
+    });
+  }
+
+  if (summaryCards.qualityScore !== undefined) {
+    cards.push({
+      key: "quality",
+      icon: "📄",
+      title: "Quality",
+      value: summaryCards.qualityScore.toFixed(1),
+      subtitle: summaryCards.qualityClassification
+        ? getReportQualityEngineClassificationLabel(
+            summaryCards.qualityClassification
+          )
+        : "SCI-51",
+    });
+  }
+
+  if (summaryCards.reproducibilityScore !== undefined) {
+    cards.push({
+      key: "reproducibility",
+      icon: "🔁",
+      title: "Reproducibility",
+      value: summaryCards.reproducibilityScore.toFixed(1),
+      subtitle: summaryCards.reproducibilityClassification
+        ? getReproducibilityExplorerClassificationLabel(
+            summaryCards.reproducibilityClassification
+          )
+        : "SCI-52",
+    });
+  }
+
+  if (summaryCards.evidenceScore !== undefined) {
+    cards.push({
+      key: "evidence",
+      icon: "🧪",
+      title: "Evidence",
+      value: summaryCards.evidenceScore.toFixed(1),
+      subtitle: summaryCards.evidenceClassification
+        ? getEvidenceStrengthEngineClassificationLabel(
+            summaryCards.evidenceClassification
+          )
+        : "SCI-53",
+    });
+  }
+
+  if (summaryCards.assumptionScore !== undefined) {
+    cards.push({
+      key: "assumptions",
+      icon: "📋",
+      title: "Assumptions",
+      value: summaryCards.assumptionScore.toFixed(1),
+      subtitle: summaryCards.assumptionClassification
+        ? getAssumptionTrackerClassificationLabel(
+            summaryCards.assumptionClassification
+          )
+        : "SCI-54",
+    });
+  }
+
+  if (summaryCards.readinessScore !== undefined) {
+    cards.push({
+      key: "readiness",
+      icon: "📰",
+      title: "Publication",
+      value: summaryCards.readinessScore.toFixed(1),
+      subtitle: summaryCards.readinessClassification
+        ? getPublicationReadinessAnalyzerClassificationLabel(
+            summaryCards.readinessClassification
+          )
+        : "SCI-55",
+    });
+  }
+
+  return (
+    <div className="w-full mt-3">
+      <div className={`${contentPanel} mb-3 flex flex-col gap-1`}>
+        <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+          📊 Overall Health Score
+        </p>
+        <p className="text-2xl font-semibold text-[var(--app-heading)] tabular-nums">
+          {analysis.overallHealthScore.toFixed(1)}
+        </p>
+        <p className="text-xs text-[var(--app-text-muted)]">
+          {analysis.evaluatedEngines} motor
+          {analysis.evaluatedEngines === 1 ? "" : "es"} metodológico
+          {analysis.evaluatedEngines === 1 ? "" : "s"} evaluado
+          {analysis.evaluatedEngines === 1 ? "" : "s"}
+        </p>
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {diagnosis.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Diagnóstico global
+          </p>
+          <ul className="mt-2 space-y-1">
+            {diagnosis.map((line, index) => (
+              <li
+                key={`methodological-dashboard-diagnosis-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ScientificClusteredDistanceHeatmapProps = {
   clusteringAnalysis: HierarchicalClusteringAnalysis;
   clusterHeatmapAnalysis: ClusterHeatmapAnalysis;
@@ -14200,6 +14628,7 @@ const generateScientificReport = (input: {
   evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
   assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
   publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
+  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -14556,6 +14985,13 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
+    title: "Methodological Summary Dashboard",
+    content: getMethodologicalDashboardReportLines(
+      input.methodologicalDashboardAnalysis
+    ),
+  });
+
+  sections.push({
     title: "Clusterización jerárquica",
     content: deduplicateTextLines([
       ...getHierarchicalClusteringInterpretationLines(
@@ -14840,6 +15276,7 @@ const generateScientificInterpretation = (input: {
   evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
   assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
   publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
+  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   experimentalOutliers: ExperimentalOutlier[];
   tTestResult: TTestResult | null;
@@ -15512,6 +15949,14 @@ const generateScientificInterpretation = (input: {
     });
   }
 
+  if (input.methodologicalDashboardAnalysis) {
+    deduplicateTextLines(input.methodologicalDashboardAnalysis.diagnosis).forEach(
+      (line) => {
+        pushUniqueFinding(line);
+      }
+    );
+  }
+
   if (input.hierarchicalClusteringAnalysis) {
     if (input.hierarchicalClusteringAnalysis.seriesCount === 2) {
       pushUniqueFinding("Se compararon dos perfiles experimentales.");
@@ -15780,6 +16225,7 @@ const generateScientificAssistantReport = (input: {
   evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
   assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
   publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
+  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
   hierarchicalClusteringAnalysis: HierarchicalClusteringAnalysis | null;
   showHierarchicalClustering: boolean;
   showClusterHeatmap: boolean;
@@ -16901,6 +17347,16 @@ const generateScientificAssistantReport = (input: {
     deduplicateTextLines(
       input.publicationReadinessAnalyzerAnalysis.interpretation
     ).forEach((line) => pushUniqueFinding(line));
+  }
+  if (input.methodologicalDashboardAnalysis) {
+    deduplicateTextLines(input.methodologicalDashboardAnalysis.diagnosis).forEach(
+      (line) => pushUniqueFinding(line)
+    );
+    if (input.methodologicalDashboardAnalysis.overallHealthScore < 70) {
+      pushCaution(
+        "La evaluación metodológica global sugiere revisar el diseño del análisis."
+      );
+    }
   }
   if (
     input.hierarchicalClusteringAnalysis &&
@@ -18215,6 +18671,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showAssumptionTracker, setShowAssumptionTracker] = useState(false);
   const [showPublicationReadinessAnalyzer, setShowPublicationReadinessAnalyzer] =
     useState(false);
+  const [showMethodologicalDashboard, setShowMethodologicalDashboard] =
+    useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -18639,6 +19097,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowEvidenceStrengthEngine(false);
     setShowAssumptionTracker(false);
     setShowPublicationReadinessAnalyzer(false);
+    setShowMethodologicalDashboard(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -19910,6 +20369,34 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   );
   const hasEnoughSeriesForPublicationReadinessAnalyzer =
     publicationReadinessAnalyzerAnalysis !== null;
+  const methodologicalDashboardAnalysis = useMemo(
+    () =>
+      buildMethodologicalDashboardAnalysis({
+        consistencyEngineAnalysis,
+        reportQualityEngineAnalysis,
+        reproducibilityExplorerAnalysis,
+        evidenceStrengthEngineAnalysis,
+        assumptionTrackerAnalysis,
+        publicationReadinessAnalyzerAnalysis,
+      }),
+    [
+      consistencyEngineAnalysis,
+      reportQualityEngineAnalysis,
+      reproducibilityExplorerAnalysis,
+      evidenceStrengthEngineAnalysis,
+      assumptionTrackerAnalysis,
+      publicationReadinessAnalyzerAnalysis,
+    ]
+  );
+  const hasEnoughSeriesForMethodologicalDashboard =
+    canBuildMethodologicalDashboard({
+      consistencyEngineAnalysis,
+      reportQualityEngineAnalysis,
+      reproducibilityExplorerAnalysis,
+      evidenceStrengthEngineAnalysis,
+      assumptionTrackerAnalysis,
+      publicationReadinessAnalyzerAnalysis,
+    });
   const statisticalRecommendation = useMemo(
     () =>
       buildStatisticalRecommendation(
@@ -19962,6 +20449,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         evidenceStrengthEngineAnalysis,
         assumptionTrackerAnalysis,
         publicationReadinessAnalyzerAnalysis,
+        methodologicalDashboardAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -20015,6 +20503,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       evidenceStrengthEngineAnalysis,
       assumptionTrackerAnalysis,
       publicationReadinessAnalyzerAnalysis,
+      methodologicalDashboardAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -20068,6 +20557,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         evidenceStrengthEngineAnalysis,
         assumptionTrackerAnalysis,
         publicationReadinessAnalyzerAnalysis,
+        methodologicalDashboardAnalysis,
         hierarchicalClusteringAnalysis,
         experimentalOutliers,
         tTestResult,
@@ -20116,6 +20606,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       evidenceStrengthEngineAnalysis,
       assumptionTrackerAnalysis,
       publicationReadinessAnalyzerAnalysis,
+      methodologicalDashboardAnalysis,
       hierarchicalClusteringAnalysis,
       experimentalOutliers,
       tTestResult,
@@ -20168,6 +20659,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         evidenceStrengthEngineAnalysis,
         assumptionTrackerAnalysis,
         publicationReadinessAnalyzerAnalysis,
+        methodologicalDashboardAnalysis,
         hierarchicalClusteringAnalysis,
         showHierarchicalClustering,
         showClusterHeatmap,
@@ -20222,6 +20714,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       evidenceStrengthEngineAnalysis,
       assumptionTrackerAnalysis,
       publicationReadinessAnalyzerAnalysis,
+      methodologicalDashboardAnalysis,
       hierarchicalClusteringAnalysis,
       showHierarchicalClustering,
       showClusterHeatmap,
@@ -20907,6 +21400,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showEvidenceStrengthEngine ||
         showAssumptionTracker ||
         showPublicationReadinessAnalyzer ||
+        showMethodologicalDashboard ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest || showAnova || showPostHoc || showNonParametric)) ||
@@ -23112,6 +23606,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             disabled={
                               !hasEnoughSeriesForPublicationReadinessAnalyzer
                             }
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForMethodologicalDashboard
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Methodological Summary Dashboard
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showMethodologicalDashboard}
+                            onChange={(e) =>
+                              setShowMethodologicalDashboard(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForMethodologicalDashboard}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -26316,6 +26835,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           evidenceScore={
                             evidenceStrengthEngineAnalysis?.evidenceScore ?? 50
                           }
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showMethodologicalDashboard && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      📋 Methodological Summary Dashboard
+                    </p>
+                    {!methodologicalDashboardAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Methodological
+                        Summary Dashboard.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificMethodologicalDashboard
+                          analysis={methodologicalDashboardAnalysis}
                         />
                       </div>
                     )}
