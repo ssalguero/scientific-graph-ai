@@ -6046,6 +6046,7 @@ type MDSPoint = {
 type MDSAnalysis = {
   points: MDSPoint[];
   stress: number;
+  excludedConstantVariables: string[];
   interpretation: string[];
 };
 
@@ -6061,6 +6062,7 @@ type DistanceMatrixAnalysis = {
   minDistance: number;
   maxDistance: number;
   averageDistance: number;
+  excludedConstantVariables: string[];
   interpretation: string[];
 };
 
@@ -6251,6 +6253,7 @@ type ClusterNode = {
 type HierarchicalClusteringAnalysis = {
   root: ClusterNode | null;
   seriesCount: number;
+  excludedConstantVariables: string[];
   interpretation: string;
 };
 
@@ -6281,6 +6284,41 @@ const canBuildHierarchicalClustering = (series: ExperimentalSeries[]) => {
   if (series.length < 2) return false;
   return series.every((item) => item.points.length >= 3);
 };
+
+// SCI-29B: exclusión de variables constantes del clustering (patrón PCA).
+const CLUSTERING_CONSTANT_EPSILON = 1e-9;
+
+const isClusteringConstantSeries = (series: ExperimentalSeries): boolean => {
+  const values = getSeriesYValues(series);
+  if (values.length === 0) return true;
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  return values.every(
+    (value) => Math.abs(value - mean) <= CLUSTERING_CONSTANT_EPSILON
+  );
+};
+
+const partitionClusteringSeriesByVariance = (
+  series: ExperimentalSeries[]
+): {
+  activeSeries: ExperimentalSeries[];
+  excludedConstantVariables: string[];
+} => {
+  const activeSeries: ExperimentalSeries[] = [];
+  const excludedConstantVariables: string[] = [];
+  series.forEach((item) => {
+    if (isClusteringConstantSeries(item)) {
+      excludedConstantVariables.push(item.name);
+    } else {
+      activeSeries.push(item);
+    }
+  });
+  return { activeSeries, excludedConstantVariables };
+};
+
+const getClusteringConstantExclusionNotice = (
+  excludedConstantVariables: string[]
+): string =>
+  `Variables constantes excluidas del clustering (sin variabilidad): ${excludedConstantVariables.join(", ")}.`;
 
 const euclideanSeriesDistance = (
   leftValues: number[],
@@ -6466,11 +6504,17 @@ const buildMDSInterpretation = (
 };
 
 const buildMDSAnalysis = (series: ExperimentalSeries[]): MDSAnalysis | null => {
-  if (!isMDSInputValid(series) || !canBuildHierarchicalClustering(series)) {
+  const { activeSeries, excludedConstantVariables } =
+    partitionClusteringSeriesByVariance(series);
+
+  if (
+    !isMDSInputValid(activeSeries) ||
+    !canBuildHierarchicalClustering(activeSeries)
+  ) {
     return null;
   }
 
-  const distanceMatrix = buildClusteringDistanceMatrix(series);
+  const distanceMatrix = buildClusteringDistanceMatrix(activeSeries);
   const centeredMatrix = buildDoubleCenteredMatrix(distanceMatrix);
   const firstEigenpair = powerIterationEigenpair(centeredMatrix);
   const deflatedMatrix = deflateSymmetricMatrix(
@@ -6485,18 +6529,25 @@ const buildMDSAnalysis = (series: ExperimentalSeries[]): MDSAnalysis | null => {
   const secondScale =
     secondEigenpair.eigenvalue > 0 ? Math.sqrt(secondEigenpair.eigenvalue) : 0;
 
-  const points: MDSPoint[] = series.map((item, index) => ({
+  const points: MDSPoint[] = activeSeries.map((item, index) => ({
     seriesName: item.name,
     x: (firstEigenpair.eigenvector[index] ?? 0) * firstScale,
     y: (secondEigenpair.eigenvector[index] ?? 0) * secondScale,
   }));
 
   const stress = computeMDSStress(distanceMatrix, points);
+  const interpretation = buildMDSInterpretation(points, stress);
+  if (excludedConstantVariables.length > 0) {
+    interpretation.unshift(
+      getClusteringConstantExclusionNotice(excludedConstantVariables)
+    );
+  }
 
   return {
     points,
     stress,
-    interpretation: buildMDSInterpretation(points, stress),
+    excludedConstantVariables,
+    interpretation,
   };
 };
 
@@ -6760,18 +6811,25 @@ const buildDistanceMatrixInterpretation = (
 const buildDistanceMatrixAnalysis = (
   series: ExperimentalSeries[]
 ): DistanceMatrixAnalysis | null => {
-  if (!isDistanceMatrixInputValid(series) || !canBuildHierarchicalClustering(series)) {
+  const { activeSeries, excludedConstantVariables } =
+    partitionClusteringSeriesByVariance(series);
+
+  if (
+    !isDistanceMatrixInputValid(activeSeries) ||
+    !canBuildHierarchicalClustering(activeSeries)
+  ) {
     return null;
   }
 
-  const matrix = buildClusteringDistanceMatrix(series);
-  const variables = series.map((item) => item.name);
+  const matrix = buildClusteringDistanceMatrix(activeSeries);
+  const variables = activeSeries.map((item) => item.name);
   const uniqueDistances = getDistanceMatrixUniquePairs({
     variables,
     matrix,
     minDistance: 0,
     maxDistance: 0,
     averageDistance: 0,
+    excludedConstantVariables: [],
     interpretation: [],
   }).map((pair) => pair.distance);
 
@@ -6789,10 +6847,17 @@ const buildDistanceMatrixAnalysis = (
     minDistance,
     maxDistance,
     averageDistance,
+    excludedConstantVariables,
     interpretation: [],
   };
 
-  analysis.interpretation = buildDistanceMatrixInterpretation(analysis);
+  const interpretation = buildDistanceMatrixInterpretation(analysis);
+  if (excludedConstantVariables.length > 0) {
+    interpretation.unshift(
+      getClusteringConstantExclusionNotice(excludedConstantVariables)
+    );
+  }
+  analysis.interpretation = interpretation;
   return analysis;
 };
 
@@ -7134,11 +7199,19 @@ const buildClusterHeatmapAnalysis = (
     interpretation: [],
   };
 
-  analysis.interpretation = buildClusterHeatmapInterpretation(
+  const interpretation = buildClusterHeatmapInterpretation(
     analysis,
     distanceMatrixAnalysis.averageDistance,
     distanceMatrixAnalysis.maxDistance
   );
+  if (distanceMatrixAnalysis.excludedConstantVariables.length > 0) {
+    interpretation.unshift(
+      getClusteringConstantExclusionNotice(
+        distanceMatrixAnalysis.excludedConstantVariables
+      )
+    );
+  }
+  analysis.interpretation = interpretation;
 
   return analysis;
 };
@@ -12448,11 +12521,14 @@ const getMaxClusterDistance = (node: ClusterNode): number => {
 const buildHierarchicalClusteringAnalysis = (
   series: ExperimentalSeries[]
 ): HierarchicalClusteringAnalysis | null => {
-  if (!canBuildHierarchicalClustering(series)) return null;
+  const { activeSeries, excludedConstantVariables } =
+    partitionClusteringSeriesByVariance(series);
 
-  const distanceMatrix = buildClusteringDistanceMatrix(series);
+  if (!canBuildHierarchicalClustering(activeSeries)) return null;
+
+  const distanceMatrix = buildClusteringDistanceMatrix(activeSeries);
   const { root, mergeDistances, finalDistance } = buildHierarchicalClusteringTree(
-    series,
+    activeSeries,
     distanceMatrix
   );
 
@@ -12460,9 +12536,10 @@ const buildHierarchicalClusteringAnalysis = (
 
   return {
     root,
-    seriesCount: series.length,
+    seriesCount: activeSeries.length,
+    excludedConstantVariables,
     interpretation: getHierarchicalClusteringInterpretation(
-      series.length,
+      activeSeries.length,
       mergeDistances,
       finalDistance
     ),
@@ -12476,12 +12553,18 @@ const getHierarchicalClusteringInterpretationLines = (
     return ["No hay datos suficientes para realizar clustering."];
   }
 
-  return [
-    `Número de series: ${analysis.seriesCount}.`,
+  const lines = [`Número de series: ${analysis.seriesCount}.`];
+  if (analysis.excludedConstantVariables.length > 0) {
+    lines.push(
+      getClusteringConstantExclusionNotice(analysis.excludedConstantVariables)
+    );
+  }
+  lines.push(
     analysis.interpretation,
     getHierarchicalClusteringStructureDescription(analysis.root),
-    "Método: clustering jerárquico aglomerativo con enlace promedio y distancia euclídea.",
-  ];
+    "Método: clustering jerárquico aglomerativo con enlace promedio y distancia euclídea."
+  );
+  return lines;
 };
 
 type DendrogramLineSegment = {
