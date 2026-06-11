@@ -5707,6 +5707,7 @@ type VariableImportanceEntry = {
   score: number;
   normalizedScore: number;
   rank: number;
+  isSharedRank: boolean;
   factors: string[];
 };
 
@@ -5789,6 +5790,28 @@ const hasVariableImportanceDominanceGap = (
   return topEntry.normalizedScore - secondEntry.normalizedScore > 50;
 };
 
+// SCI-37B: ranking compartido y comunicación explícita de empates.
+// El epsilon tolera el ruido numérico de power iteration en las contribuciones
+// PCA y queda muy por debajo del menor gap legítimo observado (~0.4 puntos).
+const VARIABLE_IMPORTANCE_TIE_EPSILON = 0.05;
+
+const areVariableImportanceScoresTied = (left: number, right: number) =>
+  Math.abs(left - right) <= VARIABLE_IMPORTANCE_TIE_EPSILON;
+
+const getTopVariableImportanceEntries = (
+  analysis: VariableImportanceAnalysis | null
+): VariableImportanceEntry[] => {
+  if (!analysis) return [];
+  return analysis.entries.filter((entry) => entry.rank === 1);
+};
+
+const hasVariableImportanceTopTie = (
+  analysis: VariableImportanceAnalysis | null
+) => getTopVariableImportanceEntries(analysis).length > 1;
+
+const formatVariableImportanceCoLeaders = (variables: string[]) =>
+  variables.join(" / ");
+
 const getPcaPc1LeaderVariable = (pcaAnalysis: PCAAnalysis | null) => {
   if (!pcaAnalysis || pcaAnalysis.loadings.length === 0) return null;
   return pcaAnalysis.loadings.reduce((leader, loading) =>
@@ -5801,11 +5824,24 @@ const buildVariableImportanceInterpretation = (
 ): string[] => {
   const interpretation: string[] = [];
 
+  const topTiedVariables = entries
+    .filter((entry) => entry.rank === 1 && entry.isSharedRank)
+    .map((entry) => entry.variable);
+  if (topTiedVariables.length > 1) {
+    interpretation.push(
+      `Las variables ${topTiedVariables.join(" y ")} comparten la importancia máxima (empate al 100%).`
+    );
+  }
+
   entries.forEach((entry) => {
     if (entry.factors.includes("Variable constante")) {
       interpretation.push(
         `La variable ${entry.variable} presenta variabilidad insuficiente para contribuir significativamente.`
       );
+      return;
+    }
+
+    if (entry.rank === 1 && entry.isSharedRank) {
       return;
     }
 
@@ -5921,13 +5957,27 @@ const buildVariableImportanceAnalysis = (input: {
       score: entry.score,
       normalizedScore: maxScore > 0 ? (entry.score / maxScore) * 100 : 0,
       rank: 0,
+      isSharedRank: false,
       factors: entry.factors,
     }))
-    .sort((left, right) => right.normalizedScore - left.normalizedScore)
-    .map((entry, index) => ({
-      ...entry,
-      rank: index + 1,
-    }));
+    .sort((left, right) => right.normalizedScore - left.normalizedScore);
+
+  // Competition ranking (1, 1, 3): los empates comparten rank y el siguiente salta.
+  entries.forEach((entry, index) => {
+    const previous = entries[index - 1];
+    entry.rank =
+      previous &&
+      areVariableImportanceScoresTied(
+        entry.normalizedScore,
+        previous.normalizedScore
+      )
+        ? previous.rank
+        : index + 1;
+  });
+  entries.forEach((entry) => {
+    entry.isSharedRank =
+      entries.filter((other) => other.rank === entry.rank).length > 1;
+  });
 
   return {
     entries,
@@ -5947,7 +5997,7 @@ const getVariableImportanceReportLines = (
     .sort((left, right) => left.rank - right.rank)
     .forEach((entry) => {
       lines.push(
-        `${entry.rank}. ${entry.variable} — ${entry.normalizedScore.toFixed(0)}%.`
+        `${entry.rank}. ${entry.variable} — ${entry.normalizedScore.toFixed(0)}%${entry.isSharedRank ? " (empate)" : ""}.`
       );
       lines.push(
         `Puntaje: ${entry.score.toFixed(2)}. Factores: ${entry.factors.join(", ") || "Ninguno"}.`
@@ -6094,6 +6144,7 @@ type MultivariateDashboardAnalysis = {
     mdsStress?: number;
     topVariable?: string;
     topVariableScore?: number;
+    topVariableTied?: string[];
     averageSimilarity?: number;
   };
   diagnosis: string[];
@@ -7395,6 +7446,7 @@ const buildMultivariateDashboardDiagnosis = (input: {
   averageSimilarity?: number;
   topVariable?: string;
   topVariableScore?: number;
+  topVariableTied?: string[];
 }): string[] => {
   const diagnosis: string[] = [];
 
@@ -7437,7 +7489,9 @@ const buildMultivariateDashboardDiagnosis = (input: {
     input.topVariableScore >= 80
   ) {
     diagnosis.push(
-      `La variable ${input.topVariable} domina la estructura informativa del conjunto.`
+      input.topVariableTied && input.topVariableTied.length > 1
+        ? `Las variables ${input.topVariableTied.join(" y ")} comparten la posición dominante en la estructura informativa del conjunto.`
+        : `La variable ${input.topVariable} domina la estructura informativa del conjunto.`
     );
   }
 
@@ -7499,6 +7553,11 @@ const buildMultivariateDashboardAnalysis = (input: {
   if (topEntry) {
     summaryCards.topVariable = topEntry.variable;
     summaryCards.topVariableScore = topEntry.normalizedScore;
+    if (hasVariableImportanceTopTie(input.variableImportanceAnalysis)) {
+      summaryCards.topVariableTied = getTopVariableImportanceEntries(
+        input.variableImportanceAnalysis
+      ).map((entry) => entry.variable);
+    }
   }
 
   if (input.similarityNetworkAnalysis) {
@@ -7513,6 +7572,7 @@ const buildMultivariateDashboardAnalysis = (input: {
     averageSimilarity: summaryCards.averageSimilarity,
     topVariable: summaryCards.topVariable,
     topVariableScore: summaryCards.topVariableScore,
+    topVariableTied: summaryCards.topVariableTied,
   });
 
   return { summaryCards, diagnosis };
@@ -7545,12 +7605,19 @@ const getMultivariateDashboardReportLines = (
   }
 
   if (summaryCards.topVariable !== undefined) {
+    const isTied =
+      summaryCards.topVariableTied !== undefined &&
+      summaryCards.topVariableTied.length > 1;
     lines.push(
-      `Variable líder: ${summaryCards.topVariable}${
+      `Variable líder: ${
+        isTied
+          ? formatVariableImportanceCoLeaders(summaryCards.topVariableTied!)
+          : summaryCards.topVariable
+      }${
         summaryCards.topVariableScore !== undefined
           ? ` — ${summaryCards.topVariableScore.toFixed(0)}%`
           : ""
-      }.`
+      }${isTied ? " (empate)" : ""}.`
     );
   }
 
@@ -7622,8 +7689,15 @@ function ScientificMultivariateDashboard({
       key: "top-variable",
       icon: "🏆",
       title: "Variable líder",
-      value: summaryCards.topVariable,
-      subtitle: `${summaryCards.topVariableScore.toFixed(0)}%`,
+      value:
+        summaryCards.topVariableTied && summaryCards.topVariableTied.length > 1
+          ? formatVariableImportanceCoLeaders(summaryCards.topVariableTied)
+          : summaryCards.topVariable,
+      subtitle: `${summaryCards.topVariableScore.toFixed(0)}%${
+        summaryCards.topVariableTied && summaryCards.topVariableTied.length > 1
+          ? " — empate"
+          : ""
+      }`,
     });
   }
 
@@ -15651,34 +15725,34 @@ const generateScientificInterpretation = (input: {
       pushUniqueFinding(line);
     });
 
-    const topEntry = getTopVariableImportanceEntry(
+    const topEntries = getTopVariableImportanceEntries(
       input.variableImportanceAnalysis
     );
-    if (topEntry && input.pcaAnalysis) {
+    if (topEntries.length > 0 && input.pcaAnalysis) {
       const pc1Leader = getPcaPc1LeaderVariable(input.pcaAnalysis);
-      if (pc1Leader === topEntry.variable) {
+      if (topEntries.some((entry) => entry.variable === pc1Leader)) {
         pushUniqueFinding(
           "La importancia observada es consistente con PCA."
         );
       }
     }
 
-    if (topEntry && input.correlationNetworkAnalysis) {
+    if (topEntries.length > 0 && input.correlationNetworkAnalysis) {
       const centralNode = getCorrelationNetworkCentralNode(
         input.correlationNetworkAnalysis
       );
-      if (centralNode === topEntry.variable) {
+      if (topEntries.some((entry) => entry.variable === centralNode)) {
         pushUniqueFinding(
           "La variable actúa como eje principal de correlaciones."
         );
       }
     }
 
-    if (topEntry && input.similarityNetworkAnalysis) {
+    if (topEntries.length > 0 && input.similarityNetworkAnalysis) {
       const centralNode = getSimilarityNetworkCentralNode(
         input.similarityNetworkAnalysis
       );
-      if (centralNode === topEntry.variable) {
+      if (topEntries.some((entry) => entry.variable === centralNode)) {
         pushUniqueFinding(
           "La variable ocupa una posición central en la red de similitud."
         );
@@ -15765,9 +15839,13 @@ const generateScientificInterpretation = (input: {
     const topVariable = input.multivariateDashboardAnalysis.summaryCards.topVariable;
     const topVariableScore =
       input.multivariateDashboardAnalysis.summaryCards.topVariableScore;
+    const topVariableTied =
+      input.multivariateDashboardAnalysis.summaryCards.topVariableTied;
     if (topVariable && topVariableScore !== undefined && topVariableScore >= 80) {
       pushUniqueFinding(
-        `La variable ${topVariable} domina la estructura informativa.`
+        topVariableTied && topVariableTied.length > 1
+          ? `Las variables ${topVariableTied.join(" y ")} comparten la posición dominante en la estructura informativa.`
+          : `La variable ${topVariable} domina la estructura informativa.`
       );
     }
   }
@@ -17109,34 +17187,34 @@ const generateScientificAssistantReport = (input: {
       input.variableImportanceAnalysis.interpretation
     ).forEach((line) => pushUniqueFinding(line));
 
-    const topEntry = getTopVariableImportanceEntry(
+    const topEntries = getTopVariableImportanceEntries(
       input.variableImportanceAnalysis
     );
-    if (topEntry && input.pcaAnalysis) {
+    if (topEntries.length > 0 && input.pcaAnalysis) {
       const pc1Leader = getPcaPc1LeaderVariable(input.pcaAnalysis);
-      if (pc1Leader === topEntry.variable) {
+      if (topEntries.some((entry) => entry.variable === pc1Leader)) {
         pushUniqueFinding(
           "La importancia observada es consistente con PCA."
         );
       }
     }
 
-    if (topEntry && input.correlationNetworkAnalysis) {
+    if (topEntries.length > 0 && input.correlationNetworkAnalysis) {
       const centralNode = getCorrelationNetworkCentralNode(
         input.correlationNetworkAnalysis
       );
-      if (centralNode === topEntry.variable) {
+      if (topEntries.some((entry) => entry.variable === centralNode)) {
         pushUniqueFinding(
           "La variable actúa como eje principal de correlaciones."
         );
       }
     }
 
-    if (topEntry && input.similarityNetworkAnalysis) {
+    if (topEntries.length > 0 && input.similarityNetworkAnalysis) {
       const centralNode = getSimilarityNetworkCentralNode(
         input.similarityNetworkAnalysis
       );
-      if (centralNode === topEntry.variable) {
+      if (topEntries.some((entry) => entry.variable === centralNode)) {
         pushUniqueFinding(
           "La variable ocupa una posición central en la red de similitud."
         );
@@ -17214,9 +17292,13 @@ const generateScientificAssistantReport = (input: {
     const topVariable = input.multivariateDashboardAnalysis.summaryCards.topVariable;
     const topVariableScore =
       input.multivariateDashboardAnalysis.summaryCards.topVariableScore;
+    const topVariableTied =
+      input.multivariateDashboardAnalysis.summaryCards.topVariableTied;
     if (topVariable && topVariableScore !== undefined && topVariableScore >= 80) {
       pushUniqueFinding(
-        `La variable ${topVariable} domina la estructura informativa.`
+        topVariableTied && topVariableTied.length > 1
+          ? `Las variables ${topVariableTied.join(" y ")} comparten la posición dominante en la estructura informativa.`
+          : `La variable ${topVariable} domina la estructura informativa.`
       );
     }
   }
@@ -26452,11 +26534,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           {[...variableImportanceAnalysis.entries]
                             .sort((left, right) => left.rank - right.rank)
                             .map((entry) => (
-                              <p key={`variable-importance-rank-${entry.rank}`}>
+                              <p
+                                key={`variable-importance-${entry.variable}`}
+                              >
                                 <span className="font-semibold">
                                   {entry.rank}. {entry.variable}
                                 </span>{" "}
                                 — {entry.normalizedScore.toFixed(0)}%
+                                {entry.isSharedRank ? " (empate)" : ""}
                               </p>
                             ))}
                         </div>

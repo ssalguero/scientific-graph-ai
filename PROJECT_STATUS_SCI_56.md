@@ -1,14 +1,14 @@
-# Scientific Graph AI — Estado del Proyecto (Cierre SCI-56 + SCI-29B)
+# Scientific Graph AI — Estado del Proyecto (Cierre SCI-37B)
 
 Fecha: 2026-06-10
-Versión actual: SCI-56 + SCI-29B
-Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B implementado sobre esta base
+Versión actual: SCI-56 + SCI-29B + SCI-37B
+Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B y SCI-37B implementados sobre esta base
 
 ---
 
 ## 1. Resumen ejecutivo
 
-El proyecto alcanzó el cierre completo del bloque metodológico y su capa ejecutiva de síntesis. Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19) y se implementó SCI-56 — Methodological Summary Dashboard, completando el patrón arquitectónico de dashboards por bloque.
+El proyecto alcanzó el cierre completo del bloque metodológico, su capa ejecutiva de síntesis y la totalidad del backlog técnico histórico. Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, y se cerraron los dos ítems de backlog pendientes: SCI-29B (variables constantes en clustering) y SCI-37B (empates en Variable Importance). **SCI-29B y SCI-37B están cerrados; el backlog técnico histórico queda vacío.**
 
 Hitos cerrados en este ciclo:
 
@@ -19,6 +19,7 @@ Hitos cerrados en este ciclo:
 | BUGFIX SCI-19 | CERRADO | Deduplicación de hallazgos en `generateScientificInterpretation()`; warning React eliminado |
 | SCI-56 | COMPLETADO | Dashboard ejecutivo del bloque metodológico SCI-50→55 |
 | SCI-29B | COMPLETADO | Exclusión de variables constantes en el pipeline de clustering (consistencia con PCA) |
+| SCI-37B | COMPLETADO | Ranking compartido y comunicación explícita de empates en Variable Importance |
 
 Estado de calidad: Build OK, TypeScript OK, Dataset5 PASS, Dataset6 PASS, PDF OK, repositorio sincronizado con origin.
 
@@ -112,6 +113,17 @@ SCI-56 es capa de solo lectura: no recalcula algoritmos ni modifica scores upstr
 - SCI-56 sin impacto funcional relevante (variación de redondeo en Reproducibility 67.7 → 67.6)
 - Dataset5 como control negativo: comportamiento idéntico pre/post
 
+**SCI-37B — Tie-Aware Variable Importance Ranking (COMPLETED)**
+- Ranking compartido (competition ranking 1, 1, 3) con detección por `VARIABLE_IMPORTANCE_TIE_EPSILON` (0.05, tolerante al ruido numérico de power iteration en contribuciones PCA)
+- Scores y `normalizedScore` intactos: solo cambian `rank` y la comunicación
+- Frase explícita de empate en la interpretación de SCI-37
+- SCI-40 tie-aware: tarjeta "Variable líder" con co-líderes ("Control1 / Tratamiento2 — 100% — empate") y diagnóstico "comparten la posición dominante"
+- SCI-19/SCI-20 tie-aware: findings de dominancia y consistencia cruzada (PCA/correlación/similitud) evaluados sobre el grupo de co-líderes
+- Propagación a SCI-17 y PDF vía report lines ("(empate)" en el ranking)
+- Corrección de bug latente: key React del ranking por variable (antes por rank, que habría duplicado claves)
+- Helpers nuevos: `areVariableImportanceScoresTied`, `getTopVariableImportanceEntries`, `hasVariableImportanceTopTie`, `formatVariableImportanceCoLeaders`
+- Tipos: `VariableImportanceEntry.isSharedRank`, `summaryCards.topVariableTied`
+
 ---
 
 ## 4. Dashboards disponibles
@@ -128,9 +140,7 @@ SCI-56 muestra: Overall Health Score, número de motores evaluados, 6 tarjetas (
 
 ## 5. Backlog pendiente
 
-### SCI-37B — Empates en Variable Importance
-
-Mejorar el manejo de empates al 100% en Variable Importance: criterio de desempate estable y comunicación explícita del empate en la interpretación.
+**Backlog técnico histórico: vacío.** SCI-29B y SCI-37B, los dos últimos ítems documentados, están cerrados y validados.
 
 ### Deuda menor documentada
 
@@ -146,7 +156,6 @@ Propuestas no aprobadas, ordenadas por valor estimado:
 
 | Candidato | Tipo | Justificación |
 |-----------|------|---------------|
-| SCI-37B | Corrección | Promover el backlog existente antes de nuevas features |
 | Dataset de regresión con caso `contradictory` | Validación | Cubrir la regla D1 del motor canónico con evidencia funcional |
 | ARCH-5 — Modularización de `page.tsx` | Arquitectura | ~28K líneas en un archivo; extraer motores y builders a módulos |
 | Drill-down en SCI-56 | UX | Click en tarjeta → navegar/expandir el panel del motor correspondiente |
@@ -166,6 +175,7 @@ Propuestas no aprobadas, ordenadas por valor estimado:
 | Motores SCI-46/51/52/54/55 | PASS | PASS |
 | SCI-56 dashboard (6 tarjetas + diagnóstico) | PASS | PASS |
 | SCI-29B (exclusión de constantes en clustering) | PASS (control negativo, sin cambios) | PASS (pH excluida) |
+| SCI-37B (ranking compartido + empates explícitos) | PASS (empate top Control1/Tratamiento2) | PASS (líder único + empate intermedio) |
 | Export PDF (incluye sección SCI-56) | PASS | PASS |
 
 Resultados observados de SCI-56:
@@ -190,19 +200,60 @@ Impacto observado de SCI-29B (Dataset6 pre/post):
 | SCI-56 · Overall Health Score | 67.7 | 67.7 |
 | SCI-56 · Reproducibility | 67.7 | 67.6 |
 
+Impacto observado de SCI-37B (pre/post):
+
+| Punto | Pre | Post |
+|-------|-----|------|
+| Dataset5 · SCI-37 ranking | 1, 2, 3, 4 (arbitrario por orden de columna) | 1, 1, 3, 3 + "(empate)" + frase de empate explícita |
+| Dataset5 · SCI-40 Variable líder | "Control1 — 100%" + "domina la estructura informativa" | "Control1 / Tratamiento2 — 100% — empate" + "comparten la posición dominante" |
+| Dataset5 · SCI-19/20 | Dominancia única arbitraria | Findings tie-aware sobre el grupo de co-líderes |
+| Dataset6 · SCI-37 ranking | 1, 2, 3, 4 | 1, 2, 2, 4 (empate intermedio Temperatura/Presion comunicado) |
+| Dataset6 · SCI-40 / SCI-56 | — | Sin cambios (líder único Humedad; Overall 67.7) — control negativo |
+| Scores numéricos (ambos datasets) | — | Intactos |
+
 Build: Compilación OK · TypeScript OK · Exportación PDF OK.
 
 Git: `main` sincronizado con origin; tags `SCI-55`, `HOTFIX-SCI-NORMALITY-2`, `SCI-56` publicados.
 
 ---
 
-## 8. Próximos pasos recomendados
+## 8. Estado del proyecto al cierre de SCI-37B
 
-1. **Implementar SCI-37B** (único backlog pendiente) o definir SCI-57 a partir de los candidatos de la sección 6 (ARCH-5 si se prioriza sostenibilidad).
+Inventario completo de hitos al cierre formal del backlog técnico histórico:
+
+| Bloque / Hito | Estado |
+|---------------|--------|
+| SCI-1 → SCI-55 | COMPLETADOS |
+| HOTFIX-SCI-NORMALITY-2 | COMPLETADO |
+| BUGFIX SCI-19 | COMPLETADO |
+| SCI-56 — Methodological Summary Dashboard | COMPLETADO |
+| SCI-29B — Constant Variable Exclusion in Clustering | COMPLETADO |
+| SCI-37B — Tie-Aware Variable Importance Ranking | COMPLETADO |
+
+No queda ningún ítem de backlog técnico histórico abierto. Toda la funcionalidad científica planificada hasta la fecha está implementada, validada con Dataset5 y Dataset6, e integrada en SCI-17, SCI-19, SCI-20 y la exportación PDF.
+
+---
+
+## 9. Preparación para SCI-57+
+
+El proyecto queda formalmente listo para abrir una nueva etapa evolutiva:
+
+- Base de código estable: Build OK, TypeScript OK, sin warnings React, sin regresiones detectadas.
+- Pipeline de validación funcional reproducible (Playwright + Dataset5/Dataset6 + verificación de PDF) disponible como punto de partida para regresión.
+- Arquitectura de dashboards por bloque completa (SCI-40, normalidad integrada, SCI-56) como patrón de referencia para futuras capas de síntesis.
+- Backlog técnico histórico vacío: cualquier trabajo nuevo parte de una definición SCI-57+ y no de deuda heredada.
+
+Esta sección no define funcionalidades nuevas; los candidatos de la sección 6 permanecen como propuestas no aprobadas a evaluar al definir SCI-57.
+
+---
+
+## 10. Próximos pasos recomendados
+
+1. **Definir SCI-57** a partir de los candidatos de la sección 6 (ARCH-5 si se prioriza sostenibilidad del monolito).
 2. **Validar la regla `contradictory`** con un dataset diseñado para producir contradicción SCI-11 vs. diagnósticos visuales.
 3. **Formalizar la suite de validación** (script Playwright) como herramienta de regresión para futuros bloques.
 4. **Evaluar ARCH-5** antes de que el monolito supere las ~30K líneas, para mantener la velocidad de implementación de bloques futuros.
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B y SCI-37B (cierre del backlog técnico histórico). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
