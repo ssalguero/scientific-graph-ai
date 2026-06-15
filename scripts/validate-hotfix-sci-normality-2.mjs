@@ -16,6 +16,7 @@ const STATISTICS_TOGGLES = [
   "Mostrar Violin Plot",
   "Mostrar Kernel Density Plot",
   "Mostrar PCA",
+  "Mostrar Dashboard Multivariante",
   "Mostrar Cluster Heatmap",
   "Mostrar Clustered Distance Heatmap",
   "Mostrar Bootstrap Explorer",
@@ -85,7 +86,7 @@ async function importDataset(page, datasetPath) {
   await page
     .locator('input[type="file"][accept*=".csv"]')
     .setInputFiles(datasetPath);
-  await page.getByText(path.basename(datasetPath)).waitFor({
+  await page.getByText(`Nombre: ${path.basename(datasetPath)}`).waitFor({
     state: "visible",
     timeout: 15000,
   });
@@ -124,6 +125,203 @@ async function expandNotebook(page, title) {
     await target.click();
   }
   return true;
+}
+
+async function applyAllGuidedWorkflowSteps(page, maxSteps = 15) {
+  for (let index = 0; index < maxSteps; index += 1) {
+    const applyButton = page.getByRole("button", { name: "Aplicar paso" });
+    if ((await applyButton.count()) === 0) {
+      break;
+    }
+    const target = applyButton.first();
+    if (!(await target.isVisible())) {
+      break;
+    }
+    await target.click();
+    await page.waitForTimeout(250);
+  }
+  await page.waitForTimeout(500);
+}
+
+async function validateSci59Workflow(page, datasetPath, datasetName, templateLabel) {
+  const result = {
+    dataset: datasetName,
+    template: templateLabel,
+    pass: true,
+    checks: {},
+    issues: [],
+  };
+
+  await page.goto(BASE_URL, { waitUntil: "networkidle" });
+  await importDataset(page, datasetPath);
+
+  await page.getByRole("tab", { name: "Datos" }).click();
+  result.checks.sci59EntryCard = await page
+    .getByText("Guided Scientific Workflow")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (!result.checks.sci59EntryCard) {
+    result.issues.push("SCI-59: tarjeta de entrada no visible en Datos");
+  }
+
+  const templateButton = page.getByRole("button", {
+    name: new RegExp(templateLabel, "i"),
+  });
+  if ((await templateButton.count()) === 0) {
+    result.issues.push(`SCI-59: botón de template "${templateLabel}" no encontrado`);
+    result.pass = false;
+    return result;
+  }
+  await templateButton.first().click();
+  await page.waitForTimeout(300);
+
+  result.checks.sci59WorkflowStarted = await page
+    .getByRole("button", { name: "Aplicar paso" })
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (!result.checks.sci59WorkflowStarted) {
+    result.issues.push("SCI-59: panel de workflow no iniciado");
+  }
+
+  await applyAllGuidedWorkflowSteps(page);
+
+  result.checks.sci59WorkflowCompleted =
+    (await page.getByText(/Workflow .* completado/i).count()) > 0;
+  if (!result.checks.sci59WorkflowCompleted) {
+    result.issues.push("SCI-59: workflow no alcanzó estado completado");
+  }
+
+  if (/publicaci/i.test(templateLabel)) {
+    await page.getByRole("tab", { name: "Resultados" }).click();
+    await page.waitForTimeout(500);
+    result.checks.sci59Sci56ViaWorkflow = await page
+      .getByText("📋 Methodological Summary Dashboard")
+      .first()
+      .isVisible()
+      .catch(() => false);
+    result.checks.sci59Sci57ViaWorkflow = await page
+      .getByText("📏 Effect Size & Power")
+      .first()
+      .isVisible()
+      .catch(() => false);
+    result.checks.sci59Sci60ViaWorkflow = await page
+      .getByText("📰 Executive Publication Dashboard")
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (!result.checks.sci59Sci56ViaWorkflow) {
+      result.issues.push("SCI-59/T3: SCI-56 no visible tras workflow");
+    }
+    if (!result.checks.sci59Sci57ViaWorkflow) {
+      result.issues.push("SCI-59/T3: SCI-57 no visible tras workflow");
+    }
+    if (!result.checks.sci59Sci60ViaWorkflow) {
+      result.issues.push("SCI-59/T3: SCI-60 no visible tras workflow");
+    }
+  }
+
+  if (/estructura/i.test(templateLabel)) {
+    await page.getByRole("tab", { name: "Resultados" }).click();
+    await page.waitForTimeout(500);
+    result.checks.sci59Sci40ViaWorkflow = await page
+      .getByText("📊 Multivariate Summary Dashboard")
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (!result.checks.sci59Sci40ViaWorkflow) {
+      result.issues.push("SCI-59/T2: SCI-40 no visible tras workflow");
+    }
+  }
+
+  result.pass = result.issues.length === 0;
+  return result;
+}
+
+async function expandNotebookIfNeeded(page, title) {
+  const button = page.getByRole("button", { name: new RegExp(title, "i") });
+  if ((await button.count()) === 0) {
+    return false;
+  }
+  const target = button.first();
+  const expanded = await target.getAttribute("aria-expanded");
+  if (expanded === "false") {
+    await target.click();
+  }
+  return true;
+}
+
+async function captureComparisonSlot(page, slotLabel) {
+  await page.getByRole("tab", { name: "Datos" }).click();
+  await expandNotebookIfNeeded(page, "Multi-Dataset Comparison");
+  const captureButton = page.getByRole("button", {
+    name: new RegExp(`(Capturar|Actualizar) Slot ${slotLabel}`, "i"),
+  });
+  if ((await captureButton.count()) === 0) {
+    throw new Error(`SCI-58: botón capturar Slot ${slotLabel} no encontrado`);
+  }
+  await captureButton.first().click();
+  await page.waitForTimeout(400);
+}
+
+async function validateSci58Comparison(page) {
+  const result = {
+    pass: true,
+    checks: {},
+    issues: [],
+  };
+
+  await page.goto(BASE_URL, { waitUntil: "networkidle" });
+  await importDataset(page, DATASET5);
+  await enableModules(page);
+  await captureComparisonSlot(page, "A");
+
+  await importDataset(page, DATASET6);
+  await enableModules(page);
+  await captureComparisonSlot(page, "B");
+
+  await page.getByRole("tab", { name: "Análisis" }).click();
+  await selectInspectorCategory(page, "Estadística");
+  const toggleState = await enableToggle(
+    page,
+    "Mostrar Multi-Dataset Comparison Dashboard"
+  );
+  if (!toggleState.enabled) {
+    result.issues.push("SCI-58: toggle comparación no disponible");
+  }
+
+  await page.getByRole("tab", { name: "Resultados" }).click();
+  await page.waitForTimeout(800);
+
+  result.checks.sci58ComparisonPanel = await page
+    .getByText("📊 Multi-Dataset Comparison Dashboard")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (!result.checks.sci58ComparisonPanel) {
+    result.issues.push("SCI-58: panel comparativo no visible");
+  }
+
+  const bodyText = await page.locator("body").innerText();
+  result.checks.sci58DeltaReadiness =
+    bodyText.includes("-9.5") || bodyText.includes("−9.5");
+  if (!result.checks.sci58DeltaReadiness) {
+    result.issues.push("SCI-58: delta Readiness -9.5 no visible");
+  }
+
+  result.checks.sci58ReadinessSlotA = /77\.0/.test(bodyText);
+  result.checks.sci58ReadinessSlotB = /67\.5/.test(bodyText);
+  result.checks.sci58CrossDiagnosis =
+    bodyText.includes("Diagnóstico cruzado") ||
+    bodyText.includes("Publication Status diverge");
+
+  if (!result.checks.sci58ReadinessSlotA || !result.checks.sci58ReadinessSlotB) {
+    result.issues.push("SCI-58: KPIs Readiness esperados no visibles");
+  }
+
+  result.pass = result.issues.length === 0;
+  return result;
 }
 
 async function validateDataset(page, datasetPath, datasetName) {
@@ -333,6 +531,15 @@ async function validateDataset(page, datasetPath, datasetName) {
     result.issues.push("SCI-60: diagnóstico editorial no visible");
   }
 
+  result.checks.sci40Panel = await page
+    .getByText("📊 Multivariate Summary Dashboard")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (!result.checks.sci40Panel) {
+    result.issues.push("SCI-40: panel Multivariate Summary Dashboard no visible");
+  }
+
   result.checks.sci19PanelVisible = await page
     .getByText("Interpretación científica", { exact: false })
     .first()
@@ -501,6 +708,32 @@ async function main() {
   const pdf5 = await validatePdf(page, DATASET5);
   const pdf6 = await validatePdf(page, DATASET6);
 
+  const sci59T3Dataset5 = await validateSci59Workflow(
+    page,
+    DATASET5,
+    "Dataset5",
+    "Evaluar publicación"
+  );
+  const sci59T3Dataset6 = await validateSci59Workflow(
+    page,
+    DATASET6,
+    "Dataset6",
+    "Evaluar publicación"
+  );
+  const sci59T2Dataset5 = await validateSci59Workflow(
+    page,
+    DATASET5,
+    "Dataset5",
+    "Explorar estructura"
+  );
+  const sci59T1Dataset5 = await validateSci59Workflow(
+    page,
+    DATASET5,
+    "Dataset5",
+    "Comparar grupos"
+  );
+  const sci58Comparison = await validateSci58Comparison(page);
+
   await browser.close();
 
   const summary = {
@@ -582,9 +815,45 @@ async function main() {
         pdf5.hasSci60 &&
         pdf6.hasSci60,
     },
+    sci40: {
+      pass: dataset5.checks.sci40Panel && dataset6.checks.sci40Panel,
+    },
+    sci59: {
+      pass:
+        sci59T1Dataset5.pass &&
+        sci59T2Dataset5.pass &&
+        sci59T3Dataset5.pass &&
+        sci59T3Dataset6.pass,
+      t1Dataset5: sci59T1Dataset5,
+      t2Dataset5: sci59T2Dataset5,
+      t3Dataset5: sci59T3Dataset5,
+      t3Dataset6: sci59T3Dataset6,
+    },
+    sci58: {
+      pass: sci58Comparison.pass,
+      comparison: sci58Comparison,
+    },
   };
 
+  const allPass =
+    summary.sci17.pass &&
+    summary.sci19.pass &&
+    summary.sci20.pass &&
+    summary.methodologicalEngines.pass &&
+    summary.noRegressions.pass &&
+    summary.sci56.pass &&
+    summary.sci57.pass &&
+    summary.sci60.pass &&
+    summary.sci40.pass &&
+    summary.sci59.pass &&
+    summary.sci58.pass &&
+    summary.pdf.pass;
+
   console.log(JSON.stringify(summary, null, 2));
+
+  if (!allPass) {
+    process.exit(1);
+  }
 }
 
 main().catch((error) => {

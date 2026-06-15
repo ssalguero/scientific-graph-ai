@@ -13160,6 +13160,1158 @@ function ScientificPublicationDashboard({
   );
 }
 
+// BEGIN SCI-59 — Guided Scientific Workflow (orchestration layer)
+
+type GuidedWorkflowTemplateId =
+  | "compare-groups"
+  | "explore-structure"
+  | "evaluate-publication";
+
+type GuidedWorkflowStatus = "idle" | "active" | "completed" | "cancelled";
+
+type GuidedWorkflowWorkspaceTab = WorkspaceSection;
+
+type GuidedWorkflowInspectorSection = AnalysisInspectorSection;
+
+type GuidedWorkflowToggleKey =
+  | "showStatistics"
+  | "showErrorBars"
+  | "showNormality"
+  | "showQQPlot"
+  | "showCorrelation"
+  | "showHeatmap"
+  | "showPCA"
+  | "showHierarchicalClustering"
+  | "showMultivariateDashboard"
+  | "showTTest"
+  | "showAnova"
+  | "showPostHoc"
+  | "showNonParametric"
+  | "showEffectSizePower"
+  | "showConsistencyEngine"
+  | "showReportQualityEngine"
+  | "showReproducibilityExplorer"
+  | "showEvidenceStrengthEngine"
+  | "showAssumptionTracker"
+  | "showPublicationReadinessAnalyzer"
+  | "showMethodologicalDashboard"
+  | "showPublicationDashboard"
+  | "showStatisticalAdvisor"
+  | "showScientificInterpretation"
+  | "showScientificReport";
+
+type GuidedWorkflowContext = {
+  seriesCount: number;
+  totalObservations: number;
+  canonicalNormalityAssessment: CanonicalNormalityAssessment;
+  statisticalRecommendation: StatisticalRecommendation | null;
+};
+
+type GuidedWorkflowStep = {
+  id: string;
+  title: string;
+  explanation: string;
+  workspaceTab: GuidedWorkflowWorkspaceTab;
+  inspectorSection?: GuidedWorkflowInspectorSection;
+  toggles: GuidedWorkflowToggleKey[];
+  conditionalToggles?: (
+    ctx: GuidedWorkflowContext
+  ) => GuidedWorkflowToggleKey[];
+  navigateAfterApply?: boolean;
+};
+
+type GuidedWorkflowPlan = {
+  templateId: GuidedWorkflowTemplateId;
+  templateTitle: string;
+  templateDescription: string;
+  steps: GuidedWorkflowStep[];
+  estimatedSteps: number;
+};
+
+type GuidedWorkflowSession = {
+  status: GuidedWorkflowStatus;
+  templateId: GuidedWorkflowTemplateId | null;
+  currentStepIndex: number;
+  completedStepIds: string[];
+  skippedStepIds: string[];
+  startedAt: string | null;
+  completedAt: string | null;
+};
+
+type GuidedWorkflowToggleSetters = Record<
+  GuidedWorkflowToggleKey,
+  (value: boolean) => void
+>;
+
+const GUIDED_WORKFLOW_IDLE_SESSION: GuidedWorkflowSession = {
+  status: "idle",
+  templateId: null,
+  currentStepIndex: 0,
+  completedStepIds: [],
+  skippedStepIds: [],
+  startedAt: null,
+  completedAt: null,
+};
+
+const GUIDED_WORKFLOW_TEMPLATE_CATALOG: {
+  id: GuidedWorkflowTemplateId;
+  title: string;
+  description: string;
+}[] = [
+  {
+    id: "compare-groups",
+    title: "Comparar grupos",
+    description:
+      "Descriptiva, normalidad, inferencia recomendada, effect size e interpretación.",
+  },
+  {
+    id: "explore-structure",
+    title: "Explorar estructura",
+    description:
+      "Correlación, PCA, clustering y dashboard multivariante (SCI-40).",
+  },
+  {
+    id: "evaluate-publication",
+    title: "Evaluar publicación",
+    description:
+      "Motores metodológicos SCI-50→55, SCI-56, SCI-57 y Executive Publication Dashboard.",
+  },
+];
+
+const resolveInferentialWorkflowToggles = (
+  ctx: GuidedWorkflowContext
+): GuidedWorkflowToggleKey[] => {
+  const assessments = ctx.canonicalNormalityAssessment.seriesAssessments;
+  const allNormal =
+    assessments.length > 0 &&
+    assessments.every(
+      (item) =>
+        item.conclusion === "normal" || item.conclusion === "probably-normal"
+    );
+  const anyNonNormal = assessments.some(
+    (item) =>
+      item.conclusion === "non-normal" ||
+      item.conclusion === "questionable" ||
+      item.conclusion === "contradictory"
+  );
+
+  if (allNormal && !anyNonNormal) {
+    if (ctx.seriesCount === 2) return ["showTTest"];
+    if (ctx.seriesCount >= 3) return ["showAnova", "showPostHoc"];
+    return [];
+  }
+
+  if (ctx.seriesCount >= 2) return ["showNonParametric"];
+  return [];
+};
+
+const resolveGuidedWorkflowStepToggles = (
+  step: GuidedWorkflowStep,
+  ctx: GuidedWorkflowContext
+): GuidedWorkflowToggleKey[] => {
+  const resolved = [...step.toggles];
+  if (step.conditionalToggles) {
+    resolved.push(...step.conditionalToggles(ctx));
+  }
+  return [...new Set(resolved)];
+};
+
+const buildCompareGroupsWorkflowSteps = (): GuidedWorkflowStep[] => [
+  {
+    id: "descriptive",
+    title: "Estadística descriptiva",
+    explanation:
+      "Active descriptiva y barras de error para caracterizar cada grupo antes de inferencia.",
+    workspaceTab: "analysis",
+    inspectorSection: "statistics",
+    toggles: ["showStatistics", "showErrorBars"],
+  },
+  {
+    id: "normality",
+    title: "Evaluación de normalidad",
+    explanation:
+      "Revise normalidad canónica con tests y Q-Q Plot antes de elegir pruebas paramétricas.",
+    workspaceTab: "analysis",
+    inspectorSection: "statistics",
+    toggles: ["showNormality", "showQQPlot"],
+  },
+  {
+    id: "inferential",
+    title: "Inferencia principal",
+    explanation:
+      "Se activará la prueba recomendada según grupos visibles y normalidad canónica.",
+    workspaceTab: "analysis",
+    inspectorSection: "inference",
+    toggles: [],
+    conditionalToggles: resolveInferentialWorkflowToggles,
+  },
+  {
+    id: "effect-size",
+    title: "Magnitud y potencia",
+    explanation:
+      "Effect Size & Power (SCI-57) contextualiza el tamaño del efecto y la potencia prospectiva.",
+    workspaceTab: "analysis",
+    inspectorSection: "inference",
+    toggles: ["showEffectSizePower"],
+  },
+  {
+    id: "advisor",
+    title: "Advisor Estadístico",
+    explanation:
+      "El Advisor confirma la prueba principal; correlación se activa para alimentar la recomendación.",
+    workspaceTab: "analysis",
+    inspectorSection: "advisor",
+    toggles: ["showCorrelation", "showStatisticalAdvisor"],
+  },
+  {
+    id: "interpretation",
+    title: "Interpretación científica",
+    explanation:
+      "Revise la interpretación automática (SCI-19) con los resultados inferenciales visibles.",
+    workspaceTab: "results",
+    toggles: ["showScientificInterpretation"],
+  },
+  {
+    id: "review-results",
+    title: "Revisión de resultados",
+    explanation:
+      "Confirme paneles inferenciales y de effect size antes de exportar o continuar en modo experto.",
+    workspaceTab: "results",
+    toggles: [],
+    navigateAfterApply: false,
+  },
+];
+
+const buildExploreStructureWorkflowSteps = (): GuidedWorkflowStep[] => [
+  {
+    id: "descriptive",
+    title: "Descriptiva y correlación",
+    explanation: "Base exploratoria para relaciones lineales entre series.",
+    workspaceTab: "analysis",
+    inspectorSection: "statistics",
+    toggles: ["showStatistics", "showCorrelation"],
+  },
+  {
+    id: "heatmap",
+    title: "Heatmap de correlación",
+    explanation: "Visualice la matriz de asociaciones entre variables.",
+    workspaceTab: "analysis",
+    inspectorSection: "statistics",
+    toggles: ["showHeatmap"],
+  },
+  {
+    id: "pca",
+    title: "Análisis PCA",
+    explanation: "Identifique componentes principales que resumen la variabilidad.",
+    workspaceTab: "analysis",
+    inspectorSection: "statistics",
+    toggles: ["showPCA"],
+  },
+  {
+    id: "clustering",
+    title: "Clustering jerárquico",
+    explanation: "Explore agrupamientos naturales entre series o observaciones.",
+    workspaceTab: "analysis",
+    inspectorSection: "statistics",
+    toggles: ["showHierarchicalClustering"],
+  },
+  {
+    id: "multivariate-dashboard",
+    title: "Dashboard multivariante",
+    explanation: "SCI-40 sintetiza PCA, clustering y métricas multivariantes.",
+    workspaceTab: "results",
+    toggles: ["showMultivariateDashboard"],
+  },
+  {
+    id: "sci40-review",
+    title: "Revisión SCI-40",
+    explanation: "Confirme highlights multivariantes antes de profundizar manualmente.",
+    workspaceTab: "results",
+    toggles: [],
+    navigateAfterApply: false,
+  },
+];
+
+const buildEvaluatePublicationWorkflowSteps = (): GuidedWorkflowStep[] => [
+  {
+    id: "methodology-engines",
+    title: "Motores metodológicos",
+    explanation:
+      "Active SCI-50→55 para evaluar consistencia, calidad, evidencia y preparación.",
+    workspaceTab: "analysis",
+    inspectorSection: "statistics",
+    toggles: [
+      "showConsistencyEngine",
+      "showReportQualityEngine",
+      "showReproducibilityExplorer",
+      "showEvidenceStrengthEngine",
+      "showAssumptionTracker",
+      "showPublicationReadinessAnalyzer",
+    ],
+  },
+  {
+    id: "effect-size",
+    title: "Effect Size & Power",
+    explanation: "SCI-57 aporta magnitud del efecto para la síntesis editorial.",
+    workspaceTab: "analysis",
+    inspectorSection: "inference",
+    toggles: ["showEffectSizePower"],
+  },
+  {
+    id: "sci56",
+    title: "Methodological Summary Dashboard",
+    explanation: "SCI-56 resume la salud metodológica global del análisis.",
+    workspaceTab: "results",
+    toggles: ["showMethodologicalDashboard"],
+  },
+  {
+    id: "sci60",
+    title: "Executive Publication Dashboard",
+    explanation:
+      "SCI-60 consolida preparación, evidencia, normalidad y riesgos pre-manuscrito.",
+    workspaceTab: "results",
+    toggles: ["showPublicationDashboard"],
+  },
+  {
+    id: "report",
+    title: "Reporte científico",
+    explanation: "Prepare la exportación PDF con el reporte científico integrado.",
+    workspaceTab: "reports",
+    inspectorSection: "advisor",
+    toggles: ["showScientificReport"],
+  },
+];
+
+const buildGuidedWorkflowPlan = (
+  templateId: GuidedWorkflowTemplateId,
+  ctx: GuidedWorkflowContext
+): GuidedWorkflowPlan | null => {
+  if (ctx.seriesCount < 2 || ctx.totalObservations === 0) {
+    return null;
+  }
+
+  const catalogEntry = GUIDED_WORKFLOW_TEMPLATE_CATALOG.find(
+    (entry) => entry.id === templateId
+  );
+  if (!catalogEntry) return null;
+
+  let steps: GuidedWorkflowStep[];
+  switch (templateId) {
+    case "compare-groups":
+      steps = buildCompareGroupsWorkflowSteps();
+      break;
+    case "explore-structure":
+      steps = buildExploreStructureWorkflowSteps();
+      break;
+    case "evaluate-publication":
+      steps = buildEvaluatePublicationWorkflowSteps();
+      break;
+    default:
+      return null;
+  }
+
+  return {
+    templateId,
+    templateTitle: catalogEntry.title,
+    templateDescription: catalogEntry.description,
+    steps,
+    estimatedSteps: steps.length,
+  };
+};
+
+const applyGuidedWorkflowToggles = (
+  toggles: GuidedWorkflowToggleKey[],
+  setters: GuidedWorkflowToggleSetters
+): void => {
+  toggles.forEach((key) => {
+    setters[key](true);
+  });
+};
+
+type GuidedWorkflowPanelProps = {
+  plan: GuidedWorkflowPlan;
+  session: GuidedWorkflowSession;
+  onApplyStep: () => void;
+  onSkipStep: () => void;
+  onCancel: () => void;
+};
+
+function GuidedWorkflowPanel({
+  plan,
+  session,
+  onApplyStep,
+  onSkipStep,
+  onCancel,
+}: GuidedWorkflowPanelProps) {
+  const currentStep = plan.steps[session.currentStepIndex];
+  const progressLabel = currentStep
+    ? `Paso ${session.currentStepIndex + 1}/${plan.steps.length} · ${plan.templateTitle}`
+    : `${plan.templateTitle} · completado`;
+
+  return (
+    <div className={`${contentPanel} border border-[var(--app-accent)]/25`}>
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+        <div>
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            🧭 Guided Scientific Workflow
+          </p>
+          <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+            {progressLabel}
+          </p>
+        </div>
+        {session.status === "active" ? (
+          <button type="button" onClick={onCancel} className={btnOutlineSm}>
+            Cancelar workflow
+          </button>
+        ) : null}
+      </div>
+
+      {session.status === "completed" ? (
+        <p className="text-sm text-[var(--app-text)]">
+          Workflow &quot;{plan.templateTitle}&quot; completado. Puede continuar
+          en modo experto o exportar reportes.
+        </p>
+      ) : currentStep ? (
+        <>
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            {currentStep.title}
+          </p>
+          <p className="text-sm text-[var(--app-text-muted)] mt-1">
+            {currentStep.explanation}
+          </p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            <button type="button" onClick={onApplyStep} className={btnPrimary}>
+              Aplicar paso
+            </button>
+            <button type="button" onClick={onSkipStep} className={btnOutlineSm}>
+              Omitir paso
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {session.completedStepIds.length > 0 ? (
+        <p className="text-xs text-[var(--app-text-muted)] mt-3">
+          Completados: {session.completedStepIds.length} · Omitidos:{" "}
+          {session.skippedStepIds.length}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+// END SCI-59
+
+// BEGIN SCI-58 — Multi-Dataset Comparison Framework (comparison layer)
+
+type ComparisonSlotId = "A" | "B";
+
+type ComparisonDeltaDirection =
+  | "improved"
+  | "regressed"
+  | "stable"
+  | "n/a";
+
+type DatasetAnalysisProfileNormalitySnapshot = {
+  seriesEvaluated: number;
+  normalCount: number;
+  nonNormalCount: number;
+  questionableCount: number;
+  contradictoryCount: number;
+  globalHeadline?: string;
+  hasWarnings: boolean;
+};
+
+type DatasetAnalysisProfileInferentialSnapshot = {
+  dominantMagnitude?: EffectMagnitude;
+  metric?: string;
+  valueDisplay?: string;
+  prospectiveSampleSize?: number | null;
+};
+
+type DatasetAnalysisProfile = {
+  slotLabel: ComparisonSlotId;
+  datasetInfo: ImportedDatasetInfo;
+  capturedAt: string;
+  seriesCount: number;
+  totalObservations: number;
+  readinessScore?: number;
+  readinessClassification?: PublicationReadinessAnalyzerAnalysis["classification"];
+  overallHealthScore?: number;
+  evidenceScore?: number;
+  evidenceClassification?: EvidenceStrengthEngineAnalysis["classification"];
+  publicationStatus?: PublicationReadinessAnalyzerAnalysis["classification"];
+  publicationScore?: number;
+  normality?: DatasetAnalysisProfileNormalitySnapshot;
+  inferential?: DatasetAnalysisProfileInferentialSnapshot;
+  multivariateHeadline?: string;
+  isComplete: boolean;
+};
+
+type ComparisonSlot = {
+  id: ComparisonSlotId;
+  label: string;
+  profile: DatasetAnalysisProfile | null;
+};
+
+type ComparisonKpiRow = {
+  key: string;
+  title: string;
+  slotAValue: string;
+  slotBValue: string;
+  slotANumeric: number | null;
+  slotBNumeric: number | null;
+  delta: number | null;
+  deltaDirection: ComparisonDeltaDirection;
+};
+
+type MultiDatasetComparisonAnalysis = {
+  slotA: DatasetAnalysisProfile;
+  slotB: DatasetAnalysisProfile;
+  kpiRows: ComparisonKpiRow[];
+  comparabilityWarnings: string[];
+  crossDatasetDiagnosis: string[];
+  comparisonRecommendations: string[];
+  evaluatedMetrics: number;
+};
+
+const COMPARISON_DELTA_STABLE_THRESHOLD = 0.5;
+
+const createEmptyComparisonSlots = (): Record<ComparisonSlotId, ComparisonSlot> => ({
+  A: { id: "A", label: "Slot A", profile: null },
+  B: { id: "B", label: "Slot B", profile: null },
+});
+
+const mapNormalityToProfileSnapshot = (
+  assessment: CanonicalNormalityAssessment
+): DatasetAnalysisProfileNormalitySnapshot | undefined => {
+  const summary = buildPublicationDashboardNormalitySummary(assessment);
+  if (!summary) {
+    return undefined;
+  }
+  return {
+    seriesEvaluated: summary.seriesEvaluated,
+    normalCount: summary.normalCount,
+    nonNormalCount: summary.nonNormalCount,
+    questionableCount: summary.questionableCount,
+    contradictoryCount: summary.contradictoryCount,
+    globalHeadline: summary.globalHeadline,
+    hasWarnings: summary.hasWarnings,
+  };
+};
+
+const mapInferentialToProfileSnapshot = (
+  analysis: EffectSizePowerAnalysis | null
+): DatasetAnalysisProfileInferentialSnapshot | undefined => {
+  if (!analysis) {
+    return undefined;
+  }
+  return {
+    dominantMagnitude: analysis.dominantMagnitude,
+    metric: analysis.dominantEntry?.metric,
+    valueDisplay: analysis.dominantEntry?.valueDisplay,
+    prospectiveSampleSize: analysis.prospectiveSampleSize,
+  };
+};
+
+const countCompleteProfileMetrics = (profile: DatasetAnalysisProfile): number => {
+  let count = 0;
+  if (profile.readinessScore !== undefined) count += 1;
+  if (profile.overallHealthScore !== undefined) count += 1;
+  if (profile.evidenceScore !== undefined) count += 1;
+  return count;
+};
+
+const canBuildDatasetAnalysisProfile = (input: {
+  datasetInfo: ImportedDatasetInfo | null;
+  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
+  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  canonicalNormalityAssessment: CanonicalNormalityAssessment;
+}): boolean => {
+  if (!input.datasetInfo) {
+    return false;
+  }
+  const hasCoreMetric =
+    input.publicationReadinessAnalyzerAnalysis !== null ||
+    input.methodologicalDashboardAnalysis !== null ||
+    input.evidenceStrengthEngineAnalysis !== null;
+  const hasNormality =
+    input.canonicalNormalityAssessment.seriesAssessments.length > 0;
+  return hasCoreMetric || hasNormality;
+};
+
+const buildDatasetAnalysisProfile = (input: {
+  slotLabel: ComparisonSlotId;
+  datasetInfo: ImportedDatasetInfo;
+  seriesCount: number;
+  totalObservations: number;
+  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
+  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  effectSizePowerAnalysis: EffectSizePowerAnalysis | null;
+  canonicalNormalityAssessment: CanonicalNormalityAssessment;
+  multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
+}): DatasetAnalysisProfile => {
+  const multivariateHighlights = buildPublicationDashboardMultivariateHighlights(
+    input.multivariateDashboardAnalysis
+  );
+  const profile: DatasetAnalysisProfile = {
+    slotLabel: input.slotLabel,
+    datasetInfo: input.datasetInfo,
+    capturedAt: new Date().toISOString(),
+    seriesCount: input.seriesCount,
+    totalObservations: input.totalObservations,
+    readinessScore:
+      input.publicationReadinessAnalyzerAnalysis?.readinessScore ?? undefined,
+    readinessClassification:
+      input.publicationReadinessAnalyzerAnalysis?.classification ?? undefined,
+    overallHealthScore:
+      input.methodologicalDashboardAnalysis?.overallHealthScore ?? undefined,
+    evidenceScore:
+      input.evidenceStrengthEngineAnalysis?.evidenceScore ?? undefined,
+    evidenceClassification:
+      input.evidenceStrengthEngineAnalysis?.classification ?? undefined,
+    publicationStatus:
+      input.publicationReadinessAnalyzerAnalysis?.classification ?? undefined,
+    publicationScore:
+      input.publicationReadinessAnalyzerAnalysis?.readinessScore ?? undefined,
+    normality: mapNormalityToProfileSnapshot(
+      input.canonicalNormalityAssessment
+    ),
+    inferential: mapInferentialToProfileSnapshot(input.effectSizePowerAnalysis),
+    multivariateHeadline: multivariateHighlights?.headline ?? undefined,
+    isComplete: false,
+  };
+  profile.isComplete = countCompleteProfileMetrics(profile) >= 3;
+  return profile;
+};
+
+const computeComparisonDeltaDirection = (
+  delta: number | null,
+  higherIsBetter: boolean
+): ComparisonDeltaDirection => {
+  if (delta === null || !Number.isFinite(delta)) {
+    return "n/a";
+  }
+  if (Math.abs(delta) < COMPARISON_DELTA_STABLE_THRESHOLD) {
+    return "stable";
+  }
+  if (higherIsBetter) {
+    return delta > 0 ? "improved" : "regressed";
+  }
+  return delta < 0 ? "improved" : "regressed";
+};
+
+const formatComparisonNumericDelta = (delta: number | null): string => {
+  if (delta === null || !Number.isFinite(delta)) {
+    return "—";
+  }
+  const prefix = delta > 0 ? "+" : "";
+  return `${prefix}${delta.toFixed(1)}`;
+};
+
+const buildComparisonKpiRow = (input: {
+  key: string;
+  title: string;
+  slotAValue: string;
+  slotBValue: string;
+  slotANumeric?: number;
+  slotBNumeric?: number;
+  higherIsBetter?: boolean;
+}): ComparisonKpiRow => {
+  const slotANumeric =
+    input.slotANumeric !== undefined && Number.isFinite(input.slotANumeric)
+      ? input.slotANumeric
+      : null;
+  const slotBNumeric =
+    input.slotBNumeric !== undefined && Number.isFinite(input.slotBNumeric)
+      ? input.slotBNumeric
+      : null;
+  const delta =
+    slotANumeric !== null && slotBNumeric !== null
+      ? slotBNumeric - slotANumeric
+      : null;
+  return {
+    key: input.key,
+    title: input.title,
+    slotAValue: input.slotAValue,
+    slotBValue: input.slotBValue,
+    slotANumeric,
+    slotBNumeric,
+    delta,
+    deltaDirection: computeComparisonDeltaDirection(
+      delta,
+      input.higherIsBetter ?? true
+    ),
+  };
+};
+
+const formatProfileReadinessValue = (
+  profile: DatasetAnalysisProfile
+): string => {
+  if (profile.readinessScore === undefined) {
+    return "—";
+  }
+  const label = profile.readinessClassification
+    ? getPublicationReadinessAnalyzerClassificationLabel(
+        profile.readinessClassification
+      )
+    : "";
+  return `${profile.readinessScore.toFixed(1)}${label ? ` (${label})` : ""}`;
+};
+
+const formatProfileEvidenceValue = (profile: DatasetAnalysisProfile): string => {
+  if (profile.evidenceScore === undefined) {
+    return "—";
+  }
+  const label = profile.evidenceClassification
+    ? getEvidenceStrengthEngineClassificationLabel(
+        profile.evidenceClassification
+      )
+    : "";
+  return `${profile.evidenceScore.toFixed(1)}${label ? ` (${label})` : ""}`;
+};
+
+const formatProfilePublicationStatusValue = (
+  profile: DatasetAnalysisProfile
+): string => {
+  if (!profile.publicationStatus) {
+    return "—";
+  }
+  return getPublicationReadinessAnalyzerClassificationLabel(
+    profile.publicationStatus
+  );
+};
+
+const formatProfileEffectValue = (
+  profile: DatasetAnalysisProfile
+): string => {
+  if (!profile.inferential?.dominantMagnitude) {
+    return "—";
+  }
+  const magnitude = getEffectMagnitudeLabel(profile.inferential.dominantMagnitude);
+  const metric = profile.inferential.metric ?? "efecto";
+  const value = profile.inferential.valueDisplay ?? "";
+  return value
+    ? `${magnitude} · ${metric} ${value}`
+    : `${magnitude} · ${metric}`;
+};
+
+const buildComparabilityWarnings = (
+  slotA: DatasetAnalysisProfile,
+  slotB: DatasetAnalysisProfile
+): string[] => {
+  const warnings: string[] = [];
+  if (slotA.seriesCount !== slotB.seriesCount) {
+    warnings.push(
+      "Los datasets tienen distinto número de series; la comparación es parcial."
+    );
+  }
+  if (
+    slotA.totalObservations > 0 &&
+    slotB.totalObservations > 0 &&
+    (slotA.totalObservations / slotB.totalObservations > 3 ||
+      slotB.totalObservations / slotA.totalObservations > 3)
+  ) {
+    warnings.push("Los tamaños muestrales son muy dispares entre slots.");
+  }
+  if (!slotA.isComplete || !slotB.isComplete) {
+    warnings.push(
+      "Capture ambos slots con motores SCI-50→57 activos para una comparación completa."
+    );
+  }
+  if (slotA.inferential && !slotB.inferential) {
+    warnings.push("Effect size disponible solo en Slot A.");
+  } else if (!slotA.inferential && slotB.inferential) {
+    warnings.push("Effect size disponible solo en Slot B.");
+  } else if (
+    slotA.inferential?.metric &&
+    slotB.inferential?.metric &&
+    slotA.inferential.metric !== slotB.inferential.metric
+  ) {
+    warnings.push(
+      "Las métricas de effect size no son directamente comparables entre slots."
+    );
+  }
+  return deduplicateTextLines(warnings);
+};
+
+const buildCrossDatasetComparisonDiagnosis = (input: {
+  slotA: DatasetAnalysisProfile;
+  slotB: DatasetAnalysisProfile;
+  kpiRows: ComparisonKpiRow[];
+}): string[] => {
+  const diagnosis: string[] = [];
+  const readinessRow = input.kpiRows.find((row) => row.key === "readiness");
+  const evidenceRow = input.kpiRows.find((row) => row.key === "evidence");
+  const publicationRow = input.kpiRows.find((row) => row.key === "publicationStatus");
+
+  if (
+    evidenceRow?.slotAValue.includes("Strong") &&
+    evidenceRow?.slotBValue.includes("Strong") &&
+    readinessRow?.delta !== null &&
+    readinessRow?.delta !== undefined &&
+    readinessRow.delta < -5
+  ) {
+    pushUniqueTextLine(
+      diagnosis,
+      "Ambos estudios mantienen evidencia Strong, pero Slot B presenta menor preparación metodológica."
+    );
+  }
+
+  if (
+    publicationRow &&
+    publicationRow.slotAValue !== publicationRow.slotBValue &&
+    publicationRow.slotAValue !== "—" &&
+    publicationRow.slotBValue !== "—"
+  ) {
+    pushUniqueTextLine(
+      diagnosis,
+      `Publication Status diverge: Slot A (${publicationRow.slotAValue}) vs Slot B (${publicationRow.slotBValue}).`
+    );
+  }
+
+  if (
+    input.slotA.inferential?.dominantMagnitude === "large" &&
+    input.slotB.inferential?.dominantMagnitude === "large"
+  ) {
+    pushUniqueTextLine(
+      diagnosis,
+      "La magnitud del efecto dominante es grande en ambos estudios."
+    );
+  }
+
+  const nonNormalA = input.slotA.normality?.nonNormalCount ?? 0;
+  const nonNormalB = input.slotB.normality?.nonNormalCount ?? 0;
+  if (nonNormalB > nonNormalA) {
+    pushUniqueTextLine(
+      diagnosis,
+      "Slot B presenta más series no normales que Slot A."
+    );
+  }
+
+  if (diagnosis.length === 0) {
+    pushUniqueTextLine(
+      diagnosis,
+      "Los perfiles comparados no muestran divergencias críticas en los KPIs evaluados."
+    );
+  }
+
+  return diagnosis;
+};
+
+const evidenceRowStable = (rows: ComparisonKpiRow[]): boolean => {
+  const evidenceRow = rows.find((row) => row.key === "evidence");
+  return evidenceRow?.deltaDirection === "stable";
+};
+
+const buildCrossDatasetComparisonRecommendations = (input: {
+  kpiRows: ComparisonKpiRow[];
+  comparabilityWarnings: string[];
+}): string[] => {
+  const recommendations: string[] = [];
+  const readinessRow = input.kpiRows.find((row) => row.key === "readiness");
+  const overallRow = input.kpiRows.find((row) => row.key === "overallHealth");
+
+  if (readinessRow?.deltaDirection === "regressed") {
+    pushUniqueTextLine(
+      recommendations,
+      "Revise supuestos y calidad metodológica en Slot B antes de generalizar conclusiones."
+    );
+  }
+
+  if (
+    evidenceRowStable(input.kpiRows) &&
+    overallRow?.deltaDirection === "regressed"
+  ) {
+    pushUniqueTextLine(
+      recommendations,
+      "Priorice Assumptions y Reproducibility en Slot B (SCI-56) pese a evidencia estable."
+    );
+  }
+
+  if (input.comparabilityWarnings.length > 0) {
+    pushUniqueTextLine(
+      recommendations,
+      "Considere las advertencias de comparabilidad antes de interpretar deltas numéricos."
+    );
+  }
+
+  if (recommendations.length === 0) {
+    pushUniqueTextLine(
+      recommendations,
+      "Documente el contraste entre slots en el reporte científico del dataset activo."
+    );
+  }
+
+  return recommendations;
+};
+
+const canBuildMultiDatasetComparisonAnalysis = (
+  slotA: DatasetAnalysisProfile | null,
+  slotB: DatasetAnalysisProfile | null
+): boolean =>
+  slotA !== null &&
+  slotB !== null &&
+  slotA.isComplete &&
+  slotB.isComplete;
+
+const buildMultiDatasetComparisonAnalysis = (input: {
+  slotA: DatasetAnalysisProfile;
+  slotB: DatasetAnalysisProfile;
+}): MultiDatasetComparisonAnalysis => {
+  const { slotA, slotB } = input;
+  const kpiRows: ComparisonKpiRow[] = [
+    buildComparisonKpiRow({
+      key: "readiness",
+      title: "Readiness (SCI-55)",
+      slotAValue: formatProfileReadinessValue(slotA),
+      slotBValue: formatProfileReadinessValue(slotB),
+      slotANumeric: slotA.readinessScore,
+      slotBNumeric: slotB.readinessScore,
+      higherIsBetter: true,
+    }),
+    buildComparisonKpiRow({
+      key: "overallHealth",
+      title: "Overall Health (SCI-56)",
+      slotAValue:
+        slotA.overallHealthScore !== undefined
+          ? slotA.overallHealthScore.toFixed(1)
+          : "—",
+      slotBValue:
+        slotB.overallHealthScore !== undefined
+          ? slotB.overallHealthScore.toFixed(1)
+          : "—",
+      slotANumeric: slotA.overallHealthScore,
+      slotBNumeric: slotB.overallHealthScore,
+      higherIsBetter: true,
+    }),
+    buildComparisonKpiRow({
+      key: "evidence",
+      title: "Evidence (SCI-53)",
+      slotAValue: formatProfileEvidenceValue(slotA),
+      slotBValue: formatProfileEvidenceValue(slotB),
+      slotANumeric: slotA.evidenceScore,
+      slotBNumeric: slotB.evidenceScore,
+      higherIsBetter: true,
+    }),
+    buildComparisonKpiRow({
+      key: "publicationStatus",
+      title: "Publication Status",
+      slotAValue: formatProfilePublicationStatusValue(slotA),
+      slotBValue: formatProfilePublicationStatusValue(slotB),
+      higherIsBetter: false,
+    }),
+    buildComparisonKpiRow({
+      key: "effectDominant",
+      title: "Effect dominante (SCI-57)",
+      slotAValue: formatProfileEffectValue(slotA),
+      slotBValue: formatProfileEffectValue(slotB),
+      higherIsBetter: false,
+    }),
+  ];
+
+  const comparabilityWarnings = buildComparabilityWarnings(slotA, slotB);
+  const crossDatasetDiagnosis = buildCrossDatasetComparisonDiagnosis({
+    slotA,
+    slotB,
+    kpiRows,
+  });
+  const comparisonRecommendations = buildCrossDatasetComparisonRecommendations({
+    kpiRows,
+    comparabilityWarnings,
+  });
+
+  return {
+    slotA,
+    slotB,
+    kpiRows,
+    comparabilityWarnings,
+    crossDatasetDiagnosis,
+    comparisonRecommendations,
+    evaluatedMetrics: kpiRows.filter((row) => row.slotANumeric !== null).length,
+  };
+};
+
+const formatDatasetAnalysisProfileMiniSummary = (
+  profile: DatasetAnalysisProfile
+): string => {
+  const parts: string[] = [];
+  if (profile.readinessScore !== undefined) {
+    parts.push(`R ${profile.readinessScore.toFixed(1)}`);
+  }
+  if (profile.overallHealthScore !== undefined) {
+    parts.push(`H ${profile.overallHealthScore.toFixed(1)}`);
+  }
+  if (profile.evidenceScore !== undefined) {
+    parts.push(`E ${profile.evidenceScore.toFixed(1)}`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : "Perfil parcial";
+};
+
+const getComparisonDeltaDirectionLabel = (
+  direction: ComparisonDeltaDirection
+): string => {
+  if (direction === "improved") return "Mejora";
+  if (direction === "regressed") return "Regresión";
+  if (direction === "stable") return "Estable";
+  return "N/A";
+};
+
+type ScientificMultiDatasetComparisonDashboardProps = {
+  analysis: MultiDatasetComparisonAnalysis;
+};
+
+function ScientificMultiDatasetComparisonDashboard({
+  analysis,
+}: ScientificMultiDatasetComparisonDashboardProps) {
+  const readinessRow = analysis.kpiRows.find((row) => row.key === "readiness");
+
+  return (
+    <div className="w-full mt-3 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className={`${contentPanel} flex flex-col gap-1`}>
+          <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            Slot A
+          </p>
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            {analysis.slotA.datasetInfo.fileName}
+          </p>
+          <p className="text-xs text-[var(--app-text-muted)]">
+            {analysis.slotA.seriesCount} series ·{" "}
+            {analysis.slotA.totalObservations} obs.
+          </p>
+        </div>
+        <div className={`${contentPanel} flex flex-col gap-1`}>
+          <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            Slot B
+          </p>
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            {analysis.slotB.datasetInfo.fileName}
+          </p>
+          <p className="text-xs text-[var(--app-text-muted)]">
+            {analysis.slotB.seriesCount} series ·{" "}
+            {analysis.slotB.totalObservations} obs.
+          </p>
+        </div>
+      </div>
+
+      {readinessRow &&
+      readinessRow.delta !== null &&
+      readinessRow.delta !== undefined ? (
+        <div className={`${contentPanel} flex flex-col gap-1`}>
+          <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            Delta Readiness (B − A)
+          </p>
+          <p className="text-2xl font-semibold text-[var(--app-heading)] tabular-nums">
+            {formatComparisonNumericDelta(readinessRow.delta)}
+          </p>
+        </div>
+      ) : null}
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b border-[var(--app-border)]">
+              <th className="text-left py-2 pr-3 font-semibold">KPI</th>
+              <th className="text-left py-2 px-3 font-semibold">Slot A</th>
+              <th className="text-left py-2 px-3 font-semibold">Slot B</th>
+              <th className="text-left py-2 pl-3 font-semibold">Δ (B−A)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {analysis.kpiRows.map((row) => (
+              <tr
+                key={row.key}
+                className="border-b border-[var(--app-border)]/60"
+              >
+                <td className="py-2 pr-3 text-[var(--app-heading)]">
+                  {row.title}
+                </td>
+                <td className="py-2 px-3 text-[var(--app-text-muted)]">
+                  {row.slotAValue}
+                </td>
+                <td className="py-2 px-3 text-[var(--app-text-muted)]">
+                  {row.slotBValue}
+                </td>
+                <td className="py-2 pl-3 tabular-nums text-[var(--app-text)]">
+                  {row.delta !== null
+                    ? `${formatComparisonNumericDelta(row.delta)} (${getComparisonDeltaDirectionLabel(row.deltaDirection)})`
+                    : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {(analysis.slotA.normality || analysis.slotB.normality) && (
+        <div>
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Normalidad integrada
+          </p>
+          {analysis.slotA.normality ? (
+            <p className={`mt-1 text-sm ${emptyState}`}>
+              Slot A: normales={analysis.slotA.normality.normalCount}, no
+              normales={analysis.slotA.normality.nonNormalCount}, cuestionables=
+              {analysis.slotA.normality.questionableCount}.
+            </p>
+          ) : null}
+          {analysis.slotB.normality ? (
+            <p className={`mt-1 text-sm ${emptyState}`}>
+              Slot B: normales={analysis.slotB.normality.normalCount}, no
+              normales={analysis.slotB.normality.nonNormalCount}, cuestionables=
+              {analysis.slotB.normality.questionableCount}.
+            </p>
+          ) : null}
+        </div>
+      )}
+
+      {analysis.comparabilityWarnings.length > 0 ? (
+        <div>
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Advertencias de comparabilidad
+          </p>
+          {analysis.comparabilityWarnings.map((warning) => (
+            <p key={warning} className={`mt-1 text-sm ${emptyState}`}>
+              {warning}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
+      {analysis.crossDatasetDiagnosis.length > 0 ? (
+        <div>
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Diagnóstico cruzado
+          </p>
+          {analysis.crossDatasetDiagnosis.map((line) => (
+            <p key={line} className={`mt-1 text-sm ${emptyState}`}>
+              {line}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
+      {analysis.comparisonRecommendations.length > 0 ? (
+        <div>
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Recomendaciones
+          </p>
+          {analysis.comparisonRecommendations.map((line) => (
+            <p key={line} className={`mt-1 text-sm ${emptyState}`}>
+              {line}
+            </p>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// END SCI-58
+
 type ScientificMethodologicalDashboardProps = {
   analysis: MethodologicalDashboardAnalysis;
 };
@@ -20342,6 +21494,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState(false);
   const [showPublicationDashboard, setShowPublicationDashboard] =
     useState(false);
+  const [guidedWorkflowSession, setGuidedWorkflowSession] =
+    useState<GuidedWorkflowSession>(GUIDED_WORKFLOW_IDLE_SESSION);
+  const [comparisonSlots, setComparisonSlots] = useState<
+    Record<ComparisonSlotId, ComparisonSlot>
+  >(createEmptyComparisonSlots);
+  const [showMultiDatasetComparison, setShowMultiDatasetComparison] =
+    useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -20769,6 +21928,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowPublicationReadinessAnalyzer(false);
     setShowMethodologicalDashboard(false);
     setShowPublicationDashboard(false);
+    setGuidedWorkflowSession(GUIDED_WORKFLOW_IDLE_SESSION);
+    setShowMultiDatasetComparison(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -22127,6 +23288,222 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     effectSizePowerAnalysis,
     canonicalNormalityAssessment,
   });
+  const guidedWorkflowContext = useMemo(
+    (): GuidedWorkflowContext => ({
+      seriesCount: visibleExperimentalSeries.length,
+      totalObservations: visibleExperimentalSeries.reduce(
+        (sum, item) => sum + getSeriesYValues(item).length,
+        0
+      ),
+      canonicalNormalityAssessment,
+      statisticalRecommendation,
+    }),
+    [
+      visibleExperimentalSeries,
+      canonicalNormalityAssessment,
+      statisticalRecommendation,
+    ]
+  );
+  const guidedWorkflowToggleSetters: GuidedWorkflowToggleSetters = {
+    showStatistics: setShowStatistics,
+    showErrorBars: setShowErrorBars,
+    showNormality: setShowNormality,
+    showQQPlot: setShowQQPlot,
+    showCorrelation: setShowCorrelation,
+    showHeatmap: setShowHeatmap,
+    showPCA: setShowPCA,
+    showHierarchicalClustering: setShowHierarchicalClustering,
+    showMultivariateDashboard: setShowMultivariateDashboard,
+    showTTest: setShowTTest,
+    showAnova: setShowAnova,
+    showPostHoc: setShowPostHoc,
+    showNonParametric: setShowNonParametric,
+    showEffectSizePower: setShowEffectSizePower,
+    showConsistencyEngine: setShowConsistencyEngine,
+    showReportQualityEngine: setShowReportQualityEngine,
+    showReproducibilityExplorer: setShowReproducibilityExplorer,
+    showEvidenceStrengthEngine: setShowEvidenceStrengthEngine,
+    showAssumptionTracker: setShowAssumptionTracker,
+    showPublicationReadinessAnalyzer: setShowPublicationReadinessAnalyzer,
+    showMethodologicalDashboard: setShowMethodologicalDashboard,
+    showPublicationDashboard: setShowPublicationDashboard,
+    showStatisticalAdvisor: setShowStatisticalAdvisor,
+    showScientificInterpretation: setShowScientificInterpretation,
+    showScientificReport: setShowScientificReport,
+  };
+  const activeGuidedWorkflowPlan = useMemo(() => {
+    if (
+      !guidedWorkflowSession.templateId ||
+      guidedWorkflowSession.status === "idle" ||
+      guidedWorkflowSession.status === "cancelled"
+    ) {
+      return null;
+    }
+    return buildGuidedWorkflowPlan(
+      guidedWorkflowSession.templateId,
+      guidedWorkflowContext
+    );
+  }, [guidedWorkflowSession, guidedWorkflowContext]);
+  const startGuidedWorkflow = (templateId: GuidedWorkflowTemplateId) => {
+    if (!buildGuidedWorkflowPlan(templateId, guidedWorkflowContext)) {
+      return;
+    }
+    setGuidedWorkflowSession({
+      status: "active",
+      templateId,
+      currentStepIndex: 0,
+      completedStepIds: [],
+      skippedStepIds: [],
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+    });
+  };
+  const cancelGuidedWorkflow = () => {
+    setGuidedWorkflowSession(GUIDED_WORKFLOW_IDLE_SESSION);
+  };
+  const advanceGuidedWorkflowStep = (stepId: string, skipped: boolean) => {
+    setGuidedWorkflowSession((previous) => {
+      const plan = previous.templateId
+        ? buildGuidedWorkflowPlan(previous.templateId, guidedWorkflowContext)
+        : null;
+      if (!plan || previous.status !== "active") {
+        return previous;
+      }
+
+      const nextIndex = previous.currentStepIndex + 1;
+      const completedStepIds = skipped
+        ? previous.completedStepIds
+        : [...previous.completedStepIds, stepId];
+      const skippedStepIds = skipped
+        ? [...previous.skippedStepIds, stepId]
+        : previous.skippedStepIds;
+
+      if (nextIndex >= plan.steps.length) {
+        return {
+          ...previous,
+          status: "completed",
+          currentStepIndex: nextIndex,
+          completedStepIds,
+          skippedStepIds,
+          completedAt: new Date().toISOString(),
+        };
+      }
+
+      return {
+        ...previous,
+        currentStepIndex: nextIndex,
+        completedStepIds,
+        skippedStepIds,
+      };
+    });
+  };
+  const applyCurrentGuidedWorkflowStep = () => {
+    if (guidedWorkflowSession.status !== "active" || !activeGuidedWorkflowPlan) {
+      return;
+    }
+    const step =
+      activeGuidedWorkflowPlan.steps[guidedWorkflowSession.currentStepIndex];
+    if (!step) {
+      return;
+    }
+
+    const toggles = resolveGuidedWorkflowStepToggles(
+      step,
+      guidedWorkflowContext
+    );
+    applyGuidedWorkflowToggles(toggles, guidedWorkflowToggleSetters);
+
+    if (step.navigateAfterApply !== false) {
+      setActiveWorkspaceSection(step.workspaceTab);
+      if (step.inspectorSection) {
+        setAnalysisInspectorSection(step.inspectorSection);
+      }
+    }
+
+    advanceGuidedWorkflowStep(step.id, false);
+  };
+  const skipCurrentGuidedWorkflowStep = () => {
+    if (guidedWorkflowSession.status !== "active" || !activeGuidedWorkflowPlan) {
+      return;
+    }
+    const step =
+      activeGuidedWorkflowPlan.steps[guidedWorkflowSession.currentStepIndex];
+    if (!step) {
+      return;
+    }
+    advanceGuidedWorkflowStep(step.id, true);
+  };
+  const buildCurrentDatasetAnalysisProfile = (
+    slotLabel: ComparisonSlotId
+  ): DatasetAnalysisProfile | null => {
+    if (!currentDatasetInfo) {
+      return null;
+    }
+    if (
+      !canBuildDatasetAnalysisProfile({
+        datasetInfo: currentDatasetInfo,
+        publicationReadinessAnalyzerAnalysis,
+        methodologicalDashboardAnalysis,
+        evidenceStrengthEngineAnalysis,
+        canonicalNormalityAssessment,
+      })
+    ) {
+      return null;
+    }
+    return buildDatasetAnalysisProfile({
+      slotLabel,
+      datasetInfo: currentDatasetInfo,
+      seriesCount: visibleExperimentalSeries.length,
+      totalObservations: visibleExperimentalSeries.reduce(
+        (sum, item) => sum + getSeriesYValues(item).length,
+        0
+      ),
+      publicationReadinessAnalyzerAnalysis,
+      methodologicalDashboardAnalysis,
+      evidenceStrengthEngineAnalysis,
+      effectSizePowerAnalysis,
+      canonicalNormalityAssessment,
+      multivariateDashboardAnalysis,
+    });
+  };
+  const captureComparisonSlot = (slotId: ComparisonSlotId) => {
+    const profile = buildCurrentDatasetAnalysisProfile(slotId);
+    if (!profile) {
+      return;
+    }
+    setComparisonSlots((previous) => ({
+      ...previous,
+      [slotId]: {
+        ...previous[slotId],
+        profile,
+      },
+    }));
+  };
+  const clearComparisonSlot = (slotId: ComparisonSlotId) => {
+    setComparisonSlots((previous) => ({
+      ...previous,
+      [slotId]: {
+        ...previous[slotId],
+        profile: null,
+      },
+    }));
+  };
+  const comparisonAnalysis = useMemo(() => {
+    const profileA = comparisonSlots.A.profile;
+    const profileB = comparisonSlots.B.profile;
+    if (
+      !profileA ||
+      !profileB ||
+      !canBuildMultiDatasetComparisonAnalysis(profileA, profileB)
+    ) {
+      return null;
+    }
+    return buildMultiDatasetComparisonAnalysis({
+      slotA: profileA,
+      slotB: profileB,
+    });
+  }, [comparisonSlots.A.profile, comparisonSlots.B.profile]);
+  const hasEnoughDataForMultiDatasetComparison = comparisonAnalysis !== null;
   const scientificReport = useMemo(
     () =>
       generateScientificReport({
@@ -23125,6 +24502,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showPublicationReadinessAnalyzer ||
         showMethodologicalDashboard ||
         showPublicationDashboard ||
+        showMultiDatasetComparison ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest ||
@@ -23881,6 +25259,142 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </p>
                     )}
               </NotebookSection>
+
+              {hasEnoughSeriesForCorrelation &&
+                guidedWorkflowSession.status === "idle" && (
+                  <NotebookSection
+                    title="Guided Scientific Workflow"
+                    icon="🧭"
+                    subtitle="Seleccione un objetivo analítico"
+                    defaultOpen
+                  >
+                    <p className="text-sm text-[var(--app-text-muted)] mb-3">
+                      El workflow activará módulos y navegará el workspace paso
+                      a paso. Modo experto siempre disponible.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {GUIDED_WORKFLOW_TEMPLATE_CATALOG.map((template) => (
+                        <button
+                          key={template.id}
+                          type="button"
+                          onClick={() => startGuidedWorkflow(template.id)}
+                          className={`${btnOutline} text-left flex flex-col items-start gap-0.5 py-2.5`}
+                        >
+                          <span className="font-semibold text-[var(--app-heading)]">
+                            {template.title}
+                          </span>
+                          <span className="text-xs text-[var(--app-text-muted)] font-normal">
+                            {template.description}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </NotebookSection>
+                )}
+
+              {(guidedWorkflowSession.status === "active" ||
+                guidedWorkflowSession.status === "completed") &&
+                activeGuidedWorkflowPlan && (
+                  <GuidedWorkflowPanel
+                    plan={activeGuidedWorkflowPlan}
+                    session={guidedWorkflowSession}
+                    onApplyStep={applyCurrentGuidedWorkflowStep}
+                    onSkipStep={skipCurrentGuidedWorkflowStep}
+                    onCancel={cancelGuidedWorkflow}
+                  />
+                )}
+
+              {hasEnoughSeriesForCorrelation && (
+                <NotebookSection
+                  title="Multi-Dataset Comparison"
+                  icon="📊"
+                  subtitle="Capture perfiles analíticos en Slot A y Slot B"
+                  defaultOpen={false}
+                >
+                  <p className="text-sm text-[var(--app-text-muted)] mb-3">
+                    Dataset activo:{" "}
+                    {currentDatasetInfo?.fileName ?? "sin importar"}. Los slots
+                    conservan snapshots aunque importe otro archivo.
+                  </p>
+                  {(["A", "B"] as ComparisonSlotId[]).map((slotId) => {
+                    const slot = comparisonSlots[slotId];
+                    const profile = slot.profile;
+                    const isStale =
+                      profile !== null &&
+                      currentDatasetInfo !== null &&
+                      profile.datasetInfo.fileName !==
+                        currentDatasetInfo.fileName;
+                    return (
+                      <div
+                        key={slotId}
+                        className={`${contentPanel} mb-3 last:mb-0`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-[var(--app-heading)]">
+                              {slot.label}
+                            </p>
+                            {profile ? (
+                              <>
+                                <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+                                  {profile.datasetInfo.fileName} ·{" "}
+                                  {new Date(profile.capturedAt).toLocaleString()}
+                                </p>
+                                <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+                                  {formatDatasetAnalysisProfileMiniSummary(
+                                    profile
+                                  )}
+                                </p>
+                                <p className="text-xs mt-1">
+                                  <span
+                                    className={
+                                      profile.isComplete
+                                        ? "text-emerald-600"
+                                        : "text-amber-600"
+                                    }
+                                  >
+                                    {profile.isComplete
+                                      ? "Perfil completo"
+                                      : "Perfil parcial"}
+                                  </span>
+                                </p>
+                                {isStale ? (
+                                  <p className="text-xs text-amber-600 mt-1">
+                                    Slot puede estar desactualizado respecto al
+                                    dataset activo.
+                                  </p>
+                                ) : null}
+                              </>
+                            ) : (
+                              <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+                                Vacío — capture desde el dataset activo.
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              className={btnOutlineSm}
+                              disabled={!currentDatasetInfo}
+                              onClick={() => captureComparisonSlot(slotId)}
+                            >
+                              {profile ? "Actualizar" : "Capturar"} {slot.label}
+                            </button>
+                            <button
+                              type="button"
+                              className={btnOutlineSm}
+                              disabled={!profile}
+                              onClick={() => clearComparisonSlot(slotId)}
+                            >
+                              Limpiar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </NotebookSection>
+              )}
             </div>
           </section>
 
@@ -23893,6 +25407,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               Inspector contextual: seleccione una categoría para ver sus
               controles
             </p>
+            {guidedWorkflowSession.status === "active" &&
+              activeGuidedWorkflowPlan && (
+                <div className="mb-3">
+                  <GuidedWorkflowPanel
+                    plan={activeGuidedWorkflowPlan}
+                    session={guidedWorkflowSession}
+                    onApplyStep={applyCurrentGuidedWorkflowStep}
+                    onSkipStep={skipCurrentGuidedWorkflowStep}
+                    onCancel={cancelGuidedWorkflow}
+                  />
+                </div>
+              )}
             <div className={`${card} w-full`}>
               <div className="flex flex-col gap-4 lg:flex-row">
                 <nav
@@ -25392,6 +26918,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                       <label
                         className={`${toggleLabel} ${
+                          !hasEnoughDataForMultiDatasetComparison
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Multi-Dataset Comparison Dashboard
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showMultiDatasetComparison}
+                            onChange={(e) =>
+                              setShowMultiDatasetComparison(e.target.checked)
+                            }
+                            disabled={!hasEnoughDataForMultiDatasetComparison}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
                           !hasEnoughSeriesForCorrelation
                             ? "opacity-50 cursor-not-allowed"
                             : ""
@@ -25803,6 +27354,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             aria-hidden={activeWorkspaceSection !== "results"}
           >
             <h2 className={`${sectionLabel} mb-3`}>📈 Resultados</h2>
+            {guidedWorkflowSession.status === "active" &&
+              activeGuidedWorkflowPlan && (
+                <div className="mb-3">
+                  <GuidedWorkflowPanel
+                    plan={activeGuidedWorkflowPlan}
+                    session={guidedWorkflowSession}
+                    onApplyStep={applyCurrentGuidedWorkflowStep}
+                    onSkipStep={skipCurrentGuidedWorkflowStep}
+                    onCancel={cancelGuidedWorkflow}
+                  />
+                </div>
+              )}
             <div className="space-y-3">
             {isBasicModuleEnabled && (
             <NotebookSection
@@ -28656,6 +30219,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className={contentPanel}>
                         <ScientificPublicationDashboard
                           analysis={publicationDashboardAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showMultiDatasetComparison && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      📊 Multi-Dataset Comparison Dashboard
+                    </p>
+                    {!comparisonAnalysis ? (
+                      <p className={emptyState}>
+                        Capture Slot A y Slot B completos en Datos para
+                        comparar datasets.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificMultiDatasetComparisonDashboard
+                          analysis={comparisonAnalysis}
                         />
                       </div>
                     )}
