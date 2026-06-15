@@ -11128,6 +11128,44 @@ const hasEvidenceStrengthEngineInput = (input: {
   input.reproducibilityExplorerAnalysis !== null ||
   input.bootstrapExplorerAnalysis !== null;
 
+const EVIDENCE_INFERENCE_SCORE_FALLBACK = 50;
+const EVIDENCE_INFERENCE_SCORE_TRIVIAL = 55;
+const EVIDENCE_INFERENCE_SCORE_SMALL = 70;
+const EVIDENCE_INFERENCE_SCORE_MEDIUM = 80;
+const EVIDENCE_INFERENCE_SCORE_LARGE = 95;
+const EVIDENCE_INSUFFICIENT_SAMPLE_PENALTY = 10;
+
+const getEvidenceStrengthEffectMagnitudeInferenceScoreBase = (
+  magnitude: EffectMagnitude
+): number => {
+  if (magnitude === "large") return EVIDENCE_INFERENCE_SCORE_LARGE;
+  if (magnitude === "medium") return EVIDENCE_INFERENCE_SCORE_MEDIUM;
+  if (magnitude === "small") return EVIDENCE_INFERENCE_SCORE_SMALL;
+  return EVIDENCE_INFERENCE_SCORE_TRIVIAL;
+};
+
+const getEvidenceStrengthEffectAwareInferenceScore = (
+  effectSizePowerAnalysis: EffectSizePowerAnalysis | null
+): number => {
+  if (!effectSizePowerAnalysis) {
+    return EVIDENCE_INFERENCE_SCORE_FALLBACK;
+  }
+
+  let score = getEvidenceStrengthEffectMagnitudeInferenceScoreBase(
+    effectSizePowerAnalysis.dominantMagnitude
+  );
+
+  if (effectSizePowerAnalysis.insufficientSampleWarning !== null) {
+    score = Math.max(
+      EVIDENCE_INFERENCE_SCORE_FALLBACK,
+      score - EVIDENCE_INSUFFICIENT_SAMPLE_PENALTY
+    );
+  }
+
+  return score;
+};
+
+// Legacy binario pre-SCI-57B — conservado para comparación temporal.
 const getEvidenceStrengthInferenceScore = (input: {
   anovaAnalysis: AnovaAnalysis | null;
   mannWhitneyResult: MannWhitneyResult | null;
@@ -11244,6 +11282,7 @@ const buildEvidenceStrengthEngineAnalysis = (input: {
   reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
   reproducibilityExplorerAnalysis: ReproducibilityExplorerAnalysis | null;
   bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
+  effectSizePowerAnalysis: EffectSizePowerAnalysis | null;
   anovaAnalysis: AnovaAnalysis | null;
   mannWhitneyResult: MannWhitneyResult | null;
   kruskalWallisResult: KruskalWallisResult | null;
@@ -11257,11 +11296,9 @@ const buildEvidenceStrengthEngineAnalysis = (input: {
   const reproducibilityScore =
     input.reproducibilityExplorerAnalysis?.reproducibilityScore ?? 50;
   const bootstrapScore = input.bootstrapExplorerAnalysis?.stabilityScore ?? 50;
-  const inferenceScore = getEvidenceStrengthInferenceScore({
-    anovaAnalysis: input.anovaAnalysis,
-    mannWhitneyResult: input.mannWhitneyResult,
-    kruskalWallisResult: input.kruskalWallisResult,
-  });
+  const inferenceScore = getEvidenceStrengthEffectAwareInferenceScore(
+    input.effectSizePowerAnalysis
+  );
   const hasInferentialTests =
     input.anovaAnalysis !== null ||
     input.mannWhitneyResult !== null ||
@@ -21161,6 +21198,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         reportQualityEngineAnalysis,
         reproducibilityExplorerAnalysis,
         bootstrapExplorerAnalysis,
+        effectSizePowerAnalysis,
         anovaAnalysis,
         mannWhitneyResult,
         kruskalWallisResult,
@@ -21170,6 +21208,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       reportQualityEngineAnalysis,
       reproducibilityExplorerAnalysis,
       bootstrapExplorerAnalysis,
+      effectSizePowerAnalysis,
       anovaAnalysis,
       mannWhitneyResult,
       kruskalWallisResult,
