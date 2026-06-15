@@ -29,7 +29,13 @@ const STATISTICS_TOGGLES = [
   "Mostrar Methodological Summary Dashboard",
 ];
 
-const INFERENCE_TOGGLES = ["Mostrar clustering jerárquico"];
+const INFERENCE_TOGGLES = [
+  "Mostrar clustering jerárquico",
+  "Mostrar t-test",
+  "Mostrar ANOVA",
+  "Mostrar pruebas no paramétricas",
+  "Mostrar Effect Size & Power",
+];
 
 const ADVISOR_TOGGLES = [
   "Mostrar reporte científico",
@@ -284,6 +290,25 @@ async function validateDataset(page, datasetPath, datasetName) {
     result.issues.push("Uno o más motores metodológicos sin salida");
   }
 
+  // SCI-57 — Effect Size & Power Engine
+  result.checks.sci57Panel = await page
+    .getByText("📏 Effect Size & Power")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (!result.checks.sci57Panel) {
+    result.issues.push("SCI-57: panel Effect Size & Power no visible");
+  }
+  result.checks.sci57DominantEffect = bodyText.includes("Efecto dominante");
+  result.checks.sci57HasMetrics =
+    bodyText.includes("Cohen's d") || bodyText.includes("Epsilon²");
+  result.checks.sci57ProspectivePower = bodyText.includes(
+    "Potencia prospectiva"
+  );
+  if (!result.checks.sci57DominantEffect || !result.checks.sci57HasMetrics) {
+    result.issues.push("SCI-57: contenido del panel incompleto");
+  }
+
   result.checks.sci19PanelVisible = await page
     .getByText("Interpretación científica", { exact: false })
     .first()
@@ -345,6 +370,12 @@ async function validateDataset(page, datasetPath, datasetName) {
   if (!result.checks.sci17IntegratedSection) {
     result.issues.push("SCI-17: sección integrada no encontrada en reporte");
   }
+  result.checks.sci57Sci17Section = reportsText.includes(
+    "Effect Size & Power"
+  );
+  if (!result.checks.sci57Sci17Section) {
+    result.issues.push("SCI-57: sección no encontrada en SCI-17");
+  }
 
   const reportSections = await page
     .locator("button")
@@ -400,12 +431,15 @@ async function validatePdf(page, datasetPath) {
     pdfText.includes("Consenso de normalidad") ||
     pdfText.includes("Coherencia de normalidad");
   const hasSci56 = pdfText.includes("Methodological Summary Dashboard");
+  const hasSci57 = pdfText.includes("Effect Size & Power");
   return {
-    pass: stats.size > 5000 && hasIntegrated && !hasLegacy && hasSci56,
+    pass:
+      stats.size > 5000 && hasIntegrated && !hasLegacy && hasSci56 && hasSci57,
     size: stats.size,
     hasIntegrated,
     hasLegacy,
     hasSci56,
+    hasSci57,
     path: downloadPath,
   };
 }
@@ -482,6 +516,21 @@ async function main() {
         pdf6.hasSci56,
       engineCardsDataset5: dataset5.checks.sci56EngineCards,
       engineCardsDataset6: dataset6.checks.sci56EngineCards,
+    },
+    sci57: {
+      pass:
+        dataset5.checks.sci57Panel &&
+        dataset6.checks.sci57Panel &&
+        dataset5.checks.sci57DominantEffect &&
+        dataset6.checks.sci57DominantEffect &&
+        dataset5.checks.sci57HasMetrics &&
+        dataset6.checks.sci57HasMetrics &&
+        dataset5.checks.sci57Sci17Section &&
+        dataset6.checks.sci57Sci17Section &&
+        pdf5.hasSci57 &&
+        pdf6.hasSci57,
+      prospectivePowerDataset5: dataset5.checks.sci57ProspectivePower,
+      prospectivePowerDataset6: dataset6.checks.sci57ProspectivePower,
     },
   };
 
