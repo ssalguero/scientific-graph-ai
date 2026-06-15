@@ -26,7 +26,7 @@ const STATISTICS_TOGGLES = [
   "Mostrar Evidence Strength Engine",
   "Mostrar Assumption Tracker",
   "Mostrar Publication Readiness Analyzer",
-  "Mostrar Methodological Summary Dashboard",
+  "Mostrar Executive Publication Dashboard",
 ];
 
 const INFERENCE_TOGGLES = [
@@ -309,6 +309,30 @@ async function validateDataset(page, datasetPath, datasetName) {
     result.issues.push("SCI-57: contenido del panel incompleto");
   }
 
+  // SCI-60 — Executive Publication Dashboard
+  result.checks.sci60Panel = await page
+    .getByText("📰 Executive Publication Dashboard")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (!result.checks.sci60Panel) {
+    result.issues.push("SCI-60: panel Executive Publication Dashboard no visible");
+  }
+  result.checks.sci60PublicationStatusBanner =
+    bodyText.includes("Publication Status") &&
+    (bodyText.includes("Near Ready") ||
+      bodyText.includes("Requires Review") ||
+      bodyText.includes("Publication Ready"));
+  if (!result.checks.sci60PublicationStatusBanner) {
+    result.issues.push("SCI-60: banner Publication Status no visible");
+  }
+  result.checks.sci60CrossDomainDiagnosis = bodyText.includes(
+    "Diagnóstico editorial"
+  );
+  if (!result.checks.sci60CrossDomainDiagnosis) {
+    result.issues.push("SCI-60: diagnóstico editorial no visible");
+  }
+
   result.checks.sci19PanelVisible = await page
     .getByText("Interpretación científica", { exact: false })
     .first()
@@ -376,6 +400,12 @@ async function validateDataset(page, datasetPath, datasetName) {
   if (!result.checks.sci57Sci17Section) {
     result.issues.push("SCI-57: sección no encontrada en SCI-17");
   }
+  result.checks.sci60Sci17Section = reportsText.includes(
+    "Executive Publication Dashboard"
+  );
+  if (!result.checks.sci60Sci17Section) {
+    result.issues.push("SCI-60: sección no encontrada en SCI-17");
+  }
 
   const reportSections = await page
     .locator("button")
@@ -432,14 +462,21 @@ async function validatePdf(page, datasetPath) {
     pdfText.includes("Coherencia de normalidad");
   const hasSci56 = pdfText.includes("Methodological Summary Dashboard");
   const hasSci57 = pdfText.includes("Effect Size & Power");
+  const hasSci60 = pdfText.includes("Executive Publication Dashboard");
   return {
     pass:
-      stats.size > 5000 && hasIntegrated && !hasLegacy && hasSci56 && hasSci57,
+      stats.size > 5000 &&
+      hasIntegrated &&
+      !hasLegacy &&
+      hasSci56 &&
+      hasSci57 &&
+      hasSci60,
     size: stats.size,
     hasIntegrated,
     hasLegacy,
     hasSci56,
     hasSci57,
+    hasSci60,
     path: downloadPath,
   };
 }
@@ -531,6 +568,19 @@ async function main() {
         pdf6.hasSci57,
       prospectivePowerDataset5: dataset5.checks.sci57ProspectivePower,
       prospectivePowerDataset6: dataset6.checks.sci57ProspectivePower,
+    },
+    sci60: {
+      pass:
+        dataset5.checks.sci60Panel &&
+        dataset6.checks.sci60Panel &&
+        dataset5.checks.sci60PublicationStatusBanner &&
+        dataset6.checks.sci60PublicationStatusBanner &&
+        dataset5.checks.sci60CrossDomainDiagnosis &&
+        dataset6.checks.sci60CrossDomainDiagnosis &&
+        dataset5.checks.sci60Sci17Section &&
+        dataset6.checks.sci60Sci17Section &&
+        pdf5.hasSci60 &&
+        pdf6.hasSci60,
     },
   };
 

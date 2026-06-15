@@ -12365,6 +12365,801 @@ const getMethodologicalDashboardReportLines = (
   return deduplicateTextLines(lines);
 };
 
+// SCI-60: Executive Publication Dashboard — síntesis read-only pre-manuscrito.
+type PublicationDashboardNormalitySummary = {
+  seriesEvaluated: number;
+  normalCount: number;
+  nonNormalCount: number;
+  questionableCount: number;
+  contradictoryCount: number;
+  globalHeadline: string;
+  hasWarnings: boolean;
+};
+
+type PublicationDashboardMultivariateHighlights = {
+  pcaVariance?: number;
+  clusterCount?: number;
+  topVariable?: string;
+  topVariableTied?: string[];
+  averageSimilarity?: number;
+  headline?: string;
+};
+
+type PublicationDashboardInferentialHighlight = {
+  dominantMagnitude?: EffectMagnitude;
+  metric?: string;
+  valueDisplay?: string;
+  source?: string;
+  prospectiveSampleSize?: number;
+  currentSampleSize?: number;
+  insufficientSampleWarning?: string | null;
+};
+
+type PublicationDashboardAnalysis = {
+  publicationStatus: PublicationReadinessAnalyzerAnalysis["classification"];
+  publicationScore: number;
+  methodologicalHealthScore?: number;
+  evidenceScore?: number;
+  evidenceClassification?: EvidenceStrengthEngineAnalysis["classification"];
+  normalitySummary?: PublicationDashboardNormalitySummary;
+  multivariateHighlights?: PublicationDashboardMultivariateHighlights;
+  inferentialHighlight?: PublicationDashboardInferentialHighlight;
+  recommendedTest?: string;
+  advisorConfidence?: StatisticalRecommendationConfidence;
+  crossDomainDiagnosis: string[];
+  publicationRisks: string[];
+  publicationRecommendations: string[];
+  evaluatedDomains: number;
+};
+
+const canBuildPublicationDashboard = (input: {
+  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
+  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
+  multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
+  effectSizePowerAnalysis: EffectSizePowerAnalysis | null;
+  canonicalNormalityAssessment: CanonicalNormalityAssessment;
+}) =>
+  input.publicationReadinessAnalyzerAnalysis !== null ||
+  input.methodologicalDashboardAnalysis !== null ||
+  input.multivariateDashboardAnalysis !== null ||
+  input.effectSizePowerAnalysis !== null ||
+  input.canonicalNormalityAssessment.seriesAssessments.length > 0;
+
+const buildPublicationDashboardNormalitySummary = (
+  assessment: CanonicalNormalityAssessment
+): PublicationDashboardNormalitySummary | null => {
+  if (assessment.seriesAssessments.length === 0) {
+    return null;
+  }
+
+  let normalCount = 0;
+  let nonNormalCount = 0;
+  let questionableCount = 0;
+  let contradictoryCount = 0;
+
+  assessment.seriesAssessments.forEach((seriesAssessment) => {
+    if (
+      seriesAssessment.conclusion === "normal" ||
+      seriesAssessment.conclusion === "probably-normal"
+    ) {
+      normalCount += 1;
+      return;
+    }
+    if (seriesAssessment.conclusion === "non-normal") {
+      nonNormalCount += 1;
+      return;
+    }
+    if (seriesAssessment.conclusion === "questionable") {
+      questionableCount += 1;
+      return;
+    }
+    if (seriesAssessment.conclusion === "contradictory") {
+      contradictoryCount += 1;
+    }
+  });
+
+  return {
+    seriesEvaluated: assessment.seriesAssessments.length,
+    normalCount,
+    nonNormalCount,
+    questionableCount,
+    contradictoryCount,
+    globalHeadline:
+      assessment.globalConclusion[0] ??
+      "Evaluación integrada de normalidad disponible.",
+    hasWarnings: assessment.warnings.length > 0,
+  };
+};
+
+const buildPublicationDashboardMultivariateHighlights = (
+  analysis: MultivariateDashboardAnalysis | null
+): PublicationDashboardMultivariateHighlights | null => {
+  if (!analysis) {
+    return null;
+  }
+
+  const { summaryCards, diagnosis } = analysis;
+  return {
+    pcaVariance: summaryCards.pcaVariance,
+    clusterCount: summaryCards.clusterCount,
+    topVariable: summaryCards.topVariable,
+    topVariableTied: summaryCards.topVariableTied,
+    averageSimilarity: summaryCards.averageSimilarity,
+    headline: diagnosis[0],
+  };
+};
+
+const buildPublicationDashboardInferentialHighlight = (
+  analysis: EffectSizePowerAnalysis | null
+): PublicationDashboardInferentialHighlight | null => {
+  if (!analysis) {
+    return null;
+  }
+
+  return {
+    dominantMagnitude: analysis.dominantMagnitude,
+    metric: analysis.dominantEntry?.metric,
+    valueDisplay: analysis.dominantEntry?.valueDisplay,
+    source: analysis.dominantEntry?.source,
+    prospectiveSampleSize: analysis.prospectiveSampleSize ?? undefined,
+    currentSampleSize: analysis.currentSampleSize ?? undefined,
+    insufficientSampleWarning: analysis.insufficientSampleWarning,
+  };
+};
+
+const buildPublicationDashboardCrossDomainDiagnosis = (input: {
+  publicationStatus: PublicationReadinessAnalyzerAnalysis["classification"];
+  publicationScore: number;
+  methodologicalHealthScore?: number;
+  evidenceClassification?: EvidenceStrengthEngineAnalysis["classification"];
+  inferentialHighlight?: PublicationDashboardInferentialHighlight;
+  multivariateHighlights?: PublicationDashboardMultivariateHighlights;
+}): string[] => {
+  const diagnosis: string[] = [];
+  const dominantMagnitude = input.inferentialHighlight?.dominantMagnitude;
+
+  if (input.publicationStatus === "publication-ready") {
+    pushUniqueTextLine(
+      diagnosis,
+      "El análisis presenta preparación adecuada para comunicación científica."
+    );
+  }
+
+  if (input.publicationStatus === "near-ready") {
+    pushUniqueTextLine(
+      diagnosis,
+      "El análisis se encuentra próximo a preparación para publicación; conviene revisar los riesgos listados."
+    );
+  }
+
+  if (
+    input.evidenceClassification === "strong" &&
+    dominantMagnitude === "large"
+  ) {
+    pushUniqueTextLine(
+      diagnosis,
+      "La evidencia inferencial es sólida y está respaldada por un efecto de magnitud elevada."
+    );
+  }
+
+  if (
+    input.evidenceClassification === "strong" &&
+    dominantMagnitude === "trivial"
+  ) {
+    pushUniqueTextLine(
+      diagnosis,
+      "La evidencia metodológica converge, pero la magnitud inferencial dominante es limitada."
+    );
+  }
+
+  if (
+    input.methodologicalHealthScore !== undefined &&
+    input.methodologicalHealthScore >= 85 &&
+    input.multivariateHighlights?.pcaVariance !== undefined &&
+    input.multivariateHighlights.pcaVariance >= 80
+  ) {
+    pushUniqueTextLine(
+      diagnosis,
+      "La estructura multivariante y la evaluación metodológica global están alineadas favorablemente."
+    );
+  }
+
+  if (input.publicationScore >= 70 && dominantMagnitude === "large") {
+    pushUniqueTextLine(
+      diagnosis,
+      "La magnitud del efecto observado respalda la comunicación de resultados."
+    );
+  }
+
+  if (
+    input.publicationStatus === "requires-review" ||
+    input.publicationStatus === "not-ready"
+  ) {
+    pushUniqueTextLine(
+      diagnosis,
+      "Se recomienda revisión metodológica adicional antes de redactar el manuscrito."
+    );
+  }
+
+  return deduplicateTextLines(diagnosis);
+};
+
+const buildPublicationDashboardRisks = (input: {
+  inferentialHighlight?: PublicationDashboardInferentialHighlight;
+  normalitySummary?: PublicationDashboardNormalitySummary;
+  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
+  publicationScore: number;
+  evidenceScore?: number;
+  recommendedTest?: string;
+}): string[] => {
+  const risks: string[] = [];
+
+  if (input.inferentialHighlight?.insufficientSampleWarning) {
+    pushUniqueTextLine(
+      risks,
+      "Potencia estadística limitada: el tamaño muestral actual está por debajo del recomendado."
+    );
+  }
+
+  const assumptionScore =
+    input.methodologicalDashboardAnalysis?.summaryCards.assumptionScore;
+  if (assumptionScore !== undefined && assumptionScore < 70) {
+    pushUniqueTextLine(
+      risks,
+      "Algunos supuestos estadísticos requieren revisión antes de interpretar los resultados."
+    );
+  }
+
+  if (
+    input.normalitySummary &&
+    (input.normalitySummary.nonNormalCount > 0 ||
+      input.normalitySummary.contradictoryCount > 0)
+  ) {
+    pushUniqueTextLine(
+      risks,
+      "El perfil de normalidad no es uniforme; conviene validar la coherencia con la prueba inferencial reportada."
+    );
+  }
+
+  const parametricRecommendedTest =
+    input.recommendedTest === "t-Test" || input.recommendedTest === "ANOVA";
+  if (
+    parametricRecommendedTest &&
+    input.normalitySummary &&
+    (input.normalitySummary.nonNormalCount > 0 ||
+      input.normalitySummary.contradictoryCount > 0)
+  ) {
+    pushUniqueTextLine(
+      risks,
+      "Posible desalineación entre la prueba inferencial recomendada y la evaluación de normalidad."
+    );
+  }
+
+  if (
+    input.evidenceScore !== undefined &&
+    input.evidenceScore >= 70 &&
+    input.publicationScore < 70
+  ) {
+    pushUniqueTextLine(
+      risks,
+      "La fuerza de evidencia supera la preparación global para publicación; revisar supuestos y reproducibilidad."
+    );
+  }
+
+  const reproducibilityScore =
+    input.methodologicalDashboardAnalysis?.summaryCards.reproducibilityScore;
+  if (reproducibilityScore !== undefined && reproducibilityScore < 70) {
+    pushUniqueTextLine(
+      risks,
+      "La reproducibilidad potencial del análisis es limitada."
+    );
+  }
+
+  return deduplicateTextLines(risks);
+};
+
+const buildPublicationDashboardRecommendations = (input: {
+  publicationRisks: string[];
+  inferentialHighlight?: PublicationDashboardInferentialHighlight;
+  multivariateHighlights?: PublicationDashboardMultivariateHighlights;
+  publicationStatus: PublicationReadinessAnalyzerAnalysis["classification"];
+  recommendedTest?: string;
+}): string[] => {
+  const recommendations: string[] = [];
+
+  if (input.publicationRisks.length > 0) {
+    pushUniqueTextLine(
+      recommendations,
+      "Abordar los riesgos metodológicos identificados antes de la redacción final."
+    );
+  }
+
+  if (
+    input.inferentialHighlight?.dominantMagnitude === "large" &&
+    !input.inferentialHighlight.insufficientSampleWarning
+  ) {
+    pushUniqueTextLine(
+      recommendations,
+      "Reportar la magnitud del efecto junto con la prueba inferencial en la sección de Resultados."
+    );
+  }
+
+  if (input.inferentialHighlight?.insufficientSampleWarning) {
+    pushUniqueTextLine(
+      recommendations,
+      "Considerar ampliación muestral o reportar explícitamente la limitación de potencia en la Discusión."
+    );
+  }
+
+  if (
+    input.multivariateHighlights?.topVariableTied &&
+    input.multivariateHighlights.topVariableTied.length > 1
+  ) {
+    pushUniqueTextLine(
+      recommendations,
+      `Mencionar el co-liderazgo de ${formatVariableImportanceCoLeaders(
+        input.multivariateHighlights.topVariableTied
+      )} al describir la estructura informativa.`
+    );
+  }
+
+  if (input.publicationStatus === "near-ready") {
+    pushUniqueTextLine(
+      recommendations,
+      "Realizar una revisión final de supuestos y reproducibilidad antes del envío."
+    );
+  }
+
+  if (input.recommendedTest) {
+    pushUniqueTextLine(
+      recommendations,
+      `Utilizar ${input.recommendedTest} como análisis principal, según el Advisor Estadístico.`
+    );
+  }
+
+  return deduplicateTextLines(recommendations);
+};
+
+const buildPublicationDashboardAnalysis = (input: {
+  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
+  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
+  multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
+  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
+  effectSizePowerAnalysis: EffectSizePowerAnalysis | null;
+  canonicalNormalityAssessment: CanonicalNormalityAssessment;
+  statisticalRecommendation: StatisticalRecommendation | null;
+}): PublicationDashboardAnalysis | null => {
+  if (!canBuildPublicationDashboard(input)) {
+    return null;
+  }
+
+  const publicationStatus =
+    input.publicationReadinessAnalyzerAnalysis?.classification ?? "not-ready";
+  const publicationScore =
+    input.publicationReadinessAnalyzerAnalysis?.readinessScore ?? 50;
+  const methodologicalHealthScore =
+    input.methodologicalDashboardAnalysis?.overallHealthScore;
+  const evidenceScore = input.evidenceStrengthEngineAnalysis?.evidenceScore;
+  const evidenceClassification =
+    input.evidenceStrengthEngineAnalysis?.classification;
+  const normalitySummary = buildPublicationDashboardNormalitySummary(
+    input.canonicalNormalityAssessment
+  );
+  const multivariateHighlights = buildPublicationDashboardMultivariateHighlights(
+    input.multivariateDashboardAnalysis
+  );
+  const inferentialHighlight = buildPublicationDashboardInferentialHighlight(
+    input.effectSizePowerAnalysis
+  );
+  const recommendedTest = input.statisticalRecommendation?.recommendedTest;
+  const advisorConfidence = input.statisticalRecommendation?.confidence;
+
+  let evaluatedDomains = 0;
+  if (input.publicationReadinessAnalyzerAnalysis) evaluatedDomains += 1;
+  if (input.methodologicalDashboardAnalysis) evaluatedDomains += 1;
+  if (input.multivariateDashboardAnalysis) evaluatedDomains += 1;
+  if (input.evidenceStrengthEngineAnalysis) evaluatedDomains += 1;
+  if (input.effectSizePowerAnalysis) evaluatedDomains += 1;
+  if (normalitySummary) evaluatedDomains += 1;
+
+  const publicationRisks = buildPublicationDashboardRisks({
+    inferentialHighlight: inferentialHighlight ?? undefined,
+    normalitySummary: normalitySummary ?? undefined,
+    methodologicalDashboardAnalysis: input.methodologicalDashboardAnalysis,
+    publicationScore,
+    evidenceScore,
+    recommendedTest,
+  });
+  const crossDomainDiagnosis = buildPublicationDashboardCrossDomainDiagnosis({
+    publicationStatus,
+    publicationScore,
+    methodologicalHealthScore,
+    evidenceClassification,
+    inferentialHighlight: inferentialHighlight ?? undefined,
+    multivariateHighlights: multivariateHighlights ?? undefined,
+  });
+  const publicationRecommendations = buildPublicationDashboardRecommendations({
+    publicationRisks,
+    inferentialHighlight: inferentialHighlight ?? undefined,
+    multivariateHighlights: multivariateHighlights ?? undefined,
+    publicationStatus,
+    recommendedTest,
+  });
+
+  return {
+    publicationStatus,
+    publicationScore,
+    methodologicalHealthScore,
+    evidenceScore,
+    evidenceClassification,
+    normalitySummary: normalitySummary ?? undefined,
+    multivariateHighlights: multivariateHighlights ?? undefined,
+    inferentialHighlight: inferentialHighlight ?? undefined,
+    recommendedTest,
+    advisorConfidence,
+    crossDomainDiagnosis,
+    publicationRisks,
+    publicationRecommendations,
+    evaluatedDomains,
+  };
+};
+
+const getPublicationDashboardReportLines = (
+  analysis: PublicationDashboardAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return [
+      "No hay datos suficientes para generar Executive Publication Dashboard.",
+    ];
+  }
+
+  const lines = [
+    `Publication Status: ${getPublicationReadinessAnalyzerClassificationLabel(
+      analysis.publicationStatus
+    )}.`,
+    `Readiness Score: ${analysis.publicationScore.toFixed(1)}.`,
+    `Dominios evaluados: ${analysis.evaluatedDomains}.`,
+  ];
+
+  if (analysis.methodologicalHealthScore !== undefined) {
+    lines.push(
+      `Overall Health (referencia SCI-56): ${analysis.methodologicalHealthScore.toFixed(1)}.`
+    );
+  }
+
+  if (
+    analysis.evidenceScore !== undefined &&
+    analysis.evidenceClassification
+  ) {
+    lines.push(
+      `Evidence (referencia SCI-53): ${analysis.evidenceScore.toFixed(1)} — ${getEvidenceStrengthEngineClassificationLabel(
+        analysis.evidenceClassification
+      )}.`
+    );
+  }
+
+  if (
+    analysis.inferentialHighlight?.metric &&
+    analysis.inferentialHighlight.valueDisplay
+  ) {
+    lines.push(
+      `Efecto dominante: ${getEffectMagnitudeLabel(
+        analysis.inferentialHighlight.dominantMagnitude ?? "trivial"
+      )} (${analysis.inferentialHighlight.metric} = ${analysis.inferentialHighlight.valueDisplay}, ${analysis.inferentialHighlight.source ?? "inferencia"}).`
+    );
+  }
+
+  if (analysis.normalitySummary) {
+    lines.push(
+      `Normalidad integrada: ${analysis.normalitySummary.globalHeadline}`
+    );
+    lines.push(
+      `Series evaluadas: ${analysis.normalitySummary.seriesEvaluated}; normales=${analysis.normalitySummary.normalCount}, no normales=${analysis.normalitySummary.nonNormalCount}, cuestionables=${analysis.normalitySummary.questionableCount}, contradictorias=${analysis.normalitySummary.contradictoryCount}.`
+    );
+  }
+
+  if (analysis.multivariateHighlights?.pcaVariance !== undefined) {
+    lines.push(
+      `PCA (referencia SCI-40): ${formatPCAVariancePercent(
+        analysis.multivariateHighlights.pcaVariance
+      )} varianza acumulada.`
+    );
+  }
+
+  if (analysis.multivariateHighlights?.clusterCount !== undefined) {
+    lines.push(
+      `Clustering (referencia SCI-40): ${analysis.multivariateHighlights.clusterCount} grupos.`
+    );
+  }
+
+  if (analysis.multivariateHighlights?.topVariable) {
+    lines.push(
+      `Variable líder (referencia SCI-40): ${
+        analysis.multivariateHighlights.topVariableTied &&
+        analysis.multivariateHighlights.topVariableTied.length > 1
+          ? formatVariableImportanceCoLeaders(
+              analysis.multivariateHighlights.topVariableTied
+            )
+          : analysis.multivariateHighlights.topVariable
+      }.`
+    );
+  }
+
+  if (
+    analysis.inferentialHighlight?.prospectiveSampleSize !== null &&
+    analysis.inferentialHighlight?.prospectiveSampleSize !== undefined &&
+    analysis.inferentialHighlight.currentSampleSize !== null &&
+    analysis.inferentialHighlight.currentSampleSize !== undefined
+  ) {
+    lines.push(
+      `Potencia prospectiva: n recomendado = ${analysis.inferentialHighlight.prospectiveSampleSize}; n actual = ${analysis.inferentialHighlight.currentSampleSize}.`
+    );
+  }
+
+  if (analysis.recommendedTest) {
+    lines.push(
+      `Prueba recomendada (Advisor): ${analysis.recommendedTest}${
+        analysis.advisorConfidence
+          ? ` (confianza ${getStatisticalAdvisorConfidenceLabel(
+              analysis.advisorConfidence
+            )})`
+          : ""
+      }.`
+    );
+  }
+
+  if (analysis.crossDomainDiagnosis.length > 0) {
+    lines.push("Diagnóstico editorial:");
+    analysis.crossDomainDiagnosis.forEach((line) => lines.push(line));
+  }
+
+  if (analysis.publicationRisks.length > 0) {
+    lines.push("Riesgos pre-publicación:");
+    analysis.publicationRisks.forEach((line) => lines.push(line));
+  }
+
+  if (analysis.publicationRecommendations.length > 0) {
+    lines.push("Recomendaciones:");
+    analysis.publicationRecommendations.forEach((line) => lines.push(line));
+  }
+
+  return deduplicateTextLines(lines);
+};
+
+type ScientificPublicationDashboardProps = {
+  analysis: PublicationDashboardAnalysis;
+};
+
+function ScientificPublicationDashboard({
+  analysis,
+}: ScientificPublicationDashboardProps) {
+  const kpiCards: {
+    key: string;
+    icon: string;
+    title: string;
+    value: string;
+    subtitle: string;
+  }[] = [
+    {
+      key: "readiness",
+      icon: "📰",
+      title: "Readiness",
+      value: analysis.publicationScore.toFixed(1),
+      subtitle: getPublicationReadinessAnalyzerClassificationLabel(
+        analysis.publicationStatus
+      ),
+    },
+  ];
+
+  if (analysis.methodologicalHealthScore !== undefined) {
+    kpiCards.push({
+      key: "health",
+      icon: "📋",
+      title: "Overall Health",
+      value: analysis.methodologicalHealthScore.toFixed(1),
+      subtitle: "Referencia SCI-56",
+    });
+  }
+
+  if (analysis.evidenceScore !== undefined && analysis.evidenceClassification) {
+    kpiCards.push({
+      key: "evidence",
+      icon: "🧪",
+      title: "Evidence",
+      value: analysis.evidenceScore.toFixed(1),
+      subtitle: getEvidenceStrengthEngineClassificationLabel(
+        analysis.evidenceClassification
+      ),
+    });
+  }
+
+  if (
+    analysis.inferentialHighlight?.metric &&
+    analysis.inferentialHighlight.valueDisplay
+  ) {
+    kpiCards.push({
+      key: "effect",
+      icon: "📏",
+      title: "Effect Dominante",
+      value: analysis.inferentialHighlight.valueDisplay,
+      subtitle: `${getEffectMagnitudeLabel(
+        analysis.inferentialHighlight.dominantMagnitude ?? "trivial"
+      )} · ${analysis.inferentialHighlight.metric}`,
+    });
+  }
+
+  return (
+    <div className="w-full mt-3">
+      <div className={`${contentPanel} mb-3 flex flex-col gap-1`}>
+        <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+          Publication Status
+        </p>
+        <p className="text-2xl font-semibold text-[var(--app-heading)]">
+          {getPublicationReadinessAnalyzerClassificationLabel(
+            analysis.publicationStatus
+          )}
+        </p>
+        <p className="text-xs text-[var(--app-text-muted)] tabular-nums">
+          Readiness Score: {analysis.publicationScore.toFixed(1)} ·{" "}
+          {analysis.evaluatedDomains} dominio
+          {analysis.evaluatedDomains === 1 ? "" : "s"} evaluado
+          {analysis.evaluatedDomains === 1 ? "" : "s"}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {kpiCards.map((card) => (
+          <div
+            key={card.key}
+            className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
+          >
+            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+              {card.icon} {card.title}
+            </p>
+            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+              {card.value}
+            </p>
+            {card.subtitle ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                {card.subtitle}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      {analysis.normalitySummary ? (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Normalidad integrada
+          </p>
+          <p className={`mt-1 text-sm ${emptyState}`}>
+            {analysis.normalitySummary.globalHeadline}
+          </p>
+          <p className={`mt-1 text-sm ${emptyState}`}>
+            {analysis.normalitySummary.seriesEvaluated} series: normales=
+            {analysis.normalitySummary.normalCount}, no normales=
+            {analysis.normalitySummary.nonNormalCount}, cuestionables=
+            {analysis.normalitySummary.questionableCount}, contradictorias=
+            {analysis.normalitySummary.contradictoryCount}.
+          </p>
+        </div>
+      ) : null}
+
+      {analysis.multivariateHighlights ? (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Highlights multivariantes
+          </p>
+          {analysis.multivariateHighlights.pcaVariance !== undefined ? (
+            <p className={`mt-1 text-sm ${emptyState}`}>
+              PCA:{" "}
+              {formatPCAVariancePercent(analysis.multivariateHighlights.pcaVariance)}{" "}
+              varianza acumulada.
+            </p>
+          ) : null}
+          {analysis.multivariateHighlights.clusterCount !== undefined ? (
+            <p className={`mt-1 text-sm ${emptyState}`}>
+              Clustering: {analysis.multivariateHighlights.clusterCount} grupos.
+            </p>
+          ) : null}
+          {analysis.multivariateHighlights.topVariable ? (
+            <p className={`mt-1 text-sm ${emptyState}`}>
+              Variable líder:{" "}
+              {analysis.multivariateHighlights.topVariableTied &&
+              analysis.multivariateHighlights.topVariableTied.length > 1
+                ? formatVariableImportanceCoLeaders(
+                    analysis.multivariateHighlights.topVariableTied
+                  )
+                : analysis.multivariateHighlights.topVariable}
+              .
+            </p>
+          ) : null}
+          {analysis.multivariateHighlights.headline ? (
+            <p className={`mt-1 text-sm ${emptyState}`}>
+              {analysis.multivariateHighlights.headline}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {analysis.inferentialHighlight?.prospectiveSampleSize !== null &&
+      analysis.inferentialHighlight?.prospectiveSampleSize !== undefined &&
+      analysis.inferentialHighlight.currentSampleSize !== null &&
+      analysis.inferentialHighlight.currentSampleSize !== undefined ? (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Potencia prospectiva
+          </p>
+          <p className={`mt-1 text-sm ${emptyState}`}>
+            n recomendado = {analysis.inferentialHighlight.prospectiveSampleSize};
+            n actual = {analysis.inferentialHighlight.currentSampleSize}.
+          </p>
+          {analysis.inferentialHighlight.insufficientSampleWarning ? (
+            <p className={`mt-1 text-sm ${emptyState}`}>
+              ⚠ {analysis.inferentialHighlight.insufficientSampleWarning}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {analysis.crossDomainDiagnosis.length > 0 ? (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Diagnóstico editorial
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.crossDomainDiagnosis.map((line, index) => (
+              <li
+                key={`publication-dashboard-diagnosis-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {analysis.publicationRisks.length > 0 ? (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Riesgos pre-publicación
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.publicationRisks.map((line, index) => (
+              <li
+                key={`publication-dashboard-risk-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                ⚠ {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {analysis.publicationRecommendations.length > 0 ? (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Recomendaciones
+          </p>
+          <ul className="mt-2 space-y-1">
+            {analysis.publicationRecommendations.map((line, index) => (
+              <li
+                key={`publication-dashboard-recommendation-${index}`}
+                className={`text-sm ${emptyState}`}
+              >
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 type ScientificMethodologicalDashboardProps = {
   analysis: MethodologicalDashboardAnalysis;
 };
@@ -15419,6 +16214,7 @@ const generateScientificReport = (input: {
   assumptionTrackerAnalysis: AssumptionTrackerAnalysis | null;
   publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
   methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
+  publicationDashboardAnalysis: PublicationDashboardAnalysis | null;
   correlationAnalysis: {
     results: CorrelationResult[];
     unavailablePairs: CorrelationUnavailablePair[];
@@ -15778,6 +16574,13 @@ const generateScientificReport = (input: {
     title: "Methodological Summary Dashboard",
     content: getMethodologicalDashboardReportLines(
       input.methodologicalDashboardAnalysis
+    ),
+  });
+
+  sections.push({
+    title: "Executive Publication Dashboard",
+    content: getPublicationDashboardReportLines(
+      input.publicationDashboardAnalysis
     ),
   });
 
@@ -19537,6 +20340,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState(false);
   const [showMethodologicalDashboard, setShowMethodologicalDashboard] =
     useState(false);
+  const [showPublicationDashboard, setShowPublicationDashboard] =
+    useState(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -19963,6 +20768,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowAssumptionTracker(false);
     setShowPublicationReadinessAnalyzer(false);
     setShowMethodologicalDashboard(false);
+    setShowPublicationDashboard(false);
     setShowHierarchicalClustering(false);
     setShowTTest(false);
     setShowAnova(false);
@@ -21293,6 +22099,34 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
     [visibleExperimentalSeries, normalityAnalyses, showCorrelation]
   );
+  const publicationDashboardAnalysis = useMemo(
+    () =>
+      buildPublicationDashboardAnalysis({
+        publicationReadinessAnalyzerAnalysis,
+        methodologicalDashboardAnalysis,
+        multivariateDashboardAnalysis,
+        evidenceStrengthEngineAnalysis,
+        effectSizePowerAnalysis,
+        canonicalNormalityAssessment,
+        statisticalRecommendation,
+      }),
+    [
+      publicationReadinessAnalyzerAnalysis,
+      methodologicalDashboardAnalysis,
+      multivariateDashboardAnalysis,
+      evidenceStrengthEngineAnalysis,
+      effectSizePowerAnalysis,
+      canonicalNormalityAssessment,
+      statisticalRecommendation,
+    ]
+  );
+  const hasEnoughSeriesForPublicationDashboard = canBuildPublicationDashboard({
+    publicationReadinessAnalyzerAnalysis,
+    methodologicalDashboardAnalysis,
+    multivariateDashboardAnalysis,
+    effectSizePowerAnalysis,
+    canonicalNormalityAssessment,
+  });
   const scientificReport = useMemo(
     () =>
       generateScientificReport({
@@ -21337,6 +22171,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         assumptionTrackerAnalysis,
         publicationReadinessAnalyzerAnalysis,
         methodologicalDashboardAnalysis,
+        publicationDashboardAnalysis,
         correlationAnalysis,
         correlationMethod,
         experimentalOutliers,
@@ -21391,6 +22226,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       assumptionTrackerAnalysis,
       publicationReadinessAnalyzerAnalysis,
       methodologicalDashboardAnalysis,
+      publicationDashboardAnalysis,
       correlationAnalysis,
       correlationMethod,
       experimentalOutliers,
@@ -22288,6 +23124,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showAssumptionTracker ||
         showPublicationReadinessAnalyzer ||
         showMethodologicalDashboard ||
+        showPublicationDashboard ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
       (showTTest ||
@@ -24522,6 +25359,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               setShowMethodologicalDashboard(e.target.checked)
                             }
                             disabled={!hasEnoughSeriesForMethodologicalDashboard}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForPublicationDashboard
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Executive Publication Dashboard
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showPublicationDashboard}
+                            onChange={(e) =>
+                              setShowPublicationDashboard(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForPublicationDashboard}
                           />
                           <span className={toggleTrackBg} aria-hidden />
                           <span className={toggleThumb} aria-hidden />
@@ -27774,6 +28636,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className={contentPanel}>
                         <ScientificMethodologicalDashboard
                           analysis={methodologicalDashboardAnalysis}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showPublicationDashboard && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      📰 Executive Publication Dashboard
+                    </p>
+                    {!publicationDashboardAnalysis ? (
+                      <p className={emptyState}>
+                        No hay datos suficientes para generar Executive
+                        Publication Dashboard.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <ScientificPublicationDashboard
+                          analysis={publicationDashboardAnalysis}
                         />
                       </div>
                     )}
