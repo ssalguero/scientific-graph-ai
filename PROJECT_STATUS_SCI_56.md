@@ -1,14 +1,16 @@
-# Scientific Graph AI — Estado del Proyecto (Cierre SCI-37B)
+# Scientific Graph AI — Estado del Proyecto (Cierre SCI-57)
 
-Fecha: 2026-06-10
-Versión actual: SCI-56 + SCI-29B + SCI-37B
-Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B y SCI-37B implementados sobre esta base
+Fecha: 2026-06-15
+Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57
+Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B, SCI-37B y SCI-57 implementados sobre esta base
 
 ---
 
 ## 1. Resumen ejecutivo
 
-El proyecto alcanzó el cierre completo del bloque metodológico, su capa ejecutiva de síntesis y la totalidad del backlog técnico histórico. Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, y se cerraron los dos ítems de backlog pendientes: SCI-29B (variables constantes en clustering) y SCI-37B (empates en Variable Importance). **SCI-29B y SCI-37B están cerrados; el backlog técnico histórico queda vacío.**
+El proyecto alcanzó el cierre completo del bloque metodológico, su capa ejecutiva de síntesis, la totalidad del backlog técnico histórico y la primera capacidad de la nueva etapa evolutiva SCI-57+. Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, se cerraron SCI-29B y SCI-37B, y se completó **SCI-57 — Effect Size & Power Engine**, cerrando el principal vacío metodológico identificado en REVIEW-5 (magnitud del efecto, intervalos de confianza y potencia estadística).
+
+**SCI-29B, SCI-37B y SCI-57 están cerrados; el backlog técnico histórico permanece vacío.**
 
 Hitos cerrados en este ciclo:
 
@@ -20,20 +22,22 @@ Hitos cerrados en este ciclo:
 | SCI-56 | COMPLETADO | Dashboard ejecutivo del bloque metodológico SCI-50→55 |
 | SCI-29B | COMPLETADO | Exclusión de variables constantes en el pipeline de clustering (consistencia con PCA) |
 | SCI-37B | COMPLETADO | Ranking compartido y comunicación explícita de empates en Variable Importance |
+| SCI-57 | COMPLETADO | Effect Size & Power Engine — magnitud del efecto, IC95% y potencia sobre inferencia existente |
 
-Estado de calidad: Build OK, TypeScript OK, Dataset5 PASS, Dataset6 PASS, PDF OK, repositorio sincronizado con origin.
+Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · t crítico (df=10,18,30) PASS.**
 
 ---
 
 ## 2. Arquitectura actual
 
-Monolito científico maduro en `src/app/page.tsx` (~28.000 líneas), organizado en capas acumulativas:
+Monolito científico maduro en `src/app/page.tsx` (~29.000 líneas), organizado en capas acumulativas:
 
 | Capa | Rango | Rol |
 |------|-------|-----|
 | Datos | DATA-1→3 | Importación CSV/TXT/XLSX/ODS en `src/lib/experimentalData.ts` |
 | Infraestructura UX | ARCH-1→4 | Workspace (Datos/Análisis/Resultados/Reportes), Inspector contextual, módulos activables, tema |
 | Núcleo científico | SCI-1→27 | Estadística descriptiva, distribución, inferencia |
+| Inferencia ampliada | SCI-57 | Effect Size & Power Engine (síntesis sobre t-Test, ANOVA, Tukey, no paramétricas) |
 | Multivariante | SCI-28→40 | PCA, clustering, redes, proyecciones + dashboard SCI-40 |
 | Exploradores avanzados | SCI-41→49 | MANOVA, LDA, CCA, PCR, PLS, Bootstrap, Sensitivity, t-SNE, UMAP |
 | Evaluación metodológica | SCI-50→55 | Motores de consistencia, calidad, reproducibilidad, evidencia, supuestos y preparación |
@@ -67,6 +71,8 @@ SCI-56 Methodological Summary Dashboard (síntesis de los 6)
 
 SCI-56 es capa de solo lectura: no recalcula algoritmos ni modifica scores upstream.
 
+SCI-57 es capa de síntesis sobre inferencia: no recalcula tests ni modifica p-valores; deriva effect size, IC y potencia de resultados existentes.
+
 ---
 
 ## 3. Funcionalidades completadas
@@ -78,6 +84,7 @@ SCI-56 es capa de solo lectura: no recalcula algoritmos ni modifica scores upstr
 - SCI-41 → SCI-49 — Exploradores avanzados
 - SCI-50 → SCI-55 — Evaluación metodológica
 - SCI-56 — Síntesis metodológica
+- SCI-57 — Effect Size & Power Engine
 
 ### Post-SCI-55 (este ciclo)
 
@@ -101,28 +108,41 @@ SCI-56 es capa de solo lectura: no recalcula algoritmos ni modifica scores upstr
 - Integraciones: SCI-17 (sección propia), SCI-19/20 (diagnóstico con dedup), PDF (vía sections)
 
 **SCI-29B — Constant Variable Exclusion in Clustering (COMPLETED)**
-- Exclusión de variables constantes en Distance Matrix
-- Exclusión en Hierarchical Clustering
-- Exclusión en MDS
+- Exclusión de variables constantes en Distance Matrix, Hierarchical Clustering y MDS
 - Exclusión heredada en SCI-38 (Cluster Heatmap) y SCI-39 (Clustered Distance Heatmap)
-- Consistencia metodológica con PCA (`CLUSTERING_CONSTANT_EPSILON`, partición activas/constantes)
-- Gate: < 2 variables no constantes → análisis `null`
-- Aviso explícito de exclusión en interpretación, SCI-17/19/20 y PDF
-- Dataset6 validado con exclusión de pH (clustering pasa de 4 a 3 variables)
-- SCI-40 actualizado automáticamente (Clustering 3 grupos, Similaridad 0.73 → 0.67)
-- SCI-56 sin impacto funcional relevante (variación de redondeo en Reproducibility 67.7 → 67.6)
-- Dataset5 como control negativo: comportamiento idéntico pre/post
+- Consistencia metodológica con PCA; aviso explícito en SCI-17/19/20 y PDF
+- Dataset6 validado con exclusión de pH; Dataset5 como control negativo
 
 **SCI-37B — Tie-Aware Variable Importance Ranking (COMPLETED)**
-- Ranking compartido (competition ranking 1, 1, 3) con detección por `VARIABLE_IMPORTANCE_TIE_EPSILON` (0.05, tolerante al ruido numérico de power iteration en contribuciones PCA)
-- Scores y `normalizedScore` intactos: solo cambian `rank` y la comunicación
-- Frase explícita de empate en la interpretación de SCI-37
-- SCI-40 tie-aware: tarjeta "Variable líder" con co-líderes ("Control1 / Tratamiento2 — 100% — empate") y diagnóstico "comparten la posición dominante"
-- SCI-19/SCI-20 tie-aware: findings de dominancia y consistencia cruzada (PCA/correlación/similitud) evaluados sobre el grupo de co-líderes
-- Propagación a SCI-17 y PDF vía report lines ("(empate)" en el ranking)
-- Corrección de bug latente: key React del ranking por variable (antes por rank, que habría duplicado claves)
-- Helpers nuevos: `areVariableImportanceScoresTied`, `getTopVariableImportanceEntries`, `hasVariableImportanceTopTie`, `formatVariableImportanceCoLeaders`
-- Tipos: `VariableImportanceEntry.isSharedRank`, `summaryCards.topVariableTied`
+- Ranking compartido (1, 1, 3) con comunicación explícita de empates
+- SCI-40, SCI-19 y SCI-20 tie-aware; Dataset5 como caso positivo de empate
+
+**SCI-57 — Effect Size & Power Engine (COMPLETED)**
+- Motor único de síntesis sobre la capa de inferencia existente (patrón SCI-50→56)
+- **Effect Size:**
+  - Cohen's d (t-Test)
+  - Hedges' g (t-Test, corrección para muestras pequeñas)
+  - Eta² (ANOVA)
+  - Omega² (ANOVA)
+  - r effect size (Mann-Whitney)
+  - Cliff's Delta — magnitud (Mann-Whitney)
+  - Epsilon² (Kruskal-Wallis)
+- **Confidence Intervals:**
+  - IC95% de Cohen's d (aproximación asintótica)
+  - IC95% de la diferencia de medias (t-based, `T_CRITICAL_95_TABLE` con interpolación)
+  - IC95% aproximado por par en Tukey (q crítico simplificado)
+- **Prospective Power:** n por grupo recomendado para detectar el efecto observado con potencia 80% (α = 0.05) — métrica principal
+- **Observed Power:** potencia observada aproximada con **disclaimer explícito** (no usar para justificar resultados no significativos; no participa en scoring)
+- Toggle "Mostrar Effect Size & Power" + panel 📏 Effect Size & Power Engine
+- Integraciones: SCI-17 (sección propia), SCI-19 (`pushUniqueFinding`/`pushUniqueWarning`), SCI-20, PDF (vía `report.sections`)
+- Priorización de métricas no paramétricas cuando la normalidad canónica es `non-normal`/`contradictory`
+- **Sin cambios en SCI-53** (Evidence Strength Engine — `inferenceScore` binario intacto)
+- **Sin cambios en SCI-55** (Publication Readiness Analyzer)
+- **Sin cambios en SCI-56** (Overall Health Score Dataset5 77.2 / Dataset6 67.7 idénticos pre/post)
+- **Sin cambios en Advisor Estadístico**
+- Validación t crítico: df=10 → 2.2280, df=18 → 2.1010, df=30 → 2.0420 (script `validate-t-quantile.mjs`, tolerancia < 0.01)
+- Dataset5: Cohen's d ≈ −1.36 (efecto grande), IC95% excluye 0, potencia prospectiva presente
+- Dataset6: métricas coherentes; control negativo de regresión en SCI-56
 
 ---
 
@@ -136,31 +156,34 @@ SCI-56 es capa de solo lectura: no recalcula algoritmos ni modifica scores upstr
 
 SCI-56 muestra: Overall Health Score, número de motores evaluados, 6 tarjetas (Consistency, Quality, Reproducibility, Evidence, Assumptions, Publication) con score y clasificación, y diagnóstico global por reglas.
 
+SCI-57 no es dashboard ejecutivo: es motor inferencial con panel propio (📏 Effect Size & Power Engine).
+
 ---
 
 ## 5. Backlog pendiente
 
-**Backlog técnico histórico: vacío.** SCI-29B y SCI-37B, los dos últimos ítems documentados, están cerrados y validados.
+**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B y SCI-57 están cerrados y validados.
 
 ### Deuda menor documentada
 
-- Commit `69a140d` contiene la implementación de SCI-56 bajo mensaje "HOTFIX-SCI-NORMALITY-2" (ya en remoto; trazabilidad corregida vía tag `SCI-56` y commit de docs `fe4c6f2`).
-- Dataset6 no produce series `contradictory` con su perfil actual; la regla D1 del motor canónico queda validada solo a nivel de código (pendiente dataset alternativo).
-- `overallHealthScore` de SCI-56 promedia 6 scores donde Readiness ya es promedio de los otros 5 (sobreponderación leve y deliberada de la media global).
+- Commit `69a140d` contiene la implementación de SCI-56 bajo mensaje "HOTFIX-SCI-NORMALITY-2" (trazabilidad corregida vía tag `SCI-56`).
+- Dataset6 no produce series `contradictory` con su perfil actual; regla D1 del motor canónico validada solo a nivel de código.
+- `overallHealthScore` de SCI-56 promedia 6 scores donde Readiness ya es promedio de los otros 5.
+- SCI-53 aún no incorpora effect size en su `inferenceScore` (candidato SCI-57B, no backlog histórico).
 
 ---
 
-## 6. Posibles candidatos SCI-57+
+## 6. Candidatos SCI-57+
 
-Propuestas no aprobadas, ordenadas por valor estimado:
+Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización definitiva ni análisis de impacto.
 
-| Candidato | Tipo | Justificación |
-|-----------|------|---------------|
-| Dataset de regresión con caso `contradictory` | Validación | Cubrir la regla D1 del motor canónico con evidencia funcional |
-| ARCH-5 — Modularización de `page.tsx` | Arquitectura | ~28K líneas en un archivo; extraer motores y builders a módulos |
-| Drill-down en SCI-56 | UX | Click en tarjeta → navegar/expandir el panel del motor correspondiente |
-| Export ejecutivo del dashboard | Reportes | PDF/PNG de una página con SCI-40 + SCI-56 + normalidad integrada |
-| Suite de validación automatizada | Calidad | Formalizar el script Playwright usado en las validaciones de este ciclo |
+| Candidato | Descripción breve |
+|-----------|-------------------|
+| **SCI-57B — Effect-Aware Evidence & Readiness** | Enriquecer SCI-53 y SCI-55 para que el score de evidencia y publication readiness incorpore magnitud del efecto y potencia, consumiendo SCI-57 como fuente. |
+| **SCI-58 — Multi-Dataset Comparison Framework** | Modo de sesión con 2+ datasets: comparación lado a lado de estadísticas, normalidad, estructuras multivariantes y health scores. |
+| **SCI-59 — Guided Scientific Workflow** | Wizard orientado por pregunta de investigación que activa módulos, ejecuta el camino analítico correcto y explica cada decisión metodológica. |
+| **SCI-60 — Executive Publication Dashboard** | Capa ejecutiva de síntesis orientada a publicación: consolidación de SCI-40, SCI-56, normalidad integrada y SCI-57 en vista de manuscrito. |
+| **ARCH-5 — Modular Architecture Refactor** | Extraer motores, builders y tipos de `page.tsx` (~29K líneas) a módulos independientes para sostenibilidad del monolito. |
 
 ---
 
@@ -168,17 +191,21 @@ Propuestas no aprobadas, ordenadas por valor estimado:
 
 | Verificación | Dataset5 | Dataset6 |
 |--------------|----------|----------|
+| TypeScript | PASS | PASS |
+| Build | PASS | PASS |
 | Evaluación integrada de normalidad | PASS | PASS |
 | SCI-17 (sección única, sin legacy) | PASS | PASS |
 | SCI-19 (sin duplicados, sin warnings React) | PASS | PASS |
 | SCI-20 | PASS | PASS |
 | Motores SCI-46/51/52/54/55 | PASS | PASS |
 | SCI-56 dashboard (6 tarjetas + diagnóstico) | PASS | PASS |
-| SCI-29B (exclusión de constantes en clustering) | PASS (control negativo, sin cambios) | PASS (pH excluida) |
-| SCI-37B (ranking compartido + empates explícitos) | PASS (empate top Control1/Tratamiento2) | PASS (líder único + empate intermedio) |
-| Export PDF (incluye sección SCI-56) | PASS | PASS |
+| SCI-29B (exclusión de constantes en clustering) | PASS (control negativo) | PASS (pH excluida) |
+| SCI-37B (ranking compartido + empates) | PASS (empate top) | PASS (control negativo) |
+| SCI-57 (Effect Size & Power Engine) | PASS (d ≈ −1.36, efecto grande) | PASS (sin regresiones) |
+| Export PDF (SCI-56 + SCI-57) | PASS | PASS |
+| t crítico IC95% (df=10, 18, 30) | PASS (2.228 / 2.101 / 2.042) | — |
 
-Resultados observados de SCI-56:
+Resultados observados de SCI-56 (sin cambios post-SCI-57):
 
 | Métrica | Dataset5 | Dataset6 |
 |---------|----------|----------|
@@ -190,36 +217,22 @@ Resultados observados de SCI-56:
 | Assumptions | 60.0 (Moderate) | 70.0 (Good) |
 | Publication | 77.2 (Near Ready) | 67.7 (Requires Review) |
 
-Impacto observado de SCI-29B (Dataset6 pre/post):
+Impacto observado de SCI-57 (Dataset5):
 
-| Métrica | Pre | Post |
-|---------|-----|------|
-| Variables en clustering | 4 (incluía pH constante) | 3 (pH excluida con aviso) |
-| SCI-40 · Clustering | 4 grupos | 3 grupos |
-| SCI-40 · Similaridad | 0.73 | 0.67 |
-| SCI-56 · Overall Health Score | 67.7 | 67.7 |
-| SCI-56 · Reproducibility | 67.7 | 67.6 |
+| Punto | Resultado |
+|-------|-----------|
+| Cohen's d | ≈ −1.36 (efecto grande) |
+| IC95% diferencia de medias | Excluye 0 |
+| Potencia prospectiva | Presente en panel, SCI-17, SCI-19 y PDF |
+| SCI-56 Overall Health Score | 77.2 (sin cambios) |
 
-Impacto observado de SCI-37B (pre/post):
-
-| Punto | Pre | Post |
-|-------|-----|------|
-| Dataset5 · SCI-37 ranking | 1, 2, 3, 4 (arbitrario por orden de columna) | 1, 1, 3, 3 + "(empate)" + frase de empate explícita |
-| Dataset5 · SCI-40 Variable líder | "Control1 — 100%" + "domina la estructura informativa" | "Control1 / Tratamiento2 — 100% — empate" + "comparten la posición dominante" |
-| Dataset5 · SCI-19/20 | Dominancia única arbitraria | Findings tie-aware sobre el grupo de co-líderes |
-| Dataset6 · SCI-37 ranking | 1, 2, 3, 4 | 1, 2, 2, 4 (empate intermedio Temperatura/Presion comunicado) |
-| Dataset6 · SCI-40 / SCI-56 | — | Sin cambios (líder único Humedad; Overall 67.7) — control negativo |
-| Scores numéricos (ambos datasets) | — | Intactos |
-
-Build: Compilación OK · TypeScript OK · Exportación PDF OK.
-
-Git: `main` sincronizado con origin; tags `SCI-55`, `HOTFIX-SCI-NORMALITY-2`, `SCI-56` publicados.
+Build: Compilación OK · TypeScript OK · Exportación PDF OK · `validate-t-quantile.mjs` OK.
 
 ---
 
 ## 8. Estado del proyecto al cierre de SCI-37B
 
-Inventario completo de hitos al cierre formal del backlog técnico histórico:
+Inventario de hitos al cierre del backlog técnico histórico (referencia intermedia):
 
 | Bloque / Hito | Estado |
 |---------------|--------|
@@ -230,30 +243,56 @@ Inventario completo de hitos al cierre formal del backlog técnico histórico:
 | SCI-29B — Constant Variable Exclusion in Clustering | COMPLETADO |
 | SCI-37B — Tie-Aware Variable Importance Ranking | COMPLETADO |
 
-No queda ningún ítem de backlog técnico histórico abierto. Toda la funcionalidad científica planificada hasta la fecha está implementada, validada con Dataset5 y Dataset6, e integrada en SCI-17, SCI-19, SCI-20 y la exportación PDF.
-
 ---
 
-## 9. Preparación para SCI-57+
+## 9. Estado del proyecto al cierre de SCI-57
 
-El proyecto queda formalmente listo para abrir una nueva etapa evolutiva:
+Inventario completo de hitos al cierre de la etapa SCI-56 + SCI-29B + SCI-37B + SCI-57:
 
-- Base de código estable: Build OK, TypeScript OK, sin warnings React, sin regresiones detectadas.
-- Pipeline de validación funcional reproducible (Playwright + Dataset5/Dataset6 + verificación de PDF) disponible como punto de partida para regresión.
-- Arquitectura de dashboards por bloque completa (SCI-40, normalidad integrada, SCI-56) como patrón de referencia para futuras capas de síntesis.
-- Backlog técnico histórico vacío: cualquier trabajo nuevo parte de una definición SCI-57+ y no de deuda heredada.
+| Bloque / Hito | Estado |
+|---------------|--------|
+| SCI-1 → SCI-55 | COMPLETADOS |
+| HOTFIX-SCI-NORMALITY-2 | COMPLETADO |
+| BUGFIX SCI-19 | COMPLETADO |
+| SCI-56 — Methodological Summary Dashboard | COMPLETADO |
+| SCI-29B — Constant Variable Exclusion in Clustering | COMPLETADO |
+| SCI-37B — Tie-Aware Variable Importance Ranking | COMPLETADO |
+| SCI-57 — Effect Size & Power Engine | COMPLETADO |
 
-Esta sección no define funcionalidades nuevas; los candidatos de la sección 6 permanecen como propuestas no aprobadas a evaluar al definir SCI-57.
+### Capacidades científicas actuales
+
+Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset experimental tabular:
+
+- Importación multi-formato y workspace científico (Datos → Análisis → Resultados → Reportes)
+- Estadística descriptiva, distribución, normalidad canónica unificada, outliers y correlación
+- Inferencia paramétrica y no paramétrica (t-Test, ANOVA, Tukey, Mann-Whitney, Kruskal-Wallis) con **magnitud del efecto, intervalos de confianza y potencia** (SCI-57)
+- Análisis multivariante completo (PCA, clustering, MDS, redes, Variable Importance con empates explícitos)
+- Exploradores avanzados (MANOVA, LDA, CCA, PCR, PLS, Bootstrap, Sensitivity, t-SNE, UMAP)
+- Evaluación metodológica automatizada (SCI-50→55) con dashboard ejecutivo (SCI-56)
+- Advisor Estadístico, interpretación científica (SCI-19/20) y exportación PDF completa
+
+### Backlog técnico
+
+**Vacío.** No quedan ítems de deuda histórica abiertos. SCI-57B y los candidatos de la sección 6 son evolución futura, no backlog pendiente.
+
+### Áreas abiertas para evolución futura
+
+- Enriquecimiento effect-aware de SCI-53/55 (SCI-57B)
+- Comparación entre datasets (SCI-58)
+- Workflow científico guiado (SCI-59)
+- Dashboard ejecutivo de publicación (SCI-60)
+- Modularización arquitectónica del monolito (ARCH-5)
+- Validación formal con dataset `contradictory` y suite Playwright como CI de regresión
 
 ---
 
 ## 10. Próximos pasos recomendados
 
-1. **Definir SCI-57** a partir de los candidatos de la sección 6 (ARCH-5 si se prioriza sostenibilidad del monolito).
-2. **Validar la regla `contradictory`** con un dataset diseñado para producir contradicción SCI-11 vs. diagnósticos visuales.
-3. **Formalizar la suite de validación** (script Playwright) como herramienta de regresión para futuros bloques.
-4. **Evaluar ARCH-5** antes de que el monolito supere las ~30K líneas, para mantener la velocidad de implementación de bloques futuros.
+1. **Definir la siguiente fase evolutiva** a partir de los candidatos de la sección 6 (SCI-57B, SCI-58, ARCH-5 u otros).
+2. **Formalizar la suite de validación** (Playwright + `validate-t-quantile.mjs`) como herramienta de regresión continua.
+3. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
+4. **Evaluar ARCH-5** antes de que el monolito supere las ~30K líneas.
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B y SCI-37B (cierre del backlog técnico histórico). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B y SCI-57. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
