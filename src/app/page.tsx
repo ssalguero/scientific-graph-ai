@@ -13744,40 +13744,48 @@ const logGamma = (value: number): number => {
   );
 };
 
+// Fracción continua de la beta incompleta (método de Lentz modificado).
 const betacf = (a: number, b: number, x: number): number => {
   const maxIterations = 200;
-  const epsilon = 3e-7;
-  let am = 1;
-  let bm = 1;
-  let az = 1;
-  let bz = 1 - ((a + b) * x) / (a + 1);
+  const epsilon = 3e-12;
+  const floor = 1e-300;
+  const qab = a + b;
+  const qap = a + 1;
+  const qam = a - 1;
+
+  let c = 1;
+  let d = 1 - (qab * x) / qap;
+  if (Math.abs(d) < floor) d = floor;
+  d = 1 / d;
+  let h = d;
 
   for (let iteration = 1; iteration <= maxIterations; iteration += 1) {
-    const em = iteration;
-    const tem = em + em;
-    let d =
-      (em * (b - em) * x) / ((a + tem - 1) * (a + tem));
-    let ap = az + d * am;
-    let bp = bz + d * bm;
-    d = (-(a + em) * (a + b + em) * x) / ((a + tem) * (a + tem + 1));
-    az = ap + d * az;
-    bz = bp + d * bz;
-    am = ap;
-    bm = bp;
+    const twoIteration = 2 * iteration;
+    let coefficient =
+      (iteration * (b - iteration) * x) /
+      ((qam + twoIteration) * (a + twoIteration));
+    d = 1 + coefficient * d;
+    if (Math.abs(d) < floor) d = floor;
+    c = 1 + coefficient / c;
+    if (Math.abs(c) < floor) c = floor;
+    d = 1 / d;
+    h *= d * c;
 
-    if (Math.abs(bz) > 1e-30) {
-      am /= bz;
-      az /= bz;
-      bm = 1;
-      bz = 1;
-    }
+    coefficient =
+      (-(a + iteration) * (qab + iteration) * x) /
+      ((a + twoIteration) * (qap + twoIteration));
+    d = 1 + coefficient * d;
+    if (Math.abs(d) < floor) d = floor;
+    c = 1 + coefficient / c;
+    if (Math.abs(c) < floor) c = floor;
+    d = 1 / d;
+    const delta = d * c;
+    h *= delta;
 
-    if (Math.abs(az) < epsilon * Math.abs(bz)) {
-      return az / bz;
-    }
+    if (Math.abs(delta - 1) < epsilon) break;
   }
 
-  return az / bz;
+  return h;
 };
 
 const regularizedIncompleteBeta = (
@@ -14365,6 +14373,594 @@ const getNonParametricRecommendation = (
   }
 
   return "Esta prueba es apropiada para datos que no cumplen supuestos de normalidad.";
+};
+
+// SCI-57: Effect Size & Power Engine — capa de síntesis sobre la inferencia.
+const EFFECT_SIZE_ALPHA = 0.05;
+const EFFECT_SIZE_TARGET_POWER = 0.8;
+const EFFECT_SIZE_Z_ALPHA_TWO_TAILED = 1.959964;
+const EFFECT_SIZE_Z_TARGET_POWER = 0.841621;
+
+const EFFECT_SIZE_D_THRESHOLDS: [number, number, number] = [0.2, 0.5, 0.8];
+const EFFECT_SIZE_R_THRESHOLDS: [number, number, number] = [0.1, 0.3, 0.5];
+const EFFECT_SIZE_ETA_THRESHOLDS: [number, number, number] = [0.01, 0.06, 0.14];
+const EFFECT_SIZE_DELTA_THRESHOLDS: [number, number, number] = [
+  0.147, 0.33, 0.474,
+];
+
+const EFFECT_SIZE_POWER_DISCLAIMER =
+  "Advertencia: la potencia observada deriva directamente del p-valor obtenido y no debe usarse para justificar resultados no significativos.";
+
+type EffectMagnitude = "trivial" | "small" | "medium" | "large";
+
+type EffectSizeEntry = {
+  source: string;
+  comparison: string;
+  metric: string;
+  value: number;
+  valueDisplay: string;
+  ciLower?: number;
+  ciUpper?: number;
+  ciDisplay?: string;
+  magnitude: EffectMagnitude;
+  magnitudeLabel: string;
+};
+
+type EffectSizePowerAnalysis = {
+  entries: EffectSizeEntry[];
+  dominantMagnitude: EffectMagnitude;
+  dominantEntry: EffectSizeEntry | null;
+  prospectiveSampleSize: number | null;
+  currentSampleSize: number | null;
+  observedPower: number | null;
+  powerDisclaimer: string;
+  insufficientSampleWarning: string | null;
+  interpretation: string[];
+};
+
+const classifyEffectMagnitude = (
+  value: number,
+  thresholds: [number, number, number]
+): EffectMagnitude => {
+  const magnitude = Math.abs(value);
+  if (magnitude >= thresholds[2]) return "large";
+  if (magnitude >= thresholds[1]) return "medium";
+  if (magnitude >= thresholds[0]) return "small";
+  return "trivial";
+};
+
+const getEffectMagnitudeLabel = (magnitude: EffectMagnitude) => {
+  if (magnitude === "large") return "grande";
+  if (magnitude === "medium") return "mediano";
+  if (magnitude === "small") return "pequeño";
+  return "trivial";
+};
+
+const EFFECT_MAGNITUDE_ORDER: EffectMagnitude[] = [
+  "trivial",
+  "small",
+  "medium",
+  "large",
+];
+
+// Tabla de t crítico (α=0.05 bilateral, IC95%) con interpolación lineal.
+// Evita la inestabilidad numérica de betacf en la CDF t existente.
+const T_CRITICAL_95_TABLE: ReadonlyArray<readonly [number, number]> = [
+  [1, 12.706],
+  [2, 4.303],
+  [3, 3.182],
+  [4, 2.776],
+  [5, 2.571],
+  [6, 2.447],
+  [7, 2.365],
+  [8, 2.306],
+  [9, 2.262],
+  [10, 2.228],
+  [11, 2.201],
+  [12, 2.179],
+  [13, 2.16],
+  [14, 2.145],
+  [15, 2.131],
+  [16, 2.12],
+  [17, 2.11],
+  [18, 2.101],
+  [19, 2.093],
+  [20, 2.086],
+  [25, 2.06],
+  [30, 2.042],
+  [40, 2.021],
+  [60, 2.0],
+  [120, 1.98],
+  [Infinity, 1.96],
+];
+
+const interpolateCriticalTFromTable = (degreesOfFreedom: number): number => {
+  if (degreesOfFreedom <= 0) return Number.NaN;
+  if (degreesOfFreedom <= T_CRITICAL_95_TABLE[0][0]) {
+    return T_CRITICAL_95_TABLE[0][1];
+  }
+
+  for (let index = 1; index < T_CRITICAL_95_TABLE.length; index += 1) {
+    const [upperDf, upperT] = T_CRITICAL_95_TABLE[index];
+    const [lowerDf, lowerT] = T_CRITICAL_95_TABLE[index - 1];
+    if (degreesOfFreedom <= upperDf) {
+      if (!Number.isFinite(upperDf)) return upperT;
+      const weight = (degreesOfFreedom - lowerDf) / (upperDf - lowerDf);
+      return lowerT + weight * (upperT - lowerT);
+    }
+  }
+
+  return T_CRITICAL_95_TABLE[T_CRITICAL_95_TABLE.length - 1][1];
+};
+
+const computeCriticalTValue = (
+  alpha: number,
+  degreesOfFreedom: number
+): number => {
+  if (degreesOfFreedom <= 0 || alpha <= 0 || alpha >= 1) return Number.NaN;
+  if (Math.abs(alpha - EFFECT_SIZE_ALPHA) > 1e-12) return Number.NaN;
+
+  return interpolateCriticalTFromTable(degreesOfFreedom);
+};
+
+const computeCohensD = (result: TTestResult): number => {
+  const pooledVariance =
+    ((result.sampleSizeA - 1) * result.standardDeviationA ** 2 +
+      (result.sampleSizeB - 1) * result.standardDeviationB ** 2) /
+    result.degreesOfFreedom;
+  if (pooledVariance <= 0) return 0;
+  return (result.meanA - result.meanB) / Math.sqrt(pooledVariance);
+};
+
+const computeHedgesG = (cohensD: number, degreesOfFreedom: number): number =>
+  degreesOfFreedom > 1
+    ? cohensD * (1 - 3 / (4 * degreesOfFreedom - 1))
+    : cohensD;
+
+const computeCohensDCI = (
+  cohensD: number,
+  sampleSizeA: number,
+  sampleSizeB: number
+): { lower: number; upper: number } => {
+  const variance =
+    (sampleSizeA + sampleSizeB) / (sampleSizeA * sampleSizeB) +
+    (cohensD * cohensD) / (2 * (sampleSizeA + sampleSizeB));
+  const margin = EFFECT_SIZE_Z_ALPHA_TWO_TAILED * Math.sqrt(variance);
+  return { lower: cohensD - margin, upper: cohensD + margin };
+};
+
+const computeMeanDifferenceCI = (
+  result: TTestResult
+): { lower: number; upper: number } | null => {
+  const pooledVariance =
+    ((result.sampleSizeA - 1) * result.standardDeviationA ** 2 +
+      (result.sampleSizeB - 1) * result.standardDeviationB ** 2) /
+    result.degreesOfFreedom;
+  if (pooledVariance <= 0) return null;
+
+  const standardError = Math.sqrt(
+    pooledVariance * (1 / result.sampleSizeA + 1 / result.sampleSizeB)
+  );
+  const criticalT = computeCriticalTValue(
+    EFFECT_SIZE_ALPHA,
+    result.degreesOfFreedom
+  );
+  if (!Number.isFinite(criticalT)) return null;
+
+  const difference = result.meanA - result.meanB;
+  return {
+    lower: difference - criticalT * standardError,
+    upper: difference + criticalT * standardError,
+  };
+};
+
+const computeAnovaEtaSquared = (result: AnovaResult): number =>
+  result.totalSS > 0 ? result.betweenGroupsSS / result.totalSS : 0;
+
+const computeAnovaOmegaSquared = (result: AnovaResult): number => {
+  const denominator = result.totalSS + result.meanSquareWithin;
+  if (denominator <= 0) return 0;
+  return Math.max(
+    0,
+    (result.betweenGroupsSS -
+      result.betweenGroupsDF * result.meanSquareWithin) /
+      denominator
+  );
+};
+
+const computeTukeyPairCI = (
+  comparison: PostHocComparison
+): { lower: number; upper: number } => ({
+  lower:
+    comparison.meanDifference -
+    TUKEY_HSD_Q_CRITICAL * comparison.standardError,
+  upper:
+    comparison.meanDifference +
+    TUKEY_HSD_Q_CRITICAL * comparison.standardError,
+});
+
+const computeMannWhitneyREffectSize = (result: MannWhitneyResult): number => {
+  const totalSampleSize = result.sampleSizeA + result.sampleSizeB;
+  if (totalSampleSize <= 0) return 0;
+  return Math.abs(result.zScore) / Math.sqrt(totalSampleSize);
+};
+
+// El U reportado es min(U1, U2), por lo que solo la magnitud de delta es
+// recuperable (la dirección requiere conocer a qué grupo corresponde U).
+const computeCliffsDeltaMagnitude = (result: MannWhitneyResult): number => {
+  const pairProduct = result.sampleSizeA * result.sampleSizeB;
+  if (pairProduct <= 0) return 0;
+  return Math.max(0, Math.min(1, 1 - (2 * result.uStatistic) / pairProduct));
+};
+
+const computeKruskalWallisEpsilonSquared = (
+  result: KruskalWallisResult
+): number => {
+  const totalSampleSize = result.totalSampleSize;
+  if (totalSampleSize <= 1) return 0;
+  return Math.min(
+    1,
+    result.hStatistic /
+      ((totalSampleSize * totalSampleSize - 1) / (totalSampleSize + 1))
+  );
+};
+
+const computeProspectiveSampleSizePerGroup = (
+  standardizedEffect: number
+): number | null => {
+  const magnitude = Math.abs(standardizedEffect);
+  if (magnitude <= 0) return null;
+  return Math.ceil(
+    2 *
+      ((EFFECT_SIZE_Z_ALPHA_TWO_TAILED + EFFECT_SIZE_Z_TARGET_POWER) /
+        magnitude) **
+        2
+  );
+};
+
+const computeObservedPowerFromStatistic = (statistic: number): number => {
+  const absoluteStatistic = Math.abs(statistic);
+  const power =
+    1 -
+    approximateStandardNormalCdf(
+      EFFECT_SIZE_Z_ALPHA_TWO_TAILED - absoluteStatistic
+    ) +
+    approximateStandardNormalCdf(
+      -EFFECT_SIZE_Z_ALPHA_TWO_TAILED - absoluteStatistic
+    );
+  return Math.max(0, Math.min(1, power));
+};
+
+const buildEffectSizeEntry = (input: {
+  source: string;
+  comparison: string;
+  metric: string;
+  value: number;
+  precision: number;
+  thresholds: [number, number, number];
+  magnitudeValue?: number;
+  ci?: { lower: number; upper: number } | null;
+}): EffectSizeEntry => {
+  const magnitude = classifyEffectMagnitude(
+    input.magnitudeValue ?? input.value,
+    input.thresholds
+  );
+  return {
+    source: input.source,
+    comparison: input.comparison,
+    metric: input.metric,
+    value: input.value,
+    valueDisplay: input.value.toFixed(input.precision),
+    ciLower: input.ci?.lower,
+    ciUpper: input.ci?.upper,
+    ciDisplay: input.ci
+      ? `IC95% [${input.ci.lower.toFixed(input.precision)}, ${input.ci.upper.toFixed(input.precision)}]`
+      : undefined,
+    magnitude,
+    magnitudeLabel: getEffectMagnitudeLabel(magnitude),
+  };
+};
+
+const canBuildEffectSizePowerAnalysis = (input: {
+  tTestResult: TTestResult | null;
+  anovaAnalysis: AnovaAnalysis | null;
+  mannWhitneyResult: MannWhitneyResult | null;
+  kruskalWallisResult: KruskalWallisResult | null;
+}) =>
+  input.tTestResult !== null ||
+  input.anovaAnalysis !== null ||
+  input.mannWhitneyResult !== null ||
+  input.kruskalWallisResult !== null;
+
+const buildEffectSizePowerAnalysis = (input: {
+  tTestResult: TTestResult | null;
+  anovaAnalysis: AnovaAnalysis | null;
+  postHocComparisons: PostHocComparison[];
+  mannWhitneyResult: MannWhitneyResult | null;
+  kruskalWallisResult: KruskalWallisResult | null;
+  normalityConsensus: NormalityConsensus[];
+}): EffectSizePowerAnalysis | null => {
+  if (!canBuildEffectSizePowerAnalysis(input)) return null;
+
+  const entries: EffectSizeEntry[] = [];
+
+  if (input.tTestResult) {
+    const comparison = `${input.tTestResult.seriesA} vs ${input.tTestResult.seriesB}`;
+    const cohensD = computeCohensD(input.tTestResult);
+    const hedgesG = computeHedgesG(
+      cohensD,
+      input.tTestResult.degreesOfFreedom
+    );
+
+    entries.push(
+      buildEffectSizeEntry({
+        source: "t-Test",
+        comparison,
+        metric: "Cohen's d",
+        value: cohensD,
+        precision: 2,
+        thresholds: EFFECT_SIZE_D_THRESHOLDS,
+        ci: computeCohensDCI(
+          cohensD,
+          input.tTestResult.sampleSizeA,
+          input.tTestResult.sampleSizeB
+        ),
+      })
+    );
+    entries.push(
+      buildEffectSizeEntry({
+        source: "t-Test",
+        comparison,
+        metric: "Hedges' g",
+        value: hedgesG,
+        precision: 2,
+        thresholds: EFFECT_SIZE_D_THRESHOLDS,
+      })
+    );
+    entries.push(
+      buildEffectSizeEntry({
+        source: "t-Test",
+        comparison,
+        metric: "Diferencia de medias",
+        value: input.tTestResult.meanA - input.tTestResult.meanB,
+        precision: 2,
+        thresholds: EFFECT_SIZE_D_THRESHOLDS,
+        magnitudeValue: cohensD,
+        ci: computeMeanDifferenceCI(input.tTestResult),
+      })
+    );
+  }
+
+  if (input.anovaAnalysis) {
+    const comparison = `${input.anovaAnalysis.result.groupCount} grupos`;
+    entries.push(
+      buildEffectSizeEntry({
+        source: "ANOVA",
+        comparison,
+        metric: "Eta²",
+        value: computeAnovaEtaSquared(input.anovaAnalysis.result),
+        precision: 3,
+        thresholds: EFFECT_SIZE_ETA_THRESHOLDS,
+      })
+    );
+    entries.push(
+      buildEffectSizeEntry({
+        source: "ANOVA",
+        comparison,
+        metric: "Omega²",
+        value: computeAnovaOmegaSquared(input.anovaAnalysis.result),
+        precision: 3,
+        thresholds: EFFECT_SIZE_ETA_THRESHOLDS,
+      })
+    );
+
+    const meanSquareWithin = input.anovaAnalysis.result.meanSquareWithin;
+    input.postHocComparisons.forEach((pairComparison) => {
+      const standardizedPairEffect =
+        meanSquareWithin > 0
+          ? pairComparison.meanDifference / Math.sqrt(meanSquareWithin)
+          : 0;
+      entries.push(
+        buildEffectSizeEntry({
+          source: "Tukey",
+          comparison: `${pairComparison.seriesA} ↔ ${pairComparison.seriesB}`,
+          metric: "Δ medias (IC95% aprox.)",
+          value: pairComparison.meanDifference,
+          precision: 2,
+          thresholds: EFFECT_SIZE_D_THRESHOLDS,
+          magnitudeValue: standardizedPairEffect,
+          ci: computeTukeyPairCI(pairComparison),
+        })
+      );
+    });
+  }
+
+  if (input.mannWhitneyResult) {
+    const comparison = `${input.mannWhitneyResult.seriesA} vs ${input.mannWhitneyResult.seriesB}`;
+    entries.push(
+      buildEffectSizeEntry({
+        source: "Mann-Whitney",
+        comparison,
+        metric: "r",
+        value: computeMannWhitneyREffectSize(input.mannWhitneyResult),
+        precision: 2,
+        thresholds: EFFECT_SIZE_R_THRESHOLDS,
+      })
+    );
+    entries.push(
+      buildEffectSizeEntry({
+        source: "Mann-Whitney",
+        comparison,
+        metric: "Cliff's Delta (magnitud)",
+        value: computeCliffsDeltaMagnitude(input.mannWhitneyResult),
+        precision: 2,
+        thresholds: EFFECT_SIZE_DELTA_THRESHOLDS,
+      })
+    );
+  }
+
+  if (input.kruskalWallisResult) {
+    entries.push(
+      buildEffectSizeEntry({
+        source: "Kruskal-Wallis",
+        comparison: `${input.kruskalWallisResult.groupCount} grupos`,
+        metric: "Epsilon²",
+        value: computeKruskalWallisEpsilonSquared(input.kruskalWallisResult),
+        precision: 3,
+        thresholds: EFFECT_SIZE_ETA_THRESHOLDS,
+      })
+    );
+  }
+
+  if (entries.length === 0) return null;
+
+  const dominantEntry = entries.reduce((leader, entry) =>
+    EFFECT_MAGNITUDE_ORDER.indexOf(entry.magnitude) >
+    EFFECT_MAGNITUDE_ORDER.indexOf(leader.magnitude)
+      ? entry
+      : leader
+  );
+  const dominantMagnitude = dominantEntry.magnitude;
+
+  let prospectiveSampleSize: number | null = null;
+  let currentSampleSize: number | null = null;
+  let observedPower: number | null = null;
+
+  if (input.tTestResult) {
+    const hedgesG = computeHedgesG(
+      computeCohensD(input.tTestResult),
+      input.tTestResult.degreesOfFreedom
+    );
+    prospectiveSampleSize = computeProspectiveSampleSizePerGroup(hedgesG);
+    currentSampleSize = Math.min(
+      input.tTestResult.sampleSizeA,
+      input.tTestResult.sampleSizeB
+    );
+    observedPower = computeObservedPowerFromStatistic(
+      input.tTestResult.tStatistic
+    );
+  } else if (input.mannWhitneyResult) {
+    const rEffectSize = computeMannWhitneyREffectSize(
+      input.mannWhitneyResult
+    );
+    const approximateD =
+      rEffectSize < 1
+        ? (2 * rEffectSize) / Math.sqrt(1 - rEffectSize * rEffectSize)
+        : null;
+    prospectiveSampleSize =
+      approximateD !== null
+        ? computeProspectiveSampleSizePerGroup(approximateD)
+        : null;
+    currentSampleSize = Math.min(
+      input.mannWhitneyResult.sampleSizeA,
+      input.mannWhitneyResult.sampleSizeB
+    );
+    observedPower = computeObservedPowerFromStatistic(
+      input.mannWhitneyResult.zScore
+    );
+  }
+
+  const insufficientSampleWarning =
+    prospectiveSampleSize !== null &&
+    currentSampleSize !== null &&
+    currentSampleSize < prospectiveSampleSize
+      ? `El tamaño muestral actual (n = ${currentSampleSize} por grupo) está por debajo del recomendado (n = ${prospectiveSampleSize}) para detectar el efecto observado con una potencia del ${Math.round(EFFECT_SIZE_TARGET_POWER * 100)}%.`
+      : null;
+
+  const interpretation: string[] = [];
+  pushUniqueTextLine(
+    interpretation,
+    `El efecto dominante observado es ${getEffectMagnitudeLabel(dominantMagnitude)} (${dominantEntry.metric} = ${dominantEntry.valueDisplay}, ${dominantEntry.source}).`
+  );
+
+  if (input.tTestResult) {
+    const meanDifferenceCI = computeMeanDifferenceCI(input.tTestResult);
+    if (meanDifferenceCI) {
+      pushUniqueTextLine(
+        interpretation,
+        meanDifferenceCI.lower > 0 || meanDifferenceCI.upper < 0
+          ? "El intervalo de confianza de la diferencia de medias excluye el 0, lo que respalda una diferencia real entre los grupos."
+          : "El intervalo de confianza de la diferencia de medias incluye el 0; la diferencia observada podría no ser real."
+      );
+    }
+  }
+
+  if (prospectiveSampleSize !== null && currentSampleSize !== null) {
+    pushUniqueTextLine(
+      interpretation,
+      insufficientSampleWarning ??
+        `El tamaño muestral actual (n = ${currentSampleSize} por grupo) es suficiente para detectar el efecto observado con una potencia del ${Math.round(EFFECT_SIZE_TARGET_POWER * 100)}%.`
+    );
+  }
+
+  if (observedPower !== null) {
+    pushUniqueTextLine(
+      interpretation,
+      `Potencia observada (aprox.): ${(observedPower * 100).toFixed(1)}%. ${EFFECT_SIZE_POWER_DISCLAIMER}`
+    );
+  }
+
+  const prefersNonParametric =
+    input.normalityConsensus.some(
+      (consensus) =>
+        consensus.conclusion === "non-normal" ||
+        consensus.conclusion === "contradictory"
+    ) &&
+    (input.mannWhitneyResult !== null || input.kruskalWallisResult !== null);
+  if (prefersNonParametric) {
+    pushUniqueTextLine(
+      interpretation,
+      "Dada la evaluación de normalidad, las métricas de efecto no paramétricas (r, Cliff's Delta, Epsilon²) son las más apropiadas para este conjunto."
+    );
+  }
+
+  return {
+    entries,
+    dominantMagnitude,
+    dominantEntry,
+    prospectiveSampleSize,
+    currentSampleSize,
+    observedPower,
+    powerDisclaimer: EFFECT_SIZE_POWER_DISCLAIMER,
+    insufficientSampleWarning,
+    interpretation: deduplicateTextLines(interpretation),
+  };
+};
+
+const getEffectSizePowerReportLines = (
+  analysis: EffectSizePowerAnalysis | null
+): string[] => {
+  if (!analysis) {
+    return [
+      "No hay pruebas inferenciales disponibles para calcular Effect Size & Power.",
+    ];
+  }
+
+  const lines: string[] = [];
+  analysis.entries.forEach((entry) => {
+    lines.push(
+      `${entry.source} (${entry.comparison}): ${entry.metric} = ${entry.valueDisplay}${entry.ciDisplay ? `, ${entry.ciDisplay}` : ""} — efecto ${entry.magnitudeLabel}.`
+    );
+  });
+
+  if (
+    analysis.prospectiveSampleSize !== null &&
+    analysis.currentSampleSize !== null
+  ) {
+    lines.push(
+      `Potencia prospectiva: se requieren n = ${analysis.prospectiveSampleSize} observaciones por grupo para detectar el efecto observado con una potencia del ${Math.round(EFFECT_SIZE_TARGET_POWER * 100)}% (α = ${EFFECT_SIZE_ALPHA}); n actual = ${analysis.currentSampleSize}.`
+    );
+  }
+
+  if (analysis.observedPower !== null) {
+    lines.push(
+      `Potencia observada (aprox.): ${(analysis.observedPower * 100).toFixed(1)}%.`
+    );
+    lines.push(analysis.powerDisclaimer);
+  }
+
+  analysis.interpretation.forEach((line) => lines.push(line));
+  return deduplicateTextLines(lines);
 };
 
 type StatisticalRecommendationConfidence = "high" | "medium" | "low";
@@ -15288,6 +15884,31 @@ const generateScientificReport = (input: {
 
   sections.push({ title: "Pruebas estadísticas", content: testLines });
 
+  const effectSizePowerAnalysis = buildEffectSizePowerAnalysis({
+    tTestResult: input.tTestResult,
+    anovaAnalysis: input.anovaAnalysis,
+    postHocComparisons: input.postHocComparisons,
+    mannWhitneyResult: input.mannWhitneyResult,
+    kruskalWallisResult: input.kruskalWallisResult,
+    normalityConsensus: buildCanonicalNormalityAssessment(
+      input.normalityAnalyses,
+      input.qqPlotAnalyses,
+      input.violinPlotAnalyses,
+      input.kernelDensityAnalyses
+    ).seriesAssessments,
+  });
+  if (effectSizePowerAnalysis) {
+    sections.push({
+      title: "Effect Size & Power",
+      content: getEffectSizePowerReportLines(effectSizePowerAnalysis),
+    });
+    if (effectSizePowerAnalysis.dominantEntry) {
+      summaryLines.push(
+        `El efecto observado es de magnitud ${getEffectMagnitudeLabel(effectSizePowerAnalysis.dominantMagnitude)}.`
+      );
+    }
+  }
+
   const recommendationLines: string[] = [];
   if (input.statisticalRecommendation) {
     recommendationLines.push(
@@ -16210,6 +16831,30 @@ const generateScientificInterpretation = (input: {
     );
   }
 
+  const effectSizePowerAnalysis = buildEffectSizePowerAnalysis({
+    tTestResult: input.tTestResult,
+    anovaAnalysis: input.anovaAnalysis,
+    postHocComparisons: input.postHocComparisons,
+    mannWhitneyResult: input.mannWhitneyResult,
+    kruskalWallisResult: input.kruskalWallisResult,
+    normalityConsensus: buildCanonicalNormalityAssessment(
+      input.normalityAnalyses,
+      input.qqPlotAnalyses,
+      input.violinPlotAnalyses,
+      input.kernelDensityAnalyses
+    ).seriesAssessments,
+  });
+  if (effectSizePowerAnalysis) {
+    deduplicateTextLines(effectSizePowerAnalysis.interpretation).forEach(
+      (line) => {
+        pushUniqueFinding(line);
+      }
+    );
+    if (effectSizePowerAnalysis.insufficientSampleWarning) {
+      pushUniqueWarning(effectSizePowerAnalysis.insufficientSampleWarning);
+    }
+  }
+
   if (input.statisticalRecommendation) {
     const { recommendedTest, confidence, reasoning, warnings: advisorWarnings } =
       input.statisticalRecommendation;
@@ -16858,6 +17503,23 @@ const generateScientificAssistantReport = (input: {
 
   if (input.kruskalWallisResult?.significant) {
     pushUniqueFinding("Kruskal-Wallis detectó diferencias significativas.");
+  }
+
+  const effectSizePowerAnalysis = buildEffectSizePowerAnalysis({
+    tTestResult: input.tTestResult,
+    anovaAnalysis: input.anovaAnalysis,
+    postHocComparisons: input.postHocComparisons,
+    mannWhitneyResult: input.mannWhitneyResult,
+    kruskalWallisResult: input.kruskalWallisResult,
+    normalityConsensus,
+  });
+  if (effectSizePowerAnalysis?.dominantEntry) {
+    pushUniqueFinding(
+      `El efecto dominante observado es ${getEffectMagnitudeLabel(effectSizePowerAnalysis.dominantMagnitude)} (${effectSizePowerAnalysis.dominantEntry.metric} = ${effectSizePowerAnalysis.dominantEntry.valueDisplay}, ${effectSizePowerAnalysis.dominantEntry.source}).`
+    );
+    if (effectSizePowerAnalysis.insufficientSampleWarning) {
+      pushUniqueFinding(effectSizePowerAnalysis.insufficientSampleWarning);
+    }
   }
 
   if (heatmapStrongPositivePairs > 0 && input.correlationHeatmap) {
@@ -18850,6 +19512,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showAnova, setShowAnova] = useState(false);
   const [showPostHoc, setShowPostHoc] = useState(false);
   const [showNonParametric, setShowNonParametric] = useState(false);
+  const [showEffectSizePower, setShowEffectSizePower] = useState(false);
   const [nonParametricMode, setNonParametricMode] =
     useState<NonParametricMode>("mann-whitney");
   const [selectedMannWhitneySeriesA, setSelectedMannWhitneySeriesA] = useState<
@@ -19268,6 +19931,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowAnova(false);
     setShowPostHoc(false);
     setShowNonParametric(false);
+    setShowEffectSizePower(false);
     setShowStatisticalAdvisor(false);
     setShowScientificReport(false);
     setShowScientificInterpretation(false);
@@ -20427,6 +21091,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => calculateKruskalWallis(visibleExperimentalSeries),
     [visibleExperimentalSeries]
   );
+  const effectSizePowerAnalysis = useMemo(
+    () =>
+      buildEffectSizePowerAnalysis({
+        tTestResult,
+        anovaAnalysis,
+        postHocComparisons,
+        mannWhitneyResult,
+        kruskalWallisResult,
+        normalityConsensus,
+      }),
+    [
+      tTestResult,
+      anovaAnalysis,
+      postHocComparisons,
+      mannWhitneyResult,
+      kruskalWallisResult,
+      normalityConsensus,
+    ]
+  );
   const reportQualityEngineAnalysis = useMemo(
     () =>
       buildReportQualityEngineAnalysis({
@@ -21568,7 +22251,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showMethodologicalDashboard ||
         showHierarchicalClustering)) ||
     (isInferenceModuleEnabled &&
-      (showTTest || showAnova || showPostHoc || showNonParametric)) ||
+      (showTTest ||
+        showAnova ||
+        showPostHoc ||
+        showNonParametric ||
+        showEffectSizePower)) ||
     (isAssistantModuleEnabled &&
       (showStatisticalAdvisor ||
         showScientificInterpretation ||
@@ -24069,6 +24756,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           </>
                         )}
                       </div>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Effect Size &amp; Power
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showEffectSizePower}
+                            onChange={(e) =>
+                              setShowEffectSizePower(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
                   </div>
 
                   <div
@@ -27634,6 +28346,95 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <p className={emptyState}>
                         Resultado no disponible para las series seleccionadas.
                       </p>
+                    )}
+                  </div>
+                )}
+
+                {showEffectSizePower && (
+                  <div className={`${subsectionCard} lg:col-span-2`}>
+                    <p className={subsectionHeading}>
+                      📏 Effect Size &amp; Power
+                    </p>
+                    {!effectSizePowerAnalysis ? (
+                      <p className={emptyState}>
+                        Active al menos una prueba inferencial calculable
+                        (t-Test, ANOVA, Mann-Whitney o Kruskal-Wallis) para
+                        estimar tamaños de efecto y potencia.
+                      </p>
+                    ) : (
+                      <div className={contentPanel}>
+                        <p className="font-semibold">
+                          Efecto dominante:{" "}
+                          {getEffectMagnitudeLabel(
+                            effectSizePowerAnalysis.dominantMagnitude
+                          )}
+                          {effectSizePowerAnalysis.dominantEntry
+                            ? ` (${effectSizePowerAnalysis.dominantEntry.metric} = ${effectSizePowerAnalysis.dominantEntry.valueDisplay}, ${effectSizePowerAnalysis.dominantEntry.source})`
+                            : ""}
+                        </p>
+
+                        <p className="mt-2 font-semibold">
+                          Tamaños de efecto:
+                        </p>
+                        {effectSizePowerAnalysis.entries.map((entry) => (
+                          <p
+                            key={`effect-size-${entry.source}-${entry.metric}-${entry.comparison}`}
+                            className="mt-1"
+                          >
+                            <span className="font-semibold">
+                              {entry.source}
+                            </span>{" "}
+                            ({entry.comparison}): {entry.metric} ={" "}
+                            {entry.valueDisplay}
+                            {entry.ciDisplay ? `, ${entry.ciDisplay}` : ""} —
+                            efecto {entry.magnitudeLabel}.
+                          </p>
+                        ))}
+
+                        {effectSizePowerAnalysis.prospectiveSampleSize !==
+                          null &&
+                          effectSizePowerAnalysis.currentSampleSize !==
+                            null && (
+                            <p className="mt-2">
+                              <span className="font-semibold">
+                                Potencia prospectiva (principal):
+                              </span>{" "}
+                              n recomendado ={" "}
+                              {effectSizePowerAnalysis.prospectiveSampleSize}{" "}
+                              por grupo (potencia{" "}
+                              {Math.round(EFFECT_SIZE_TARGET_POWER * 100)}%, α
+                              = {EFFECT_SIZE_ALPHA}); n actual ={" "}
+                              {effectSizePowerAnalysis.currentSampleSize}.
+                            </p>
+                          )}
+
+                        {effectSizePowerAnalysis.observedPower !== null && (
+                          <>
+                            <p className="mt-1">
+                              <span className="font-semibold">
+                                Potencia observada (aprox.):
+                              </span>{" "}
+                              {(
+                                effectSizePowerAnalysis.observedPower * 100
+                              ).toFixed(1)}
+                              %.
+                            </p>
+                            <p className={`mt-1 text-sm ${emptyState}`}>
+                              ⚠ {effectSizePowerAnalysis.powerDisclaimer}
+                            </p>
+                          </>
+                        )}
+
+                        <p className="mt-2 font-semibold">Interpretación:</p>
+                        {effectSizePowerAnalysis.interpretation.map((line) => (
+                          <p
+                            key={`effect-size-interpretation-${line}`}
+                            className="mt-1"
+                          >
+                            {line}
+                          </p>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
