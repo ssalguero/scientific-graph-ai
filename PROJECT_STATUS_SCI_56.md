@@ -1,16 +1,16 @@
-# Scientific Graph AI — Estado del Proyecto (Cierre SCI-59)
+# Scientific Graph AI — Estado del Proyecto (Cierre SCI-58)
 
 Fecha: 2026-06-15
-Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-60 + SCI-59
-Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-60 y SCI-59 implementados sobre esta base
+Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60
+Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59 y SCI-60 implementados sobre esta base
 
 ---
 
 ## 1. Resumen ejecutivo
 
-El proyecto alcanzó el cierre completo del bloque metodológico, las capas ejecutivas de síntesis (multivariante, metodológica y de publicación), la capa de orquestación UX, la totalidad del backlog técnico histórico y la etapa evolutiva SCI-57+. Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, se cerraron SCI-29B y SCI-37B, se completó **SCI-57 — Effect Size & Power Engine**, **SCI-57B — Effect-Aware Evidence**, **SCI-60 — Executive Publication Dashboard** y **SCI-59 — Guided Scientific Workflow**, cerrando los vacíos de magnitud inferencial, evidencia effect-aware, síntesis pre-manuscrito y experiencia de uso guiada identificados en REVIEW-5, POST-SCI-57B REVIEW y POST-SCI-60 REVIEW.
+El proyecto alcanzó el cierre completo del bloque metodológico, las capas ejecutivas de síntesis (multivariante, metodológica y de publicación), la capa de orquestación UX, la capa de comparación multi-dataset, la totalidad del backlog técnico histórico y la etapa evolutiva SCI-57+. Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, se cerraron SCI-29B y SCI-37B, se completó **SCI-57 — Effect Size & Power Engine**, **SCI-57B — Effect-Aware Evidence**, **SCI-60 — Executive Publication Dashboard**, **SCI-59 — Guided Scientific Workflow** y **SCI-58 — Multi-Dataset Comparison Framework**, cerrando los vacíos de magnitud inferencial, evidencia effect-aware, síntesis pre-manuscrito, experiencia de uso guiada y comparación estructurada entre datasets identificados en REVIEW-5, POST-SCI-57B REVIEW, POST-SCI-60 REVIEW y POST-SCI-59 REVIEW.
 
-**SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-60 y SCI-59 están cerrados; el backlog técnico histórico permanece vacío.**
+**SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59 y SCI-60 están cerrados; el backlog técnico histórico permanece vacío.**
 
 Hitos cerrados en este ciclo:
 
@@ -26,8 +26,9 @@ Hitos cerrados en este ciclo:
 | SCI-57B | COMPLETADO | Inferencia effect-aware en SCI-53 vía `dominantMagnitude` de SCI-57 |
 | SCI-60 | COMPLETADO | Executive Publication Dashboard — síntesis read-only pre-manuscrito |
 | SCI-59 | COMPLETADO | Guided Scientific Workflow — orquestación UX con templates y wizard |
+| SCI-58 | COMPLETADO | Multi-Dataset Comparison Framework basado en DatasetAnalysisProfile y Slots A/B, con dashboard comparativo read-only y sin recalcular motores científicos |
 
-Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · t crítico (df=10,18,30) PASS.**
+Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · t crítico (df=10,18,30) PASS.**
 
 ---
 
@@ -40,6 +41,7 @@ Monolito científico maduro en `src/app/page.tsx` (~30.730 líneas), organizado 
 | Datos | DATA-1→3 | Importación CSV/TXT/XLSX/ODS en `src/lib/experimentalData.ts` |
 | Infraestructura UX | ARCH-1→4 | Workspace (Datos/Análisis/Resultados/Reportes), Inspector contextual, módulos activables, tema |
 | Orquestación UX | SCI-59 | Guided Scientific Workflow — templates, wizard, auto-toggle y navegación |
+| Comparación multi-dataset | SCI-58 | Slots A/B, `DatasetAnalysisProfile` y dashboard comparativo read-only |
 | Núcleo científico | SCI-1→27 | Estadística descriptiva, distribución, inferencia |
 | Inferencia ampliada | SCI-57 + SCI-57B | Effect Size & Power Engine + evidencia effect-aware en SCI-53 |
 | Multivariante | SCI-28→40 | PCA, clustering, redes, proyecciones + dashboard SCI-40 |
@@ -90,6 +92,8 @@ SCI-60 consume SCI-55 (status primario), SCI-56, SCI-53, SCI-40, SCI-57 y normal
 
 SCI-59 consume normalidad canónica, `buildStatisticalRecommendation` y contexto de series para ramificar templates; conduce hacia SCI-40 (T2) y SCI-60 (T3).
 
+SCI-58 es capa de comparación read-only (Opción D): captura snapshots `DatasetAnalysisProfile` desde los `useMemo` existentes (SCI-53/55/56/57, normalidad canónica) sin recalcular motores; los slots A/B persisten entre imports de dataset.
+
 ---
 
 ## 3. Funcionalidades completadas
@@ -105,6 +109,7 @@ SCI-59 consume normalidad canónica, `buildStatisticalRecommendation` y contexto
 - SCI-57B — Effect-Aware Evidence (SCI-53)
 - SCI-60 — Executive Publication Dashboard
 - SCI-59 — Guided Scientific Workflow
+- SCI-58 — Multi-Dataset Comparison Framework
 
 ### Post-SCI-55 (este ciclo)
 
@@ -182,6 +187,23 @@ SCI-59 consume normalidad canónica, `buildStatisticalRecommendation` y contexto
 - Reset en `resetAnalysisSession()`; **sin cambios** en builders SCI-11→60, SCI-19/20, Advisor, `exportScientificReportPdf()`
 - Validación: T1/T2/T3 PASS Dataset5; T3 PASS Dataset6; scores upstream sin delta (Evidence 82.7/73.3; Overall 77.0/67.5)
 
+**SCI-58 — Multi-Dataset Comparison Framework (COMPLETED)**
+- Capa de comparación read-only (Opción D aprobada); sin motor científico ni score comparativo global
+- **Arquitectura Slots A/B:** dos slots independientes del dataset activo; captura / actualización / limpieza desde Datos
+- **`DatasetAnalysisProfile`:** snapshot inmutable de KPIs en instante de captura (`fileName`, `capturedAt`, series, observaciones, completitud)
+- **Dashboard comparativo:** `ScientificMultiDatasetComparisonDashboard` en Resultados con toggle dedicado
+- **Comparación de KPIs:**
+  - Evidence (SCI-53)
+  - Readiness (SCI-55)
+  - Overall Health (SCI-56)
+  - Publication Status (SCI-55/60)
+  - Effect Size dominante (SCI-57)
+  - Normalidad integrada (canónica)
+- Deltas numéricos B−A, advertencias de comparabilidad, diagnóstico cruzado y recomendaciones
+- **Persistencia de slots:** perfiles A/B conservados al importar un nuevo dataset; toggle comparativo resetea en `resetAnalysisSession()`; limpieza manual por slot
+- **Sin cambios** en builders SCI-11→60, SCI-17/19/20, Advisor, `exportScientificReportPdf()` (PDF mono-dataset)
+- Validación: Slot A Dataset5 (Readiness 77.0), Slot B Dataset6 (Readiness 67.5), delta Readiness ≈ −9.5; scores upstream sin regresión
+
 ---
 
 ## 4. Dashboards y capas de síntesis disponibles
@@ -193,6 +215,7 @@ SCI-59 consume normalidad canónica, `buildStatisticalRecommendation` y contexto
 | 🔬 Evaluación integrada de normalidad | HOTFIX | SCI-11/21/22/26 | Resultados → Resultados matemáticos |
 | 📋 Methodological Summary Dashboard | SCI-56 | SCI-50→55 | Resultados → Resultados matemáticos |
 | 📰 Executive Publication Dashboard | SCI-60 | SCI-55 + SCI-56 + SCI-53/57B + SCI-40 + SCI-57 + normalidad | Resultados → Resultados matemáticos |
+| 📊 Multi-Dataset Comparison Dashboard | SCI-58 | Perfiles A/B (SCI-53/55/56/57 + normalidad) | Datos (slots) · Resultados (comparación) |
 
 SCI-59 no es dashboard analítico: orquesta toggles, navegación workspace e inspector hacia motores y dashboards existentes.
 
@@ -202,11 +225,13 @@ SCI-60 muestra: Publication Status (SCI-55), KPIs referenciales, normalidad, hig
 
 SCI-57 no es dashboard ejecutivo: es motor inferencial con panel propio (📏 Effect Size & Power Engine).
 
+SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sigue alimentando el análisis mono-dataset y el PDF.
+
 ---
 
 ## 5. Backlog pendiente
 
-**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-60 y SCI-59 están cerrados y validados.
+**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59 y SCI-60 están cerrados y validados.
 
 ### Deuda menor documentada
 
@@ -217,14 +242,14 @@ SCI-57 no es dashboard ejecutivo: es motor inferencial con panel propio (📏 Ef
 
 ---
 
-## 6. Candidatos post-SCI-59
+## 6. Candidatos post-SCI-58
 
 Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización definitiva.
 
 | Candidato | Descripción breve |
 |-----------|-------------------|
-| **SCI-58 — Multi-Dataset Comparison Framework** | Modo de sesión con 2+ datasets: comparación lado a lado de estadísticas, normalidad, estructuras multivariantes y health scores. |
 | **ARCH-5 — Modular Architecture Refactor** | Extraer motores, builders y tipos de `page.tsx` (~31K líneas) a módulos independientes para sostenibilidad del monolito. |
+| **SCI-58 v2 — Comparación ampliada** | N>2 slots, integración SCI-17/PDF, persistencia entre sesiones o comparación de series completas. |
 
 ---
 
@@ -249,6 +274,7 @@ Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización defi
 | SCI-59 T1 Comparar grupos | PASS | — |
 | SCI-59 T2 Explorar estructura (SCI-40) | PASS | — |
 | SCI-59 T3 Evaluar publicación (SCI-56/57/60) | PASS | PASS |
+| SCI-58 Multi-Dataset Comparison (slots A/B, delta Readiness) | PASS (Slot A 77.0) | PASS (Slot B 67.5, Δ −9.5) |
 | Export PDF (SCI-56 + SCI-57 + SCI-60) | PASS | PASS |
 | t crítico IC95% (df=10, 18, 30) | PASS (2.228 / 2.101 / 2.042) | — |
 
@@ -262,7 +288,7 @@ Resultados observados post-SCI-57B / SCI-60 / SCI-59 (scores upstream referencia
 | Publication Status (SCI-60) | Near Ready | Requires Review |
 | Effect dominante (SCI-57) | large, d ≈ −1.36 | large, d ≈ −1.98 |
 
-Build: Compilación OK · TypeScript OK · Exportación PDF OK · `validate-hotfix-sci-normality-2.mjs` (sci59.pass) OK · `validate-t-quantile.mjs` OK · scores upstream sin regresión post-SCI-59.
+Build: Compilación OK · TypeScript OK · Exportación PDF OK · `validate-hotfix-sci-normality-2.mjs` (sci58.pass · sci59.pass) OK · `validate-t-quantile.mjs` OK · scores upstream sin regresión post-SCI-58.
 
 ---
 
@@ -338,6 +364,7 @@ Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset ex
 
 - Importación multi-formato y workspace científico (Datos → Análisis → Resultados → Reportes)
 - **Workflow guiado (SCI-59):** 3 templates con wizard, auto-toggle y navegación hacia el camino analítico correcto
+- **Comparación multi-dataset (SCI-58):** captura de perfiles en Slots A/B y dashboard comparativo read-only entre datasets
 - Estadística descriptiva, distribución, normalidad canónica unificada, outliers y correlación
 - Inferencia paramétrica y no paramétrica con magnitud del efecto, IC95% y potencia (SCI-57)
 - Evidencia metodológica effect-aware en SCI-53 (SCI-57B)
@@ -350,11 +377,11 @@ Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset ex
 
 ### Backlog técnico
 
-**Vacío.** Los candidatos de la sección 6 (SCI-58, ARCH-5) son evolución futura, no backlog pendiente.
+**Vacío.** Los candidatos de la sección 6 (ARCH-5, SCI-58 v2) son evolución futura, no backlog pendiente.
 
 ### Áreas abiertas para evolución futura
 
-- Comparación entre datasets (SCI-58)
+- Comparación ampliada N>2 slots o integración reporte/PDF (SCI-58 v2)
 - Modularización arquitectónica del monolito (ARCH-5)
 - Enriquecimiento narrativo SCI-57B en SCI-55/56 (opcional, no bloqueante)
 - SCI-59 v1.1: branching condicional avanzado, persistencia de workflow, orquestación SCI-41→49
@@ -362,13 +389,33 @@ Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset ex
 
 ---
 
-## 12. Próximos pasos recomendados
+## 12. Estado del proyecto al cierre de SCI-58
 
-1. **Definir la siguiente fase evolutiva** a partir de los candidatos de la sección 6 (SCI-58, ARCH-5).
+Inventario completo de hitos al cierre de la etapa SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60:
+
+| Bloque / Hito | Estado |
+|---------------|--------|
+| SCI-1 → SCI-55 | COMPLETADOS |
+| HOTFIX-SCI-NORMALITY-2 | COMPLETADO |
+| BUGFIX SCI-19 | COMPLETADO |
+| SCI-56 — Methodological Summary Dashboard | COMPLETADO |
+| SCI-29B — Constant Variable Exclusion in Clustering | COMPLETADO |
+| SCI-37B — Tie-Aware Variable Importance Ranking | COMPLETADO |
+| SCI-57 — Effect Size & Power Engine | COMPLETADO |
+| SCI-57B — Effect-Aware Evidence (SCI-53) | COMPLETADO |
+| SCI-60 — Executive Publication Dashboard | COMPLETADO |
+| SCI-59 — Guided Scientific Workflow | COMPLETADO |
+| SCI-58 — Multi-Dataset Comparison Framework | COMPLETADO |
+
+---
+
+## 13. Próximos pasos recomendados
+
+1. **Definir la siguiente fase evolutiva** a partir de los candidatos de la sección 6 (ARCH-5, SCI-58 v2).
 2. **Formalizar la suite de validación** (Playwright + `validate-t-quantile.mjs`) como herramienta de regresión continua.
 3. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
 4. **Evaluar ARCH-5** antes de que el monolito supere las ~31K líneas.
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-60 y SCI-59. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59 y SCI-60. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
