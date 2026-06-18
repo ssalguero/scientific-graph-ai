@@ -627,14 +627,38 @@ Framework de importación dominio-agnóstico; **COMPLETADO** y validado con base
 
 ---
 
-## 16. Próximos pasos recomendados
+## 16. PROD-2A — Project File Core (cerrado)
+
+Persistencia local de proyectos científicos en `.sgproj` (F0–F6 completados).
+
+| Entregable | Estado |
+|------------|--------|
+| Dominio `src/lib/project/` | ✅ |
+| Boundary `collectProjectSnapshot` / `applyHydrateProjectPatch` | ✅ |
+| UX sidebar (Nuevo / Guardar / Abrir) | ✅ F4 |
+| E2E save→reload Dataset5/6 + SCI-58/59 | ✅ F5 |
+| Hardening UX + mensajes + gate final | ✅ F6 |
+
+**Persiste:** dataset, toggles/modos/selecciones, SCI-59 session, SCI-58 slot KPIs, workspace, graphContext opcional.
+
+**No persiste:** outputs SCI-53→60, PDF, Advisor, Supabase graphs.
+
+**Validación:**
+
+```bash
+npm run validate:prod2a-gate
+```
+
+---
+
+## 17. Próximos pasos recomendados
 
 1. **Implementar PROD-1B** — validación avanzada + reportes completos sobre `src/lib/import/`.
 2. **Continuar ARCH-5 Fase 4** — extracción comparison SCI-58, metodología SCI-50→56 o reporting según roadmap.
-3. **Formalizar la suite de validación** (Playwright + `validate-t-quantile.mjs` + `validate-prod1-rw-suite.mjs`) como herramienta de regresión continua.
+3. **Formalizar la suite de validación** (Playwright + `validate-t-quantile.mjs` + `validate-prod1-rw-suite.mjs` + `validate-prod2a-gate`) como herramienta de regresión continua.
 4. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
 5. **Evaluar SCI-58 v2** tras completar dominios upstream modularizados.
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3) y PROD-1A. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3), PROD-1A y **PROD-2A**. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.

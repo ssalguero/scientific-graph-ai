@@ -1,0 +1,153 @@
+{
+  "kind": "scientific-graph-ai.project",
+  "schemaVersion": 1,
+  "appVersion": "0.1.0",
+  "exportedAt": "2026-06-17T12:00:00.000Z",
+  "project": {
+    "metadata": {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "name": "Dataset5 minimal fixture",
+      "createdAt": "2026-06-17T10:00:00.000Z",
+      "updatedAt": "2026-06-17T12:00:00.000Z"
+    },
+    "dataset": {
+      "series": [
+        {
+          "id": "d5-control1",
+          "name": "Control1",
+          "color": "#3b82f6",
+          "points": [
+            { "x": 1, "y": 10 },
+            { "x": 2, "y": 11 },
+            { "x": 3, "y": 12 },
+            { "x": 4, "y": 11 },
+            { "x": 5, "y": 10 },
+            { "x": 6, "y": 11 },
+            { "x": 7, "y": 12 },
+            { "x": 8, "y": 11 },
+            { "x": 9, "y": 10 },
+            { "x": 10, "y": 11 }
+          ]
+        },
+        {
+          "id": "d5-control2",
+          "name": "Control2",
+          "color": "#ef4444",
+          "points": [
+            { "x": 1, "y": 11 },
+            { "x": 2, "y": 12 },
+            { "x": 3, "y": 13 },
+            { "x": 4, "y": 12 },
+            { "x": 5, "y": 11 },
+            { "x": 6, "y": 12 },
+            { "x": 7, "y": 13 },
+            { "x": 8, "y": 12 },
+            { "x": 9, "y": 11 },
+            { "x": 10, "y": 12 }
+          ]
+        },
+        {
+          "id": "d5-tratamiento1",
+          "name": "Tratamiento1",
+          "color": "#22c55e",
+          "points": [
+            { "x": 1, "y": 50 },
+            { "x": 2, "y": 52 },
+            { "x": 3, "y": 54 },
+            { "x": 4, "y": 56 },
+            { "x": 5, "y": 58 },
+            { "x": 6, "y": 60 },
+            { "x": 7, "y": 62 },
+            { "x": 8, "y": 64 },
+            { "x": 9, "y": 66 },
+            { "x": 10, "y": 68 }
+          ]
+        },
+        {
+          "id": "d5-tratamiento2",
+          "name": "Tratamiento2",
+          "color": "#a855f7",
+          "points": [
+            { "x": 1, "y": 51 },
+            { "x": 2, "y": 53 },
+            { "x": 3, "y": 55 },
+            { "x": 4, "y": 57 },
+            { "x": 5, "y": 59 },
+            { "x": 6, "y": 61 },
+            { "x": 7, "y": 63 },
+            { "x": 8, "y": 65 },
+            { "x": 9, "y": 67 },
+            { "x": 10, "y": 69 }
+          ]
+        }
+      ],
+      "info": {
+        "fileName": "Dataset5.csv",
+        "importedAt": "2026-06-17T11:00:00.000Z",
+        "seriesCount": 4,
+        "observationCount": 40
+      }
+    },
+    "importProvenance": {
+      "report": null,
+      "preserveAnalysisOnReimport": false
+    },
+    "analysisConfig": {
+      "visibility": {
+        "showStatistics": false,
+        "showNormality": false,
+        "showMethodologicalDashboard": false
+      },
+      "modes": {
+        "regressionModel": "none",
+        "errorBarMode": "sd",
+        "correlationMethod": "pearson",
+        "outlierMethod": "iqr",
+        "heatmapMode": "correlation",
+        "nonParametricMode": "mann-whitney",
+        "histogramBins": 10,
+        "axisScaleMode": "linear",
+        "naturalLanguageEnabled": true
+      },
+      "selections": {
+        "tTestSeriesA": "d5-control1",
+        "tTestSeriesB": "d5-tratamiento1",
+        "mannWhitneySeriesA": null,
+        "mannWhitneySeriesB": null
+      },
+      "legend": {
+        "hiddenKeys": []
+      }
+    },
+    "workflow": {
+      "session": {
+        "status": "idle",
+        "templateId": null,
+        "currentStepIndex": 0,
+        "completedStepIds": [],
+        "skippedStepIds": [],
+        "startedAt": null,
+        "completedAt": null
+      }
+    },
+    "comparison": {
+      "slots": {
+        "A": { "label": "Slot A", "profile": null },
+        "B": { "label": "Slot B", "profile": null }
+      }
+    },
+    "workspace": {
+      "activeSection": "data",
+      "inspectorSection": "visualization",
+      "enabledModules": {
+        "basic": true,
+        "mathematics": true,
+        "statistics": true,
+        "inference": true,
+        "assistant": true,
+        "reports": true
+      }
+    },
+    "graphContext": null
+  }
+}

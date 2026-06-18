@@ -25,6 +25,13 @@ import {
 } from "@/lib/import";
 import { ImportReportPanel } from "@/components/import/ImportReportPanel";
 import { WorkbookImportWizard } from "@/components/import/WorkbookImportWizard";
+import type { ProjectMetadataV1 } from "@/lib/project";
+import { createInitialProjectMetadata } from "./projectPersistence";
+import {
+  ProjectScientificFilePanel,
+  type ProjectFileFeedback,
+} from "./ProjectScientificFilePanel";
+import { useGraphEditorProjectFile, type UseGraphEditorProjectFileParams } from "./useGraphEditorProjectFile";
 import {
   deduplicateTextLines,
   pushUniqueTextLine,
@@ -19587,6 +19594,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState<ImportedDatasetInfo | null>(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
   const [themeLoaded, setThemeLoaded] = useState(false);
+  const [projectMetadata, setProjectMetadata] = useState<ProjectMetadataV1>(() =>
+    createInitialProjectMetadata()
+  );
+  const [isProjectDirty, setIsProjectDirty] = useState(false);
+  const [projectFileFeedback, setProjectFileFeedback] =
+    useState<ProjectFileFeedback | null>(null);
 
   useEffect(() => {
     const visible = ANALYSIS_INSPECTOR_CATEGORIES.filter((category) =>
@@ -19614,6 +19627,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   };
 
   const nextCurveIdRef = useRef(2);
+  const generateGraphRef = useRef<(curveSource?: Curve[]) => void>(() => {});
   const chartExportRef = useRef<HTMLDivElement>(null);
   const chartInteractionRef = useRef<HTMLDivElement>(null);
   const jsonImportInputRef = useRef<HTMLInputElement>(null);
@@ -19930,6 +19944,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setRegressionModel("none");
   };
 
+  const clearEphemeralUiState = () => {
+    setExperimentalImportError(null);
+    setJsonImportError(null);
+    setWorkbookImportWizard({ open: false, analysis: null });
+    setScientificReportCopied(false);
+    setScientificInterpretationCopied(false);
+    setScientificAssistantCopied(false);
+    setScientificReportPdfExporting(false);
+    setScientificReportPdfMessage(null);
+    setErrorMessage("");
+    setMathWarning(null);
+    setRangeWarning([]);
+    setScaleWarning(null);
+    setShareNotFound(false);
+    setLinkCopied(false);
+  };
+
   const handleExperimentalImport = async (
     event: ChangeEvent<HTMLInputElement>
   ) => {
@@ -20116,6 +20147,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setYMetrics(computeYMetrics([]));
     }
   };
+  generateGraphRef.current = generateGraph;
 
   const graphExpression = (expr: string) => {
     if (activeCurveIndex < 0 || activeCurveIndex >= curves.length) return;
@@ -22690,6 +22722,206 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     panStateRef.current.isPanning = false;
   };
 
+  const {
+    suppressProjectDirtyRef,
+    handleNewProject,
+    handleSaveProject,
+    handleOpenProjectFile,
+  } = useGraphEditorProjectFile({
+    projectMetadata,
+    setProjectMetadata,
+    isProjectDirty,
+    setIsProjectDirty,
+    setProjectFileFeedback,
+    experimentalSeries,
+    setExperimentalSeries,
+    currentDatasetInfo,
+    setCurrentDatasetInfo,
+    lastImportReport,
+    setLastImportReport,
+    preserveAnalysisConfiguration,
+    setPreserveAnalysisConfiguration,
+    title,
+    setTitle,
+    curves,
+    setCurves,
+    minX,
+    setMinX,
+    maxX,
+    setMaxX,
+    visibleMinX,
+    setVisibleMinX,
+    visibleMaxX,
+    setVisibleMaxX,
+    autoScaleY,
+    setAutoScaleY,
+    useSecondaryYAxis,
+    setUseSecondaryYAxis,
+    regressionModel,
+    setRegressionModel,
+    errorBarMode,
+    setErrorBarMode,
+    correlationMethod,
+    setCorrelationMethod,
+    outlierMethod,
+    setOutlierMethod,
+    heatmapMode,
+    setHeatmapMode,
+    nonParametricMode,
+    setNonParametricMode,
+    histogramBins,
+    setHistogramBins,
+    axisScaleMode,
+    setAxisScaleMode,
+    naturalLanguageEnabled,
+    setNaturalLanguageEnabled,
+    selectedTTestSeriesA,
+    setSelectedTTestSeriesA,
+    selectedTTestSeriesB,
+    setSelectedTTestSeriesB,
+    selectedMannWhitneySeriesA,
+    setSelectedMannWhitneySeriesA,
+    selectedMannWhitneySeriesB,
+    setSelectedMannWhitneySeriesB,
+    hiddenLegendKeys,
+    setHiddenLegendKeys,
+    guidedWorkflowSession,
+    setGuidedWorkflowSession,
+    comparisonSlots,
+    setComparisonSlots,
+    activeWorkspaceSection,
+    setActiveWorkspaceSection,
+    analysisInspectorSection,
+    setAnalysisInspectorSection,
+    enabledModules,
+    setEnabledModules,
+    controlPanelTab,
+    setControlPanelTab,
+    nextCurveIdRef,
+    generateGraph: (curveSource?: Curve[]) => generateGraphRef.current(curveSource),
+    resetAnalysisSession,
+    resetToSingleCurve,
+    createEmptyComparisonSlots,
+    createDefaultEnabledModules,
+    clearEphemeralUiState,
+    showDerivative,
+    setShowDerivative,
+    showIntegral,
+    setShowIntegral,
+    showIntersections,
+    setShowIntersections,
+    showCriticalPoints,
+    setShowCriticalPoints,
+    showRoots,
+    setShowRoots,
+    showStatistics,
+    setShowStatistics,
+    showErrorBars,
+    setShowErrorBars,
+    showCorrelation,
+    setShowCorrelation,
+    showOutliers,
+    setShowOutliers,
+    showHistogram,
+    setShowHistogram,
+    showBoxPlot,
+    setShowBoxPlot,
+    showNormality,
+    setShowNormality,
+    showQQPlot,
+    setShowQQPlot,
+    showViolinPlot,
+    setShowViolinPlot,
+    showHeatmap,
+    setShowHeatmap,
+    showBubblePlot,
+    setShowBubblePlot,
+    showRadarPlot,
+    setShowRadarPlot,
+    showKernelDensity,
+    setShowKernelDensity,
+    showForestPlot,
+    setShowForestPlot,
+    showPCA,
+    setShowPCA,
+    showScatterMatrix,
+    setShowScatterMatrix,
+    showParallelCoordinates,
+    setShowParallelCoordinates,
+    showCorrelationNetwork,
+    setShowCorrelationNetwork,
+    showMDS,
+    setShowMDS,
+    showDistanceMatrix,
+    setShowDistanceMatrix,
+    showSimilarityNetwork,
+    setShowSimilarityNetwork,
+    showVariableImportance,
+    setShowVariableImportance,
+    showClusterHeatmap,
+    setShowClusterHeatmap,
+    showClusteredDistanceHeatmap,
+    setShowClusteredDistanceHeatmap,
+    showMultivariateDashboard,
+    setShowMultivariateDashboard,
+    showManovaExplorer,
+    setShowManovaExplorer,
+    showLdaExplorer,
+    setShowLdaExplorer,
+    showCanonicalCorrelationExplorer,
+    setShowCanonicalCorrelationExplorer,
+    showPcrExplorer,
+    setShowPcrExplorer,
+    showPlsExplorer,
+    setShowPlsExplorer,
+    showBootstrapExplorer,
+    setShowBootstrapExplorer,
+    showSensitivityExplorer,
+    setShowSensitivityExplorer,
+    showTsneExplorer,
+    setShowTsneExplorer,
+    showUmapExplorer,
+    setShowUmapExplorer,
+    showConsistencyEngine,
+    setShowConsistencyEngine,
+    showReportQualityEngine,
+    setShowReportQualityEngine,
+    showReproducibilityExplorer,
+    setShowReproducibilityExplorer,
+    showEvidenceStrengthEngine,
+    setShowEvidenceStrengthEngine,
+    showAssumptionTracker,
+    setShowAssumptionTracker,
+    showPublicationReadinessAnalyzer,
+    setShowPublicationReadinessAnalyzer,
+    showMethodologicalDashboard,
+    setShowMethodologicalDashboard,
+    showPublicationDashboard,
+    setShowPublicationDashboard,
+    showMultiDatasetComparison,
+    setShowMultiDatasetComparison,
+    showHierarchicalClustering,
+    setShowHierarchicalClustering,
+    showTTest,
+    setShowTTest,
+    showAnova,
+    setShowAnova,
+    showPostHoc,
+    setShowPostHoc,
+    showNonParametric,
+    setShowNonParametric,
+    showEffectSizePower,
+    setShowEffectSizePower,
+    showStatisticalAdvisor,
+    setShowStatisticalAdvisor,
+    showScientificReport,
+    setShowScientificReport,
+    showScientificInterpretation,
+    setShowScientificInterpretation,
+    showScientificAssistant,
+    setShowScientificAssistant,
+  } as UseGraphEditorProjectFileParams);
+
   return (
     <main className={`flex min-h-screen flex-col lg:flex-row ${getAppShell(themeMode)}`}>
       <aside className="w-full lg:w-[280px] lg:max-w-[300px] lg:min-h-screen shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col transition-colors duration-200">
@@ -22704,6 +22936,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             + Nuevo gráfico
           </button>
+
+          <DashboardSection title="Proyecto científico" icon="📁" defaultOpen>
+            <ProjectScientificFilePanel
+              projectMetadata={projectMetadata}
+              isProjectDirty={isProjectDirty}
+              feedback={projectFileFeedback}
+              onDismissFeedback={() => setProjectFileFeedback(null)}
+              onNewProject={handleNewProject}
+              onSaveProject={handleSaveProject}
+              onOpenProjectFile={handleOpenProjectFile}
+            />
+          </DashboardSection>
 
           <div className={sidebarDivider} />
 
