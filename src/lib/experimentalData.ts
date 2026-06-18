@@ -30,9 +30,10 @@ export const EXPERIMENTAL_DATA_SOURCES: ExperimentalDataSource[] = [
   { id: "txt", label: "TXT", enabled: true, accept: ".txt,text/plain" },
   {
     id: "xlsx",
-    label: "Excel (.xlsx)",
+    label: "Excel (.xlsx, .xls)",
     enabled: true,
-    accept: ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    accept:
+      ".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel",
   },
   {
     id: "ods",

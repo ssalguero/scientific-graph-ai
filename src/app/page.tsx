@@ -15,10 +15,16 @@ import {
   DEFAULT_EXPERIMENTAL_DATA_SOURCE_ID,
   EXPERIMENTAL_DATA_SOURCES,
   getExperimentalDataSource,
-  importExperimentalDataFile,
   type ExperimentalDataSourceId,
   type ExperimentalSeries,
 } from "../lib/experimentalData";
+import {
+  attemptExperimentalImport,
+  type ImportReport,
+  type WorkbookAnalysis,
+} from "@/lib/import";
+import { ImportReportPanel } from "@/components/import/ImportReportPanel";
+import { WorkbookImportWizard } from "@/components/import/WorkbookImportWizard";
 import {
   deduplicateTextLines,
   pushUniqueTextLine,
@@ -19568,6 +19574,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [experimentalImportError, setExperimentalImportError] = useState<
     string | null
   >(null);
+  const [lastImportReport, setLastImportReport] = useState<ImportReport | null>(
+    null
+  );
+  const [workbookImportWizard, setWorkbookImportWizard] = useState<{
+    open: boolean;
+    analysis: WorkbookAnalysis | null;
+  }>({ open: false, analysis: null });
   const [preserveAnalysisConfiguration, setPreserveAnalysisConfiguration] =
     useState(false);
   const [currentDatasetInfo, setCurrentDatasetInfo] =
@@ -19928,18 +19941,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     const source = getExperimentalDataSource(selectedDataSourceId);
     if (!source?.enabled) return;
 
-    try {
-      const importedSeries = await importExperimentalDataFile(
-        selectedDataSourceId,
-        file
-      );
-
-      if (!importedSeries || importedSeries.length === 0) {
-        setExperimentalImportError("Archivo de datos inválido");
-        return;
-      }
-
+    const applyImportedSeries = (
+      importedSeries: ExperimentalSeries[],
+      report: ImportReport | null,
+      importedFileName: string
+    ) => {
       setExperimentalImportError(null);
+      setLastImportReport(report);
       if (!preserveAnalysisConfiguration) {
         resetAnalysisSession();
       }
@@ -19951,7 +19959,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       }));
       setExperimentalSeries(mappedSeries);
       setCurrentDatasetInfo({
-        fileName: file.name,
+        fileName: importedFileName,
         importedAt: new Date().toLocaleString(),
         seriesCount: mappedSeries.length,
         observationCount: mappedSeries.reduce(
@@ -19959,13 +19967,69 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           0
         ),
       });
+    };
+
+    try {
+      const result = await attemptExperimentalImport(selectedDataSourceId, file);
+
+      if (result.kind === "wizard") {
+        setExperimentalImportError(null);
+        setWorkbookImportWizard({ open: true, analysis: result.analysis });
+        return;
+      }
+
+      if (result.kind === "error") {
+        setLastImportReport(null);
+        setExperimentalImportError(result.message);
+        return;
+      }
+
+      applyImportedSeries(result.series, result.report, file.name);
     } catch {
-      setExperimentalImportError("Archivo de datos inválido");
+      setLastImportReport(null);
+      setExperimentalImportError(
+        "No se pudo leer el archivo. Verifique el formato e intente nuevamente."
+      );
     }
+  };
+
+  const handleWorkbookImportComplete = ({
+    series,
+    report,
+  }: {
+    series: ExperimentalSeries[];
+    report: ImportReport;
+  }) => {
+    const curveCount = curves.filter((curve) => curve.expression.trim()).length;
+    const mappedSeries = series.map((item, index) => ({
+      ...item,
+      color: getDefaultColorForIndex(curveCount + index),
+    }));
+    setWorkbookImportWizard({ open: false, analysis: null });
+    setExperimentalImportError(null);
+    setLastImportReport(report);
+    if (!preserveAnalysisConfiguration) {
+      resetAnalysisSession();
+    }
+    setExperimentalSeries(mappedSeries);
+    setCurrentDatasetInfo({
+      fileName: report.fileName,
+      importedAt: new Date().toLocaleString(),
+      seriesCount: mappedSeries.length,
+      observationCount: mappedSeries.reduce(
+        (sum, item) => sum + item.points.length,
+        0
+      ),
+    });
   };
 
   const selectedDataSource = getExperimentalDataSource(selectedDataSourceId);
   const canImportExperimentalData = selectedDataSource?.enabled ?? false;
+  const experimentalFileAccept = EXPERIMENTAL_DATA_SOURCES.filter(
+    (item) => item.enabled && item.accept
+  )
+    .map((item) => item.accept)
+    .join(",");
 
   const resolveCurvesForMath = (sourceCurves: Curve[]): Curve[] =>
     sourceCurves.map((curve) => ({
@@ -23140,7 +23204,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               <NotebookSection
                 title="Importación de datos"
                 icon="📥"
-                subtitle="CSV, TXT, XLSX u ODS"
+                subtitle="CSV, TXT, Excel (.xlsx/.xls), ODS"
                 defaultOpen={false}
               >
                     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
@@ -23187,7 +23251,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <input
                         ref={experimentalFileInputRef}
                         type="file"
-                        accept={selectedDataSource?.accept ?? undefined}
+                        accept={experimentalFileAccept || undefined}
                         className="hidden"
                         onChange={handleExperimentalImport}
                       />
@@ -23216,7 +23280,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         {experimentalImportError}
                       </p>
                     )}
+
+                    {lastImportReport && (
+                      <ImportReportPanel report={lastImportReport} />
+                    )}
               </NotebookSection>
+
+              {workbookImportWizard.open && workbookImportWizard.analysis && (
+                <WorkbookImportWizard
+                  open={workbookImportWizard.open}
+                  analysis={workbookImportWizard.analysis}
+                  sourceId={selectedDataSourceId}
+                  onClose={() =>
+                    setWorkbookImportWizard({ open: false, analysis: null })
+                  }
+                  onComplete={handleWorkbookImportComplete}
+                />
+              )}
 
               {hasEnoughSeriesForCorrelation &&
                 guidedWorkflowSession.status === "idle" && (

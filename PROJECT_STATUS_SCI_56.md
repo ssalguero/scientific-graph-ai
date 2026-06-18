@@ -1,16 +1,16 @@
-# Scientific Graph AI — Estado del Proyecto (Cierre ARCH-5 Fase 3)
+# Scientific Graph AI — Estado del Proyecto (Cierre PROD-1A)
 
 Fecha: 2026-06-16
-Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–3)
-Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60 y ARCH-5 Fases 1–3 implementados sobre esta base
+Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–3) + PROD-1A
+Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 Fases 1–3 y PROD-1A implementados sobre esta base
 
 ---
 
 ## 1. Resumen ejecutivo
 
-El proyecto alcanzó el cierre completo del bloque metodológico, las capas ejecutivas de síntesis (multivariante, metodológica y de publicación), la capa de orquestación UX, la capa de comparación multi-dataset, la totalidad del backlog técnico histórico, la etapa evolutiva SCI-57+ y **las tres primeras fases de modularización incremental ARCH-5**. Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, se cerraron SCI-29B y SCI-37B, se completó **SCI-57 — Effect Size & Power Engine**, **SCI-57B — Effect-Aware Evidence**, **SCI-60 — Executive Publication Dashboard**, **SCI-59 — Guided Scientific Workflow**, **SCI-58 — Multi-Dataset Comparison Framework** y **ARCH-5 Fases 1–3** (normalidad canónica, workflow SCI-59 e inferencia SCI-12–15 + SCI-57 en `src/lib/scientific/`), cerrando los vacíos de magnitud inferencial, evidencia effect-aware, síntesis pre-manuscrito, experiencia de uso guiada, comparación estructurada entre datasets y deuda de monolito en los cuatro dominios acotados identificados en REVIEW-5, POST-SCI-57B REVIEW, POST-SCI-60 REVIEW, POST-SCI-59 REVIEW y PROJECT REVIEW post-SCI-58.
+El proyecto alcanzó el cierre completo del bloque metodológico, las capas ejecutivas de síntesis (multivariante, metodológica y de publicación), la capa de orquestación UX, la capa de comparación multi-dataset, la totalidad del backlog técnico histórico, la etapa evolutiva SCI-57+, **las tres primeras fases de modularización incremental ARCH-5** y **PROD-1A — Scientific Workbook Import Framework** (importación robusta de workbooks científicos con pipeline híbrido fast path + wizard). Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, se cerraron SCI-29B y SCI-37B, se completó **SCI-57 — Effect Size & Power Engine**, **SCI-57B — Effect-Aware Evidence**, **SCI-60 — Executive Publication Dashboard**, **SCI-59 — Guided Scientific Workflow**, **SCI-58 — Multi-Dataset Comparison Framework**, **ARCH-5 Fases 1–3** (normalidad canónica, workflow SCI-59 e inferencia SCI-12–15 + SCI-57 en `src/lib/scientific/`) y **PROD-1A** (framework de importación en `src/lib/import/` + wizard UI), cerrando los vacíos de magnitud inferencial, evidencia effect-aware, síntesis pre-manuscrito, experiencia de uso guiada, comparación estructurada entre datasets, deuda de monolito en los cuatro dominios acotados identificados en REVIEW-5, POST-SCI-57B REVIEW, POST-SCI-60 REVIEW, POST-SCI-59 REVIEW, PROJECT REVIEW post-SCI-58 y la imposibilidad de importar workbooks científicos reales validados en RW-01→RW-04.
 
-**SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60 y ARCH-5 (Fase 1–3) están cerrados; el backlog técnico histórico permanece vacío.**
+**SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3) y PROD-1A están cerrados; el backlog técnico histórico permanece vacío. PROD-1B (validación avanzada + reportes completos) queda como evolución aprobada en plan, no implementada.**
 
 Hitos cerrados en este ciclo:
 
@@ -30,8 +30,9 @@ Hitos cerrados en este ciclo:
 | ARCH-5 Fase 1 | COMPLETADO | Modularización incremental — normalidad canónica y utilidades de texto en `src/lib/scientific/normality/` + `shared/` |
 | ARCH-5 Fase 2 | COMPLETADO | Modularización incremental — lógica declarativa SCI-59 Guided Workflow en `src/lib/scientific/workflow/` |
 | ARCH-5 Fase 3 | COMPLETADO | Modularización incremental — inferencia SCI-12–15 + SCI-57 Effect Size & Power en `src/lib/scientific/inference/` |
+| PROD-1A | COMPLETADO | Scientific Workbook Import Framework — pipeline híbrido fast path + wizard en `src/lib/import/` |
 
-Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · t crítico (df=10,18,30) PASS.**
+Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · PROD-1A PASS · RW-01 PASS · RW-02 PASS · RW-03 PASS · RW-04 PASS · t crítico (df=10,18,30) PASS.**
 
 ---
 
@@ -41,8 +42,9 @@ Monolito científico maduro en `src/app/page.tsx` (~27.200 líneas), con módulo
 
 | Capa | Rango | Rol |
 |------|-------|-----|
-| Datos | DATA-1→3 | Importación CSV/TXT/XLSX/ODS en `src/lib/experimentalData.ts` |
+| Datos | DATA-1→3 + PROD-1A | Importación CSV/TXT/XLSX/XLS/ODS; fast path legacy en `experimentalData.ts`; framework workbook en `src/lib/import/` + wizard UI |
 | Modularización | ARCH-5 F1–3 | `shared/`, `normality/`, `workflow/`, `inference/` — dominios extraídos sin cambio funcional |
+| Importación workbook | PROD-1A | `src/lib/import/` — lectura, discovery, detección tabla/encabezados, mapeo X/Y, validación mínima, reporte mínimo |
 | Infraestructura UX | ARCH-1→4 | Workspace (Datos/Análisis/Resultados/Reportes), Inspector contextual, módulos activables, tema |
 | Orquestación UX | SCI-59 | Guided Scientific Workflow — templates, wizard, auto-toggle y navegación |
 | Comparación multi-dataset | SCI-58 | Slots A/B, `DatasetAnalysisProfile` y dashboard comparativo read-only |
@@ -100,6 +102,8 @@ SCI-58 es capa de comparación read-only (Opción D): captura snapshots `Dataset
 
 **ARCH-5 (Fases 1–3):** extracción incremental move-only; scores, clasificaciones, PDF y builders SCI-11→60 sin cambios semánticos. Fase 1: normalidad canónica + utilidades `shared/`. Fase 2: plan builders SCI-59 (`buildGuidedWorkflowPlan`, templates T1/T2/T3, resolvers); handlers React y `GuidedWorkflowPanel` permanecen en `page.tsx`. Fase 3: calculadores SCI-12–15 + motor SCI-57 (`calculateIndependentTTest`, `calculateOneWayAnova`, `calculateTukeyComparisons`, `calculateMannWhitney`, `calculateKruskalWallis`, `buildEffectSizePowerAnalysis`); toggles, `useMemo` e UI inferencial permanecen en `page.tsx`.
 
+**PROD-1A:** capa de importación dominio-agnóstica; no recalcula motores SCI. Pipeline híbrido: CSV/TXT simples → fast path legacy (`importExperimentalDataFile`); workbooks XLSX/XLS/ODS complejos → `WorkbookImportWizard` (hoja → tabla → columnas X/Y → confirmación). Salida: `ExperimentalSeries[]` + `ImportReport` mínimo. **Sin cambios** en SCI-53→60, PDF, Advisor, ARCH-5 ni builders inferenciales.
+
 ---
 
 ## 3. Funcionalidades completadas
@@ -119,6 +123,7 @@ SCI-58 es capa de comparación read-only (Opción D): captura snapshots `Dataset
 - ARCH-5 Fase 1 — Normalidad canónica modularizada
 - ARCH-5 Fase 2 — Workflow SCI-59 modularizado
 - ARCH-5 Fase 3 — Inferencia SCI-12–15 + SCI-57 modularizada
+- PROD-1A — Scientific Workbook Import Framework
 
 ### Post-SCI-55 (este ciclo)
 
@@ -243,6 +248,16 @@ SCI-58 es capa de comparación read-only (Opción D): captura snapshots `Dataset
 - **Sin cambios** en scores SCI-57B (Evidence 82.7/73.3), Readiness (77.0/67.5), PDF, SCI-58/59/60, motores SCI-50→56
 - Validación: TypeScript · Build · score-check baselineMatch D5/D6 · sci57.pass · sci58.pass · sci59.pass · sci60.pass · PDF · E2E completo exit 0
 
+**PROD-1A — Scientific Workbook Import Framework (COMPLETED)**
+- Framework dominio-agnóstico de importación de workbooks científicos (Opción D aprobada: pipeline híbrido fast path + wizard); sin motor científico ni score propio
+- **Módulo `src/lib/import/`:** lectura XLSX/XLS/ODS, discovery/ranking de hojas, detección de tabla y encabezados, sugerencias y mapeo X/Y, validación mínima (≥2 puntos), builder → `ExperimentalSeries[]`, reporte mínimo
+- **Pipeline:** `attemptExperimentalImport()` — fast path legacy para CSV/TXT (Dataset5/6); wizard path para workbooks multi-hoja con metadatos pre-tabla
+- **UI:** `WorkbookImportWizard` (4 pasos: hoja · tabla · columnas · confirmar) + panel informe mínimo post-import en Datos
+- **Bridge:** `experimentalData.ts` conserva contrato `ExperimentalSeries`; accept ampliado a `.xls`
+- **Real World Validation Suite:** RW-01, RW-02, RW-03, RW-04 PASS vía `scripts/validate-prod1-rw-suite.mjs`
+- **Sin cambios** en SCI-53→60, PDF, Advisor, ARCH-5, motores inferenciales ni recálculo de scores
+- Validación: TypeScript · Build · score-check baselineMatch D5/D6 (Evidence 82.7/73.3; Overall 77.0/67.5) · RW-Suite 4/4 PASS
+
 ---
 
 ## 4. Dashboards y capas de síntesis disponibles
@@ -270,7 +285,7 @@ SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sig
 
 ## 5. Backlog pendiente
 
-**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60 y ARCH-5 (Fase 1–3) están cerrados y validados.
+**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3) y PROD-1A están cerrados y validados.
 
 ### Deuda menor documentada
 
@@ -281,14 +296,16 @@ SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sig
 
 ---
 
-## 6. Candidatos post-ARCH-5 Fase 3
+## 6. Candidatos post-ARCH-5 Fase 3 / PROD-1A
 
 Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización definitiva.
 
 | Candidato | Descripción breve |
 |-----------|-------------------|
+| **PROD-1B — Validación avanzada + reportes** | Preview expandido, warnings estructurados, `ImportReport` completo, script RW en CI; plan aprobado, no implementado. |
 | **ARCH-5 Fase 4+ — Modularización incremental** | Comparison SCI-58, metodología SCI-50→56, reporting, PDF (roadmap ARCH-5). |
 | **SCI-58 v2 — Comparación ampliada** | N>2 slots, integración SCI-17/PDF, persistencia entre sesiones o comparación de series completas. |
+| **PROD-1 v1.1 — Multi-serie side-by-side** | Importación de layouts `grafico q vs t` (RW-04) como múltiples series en un paso. |
 
 ---
 
@@ -315,6 +332,8 @@ Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización defi
 | SCI-59 T3 Evaluar publicación (SCI-56/57/60) | PASS | PASS |
 | SCI-58 Multi-Dataset Comparison (slots A/B, delta Readiness) | PASS (Slot A 77.0) | PASS (Slot B 67.5, Δ −9.5) |
 | ARCH-5 Fase 3 (inferencia modularizada) | PASS | PASS |
+| PROD-1A Workbook Import (fast path CSV) | PASS (baselineMatch) | PASS (baselineMatch) |
+| PROD-1A RW-Suite (RW-01→RW-04) | PASS | PASS |
 | Export PDF (SCI-56 + SCI-57 + SCI-60) | PASS | PASS |
 | t crítico IC95% (df=10, 18, 30) | PASS (2.228 / 2.101 / 2.042) | — |
 
@@ -328,7 +347,7 @@ Resultados observados post-SCI-57B / SCI-60 / SCI-59 (scores upstream referencia
 | Publication Status (SCI-60) | Near Ready | Requires Review |
 | Effect dominante (SCI-57) | large, d ≈ −1.36 | large, d ≈ −1.98 |
 
-Build: Compilación OK · TypeScript OK · Exportación PDF OK · `validate-hotfix-sci-normality-2.mjs` (sci57.pass · sci58.pass · sci59.pass · sci60.pass) OK · `validate-t-quantile.mjs` OK · scores upstream sin regresión post-ARCH-5 Fase 3 (baselineMatch D5/D6).
+Build: Compilación OK · TypeScript OK · Exportación PDF OK · `validate-hotfix-sci-normality-2.mjs` (sci57.pass · sci58.pass · sci59.pass · sci60.pass) OK · `validate-t-quantile.mjs` OK · `validate-prod1-rw-suite.mjs` (RW-01→RW-04) OK · scores upstream sin regresión post-ARCH-5 Fase 3 y PROD-1A (baselineMatch D5/D6).
 
 ---
 
@@ -403,6 +422,7 @@ Inventario completo de hitos al cierre de la etapa SCI-56 + SCI-29B + SCI-37B + 
 Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset experimental tabular:
 
 - Importación multi-formato y workspace científico (Datos → Análisis → Resultados → Reportes)
+- **Importación robusta de workbooks (PROD-1A):** fast path CSV/TXT + wizard para XLSX/XLS/ODS con detección de hoja/tabla y mapeo X/Y; validado RW-01→RW-04
 - **Workflow guiado (SCI-59):** 3 templates con wizard, auto-toggle y navegación hacia el camino analítico correcto (builders en `src/lib/scientific/workflow/`)
 - **Modularización incremental (ARCH-5):** cuatro módulos cerrados en `src/lib/scientific/` — `shared/`, `normality/`, `workflow/`, `inference/` — sin cambio funcional ni de scores
 - **Comparación multi-dataset (SCI-58):** captura de perfiles en Slots A/B y dashboard comparativo read-only entre datasets
@@ -418,10 +438,11 @@ Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset ex
 
 ### Backlog técnico
 
-**Vacío.** Los candidatos de la sección 6 (ARCH-5 Fase 4+, SCI-58 v2) son evolución futura, no backlog pendiente.
+**Vacío.** Los candidatos de la sección 6 (PROD-1B, ARCH-5 Fase 4+, SCI-58 v2, PROD-1 v1.1) son evolución futura, no backlog pendiente.
 
 ### Áreas abiertas para evolución futura
 
+- PROD-1B — validación avanzada, reportes completos y preview expandido
 - ARCH-5 Fase 4 — comparison SCI-58, metodología SCI-50→56, reporting, PDF
 - Comparación ampliada N>2 slots o integración reporte/PDF (SCI-58 v2)
 - Enriquecimiento narrativo SCI-57B en SCI-55/56 (opcional, no bloqueante)
@@ -532,13 +553,88 @@ Cuatro dominios modulares extraídos del monolito; todos **COMPLETADOS** y valid
 
 ---
 
-## 15. Próximos pasos recomendados
+## 15. Estado del proyecto al cierre de PROD-1A
 
-1. **Continuar ARCH-5 Fase 4** — extracción comparison SCI-58, metodología SCI-50→56 o reporting según roadmap.
-2. **Formalizar la suite de validación** (Playwright + `validate-t-quantile.mjs`) como herramienta de regresión continua.
-3. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
-4. **Evaluar SCI-58 v2** tras completar dominios upstream modularizados.
+Inventario completo de hitos al cierre de la etapa SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–3) + PROD-1A:
+
+| Bloque / Hito | Estado |
+|---------------|--------|
+| SCI-1 → SCI-55 | COMPLETADOS |
+| HOTFIX-SCI-NORMALITY-2 | COMPLETADO |
+| BUGFIX SCI-19 | COMPLETADO |
+| SCI-56 — Methodological Summary Dashboard | COMPLETADO |
+| SCI-29B — Constant Variable Exclusion in Clustering | COMPLETADO |
+| SCI-37B — Tie-Aware Variable Importance Ranking | COMPLETADO |
+| SCI-57 — Effect Size & Power Engine | COMPLETADO |
+| SCI-57B — Effect-Aware Evidence (SCI-53) | COMPLETADO |
+| SCI-60 — Executive Publication Dashboard | COMPLETADO |
+| SCI-59 — Guided Scientific Workflow | COMPLETADO |
+| SCI-58 — Multi-Dataset Comparison Framework | COMPLETADO |
+| ARCH-5 Fase 1 — Canonical Normality Modularization | COMPLETADO |
+| ARCH-5 Fase 2 — SCI-59 Workflow Modularization | COMPLETADO |
+| ARCH-5 Fase 3 — Inferential Engine Modularization | COMPLETADO |
+| PROD-1A — Scientific Workbook Import Framework | COMPLETADO |
+
+### Módulo `src/lib/import/` — inventario PROD-1A
+
+Framework de importación dominio-agnóstico; **COMPLETADO** y validado con baseline D5/D6 idéntico + RW-Suite 4/4.
+
+| Submódulo | Contenido | Rol |
+|-----------|-----------|-----|
+| `types.ts` | Contratos (`WorkbookSnapshot`, `TableRegion`, `ColumnMapping`, `ImportReport`, wizard state) | API del framework |
+| `read/` | XLSX, XLS, ODS; detección de formato | Lectura robusta |
+| `discover/` | `SheetSummary`, ranking, clasificación heurística de hojas | Discovery |
+| `detect-table/` | Región tabular, metadatos pre-tabla | Detección de tabla |
+| `detect-header/` | Encabezados, `ColumnDescriptor` | Detección de encabezados |
+| `map/` | Sugerencias de roles, mapeo X/Y, extracción de puntos | Mapeo |
+| `validate/` | Preview, validación mínima (≥2 puntos) | Validación PROD-1A |
+| `build/` | Builder → `ExperimentalSeries[]` | Transformación |
+| `report/` | Reporte mínimo, `formatImportReportSummary` | Trazabilidad |
+| `pipeline.ts` | `attemptExperimentalImport`, wizard build, fast path | Orquestación |
+| `shared/` | `cell`, `matrix`, `text` helpers | Utilidades agnósticas |
+
+**UI:** `src/components/import/WorkbookImportWizard.tsx` · integración en `page.tsx` (handler, estado wizard, panel informe).
+
+#### API pública principal
+
+| Export | Rol |
+|--------|-----|
+| `attemptExperimentalImport` | Entrada única: success \| wizard \| error |
+| `buildInitialWizardState` / `refreshWizardState` / `runWizardImport` | Flujo wizard |
+| `analyzeWorkbookFile` | Análisis previo de workbook |
+| `formatImportReportSummary` | Resumen legible del reporte mínimo |
+
+#### Validación PROD-1A
+
+| Verificación | Resultado |
+|--------------|-----------|
+| TypeScript | PASS |
+| Build | PASS |
+| Dataset5 fast path | PASS (Evidence 82.7 · Readiness 77.0 · Overall 77.0) |
+| Dataset6 fast path | PASS (Evidence 73.3 · Readiness 67.5 · Overall 67.5) |
+| RW-01 (`Pb`) | PASS (≥8 puntos) |
+| RW-02 (`Lang_Up`) | PASS (≥8 puntos) |
+| RW-03 (`resultados_Up`) | PASS (≥8 puntos) |
+| RW-04 (`Up_PH3`, `.xls`) | PASS (≥10 puntos) |
+| SCI-53→60 / PDF / Advisor | Sin cambios |
+
+#### Pendiente PROD-1B (no implementado)
+
+- Validación avanzada con severidades estructuradas
+- `ImportReport` completo en UI
+- Preview expandido con auditoría de filas omitidas
+- Integración RW-Suite en CI de regresión continua
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60 y ARCH-5 (Fase 1–3). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+## 16. Próximos pasos recomendados
+
+1. **Implementar PROD-1B** — validación avanzada + reportes completos sobre `src/lib/import/`.
+2. **Continuar ARCH-5 Fase 4** — extracción comparison SCI-58, metodología SCI-50→56 o reporting según roadmap.
+3. **Formalizar la suite de validación** (Playwright + `validate-t-quantile.mjs` + `validate-prod1-rw-suite.mjs`) como herramienta de regresión continua.
+4. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
+5. **Evaluar SCI-58 v2** tras completar dominios upstream modularizados.
+
+---
+
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3) y PROD-1A. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
