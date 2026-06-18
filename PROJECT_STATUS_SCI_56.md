@@ -1,16 +1,16 @@
-# Scientific Graph AI — Estado del Proyecto (Cierre PROD-1A)
+# Scientific Graph AI — Estado del Proyecto (Cierre PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1)
 
-Fecha: 2026-06-16
-Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–3) + PROD-1A
-Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 Fases 1–3 y PROD-1A implementados sobre esta base
+Fecha: 2026-06-16 (actualizado)
+Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–3) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1
+Commit de referencia: `fe4c6f2` (tag `SCI-56`); SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 Fases 1–3, PROD-1A, PROD-2A y HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 implementados sobre esta base
 
 ---
 
 ## 1. Resumen ejecutivo
 
-El proyecto alcanzó el cierre completo del bloque metodológico, las capas ejecutivas de síntesis (multivariante, metodológica y de publicación), la capa de orquestación UX, la capa de comparación multi-dataset, la totalidad del backlog técnico histórico, la etapa evolutiva SCI-57+, **las tres primeras fases de modularización incremental ARCH-5** y **PROD-1A — Scientific Workbook Import Framework** (importación robusta de workbooks científicos con pipeline híbrido fast path + wizard). Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, se cerraron SCI-29B y SCI-37B, se completó **SCI-57 — Effect Size & Power Engine**, **SCI-57B — Effect-Aware Evidence**, **SCI-60 — Executive Publication Dashboard**, **SCI-59 — Guided Scientific Workflow**, **SCI-58 — Multi-Dataset Comparison Framework**, **ARCH-5 Fases 1–3** (normalidad canónica, workflow SCI-59 e inferencia SCI-12–15 + SCI-57 en `src/lib/scientific/`) y **PROD-1A** (framework de importación en `src/lib/import/` + wizard UI), cerrando los vacíos de magnitud inferencial, evidencia effect-aware, síntesis pre-manuscrito, experiencia de uso guiada, comparación estructurada entre datasets, deuda de monolito en los cuatro dominios acotados identificados en REVIEW-5, POST-SCI-57B REVIEW, POST-SCI-60 REVIEW, POST-SCI-59 REVIEW, PROJECT REVIEW post-SCI-58 y la imposibilidad de importar workbooks científicos reales validados en RW-01→RW-04.
+El proyecto alcanzó el cierre completo del bloque metodológico, las capas ejecutivas de síntesis (multivariante, metodológica y de publicación), la capa de orquestación UX, la capa de comparación multi-dataset, la totalidad del backlog técnico histórico, la etapa evolutiva SCI-57+, **las tres primeras fases de modularización incremental ARCH-5**, **PROD-1A — Scientific Workbook Import Framework**, **PROD-2A — Project File Core** y el hotfix **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre del incidente BUG-SERIES-RENDER-1: renderizado de series experimentales tras importación y reapertura de proyectos). Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, se cerraron SCI-29B y SCI-37B, se completó **SCI-57 — Effect Size & Power Engine**, **SCI-57B — Effect-Aware Evidence**, **SCI-60 — Executive Publication Dashboard**, **SCI-59 — Guided Scientific Workflow**, **SCI-58 — Multi-Dataset Comparison Framework**, **ARCH-5 Fases 1–3** (normalidad canónica, workflow SCI-59 e inferencia SCI-12–15 + SCI-57 en `src/lib/scientific/`), **PROD-1A** (framework de importación en `src/lib/import/` + wizard UI) y **PROD-2A** (persistencia `.sgproj`), cerrando los vacíos de magnitud inferencial, evidencia effect-aware, síntesis pre-manuscrito, experiencia de uso guiada, comparación estructurada entre datasets, deuda de monolito en los cuatro dominios acotados identificados en REVIEW-5, POST-SCI-57B REVIEW, POST-SCI-60 REVIEW, POST-SCI-59 REVIEW, PROJECT REVIEW post-SCI-58, la imposibilidad de importar workbooks científicos reales validados en RW-01→RW-04 y la invisibilidad de series experimentales por clipping del viewport X.
 
-**SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3) y PROD-1A están cerrados; el backlog técnico histórico permanece vacío. PROD-1B (validación avanzada + reportes completos) queda como evolución aprobada en plan, no implementada.**
+**SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3), PROD-1A, PROD-2A y HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 están cerrados; el backlog técnico histórico permanece vacío.** Se cerró formalmente el incidente **BUG-SERIES-RENDER-1** (series experimentales persistidas pero invisibles en el gráfico por clipping del dominio X fijo `[-10, 10]`). PROD-1B (validación avanzada + reportes completos) queda como evolución aprobada en plan, no implementada.
 
 Hitos cerrados en este ciclo:
 
@@ -31,8 +31,11 @@ Hitos cerrados en este ciclo:
 | ARCH-5 Fase 2 | COMPLETADO | Modularización incremental — lógica declarativa SCI-59 Guided Workflow en `src/lib/scientific/workflow/` |
 | ARCH-5 Fase 3 | COMPLETADO | Modularización incremental — inferencia SCI-12–15 + SCI-57 Effect Size & Power en `src/lib/scientific/inference/` |
 | PROD-1A | COMPLETADO | Scientific Workbook Import Framework — pipeline híbrido fast path + wizard en `src/lib/import/` |
+| PROD-2A | COMPLETADO | Project File Core — persistencia local `.sgproj` (F0–F6) |
+| HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 | CERRADO | Auto-fit automático del viewport X para series experimentales (importación + hidratación de proyectos) |
+| BUG-SERIES-RENDER-1 | CERRADO | Incidente resuelto vía HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 — renderizado de puntos experimentales tras import/reapertura |
 
-Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · PROD-1A PASS · RW-01 PASS · RW-02 PASS · RW-03 PASS · RW-04 PASS · t crítico (df=10,18,30) PASS.**
+Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · PROD-1A PASS · PROD-2A PASS · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 PASS · RW-01 PASS · RW-02 PASS · RW-03 PASS · RW-04 PASS · t crítico (df=10,18,30) PASS.**
 
 ---
 
@@ -43,6 +46,8 @@ Monolito científico maduro en `src/app/page.tsx` (~27.200 líneas), con módulo
 | Capa | Rango | Rol |
 |------|-------|-----|
 | Datos | DATA-1→3 + PROD-1A | Importación CSV/TXT/XLSX/XLS/ODS; fast path legacy en `experimentalData.ts`; framework workbook en `src/lib/import/` + wizard UI |
+| Persistencia | PROD-2A | Proyectos `.sgproj` — `src/lib/project/` + sidebar Nuevo/Guardar/Abrir |
+| Viewport gráfico | HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 | `src/app/chartViewport.ts` — auto-fit dominio X con padding 10% tras import/hidratación |
 | Modularización | ARCH-5 F1–3 | `shared/`, `normality/`, `workflow/`, `inference/` — dominios extraídos sin cambio funcional |
 | Importación workbook | PROD-1A | `src/lib/import/` — lectura, discovery, detección tabla/encabezados, mapeo X/Y, validación mínima, reporte mínimo |
 | Infraestructura UX | ARCH-1→4 | Workspace (Datos/Análisis/Resultados/Reportes), Inspector contextual, módulos activables, tema |
@@ -124,6 +129,8 @@ SCI-58 es capa de comparación read-only (Opción D): captura snapshots `Dataset
 - ARCH-5 Fase 2 — Workflow SCI-59 modularizado
 - ARCH-5 Fase 3 — Inferencia SCI-12–15 + SCI-57 modularizada
 - PROD-1A — Scientific Workbook Import Framework
+- PROD-2A — Project File Core
+- HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 — Auto-fit viewport X series experimentales
 
 ### Post-SCI-55 (este ciclo)
 
@@ -139,6 +146,14 @@ SCI-58 es capa de comparación read-only (Opción D): captura snapshots `Dataset
 - `pushUniqueTextLine()` global + `pushUniqueFinding`/`pushUniqueWarning` en generación
 - Deduplicación en origen (no claves por índice); red de seguridad con `deduplicateTextLines` al retornar
 - Warning React "Encountered two children with the same key" eliminado
+
+**BUG-SERIES-RENDER-1 → HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 (CERRADO)**
+- **Incidente:** series experimentales importadas persistían e hidrataban correctamente, pero no aparecían en el gráfico principal tras importar o reabrir proyectos.
+- **Root cause:** viewport X fijo en `[-10, 10]` mientras los valores X de las series quedaban fuera de ese dominio (clipping visual; datos, dashboards y persistencia intactos).
+- **Solución:** helper `chartViewport.ts` — `collectExperimentalXExtent`, `computeXViewportWithPadding` (10%), `fitXViewportToExperimentalSeries`, `applyExperimentalXViewportFit`.
+- **Aplicación:** importación rápida (`page.tsx`), importación wizard (`page.tsx`), apertura de `.sgproj` cuando `graphContext == null` (`projectFileActions.ts`).
+- **Archivos:** `src/app/chartViewport.ts`, `src/app/page.tsx`, `src/app/projectFileActions.ts`.
+- **Validación E2E manual:** import Excel → 11 puntos visibles → guardar → cerrar navegador → reabrir → abrir `.sgproj` → puntos visibles sin intervención manual. **PASS.**
 
 **SCI-56 — Methodological Summary Dashboard**
 - `MethodologicalDashboardAnalysis` (summaryCards, overallHealthScore, evaluatedEngines, diagnosis)
@@ -285,7 +300,7 @@ SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sig
 
 ## 5. Backlog pendiente
 
-**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3) y PROD-1A están cerrados y validados.
+**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3), PROD-1A, PROD-2A y HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 están cerrados y validados. BUG-SERIES-RENDER-1 cerrado sin deuda bloqueante.
 
 ### Deuda menor documentada
 
@@ -293,6 +308,7 @@ SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sig
 - Dataset6 no produce series `contradictory` con su perfil actual; regla D1 del motor canónico validada solo a nivel de código.
 - `overallHealthScore` de SCI-56 promedia 6 scores donde Readiness ya es promedio de los otros 5.
 - Falsos negativos Playwright en visibilidad de tarjetas individuales SCI-50→55 (no fallos funcionales).
+- **Viewport (post HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1):** auto-fit implementado solo en eje X; eje Y sigue con dominio por defecto. Proyectos `.sgproj` guardados con `graphContext` que contenga un viewport X obsoleto (p. ej. `[-10, 10]` pre-hotfix) no recalculan auto-fit al abrir — solo cuando `graphContext == null`. Sin tests automatizados en gate CI para `chartViewport.ts`.
 
 ---
 
@@ -334,6 +350,8 @@ Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización defi
 | ARCH-5 Fase 3 (inferencia modularizada) | PASS | PASS |
 | PROD-1A Workbook Import (fast path CSV) | PASS (baselineMatch) | PASS (baselineMatch) |
 | PROD-1A RW-Suite (RW-01→RW-04) | PASS | PASS |
+| PROD-2A Project File (save/reload D5/D6, SCI-58/59) | PASS | PASS |
+| HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 (render series post-import/reopen) | PASS | PASS |
 | Export PDF (SCI-56 + SCI-57 + SCI-60) | PASS | PASS |
 | t crítico IC95% (df=10, 18, 30) | PASS (2.228 / 2.101 / 2.042) | — |
 
@@ -574,6 +592,9 @@ Inventario completo de hitos al cierre de la etapa SCI-56 + SCI-29B + SCI-37B + 
 | ARCH-5 Fase 2 — SCI-59 Workflow Modularization | COMPLETADO |
 | ARCH-5 Fase 3 — Inferential Engine Modularization | COMPLETADO |
 | PROD-1A — Scientific Workbook Import Framework | COMPLETADO |
+| PROD-2A — Project File Core | COMPLETADO |
+| HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 | COMPLETADO |
+| BUG-SERIES-RENDER-1 | CERRADO |
 
 ### Módulo `src/lib/import/` — inventario PROD-1A
 
@@ -627,9 +648,27 @@ Framework de importación dominio-agnóstico; **COMPLETADO** y validado con base
 
 ---
 
-## 16. PROD-2A — Project File Core (cerrado)
+## 16. PROD-2A — Project File Core — **COMPLETED**
+
+**Status: PASS**
 
 Persistencia local de proyectos científicos en `.sgproj` (F0–F6 completados).
+
+### Validación funcional (E2E)
+
+| Check | Resultado |
+|-------|-----------|
+| Save/Reload Dataset5 | **PASS** |
+| Save/Reload Dataset6 | **PASS** |
+| SCI-58 Restore | **PASS** |
+| SCI-59 Restore | **PASS** |
+| Graph context restore | **PASS** |
+| Nuevo proyecto (reset limpio) | **PASS** |
+| Dataset5 baselineMatch (post-reload) | **PASS** |
+| Dataset6 baselineMatch (post-reload) | **PASS** |
+| RW-Suite (sin regresión) | **PASS** |
+
+### Entregables
 
 | Entregable | Estado |
 |------------|--------|
@@ -643,15 +682,58 @@ Persistencia local de proyectos científicos en `.sgproj` (F0–F6 completados).
 
 **No persiste:** outputs SCI-53→60, PDF, Advisor, Supabase graphs.
 
-**Validación:**
+**Gate:**
 
 ```bash
 npm run validate:prod2a-gate
 ```
 
+**Nota post-hotfix:** la reapertura de proyectos con series experimentales y `graphContext == null` aplica auto-fit del viewport X vía HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 (ver §17).
+
 ---
 
-## 17. Próximos pasos recomendados
+## 17. BUG-SERIES-RENDER-1 / HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 — **CLOSED**
+
+**Status: PASS**
+
+### Resumen ejecutivo (historial)
+
+Las series experimentales importadas se persistían y hidrataban correctamente, pero no aparecían en el gráfico principal. La causa no era pérdida de datos ni fallo de PROD-2A: el dominio X del viewport permanecía en `[-10, 10]` mientras los puntos importados tenían coordenadas X fuera de ese rango. El gráfico recortaba visualmente las series sin error explícito.
+
+### Solución
+
+| Componente | Rol |
+|------------|-----|
+| `src/app/chartViewport.ts` | Helper de auto-fit: extent X, padding 10%, aplicación a setters de viewport |
+| `src/app/page.tsx` | Auto-fit tras importación rápida y tras wizard |
+| `src/app/projectFileActions.ts` | Auto-fit al abrir `.sgproj` si `graphContext == null` y hay series |
+
+### Validación funcional (E2E manual)
+
+| Paso | Resultado |
+|------|-----------|
+| Importación Excel | **PASS** |
+| Renderizado inmediato (11 puntos experimentales) | **PASS** |
+| Guardado de proyecto | **PASS** |
+| Cierre completo del navegador | **PASS** |
+| Reapertura de la aplicación | **PASS** |
+| Apertura archivo `.sgproj` | **PASS** |
+| Puntos visibles sin intervención manual | **PASS** |
+
+**Subsystems verificados:** persistencia OK · hidratación OK · dashboards OK · renderizado OK · reapertura OK.
+
+### Deuda técnica residual (no bloqueante)
+
+| Ítem | Severidad | Notas |
+|------|-----------|-------|
+| Auto-fit solo eje X | Baja | Dominio Y no se ajusta automáticamente |
+| `graphContext` persistido con viewport obsoleto | Baja | Auto-fit en apertura solo si `graphContext == null`; proyectos legacy con `[-10, 10]` guardado pueden requerir reset manual de viewport |
+| Sin gate CI para `chartViewport.ts` | Baja | Validación manual E2E; candidato a test unitario en suite de regresión |
+| Re-import con viewport usuario | Info | Nueva importación recalcula viewport; comportamiento esperado |
+
+---
+
+## 18. Próximos pasos recomendados
 
 1. **Implementar PROD-1B** — validación avanzada + reportes completos sobre `src/lib/import/`.
 2. **Continuar ARCH-5 Fase 4** — extracción comparison SCI-58, metodología SCI-50→56 o reporting según roadmap.
@@ -661,4 +743,4 @@ npm run validate:prod2a-gate
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3), PROD-1A y **PROD-2A**. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–3), PROD-1A, **PROD-2A** y **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre BUG-SERIES-RENDER-1). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.

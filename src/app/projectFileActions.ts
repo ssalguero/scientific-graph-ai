@@ -11,6 +11,7 @@ import {
   type ProjectFileFeedbackKind,
 } from "@/lib/project/userMessages";
 
+import { applyExperimentalXViewportFit } from "./chartViewport";
 import {
   applyHydrateProjectPatch,
   collectProjectSnapshot,
@@ -119,7 +120,17 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
         return;
       }
 
-      applyHydrateProjectPatch(hydrated.patch, deps.buildApplyContext());
+      const applyContext = deps.buildApplyContext();
+      applyHydrateProjectPatch(hydrated.patch, applyContext);
+      if (
+        hydrated.patch.project.graphContext == null &&
+        hydrated.patch.project.dataset.series.length > 0
+      ) {
+        applyExperimentalXViewportFit(
+          hydrated.patch.project.dataset.series,
+          applyContext
+        );
+      }
       deps.setProjectMetadata(hydrated.patch.project.metadata);
       deps.suppressProjectDirtyRef.current = true;
       deps.setIsProjectDirty(false);

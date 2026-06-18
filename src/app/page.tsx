@@ -26,6 +26,7 @@ import {
 import { ImportReportPanel } from "@/components/import/ImportReportPanel";
 import { WorkbookImportWizard } from "@/components/import/WorkbookImportWizard";
 import type { ProjectMetadataV1 } from "@/lib/project";
+import { applyExperimentalXViewportFit } from "./chartViewport";
 import { createInitialProjectMetadata } from "./projectPersistence";
 import {
   ProjectScientificFilePanel,
@@ -19989,6 +19990,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         color: getDefaultColorForIndex(curveCount + index),
       }));
       setExperimentalSeries(mappedSeries);
+      applyExperimentalXViewportFit(mappedSeries, {
+        setMinX,
+        setMaxX,
+        setVisibleMinX,
+        setVisibleMaxX,
+      });
       setCurrentDatasetInfo({
         fileName: importedFileName,
         importedAt: new Date().toLocaleString(),
@@ -20043,6 +20050,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       resetAnalysisSession();
     }
     setExperimentalSeries(mappedSeries);
+    applyExperimentalXViewportFit(mappedSeries, {
+      setMinX,
+      setMaxX,
+      setVisibleMinX,
+      setVisibleMaxX,
+    });
     setCurrentDatasetInfo({
       fileName: report.fileName,
       importedAt: new Date().toLocaleString(),
