@@ -67,6 +67,22 @@ import {
   type GuidedWorkflowToggleSetters,
 } from "@/lib/scientific/workflow";
 import {
+  buildDatasetAnalysisProfile,
+  buildMultiDatasetComparisonAnalysis,
+  canBuildDatasetAnalysisProfile,
+  canBuildMultiDatasetComparisonAnalysis,
+  createEmptyComparisonSlots,
+  formatComparisonNumericDelta,
+  formatDatasetAnalysisProfileMiniSummary,
+  getComparisonDeltaDirectionLabel,
+  mapInferentialToProfileSnapshot,
+  mapNormalitySummaryToProfileSnapshot,
+  type ComparisonSlot,
+  type ComparisonSlotId,
+  type DatasetAnalysisProfile,
+  type MultiDatasetComparisonAnalysis,
+} from "@/lib/scientific/comparison";
+import {
   buildEffectSizePowerAnalysis,
   buildPostHocSummary,
   calculateIndependentTTest,
@@ -13290,561 +13306,7 @@ function GuidedWorkflowPanel({
 // END SCI-59
 
 // BEGIN SCI-58 — Multi-Dataset Comparison Framework (comparison layer)
-
-type ComparisonSlotId = "A" | "B";
-
-type ComparisonDeltaDirection =
-  | "improved"
-  | "regressed"
-  | "stable"
-  | "n/a";
-
-type DatasetAnalysisProfileNormalitySnapshot = {
-  seriesEvaluated: number;
-  normalCount: number;
-  nonNormalCount: number;
-  questionableCount: number;
-  contradictoryCount: number;
-  globalHeadline?: string;
-  hasWarnings: boolean;
-};
-
-type DatasetAnalysisProfileInferentialSnapshot = {
-  dominantMagnitude?: EffectMagnitude;
-  metric?: string;
-  valueDisplay?: string;
-  prospectiveSampleSize?: number | null;
-};
-
-type DatasetAnalysisProfile = {
-  slotLabel: ComparisonSlotId;
-  datasetInfo: ImportedDatasetInfo;
-  capturedAt: string;
-  seriesCount: number;
-  totalObservations: number;
-  readinessScore?: number;
-  readinessClassification?: PublicationReadinessAnalyzerAnalysis["classification"];
-  overallHealthScore?: number;
-  evidenceScore?: number;
-  evidenceClassification?: EvidenceStrengthEngineAnalysis["classification"];
-  publicationStatus?: PublicationReadinessAnalyzerAnalysis["classification"];
-  publicationScore?: number;
-  normality?: DatasetAnalysisProfileNormalitySnapshot;
-  inferential?: DatasetAnalysisProfileInferentialSnapshot;
-  multivariateHeadline?: string;
-  isComplete: boolean;
-};
-
-type ComparisonSlot = {
-  id: ComparisonSlotId;
-  label: string;
-  profile: DatasetAnalysisProfile | null;
-};
-
-type ComparisonKpiRow = {
-  key: string;
-  title: string;
-  slotAValue: string;
-  slotBValue: string;
-  slotANumeric: number | null;
-  slotBNumeric: number | null;
-  delta: number | null;
-  deltaDirection: ComparisonDeltaDirection;
-};
-
-type MultiDatasetComparisonAnalysis = {
-  slotA: DatasetAnalysisProfile;
-  slotB: DatasetAnalysisProfile;
-  kpiRows: ComparisonKpiRow[];
-  comparabilityWarnings: string[];
-  crossDatasetDiagnosis: string[];
-  comparisonRecommendations: string[];
-  evaluatedMetrics: number;
-};
-
-const COMPARISON_DELTA_STABLE_THRESHOLD = 0.5;
-
-const createEmptyComparisonSlots = (): Record<ComparisonSlotId, ComparisonSlot> => ({
-  A: { id: "A", label: "Slot A", profile: null },
-  B: { id: "B", label: "Slot B", profile: null },
-});
-
-const mapNormalityToProfileSnapshot = (
-  assessment: CanonicalNormalityAssessment
-): DatasetAnalysisProfileNormalitySnapshot | undefined => {
-  const summary = buildPublicationDashboardNormalitySummary(assessment);
-  if (!summary) {
-    return undefined;
-  }
-  return {
-    seriesEvaluated: summary.seriesEvaluated,
-    normalCount: summary.normalCount,
-    nonNormalCount: summary.nonNormalCount,
-    questionableCount: summary.questionableCount,
-    contradictoryCount: summary.contradictoryCount,
-    globalHeadline: summary.globalHeadline,
-    hasWarnings: summary.hasWarnings,
-  };
-};
-
-const mapInferentialToProfileSnapshot = (
-  analysis: EffectSizePowerAnalysis | null
-): DatasetAnalysisProfileInferentialSnapshot | undefined => {
-  if (!analysis) {
-    return undefined;
-  }
-  return {
-    dominantMagnitude: analysis.dominantMagnitude,
-    metric: analysis.dominantEntry?.metric,
-    valueDisplay: analysis.dominantEntry?.valueDisplay,
-    prospectiveSampleSize: analysis.prospectiveSampleSize,
-  };
-};
-
-const countCompleteProfileMetrics = (profile: DatasetAnalysisProfile): number => {
-  let count = 0;
-  if (profile.readinessScore !== undefined) count += 1;
-  if (profile.overallHealthScore !== undefined) count += 1;
-  if (profile.evidenceScore !== undefined) count += 1;
-  return count;
-};
-
-const canBuildDatasetAnalysisProfile = (input: {
-  datasetInfo: ImportedDatasetInfo | null;
-  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
-  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
-  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
-  canonicalNormalityAssessment: CanonicalNormalityAssessment;
-}): boolean => {
-  if (!input.datasetInfo) {
-    return false;
-  }
-  const hasCoreMetric =
-    input.publicationReadinessAnalyzerAnalysis !== null ||
-    input.methodologicalDashboardAnalysis !== null ||
-    input.evidenceStrengthEngineAnalysis !== null;
-  const hasNormality =
-    input.canonicalNormalityAssessment.seriesAssessments.length > 0;
-  return hasCoreMetric || hasNormality;
-};
-
-const buildDatasetAnalysisProfile = (input: {
-  slotLabel: ComparisonSlotId;
-  datasetInfo: ImportedDatasetInfo;
-  seriesCount: number;
-  totalObservations: number;
-  publicationReadinessAnalyzerAnalysis: PublicationReadinessAnalyzerAnalysis | null;
-  methodologicalDashboardAnalysis: MethodologicalDashboardAnalysis | null;
-  evidenceStrengthEngineAnalysis: EvidenceStrengthEngineAnalysis | null;
-  effectSizePowerAnalysis: EffectSizePowerAnalysis | null;
-  canonicalNormalityAssessment: CanonicalNormalityAssessment;
-  multivariateDashboardAnalysis: MultivariateDashboardAnalysis | null;
-}): DatasetAnalysisProfile => {
-  const multivariateHighlights = buildPublicationDashboardMultivariateHighlights(
-    input.multivariateDashboardAnalysis
-  );
-  const profile: DatasetAnalysisProfile = {
-    slotLabel: input.slotLabel,
-    datasetInfo: input.datasetInfo,
-    capturedAt: new Date().toISOString(),
-    seriesCount: input.seriesCount,
-    totalObservations: input.totalObservations,
-    readinessScore:
-      input.publicationReadinessAnalyzerAnalysis?.readinessScore ?? undefined,
-    readinessClassification:
-      input.publicationReadinessAnalyzerAnalysis?.classification ?? undefined,
-    overallHealthScore:
-      input.methodologicalDashboardAnalysis?.overallHealthScore ?? undefined,
-    evidenceScore:
-      input.evidenceStrengthEngineAnalysis?.evidenceScore ?? undefined,
-    evidenceClassification:
-      input.evidenceStrengthEngineAnalysis?.classification ?? undefined,
-    publicationStatus:
-      input.publicationReadinessAnalyzerAnalysis?.classification ?? undefined,
-    publicationScore:
-      input.publicationReadinessAnalyzerAnalysis?.readinessScore ?? undefined,
-    normality: mapNormalityToProfileSnapshot(
-      input.canonicalNormalityAssessment
-    ),
-    inferential: mapInferentialToProfileSnapshot(input.effectSizePowerAnalysis),
-    multivariateHeadline: multivariateHighlights?.headline ?? undefined,
-    isComplete: false,
-  };
-  profile.isComplete = countCompleteProfileMetrics(profile) >= 3;
-  return profile;
-};
-
-const computeComparisonDeltaDirection = (
-  delta: number | null,
-  higherIsBetter: boolean
-): ComparisonDeltaDirection => {
-  if (delta === null || !Number.isFinite(delta)) {
-    return "n/a";
-  }
-  if (Math.abs(delta) < COMPARISON_DELTA_STABLE_THRESHOLD) {
-    return "stable";
-  }
-  if (higherIsBetter) {
-    return delta > 0 ? "improved" : "regressed";
-  }
-  return delta < 0 ? "improved" : "regressed";
-};
-
-const formatComparisonNumericDelta = (delta: number | null): string => {
-  if (delta === null || !Number.isFinite(delta)) {
-    return "—";
-  }
-  const prefix = delta > 0 ? "+" : "";
-  return `${prefix}${delta.toFixed(1)}`;
-};
-
-const buildComparisonKpiRow = (input: {
-  key: string;
-  title: string;
-  slotAValue: string;
-  slotBValue: string;
-  slotANumeric?: number;
-  slotBNumeric?: number;
-  higherIsBetter?: boolean;
-}): ComparisonKpiRow => {
-  const slotANumeric =
-    input.slotANumeric !== undefined && Number.isFinite(input.slotANumeric)
-      ? input.slotANumeric
-      : null;
-  const slotBNumeric =
-    input.slotBNumeric !== undefined && Number.isFinite(input.slotBNumeric)
-      ? input.slotBNumeric
-      : null;
-  const delta =
-    slotANumeric !== null && slotBNumeric !== null
-      ? slotBNumeric - slotANumeric
-      : null;
-  return {
-    key: input.key,
-    title: input.title,
-    slotAValue: input.slotAValue,
-    slotBValue: input.slotBValue,
-    slotANumeric,
-    slotBNumeric,
-    delta,
-    deltaDirection: computeComparisonDeltaDirection(
-      delta,
-      input.higherIsBetter ?? true
-    ),
-  };
-};
-
-const formatProfileReadinessValue = (
-  profile: DatasetAnalysisProfile
-): string => {
-  if (profile.readinessScore === undefined) {
-    return "—";
-  }
-  const label = profile.readinessClassification
-    ? getPublicationReadinessAnalyzerClassificationLabel(
-        profile.readinessClassification
-      )
-    : "";
-  return `${profile.readinessScore.toFixed(1)}${label ? ` (${label})` : ""}`;
-};
-
-const formatProfileEvidenceValue = (profile: DatasetAnalysisProfile): string => {
-  if (profile.evidenceScore === undefined) {
-    return "—";
-  }
-  const label = profile.evidenceClassification
-    ? getEvidenceStrengthEngineClassificationLabel(
-        profile.evidenceClassification
-      )
-    : "";
-  return `${profile.evidenceScore.toFixed(1)}${label ? ` (${label})` : ""}`;
-};
-
-const formatProfilePublicationStatusValue = (
-  profile: DatasetAnalysisProfile
-): string => {
-  if (!profile.publicationStatus) {
-    return "—";
-  }
-  return getPublicationReadinessAnalyzerClassificationLabel(
-    profile.publicationStatus
-  );
-};
-
-const formatProfileEffectValue = (
-  profile: DatasetAnalysisProfile
-): string => {
-  if (!profile.inferential?.dominantMagnitude) {
-    return "—";
-  }
-  const magnitude = getEffectMagnitudeLabel(profile.inferential.dominantMagnitude);
-  const metric = profile.inferential.metric ?? "efecto";
-  const value = profile.inferential.valueDisplay ?? "";
-  return value
-    ? `${magnitude} · ${metric} ${value}`
-    : `${magnitude} · ${metric}`;
-};
-
-const buildComparabilityWarnings = (
-  slotA: DatasetAnalysisProfile,
-  slotB: DatasetAnalysisProfile
-): string[] => {
-  const warnings: string[] = [];
-  if (slotA.seriesCount !== slotB.seriesCount) {
-    warnings.push(
-      "Los datasets tienen distinto número de series; la comparación es parcial."
-    );
-  }
-  if (
-    slotA.totalObservations > 0 &&
-    slotB.totalObservations > 0 &&
-    (slotA.totalObservations / slotB.totalObservations > 3 ||
-      slotB.totalObservations / slotA.totalObservations > 3)
-  ) {
-    warnings.push("Los tamaños muestrales son muy dispares entre slots.");
-  }
-  if (!slotA.isComplete || !slotB.isComplete) {
-    warnings.push(
-      "Capture ambos slots con motores SCI-50→57 activos para una comparación completa."
-    );
-  }
-  if (slotA.inferential && !slotB.inferential) {
-    warnings.push("Effect size disponible solo en Slot A.");
-  } else if (!slotA.inferential && slotB.inferential) {
-    warnings.push("Effect size disponible solo en Slot B.");
-  } else if (
-    slotA.inferential?.metric &&
-    slotB.inferential?.metric &&
-    slotA.inferential.metric !== slotB.inferential.metric
-  ) {
-    warnings.push(
-      "Las métricas de effect size no son directamente comparables entre slots."
-    );
-  }
-  return deduplicateTextLines(warnings);
-};
-
-const buildCrossDatasetComparisonDiagnosis = (input: {
-  slotA: DatasetAnalysisProfile;
-  slotB: DatasetAnalysisProfile;
-  kpiRows: ComparisonKpiRow[];
-}): string[] => {
-  const diagnosis: string[] = [];
-  const readinessRow = input.kpiRows.find((row) => row.key === "readiness");
-  const evidenceRow = input.kpiRows.find((row) => row.key === "evidence");
-  const publicationRow = input.kpiRows.find((row) => row.key === "publicationStatus");
-
-  if (
-    evidenceRow?.slotAValue.includes("Strong") &&
-    evidenceRow?.slotBValue.includes("Strong") &&
-    readinessRow?.delta !== null &&
-    readinessRow?.delta !== undefined &&
-    readinessRow.delta < -5
-  ) {
-    pushUniqueTextLine(
-      diagnosis,
-      "Ambos estudios mantienen evidencia Strong, pero Slot B presenta menor preparación metodológica."
-    );
-  }
-
-  if (
-    publicationRow &&
-    publicationRow.slotAValue !== publicationRow.slotBValue &&
-    publicationRow.slotAValue !== "—" &&
-    publicationRow.slotBValue !== "—"
-  ) {
-    pushUniqueTextLine(
-      diagnosis,
-      `Publication Status diverge: Slot A (${publicationRow.slotAValue}) vs Slot B (${publicationRow.slotBValue}).`
-    );
-  }
-
-  if (
-    input.slotA.inferential?.dominantMagnitude === "large" &&
-    input.slotB.inferential?.dominantMagnitude === "large"
-  ) {
-    pushUniqueTextLine(
-      diagnosis,
-      "La magnitud del efecto dominante es grande en ambos estudios."
-    );
-  }
-
-  const nonNormalA = input.slotA.normality?.nonNormalCount ?? 0;
-  const nonNormalB = input.slotB.normality?.nonNormalCount ?? 0;
-  if (nonNormalB > nonNormalA) {
-    pushUniqueTextLine(
-      diagnosis,
-      "Slot B presenta más series no normales que Slot A."
-    );
-  }
-
-  if (diagnosis.length === 0) {
-    pushUniqueTextLine(
-      diagnosis,
-      "Los perfiles comparados no muestran divergencias críticas en los KPIs evaluados."
-    );
-  }
-
-  return diagnosis;
-};
-
-const evidenceRowStable = (rows: ComparisonKpiRow[]): boolean => {
-  const evidenceRow = rows.find((row) => row.key === "evidence");
-  return evidenceRow?.deltaDirection === "stable";
-};
-
-const buildCrossDatasetComparisonRecommendations = (input: {
-  kpiRows: ComparisonKpiRow[];
-  comparabilityWarnings: string[];
-}): string[] => {
-  const recommendations: string[] = [];
-  const readinessRow = input.kpiRows.find((row) => row.key === "readiness");
-  const overallRow = input.kpiRows.find((row) => row.key === "overallHealth");
-
-  if (readinessRow?.deltaDirection === "regressed") {
-    pushUniqueTextLine(
-      recommendations,
-      "Revise supuestos y calidad metodológica en Slot B antes de generalizar conclusiones."
-    );
-  }
-
-  if (
-    evidenceRowStable(input.kpiRows) &&
-    overallRow?.deltaDirection === "regressed"
-  ) {
-    pushUniqueTextLine(
-      recommendations,
-      "Priorice Assumptions y Reproducibility en Slot B (SCI-56) pese a evidencia estable."
-    );
-  }
-
-  if (input.comparabilityWarnings.length > 0) {
-    pushUniqueTextLine(
-      recommendations,
-      "Considere las advertencias de comparabilidad antes de interpretar deltas numéricos."
-    );
-  }
-
-  if (recommendations.length === 0) {
-    pushUniqueTextLine(
-      recommendations,
-      "Documente el contraste entre slots en el reporte científico del dataset activo."
-    );
-  }
-
-  return recommendations;
-};
-
-const canBuildMultiDatasetComparisonAnalysis = (
-  slotA: DatasetAnalysisProfile | null,
-  slotB: DatasetAnalysisProfile | null
-): boolean =>
-  slotA !== null &&
-  slotB !== null &&
-  slotA.isComplete &&
-  slotB.isComplete;
-
-const buildMultiDatasetComparisonAnalysis = (input: {
-  slotA: DatasetAnalysisProfile;
-  slotB: DatasetAnalysisProfile;
-}): MultiDatasetComparisonAnalysis => {
-  const { slotA, slotB } = input;
-  const kpiRows: ComparisonKpiRow[] = [
-    buildComparisonKpiRow({
-      key: "readiness",
-      title: "Readiness (SCI-55)",
-      slotAValue: formatProfileReadinessValue(slotA),
-      slotBValue: formatProfileReadinessValue(slotB),
-      slotANumeric: slotA.readinessScore,
-      slotBNumeric: slotB.readinessScore,
-      higherIsBetter: true,
-    }),
-    buildComparisonKpiRow({
-      key: "overallHealth",
-      title: "Overall Health (SCI-56)",
-      slotAValue:
-        slotA.overallHealthScore !== undefined
-          ? slotA.overallHealthScore.toFixed(1)
-          : "—",
-      slotBValue:
-        slotB.overallHealthScore !== undefined
-          ? slotB.overallHealthScore.toFixed(1)
-          : "—",
-      slotANumeric: slotA.overallHealthScore,
-      slotBNumeric: slotB.overallHealthScore,
-      higherIsBetter: true,
-    }),
-    buildComparisonKpiRow({
-      key: "evidence",
-      title: "Evidence (SCI-53)",
-      slotAValue: formatProfileEvidenceValue(slotA),
-      slotBValue: formatProfileEvidenceValue(slotB),
-      slotANumeric: slotA.evidenceScore,
-      slotBNumeric: slotB.evidenceScore,
-      higherIsBetter: true,
-    }),
-    buildComparisonKpiRow({
-      key: "publicationStatus",
-      title: "Publication Status",
-      slotAValue: formatProfilePublicationStatusValue(slotA),
-      slotBValue: formatProfilePublicationStatusValue(slotB),
-      higherIsBetter: false,
-    }),
-    buildComparisonKpiRow({
-      key: "effectDominant",
-      title: "Effect dominante (SCI-57)",
-      slotAValue: formatProfileEffectValue(slotA),
-      slotBValue: formatProfileEffectValue(slotB),
-      higherIsBetter: false,
-    }),
-  ];
-
-  const comparabilityWarnings = buildComparabilityWarnings(slotA, slotB);
-  const crossDatasetDiagnosis = buildCrossDatasetComparisonDiagnosis({
-    slotA,
-    slotB,
-    kpiRows,
-  });
-  const comparisonRecommendations = buildCrossDatasetComparisonRecommendations({
-    kpiRows,
-    comparabilityWarnings,
-  });
-
-  return {
-    slotA,
-    slotB,
-    kpiRows,
-    comparabilityWarnings,
-    crossDatasetDiagnosis,
-    comparisonRecommendations,
-    evaluatedMetrics: kpiRows.filter((row) => row.slotANumeric !== null).length,
-  };
-};
-
-const formatDatasetAnalysisProfileMiniSummary = (
-  profile: DatasetAnalysisProfile
-): string => {
-  const parts: string[] = [];
-  if (profile.readinessScore !== undefined) {
-    parts.push(`R ${profile.readinessScore.toFixed(1)}`);
-  }
-  if (profile.overallHealthScore !== undefined) {
-    parts.push(`H ${profile.overallHealthScore.toFixed(1)}`);
-  }
-  if (profile.evidenceScore !== undefined) {
-    parts.push(`E ${profile.evidenceScore.toFixed(1)}`);
-  }
-  return parts.length > 0 ? parts.join(" · ") : "Perfil parcial";
-};
-
-const getComparisonDeltaDirectionLabel = (
-  direction: ComparisonDeltaDirection
-): string => {
-  if (direction === "improved") return "Mejora";
-  if (direction === "regressed") return "Regresión";
-  if (direction === "stable") return "Estable";
-  return "N/A";
-};
+// Domain logic: src/lib/scientific/comparison/
 
 type ScientificMultiDatasetComparisonDashboardProps = {
   analysis: MultiDatasetComparisonAnalysis;
@@ -21509,14 +20971,22 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     if (
       !canBuildDatasetAnalysisProfile({
         datasetInfo: currentDatasetInfo,
-        publicationReadinessAnalyzerAnalysis,
-        methodologicalDashboardAnalysis,
-        evidenceStrengthEngineAnalysis,
-        canonicalNormalityAssessment,
+        hasPublicationReadinessAnalyzer:
+          publicationReadinessAnalyzerAnalysis !== null,
+        hasMethodologicalDashboard: methodologicalDashboardAnalysis !== null,
+        hasEvidenceStrengthEngine: evidenceStrengthEngineAnalysis !== null,
+        normalityAssessmentCount:
+          canonicalNormalityAssessment.seriesAssessments.length,
       })
     ) {
       return null;
     }
+    const normalitySummary = buildPublicationDashboardNormalitySummary(
+      canonicalNormalityAssessment
+    );
+    const multivariateHighlights = buildPublicationDashboardMultivariateHighlights(
+      multivariateDashboardAnalysis
+    );
     return buildDatasetAnalysisProfile({
       slotLabel,
       datasetInfo: currentDatasetInfo,
@@ -21525,12 +20995,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         (sum, item) => sum + getSeriesYValues(item).length,
         0
       ),
-      publicationReadinessAnalyzerAnalysis,
-      methodologicalDashboardAnalysis,
-      evidenceStrengthEngineAnalysis,
-      effectSizePowerAnalysis,
-      canonicalNormalityAssessment,
-      multivariateDashboardAnalysis,
+      readinessScore:
+        publicationReadinessAnalyzerAnalysis?.readinessScore ?? undefined,
+      readinessClassification:
+        publicationReadinessAnalyzerAnalysis?.classification ?? undefined,
+      overallHealthScore:
+        methodologicalDashboardAnalysis?.overallHealthScore ?? undefined,
+      evidenceScore:
+        evidenceStrengthEngineAnalysis?.evidenceScore ?? undefined,
+      evidenceClassification:
+        evidenceStrengthEngineAnalysis?.classification ?? undefined,
+      publicationStatus:
+        publicationReadinessAnalyzerAnalysis?.classification ?? undefined,
+      publicationScore:
+        publicationReadinessAnalyzerAnalysis?.readinessScore ?? undefined,
+      normality: mapNormalitySummaryToProfileSnapshot(
+        normalitySummary ?? undefined
+      ),
+      inferential: mapInferentialToProfileSnapshot(effectSizePowerAnalysis),
+      multivariateHeadline: multivariateHighlights?.headline ?? undefined,
     });
   };
   const captureComparisonSlot = (slotId: ComparisonSlotId) => {
