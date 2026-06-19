@@ -15,6 +15,9 @@ const severityClass = {
   info: "text-[var(--app-text-muted)]",
 };
 
+const formatMetric = (value: number | null | undefined): string =>
+  value === null || value === undefined ? "N/D" : Number(value.toFixed(4)).toString();
+
 export function ImportPreviewPanel({
   preview,
   validation,
@@ -44,6 +47,25 @@ export function ImportPreviewPanel({
         </div>
       </div>
 
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 text-sm rounded-lg border border-[var(--app-border)] px-4 py-3">
+        <div>
+          <p className="text-[var(--app-text-muted)]">Media X</p>
+          <p className="font-semibold">{formatMetric(preview.stats.xMean)}</p>
+        </div>
+        <div>
+          <p className="text-[var(--app-text-muted)]">Media Y</p>
+          <p className="font-semibold">{formatMetric(preview.stats.yMean)}</p>
+        </div>
+        <div>
+          <p className="text-[var(--app-text-muted)]">X distintos</p>
+          <p className="font-semibold">{preview.stats.xDistinctCount ?? 0}</p>
+        </div>
+        <div>
+          <p className="text-[var(--app-text-muted)]">Y distintos</p>
+          <p className="font-semibold">{preview.stats.yDistinctCount ?? 0}</p>
+        </div>
+      </div>
+
       <div className="text-sm text-[var(--app-text-muted)]">
         <p>
           <strong className="text-[var(--app-heading)]">X:</strong> {xLabel}
@@ -59,14 +81,46 @@ export function ImportPreviewPanel({
         </p>
       </div>
 
+      {validation.issueSummary && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full border border-[var(--app-border)] px-2 py-0.5 text-[var(--app-danger-text)]">
+            Errores: {validation.issueSummary.error}
+          </span>
+          <span className="rounded-full border border-[var(--app-border)] px-2 py-0.5 text-[var(--app-warning-text)]">
+            Warnings: {validation.issueSummary.warning}
+          </span>
+          <span className="rounded-full border border-[var(--app-border)] px-2 py-0.5 text-[var(--app-text-muted)]">
+            Info: {validation.issueSummary.info}
+          </span>
+        </div>
+      )}
+
       {[...validation.errors, ...validation.warnings].map((issue) => (
         <p
           key={`${issue.code}-${issue.message}`}
           className={`text-sm ${severityClass[issue.severity]}`}
         >
-          [{issue.code}] {issue.message}
+          [{issue.severity.toUpperCase()} · {issue.code}] {issue.message}
         </p>
       ))}
+
+      {preview.audit && preview.audit.reasonCounts.length > 0 && (
+        <div className="rounded-lg border border-[var(--app-border)] px-3 py-2">
+          <p className="text-sm font-medium text-[var(--app-heading)] mb-1">
+            Razones de descarte
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs text-[var(--app-text-muted)]">
+            {preview.audit.reasonCounts.map((item) => (
+              <span
+                key={item.code}
+                className="rounded-full border border-[var(--app-border)] px-2 py-0.5"
+              >
+                {item.label}: {item.count}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {preview.discardedRows.length > 0 && (
         <div>
@@ -74,12 +128,18 @@ export function ImportPreviewPanel({
             Filas descartadas (muestra)
           </p>
           <ul className="text-xs text-[var(--app-text-muted)] space-y-1">
-            {preview.discardedRows.slice(0, 5).map((row) => (
+            {(preview.audit?.sampledDiscardedRows ?? preview.discardedRows.slice(0, 5)).map((row) => (
               <li key={row.rowIndex}>
                 Fila {row.rowIndex + 1}: {row.reason}
               </li>
             ))}
           </ul>
+          {preview.audit?.truncated && (
+            <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+              Muestra limitada a {preview.audit.sampleLimit} filas de{" "}
+              {preview.audit.totalDiscardedRows} descartadas.
+            </p>
+          )}
         </div>
       )}
 
@@ -94,7 +154,9 @@ export function ImportPreviewPanel({
             </tr>
           </thead>
           <tbody>
-            {preview.points.slice(0, 10).map((point) => (
+            {preview.points
+              .slice(0, preview.samplePolicy?.previewPointSampleLimit ?? 10)
+              .map((point) => (
               <tr key={`${point.sourceRowIndex}-${point.x}-${point.y}`} className="border-t border-[var(--app-border)]">
                 <td className="px-2 py-1">{point.x}</td>
                 <td className="px-2 py-1">{point.y}</td>

@@ -35,7 +35,7 @@ export const runValidationGate = (options = {}) => {
   runner.run("typescript", "npx", ["tsc", "--noEmit"]);
   runner.run("build", "npm", ["run", "build"]);
   runner.run("baseline", "node", ["scripts/.score-check-sci60.mjs"]);
-  runner.run("rw-suite", "node", ["scripts/validate-prod1-rw-suite.mjs"]);
+  runner.run("prod1-gate", "npm", ["run", "validate-prod1-gate"]);
   runner.run("e2e", "npm", ["run", "validate:prod2a"], { env: E2E_ENV });
 
   if (profile === "full") {

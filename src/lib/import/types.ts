@@ -87,18 +87,78 @@ export type PreviewPoint = {
   label?: string;
 };
 
+export type DiscardReasonCode =
+  | "EMPTY_SELECTED_CELLS"
+  | "INVALID_X"
+  | "INVALID_Y"
+  | "INVALID_NUMERIC_PAIR";
+
 export type SkippedRow = {
   rowIndex: number;
   reason: string;
+  reasonCode?: DiscardReasonCode;
+  xRawValue?: unknown;
+  yRawValue?: unknown;
+  xColumnIndex?: number;
+  yColumnIndex?: number;
 };
+
+export type ImportIssueCategory =
+  | "minimum-quality"
+  | "coverage"
+  | "column-quality"
+  | "row-audit"
+  | "distribution"
+  | "duplicates";
+
+export type ImportIssueTarget =
+  | "dataset"
+  | "x-column"
+  | "y-column"
+  | "row"
+  | "mapping";
 
 export type ImportIssue = {
   code: string;
   severity: ValidationSeverity;
   message: string;
+  category?: ImportIssueCategory;
+  target?: ImportIssueTarget;
+  ruleId?: string;
+  context?: Record<string, string | number | boolean | null>;
 };
 
 export type ValidationSeverity = "error" | "warning" | "info";
+
+export type ImportValidationRule = {
+  id: string;
+  code: string;
+  severity: ValidationSeverity;
+  category: ImportIssueCategory;
+  target: ImportIssueTarget;
+  description: string;
+};
+
+export type ImportSeveritySummary = Record<ValidationSeverity, number>;
+
+export type ImportReasonCount = {
+  code: DiscardReasonCode;
+  label: string;
+  count: number;
+};
+
+export type ImportSamplePolicy = {
+  discardedRowSampleLimit: number;
+  previewPointSampleLimit: number;
+};
+
+export type ImportAuditSummary = {
+  totalDiscardedRows: number;
+  reasonCounts: ImportReasonCount[];
+  sampledDiscardedRows: SkippedRow[];
+  sampleLimit: number;
+  truncated: boolean;
+};
 
 export type ImportPreviewStats = {
   importablePointCount: number;
@@ -110,6 +170,11 @@ export type ImportPreviewStats = {
   yMin: number | null;
   yMax: number | null;
   duplicatePointCount: number;
+  xMean?: number | null;
+  yMean?: number | null;
+  xDistinctCount?: number;
+  yDistinctCount?: number;
+  discardedRowRatio?: number;
 };
 
 export type ImportPreview = {
@@ -118,12 +183,17 @@ export type ImportPreview = {
   discardedRows: SkippedRow[];
   warnings: ImportIssue[];
   stats: ImportPreviewStats;
+  audit?: ImportAuditSummary;
+  samplePolicy?: ImportSamplePolicy;
 };
 
 export type ImportValidation = {
   ok: boolean;
   errors: ImportIssue[];
   warnings: ImportIssue[];
+  infos?: ImportIssue[];
+  issues?: ImportIssue[];
+  issueSummary?: ImportSeveritySummary;
 };
 
 export type SelectedColumns = {
@@ -136,6 +206,7 @@ export type SelectedColumns = {
 };
 
 export type ImportReport = {
+  version?: "v1" | "v2";
   fileName: string;
   sheetName: string;
   selectedSheet: string;
@@ -154,6 +225,21 @@ export type ImportReport = {
   errors: ImportIssue[];
   stats: ImportPreviewStats;
   validation: ImportValidation;
+  executiveSummary?: string;
+  audit?: ImportAuditSummary;
+  samplePolicy?: ImportSamplePolicy;
+  ruleCatalog?: ImportValidationRule[];
+  issueSummary?: ImportSeveritySummary;
+  reproducibility?: {
+    fileName: string;
+    sheetName: string;
+    importMode: ImportMode;
+    mapping: ColumnMapping;
+    selectedColumns: SelectedColumns;
+    totalSheetCount: number;
+    unimportedSheetCount: number;
+    reportVersion: "v2";
+  };
 };
 
 export type ImportBuildRequest = {

@@ -1,5 +1,10 @@
 import type { ImportPreviewStats, PreviewPoint } from "../types";
 
+const mean = (values: number[]): number | null =>
+  values.length === 0
+    ? null
+    : values.reduce((total, value) => total + value, 0) / values.length;
+
 export const buildPreviewStats = (
   points: PreviewPoint[],
   skippedRowCount: number,
@@ -20,5 +25,11 @@ export const buildPreviewStats = (
     yMin: ys.length > 0 ? Math.min(...ys) : null,
     yMax: ys.length > 0 ? Math.max(...ys) : null,
     duplicatePointCount: Math.max(0, points.length - uniqueKeys.size),
+    xMean: mean(xs),
+    yMean: mean(ys),
+    xDistinctCount: new Set(xs).size,
+    yDistinctCount: new Set(ys).size,
+    discardedRowRatio:
+      evaluatedRowCount === 0 ? 0 : skippedRowCount / evaluatedRowCount,
   };
 };

@@ -6,7 +6,9 @@ import type {
   ColumnMapping,
   ImportMode,
   SelectedColumns,
+  ImportSeveritySummary,
 } from "../types";
+import { getImportValidationRuleCatalog } from "../validate/rules";
 
 type ImportReportInput = {
   fileName: string;
@@ -40,26 +42,75 @@ const buildSelectedColumns = (
   };
 };
 
-export const buildImportReport = (input: ImportReportInput): ImportReport => ({
-  fileName: input.fileName,
-  sheetName: input.sheetName,
-  selectedSheet: input.sheetName,
-  mode: input.mode,
-  importMode: input.mode,
-  mapping: input.mapping,
-  selectedColumns: buildSelectedColumns(input.mapping, input.columnDescriptors),
-  importedPointCount: input.preview.stats.importablePointCount,
-  discardedPointCount: input.preview.stats.skippedRowCount,
-  skippedRowCount: input.preview.stats.skippedRowCount,
-  warningCount: input.validation.warnings.length,
-  errorCount: input.validation.errors.length,
-  unimportedSheetCount: input.unimportedSheetCount,
-  coverageRatio: input.preview.stats.coverageRatio,
-  warnings: input.validation.warnings,
-  errors: input.validation.errors,
-  stats: input.preview.stats,
-  validation: input.validation,
-});
+const summarizeIssues = (validation: ImportValidation): ImportSeveritySummary =>
+  validation.issueSummary ?? {
+    error: validation.errors.length,
+    warning: validation.warnings.filter((issue) => issue.severity === "warning")
+      .length,
+    info: validation.warnings.filter((issue) => issue.severity === "info").length,
+  };
+
+const buildExecutiveSummary = (
+  input: ImportReportInput,
+  issueSummary: ImportSeveritySummary
+): string => {
+  const imported = input.preview.stats.importablePointCount;
+  const discarded = input.preview.stats.skippedRowCount;
+  const coverage = Math.round(input.preview.stats.coverageRatio * 100);
+  const status =
+    issueSummary.error > 0
+      ? "requiere corrección antes de importar"
+      : issueSummary.warning > 0
+        ? "importable con advertencias"
+        : "importable sin advertencias bloqueantes";
+
+  return `${status}: ${imported} puntos importables, ${discarded} filas descartadas, cobertura ${coverage}%.`;
+};
+
+export const buildImportReport = (input: ImportReportInput): ImportReport => {
+  const selectedColumns = buildSelectedColumns(
+    input.mapping,
+    input.columnDescriptors
+  );
+  const issueSummary = summarizeIssues(input.validation);
+
+  return {
+    version: "v2",
+    fileName: input.fileName,
+    sheetName: input.sheetName,
+    selectedSheet: input.sheetName,
+    mode: input.mode,
+    importMode: input.mode,
+    mapping: input.mapping,
+    selectedColumns,
+    importedPointCount: input.preview.stats.importablePointCount,
+    discardedPointCount: input.preview.stats.skippedRowCount,
+    skippedRowCount: input.preview.stats.skippedRowCount,
+    warningCount: issueSummary.warning,
+    errorCount: issueSummary.error,
+    unimportedSheetCount: input.unimportedSheetCount,
+    coverageRatio: input.preview.stats.coverageRatio,
+    warnings: input.validation.warnings,
+    errors: input.validation.errors,
+    stats: input.preview.stats,
+    validation: input.validation,
+    executiveSummary: buildExecutiveSummary(input, issueSummary),
+    audit: input.preview.audit,
+    samplePolicy: input.preview.samplePolicy,
+    ruleCatalog: getImportValidationRuleCatalog(),
+    issueSummary,
+    reproducibility: {
+      fileName: input.fileName,
+      sheetName: input.sheetName,
+      importMode: input.mode,
+      mapping: input.mapping,
+      selectedColumns,
+      totalSheetCount: input.unimportedSheetCount + 1,
+      unimportedSheetCount: input.unimportedSheetCount,
+      reportVersion: "v2",
+    },
+  };
+};
 
 /** @deprecated Use buildImportReport */
 export const buildMinimalImportReport = buildImportReport;
@@ -72,6 +123,7 @@ const severityLabel: Record<string, string> = {
 
 export const formatImportReportLines = (report: ImportReport): string[] => {
   const lines = [
+    report.executiveSummary ?? "Resumen ejecutivo no disponible",
     `Archivo: ${report.fileName}`,
     `Hoja seleccionada: ${report.selectedSheet}`,
     `Modo de importación: ${report.importMode === "fast-path" ? "Importación directa" : "Asistente"}`,
@@ -93,6 +145,16 @@ export const formatImportReportLines = (report: ImportReport): string[] => {
   }
   if (report.warningCount > 0) {
     lines.push(`Advertencias: ${report.warningCount}`);
+  }
+  if (report.issueSummary && report.issueSummary.info > 0) {
+    lines.push(`Informativos: ${report.issueSummary.info}`);
+  }
+  if (report.audit && report.audit.reasonCounts.length > 0) {
+    lines.push(
+      `Razones de descarte: ${report.audit.reasonCounts
+        .map((item) => `${item.label} (${item.count})`)
+        .join("; ")}`
+    );
   }
 
   for (const warning of report.warnings) {

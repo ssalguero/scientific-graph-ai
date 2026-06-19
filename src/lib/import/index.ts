@@ -19,6 +19,7 @@ export {
   validateImportPreview,
   validateMinimumImport,
 } from "./validate";
+export { getImportValidationRuleCatalog } from "./validate/rules";
 export { buildWizardImportResult } from "./build";
 export {
   buildImportReport,

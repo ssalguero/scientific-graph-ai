@@ -1,16 +1,16 @@
-# Scientific Graph AI — Estado del Proyecto (Cierre ARCH-5 F4B + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1)
+# Scientific Graph AI — Estado del Proyecto (Cierre ARCH-5 Fase 4 + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1)
 
 Fecha: 2026-06-19 (actualizado)
-Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–4B) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1
-Commit de referencia: `95f2a5e` (HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1); ARCH-5 F4A/F4B (SCI-58 domain + UI dashboard) implementados sobre esta base
+Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–4 COMPLETED) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1
+Commit de referencia: `95f2a5e` (HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1); ARCH-5 Fase 4 completada sobre esta base (F4A/F4B/F4C/F4D)
 
 ---
 
 ## 1. Resumen ejecutivo
 
-El proyecto alcanzó el cierre completo del bloque metodológico, las capas ejecutivas de síntesis (multivariante, metodológica y de publicación), la capa de orquestación UX, la capa de comparación multi-dataset, la totalidad del backlog técnico histórico, la etapa evolutiva SCI-57+, **las fases 1–4A de modularización incremental ARCH-5**, **PROD-1A — Scientific Workbook Import Framework**, **PROD-2A — Project File Core** y el hotfix **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre del incidente BUG-SERIES-RENDER-1: renderizado de series experimentales tras importación y reapertura de proyectos). Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, se cerraron SCI-29B y SCI-37B, se completó **SCI-57 — Effect Size & Power Engine**, **SCI-57B — Effect-Aware Evidence**, **SCI-60 — Executive Publication Dashboard**, **SCI-59 — Guided Scientific Workflow**, **SCI-58 — Multi-Dataset Comparison Framework**, **ARCH-5 Fases 1–4A** (normalidad canónica, workflow SCI-59, inferencia SCI-12–15 + SCI-57 y dominio SCI-58 comparison en `src/lib/scientific/`), **PROD-1A** (framework de importación en `src/lib/import/` + wizard UI) y **PROD-2A** (persistencia `.sgproj`), cerrando los vacíos de magnitud inferencial, evidencia effect-aware, síntesis pre-manuscrito, experiencia de uso guiada, comparación estructurada entre datasets, deuda de monolito en los cinco dominios acotados identificados en REVIEW-5, POST-SCI-57B REVIEW, POST-SCI-60 REVIEW, POST-SCI-59 REVIEW, PROJECT REVIEW post-SCI-58, la imposibilidad de importar workbooks científicos reales validados en RW-01→RW-04 y la invisibilidad de series experimentales por clipping del viewport X.
+El proyecto alcanzó el cierre completo del bloque metodológico, las capas ejecutivas de síntesis (multivariante, metodológica y de publicación), la capa de orquestación UX, la capa de comparación multi-dataset, la totalidad del backlog técnico histórico, la etapa evolutiva SCI-57+, **las fases 1–4 de modularización incremental ARCH-5**, **PROD-1A — Scientific Workbook Import Framework**, **PROD-2A — Project File Core** y el hotfix **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre del incidente BUG-SERIES-RENDER-1: renderizado de series experimentales tras importación y reapertura de proyectos). Tras SCI-55 se resolvieron dos deudas técnicas críticas (HOTFIX-SCI-NORMALITY-2 y BUGFIX SCI-19), se implementó SCI-56 — Methodological Summary Dashboard, se cerraron SCI-29B y SCI-37B, se completó **SCI-57 — Effect Size & Power Engine**, **SCI-57B — Effect-Aware Evidence**, **SCI-60 — Executive Publication Dashboard**, **SCI-59 — Guided Scientific Workflow**, **SCI-58 — Multi-Dataset Comparison Framework**, **ARCH-5 Fases 1–4** (normalidad canónica, workflow SCI-59, inferencia SCI-12–15 + SCI-57, dominio/UI comparison, tests comparison y consolidación de contratos runtime↔persistencia), **PROD-1A** (framework de importación en `src/lib/import/` + wizard UI) y **PROD-2A** (persistencia `.sgproj`), cerrando los vacíos de magnitud inferencial, evidencia effect-aware, síntesis pre-manuscrito, experiencia de uso guiada, comparación estructurada entre datasets, deuda de monolito en los cinco dominios acotados identificados en REVIEW-5, POST-SCI-57B REVIEW, POST-SCI-60 REVIEW, POST-SCI-59 REVIEW, PROJECT REVIEW post-SCI-58, la imposibilidad de importar workbooks científicos reales validados en RW-01→RW-04 y la invisibilidad de series experimentales por clipping del viewport X.
 
-**SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4B), PROD-1A, PROD-2A y HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 están cerrados; el backlog técnico histórico permanece vacío.** Se cerró formalmente **ARCH-5 F4B — SCI-58 UI dashboard extraction** (`ScientificMultiDatasetComparisonDashboard` → `src/components/comparison/`, `validate:full` PASS). Se cerró formalmente **ARCH-5 F4A — SCI-58 domain extraction** (dominio comparison move-only a `src/lib/scientific/comparison/`). Se cerró formalmente el incidente **BUG-SERIES-RENDER-1** (series experimentales persistidas pero invisibles en el gráfico por clipping del dominio X fijo `[-10, 10]`). PROD-1B (validación avanzada + reportes completos) queda como evolución aprobada en plan, no implementada.
+**SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, PROD-2A y HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 están cerrados; el backlog técnico histórico permanece vacío.** Se cerró formalmente **ARCH-5 Fase 4 — SCI-58 comparison domain/UI/tests/contracts** (`comparison/`, `components/comparison/`, `validate:comparison-unit` 43/43 y consolidación mínima de tipos runtime↔persistencia; `validate:full` PASS). Se cerró formalmente el incidente **BUG-SERIES-RENDER-1** (series experimentales persistidas pero invisibles en el gráfico por clipping del dominio X fijo `[-10, 10]`). PROD-1B (validación avanzada + reportes completos) queda como evolución aprobada en plan, no implementada.
 
 Hitos cerrados en este ciclo:
 
@@ -32,12 +32,15 @@ Hitos cerrados en este ciclo:
 | ARCH-5 Fase 3 | COMPLETADO | Modularización incremental — inferencia SCI-12–15 + SCI-57 Effect Size & Power en `src/lib/scientific/inference/` |
 | ARCH-5 Fase 4A | COMPLETADO | SCI-58 domain extraction — dominio comparison move-only a `src/lib/scientific/comparison/` (~653 LOC); `validate:full` PASS |
 | ARCH-5 Fase 4B | COMPLETADO | SCI-58 UI dashboard extraction — `ScientificMultiDatasetComparisonDashboard` → `src/components/comparison/` (~152 LOC); `validate:full` PASS |
+| ARCH-5 Fase 4C | COMPLETADO | Tests unitarios comparison integrados al gate — `validate:comparison-unit` PASS (43/43) |
+| ARCH-5 Fase 4D | COMPLETADO | Consolidación mínima de tipos y contratos runtime↔persistencia sin cambios funcionales ni de `.sgproj`; `validate:full` PASS |
+| ARCH-5 Fase 4 | COMPLETED | F4A + F4B + F4C + F4D cerradas; comparison domain/UI/tests/contracts consolidados |
 | PROD-1A | COMPLETADO | Scientific Workbook Import Framework — pipeline híbrido fast path + wizard en `src/lib/import/` |
 | PROD-2A | COMPLETADO | Project File Core — persistencia local `.sgproj` (F0–F6) |
 | HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 | CERRADO | Auto-fit automático del viewport X para series experimentales (importación + hidratación de proyectos) |
 | BUG-SERIES-RENDER-1 | CERRADO | Incidente resuelto vía HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 — renderizado de puntos experimentales tras import/reapertura |
 
-Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · ARCH-5 Fase 4A PASS · ARCH-5 Fase 4B PASS · validate:full PASS · PROD-1A PASS · PROD-2A PASS · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 PASS · RW-01 PASS · RW-02 PASS · RW-03 PASS · RW-04 PASS · t crítico (df=10,18,30) PASS.**
+Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · ARCH-5 Fase 4 PASS · validate:comparison-unit PASS (43/43) · validate:full PASS · PROD-1A PASS · PROD-2A PASS · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 PASS · RW-01 PASS · RW-02 PASS · RW-03 PASS · RW-04 PASS · t crítico (df=10,18,30) PASS.**
 
 ---
 
@@ -50,7 +53,7 @@ Monolito científico maduro en `src/app/page.tsx` (~27.200 líneas), con módulo
 | Datos | DATA-1→3 + PROD-1A | Importación CSV/TXT/XLSX/XLS/ODS; fast path legacy en `experimentalData.ts`; framework workbook en `src/lib/import/` + wizard UI |
 | Persistencia | PROD-2A | Proyectos `.sgproj` — `src/lib/project/` + sidebar Nuevo/Guardar/Abrir |
 | Viewport gráfico | HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 | `src/app/chartViewport.ts` — auto-fit dominio X con padding 10% tras import/hidratación |
-| Modularización | ARCH-5 F1–4B | `shared/`, `normality/`, `workflow/`, `inference/`, `comparison/` + UI `components/comparison/` |
+| Modularización | ARCH-5 F1–4 COMPLETED | `shared/`, `normality/`, `workflow/`, `inference/`, `comparison/` + UI `components/comparison/` + tests/contracts comparison |
 | Importación workbook | PROD-1A | `src/lib/import/` — lectura, discovery, detección tabla/encabezados, mapeo X/Y, validación mínima, reporte mínimo |
 | Infraestructura UX | ARCH-1→4 | Workspace (Datos/Análisis/Resultados/Reportes), Inspector contextual, módulos activables, tema |
 | Orquestación UX | SCI-59 | Guided Scientific Workflow — templates, wizard, auto-toggle y navegación |
@@ -107,7 +110,7 @@ SCI-59 consume normalidad canónica, `buildStatisticalRecommendation` y contexto
 
 SCI-58 es capa de comparación read-only (Opción D): captura snapshots `DatasetAnalysisProfile` desde los `useMemo` existentes (SCI-53/55/56/57, normalidad canónica) sin recalcular motores; los slots A/B persisten entre imports de dataset. Dominio de builders, cálculos e interpretación en `src/lib/scientific/comparison/` (ARCH-5 F4A).
 
-**ARCH-5 (Fases 1–4B):** extracción incremental move-only; scores, clasificaciones, PDF y builders SCI-11→60 sin cambios semánticos. Fase 1: normalidad canónica + utilidades `shared/`. Fase 2: plan builders SCI-59 (`buildGuidedWorkflowPlan`, templates T1/T2/T3, resolvers); handlers React y `GuidedWorkflowPanel` permanecen en `page.tsx`. Fase 3: calculadores SCI-12–15 + motor SCI-57 (`calculateIndependentTTest`, `calculateOneWayAnova`, `calculateTukeyComparisons`, `calculateMannWhitney`, `calculateKruskalWallis`, `buildEffectSizePowerAnalysis`); toggles, `useMemo` e UI inferencial permanecen en `page.tsx`. Fase 4A: dominio SCI-58 en `comparison/`. Fase 4B: `ScientificMultiDatasetComparisonDashboard` en `src/components/comparison/`; adaptador de captura, panel slots Datos, estado React y wrapper Resultados permanecen en `page.tsx`.
+**ARCH-5 (Fases 1–4 COMPLETED):** extracción incremental move-only; scores, clasificaciones, PDF y builders SCI-11→60 sin cambios semánticos. Fase 1: normalidad canónica + utilidades `shared/`. Fase 2: plan builders SCI-59 (`buildGuidedWorkflowPlan`, templates T1/T2/T3, resolvers); handlers React y `GuidedWorkflowPanel` permanecen en `page.tsx`. Fase 3: calculadores SCI-12–15 + motor SCI-57 (`calculateIndependentTTest`, `calculateOneWayAnova`, `calculateTukeyComparisons`, `calculateMannWhitney`, `calculateKruskalWallis`, `buildEffectSizePowerAnalysis`); toggles, `useMemo` e UI inferencial permanecen en `page.tsx`. Fase 4: dominio SCI-58 en `comparison/`, dashboard `ScientificMultiDatasetComparisonDashboard` en `src/components/comparison/`, tests unitarios comparison en gate y consolidación mínima de contratos runtime↔persistencia; adaptador de captura, panel slots Datos, estado React y wrapper Resultados permanecen en `page.tsx`.
 
 **PROD-1A:** capa de importación dominio-agnóstica; no recalcula motores SCI. Pipeline híbrido: CSV/TXT simples → fast path legacy (`importExperimentalDataFile`); workbooks XLSX/XLS/ODS complejos → `WorkbookImportWizard` (hoja → tabla → columnas X/Y → confirmación). Salida: `ExperimentalSeries[]` + `ImportReport` mínimo. **Sin cambios** en SCI-53→60, PDF, Advisor, ARCH-5 ni builders inferenciales.
 
@@ -132,6 +135,9 @@ SCI-58 es capa de comparación read-only (Opción D): captura snapshots `Dataset
 - ARCH-5 Fase 3 — Inferencia SCI-12–15 + SCI-57 modularizada
 - ARCH-5 Fase 4A — SCI-58 comparison domain modularizado
 - ARCH-5 Fase 4B — SCI-58 comparison dashboard UI modularizado
+- ARCH-5 Fase 4C — Tests unitarios comparison integrados al gate
+- ARCH-5 Fase 4D — Tipos y contratos comparison/persistencia consolidados
+- ARCH-5 Fase 4 — COMPLETED
 - PROD-1A — Scientific Workbook Import Framework
 - PROD-2A — Project File Core
 - HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 — Auto-fit viewport X series experimentales
@@ -324,7 +330,7 @@ SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sig
 
 ## 5. Backlog pendiente
 
-**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4B), PROD-1A, PROD-2A y HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 están cerrados y validados. BUG-SERIES-RENDER-1 cerrado sin deuda bloqueante.
+**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, PROD-2A y HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 están cerrados y validados. BUG-SERIES-RENDER-1 cerrado sin deuda bloqueante.
 
 ### Deuda menor documentada
 
@@ -336,15 +342,13 @@ SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sig
 
 ---
 
-## 6. Candidatos post-ARCH-5 F4B / PROD-1A
+## 6. Candidatos post-ARCH-5 Fase 4 / PROD-1A
 
 Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización definitiva.
 
 | Candidato | Descripción breve |
 |-----------|-------------------|
 | **PROD-1B — Validación avanzada + reportes** | Preview expandido, warnings estructurados, `ImportReport` completo, script RW en CI; plan aprobado, no implementado. |
-| **ARCH-5 F4C — Tests comparison** | Unit tests `comparison/` + step en `validate:full`. |
-| **ARCH-5 F4D — Tipos persistencia** | Unificación `DatasetAnalysisProfileV1` ↔ tipos `comparison/`. |
 | **ARCH-5 Fase 4+ — Metodología / reporting** | Metodología SCI-50→56, reporting, PDF (roadmap ARCH-5). |
 | **SCI-58 v2 — Comparación ampliada** | N>2 slots, integración SCI-17/PDF, persistencia entre sesiones o comparación de series completas. |
 | **PROD-1 v1.1 — Multi-serie side-by-side** | Importación de layouts `grafico q vs t` (RW-04) como múltiples series en un paso. |
@@ -375,6 +379,9 @@ Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización defi
 | SCI-58 Multi-Dataset Comparison (slots A/B, delta Readiness) | PASS (Slot A 77.0) | PASS (Slot B 67.5, Δ −9.5) |
 | ARCH-5 Fase 4A (SCI-58 domain extraction) | PASS | PASS |
 | ARCH-5 Fase 4B (SCI-58 UI dashboard extraction) | PASS | PASS |
+| ARCH-5 Fase 4C (comparison unit tests) | PASS (43/43) | PASS (43/43) |
+| ARCH-5 Fase 4D (runtime↔persistencia contracts) | PASS | PASS |
+| ARCH-5 Fase 4 COMPLETED | PASS | PASS |
 | validate:full (gate unificado Fase A) | PASS | PASS |
 | ARCH-5 Fase 3 (inferencia modularizada) | PASS | PASS |
 | PROD-1A Workbook Import (fast path CSV) | PASS (baselineMatch) | PASS (baselineMatch) |
@@ -394,7 +401,7 @@ Resultados observados post-SCI-57B / SCI-60 / SCI-59 (scores upstream referencia
 | Publication Status (SCI-60) | Near Ready | Requires Review |
 | Effect dominante (SCI-57) | large, d ≈ −1.36 | large, d ≈ −1.98 |
 
-Build: Compilación OK · TypeScript OK · Exportación PDF OK · `npm run validate:full` OK · `validate-hotfix-sci-normality-2.mjs` (sci57.pass · sci58.pass · sci59.pass · sci60.pass) OK · `validate-t-quantile.mjs` OK · `validate-prod1-rw-suite.mjs` (RW-01→RW-04) OK · scores upstream sin regresión post-ARCH-5 F4B y PROD-1A (baselineMatch D5/D6).
+Build: Compilación OK · TypeScript OK · Exportación PDF OK · `npm run validate:comparison-unit` OK (43/43) · `npm run validate:prod2a-gate` OK · `npm run validate:full` OK · `validate-hotfix-sci-normality-2.mjs` (sci57.pass · sci58.pass · sci59.pass · sci60.pass) OK · `validate-t-quantile.mjs` OK · `validate-prod1-rw-suite.mjs` (RW-01→RW-04) OK · scores upstream sin regresión post-ARCH-5 Fase 4 y PROD-1A (baselineMatch D5/D6).
 
 ---
 
@@ -471,7 +478,7 @@ Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset ex
 - Importación multi-formato y workspace científico (Datos → Análisis → Resultados → Reportes)
 - **Importación robusta de workbooks (PROD-1A):** fast path CSV/TXT + wizard para XLSX/XLS/ODS con detección de hoja/tabla y mapeo X/Y; validado RW-01→RW-04
 - **Workflow guiado (SCI-59):** 3 templates con wizard, auto-toggle y navegación hacia el camino analítico correcto (builders en `src/lib/scientific/workflow/`)
-- **Modularización incremental (ARCH-5):** cinco módulos dominio + UI comparison en `src/components/comparison/` — sin cambio funcional ni de scores
+- **Modularización incremental (ARCH-5):** Fases 1–4 COMPLETED; cinco módulos dominio + UI comparison en `src/components/comparison/` + tests/contratos comparison — sin cambio funcional ni de scores
 - **Comparación multi-dataset (SCI-58):** dominio en `comparison/`; dashboard en `components/comparison/`; captura Slots A/B read-only
 - Estadística descriptiva, distribución, normalidad canónica unificada, outliers y correlación
 - Inferencia paramétrica y no paramétrica con magnitud del efecto, IC95% y potencia (SCI-57; calculadores en `inference/`)
@@ -485,12 +492,11 @@ Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset ex
 
 ### Backlog técnico
 
-**Vacío.** Los candidatos de la sección 6 (PROD-1B, ARCH-5 F4C/D+, SCI-58 v2, PROD-1 v1.1) son evolución futura, no backlog pendiente.
+**Vacío.** Los candidatos de la sección 6 (PROD-1B, ARCH-5 Fase 4+, SCI-58 v2, PROD-1 v1.1) son evolución futura, no backlog pendiente.
 
 ### Áreas abiertas para evolución futura
 
 - PROD-1B — validación avanzada, reportes completos y preview expandido
-- ARCH-5 F4C/F4D — tests comparison y unificación tipos persistencia
 - ARCH-5 Fase 4+ — metodología SCI-50→56, reporting, PDF
 - Comparación ampliada N>2 slots o integración reporte/PDF (SCI-58 v2)
 - Enriquecimiento narrativo SCI-57B en SCI-55/56 (opcional, no bloqueante)
@@ -766,11 +772,10 @@ Las series experimentales importadas se persistían y hidrataban correctamente, 
 ## 18. Próximos pasos recomendados
 
 1. **Implementar PROD-1B** — validación avanzada + reportes completos sobre `src/lib/import/`.
-2. **Evaluar ARCH-5 F4C/F4D** — unit tests comparison y unificación tipos persistencia.
-3. **Continuar ARCH-5 Fase 4+** — metodología SCI-50→56 o reporting según roadmap.
-4. **Formalizar la suite de validación** (`validate:full` + Playwright + RW Suite) como herramienta de regresión continua.
-5. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
-6. **Evaluar SCI-58 v2** tras completar F4C/D y dominios upstream modularizados.
+2. **Continuar ARCH-5 Fase 4+** — metodología SCI-50→56 o reporting según roadmap.
+3. **Formalizar la suite de validación** (`validate:full` + Playwright + RW Suite) como herramienta de regresión continua.
+4. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
+5. **Evaluar SCI-58 v2** sobre la base cerrada de ARCH-5 Fase 4.
 
 ---
 
@@ -815,10 +820,10 @@ Dominio SCI-58 extraído move-only; **COMPLETADO** y validado con baseline D5/D6
 | PROD-2A E2E (save/reload, SCI-58 slot restore) | PASS |
 | SCI-58 comparison (`validate-hotfix-sci-normality-2.mjs`) | PASS (Δ −9.5, KPIs 77.0/67.5) |
 
-#### Pendiente post-F4A/F4B (no bloqueante)
+#### Resolución post-F4A/F4B (F4C/F4D)
 
-- F4C: unit tests `comparison/` en gate
-- F4D: unificación `DatasetAnalysisProfileV1` ↔ tipos `comparison/`
+- F4C: unit tests `comparison/` en gate — **COMPLETADO**
+- F4D: unificación mínima de contratos `comparison/` ↔ persistencia — **COMPLETADO**
 - Panel slots Datos (opcional extracción UI futura)
 
 ---
@@ -852,4 +857,27 @@ Inventario al cierre formal de **ARCH-5 F4B — SCI-58 UI dashboard extraction**
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4B), PROD-1A, **PROD-2A**, **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre BUG-SERIES-RENDER-1), **ARCH-5 F4A** (SCI-58 domain extraction) y **ARCH-5 F4B** (SCI-58 UI dashboard extraction, `validate:full` PASS). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+## 21. Estado del proyecto al cierre de ARCH-5 Fase 4
+
+Inventario al cierre formal de **ARCH-5 Fase 4 — SCI-58 comparison domain/UI/tests/contracts**:
+
+| Bloque / Hito | Estado |
+|---------------|--------|
+| ARCH-5 Fase 4A — SCI-58 Domain Extraction | **COMPLETADO** |
+| ARCH-5 Fase 4B — SCI-58 UI Dashboard Extraction | **COMPLETADO** |
+| ARCH-5 Fase 4C — Comparison Unit Tests | **COMPLETADO** |
+| ARCH-5 Fase 4D — Runtime/Persistence Contract Consolidation | **COMPLETADO** |
+| ARCH-5 Fase 4 | **COMPLETED** |
+
+### Cierre Fase 4
+
+- Dominio SCI-58 consolidado en `src/lib/scientific/comparison/`.
+- Dashboard comparativo consolidado en `src/components/comparison/`.
+- Tests unitarios comparison integrados y validados: `validate:comparison-unit` PASS (43/43).
+- Tipos duplicados exactos reducidos entre `comparison/`, `project/`, `graphEditorProjectIntegration.ts` y `page.tsx`.
+- `DatasetAnalysisProfileV1` y `ComparisonSlotV1` permanecen como frontera de persistencia PROD-2A; sin cambios de `schemaVersion`, migraciones, validadores, sanitización, serialización ni formato `.sgproj`.
+- Validación final: TypeScript PASS · `validate:comparison-unit` PASS · `validate:prod2a-gate` PASS · `validate:full` PASS.
+
+---
+
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, **PROD-2A**, **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre BUG-SERIES-RENDER-1), **ARCH-5 F4A** (SCI-58 domain extraction), **ARCH-5 F4B** (SCI-58 UI dashboard extraction), **ARCH-5 F4C** (comparison unit tests) y **ARCH-5 F4D** (runtime/persistence contract consolidation, `validate:full` PASS). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
