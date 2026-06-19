@@ -76,6 +76,7 @@ import {
   formatDatasetAnalysisProfileMiniSummary,
   mapInferentialToProfileSnapshot,
   mapNormalitySummaryToProfileSnapshot,
+  type ComparisonDatasetInfo,
   type ComparisonSlot,
   type ComparisonSlotId,
   type DatasetAnalysisProfile,
@@ -14406,12 +14407,7 @@ const getScientificReportPdfFileName = () => {
   return `scientific-report-${year}-${month}-${day}.pdf`;
 };
 
-type ImportedDatasetInfo = {
-  fileName: string;
-  importedAt: string;
-  seriesCount: number;
-  observationCount: number;
-};
+type ImportedDatasetInfo = ComparisonDatasetInfo;
 
 type ScientificReportPdfInput = {
   report: ScientificReport;

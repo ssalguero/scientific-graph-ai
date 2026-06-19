@@ -4,16 +4,19 @@ import type {
   GuidedWorkflowSession,
   GuidedWorkflowTemplateId,
 } from "@/lib/scientific/workflow/types";
+import type {
+  ComparisonDatasetInfo,
+} from "@/lib/scientific/comparison/input-types";
+import type {
+  ComparisonSlotId,
+  DatasetAnalysisProfileInferentialSnapshot,
+  DatasetAnalysisProfileNormalitySnapshot,
+} from "@/lib/scientific/comparison/types";
 import type { SCHEMA_VERSION_V1 } from "./constants";
 
 export type ProjectSchemaVersion = typeof SCHEMA_VERSION_V1;
 
-export type ProjectImportedDatasetInfo = {
-  fileName: string;
-  importedAt: string;
-  seriesCount: number;
-  observationCount: number;
-};
+export type ProjectImportedDatasetInfo = ComparisonDatasetInfo;
 
 export type ProjectDataset = {
   series: ExperimentalSeries[];
@@ -58,23 +61,18 @@ export type ProjectWorkflowV1 = {
   session: GuidedWorkflowSession;
 };
 
-export type ComparisonSlotIdV1 = "A" | "B";
+// Comparison V1 reuses runtime contracts only where the persisted JSON shape is
+// identical. The V1 profile remains the disk boundary for legacy tolerance.
+export type ComparisonSlotIdV1 = ComparisonSlotId;
 
-export type DatasetAnalysisProfileNormalitySnapshotV1 = {
-  seriesEvaluated: number;
-  normalCount: number;
-  nonNormalCount: number;
-  questionableCount: number;
-  contradictoryCount: number;
-  globalHeadline?: string;
-  hasWarnings: boolean;
-};
+export type DatasetAnalysisProfileNormalitySnapshotV1 =
+  DatasetAnalysisProfileNormalitySnapshot;
 
-export type DatasetAnalysisProfileInferentialSnapshotV1 = {
+export type DatasetAnalysisProfileInferentialSnapshotV1 = Omit<
+  DatasetAnalysisProfileInferentialSnapshot,
+  "dominantMagnitude"
+> & {
   dominantMagnitude?: string;
-  metric?: string;
-  valueDisplay?: string;
-  prospectiveSampleSize?: number | null;
 };
 
 /** SCI-58 KPI snapshot — not full comparison analysis or series. */

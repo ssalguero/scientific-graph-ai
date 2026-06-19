@@ -2,6 +2,7 @@ import type { ExperimentalSeries } from "@/lib/experimentalData";
 import type { ImportReport } from "@/lib/import/types";
 import type { GuidedWorkflowSession } from "@/lib/scientific/workflow/types";
 import type { ProjectImportedDatasetInfo, ProjectMetadataV1 } from "@/lib/project";
+import type { ComparisonSlotId } from "@/lib/scientific/comparison";
 import { GUIDED_WORKFLOW_IDLE_SESSION } from "@/lib/scientific/workflow/catalog";
 
 import {
@@ -26,9 +27,7 @@ type Curve = {
   color: string;
 };
 
-type ComparisonSlotId = "A" | "B";
-
-type ComparisonSlot = {
+type EditorRuntimeComparisonSlot = {
   id: ComparisonSlotId;
   label: string;
   profile: EditorComparisonSlots["A"]["profile"];
@@ -100,8 +99,10 @@ export type GraphEditorProjectIntegrationInput = {
   setHiddenLegendKeys: (value: string[]) => void;
   guidedWorkflowSession: GuidedWorkflowSession;
   setGuidedWorkflowSession: (value: GuidedWorkflowSession) => void;
-  comparisonSlots: Record<ComparisonSlotId, ComparisonSlot>;
-  setComparisonSlots: (value: Record<ComparisonSlotId, ComparisonSlot>) => void;
+  comparisonSlots: Record<ComparisonSlotId, EditorRuntimeComparisonSlot>;
+  setComparisonSlots: (
+    value: Record<ComparisonSlotId, EditorRuntimeComparisonSlot>
+  ) => void;
   activeWorkspaceSection: WorkspaceSection;
   setActiveWorkspaceSection: (value: WorkspaceSection) => void;
   analysisInspectorSection: AnalysisInspectorSection;
@@ -114,7 +115,10 @@ export type GraphEditorProjectIntegrationInput = {
   generateGraph: (curveSource?: { id: number; expression: string; color: string }[]) => void;
   resetAnalysisSession: () => void;
   resetToSingleCurve: (expr: string) => void;
-  createEmptyComparisonSlots: () => Record<ComparisonSlotId, ComparisonSlot>;
+  createEmptyComparisonSlots: () => Record<
+    ComparisonSlotId,
+    EditorRuntimeComparisonSlot
+  >;
   createDefaultEnabledModules: () => Record<string, boolean>;
   clearEphemeralUiState: () => void;
 };
