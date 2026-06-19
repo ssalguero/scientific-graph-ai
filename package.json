@@ -11,7 +11,10 @@
     "validate:prod2a-unit": "npx tsx scripts/validate-prod2a-unit.ts",
     "validate:prod2a-f6": "npx tsx scripts/validate-prod2a-f6.ts",
     "validate:prod2a": "node scripts/validate-prod2a-project-persistence.mjs",
-    "validate:prod2a-gate": "node scripts/validate-prod2a-gate.mjs"
+    "validate:prod2a-gate": "node scripts/validate-prod2a-gate.mjs",
+    "validate:full": "node scripts/validate-full-gate.mjs",
+    "validate:chart-viewport": "npx tsx scripts/validate-chart-viewport.ts",
+    "validate:comparison-unit": "npx tsx scripts/validate-comparison-unit.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

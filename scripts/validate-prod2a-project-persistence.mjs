@@ -339,6 +339,14 @@ async function runDatasetPersistenceCycle(page, {
 }
 
 function runRwSuiteGate() {
+  if (process.env.SKIP_EMBEDDED_RW === "1") {
+    record("rw-suite", true, {
+      skipped: true,
+      reason: "SKIP_EMBEDDED_RW — executed by outer gate",
+    });
+    return true;
+  }
+
   const result = spawnSync("node", ["scripts/validate-prod1-rw-suite.mjs"], {
     cwd: ROOT,
     encoding: "utf8",
