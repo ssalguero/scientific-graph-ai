@@ -1,8 +1,14 @@
 import { createRequire } from "module";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const require = createRequire(import.meta.url);
 const XLSX = require("xlsx");
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const RW_FIXTURE_DIR = path.join(__dirname, "fixtures", "import-rw");
+const rwFixturePath = (fileName) => path.join(RW_FIXTURE_DIR, fileName);
 
 const cellToNumber = (cell) => {
   if (typeof cell === "number" && Number.isFinite(cell)) return cell;
@@ -250,33 +256,25 @@ const validateImport = (preview, mapping, descriptors) => {
 const CASES = [
   {
     id: "RW-01",
-    path:
-      process.env.RW01_PATH ??
-      "C:/Users/Santiago Salseguero/Desktop/JOSEFINA/JOSEFINA ARCHIVOS ESCRITORIO/Backup Josefina/Documents/Paper Pb/Biocomponente PbZn Up 26 octubre 2021.xlsx",
+    path: process.env.RW01_PATH ?? rwFixturePath("rw-01-pb.xlsx"),
     sheet: "Pb",
     minPoints: 8,
   },
   {
     id: "RW-02",
-    path:
-      process.env.RW02_PATH ??
-      "C:/Users/Santiago Salseguero/Desktop/JOSEFINA/JOSEFINA ARCHIVOS ESCRITORIO/Backup Josefina/Documents/Paper Pb/Pb Ca 1.25.xlsx",
+    path: process.env.RW02_PATH ?? rwFixturePath("rw-02-lang-up.xlsx"),
     sheet: "Lang_Up",
     minPoints: 8,
   },
   {
     id: "RW-03",
-    path:
-      process.env.RW03_PATH ??
-      "C:/Users/Santiago Salseguero/Desktop/JOSEFINA/JOSEFINA ARCHIVOS ESCRITORIO/Backup Josefina/Documents/Paper Pb/Sistema Pb-Ca.xlsx",
+    path: process.env.RW03_PATH ?? rwFixturePath("rw-03-resultados-up.xlsx"),
     sheet: "resultados_Up",
     minPoints: 8,
   },
   {
     id: "RW-04",
-    path:
-      process.env.RW04_PATH ??
-      "C:/Users/Santiago Salseguero/Desktop/JOSEFINA/JOSEFINA ARCHIVOS ESCRITORIO/Backup Josefina/Documents/Paper Pb/Copia de resultado cinetica 3 Mp Up.xls",
+    path: process.env.RW04_PATH ?? rwFixturePath("rw-04-up-ph3.xls"),
     sheet: "Up_PH3",
     minPoints: 10,
   },
