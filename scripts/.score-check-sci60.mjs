@@ -8,10 +8,26 @@ const DATASET6 =
   process.env.DATASET6_PATH ??
   "C:\\Users\\Santiago Salseguero\\Desktop\\IA CIENTIFICA\\Dataset6.csv";
 
-async function importDataset(page, datasetPath) {
+async function openExperimentalDataView(page) {
   await page.getByRole("tab", { name: "Datos" }).click();
+  const importButton = page.getByRole("button", {
+    name: /Importar datos experimentales/i,
+  });
+  try {
+    await importButton.waitFor({ state: "visible", timeout: 5000 });
+    return;
+  } catch {
+    const experimentalTab = page.getByRole("tab", { name: /^Experimental$/i });
+    await experimentalTab.waitFor({ state: "visible", timeout: 20000 });
+    await experimentalTab.click();
+    await importButton.waitFor({ state: "visible", timeout: 20000 });
+  }
+}
+
+async function importDataset(page, datasetPath) {
+  await openExperimentalDataView(page);
   const preserve = page.getByLabel(
-    "Mantener configuración de análisis al importar"
+    "Mantener configuración"
   );
   if (await preserve.isChecked()) {
     await preserve.uncheck();
@@ -22,9 +38,27 @@ async function importDataset(page, datasetPath) {
   await page.waitForTimeout(1500);
 }
 
+async function expandStatisticsInspectorGroups(page) {
+  for (const title of [
+    "Multivariante",
+    "Metodología y publicación",
+    "Dashboards",
+  ]) {
+    const buttons = page.getByRole("button", { name: new RegExp(title, "i") });
+    const count = await buttons.count();
+    for (let index = 0; index < count; index += 1) {
+      const button = buttons.nth(index);
+      if ((await button.getAttribute("aria-expanded")) === "false") {
+        await button.click();
+      }
+    }
+  }
+}
+
 async function enableToggles(page) {
   await page.getByRole("tab", { name: "Análisis" }).click();
   await page.getByRole("tab", { name: "Estadística", exact: true }).click();
+  await expandStatisticsInspectorGroups(page);
   for (const label of [
     "Mostrar Evidence Strength Engine",
     "Mostrar Publication Readiness Analyzer",
@@ -86,6 +120,9 @@ const browser = await chromium.launch({
   channel: process.env.PLAYWRIGHT_CHANNEL ?? "msedge",
 });
 const page = await browser.newPage();
+await page.addInitScript(() => {
+  localStorage.setItem("scientific-graph-ai.lab-usage-profile", "standard");
+});
 const dataset5 = await scoresForDataset(page, DATASET5);
 const dataset6 = await scoresForDataset(page, DATASET6);
 await browser.close();

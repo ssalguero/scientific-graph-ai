@@ -91,7 +91,7 @@ export const formatProjectOpenError = (
   if (options?.fileText !== undefined) {
     const sniffed = sniffJsonFileKind(options.fileText);
     if (sniffed === "graph-json") {
-      return "Este archivo parece un gráfico JSON, no un proyecto científico. Use Importar JSON en el constructor de gráficos.";
+      return "Este archivo parece un gráfico JSON, no un proyecto científico. Use Importar gráfico (JSON) en el constructor de curvas.";
     }
     if (sniffed === "invalid-json") {
       return "El archivo está vacío o no contiene JSON válido.";

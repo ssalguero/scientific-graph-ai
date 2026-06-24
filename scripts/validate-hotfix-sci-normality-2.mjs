@@ -79,7 +79,7 @@ async function importDataset(page, datasetPath) {
   }
 
   await page.getByRole("tab", { name: "Datos" }).click();
-  const preserve = page.getByLabel("Mantener configuración de análisis al importar");
+  const preserve = page.getByLabel("Mantener configuración");
   if (await preserve.isChecked()) {
     await preserve.uncheck();
   }
@@ -93,9 +93,28 @@ async function importDataset(page, datasetPath) {
   await page.waitForTimeout(1500);
 }
 
+async function expandStatisticsInspectorGroups(page) {
+  for (const title of [
+    "Multivariante",
+    "Metodología y publicación",
+    "Dashboards",
+    "Inferencia",
+  ]) {
+    const buttons = page.getByRole("button", { name: new RegExp(title, "i") });
+    const count = await buttons.count();
+    for (let index = 0; index < count; index += 1) {
+      const button = buttons.nth(index);
+      if ((await button.getAttribute("aria-expanded")) === "false") {
+        await button.click();
+      }
+    }
+  }
+}
+
 async function enableModules(page) {
   await page.getByRole("tab", { name: "Análisis" }).click();
   await selectInspectorCategory(page, "Estadística");
+  await expandStatisticsInspectorGroups(page);
   const disabledToggles = [];
   for (const toggle of STATISTICS_TOGGLES) {
     const state = await enableToggle(page, toggle);

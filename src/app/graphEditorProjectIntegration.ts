@@ -33,7 +33,9 @@ type EditorRuntimeComparisonSlot = {
   profile: EditorComparisonSlots["A"]["profile"];
 };
 
-type WorkspaceSection = EditorProjectReadContext["workspace"]["activeSection"];
+type PersistedWorkspaceSection =
+  EditorProjectReadContext["workspace"]["activeSection"];
+type RuntimeWorkspaceSection = PersistedWorkspaceSection | "home";
 type AnalysisInspectorSection =
   EditorProjectReadContext["workspace"]["inspectorSection"];
 
@@ -103,8 +105,8 @@ export type GraphEditorProjectIntegrationInput = {
   setComparisonSlots: (
     value: Record<ComparisonSlotId, EditorRuntimeComparisonSlot>
   ) => void;
-  activeWorkspaceSection: WorkspaceSection;
-  setActiveWorkspaceSection: (value: WorkspaceSection) => void;
+  activeWorkspaceSection: RuntimeWorkspaceSection;
+  setActiveWorkspaceSection: (value: RuntimeWorkspaceSection) => void;
   analysisInspectorSection: AnalysisInspectorSection;
   setAnalysisInspectorSection: (value: AnalysisInspectorSection) => void;
   enabledModules: Record<string, boolean>;
@@ -163,7 +165,10 @@ export const createGraphEditorProjectIntegration = (
       },
     },
     workspace: {
-      activeSection: input.activeWorkspaceSection,
+      activeSection:
+        input.activeWorkspaceSection === "home"
+          ? "data"
+          : input.activeWorkspaceSection,
       inspectorSection: input.analysisInspectorSection,
       enabledModules: { ...input.enabledModules },
       controlPanelTab: input.controlPanelTab,
@@ -261,7 +266,7 @@ export const createGraphEditorProjectIntegration = (
     input.setAutoScaleY(false);
     input.setUseSecondaryYAxis(false);
     input.setHiddenLegendKeys([]);
-    input.setActiveWorkspaceSection("data");
+    input.setActiveWorkspaceSection("home");
     input.setAnalysisInspectorSection("visualization");
     input.setEnabledModules(input.createDefaultEnabledModules());
     input.setControlPanelTab("graph");

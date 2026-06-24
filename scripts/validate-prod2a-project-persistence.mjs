@@ -95,9 +95,30 @@ async function openProject(page, sgprojPath) {
   await sleep(2000);
 }
 
-async function importDataset(page, datasetPath) {
+async function openExperimentalDataView(page) {
   await page.getByRole("tab", { name: "Datos" }).click();
-  const preserve = page.getByLabel("Mantener configuración de análisis al importar");
+  const importButton = page.getByRole("button", {
+    name: /Importar datos experimentales/i,
+  });
+  try {
+    await importButton.waitFor({ state: "visible", timeout: 5000 });
+    return;
+  } catch {
+    const experimentalTab = page.getByRole("tab", { name: /^Experimental$/i });
+    await experimentalTab.waitFor({ state: "visible", timeout: 20000 });
+    await experimentalTab.click();
+    await importButton.waitFor({ state: "visible", timeout: 20000 });
+  }
+}
+
+async function openCurvesDataView(page) {
+  await page.getByRole("tab", { name: "Datos" }).click();
+  await page.getByRole("tab", { name: /Curvas y=f\(x\)/i }).click();
+}
+
+async function importDataset(page, datasetPath) {
+  await openExperimentalDataView(page);
+  const preserve = page.getByLabel("Mantener configuración");
   if (await preserve.isChecked()) {
     await preserve.uncheck();
   }
@@ -109,9 +130,27 @@ async function importDataset(page, datasetPath) {
   await sleep(1500);
 }
 
+async function expandStatisticsInspectorGroups(page) {
+  for (const title of [
+    "Multivariante",
+    "Metodología y publicación",
+    "Dashboards",
+  ]) {
+    const buttons = page.getByRole("button", { name: new RegExp(title, "i") });
+    const count = await buttons.count();
+    for (let index = 0; index < count; index += 1) {
+      const button = buttons.nth(index);
+      if ((await button.getAttribute("aria-expanded")) === "false") {
+        await button.click();
+      }
+    }
+  }
+}
+
 async function enableAnalysisToggles(page) {
   await page.getByRole("tab", { name: "Análisis" }).click();
   await page.getByRole("tab", { name: "Estadística", exact: true }).click();
+  await expandStatisticsInspectorGroups(page);
   for (const label of [
     "Mostrar normalidad",
     "Mostrar Evidence Strength Engine",
@@ -132,15 +171,27 @@ async function enableAnalysisToggles(page) {
 }
 
 async function configureGraphContext(page) {
-  await page.getByRole("tab", { name: "Datos" }).click();
+  await openCurvesDataView(page);
+  const constructorToggle = page.getByRole("button", {
+    name: /Constructor de curvas/i,
+  });
+  if ((await constructorToggle.getAttribute("aria-expanded")) === "false") {
+    await constructorToggle.click();
+  }
   await page.getByPlaceholder("Ej: Parábola cuadrática").fill(GRAPH_TITLE);
   await page.getByPlaceholder("Ej: x^2 + 3*x + 1").fill(GRAPH_EXPRESSION);
-  await page.getByRole("button", { name: "Graficar" }).click();
+  await page.getByRole("button", { name: /^(Graficar|Actualizar gráfico)$/ }).click();
   await sleep(2000);
 }
 
 async function startGuidedWorkflow(page) {
-  await page.getByRole("tab", { name: "Datos" }).click();
+  await page.getByRole("tab", { name: "Resultados" }).click();
+  const workflowSection = page.getByRole("button", {
+    name: /Guided Scientific Workflow/i,
+  });
+  if ((await workflowSection.getAttribute("aria-expanded")) === "false") {
+    await workflowSection.click();
+  }
   await page.getByRole("button", { name: /Comparar grupos/i }).click();
   await page.getByRole("button", { name: "Cancelar workflow" }).first().waitFor({
     state: "visible",
@@ -149,7 +200,7 @@ async function startGuidedWorkflow(page) {
 }
 
 async function captureSci58SlotA(page) {
-  await page.getByRole("tab", { name: "Datos" }).click();
+  await openExperimentalDataView(page);
   const sectionToggle = page.getByRole("button", { name: /Multi-Dataset Comparison/i });
   await sectionToggle.click();
   await page.getByRole("button", { name: "Capturar Slot A" }).click();
@@ -194,14 +245,14 @@ async function readBaselineScores(page) {
 }
 
 async function verifyDataset(page, fileName) {
-  await page.getByRole("tab", { name: "Datos" }).click();
+  await openExperimentalDataView(page);
   await page.getByText(`Nombre: ${fileName}`).waitFor({ state: "visible", timeout: 10000 });
   const body = await page.locator("body").innerText();
   return !body.includes("No hay series experimentales importadas.");
 }
 
 async function verifySci58(page, fileName) {
-  await page.getByRole("tab", { name: "Datos" }).click();
+  await openExperimentalDataView(page);
   const sectionToggle = page.getByRole("button", { name: /Multi-Dataset Comparison/i });
   await sectionToggle.click();
   const body = await page.locator("body").innerText();
@@ -213,6 +264,8 @@ async function verifySci58(page, fileName) {
 }
 
 async function verifySci59(page) {
+  await page.getByRole("tab", { name: "Análisis" }).click();
+  await sleep(500);
   const cancelButtons = page.getByRole("button", { name: "Cancelar workflow" });
   if ((await cancelButtons.count()) === 0) return false;
   const body = await page.locator("body").innerText();
@@ -220,7 +273,7 @@ async function verifySci59(page) {
 }
 
 async function verifyGraphContext(page) {
-  await page.getByRole("tab", { name: "Datos" }).click();
+  await openCurvesDataView(page);
   const title = await page.getByPlaceholder("Ej: Parábola cuadrática").inputValue();
   const expression = await page.getByPlaceholder("Ej: x^2 + 3*x + 1").inputValue();
   const inputsOk = title === GRAPH_TITLE && expression === GRAPH_EXPRESSION;
@@ -236,8 +289,14 @@ async function verifyGraphContext(page) {
   let hasCurveLabel = body.includes(GRAPH_EXPRESSION);
 
   if (!hasChart && !hasCurveLabel) {
-    await page.getByRole("tab", { name: "Datos" }).click();
-    await page.getByRole("button", { name: "Graficar" }).click();
+    await openCurvesDataView(page);
+    const constructorToggle = page.getByRole("button", {
+      name: /Constructor de curvas/i,
+    });
+    if ((await constructorToggle.getAttribute("aria-expanded")) === "false") {
+      await constructorToggle.click();
+    }
+    await page.getByRole("button", { name: /^(Graficar|Actualizar gráfico)$/ }).click();
     await sleep(1500);
     await page.getByRole("tab", { name: "Análisis" }).click();
     await sleep(1000);
@@ -265,15 +324,20 @@ async function verifyNewProjectClean(page) {
     state: "visible",
     timeout: 10000,
   });
-  await page.getByRole("tab", { name: "Datos" }).click();
+  await openExperimentalDataView(page);
   const body = await page.locator("body").innerText();
+  await openCurvesDataView(page);
   const title = await page.getByPlaceholder("Ej: Parábola cuadrática").inputValue();
-  const projectName = await page.getByLabel("Nombre del proyecto").inputValue();
+  const projectName = await page
+    .getByLabel("Nombre del proyecto")
+    .inputValue();
+  const hasDefaultProjectName =
+    projectName === "" || projectName === "Proyecto sin título";
   return (
     body.includes("No hay dataset experimental cargado") &&
     body.includes("No hay series experimentales importadas") &&
     title === "" &&
-    projectName === "Proyecto sin título"
+    hasDefaultProjectName
   );
 }
 
@@ -374,6 +438,9 @@ async function main() {
     channel: process.env.PLAYWRIGHT_CHANNEL ?? "msedge",
   });
   const page = await browser.newPage();
+  await page.addInitScript(() => {
+    localStorage.setItem("scientific-graph-ai.lab-usage-profile", "standard");
+  });
 
   try {
     await runDatasetPersistenceCycle(page, {

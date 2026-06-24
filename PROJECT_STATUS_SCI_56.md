@@ -1,8 +1,8 @@
-# Scientific Graph AI — Estado del Proyecto (Cierre ARCH-5 Fase 4 + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1)
+# Scientific Graph AI — Estado del Proyecto (Cierre UX-1A.1 LITE + ARCH-5 Fase 4 + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1)
 
 Fecha: 2026-06-19 (actualizado)
-Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–4 COMPLETED) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1
-Commit de referencia: `95f2a5e` (HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1); ARCH-5 Fase 4 completada sobre esta base (F4A/F4B/F4C/F4D)
+Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–4 COMPLETED) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 + **UX-1A.1 LITE**
+Commit de referencia: `95f2a5e` (HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1); ARCH-5 Fase 4 completada sobre esta base (F4A/F4B/F4C/F4D); **UX-1A.1 LITE** sobre build validado post-F4D
 
 ---
 
@@ -39,8 +39,9 @@ Hitos cerrados en este ciclo:
 | PROD-2A | COMPLETADO | Project File Core — persistencia local `.sgproj` (F0–F6) |
 | HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 | CERRADO | Auto-fit automático del viewport X para series experimentales (importación + hidratación de proyectos) |
 | BUG-SERIES-RENDER-1 | CERRADO | Incidente resuelto vía HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 — renderizado de puntos experimentales tras import/reapertura |
+| UX-1A.1 LITE | COMPLETADO | Progressive disclosure quick wins — singleton workflow, agrupación toggles Estadística, sidebar/welcome cleanup, contador Análisis, placeholder nombre proyecto (UX-QW-01); sin cambios SCI/PROD-2A schema |
 
-Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · ARCH-5 Fase 4 PASS · validate:comparison-unit PASS (43/43) · validate:full PASS · PROD-1A PASS · PROD-2A PASS · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 PASS · RW-01 PASS · RW-02 PASS · RW-03 PASS · RW-04 PASS · t crítico (df=10,18,30) PASS.**
+Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · ARCH-5 Fase 4 PASS · validate:comparison-unit PASS (43/43) · validate:full PASS · PROD-1A PASS · PROD-2A PASS · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 PASS · UX-1A.1 LITE PASS · RW-01 PASS · RW-02 PASS · RW-03 PASS · RW-04 PASS · t crítico (df=10,18,30) PASS.**
 
 ---
 
@@ -880,4 +881,34 @@ Inventario al cierre formal de **ARCH-5 Fase 4 — SCI-58 comparison domain/UI/t
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, **PROD-2A**, **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre BUG-SERIES-RENDER-1), **ARCH-5 F4A** (SCI-58 domain extraction), **ARCH-5 F4B** (SCI-58 UI dashboard extraction), **ARCH-5 F4C** (comparison unit tests) y **ARCH-5 F4D** (runtime/persistence contract consolidation, `validate:full` PASS). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+## 22. Estado del proyecto al cierre de UX-1A.1 LITE
+
+Inventario al cierre formal de **UX-1A.1 LITE — Progressive Disclosure Quick Wins**:
+
+| Ítem | Estado | Descripción |
+|------|--------|-------------|
+| UX-QW-01 — Nombre de proyecto | **COMPLETADO** | Placeholder `"Nombre del proyecto"`; campo vacío para default; fallback interno `"Proyecto sin título"` al guardar |
+| GuidedWorkflowPanel singleton | **COMPLETADO** | Una instancia DOM por host tab (`data` / `analysis` / `results` / `reports`); navegación al iniciar y al hidratar sesión activa |
+| Sidebar cleanup | **COMPLETADO** | Reportes y Asistente científico navegables; eliminados placeholders contradictorios |
+| Welcome cleanup | **COMPLETADO** | Eliminadas tarjetas disabled; panel solo en estado vacío inicial (sin CTAs de scroll/focus) |
+| Contador análisis activos | **COMPLETADO** | Badge numérico únicamente en pestaña **Análisis** (`VISIBILITY_KEYS_V1`) |
+| Agrupación toggles Estadística | **COMPLETADO** | 6 headers visuales (Descriptiva, Distribución y normalidad, Multivariante, Metodología y publicación, Inferencia, Dashboards); mismos toggles, sin acordeones |
+
+### Archivos tocados
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/app/page.tsx` | Workflow singleton, sidebar, welcome, badge Análisis, `InspectorToggleGroup`, agrupación inspector Estadística |
+| `src/app/ProjectScientificFilePanel.tsx` | UX-QW-01 placeholder |
+| `src/app/projectFileActions.ts` | Fallback `DEFAULT_PROJECT_NAME` al guardar |
+| `scripts/validate-prod2a-project-persistence.mjs` | Ajustes E2E alineados a singleton workflow y placeholder (sin cambio de schema `.sgproj`) |
+
+### Restricciones respetadas
+
+- Sin cambios en motores SCI-1→60, PROD-1A/B schema, PROD-2A persistencia/schema, dominios ARCH-5.
+- Sin `complexityMode`, Start Screen ni nuevos flujos.
+- `npm run validate:full` **PASS** (baseline D5/D6, PROD-2A F5, comparison-unit 43/43).
+
+---
+
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, **PROD-2A**, **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre BUG-SERIES-RENDER-1), **ARCH-5 F4A** (SCI-58 domain extraction), **ARCH-5 F4B** (SCI-58 UI dashboard extraction), **ARCH-5 F4C** (comparison unit tests), **ARCH-5 F4D** (runtime/persistence contract consolidation) y **UX-1A.1 LITE** (`validate:full` PASS). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.

@@ -1,4 +1,5 @@
 import {
+  DEFAULT_PROJECT_NAME,
   hydrateProjectJson,
   serializeProject,
   type ProjectMetadataV1,
@@ -51,7 +52,7 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
   };
 
   const handleSaveProject = (projectName: string) => {
-    const trimmedName = projectName.trim() || deps.projectMetadata.name;
+    const trimmedName = projectName.trim() || DEFAULT_PROJECT_NAME;
     const nextMetadata: ProjectMetadataV1 = {
       ...deps.projectMetadata,
       name: trimmedName,

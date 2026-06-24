@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type RefObject } from "react";
 
-import { PROJECT_FILE_EXTENSION, type ProjectMetadataV1 } from "@/lib/project";
+import {
+  DEFAULT_PROJECT_NAME,
+  PROJECT_FILE_EXTENSION,
+  type ProjectMetadataV1,
+} from "@/lib/project";
 
 import type { ProjectFileFeedback } from "./projectFileActions";
-import { btnPrimary, fieldLabel, inputField } from "./projectFileUiStyles";
+import { btnPrimary, btnSave, btnSecondary, fieldLabel, inputField } from "./projectFileUiStyles";
 
 export type { ProjectFileFeedback };
 
@@ -19,6 +23,7 @@ export type ProjectScientificFilePanelProps = {
   onNewProject: () => void;
   onSaveProject: (projectName: string) => void;
   onOpenProjectFile: (file: File) => Promise<void>;
+  openProjectButtonRef?: RefObject<HTMLButtonElement | null>;
 };
 
 export function ProjectScientificFilePanel({
@@ -29,8 +34,14 @@ export function ProjectScientificFilePanel({
   onNewProject,
   onSaveProject,
   onOpenProjectFile,
+  openProjectButtonRef,
 }: ProjectScientificFilePanelProps) {
-  const [draftName, setDraftName] = useState(projectMetadata.name);
+  const toDisplayName = (name: string) =>
+    name.trim() === "" || name === DEFAULT_PROJECT_NAME ? "" : name;
+
+  const [draftName, setDraftName] = useState(() =>
+    toDisplayName(projectMetadata.name)
+  );
   const [pendingDiscard, setPendingDiscard] = useState<PendingDiscardAction | null>(
     null
   );
@@ -38,7 +49,7 @@ export function ProjectScientificFilePanel({
   const openAfterDiscardRef = useRef(false);
 
   useEffect(() => {
-    setDraftName(projectMetadata.name);
+    setDraftName(toDisplayName(projectMetadata.name));
   }, [projectMetadata.id, projectMetadata.name]);
 
   const requestNewProject = () => {
@@ -93,7 +104,7 @@ export function ProjectScientificFilePanel({
           : "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)] border-[var(--app-border)]";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div>
         <label htmlFor="scientific-project-name" className={fieldLabel}>
           Nombre del proyecto
@@ -103,10 +114,10 @@ export function ProjectScientificFilePanel({
           type="text"
           value={draftName}
           onChange={(event) => setDraftName(event.target.value)}
-          placeholder="Proyecto sin título"
-          className={`${inputField} mt-1`}
+          placeholder="Nombre del proyecto"
+          className={`${inputField} mt-0.5`}
         />
-        <p className="text-xs text-[var(--app-text-muted)] mt-1">
+        <p className="text-[11px] text-[var(--app-text-muted)] mt-0.5">
           {isProjectDirty ? "Cambios sin guardar" : "Guardado en esta sesión"}
         </p>
       </div>
@@ -133,21 +144,25 @@ export function ProjectScientificFilePanel({
         </div>
       ) : null}
 
-      <div className="space-y-1.5">
-        <button type="button" onClick={requestNewProject} className={`w-full ${btnPrimary} text-sm`}>
+      <div className="space-y-1">
+        <button type="button" onClick={requestNewProject} className={`w-full h-8 ${btnPrimary}`}>
           Nuevo proyecto
         </button>
         <button
           type="button"
-          onClick={() => onSaveProject(draftName.trim() || projectMetadata.name)}
-          className="w-full rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+          onClick={() =>
+            onSaveProject(draftName.trim() || DEFAULT_PROJECT_NAME)
+          }
+          className={`w-full h-8 ${btnSave}`}
         >
           Guardar proyecto
         </button>
         <button
+          ref={openProjectButtonRef}
           type="button"
           onClick={requestOpenProject}
-          className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--app-text)] hover:bg-[var(--app-surface)]"
+          className={`w-full h-8 ${btnSecondary}`}
+          title={`Abre un archivo ${PROJECT_FILE_EXTENSION} con sesión completa`}
         >
           Abrir proyecto
         </button>
