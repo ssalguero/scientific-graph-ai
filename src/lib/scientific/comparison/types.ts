@@ -30,6 +30,48 @@ export type DatasetAnalysisProfileInferentialSnapshot = {
   prospectiveSampleSize?: number | null;
 };
 
+export type DatasetAnalysisProfileMethodologicalSnapshot = {
+  consistencyScore?: number;
+  qualityScore?: number;
+  reproducibilityScore?: number;
+  evidenceScore?: number;
+  assumptionScore?: number;
+  readinessScore?: number;
+  evaluatedEngines: number;
+};
+
+export type DatasetAnalysisProfileMultivariateSnapshot = {
+  pcaVariance?: number;
+  clusterCount?: number;
+  topVariable?: string;
+  topVariableTied?: string[];
+  averageSimilarity?: number;
+  headline?: string;
+};
+
+export type DatasetAnalysisProfilePublicationSnapshot = {
+  crossDomainDiagnosisTop?: string[];
+  publicationRisksTop?: string[];
+  prospectiveSampleSize?: number | null;
+  currentSampleSize?: number | null;
+  insufficientSampleWarning?: string | null;
+};
+
+export type DatasetAnalysisProfileCaptureEngineFlags = {
+  hasMethodologicalDashboard: boolean;
+  hasPublicationReadiness: boolean;
+  hasEvidenceEngine: boolean;
+  hasMultivariateDashboard: boolean;
+  hasEffectSizePower: boolean;
+  normalityAssessmentCount: number;
+};
+
+export type DatasetAnalysisProfileCaptureMetadata = {
+  sourceDatasetChecksum?: string | null;
+  worksheetModifiedAtCapture?: boolean;
+  captureEngineFlags?: DatasetAnalysisProfileCaptureEngineFlags;
+};
+
 export type DatasetAnalysisProfile = {
   slotLabel: ComparisonSlotId;
   datasetInfo: ComparisonDatasetInfo;
@@ -46,6 +88,10 @@ export type DatasetAnalysisProfile = {
   normality?: DatasetAnalysisProfileNormalitySnapshot;
   inferential?: DatasetAnalysisProfileInferentialSnapshot;
   multivariateHeadline?: string;
+  methodological?: DatasetAnalysisProfileMethodologicalSnapshot;
+  multivariate?: DatasetAnalysisProfileMultivariateSnapshot;
+  publication?: DatasetAnalysisProfilePublicationSnapshot;
+  captureMetadata?: DatasetAnalysisProfileCaptureMetadata;
   isComplete: boolean;
 };
 
@@ -74,4 +120,7 @@ export type MultiDatasetComparisonAnalysis = {
   crossDatasetDiagnosis: string[];
   comparisonRecommendations: string[];
   evaluatedMetrics: number;
+  methodologicalBreakdownAvailable?: boolean;
+  multivariateSectionAvailable?: boolean;
+  publicationHighlightsAvailable?: boolean;
 };

@@ -28,7 +28,7 @@ export const buildComparabilityWarnings = (
     warnings.push("Effect size disponible solo en Slot A.");
   } else if (!slotA.inferential && slotB.inferential) {
     warnings.push("Effect size disponible solo en Slot B.");
-  } else if (
+  } else   if (
     slotA.inferential?.metric &&
     slotB.inferential?.metric &&
     slotA.inferential.metric !== slotB.inferential.metric
@@ -37,6 +37,27 @@ export const buildComparabilityWarnings = (
       "Las métricas de effect size no son directamente comparables entre slots."
     );
   }
+
+  const enginesA = slotA.methodological?.evaluatedEngines;
+  const enginesB = slotB.methodological?.evaluatedEngines;
+  if (
+    enginesA !== undefined &&
+    enginesB !== undefined &&
+    Math.abs(enginesA - enginesB) > 1
+  ) {
+    warnings.push(
+      "Los perfiles metodológicos capturados evalúan distinto número de motores SCI-50→55."
+    );
+  }
+
+  const hasMultivariateA = slotA.multivariate !== undefined;
+  const hasMultivariateB = slotB.multivariate !== undefined;
+  if (hasMultivariateA !== hasMultivariateB) {
+    warnings.push(
+      "Highlights multivariantes (SCI-40) disponibles solo en uno de los slots."
+    );
+  }
+
   return deduplicateTextLines(warnings);
 };
 
@@ -96,6 +117,49 @@ export const buildCrossDatasetComparisonDiagnosis = (input: {
     );
   }
 
+  const overallRow = input.kpiRows.find((row) => row.key === "overallHealth");
+  const assumptionRow = input.kpiRows.find((row) => row.key === "assumption");
+  if (
+    overallRow?.delta !== null &&
+    overallRow?.delta !== undefined &&
+    overallRow.delta < -5 &&
+    assumptionRow?.delta !== null &&
+    assumptionRow?.delta !== undefined &&
+    assumptionRow.delta < -10
+  ) {
+    pushUniqueTextLine(
+      diagnosis,
+      "Slot B muestra menor salud metodológica global y peor evaluación de supuestos que Slot A."
+    );
+  }
+
+  const pcaA = input.slotA.multivariate?.pcaVariance;
+  const pcaB = input.slotB.multivariate?.pcaVariance;
+  if (
+    pcaA !== undefined &&
+    pcaB !== undefined &&
+    Math.abs(pcaB - pcaA) > 15
+  ) {
+    pushUniqueTextLine(
+      diagnosis,
+      "La varianza PCA explicada diverge notablemente entre los estudios comparados."
+    );
+  }
+
+  const warningA = input.slotA.publication?.insufficientSampleWarning;
+  const warningB = input.slotB.publication?.insufficientSampleWarning;
+  if (warningA && !warningB) {
+    pushUniqueTextLine(
+      diagnosis,
+      "Slot A reporta advertencia de tamaño muestral insuficiente; Slot B no."
+    );
+  } else if (!warningA && warningB) {
+    pushUniqueTextLine(
+      diagnosis,
+      "Slot B reporta advertencia de tamaño muestral insuficiente; Slot A no."
+    );
+  }
+
   if (diagnosis.length === 0) {
     pushUniqueTextLine(
       diagnosis,
@@ -114,6 +178,8 @@ const evidenceRowStable = (rows: ComparisonKpiRow[]): boolean => {
 export const buildCrossDatasetComparisonRecommendations = (input: {
   kpiRows: ComparisonKpiRow[];
   comparabilityWarnings: string[];
+  slotAComplete?: boolean;
+  slotBComplete?: boolean;
 }): string[] => {
   const recommendations: string[] = [];
   const readinessRow = input.kpiRows.find((row) => row.key === "readiness");
@@ -144,10 +210,17 @@ export const buildCrossDatasetComparisonRecommendations = (input: {
   }
 
   if (recommendations.length === 0) {
-    pushUniqueTextLine(
-      recommendations,
-      "Documente el contraste entre slots en el reporte científico del dataset activo."
-    );
+    if (input.slotAComplete && input.slotBComplete) {
+      pushUniqueTextLine(
+        recommendations,
+        "Incluya la sección Multi-Dataset en el reporte científico exportado para documentar el contraste entre slots."
+      );
+    } else {
+      pushUniqueTextLine(
+        recommendations,
+        "Documente el contraste entre slots en el reporte científico del dataset activo."
+      );
+    }
   }
 
   return recommendations;

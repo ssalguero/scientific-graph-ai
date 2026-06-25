@@ -7,6 +7,8 @@ import { buildComparisonKpiRow } from "../analysis";
 import {
   buildCanonicalDataset5Profile,
   buildCanonicalDataset6Profile,
+  buildEnrichedDataset5Profile,
+  buildEnrichedDataset6Profile,
   buildIncompleteProfile,
 } from "./fixtures/profiles";
 import type { AssertCase } from "./run-assertions";
@@ -221,6 +223,85 @@ export const runInterpretationCases = (assertCase: AssertCase) => {
     "recommendations.default",
     recommendationsDefault.some((line) =>
       line.includes("Documente el contraste entre slots")
+    )
+  );
+
+  const enrichedA = buildEnrichedDataset5Profile();
+  const enrichedB = buildEnrichedDataset6Profile();
+  const warningsEngineMismatch = buildComparabilityWarnings(
+    { ...enrichedA, methodological: { ...enrichedA.methodological!, evaluatedEngines: 6 } },
+    { ...enrichedB, methodological: { ...enrichedB.methodological!, evaluatedEngines: 3 } }
+  );
+  assertCase(
+    "warnings.methodologicalEngineMismatch",
+    warningsEngineMismatch.some((line) =>
+      line.includes("distinto número de motores SCI-50→55")
+    )
+  );
+
+  const warningsMultivariateOnlyA = buildComparabilityWarnings(
+    enrichedA,
+    { ...enrichedB, multivariate: undefined }
+  );
+  assertCase(
+    "warnings.multivariateAsymmetric",
+    warningsMultivariateOnlyA.some((line) =>
+      line.includes("Highlights multivariantes (SCI-40)")
+    )
+  );
+
+  const recommendationsComplete =
+    buildCrossDatasetComparisonRecommendations({
+      kpiRows: [
+        buildComparisonKpiRow({
+          key: "readiness",
+          title: "Readiness",
+          slotAValue: "70",
+          slotBValue: "70.2",
+          slotANumeric: 70,
+          slotBNumeric: 70.2,
+          higherIsBetter: true,
+        }),
+      ],
+      comparabilityWarnings: [],
+      slotAComplete: true,
+      slotBComplete: true,
+    });
+  assertCase(
+    "recommendations.completeSlotsPdf",
+    recommendationsComplete.some((line) =>
+      line.includes("sección Multi-Dataset")
+    )
+  );
+
+  const enrichedDiagnosis = buildCrossDatasetComparisonDiagnosis({
+    slotA: enrichedA,
+    slotB: enrichedB,
+    kpiRows: [
+      buildComparisonKpiRow({
+        key: "overallHealth",
+        title: "Health",
+        slotAValue: "77",
+        slotBValue: "67.5",
+        slotANumeric: 77,
+        slotBNumeric: 67.5,
+        higherIsBetter: true,
+      }),
+      buildComparisonKpiRow({
+        key: "assumption",
+        title: "Assumptions",
+        slotAValue: "75",
+        slotBValue: "58",
+        slotANumeric: 75,
+        slotBNumeric: 58,
+        higherIsBetter: true,
+      }),
+    ],
+  });
+  assertCase(
+    "diagnosis.methodologicalSpread",
+    enrichedDiagnosis.some((line) =>
+      line.includes("menor salud metodológica global")
     )
   );
 };

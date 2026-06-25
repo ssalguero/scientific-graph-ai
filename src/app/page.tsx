@@ -119,6 +119,7 @@ import {
   type GuidedWorkflowToggleSetters,
 } from "@/lib/scientific/workflow";
 import {
+  buildCaptureMetadata,
   buildDatasetAnalysisProfile,
   buildMultiDatasetComparisonAnalysis,
   canBuildDatasetAnalysisProfile,
@@ -126,7 +127,10 @@ import {
   createEmptyComparisonSlots,
   formatDatasetAnalysisProfileMiniSummary,
   mapInferentialToProfileSnapshot,
+  mapMethodologicalToProfileSnapshot,
+  mapMultivariateToProfileSnapshot,
   mapNormalitySummaryToProfileSnapshot,
+  mapPublicationToProfileSnapshot,
   type ComparisonDatasetInfo,
   type ComparisonSlot,
   type ComparisonSlotId,
@@ -22016,6 +22020,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     const multivariateHighlights = buildPublicationDashboardMultivariateHighlights(
       multivariateDashboardAnalysis
     );
+    const inferentialHighlight = buildPublicationDashboardInferentialHighlight(
+      effectSizePowerAnalysis
+    );
+    const normalityAssessmentCount =
+      canonicalNormalityAssessment.seriesAssessments.length;
+    const activeSessionDataset = activeDatasetId
+      ? sessionDatasets.find((dataset) => dataset.id === activeDatasetId)
+      : undefined;
+
     return buildDatasetAnalysisProfile({
       slotLabel,
       datasetInfo: currentDatasetInfo,
@@ -22043,6 +22056,44 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       ),
       inferential: mapInferentialToProfileSnapshot(effectSizePowerAnalysis),
       multivariateHeadline: multivariateHighlights?.headline ?? undefined,
+      methodological: mapMethodologicalToProfileSnapshot({
+        summaryCards: methodologicalDashboardAnalysis?.summaryCards,
+        evaluatedEngines: methodologicalDashboardAnalysis?.evaluatedEngines,
+      }),
+      multivariate: mapMultivariateToProfileSnapshot(multivariateHighlights),
+      publication: mapPublicationToProfileSnapshot(
+        publicationDashboardAnalysis
+          ? {
+              crossDomainDiagnosis:
+                publicationDashboardAnalysis.crossDomainDiagnosis,
+              publicationRisks: publicationDashboardAnalysis.publicationRisks,
+              prospectiveSampleSize:
+                inferentialHighlight?.prospectiveSampleSize,
+              currentSampleSize: inferentialHighlight?.currentSampleSize,
+              insufficientSampleWarning:
+                inferentialHighlight?.insufficientSampleWarning,
+            }
+          : inferentialHighlight
+            ? {
+                prospectiveSampleSize:
+                  inferentialHighlight.prospectiveSampleSize,
+                currentSampleSize: inferentialHighlight.currentSampleSize,
+                insufficientSampleWarning:
+                  inferentialHighlight.insufficientSampleWarning,
+              }
+            : undefined
+      ),
+      captureMetadata: buildCaptureMetadata({
+        worksheetModifiedAtCapture:
+          activeSessionDataset?.worksheetModified ?? worksheetModified,
+        hasMethodologicalDashboard: methodologicalDashboardAnalysis !== null,
+        hasPublicationReadiness:
+          publicationReadinessAnalyzerAnalysis !== null,
+        hasEvidenceEngine: evidenceStrengthEngineAnalysis !== null,
+        hasMultivariateDashboard: multivariateDashboardAnalysis !== null,
+        hasEffectSizePower: effectSizePowerAnalysis !== null,
+        normalityAssessmentCount,
+      }),
     });
   };
   const captureComparisonSlot = (slotId: ComparisonSlotId) => {

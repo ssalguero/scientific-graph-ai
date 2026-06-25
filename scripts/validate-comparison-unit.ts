@@ -1,6 +1,7 @@
 import { runAnalysisCases } from "../src/lib/scientific/comparison/__tests__/analysis.cases";
 import { runFormatCases } from "../src/lib/scientific/comparison/__tests__/format.cases";
 import { runInterpretationCases } from "../src/lib/scientific/comparison/__tests__/interpretation.cases";
+import { runProfileCases } from "../src/lib/scientific/comparison/__tests__/profile.cases";
 import {
   type CaseResult,
   createAssertCase,
@@ -10,6 +11,7 @@ const results: CaseResult[] = [];
 const assertCase = createAssertCase(results);
 
 runFormatCases(assertCase);
+runProfileCases(assertCase);
 runAnalysisCases(assertCase);
 runInterpretationCases(assertCase);
 

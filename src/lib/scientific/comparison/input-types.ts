@@ -25,6 +25,43 @@ export type CanBuildDatasetAnalysisProfileInput = {
   normalityAssessmentCount: number;
 };
 
+export type MethodologicalSummaryCardsInput = {
+  consistencyScore?: number;
+  qualityScore?: number;
+  reproducibilityScore?: number;
+  evidenceScore?: number;
+  assumptionScore?: number;
+  readinessScore?: number;
+};
+
+export type MultivariateHighlightsInput = {
+  pcaVariance?: number;
+  clusterCount?: number;
+  topVariable?: string;
+  topVariableTied?: string[];
+  averageSimilarity?: number;
+  headline?: string;
+};
+
+export type PublicationSnapshotInput = {
+  crossDomainDiagnosis?: string[];
+  publicationRisks?: string[];
+  prospectiveSampleSize?: number | null;
+  currentSampleSize?: number | null;
+  insufficientSampleWarning?: string | null;
+};
+
+export type BuildCaptureMetadataInput = {
+  sourceDatasetChecksum?: string | null;
+  worksheetModifiedAtCapture?: boolean;
+  hasMethodologicalDashboard: boolean;
+  hasPublicationReadiness: boolean;
+  hasEvidenceEngine: boolean;
+  hasMultivariateDashboard: boolean;
+  hasEffectSizePower: boolean;
+  normalityAssessmentCount: number;
+};
+
 export type BuildDatasetAnalysisProfileInput = {
   slotLabel: import("./types").ComparisonSlotId;
   datasetInfo: ComparisonDatasetInfo;
@@ -40,4 +77,8 @@ export type BuildDatasetAnalysisProfileInput = {
   normality?: import("./types").DatasetAnalysisProfileNormalitySnapshot;
   inferential?: import("./types").DatasetAnalysisProfileInferentialSnapshot;
   multivariateHeadline?: string;
+  methodological?: import("./types").DatasetAnalysisProfileMethodologicalSnapshot;
+  multivariate?: import("./types").DatasetAnalysisProfileMultivariateSnapshot;
+  publication?: import("./types").DatasetAnalysisProfilePublicationSnapshot;
+  captureMetadata?: import("./types").DatasetAnalysisProfileCaptureMetadata;
 };

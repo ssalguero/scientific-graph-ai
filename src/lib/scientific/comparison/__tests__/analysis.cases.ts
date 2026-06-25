@@ -7,6 +7,8 @@ import {
 import {
   buildCanonicalDataset5Profile,
   buildCanonicalDataset6Profile,
+  buildEnrichedDataset5Profile,
+  buildEnrichedDataset6Profile,
   buildIncompleteProfile,
 } from "./fixtures/profiles";
 import type { AssertCase } from "./run-assertions";
@@ -129,5 +131,59 @@ export const runAnalysisCases = (assertCase: AssertCase) => {
       slotA,
       buildIncompleteProfile("B")
     ) === false
+  );
+
+  const enrichedA = buildEnrichedDataset5Profile();
+  const enrichedB = buildEnrichedDataset6Profile();
+  const enrichedAnalysis = buildMultiDatasetComparisonAnalysis({
+    slotA: enrichedA,
+    slotB: enrichedB,
+  });
+
+  assertCase(
+    "enriched.golden.deltaReadiness",
+    enrichedAnalysis.kpiRows.find((row) => row.key === "readiness")?.delta ===
+      -9.5
+  );
+  assertCase(
+    "enriched.kpiRowCount",
+    enrichedAnalysis.kpiRows.length === 11
+  );
+  assertCase(
+    "enriched.methodologicalBreakdown",
+    enrichedAnalysis.methodologicalBreakdownAvailable === true
+  );
+  assertCase(
+    "enriched.multivariateSection",
+    enrichedAnalysis.multivariateSectionAvailable === true
+  );
+  assertCase(
+    "enriched.publicationHighlights",
+    enrichedAnalysis.publicationHighlightsAvailable === true
+  );
+
+  const normalityRow = enrichedAnalysis.kpiRows.find(
+    (row) => row.key === "normalityNonNormal"
+  );
+  assertCase(
+    "enriched.normalityNonNormalDelta",
+    normalityRow?.delta === 1
+  );
+
+  const assumptionRow = enrichedAnalysis.kpiRows.find(
+    (row) => row.key === "assumption"
+  );
+  assertCase(
+    "enriched.assumptionDelta",
+    assumptionRow?.delta === -17
+  );
+
+  const legacyAnalysis = buildMultiDatasetComparisonAnalysis({
+    slotA: buildCanonicalDataset5Profile(),
+    slotB: buildCanonicalDataset6Profile(),
+  });
+  assertCase(
+    "legacy.flagsAbsent",
+    legacyAnalysis.methodologicalBreakdownAvailable === false
   );
 };

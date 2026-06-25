@@ -6,6 +6,8 @@ import {
 import type {
   ComparisonDeltaDirection,
   DatasetAnalysisProfile,
+  DatasetAnalysisProfileMethodologicalSnapshot,
+  DatasetAnalysisProfileMultivariateSnapshot,
 } from "./types";
 
 export const formatComparisonNumericDelta = (delta: number | null): string => {
@@ -67,6 +69,47 @@ export const formatProfileEffectValue = (
     : `${magnitude} · ${metric}`;
 };
 
+export const formatProfileMethodologicalScore = (
+  score: number | undefined
+): string => {
+  if (score === undefined || !Number.isFinite(score)) {
+    return "—";
+  }
+  return score.toFixed(1);
+};
+
+export const formatProfileMethodologicalCard = (
+  snapshot: DatasetAnalysisProfileMethodologicalSnapshot | undefined,
+  key: keyof Omit<
+    DatasetAnalysisProfileMethodologicalSnapshot,
+    "evaluatedEngines"
+  >
+): string => formatProfileMethodologicalScore(snapshot?.[key]);
+
+export const formatProfileMultivariateValue = (
+  snapshot: DatasetAnalysisProfileMultivariateSnapshot | undefined
+): string => {
+  if (!snapshot?.headline) {
+    if (snapshot?.pcaVariance !== undefined) {
+      return `PCA ${snapshot.pcaVariance.toFixed(1)}%`;
+    }
+    return "—";
+  }
+  return snapshot.headline;
+};
+
+export const formatProfileProspectiveSampleSize = (
+  profile: DatasetAnalysisProfile
+): string => {
+  const size =
+    profile.inferential?.prospectiveSampleSize ??
+    profile.publication?.prospectiveSampleSize;
+  if (size === undefined || size === null || !Number.isFinite(size)) {
+    return "—";
+  }
+  return String(size);
+};
+
 export const formatDatasetAnalysisProfileMiniSummary = (
   profile: DatasetAnalysisProfile
 ): string => {
@@ -79,6 +122,9 @@ export const formatDatasetAnalysisProfileMiniSummary = (
   }
   if (profile.evidenceScore !== undefined) {
     parts.push(`E ${profile.evidenceScore.toFixed(1)}`);
+  }
+  if (profile.methodological?.evaluatedEngines) {
+    parts.push(`M ${profile.methodological.evaluatedEngines}/6`);
   }
   return parts.length > 0 ? parts.join(" · ") : "Perfil parcial";
 };

@@ -1,9 +1,13 @@
 export type {
-  ComparisonDatasetInfo,
-  EvidenceStrengthClassification,
-  PublicationReadinessClassification,
+  BuildCaptureMetadataInput,
   BuildDatasetAnalysisProfileInput,
   CanBuildDatasetAnalysisProfileInput,
+  ComparisonDatasetInfo,
+  EvidenceStrengthClassification,
+  MethodologicalSummaryCardsInput,
+  MultivariateHighlightsInput,
+  PublicationReadinessClassification,
+  PublicationSnapshotInput,
 } from "./input-types";
 
 export type {
@@ -12,8 +16,13 @@ export type {
   ComparisonSlot,
   ComparisonSlotId,
   DatasetAnalysisProfile,
+  DatasetAnalysisProfileCaptureEngineFlags,
+  DatasetAnalysisProfileCaptureMetadata,
   DatasetAnalysisProfileInferentialSnapshot,
+  DatasetAnalysisProfileMethodologicalSnapshot,
+  DatasetAnalysisProfileMultivariateSnapshot,
   DatasetAnalysisProfileNormalitySnapshot,
+  DatasetAnalysisProfilePublicationSnapshot,
   MultiDatasetComparisonAnalysis,
 } from "./types";
 
@@ -23,11 +32,15 @@ export {
 } from "./constants";
 
 export {
+  buildCaptureMetadata,
   buildDatasetAnalysisProfile,
   canBuildDatasetAnalysisProfile,
   createEmptyComparisonSlots,
   mapInferentialToProfileSnapshot,
+  mapMethodologicalToProfileSnapshot,
+  mapMultivariateToProfileSnapshot,
   mapNormalitySummaryToProfileSnapshot,
+  mapPublicationToProfileSnapshot,
 } from "./profile";
 
 export {
@@ -48,6 +61,10 @@ export {
   formatDatasetAnalysisProfileMiniSummary,
   formatProfileEffectValue,
   formatProfileEvidenceValue,
+  formatProfileMethodologicalCard,
+  formatProfileMethodologicalScore,
+  formatProfileMultivariateValue,
+  formatProfileProspectiveSampleSize,
   formatProfilePublicationStatusValue,
   formatProfileReadinessValue,
   getComparisonDeltaDirectionLabel,
