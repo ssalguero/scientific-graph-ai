@@ -7,6 +7,8 @@ type ImportPreviewPanelProps = {
   validation: ImportValidation;
   xLabel: string;
   yLabel: string;
+  highlightedRowIndex?: number | null;
+  onDiscardedRowSelect?: (rowIndex: number) => void;
 };
 
 const severityClass = {
@@ -23,6 +25,8 @@ export function ImportPreviewPanel({
   validation,
   xLabel,
   yLabel,
+  highlightedRowIndex,
+  onDiscardedRowSelect,
 }: ImportPreviewPanelProps) {
   return (
     <div className="space-y-3">
@@ -130,7 +134,17 @@ export function ImportPreviewPanel({
           <ul className="text-xs text-[var(--app-text-muted)] space-y-1">
             {(preview.audit?.sampledDiscardedRows ?? preview.discardedRows.slice(0, 5)).map((row) => (
               <li key={row.rowIndex}>
-                Fila {row.rowIndex + 1}: {row.reason}
+                <button
+                  type="button"
+                  className={`text-left hover:underline ${
+                    highlightedRowIndex === row.rowIndex
+                      ? "font-semibold text-[var(--app-warning-text)]"
+                      : ""
+                  }`}
+                  onClick={() => onDiscardedRowSelect?.(row.rowIndex)}
+                >
+                  Fila {row.rowIndex + 1}: {row.reason}
+                </button>
               </li>
             ))}
           </ul>

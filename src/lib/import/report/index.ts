@@ -8,7 +8,7 @@ import type {
   SelectedColumns,
   ImportSeveritySummary,
 } from "../types";
-import { getImportValidationRuleCatalog } from "../validate/rules";
+import { getImportValidationRuleCatalog, IMPORT_RULE_CATALOG_VERSION } from "../validate/rules";
 
 type ImportReportInput = {
   fileName: string;
@@ -98,6 +98,8 @@ export const buildImportReport = (input: ImportReportInput): ImportReport => {
     audit: input.preview.audit,
     samplePolicy: input.preview.samplePolicy,
     ruleCatalog: getImportValidationRuleCatalog(),
+    ruleCatalogVersion: IMPORT_RULE_CATALOG_VERSION,
+    auditPartial: input.preview.auditPartial,
     issueSummary,
     reproducibility: {
       fileName: input.fileName,

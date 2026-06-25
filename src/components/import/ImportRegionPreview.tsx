@@ -17,6 +17,7 @@ type ImportRegionPreviewProps = {
   matrix: unknown[][];
   region: TableRegion;
   highlightColumns?: { xIndex: number; yIndex: number };
+  highlightedRowIndex?: number | null;
   showConfidence?: boolean;
 };
 
@@ -24,6 +25,7 @@ export function ImportRegionPreview({
   matrix,
   region,
   highlightColumns,
+  highlightedRowIndex,
   showConfidence = true,
 }: ImportRegionPreviewProps) {
   const summary = formatRegionSummary(region);
@@ -118,10 +120,15 @@ export function ImportRegionPreview({
           <tbody>
             {rows.map(({ rowIndex, cells }) => {
               const kind = classifyRegionRow(rowIndex, region);
+              const isHighlightedRow = highlightedRowIndex === rowIndex;
               return (
                 <tr
                   key={rowIndex}
-                  className={`border-b border-[var(--app-border)] ${rowKindClass[kind]}`}
+                  className={`border-b border-[var(--app-border)] ${rowKindClass[kind]} ${
+                    isHighlightedRow
+                      ? "ring-2 ring-inset ring-[var(--app-warning-text)]/60"
+                      : ""
+                  }`}
                 >
                   <td className="sticky left-0 z-10 px-2 py-1 font-medium text-[var(--app-text-muted)] bg-inherit">
                     {rowIndex + 1}

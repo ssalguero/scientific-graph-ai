@@ -208,17 +208,30 @@ export const validateImportPreview = (
 export const validateMinimumImport = validateImportPreview;
 
 export const buildFastPathPreview = (
-  points: ImportPreview["points"]
+  points: ImportPreview["points"],
+  options?: {
+    skippedRows?: SkippedRow[];
+    evaluatedRowCount?: number;
+    auditPartial?: boolean;
+  }
 ): ImportPreview => {
   const samplePolicy = resolveSamplePolicy();
+  const skippedRows = options?.skippedRows ?? [];
+  const evaluatedRowCount =
+    options?.evaluatedRowCount ?? points.length + skippedRows.length;
+  const audit = buildAuditSummary(
+    skippedRows,
+    samplePolicy.discardedRowSampleLimit
+  );
   const preview: ImportPreview = {
     points,
-    skippedRows: [],
-    discardedRows: [],
+    skippedRows,
+    discardedRows: skippedRows,
     warnings: [],
-    stats: buildPreviewStats(points, 0, points.length),
-    audit: buildAuditSummary([], samplePolicy.discardedRowSampleLimit),
+    stats: buildPreviewStats(points, skippedRows.length, evaluatedRowCount),
+    audit,
     samplePolicy,
+    auditPartial: options?.auditPartial ?? skippedRows.length === 0,
   };
   const validation = validateImportPreview(preview, undefined, {
     xColumnIndex: 0,
@@ -226,4 +239,34 @@ export const buildFastPathPreview = (
   });
   preview.warnings = validation.warnings;
   return preview;
+};
+
+/** Builds fast-path audit from delimited text rows (ÉPICA B.3). */
+export const buildFastPathPreviewFromDelimitedRows = (
+  rows: unknown[][],
+  headerRowIndex: number,
+  xColumnIndex: number,
+  yColumnIndex: number
+): ImportPreview => {
+  const mapping: ColumnMapping = {
+    xColumnIndex,
+    yColumnIndex,
+    xLabel: String(rows[headerRowIndex]?.[xColumnIndex] ?? "X"),
+    yLabel: String(rows[headerRowIndex]?.[yColumnIndex] ?? "Y"),
+    rowFilter: "skip-sparse",
+  };
+  const region: TableRegion = {
+    startRow: headerRowIndex,
+    endRow: rows.length - 1,
+    startCol: 0,
+    endCol: Math.max(
+      ...rows.map((row) => (Array.isArray(row) ? row.length - 1 : 0)),
+      1
+    ),
+    headerRowIndex,
+    metadataRowCount: 0,
+    confidence: 1,
+  };
+  const preview = buildImportPreview(rows, region, { mapping });
+  return { ...preview, auditPartial: false };
 };

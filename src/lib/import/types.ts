@@ -77,6 +77,12 @@ export type ColumnMapping = {
   xLabel: string;
   yLabel: string;
   labelColumnIndex?: number;
+  replicateColumnIndex?: number;
+  replicateLabel?: string;
+  groupColumnIndex?: number;
+  groupLabel?: string;
+  /** Side-by-side layout: multiple dependent columns sharing one X (ÉPICA B.5). */
+  yColumnIndices?: number[];
   rowFilter: "skip-sparse";
 };
 
@@ -185,6 +191,8 @@ export type ImportPreview = {
   stats: ImportPreviewStats;
   audit?: ImportAuditSummary;
   samplePolicy?: ImportSamplePolicy;
+  /** True when row-level audit is sampled or unavailable (fast path). */
+  auditPartial?: boolean;
 };
 
 export type ImportValidation = {
@@ -229,6 +237,8 @@ export type ImportReport = {
   audit?: ImportAuditSummary;
   samplePolicy?: ImportSamplePolicy;
   ruleCatalog?: ImportValidationRule[];
+  ruleCatalogVersion?: string;
+  auditPartial?: boolean;
   issueSummary?: ImportSeveritySummary;
   reproducibility?: {
     fileName: string;
@@ -255,11 +265,19 @@ export type ImportBuildRequest = {
   totalSheetCount?: number;
 };
 
+export type ImportAuxiliaryColumn = {
+  id: string;
+  label: string;
+  role: "replicate" | "group" | "condition";
+  valuesByRowIndex: Record<number, string>;
+};
+
 export type ImportBuildResult = {
   series: ExperimentalSeries[];
   report: ImportReport;
   preview: ImportPreview;
   validation: ImportValidation;
+  auxiliaryColumns?: ImportAuxiliaryColumn[];
 };
 
 export type WorkbookAnalysis = {

@@ -12,7 +12,11 @@ export const runProd1Gate = () => {
   const runner = createGateRunner();
 
   runner.run("prod1b-unit", "npx", ["tsx", "scripts/validate-prod1-unit.ts"]);
-  runner.run("rw-suite", "node", ["scripts/validate-prod1-rw-suite.mjs"]);
+  runner.run("worksheet-import-unit", "npm", [
+    "run",
+    "validate:worksheet-import-unit",
+  ]);
+  runner.run("rw-suite", "npx", ["tsx", "scripts/validate-prod1-rw-suite.ts"]);
 
   return runner.finish({
     initiative: "PROD-1B",

@@ -1,8 +1,13 @@
 import {
   buildFastPathPreview,
+  buildFastPathPreviewFromDelimitedRows,
   buildImportPreview,
   buildImportReport,
+  EPIC_B_BASELINE,
+  getBlockingImportRuleCodes,
   getImportValidationRuleCatalog,
+  IMPORT_RULE_CATALOG_VERSION,
+  isBlockingImportRule,
   validateImportPreview,
   type ColumnDescriptor,
   type ColumnMapping,
@@ -211,6 +216,80 @@ assertCase(
   ),
   {
     ruleCount: ruleCatalog.length,
+  }
+);
+
+assertCase(
+  "prod1b.rule-catalog.version",
+  IMPORT_RULE_CATALOG_VERSION === "1.0.0" &&
+    auditedReport.ruleCatalogVersion === IMPORT_RULE_CATALOG_VERSION,
+  {
+    version: auditedReport.ruleCatalogVersion,
+  }
+);
+
+assertCase(
+  "prod1b.blocking-rules.q01-only",
+  getBlockingImportRuleCodes().length === 1 &&
+    isBlockingImportRule("Q-01") &&
+    !isBlockingImportRule("Q-02") &&
+    !isBlockingImportRule("LOW_POINT_COUNT"),
+  {
+    blocking: getBlockingImportRuleCodes(),
+  }
+);
+
+const delimitedAuditPreview = buildFastPathPreviewFromDelimitedRows(
+  [
+    ["time", "value"],
+    [0, 10],
+    [1, 12],
+    ["bad", 14],
+    [2, "n/a"],
+  ],
+  0,
+  0,
+  1
+);
+assertCase(
+  "prod1b.fast-path.delimited-audit",
+  delimitedAuditPreview.auditPartial === false &&
+    (delimitedAuditPreview.audit?.totalDiscardedRows ?? 0) === 2,
+  {
+    audit: delimitedAuditPreview.audit,
+  }
+);
+
+assertCase(
+  "epic-b.baseline.frozen",
+  EPIC_B_BASELINE.dataset5.overall === 77.0 &&
+    EPIC_B_BASELINE.rwCases.length === 4,
+  {
+    baseline: EPIC_B_BASELINE,
+  }
+);
+
+const lowPointPreview = buildImportPreview(
+  [
+    ["x", "y"],
+    [1, 2],
+    [2, 3],
+  ],
+  { ...region, endRow: 2, endCol: 1 },
+  mapping
+);
+const lowPointValidation = validateImportPreview(
+  lowPointPreview,
+  descriptors,
+  mapping
+);
+assertCase(
+  "prod1b.validation.advisory-not-blocking",
+  lowPointValidation.ok &&
+    lowPointValidation.warnings.some((issue) => issue.code === "LOW_POINT_COUNT"),
+  {
+    ok: lowPointValidation.ok,
+    codes: lowPointValidation.warnings.map((issue) => issue.code),
   }
 );
 

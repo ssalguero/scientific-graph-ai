@@ -21,10 +21,24 @@ import {
 } from "../lib/experimentalData";
 import {
   attemptExperimentalImport,
+  type ImportAuxiliaryColumn,
   type ImportReport,
   type WorkbookAnalysis,
 } from "@/lib/import";
+import {
+  buildColumnRegistryFromImportAuxiliary,
+  seriesToWorksheet,
+  type WorksheetColumnRegistry,
+} from "@/lib/experimentalWorksheet";
 import { ScientificWorksheetPanel } from "@/components/data/ScientificWorksheetPanel";
+import { VisualGraphBuilder } from "@/components/graph-builder/VisualGraphBuilder";
+import { GraphPreview } from "@/components/graph-builder/GraphPreview";
+import type {
+  GraphSpecification,
+  ProjectVisualGraphEntry,
+  VisualGraphPreview,
+} from "@/lib/visualGraphBuilder";
+import { createProjectVisualGraphEntry } from "@/lib/visualGraphBuilder";
 import {
   SessionDatasetPanel,
 } from "@/components/data/SessionDatasetPanel";
@@ -288,7 +302,7 @@ const sidebarNavItem =
 const sidebarSoonBadge =
   "inline-flex shrink-0 items-center rounded-full border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]";
 
-type DataWorkspaceView = "experimental" | "curves" | "advanced";
+type DataWorkspaceView = "experimental" | "curves" | "advanced" | "visual-builder";
 
 const DATA_WORKSPACE_VIEWS: {
   id: DataWorkspaceView;
@@ -297,6 +311,7 @@ const DATA_WORKSPACE_VIEWS: {
   { id: "experimental", label: "Experimental" },
   { id: "curves", label: "Curvas y=f(x)" },
   { id: "advanced", label: "Avanzado" },
+  { id: "visual-builder", label: "📊 Constructor Visual" },
 ];
 
 type DashboardSectionProps = {
@@ -6083,9 +6098,9 @@ const hasVariableImportanceDominanceGap = (
 };
 
 // SCI-37B: ranking compartido y comunicación explícita de empates.
-// El epsilon tolera el ruido numérico de power iteration en las contribuciones
-// PCA y queda muy por debajo del menor gap legítimo observado (~0.4 puntos).
-const VARIABLE_IMPORTANCE_TIE_EPSILON = 0.05;
+// SCI-37B-H1: epsilon estricto (1e-6) — solo empates reales en normalizedScore;
+// evita artefactos de coma flotante (~1e-5) sin agrupar gaps legítimos (~0.4 pp).
+const VARIABLE_IMPORTANCE_TIE_EPSILON = 1e-6;
 
 const areVariableImportanceScoresTied = (left: number, right: number) =>
   Math.abs(left - right) <= VARIABLE_IMPORTANCE_TIE_EPSILON;
@@ -19339,8 +19354,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [dataWorkspaceView, setDataWorkspaceView] =
     useState<DataWorkspaceView>("experimental");
   const [sidebarGraphLibraryOpen, setSidebarGraphLibraryOpen] = useState(false);
-  const [importReportExpanded, setImportReportExpanded] = useState(false);
+  const [importReportExpanded, setImportReportExpanded] = useState(true);
   const [worksheetModified, setWorksheetModified] = useState(false);
+  const [projectVisualGraphs, setProjectVisualGraphs] = useState<
+    ProjectVisualGraphEntry[]
+  >([]);
+  const clearProjectVisualGraphs = () => setProjectVisualGraphs([]);
   const [labUsageProfile, setLabUsageProfile] =
     useState<LabUsageProfile>("standard");
   const [labProfileLoaded, setLabProfileLoaded] = useState(false);
@@ -19426,6 +19445,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [lastImportReport, setLastImportReport] = useState<ImportReport | null>(
     null
   );
+  const [activeAuxiliaryColumns, setActiveAuxiliaryColumns] = useState<
+    ImportAuxiliaryColumn[]
+  >([]);
+  const [activeColumnRegistry, setActiveColumnRegistry] =
+    useState<WorksheetColumnRegistry>({});
   const [workbookImportWizard, setWorkbookImportWizard] = useState<{
     open: boolean;
     analysis: WorkbookAnalysis | null;
@@ -19676,7 +19700,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setExperimentalSeries(series);
     setCurrentDatasetInfo(createSessionDatasetInfo(dataset));
     setLastImportReport(dataset.datasetPayload.importReport);
+    setActiveAuxiliaryColumns(dataset.datasetPayload.auxiliaryColumns ?? []);
+    setActiveColumnRegistry(
+      dataset.datasetPayload.columnRegistry ??
+        buildColumnRegistryFromImportAuxiliary(
+          seriesToWorksheet(series).columns,
+          dataset.datasetPayload.auxiliaryColumns
+        )
+    );
     setWorksheetModified(dataset.worksheetModified);
+    setImportReportExpanded(true);
     applyExperimentalXViewportFit(series, {
       setMinX,
       setMaxX,
@@ -19698,13 +19731,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             dataset,
             experimentalSeries,
             lastImportReport,
-            worksheetModified
+            worksheetModified,
+            {
+              columnRegistry: activeColumnRegistry,
+              auxiliaryColumns: activeAuxiliaryColumns,
+            }
           )
         : dataset
     );
   };
 
   const activateSessionDataset = (targetId: string) => {
+    clearProjectVisualGraphs();
     const persisted = persistActiveSessionDataset(sessionDatasets);
     const target = persisted.find((dataset) => dataset.id === targetId);
     if (!target) {
@@ -19720,20 +19758,36 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     mappedSeries: ExperimentalSeries[],
     report: ImportReport | null,
     importedFileName: string,
-    importedAt?: string
+    importedAt?: string,
+    payloadExtras?: {
+      auxiliaryColumns?: ImportAuxiliaryColumn[];
+      columnRegistry?: WorksheetColumnRegistry;
+    }
   ) => {
+    clearProjectVisualGraphs();
     const persisted = persistActiveSessionDataset(sessionDatasets);
+    const columnRegistry =
+      payloadExtras?.columnRegistry ??
+      buildColumnRegistryFromImportAuxiliary(
+        seriesToWorksheet(mappedSeries).columns,
+        payloadExtras?.auxiliaryColumns
+      );
+    const auxiliaryColumns = payloadExtras?.auxiliaryColumns ?? [];
     const newDataset = createSessionDatasetFromImport(
       importedFileName,
       mappedSeries,
       report,
-      importedAt ?? new Date().toLocaleString()
+      importedAt ?? new Date().toLocaleString(),
+      { columnRegistry, auxiliaryColumns }
     );
 
     setSessionDatasets([...persisted, newDataset]);
     setActiveDatasetId(newDataset.id);
     setExperimentalImportError(null);
     setLastImportReport(report);
+    setActiveAuxiliaryColumns(auxiliaryColumns);
+    setActiveColumnRegistry(columnRegistry);
+    setImportReportExpanded(true);
     setExperimentalSeries(mappedSeries);
     setWorksheetModified(false);
     setCurrentDatasetInfo(createSessionDatasetInfo(newDataset));
@@ -19811,7 +19865,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 dataset,
                 nextSeries,
                 lastImportReport,
-                true
+                true,
+                {
+                  columnRegistry: activeColumnRegistry,
+                  auxiliaryColumns: activeAuxiliaryColumns,
+                }
               )
             : dataset
         )
@@ -20118,9 +20176,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const handleWorkbookImportComplete = ({
     series,
     report,
+    auxiliaryColumns,
   }: {
     series: ExperimentalSeries[];
     report: ImportReport;
+    auxiliaryColumns?: ImportAuxiliaryColumn[];
   }) => {
     const curveCount = curves.filter((curve) => curve.expression.trim()).length;
     const mappedSeries = series.map((item, index) => ({
@@ -20131,7 +20191,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     if (!preserveAnalysisConfiguration) {
       resetAnalysisSession();
     }
-    registerAndActivateImportedDataset(mappedSeries, report, report.fileName);
+    registerAndActivateImportedDataset(mappedSeries, report, report.fileName, undefined, {
+      auxiliaryColumns,
+    });
+  };
+
+  const viewSessionDatasetReport = (datasetId: string) => {
+    const dataset = sessionDatasets.find((item) => item.id === datasetId);
+    if (!dataset?.datasetPayload.importReport) return;
+    if (dataset.id !== activeDatasetId) {
+      activateSessionDataset(datasetId);
+      return;
+    }
+    setLastImportReport(dataset.datasetPayload.importReport);
+    setImportReportExpanded(true);
   };
 
   const selectedDataSource = getExperimentalDataSource(selectedDataSourceId);
@@ -21797,6 +21870,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setSmartStartDismissed(true);
     setActiveWorkspaceSection(section);
   };
+  const handleVisualGraphCreate = (result: {
+    graphSpec: GraphSpecification;
+    preview: VisualGraphPreview;
+    displaySeries: ExperimentalSeries[];
+  }) => {
+    setProjectVisualGraphs((previous) => [
+      ...previous,
+      createProjectVisualGraphEntry({
+        ok: true,
+        graphSpec: result.graphSpec,
+        preview: result.preview,
+        displaySeries: result.displaySeries,
+      }),
+    ]);
+    setTitle(
+      result.graphSpec.title?.trim() || result.preview.title || title
+    );
+    selectWorkspaceSection("results");
+  };
   const handleSmartStartSelect = (optionId: string) => {
     setSmartStartDismissed(true);
     setShowPublicationEntryBanner(false);
@@ -21989,6 +22081,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     ) {
       return;
     }
+
+    clearProjectVisualGraphs();
 
     setComparisonSlots((previous) => ({
       A: slotReferencesSessionDataset(previous.A.profile, target)
@@ -23504,6 +23598,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
   const handleNewProject = () => {
     pendingSlotCaptureRef.current = null;
+    clearProjectVisualGraphs();
     setSessionDatasets([]);
     setActiveDatasetId(null);
     setWorksheetModified(false);
@@ -24026,16 +24121,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </p>
                     )}
 
-                    {lastImportReport && !importReportHasIssues ? (
-                      <p className="mt-2 text-xs text-[var(--app-text-muted)]">
-                        Importación OK · {lastImportReport.importedPointCount}{" "}
-                        puntos · cobertura{" "}
-                        {Math.round(lastImportReport.coverageRatio * 100)}%
-                      </p>
-                    ) : null}
-
-                    {lastImportReport && importReportHasIssues ? (
+                    {lastImportReport ? (
                       <div className="mt-2">
+                        {!importReportHasIssues ? (
+                          <p className="text-xs text-[var(--app-text-muted)] mb-2">
+                            Importación OK · {lastImportReport.importedPointCount}{" "}
+                            puntos · cobertura{" "}
+                            {Math.round(lastImportReport.coverageRatio * 100)}%
+                            {lastImportReport.auditPartial ? " · auditoría parcial" : ""}
+                          </p>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() =>
@@ -24045,10 +24140,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           aria-expanded={importReportExpanded}
                         >
                           {importReportExpanded ? "Ocultar" : "Ver"} informe de
-                          importación (
-                          {lastImportReport.errorCount +
-                            lastImportReport.warningCount}{" "}
-                          avisos)
+                          importación
+                          {importReportHasIssues
+                            ? ` (${lastImportReport.errorCount + lastImportReport.warningCount} avisos)`
+                            : ""}
                         </button>
                         {importReportExpanded ? (
                           <ImportReportPanel report={lastImportReport} />
@@ -24116,6 +24211,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   onActivate={activateSessionDataset}
                   onSendToSlot={sendSessionDatasetToSlot}
                   onRemove={removeSessionDataset}
+                  onViewReport={viewSessionDatasetReport}
                   btnOutlineSm={btnOutlineSm}
                   btnPrimary={btnPrimary}
                   dataEmptyState={dataEmptyState}
@@ -24241,6 +24337,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   series={experimentalSeries}
                   modified={worksheetModified}
                   onSeriesChange={handleWorksheetSeriesChange}
+                  auxiliaryColumns={activeAuxiliaryColumns}
+                  initialColumnRegistry={activeColumnRegistry}
                   btnOutlineSm={btnOutlineSm}
                   btnPrimary={btnPrimary}
                   inputField={inputField}
@@ -24618,6 +24716,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </div>
                     )}
                   </div>
+              </NotebookSection>
+              ) : null}
+
+              {dataWorkspaceView === "visual-builder" ? (
+              <NotebookSection
+                title="Constructor Visual"
+                icon="📊"
+                subtitle="Diseñe gráficos desde las columnas de la Worksheet"
+                defaultOpen
+              >
+                <VisualGraphBuilder
+                  key={activeDatasetId ?? "no-dataset"}
+                  series={experimentalSeries}
+                  onCreateGraph={handleVisualGraphCreate}
+                  btnOutlineSm={btnOutlineSm}
+                  btnPrimary={btnPrimary}
+                  inputField={inputField}
+                  fieldLabel={fieldLabel}
+                  dataEmptyState={dataEmptyState}
+                  soonBadgeClassName={sidebarSoonBadge}
+                />
               </NotebookSection>
               ) : null}
 
@@ -26693,6 +26812,40 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             aria-hidden={activeWorkspaceSection !== "results"}
           >
             <h2 className={`${sectionLabel} mb-2`}>📈 Resultados</h2>
+            {projectVisualGraphs.length > 0 ? (
+              <div className="mb-3 space-y-2">
+                <NotebookSection
+                  title="Gráficos del Constructor Visual"
+                  icon="📊"
+                  subtitle={`${projectVisualGraphs.length} gráfico${
+                    projectVisualGraphs.length === 1 ? "" : "s"
+                  } creado${projectVisualGraphs.length === 1 ? "" : "s"} en esta sesión`}
+                  defaultOpen
+                >
+                  <div className="space-y-4">
+                    {projectVisualGraphs.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3"
+                      >
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-[var(--app-heading)]">
+                              {entry.preview.title}
+                            </p>
+                            <p className="text-xs text-[var(--app-text-muted)]">
+                              {entry.graphSpec.graphType} ·{" "}
+                              {new Date(entry.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <GraphPreview preview={entry.preview} />
+                      </div>
+                    ))}
+                  </div>
+                </NotebookSection>
+              </div>
+            ) : null}
             {profileShowsGuidedWorkflow(labUsageProfile) &&
               hasEnoughSeriesForCorrelation &&
               guidedWorkflowSession.status === "idle" && (
@@ -27146,7 +27299,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         />
                       )
                     )}
-                    {experimentalSeries.map((series) =>
+                    {visibleExperimentalSeries.map((series) =>
                       hiddenLegendKeys.includes(
                         experimentalLegendKey(series.id)
                       ) ? null : (

@@ -1,7 +1,7 @@
-# Scientific Graph AI — Estado del Proyecto (Cierre UX-1A.1 LITE + ARCH-5 Fase 4 + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1)
+# Scientific Graph AI — Estado del Proyecto (Cierre QA-1 + UX-1A.1 LITE + ARCH-5 Fase 4 + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 + DATA-3A)
 
-Fecha: 2026-06-19 (actualizado)
-Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–4 COMPLETED) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 + **UX-1A.1 LITE**
+Fecha: 2026-06-24 (actualizado)
+Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–4 COMPLETED) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 + **UX-1A.1 LITE** + **DATA-3A / HOTFIX-DATA-3A (COMPLETED)** + **Sprint QA-1 (CERRADO)**
 Commit de referencia: `95f2a5e` (HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1); ARCH-5 Fase 4 completada sobre esta base (F4A/F4B/F4C/F4D); **UX-1A.1 LITE** sobre build validado post-F4D
 
 ---
@@ -22,6 +22,7 @@ Hitos cerrados en este ciclo:
 | SCI-56 | COMPLETADO | Dashboard ejecutivo del bloque metodológico SCI-50→55 |
 | SCI-29B | COMPLETADO | Exclusión de variables constantes en el pipeline de clustering (consistencia con PCA) |
 | SCI-37B | COMPLETADO | Ranking compartido y comunicación explícita de empates en Variable Importance |
+| SCI-37B-H1 | COMPLETADO | Epsilon de empate 1e-6 — elimina empates artificiales por ruido numérico |
 | SCI-57 | COMPLETADO | Effect Size & Power Engine — magnitud del efecto, IC95% y potencia sobre inferencia existente |
 | SCI-57B | COMPLETADO | Inferencia effect-aware en SCI-53 vía `dominantMagnitude` de SCI-57 |
 | SCI-60 | COMPLETADO | Executive Publication Dashboard — síntesis read-only pre-manuscrito |
@@ -40,8 +41,15 @@ Hitos cerrados en este ciclo:
 | HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 | CERRADO | Auto-fit automático del viewport X para series experimentales (importación + hidratación de proyectos) |
 | BUG-SERIES-RENDER-1 | CERRADO | Incidente resuelto vía HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 — renderizado de puntos experimentales tras import/reapertura |
 | UX-1A.1 LITE | COMPLETADO | Progressive disclosure quick wins — singleton workflow, agrupación toggles Estadística, sidebar/welcome cleanup, contador Análisis, placeholder nombre proyecto (UX-QW-01); sin cambios SCI/PROD-2A schema |
+| DATA-3A | COMPLETED | Visual Graph Builder — Constructor Visual (Datos), preview, creación en Resultados (`projectVisualGraphs`) |
+| HOTFIX-DATA-3A-1 | PASS | Flujo Preview → Crear gráfico → tarjeta en Resultados |
+| HOTFIX-DATA-3A-2 | PASS | Botón y panel de configuración accesibles |
+| HOTFIX-DATA-3A-3 | PASS | Render Resultados: `GraphPreview` con `aspect={1.8}` (layout responsive) |
+| HOTFIX-DATA-3A-4 | PASS | `projectVisualGraphs` sincronizado con ciclo de vida dataset/proyecto |
+| HOTFIX-DATA-3A-5 | PASS | Estado inicial neutro (`INITIAL_VISUAL_GRAPH_BUILDER_DRAFT`, `graphType: null`) |
+| **QA-1** | **CERRADO** | Validación manual end-to-end — ver §23 y `QA-1_MANUAL_VALIDATION_PROTOCOL.md` |
 
-Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · ARCH-5 Fase 4 PASS · validate:comparison-unit PASS (43/43) · validate:full PASS · PROD-1A PASS · PROD-2A PASS · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 PASS · UX-1A.1 LITE PASS · RW-01 PASS · RW-02 PASS · RW-03 PASS · RW-04 PASS · t crítico (df=10,18,30) PASS.**
+Estado de calidad: **Build PASS · TypeScript PASS · Dataset5 PASS · Dataset6 PASS · PDF PASS · SCI-40 PASS · SCI-56 PASS · SCI-57 PASS · SCI-57B PASS · SCI-60 PASS · SCI-59 PASS · SCI-58 PASS · ARCH-5 Fase 1 PASS · ARCH-5 Fase 2 PASS · ARCH-5 Fase 3 PASS · ARCH-5 Fase 4 PASS · validate:comparison-unit PASS (43/43) · validate:full PASS · PROD-1A PASS · PROD-2A PASS · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 PASS · UX-1A.1 LITE PASS · validate:visual-graph-builder-unit PASS (10/10) · validate:visual-graph-builder-render-unit PASS · RW-01 PASS · RW-02 PASS · RW-03 PASS · RW-04 PASS · t crítico (df=10,18,30) PASS · QA-1 manual PASS.**
 
 ---
 
@@ -182,6 +190,11 @@ SCI-58 es capa de comparación read-only (Opción D): captura snapshots `Dataset
 - Ranking compartido (1, 1, 3) con comunicación explícita de empates
 - SCI-40, SCI-19 y SCI-20 tie-aware; Dataset5 como caso positivo de empate
 
+**SCI-37B-H1 — Tight Tie Epsilon (COMPLETED)**
+- Cambio: `VARIABLE_IMPORTANCE_TIE_EPSILON` `0.05` → `1e-6`
+- Motivo: eliminar empates producidos por ruido numérico manteniendo soporte para empates reales
+- Validación: `validate:variable-importance-unit` PASS · Dataset5 PASS (líder único top) · Dataset6 PASS (sin cambio)
+
 **SCI-57 — Effect Size & Power Engine (COMPLETED)**
 - Motor único de síntesis sobre la capa de inferencia existente (patrón SCI-50→56)
 - **Effect Size:** Cohen's d, Hedges' g, Eta², Omega², r, Cliff's Delta (magnitud), Epsilon²
@@ -319,9 +332,11 @@ SCI-58 es capa de comparación read-only (Opción D): captura snapshots `Dataset
 
 SCI-59 no es dashboard analítico: orquesta toggles, navegación workspace e inspector hacia motores y dashboards existentes.
 
-SCI-56 muestra: Overall Health Score, 6 tarjetas metodológicas y diagnóstico global.
+**Progressive disclosure (post UX-1A.1 LITE):** todos los motores metodológicos (SCI-50→55) y dashboards de síntesis (SCI-40, SCI-56, SCI-58, SCI-60) requieren **activación manual via toggle** en el Inspector de Análisis (default **OFF**). El Guided Workflow (SCI-59) puede activarlos paso a paso de forma acumulativa. Los paneles **no aparecen automáticamente** al importar un dataset ni al navegar a Resultados.
 
-SCI-60 muestra: Publication Status (SCI-55), KPIs referenciales, normalidad, highlights multivariantes, effect dominante, diagnóstico editorial, riesgos y recomendaciones.
+SCI-56 muestra: Overall Health Score, 6 tarjetas metodológicas y diagnóstico global — **solo con toggle `showMethodologicalDashboard` activo**.
+
+SCI-60 muestra: Publication Status (SCI-55), KPIs referenciales, normalidad, highlights multivariantes, effect dominante, diagnóstico editorial, riesgos y recomendaciones — **solo con toggle `showPublicationDashboard` activo**.
 
 SCI-57 no es dashboard ejecutivo: es motor inferencial con panel propio (📏 Effect Size & Power Engine).
 
@@ -331,7 +346,7 @@ SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sig
 
 ## 5. Backlog pendiente
 
-**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, PROD-2A y HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 están cerrados y validados. BUG-SERIES-RENDER-1 cerrado sin deuda bloqueante.
+**Backlog técnico histórico: vacío.** SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, PROD-2A, HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1, **DATA-3A / HOTFIX-DATA-3A (COMPLETED)** están cerrados y validados. BUG-SERIES-RENDER-1 cerrado sin deuda bloqueante.
 
 ### Deuda menor documentada
 
@@ -343,16 +358,24 @@ SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sig
 
 ---
 
-## 6. Candidatos post-ARCH-5 Fase 4 / PROD-1A
+## 6. Roadmap — Próxima etapa
 
-Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización definitiva.
+**Sprint QA-1:** **CERRADO** (2026-06-24). El núcleo científico SCI-1 → SCI-60 se considera **validado** (manual + `validate:full` PASS). Protocolo: [`QA-1_MANUAL_VALIDATION_PROTOCOL.md`](./QA-1_MANUAL_VALIDATION_PROTOCOL.md). Roadmap detallado: [`ROADMAP.md`](./ROADMAP.md).
+
+### Próximo bloque principal: SCI-58 v2 — Comparación científica ampliada
+
+**Estado:** planificado — **no implementado**.
+
+Evolución sobre SCI-58 v1 (dominio `comparison/`, slots A/B, perfiles read-only). Alcance candidato: N>2 slots, integración reporte/PDF multi-dataset, persistencia extendida, comparación ampliada — sin recalcular motores SCI upstream.
+
+### Candidatos posteriores (sin priorización definitiva)
 
 | Candidato | Descripción breve |
 |-----------|-------------------|
 | **PROD-1B — Validación avanzada + reportes** | Preview expandido, warnings estructurados, `ImportReport` completo, script RW en CI; plan aprobado, no implementado. |
 | **ARCH-5 Fase 4+ — Metodología / reporting** | Metodología SCI-50→56, reporting, PDF (roadmap ARCH-5). |
-| **SCI-58 v2 — Comparación ampliada** | N>2 slots, integración SCI-17/PDF, persistencia entre sesiones o comparación de series completas. |
 | **PROD-1 v1.1 — Multi-serie side-by-side** | Importación de layouts `grafico q vs t` (RW-04) como múltiples series en un paso. |
+| **ARCH-6 — Mejoras UX post-QA-1** | Estado persistente Constructor Visual por dataset; refinamiento progressive disclosure (ver §23 Observaciones UX). |
 
 ---
 
@@ -370,7 +393,7 @@ Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización defi
 | SCI-40 (Multivariate Summary Dashboard) | PASS | PASS |
 | SCI-56 dashboard | PASS | PASS |
 | SCI-29B (exclusión de constantes en clustering) | PASS (control negativo) | PASS (pH excluida) |
-| SCI-37B (ranking compartido + empates) | PASS (empate top) | PASS (control negativo) |
+| SCI-37B (ranking compartido + empates) | PASS (líder único top, SCI-37B-H1) | PASS (control negativo) |
 | SCI-57 (Effect Size & Power Engine) | PASS (d ≈ −1.36, efecto grande) | PASS (d ≈ −1.98, efecto grande) |
 | SCI-57B (evidencia effect-aware) | PASS (Evidence 82.7, Strong) | PASS (Evidence 73.3, Strong) |
 | SCI-60 (Executive Publication Dashboard) | PASS (Near Ready, 77.0) | PASS (Requires Review, 67.5) |
@@ -389,6 +412,8 @@ Propuestas no aprobadas para la siguiente fase evolutiva. Sin priorización defi
 | PROD-1A RW-Suite (RW-01→RW-04) | PASS | PASS |
 | PROD-2A Project File (save/reload D5/D6, SCI-58/59) | PASS | PASS |
 | HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 (render series post-import/reopen) | PASS | PASS |
+| DATA-3A / HOTFIX-DATA-3A (Visual Graph Builder + hotfixes 3A-1→3A-5) | PASS (10/10 + render) | PASS (10/10 + render) |
+| Sprint QA-1 (validación manual end-to-end) | PASS | PASS |
 | Export PDF (SCI-56 + SCI-57 + SCI-60) | PASS | PASS |
 | t crítico IC95% (df=10, 18, 30) | PASS (2.228 / 2.101 / 2.042) | — |
 
@@ -493,7 +518,7 @@ Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset ex
 
 ### Backlog técnico
 
-**Vacío.** Los candidatos de la sección 6 (PROD-1B, ARCH-5 Fase 4+, SCI-58 v2, PROD-1 v1.1) son evolución futura, no backlog pendiente.
+**Vacío.** Sprint QA-1 cerrado. Próximo bloque: **SCI-58 v2** (ver §6, `ROADMAP.md`). Candidatos PROD-1B, ARCH-5 Fase 4+, ARCH-6 son evolución futura, no backlog pendiente.
 
 ### Áreas abiertas para evolución futura
 
@@ -772,11 +797,11 @@ Las series experimentales importadas se persistían y hidrataban correctamente, 
 
 ## 18. Próximos pasos recomendados
 
-1. **Implementar PROD-1B** — validación avanzada + reportes completos sobre `src/lib/import/`.
-2. **Continuar ARCH-5 Fase 4+** — metodología SCI-50→56 o reporting según roadmap.
-3. **Formalizar la suite de validación** (`validate:full` + Playwright + RW Suite) como herramienta de regresión continua.
-4. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
-5. **Evaluar SCI-58 v2** sobre la base cerrada de ARCH-5 Fase 4.
+1. **Iniciar SCI-58 v2** — comparación científica ampliada (próximo bloque principal; ver §6 y `ROADMAP.md`).
+2. **Implementar PROD-1B** — validación avanzada + reportes completos sobre `src/lib/import/`.
+3. **Continuar ARCH-5 Fase 4+** — metodología SCI-50→56 o reporting según roadmap.
+4. **ARCH-6** — abordar observaciones UX registradas en §23 (no bloqueantes).
+5. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
 
 ---
 
@@ -911,4 +936,76 @@ Inventario al cierre formal de **UX-1A.1 LITE — Progressive Disclosure Quick W
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, **PROD-2A**, **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre BUG-SERIES-RENDER-1), **ARCH-5 F4A** (SCI-58 domain extraction), **ARCH-5 F4B** (SCI-58 UI dashboard extraction), **ARCH-5 F4C** (comparison unit tests), **ARCH-5 F4D** (runtime/persistence contract consolidation) y **UX-1A.1 LITE** (`validate:full` PASS). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+## 22. DATA-3A — Visual Graph Builder + HOTFIX-DATA-3A — **COMPLETED**
+
+Bloque funcional del **Constructor Visual** (Datos → 📊 Constructor Visual): diseño de gráficos desde columnas de la Worksheet, vista previa, creación en Resultados (`projectVisualGraphs`).
+
+| Hito | Estado | Notas |
+|------|--------|-------|
+| DATA-3A — Visual Graph Builder (v1) | **COMPLETED** | Scatter, Line, Bar, Histogram, Box Plot, Violin |
+| HOTFIX-DATA-3A-1 | **PASS** | Flujo Preview → Crear gráfico → tarjeta en Resultados |
+| HOTFIX-DATA-3A-2 | **PASS** | Botón y panel de configuración accesibles |
+| HOTFIX-DATA-3A-3 | **PASS** | Render Resultados: `GraphPreview` con `aspect={1.8}` (layout responsive) |
+| HOTFIX-DATA-3A-4 | **PASS** | `projectVisualGraphs` se vacía en nuevo/restablecer proyecto, eliminar/cambiar/importar dataset |
+| HOTFIX-DATA-3A-5 | **PASS** | Estado inicial neutro (`INITIAL_VISUAL_GRAPH_BUILDER_DRAFT`, `graphType: null`) |
+
+**Validación manual (2026-06):** ciclo de vida dataset/proyecto, estado neutro del Builder, preview vacía hasta seleccionar tipo — confirmados.
+
+**Tests:** `npm run validate:visual-graph-builder-unit` (10/10) · `npm run validate:visual-graph-builder-render-unit` PASS
+
+**Archivos principales:** `src/lib/visualGraphBuilder.ts` · `src/components/graph-builder/*` · `src/app/page.tsx`
+
+**Alcance explícito (sesión actual):** gráficos del Constructor en memoria de sesión; **no** persistidos en `.sgproj` por dataset. Evolución futura: **ARCH-6** (§6).
+
+---
+
+## 23. Sprint QA-1 — Validación Manual — **CERRADO**
+
+**Status:** PASS · **Fecha de cierre:** 2026-06-24  
+**Protocolo:** [`QA-1_MANUAL_VALIDATION_PROTOCOL.md`](./QA-1_MANUAL_VALIDATION_PROTOCOL.md)  
+**Gate automatizado:** `npm run validate:full` — **PASS**
+
+### Alcance validado
+
+| Área | Resultado QA-1 |
+|------|----------------|
+| Validación manual end-to-end | **COMPLETADA** |
+| Constructor Visual (DATA-3A) | **VALIDADO** |
+| Worksheet | **VALIDADA** |
+| Guided Scientific Workflow (SCI-59) | **VALIDADO** |
+| Inspector de Análisis (toggles progressive disclosure) | **VALIDADO** |
+| SCI-53 — Evidence Strength Engine | **VALIDADO** (D5: 82.7 · D6: 73.3) |
+| SCI-55 — Publication Readiness Analyzer | **VALIDADO** (D5: 77.0 · D6: 67.5) |
+| SCI-56 — Methodological Summary Dashboard | **VALIDADO** (D5: Overall 77.0 · D6: 67.5) |
+| SCI-60 — Executive Publication Dashboard | **VALIDADO** (D5: Near Ready · D6: Requires Review) |
+| `npm run validate:full` | **PASS** |
+
+### Flujo de validación aplicado
+
+```
+Importación → Worksheet → Resultados → Workflow → Inspector → Activación de motores → Validación de dashboards
+```
+
+La validación confirmó la arquitectura actual post UX-1A.1 LITE: paneles metodológicos visibles **únicamente** tras activación de toggles (default OFF) o pasos del Guided Workflow (SCI-59).
+
+### Observaciones UX
+
+Registradas para futuras mejoras (**ARCH-6**). **No constituyen bugs** ni bloquean el cierre de QA-1:
+
+1. **Estado workflow persistente:** el Guided Scientific Workflow (SCI-59) mantiene su sesión activa (template, paso actual) al navegar entre pestañas Datos / Análisis / Resultados / Reportes, hasta cancelación explícita o reset de sesión/proyecto.
+
+2. **Toggles default OFF:** los dashboards metodológicos (SCI-56, SCI-60) y motores SCI-50→55 requieren activación manual en el Inspector de Análisis o via pasos del workflow T3. El comportamiento histórico donde los dashboards aparecían automáticamente **ya no aplica**.
+
+3. **Cálculo vs visualización:** los motores científicos continúan calculándose en runtime (`useMemo`) aunque la visualización esté desactivada. Esto alimenta cascadas downstream (SCI-55→56→60), captura SCI-58 y secciones del reporte PDF, pero no es evidente para el usuario sin activar toggles.
+
+4. **Auto-toggle acumulativo:** el workflow SCI-59 activa toggles al aplicar pasos pero no los revierte al cancelar el workflow.
+
+### Cierre formal
+
+El **Sprint QA-1 queda cerrado**. El núcleo científico **SCI-1 → SCI-60** se considera validado. El proyecto queda **listo para iniciar SCI-58 v2** como próximo bloque principal evolutivo (ver §6, `ROADMAP.md`).
+
+**Restricciones de este cierre:** documentación únicamente; sin cambios funcionales, motores SCI, workflow, UI ni lógica científica.
+
+---
+
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, **PROD-2A**, **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre BUG-SERIES-RENDER-1), **ARCH-5 F4A** (SCI-58 domain extraction), **ARCH-5 F4B** (SCI-58 UI dashboard extraction), **ARCH-5 F4C** (comparison unit tests), **ARCH-5 F4D** (runtime/persistence contract consolidation), **UX-1A.1 LITE** (`validate:full` PASS), **DATA-3A / HOTFIX-DATA-3A (COMPLETED)** y **Sprint QA-1 (CERRADO)**. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.

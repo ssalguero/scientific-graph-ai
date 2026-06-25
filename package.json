@@ -13,9 +13,16 @@
     "validate:prod2a": "node scripts/validate-prod2a-project-persistence.mjs",
     "validate:prod2a-gate": "node scripts/validate-prod2a-gate.mjs",
     "validate-prod1-gate": "node scripts/validate-prod1-gate.mjs",
+    "validate:worksheet-import-unit": "npx tsx scripts/validate-worksheet-import-unit.ts",
     "validate:full": "node scripts/validate-full-gate.mjs",
     "validate:chart-viewport": "npx tsx scripts/validate-chart-viewport.ts",
-    "validate:comparison-unit": "npx tsx scripts/validate-comparison-unit.ts"
+    "validate:comparison-unit": "npx tsx scripts/validate-comparison-unit.ts",
+    "validate:variable-importance-unit": "npx tsx scripts/validate-variable-importance-unit.ts",
+    "validate:worksheet-transforms-unit": "npx tsx scripts/validate-worksheet-transforms-unit.ts",
+    "validate:formula-builder-unit": "npx tsx scripts/validate-formula-builder-unit.ts",
+    "validate:worksheet-lineage-unit": "npx tsx scripts/validate-worksheet-lineage-unit.ts",
+    "validate:visual-graph-builder-unit": "npx tsx scripts/validate-visual-graph-builder-unit.ts",
+    "validate:visual-graph-builder-render-unit": "npx tsx scripts/validate-visual-graph-builder-render-unit.tsx"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

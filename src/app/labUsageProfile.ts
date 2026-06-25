@@ -1,6 +1,10 @@
 export type LabUsageProfile = "basic" | "standard" | "expert";
 
-export type DataWorkspaceView = "experimental" | "curves" | "advanced";
+export type DataWorkspaceView =
+  | "experimental"
+  | "curves"
+  | "advanced"
+  | "visual-builder";
 
 export type AnalysisInspectorSection =
   | "visualization"

@@ -10,10 +10,11 @@ import {
   type WizardImportState,
   type WizardStep,
   type ImportReport,
+  type ImportAuxiliaryColumn,
 } from "@/lib/import";
 import { detectTableRegion } from "@/lib/import/detect-table";
 import { buildColumnDescriptors } from "@/lib/import/detect-header";
-import { suggestAxisMapping } from "@/lib/import/map";
+import { suggestAxisMapping, suggestMultiSeriesMapping } from "@/lib/import/map";
 import { ImportPreviewPanel } from "./ImportPreviewPanel";
 import { ImportRegionPreview } from "./ImportRegionPreview";
 
@@ -25,6 +26,7 @@ type WorkbookImportWizardProps = {
   onComplete: (payload: {
     series: import("@/lib/experimentalData").ExperimentalSeries[];
     report: ImportReport;
+    auxiliaryColumns?: ImportAuxiliaryColumn[];
   }) => void;
 };
 
@@ -55,6 +57,9 @@ export function WorkbookImportWizard({
     buildInitialWizardState(analysis, sourceId)
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(
+    null
+  );
 
   useEffect(() => {
     if (open) {
@@ -121,7 +126,11 @@ export function WorkbookImportWizard({
       );
       return;
     }
-    onComplete({ series: result.series, report: result.report });
+    onComplete({
+      series: result.series,
+      report: result.report,
+      auxiliaryColumns: result.auxiliaryColumns,
+    });
   };
 
   return (
@@ -194,11 +203,17 @@ export function WorkbookImportWizard({
                             region
                           );
                           const mapping =
+                            suggestMultiSeriesMapping(
+                              selectedSheet.matrix,
+                              region,
+                              columnDescriptors
+                            ) ??
                             suggestAxisMapping(
                               selectedSheet.matrix,
                               region,
                               columnDescriptors
-                            ) ?? state.mapping;
+                            ) ??
+                            state.mapping;
                           setState(
                             refreshWizardState(
                               {
@@ -257,6 +272,7 @@ export function WorkbookImportWizard({
               <ImportRegionPreview
                 matrix={selectedSheetMatrix}
                 region={state.region}
+                highlightedRowIndex={highlightedRowIndex}
               />
             </div>
           )}
@@ -339,9 +355,17 @@ export function WorkbookImportWizard({
                     xIndex: state.mapping.xColumnIndex,
                     yIndex: state.mapping.yColumnIndex,
                   }}
+                  highlightedRowIndex={highlightedRowIndex}
                   showConfidence={false}
                 />
               </div>
+              {state.mapping.yColumnIndices &&
+              state.mapping.yColumnIndices.length >= 2 ? (
+                <p className="sm:col-span-2 text-xs text-[var(--app-accent)]">
+                  Layout multi-serie detectado:{" "}
+                  {state.mapping.yColumnIndices.length} series Y side-by-side.
+                </p>
+              ) : null}
               <div className="sm:col-span-2">
                 <label className="mb-2 block text-sm font-medium text-[var(--app-heading)]">
                   Nombre de la serie
@@ -362,11 +386,20 @@ export function WorkbookImportWizard({
 
           {state.step === "confirm" && (
             <div className="space-y-3">
+              {state.mapping.yColumnIndices &&
+              state.mapping.yColumnIndices.length >= 2 ? (
+                <p className="text-sm text-[var(--app-accent)]">
+                  Se importarán {state.mapping.yColumnIndices.length} series desde
+                  columnas Y side-by-side.
+                </p>
+              ) : null}
               <ImportPreviewPanel
                 preview={state.preview}
                 validation={state.validation}
                 xLabel={state.mapping.xLabel}
                 yLabel={state.mapping.yLabel}
+                highlightedRowIndex={highlightedRowIndex}
+                onDiscardedRowSelect={setHighlightedRowIndex}
               />
               {submitError && (
                 <p className="text-sm text-[var(--app-danger-text)]">{submitError}</p>

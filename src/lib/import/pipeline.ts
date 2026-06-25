@@ -12,7 +12,7 @@ import {
   getRecommendedSheetName,
   rankSheetsForImport,
 } from "./discover";
-import { suggestAxisMapping, suggestColumnRoles } from "./map";
+import { suggestAxisMapping, suggestColumnRoles, suggestMultiSeriesMapping } from "./map";
 import {
   detectFileFormat,
   readDelimitedTextFromFile,
@@ -21,6 +21,7 @@ import {
 import { buildImportReport } from "./report";
 import {
   buildFastPathPreview,
+  buildFastPathPreviewFromDelimitedRows,
   buildImportPreview,
   validateImportPreview,
 } from "./validate";
@@ -117,6 +118,12 @@ const tryDelimitedFastPath = async (
   sourceId: ExperimentalDataSourceId,
   file: File
 ): Promise<ImportAttemptResult> => {
+  const { text } = await readDelimitedTextFromFile(file);
+  const rows = text
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0)
+    .map((line) => line.split(",").map((part) => part.trim()));
+
   const series = await importExperimentalDataFile(sourceId, file);
   if (!series || series.length === 0) {
     return {
@@ -126,15 +133,20 @@ const tryDelimitedFastPath = async (
     };
   }
 
-  const preview = buildFastPathPreview(
-    series.flatMap((item) =>
-      item.points.map((point, index) => ({
-        x: point.x,
-        y: point.y,
-        sourceRowIndex: index,
-      }))
-    )
-  );
+  const preview =
+    rows.length >= 2
+      ? buildFastPathPreviewFromDelimitedRows(rows, 0, 0, 1)
+      : buildFastPathPreview(
+          series.flatMap((item) =>
+            item.points.map((point, index) => ({
+              x: point.x,
+              y: point.y,
+              sourceRowIndex: index,
+            }))
+          ),
+          { auditPartial: true }
+        );
+
   const validation = validateImportPreview(preview, undefined, {
     xColumnIndex: 0,
     yColumnIndex: 1,
@@ -214,6 +226,7 @@ export const buildInitialWizardState = (
   const columnDescriptors = buildColumnDescriptors(sheet.matrix, region);
   const suggestions = suggestColumnRoles(columnDescriptors);
   const mapping =
+    suggestMultiSeriesMapping(sheet.matrix, region, columnDescriptors) ??
     suggestAxisMapping(sheet.matrix, region, columnDescriptors) ?? {
       xColumnIndex: columnDescriptors[0]?.index ?? region.startCol,
       yColumnIndex:

@@ -1,11 +1,14 @@
 import type { ExperimentalSeries } from "./experimentalData";
-import type { ImportReport } from "./import/types";
+import type { ImportAuxiliaryColumn, ImportReport } from "./import/types";
+import type { WorksheetColumnRegistry } from "./experimentalWorksheet";
 import type { ProjectImportedDatasetInfo } from "./project";
 import type { DatasetAnalysisProfile } from "./scientific/comparison/types";
 
 export type SessionDatasetPayload = {
   series: ExperimentalSeries[];
   importReport: ImportReport | null;
+  columnRegistry?: WorksheetColumnRegistry;
+  auxiliaryColumns?: ImportAuxiliaryColumn[];
 };
 
 export type SessionDataset = {
@@ -45,7 +48,11 @@ export function createSessionDatasetFromImport(
   name: string,
   series: ExperimentalSeries[],
   importReport: ImportReport | null,
-  importedAt: string = new Date().toLocaleString()
+  importedAt: string = new Date().toLocaleString(),
+  payloadExtras?: Pick<
+    SessionDatasetPayload,
+    "columnRegistry" | "auxiliaryColumns"
+  >
 ): SessionDataset {
   const clonedSeries = cloneExperimentalSeries(series);
   const metrics = computeSessionDatasetMetrics(clonedSeries);
@@ -60,6 +67,15 @@ export function createSessionDatasetFromImport(
     datasetPayload: {
       series: clonedSeries,
       importReport: importReport ? { ...importReport } : null,
+      columnRegistry: payloadExtras?.columnRegistry
+        ? { ...payloadExtras.columnRegistry }
+        : undefined,
+      auxiliaryColumns: payloadExtras?.auxiliaryColumns
+        ? payloadExtras.auxiliaryColumns.map((item) => ({
+            ...item,
+            valuesByRowIndex: { ...item.valuesByRowIndex },
+          }))
+        : undefined,
     },
   };
 }
@@ -79,7 +95,11 @@ export function updateSessionDatasetPayload(
   dataset: SessionDataset,
   series: ExperimentalSeries[],
   importReport: ImportReport | null,
-  worksheetModified: boolean
+  worksheetModified: boolean,
+  payloadExtras?: Pick<
+    SessionDatasetPayload,
+    "columnRegistry" | "auxiliaryColumns"
+  >
 ): SessionDataset {
   const clonedSeries = cloneExperimentalSeries(series);
   const metrics = computeSessionDatasetMetrics(clonedSeries);
@@ -92,6 +112,12 @@ export function updateSessionDatasetPayload(
     datasetPayload: {
       series: clonedSeries,
       importReport: importReport ? { ...importReport } : null,
+      columnRegistry:
+        payloadExtras?.columnRegistry ??
+        dataset.datasetPayload.columnRegistry,
+      auxiliaryColumns:
+        payloadExtras?.auxiliaryColumns ??
+        dataset.datasetPayload.auxiliaryColumns,
     },
   };
 }

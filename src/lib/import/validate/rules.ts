@@ -8,6 +8,22 @@ import type {
   ValidationSeverity,
 } from "../types";
 
+/** Semantic version of the structured validation rule catalog (ÉPICA B.1). */
+export const IMPORT_RULE_CATALOG_VERSION = "1.0.0";
+
+/** Only these rule codes block import (`validation.ok === false`). */
+export const BLOCKING_IMPORT_RULE_CODES = ["Q-01"] as const;
+
+export type BlockingImportRuleCode =
+  (typeof BLOCKING_IMPORT_RULE_CODES)[number];
+
+export const getBlockingImportRuleCodes = (): BlockingImportRuleCode[] => [
+  ...BLOCKING_IMPORT_RULE_CODES,
+];
+
+export const isBlockingImportRule = (code: string): code is BlockingImportRuleCode =>
+  (BLOCKING_IMPORT_RULE_CODES as readonly string[]).includes(code);
+
 export const IMPORT_VALIDATION_RULE_CATALOG: ImportValidationRule[] = [
   {
     id: "Q-01",

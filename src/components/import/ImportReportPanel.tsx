@@ -37,6 +37,10 @@ export function ImportReportPanel({ report }: ImportReportPanelProps) {
         <span className="rounded-full border border-[var(--app-border)] px-2 py-0.5 text-xs text-[var(--app-text-muted)]">
           {report.importMode === "fast-path" ? "Directa" : "Asistente"} ·{" "}
           {report.version ?? "v1"}
+          {report.ruleCatalogVersion
+            ? ` · reglas ${report.ruleCatalogVersion}`
+            : ""}
+          {report.auditPartial ? " · auditoría parcial" : ""}
         </span>
       </div>
 

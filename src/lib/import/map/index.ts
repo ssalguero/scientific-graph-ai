@@ -11,6 +11,25 @@ import {
   scoreIndependentLabel,
 } from "../shared/text";
 
+const REPLICATE_HINTS = ["rep", "replica", "replicate", "replicado", "repeticion"];
+const GROUP_HINTS = ["group", "grupo", "condition", "condicion", "tratamiento", "treatment"];
+
+const scoreReplicateLabel = (label: string): number => {
+  const normalized = normalizeLabel(label);
+  return REPLICATE_HINTS.reduce(
+    (score, hint) => (normalized.includes(hint) ? score + 1 : score),
+    0
+  );
+};
+
+const scoreGroupLabel = (label: string): number => {
+  const normalized = normalizeLabel(label);
+  return GROUP_HINTS.reduce(
+    (score, hint) => (normalized.includes(hint) ? score + 1 : score),
+    0
+  );
+};
+
 type PairScore = {
   xColumnIndex: number;
   yColumnIndex: number;
@@ -24,6 +43,28 @@ export const suggestColumnRoles = (
   descriptors.map((descriptor) => {
     const independentScore = scoreIndependentLabel(descriptor.label);
     const dependentScore = scoreDependentLabel(descriptor.label);
+    const replicateScore = scoreReplicateLabel(descriptor.label);
+    const groupScore = scoreGroupLabel(descriptor.label);
+
+    if (replicateScore > 0 && descriptor.numericRatio < 0.5) {
+      return {
+        index: descriptor.index,
+        label: descriptor.label,
+        role: "replicate" as const,
+        confidence: Math.min(0.9, 0.5 + replicateScore * 0.15),
+        reason: "Columna textual con señales de réplica experimental",
+      };
+    }
+
+    if (groupScore > 0 && descriptor.numericRatio < 0.5) {
+      return {
+        index: descriptor.index,
+        label: descriptor.label,
+        role: "metadata" as const,
+        confidence: Math.min(0.9, 0.5 + groupScore * 0.15),
+        reason: "Columna categórica con señales de grupo o condición",
+      };
+    }
 
     if (descriptor.numericRatio >= 0.6 && independentScore >= dependentScore) {
       return {
@@ -160,13 +201,91 @@ export const suggestAxisMapping = (
 
   const labelDescriptor = descriptors.find((item) => item.numericRatio < 0.2);
 
+  const replicateDescriptor = descriptors
+    .filter((item) => scoreReplicateLabel(item.label) > 0 && item.numericRatio < 0.5)
+    .sort((a, b) => scoreReplicateLabel(b.label) - scoreReplicateLabel(a.label))[0];
+
+  const groupDescriptor = descriptors
+    .filter(
+      (item) =>
+        scoreGroupLabel(item.label) > 0 &&
+        item.numericRatio < 0.5 &&
+        item.index !== replicateDescriptor?.index
+    )
+    .sort((a, b) => scoreGroupLabel(b.label) - scoreGroupLabel(a.label))[0];
+
   return {
     xColumnIndex: best.xColumnIndex,
     yColumnIndex: best.yColumnIndex,
     xLabel: xDescriptor.label,
     yLabel: yDescriptor.label,
     labelColumnIndex: labelDescriptor?.index,
+    replicateColumnIndex: replicateDescriptor?.index,
+    replicateLabel: replicateDescriptor?.label,
+    groupColumnIndex: groupDescriptor?.index,
+    groupLabel: groupDescriptor?.label,
     rowFilter: "skip-sparse",
+  };
+};
+
+export type MultiSeriesLayout = {
+  xColumnIndex: number;
+  xLabel: string;
+  yColumns: { index: number; label: string }[];
+};
+
+/** Detects side-by-side multi-Y layout (one X + ≥2 numeric Y columns). ÉPICA B.5 */
+export const detectMultiSeriesLayout = (
+  matrix: unknown[][],
+  region: TableRegion,
+  descriptors: ColumnDescriptor[]
+): MultiSeriesLayout | null => {
+  const axisMapping = suggestAxisMapping(matrix, region, descriptors);
+  if (!axisMapping) return null;
+
+  const xIndex = axisMapping.xColumnIndex;
+  const numericDependents = descriptors.filter(
+    (item) =>
+      item.index !== xIndex &&
+      item.numericRatio >= 0.5 &&
+      (scoreDependentLabel(item.label) > 0 || item.numericRatio >= 0.7)
+  );
+
+  if (numericDependents.length < 2) return null;
+
+  const yColumns = numericDependents
+    .filter((item) => item.index !== axisMapping.replicateColumnIndex)
+    .filter((item) => item.index !== axisMapping.groupColumnIndex)
+    .map((item) => ({ index: item.index, label: item.label }));
+
+  if (yColumns.length < 2) return null;
+
+  const xDescriptor = descriptors.find((item) => item.index === xIndex);
+  if (!xDescriptor) return null;
+
+  return {
+    xColumnIndex: xIndex,
+    xLabel: xDescriptor.label,
+    yColumns,
+  };
+};
+
+export const suggestMultiSeriesMapping = (
+  matrix: unknown[][],
+  region: TableRegion,
+  descriptors: ColumnDescriptor[]
+): ColumnMapping | null => {
+  const layout = detectMultiSeriesLayout(matrix, region, descriptors);
+  if (!layout) return null;
+
+  const base = suggestAxisMapping(matrix, region, descriptors);
+  if (!base) return null;
+
+  return {
+    ...base,
+    yColumnIndex: layout.yColumns[0]?.index ?? base.yColumnIndex,
+    yLabel: layout.yColumns[0]?.label ?? base.yLabel,
+    yColumnIndices: layout.yColumns.map((item) => item.index),
   };
 };
 

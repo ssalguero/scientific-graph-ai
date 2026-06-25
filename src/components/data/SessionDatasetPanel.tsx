@@ -14,6 +14,7 @@ type SessionDatasetPanelProps = {
   onActivate: (datasetId: string) => void;
   onSendToSlot: (datasetId: string, slotId: ComparisonSlotId) => void;
   onRemove: (datasetId: string) => void;
+  onViewReport?: (datasetId: string) => void;
   btnOutlineSm: string;
   btnPrimary: string;
   dataEmptyState: string;
@@ -24,6 +25,17 @@ function datasetKey(dataset: SessionDataset): string {
   return sessionDatasetIdentityKey(dataset.name, dataset.importedAt);
 }
 
+function reportHasWarnings(dataset: SessionDataset): boolean {
+  const report = dataset.datasetPayload.importReport;
+  if (!report) return false;
+  return (
+    report.warningCount > 0 ||
+    report.errorCount > 0 ||
+    (report.issueSummary?.warning ?? 0) > 0 ||
+    (report.issueSummary?.error ?? 0) > 0
+  );
+}
+
 export function SessionDatasetPanel({
   datasets,
   activeDatasetId,
@@ -32,6 +44,7 @@ export function SessionDatasetPanel({
   onActivate,
   onSendToSlot,
   onRemove,
+  onViewReport,
   btnOutlineSm,
   btnPrimary,
   dataEmptyState,
@@ -52,6 +65,8 @@ export function SessionDatasetPanel({
         const key = datasetKey(dataset);
         const inSlotA = slotADatasetKey === key;
         const inSlotB = slotBDatasetKey === key;
+        const hasReport = dataset.datasetPayload.importReport !== null;
+        const hasWarnings = reportHasWarnings(dataset);
 
         return (
           <li
@@ -85,6 +100,11 @@ export function SessionDatasetPanel({
                   {inSlotB ? (
                     <span className={persistenceBadge}>SLOT B</span>
                   ) : null}
+                  {hasWarnings ? (
+                    <span className="inline-flex rounded-full border border-amber-300/70 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
+                      Informe con avisos
+                    </span>
+                  ) : null}
                   {dataset.worksheetModified ? (
                     <span className="inline-flex rounded-full border border-amber-300/70 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
                       Modificado
@@ -105,6 +125,15 @@ export function SessionDatasetPanel({
                     className={btnPrimary}
                   >
                     Activar
+                  </button>
+                ) : null}
+                {hasReport && onViewReport ? (
+                  <button
+                    type="button"
+                    onClick={() => onViewReport(dataset.id)}
+                    className={btnOutlineSm}
+                  >
+                    Ver informe
                   </button>
                 ) : null}
                 <button
