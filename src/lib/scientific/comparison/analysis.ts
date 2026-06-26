@@ -203,8 +203,7 @@ const hasEnrichedProfileContent = (profile: DatasetAnalysisProfile): boolean =>
   profile.methodological !== undefined ||
   profile.multivariate !== undefined ||
   profile.publication !== undefined ||
-  profile.inferential?.prospectiveSampleSize != null ||
-  profile.publication?.prospectiveSampleSize != null;
+  profile.inferential?.prospectiveSampleSize != null;
 
 const buildEnrichedComparisonKpiRows = (
   slotA: DatasetAnalysisProfile,

@@ -118,6 +118,7 @@ import {
   type GuidedWorkflowTemplateId,
   type GuidedWorkflowToggleSetters,
 } from "@/lib/scientific/workflow";
+import { ComparisonFreshnessBadge } from "@/components/comparison/ComparisonFreshnessBadge";
 import {
   buildCaptureMetadata,
   buildDatasetAnalysisProfile,
@@ -24433,11 +24434,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   {(["A", "B"] as ComparisonSlotId[]).map((slotId) => {
                     const slot = comparisonSlots[slotId];
                     const profile = slot.profile;
-                    const isStale =
-                      profile !== null &&
-                      currentDatasetInfo !== null &&
-                      profile.datasetInfo.fileName !==
-                        currentDatasetInfo.fileName;
                     return (
                       <div
                         key={slotId}
@@ -24472,12 +24468,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                       : "Perfil parcial"}
                                   </span>
                                 </p>
-                                {isStale ? (
-                                  <p className="text-xs text-amber-600 mt-1">
-                                    Slot puede estar desactualizado respecto al
-                                    dataset activo.
-                                  </p>
-                                ) : null}
+                                <ComparisonFreshnessBadge
+                                  profile={profile}
+                                  activeFileName={
+                                    currentDatasetInfo?.fileName ?? null
+                                  }
+                                  activeImportedAt={
+                                    currentDatasetInfo?.importedAt ?? null
+                                  }
+                                  activeWorksheetModified={worksheetModified}
+                                />
                               </>
                             ) : (
                               <p className="text-xs text-[var(--app-text-muted)] mt-0.5">

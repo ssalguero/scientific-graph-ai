@@ -2,9 +2,14 @@
 
 import {
   formatComparisonNumericDelta,
-  getComparisonDeltaDirectionLabel,
   type MultiDatasetComparisonAnalysis,
 } from "@/lib/scientific/comparison";
+import { ComparisonKpiTable } from "./ComparisonKpiTable";
+import { ComparisonMultivariateSection } from "./ComparisonMultivariateSection";
+import { partitionComparisonKpiRows } from "./comparisonKpiGroups";
+import { ComparisonPowerSection } from "./ComparisonPowerSection";
+import { ComparisonPublicationSection } from "./ComparisonPublicationSection";
+import { ComparisonSlotSummaryCard } from "./ComparisonSlotSummaryCard";
 
 const contentPanel =
   "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2.5 text-sm text-[var(--app-text)] transition-colors duration-200";
@@ -19,34 +24,15 @@ export function ScientificMultiDatasetComparisonDashboard({
   analysis,
 }: ScientificMultiDatasetComparisonDashboardProps) {
   const readinessRow = analysis.kpiRows.find((row) => row.key === "readiness");
+  const { core, methodological, enriched } = partitionComparisonKpiRows(
+    analysis.kpiRows
+  );
 
   return (
     <div className="w-full mt-3 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className={`${contentPanel} flex flex-col gap-1`}>
-          <p className="text-xs font-semibold text-[var(--app-text-muted)]">
-            Slot A
-          </p>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
-            {analysis.slotA.datasetInfo.fileName}
-          </p>
-          <p className="text-xs text-[var(--app-text-muted)]">
-            {analysis.slotA.seriesCount} series ·{" "}
-            {analysis.slotA.totalObservations} obs.
-          </p>
-        </div>
-        <div className={`${contentPanel} flex flex-col gap-1`}>
-          <p className="text-xs font-semibold text-[var(--app-text-muted)]">
-            Slot B
-          </p>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
-            {analysis.slotB.datasetInfo.fileName}
-          </p>
-          <p className="text-xs text-[var(--app-text-muted)]">
-            {analysis.slotB.seriesCount} series ·{" "}
-            {analysis.slotB.totalObservations} obs.
-          </p>
-        </div>
+        <ComparisonSlotSummaryCard slotLabel="Slot A" profile={analysis.slotA} />
+        <ComparisonSlotSummaryCard slotLabel="Slot B" profile={analysis.slotB} />
       </div>
 
       {readinessRow &&
@@ -62,41 +48,29 @@ export function ScientificMultiDatasetComparisonDashboard({
         </div>
       ) : null}
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="border-b border-[var(--app-border)]">
-              <th className="text-left py-2 pr-3 font-semibold">KPI</th>
-              <th className="text-left py-2 px-3 font-semibold">Slot A</th>
-              <th className="text-left py-2 px-3 font-semibold">Slot B</th>
-              <th className="text-left py-2 pl-3 font-semibold">Δ (B−A)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {analysis.kpiRows.map((row) => (
-              <tr
-                key={row.key}
-                className="border-b border-[var(--app-border)]/60"
-              >
-                <td className="py-2 pr-3 text-[var(--app-heading)]">
-                  {row.title}
-                </td>
-                <td className="py-2 px-3 text-[var(--app-text-muted)]">
-                  {row.slotAValue}
-                </td>
-                <td className="py-2 px-3 text-[var(--app-text-muted)]">
-                  {row.slotBValue}
-                </td>
-                <td className="py-2 pl-3 tabular-nums text-[var(--app-text)]">
-                  {row.delta !== null
-                    ? `${formatComparisonNumericDelta(row.delta)} (${getComparisonDeltaDirectionLabel(row.deltaDirection)})`
-                    : "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ComparisonKpiTable rows={core} />
+
+      {analysis.methodologicalBreakdownAvailable &&
+      methodological.length > 0 ? (
+        <ComparisonKpiTable
+          rows={methodological}
+          heading="Motores metodológicos (SCI-50→55)"
+        />
+      ) : null}
+
+      {enriched.length > 0 ? (
+        <ComparisonKpiTable
+          rows={enriched}
+          heading="Dimensiones ampliadas"
+        />
+      ) : null}
+
+      {analysis.multivariateSectionAvailable ? (
+        <ComparisonMultivariateSection
+          slotA={analysis.slotA}
+          slotB={analysis.slotB}
+        />
+      ) : null}
 
       {(analysis.slotA.normality || analysis.slotB.normality) && (
         <div>
@@ -119,6 +93,15 @@ export function ScientificMultiDatasetComparisonDashboard({
           ) : null}
         </div>
       )}
+
+      <ComparisonPowerSection slotA={analysis.slotA} slotB={analysis.slotB} />
+
+      {analysis.publicationHighlightsAvailable ? (
+        <ComparisonPublicationSection
+          slotA={analysis.slotA}
+          slotB={analysis.slotB}
+        />
+      ) : null}
 
       {analysis.comparabilityWarnings.length > 0 ? (
         <div>
