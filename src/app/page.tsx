@@ -123,8 +123,10 @@ import {
   buildCaptureMetadata,
   buildDatasetAnalysisProfile,
   buildMultiDatasetComparisonAnalysis,
+  buildMultiDatasetComparisonReportSection,
   canBuildDatasetAnalysisProfile,
   canBuildMultiDatasetComparisonAnalysis,
+  canIncludeMultiDatasetComparisonInReport,
   createEmptyComparisonSlots,
   formatDatasetAnalysisProfileMiniSummary,
   mapInferentialToProfileSnapshot,
@@ -136,6 +138,7 @@ import {
   type ComparisonSlot,
   type ComparisonSlotId,
   type DatasetAnalysisProfile,
+  type MultiDatasetComparisonAnalysis,
 } from "@/lib/scientific/comparison";
 import {
   buildEffectSizePowerAnalysis,
@@ -14929,6 +14932,7 @@ type ScientificReportPdfInput = {
   chartImageDataUrl: string | null;
   statisticalRecommendation: StatisticalRecommendation | null;
   datasetInfo?: ImportedDatasetInfo | null;
+  comparisonAnalysis?: MultiDatasetComparisonAnalysis | null;
 };
 
 const buildAdvisorPdfSectionLines = (
@@ -15086,6 +15090,12 @@ const exportScientificReportPdf = async (
   input.report.sections.forEach((section) => {
     drawReportSection(section);
   });
+
+  if (canIncludeMultiDatasetComparisonInReport(input.comparisonAnalysis ?? null)) {
+    drawReportSection(
+      buildMultiDatasetComparisonReportSection(input.comparisonAnalysis!)
+    );
+  }
 
   drawSectionHeading("Advisor Estadístico");
   buildAdvisorPdfSectionLines(input.statisticalRecommendation).forEach(
@@ -20001,6 +20011,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         chartImageDataUrl,
         statisticalRecommendation,
         datasetInfo: currentDatasetInfo,
+        comparisonAnalysis,
       });
       setScientificReportPdfMessage("PDF descargado correctamente.");
     } catch (error) {

@@ -74,3 +74,12 @@ export {
   getEvidenceStrengthClassificationLabel,
   getPublicationReadinessClassificationLabel,
 } from "./labels";
+
+export type { MultiDatasetComparisonReportSection } from "./report";
+
+export {
+  MULTI_DATASET_COMPARISON_REPORT_TITLE,
+  buildMultiDatasetComparisonReportSection,
+  canIncludeMultiDatasetComparisonInReport,
+  getMultiDatasetComparisonReportLines,
+} from "./report";

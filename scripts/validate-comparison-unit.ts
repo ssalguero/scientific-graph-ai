@@ -2,6 +2,7 @@ import { runAnalysisCases } from "../src/lib/scientific/comparison/__tests__/ana
 import { runFormatCases } from "../src/lib/scientific/comparison/__tests__/format.cases";
 import { runInterpretationCases } from "../src/lib/scientific/comparison/__tests__/interpretation.cases";
 import { runProfileCases } from "../src/lib/scientific/comparison/__tests__/profile.cases";
+import { runReportCases } from "../src/lib/scientific/comparison/__tests__/report.cases";
 import {
   type CaseResult,
   createAssertCase,
@@ -14,6 +15,7 @@ runFormatCases(assertCase);
 runProfileCases(assertCase);
 runAnalysisCases(assertCase);
 runInterpretationCases(assertCase);
+runReportCases(assertCase);
 
 const summary = {
   phase: "comparison-unit",
