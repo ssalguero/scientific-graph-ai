@@ -491,7 +491,8 @@ flowchart LR
 |------|--------|
 | Discovery PROD-2B | CERRADO — [`PROJECT_DISCOVERY_PROD_2B.md`](PROJECT_DISCOVERY_PROD_2B.md) |
 | Plan PROD-2B (B1–B7) | **APROBADO** |
-| Implementación | **Pendiente** — iniciar en **B1** |
+| Implementación B1 | **COMPLETED** — commit `c195591` |
+| Implementación B2–B7 | **Pendiente** — iniciar en **B2** |
 
 **Restricciones de esta etapa:** documentación únicamente · sin código · sin commits funcionales.
 
