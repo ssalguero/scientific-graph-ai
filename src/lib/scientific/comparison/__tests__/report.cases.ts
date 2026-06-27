@@ -5,9 +5,11 @@ import {
 import {
   buildMultiDatasetComparisonReportSection,
   canIncludeMultiDatasetComparisonInReport,
+  getMultiDatasetComparisonPdfLines,
   getMultiDatasetComparisonReportLines,
   MULTI_DATASET_COMPARISON_REPORT_TITLE,
 } from "../report";
+import { findProblematicPdfCharacters } from "../pdf-text-audit";
 import {
   buildCanonicalDataset5Profile,
   buildCanonicalDataset6Profile,
@@ -93,5 +95,30 @@ export const runReportCases = (assertCase: AssertCase) => {
     "report.canBuildMatchesInclude",
     canIncludeMultiDatasetComparisonInReport(analysis) ===
       canBuildMultiDatasetComparisonAnalysis(slotA, slotB)
+  );
+
+  const pdfLines = getMultiDatasetComparisonPdfLines(analysis);
+  assertCase("report.pdf.lines.nonEmpty", pdfLines.length > 0);
+  assertCase(
+    "report.pdf.deltaReadiness.ascii",
+    pdfLines.some((line) => line.includes("Delta Readiness (B - A): -9.5"))
+  );
+  assertCase(
+    "report.pdf.noPipeKpiRows",
+    pdfLines.every((line) => !line.includes(" | Slot A:"))
+  );
+  assertCase(
+    "report.pdf.kpiMultiline",
+    pdfLines.some((line) => line === "  Delta (B-A): -9.5 (Regresión)")
+  );
+  assertCase(
+    "report.pdf.noProblematicChars",
+    pdfLines.every((line) => findProblematicPdfCharacters(line).length === 0)
+  );
+
+  const enrichedPdfLines = getMultiDatasetComparisonPdfLines(enrichedAnalysis);
+  assertCase(
+    "report.pdf.enriched.effectAscii",
+    enrichedPdfLines.some((line) => line.includes("-1.36"))
   );
 };

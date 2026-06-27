@@ -79,7 +79,9 @@ export type { MultiDatasetComparisonReportSection } from "./report";
 
 export {
   MULTI_DATASET_COMPARISON_REPORT_TITLE,
+  buildMultiDatasetComparisonPdfReportSection,
   buildMultiDatasetComparisonReportSection,
   canIncludeMultiDatasetComparisonInReport,
+  getMultiDatasetComparisonPdfLines,
   getMultiDatasetComparisonReportLines,
 } from "./report";

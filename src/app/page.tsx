@@ -123,7 +123,7 @@ import {
   buildCaptureMetadata,
   buildDatasetAnalysisProfile,
   buildMultiDatasetComparisonAnalysis,
-  buildMultiDatasetComparisonReportSection,
+  buildMultiDatasetComparisonPdfReportSection,
   canBuildDatasetAnalysisProfile,
   canBuildMultiDatasetComparisonAnalysis,
   canIncludeMultiDatasetComparisonInReport,
@@ -167,6 +167,12 @@ import {
   type PostHocComparison,
   type TTestResult,
 } from "@/lib/scientific/inference";
+import {
+  deduplicateScientificReportPdfLines,
+  drawPdfWrappedText,
+  formatPdfSectionContentLine,
+} from "@/lib/scientific/report/pdf-export";
+import { prepareScientificReportPdfLine } from "@/lib/scientific/report/pdf-text";
 import {
   derivative,
   evaluate,
@@ -14991,37 +14997,48 @@ const exportScientificReportPdf = async (
     }
   };
 
+  const pdfLayout = {
+    marginMm: PDF_MARGIN_MM,
+    contentWidthMm: PDF_CONTENT_WIDTH_MM,
+    pageBottomMm: PDF_BODY_BOTTOM_MM,
+    addPage: () => {
+      doc.addPage();
+      cursorY = PDF_MARGIN_MM;
+    },
+  };
+
   const drawWrappedParagraph = (
     text: string,
     fontSizePt: number,
     fontStyle: "normal" | "bold" = "normal",
     lineSpacingMm = 1.5
   ) => {
-    doc.setFont("helvetica", fontStyle);
-    doc.setFontSize(fontSizePt);
-    const lineHeightMm = fontSizePt * 0.3528 + lineSpacingMm;
-    const wrappedLines = doc.splitTextToSize(
-      text,
-      PDF_CONTENT_WIDTH_MM
-    ) as string[];
-    const blockHeight = wrappedLines.length * lineHeightMm;
-    addPageIfNeeded(blockHeight);
-    doc.text(wrappedLines, PDF_MARGIN_MM, cursorY);
-    cursorY += blockHeight;
+    cursorY = drawPdfWrappedText(doc, text, cursorY, pdfLayout, {
+      fontSizePt,
+      fontStyle,
+      lineSpacingMm,
+    });
   };
 
   const drawSectionHeading = (heading: string) => {
     addPageIfNeeded(10);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.text(heading, PDF_MARGIN_MM, cursorY);
+    doc.setCharSpace?.(0);
+    doc.text(prepareScientificReportPdfLine(heading), PDF_MARGIN_MM, cursorY, {
+      align: "left",
+    });
     cursorY += 7;
   };
 
   const drawReportSection = (section: ScientificReportSection) => {
     drawSectionHeading(section.title);
-    section.content.forEach((line) => {
-      drawWrappedParagraph(line, 11, "normal");
+    deduplicateScientificReportPdfLines(section.content).forEach((line) => {
+      drawWrappedParagraph(
+        formatPdfSectionContentLine(section.title, line),
+        11,
+        "normal"
+      );
       cursorY += 1;
     });
     cursorY += 3;
@@ -15029,13 +15046,15 @@ const exportScientificReportPdf = async (
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
-  addPageIfNeeded(12);
-  const titleLines = doc.splitTextToSize(
+  doc.setCharSpace?.(0);
+  cursorY = drawPdfWrappedText(
+    doc,
     input.report.title,
-    PDF_CONTENT_WIDTH_MM
-  ) as string[];
-  doc.text(titleLines, PDF_MARGIN_MM, cursorY);
-  cursorY += titleLines.length * 8 + 2;
+    cursorY,
+    pdfLayout,
+    { fontSizePt: 20, fontStyle: "bold", lineSpacingMm: 2 }
+  );
+  cursorY += 2;
 
   drawWrappedParagraph(
     `Fecha: ${formatScientificReportDate(input.report.generatedAt)}`,
@@ -15092,9 +15111,15 @@ const exportScientificReportPdf = async (
   });
 
   if (canIncludeMultiDatasetComparisonInReport(input.comparisonAnalysis ?? null)) {
-    drawReportSection(
-      buildMultiDatasetComparisonReportSection(input.comparisonAnalysis!)
+    const comparisonSection = buildMultiDatasetComparisonPdfReportSection(
+      input.comparisonAnalysis!
     );
+    drawSectionHeading(comparisonSection.title);
+    comparisonSection.content.forEach((line) => {
+      drawWrappedParagraph(line, 11, "normal");
+      cursorY += 1;
+    });
+    cursorY += 3;
   }
 
   drawSectionHeading("Advisor Estadístico");
@@ -15111,12 +15136,16 @@ const exportScientificReportPdf = async (
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(90, 90, 90);
+    doc.setCharSpace?.(0);
     doc.text(
       "Generado por: Scientific Graph Platform",
       PDF_MARGIN_MM,
-      PDF_PAGE_HEIGHT_MM - 12
+      PDF_PAGE_HEIGHT_MM - 12,
+      { align: "left" }
     );
-    doc.text(footerTimestamp, PDF_MARGIN_MM, PDF_PAGE_HEIGHT_MM - 8);
+    doc.text(footerTimestamp, PDF_MARGIN_MM, PDF_PAGE_HEIGHT_MM - 8, {
+      align: "left",
+    });
     doc.setTextColor(0, 0, 0);
   }
 

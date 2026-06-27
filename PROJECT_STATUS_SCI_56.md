@@ -1,7 +1,8 @@
 # Scientific Graph AI — Estado del Proyecto (Cierre QA-1 + UX-1A.1 LITE + ARCH-5 Fase 4 + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 + DATA-3A)
 
-Fecha: 2026-06-24 (actualizado)
-Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + SCI-59 + SCI-60 + ARCH-5 (Fase 1–4 COMPLETED) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 + **UX-1A.1 LITE** + **DATA-3A / HOTFIX-DATA-3A (COMPLETED)** + **Sprint QA-1 (CERRADO)**
+Fecha: 2026-06-27 (actualizado)
+Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + **SCI-58 v2 (COMPLETED)** + SCI-59 + SCI-60 + ARCH-5 (Fase 1–4 COMPLETED) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 + **UX-1A.1 LITE** + **DATA-3A / HOTFIX-DATA-3A (COMPLETED)** + **Sprint QA-1 (CERRADO)**
+Referencia SCI-58 v2: [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md)
 Commit de referencia: `95f2a5e` (HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1); ARCH-5 Fase 4 completada sobre esta base (F4A/F4B/F4C/F4D); **UX-1A.1 LITE** sobre build validado post-F4D
 
 ---
@@ -362,11 +363,11 @@ SCI-58 no recalcula motores: compara snapshots capturados; el dataset activo sig
 
 **Sprint QA-1:** **CERRADO** (2026-06-24). El núcleo científico SCI-1 → SCI-60 se considera **validado** (manual + `validate:full` PASS). Protocolo: [`QA-1_MANUAL_VALIDATION_PROTOCOL.md`](./QA-1_MANUAL_VALIDATION_PROTOCOL.md). Roadmap detallado: [`ROADMAP.md`](./ROADMAP.md).
 
-### Próximo bloque principal: SCI-58 v2 — Comparación científica ampliada
+### SCI-58 v2 — Comparación científica ampliada
 
-**Estado:** planificado — **no implementado**.
+**Estado:** **COMPLETADO** (2026-06-27). Documentación de cierre: [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md).
 
-Evolución sobre SCI-58 v1 (dominio `comparison/`, slots A/B, perfiles read-only). Alcance candidato: N>2 slots, integración reporte/PDF multi-dataset, persistencia extendida, comparación ampliada — sin recalcular motores SCI upstream.
+Entregables: A1 (modelo enriquecido), A2 (dashboard), A3 (PDF), HOTFIX PDF-1/2/3. Gates finales PASS (`validate:comparison-unit` 92/92, `validate-pdf-export-unit` 14/14, `validate:full`).
 
 ### Candidatos posteriores (sin priorización definitiva)
 
@@ -518,13 +519,13 @@ Scientific Graph AI resuelve hoy el ciclo completo de análisis de un dataset ex
 
 ### Backlog técnico
 
-**Vacío.** Sprint QA-1 cerrado. Próximo bloque: **SCI-58 v2** (ver §6, `ROADMAP.md`). Candidatos PROD-1B, ARCH-5 Fase 4+, ARCH-6 son evolución futura, no backlog pendiente.
+**Vacío.** Sprint QA-1 cerrado. **SCI-58 v2 COMPLETED** (ver [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md)). Candidatos PROD-1B, ARCH-5 Fase 4+, ARCH-6 son evolución futura, no backlog pendiente.
 
 ### Áreas abiertas para evolución futura
 
 - PROD-1B — validación avanzada, reportes completos y preview expandido
 - ARCH-5 Fase 4+ — metodología SCI-50→56, reporting, PDF
-- Comparación ampliada N>2 slots o integración reporte/PDF (SCI-58 v2)
+- Comparación N>2 slots o persistencia extendida (evolución post SCI-58 v2)
 - Enriquecimiento narrativo SCI-57B en SCI-55/56 (opcional, no bloqueante)
 - SCI-59 v1.1: branching condicional avanzado, persistencia de workflow, orquestación SCI-41→49
 - Validación formal con dataset `contradictory` y suite Playwright como CI de regresión
@@ -797,11 +798,10 @@ Las series experimentales importadas se persistían y hidrataban correctamente, 
 
 ## 18. Próximos pasos recomendados
 
-1. **Iniciar SCI-58 v2** — comparación científica ampliada (próximo bloque principal; ver §6 y `ROADMAP.md`).
-2. **Implementar PROD-1B** — validación avanzada + reportes completos sobre `src/lib/import/`.
-3. **Continuar ARCH-5 Fase 4+** — metodología SCI-50→56 o reporting según roadmap.
-4. **ARCH-6** — abordar observaciones UX registradas en §23 (no bloqueantes).
-5. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
+1. **Implementar PROD-1B** — validación avanzada + reportes completos sobre `src/lib/import/`.
+2. **Continuar ARCH-5 Fase 4+** — metodología SCI-50→56 o reporting según roadmap.
+3. **ARCH-6** — abordar observaciones UX registradas en §23 (no bloqueantes).
+4. **Validar la regla `contradictory`** con un dataset diseñado para el caso D1 del motor canónico.
 
 ---
 
@@ -1002,10 +1002,10 @@ Registradas para futuras mejoras (**ARCH-6**). **No constituyen bugs** ni bloque
 
 ### Cierre formal
 
-El **Sprint QA-1 queda cerrado**. El núcleo científico **SCI-1 → SCI-60** se considera validado. El proyecto queda **listo para iniciar SCI-58 v2** como próximo bloque principal evolutivo (ver §6, `ROADMAP.md`).
+El **Sprint QA-1 queda cerrado**. El núcleo científico **SCI-1 → SCI-60** se considera validado. **SCI-58 v2 queda COMPLETADO** (ver [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md), §6, `ROADMAP.md`).
 
 **Restricciones de este cierre:** documentación únicamente; sin cambios funcionales, motores SCI, workflow, UI ni lógica científica.
 
 ---
 
-Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, **PROD-2A**, **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre BUG-SERIES-RENDER-1), **ARCH-5 F4A** (SCI-58 domain extraction), **ARCH-5 F4B** (SCI-58 UI dashboard extraction), **ARCH-5 F4C** (comparison unit tests), **ARCH-5 F4D** (runtime/persistence contract consolidation), **UX-1A.1 LITE** (`validate:full` PASS), **DATA-3A / HOTFIX-DATA-3A (COMPLETED)** y **Sprint QA-1 (CERRADO)**. Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado actual.
+Documento generado al cierre de SCI-56 y actualizado tras SCI-29B, SCI-37B, SCI-57, SCI-57B, SCI-58, SCI-59, SCI-60, ARCH-5 (Fase 1–4 COMPLETED), PROD-1A, **PROD-2A**, **HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1** (cierre BUG-SERIES-RENDER-1), **ARCH-5 F4A** (SCI-58 domain extraction), **ARCH-5 F4B** (SCI-58 UI dashboard extraction), **ARCH-5 F4C** (comparison unit tests), **ARCH-5 F4D** (runtime/persistence contract consolidation), **UX-1A.1 LITE** (`validate:full` PASS), **DATA-3A / HOTFIX-DATA-3A (COMPLETED)**, **Sprint QA-1 (CERRADO)** y **SCI-58 v2 (COMPLETED)** — ver [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md). Reemplaza a `PROJECT_STATUS_SCI_1-55.md` como referencia de estado general; el cierre SCI-58 v2 tiene documento dedicado.
