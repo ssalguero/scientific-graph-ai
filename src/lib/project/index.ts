@@ -5,6 +5,7 @@ export {
   PROJECT_KIND,
   PROJECT_SIZE_WARN_BYTES,
   SCHEMA_VERSION_V1,
+  SCHEMA_VERSION_V2,
   WORKSPACE_SECTIONS,
   INSPECTOR_SECTIONS,
   CONTROL_PANEL_TABS,
@@ -39,7 +40,10 @@ export type {
   ProjectWorkspaceV1,
   ProjectWorkflowV1,
   ScientificProjectFile,
+  ScientificProjectFileV1,
+  ScientificProjectFileV2,
   ScientificProjectV1,
+  ScientificProjectV2,
   SerializeProjectInput,
   SerializeProjectOptions,
   SerializeProjectResult,
@@ -66,6 +70,7 @@ export {
 export {
   validateScientificProjectFile,
   validateScientificProjectV1,
+  validateScientificProjectV2,
 } from "./validate";
 
 export {
@@ -86,7 +91,16 @@ export {
   buildHydrateProjectPatch,
   hydrateProject,
   hydrateProjectJson,
+  projectFileToHydrateV1,
 } from "./hydrate";
+
+export {
+  buildScientificProjectFileV2,
+  collapseProjectV2ForHydrate,
+  isScientificProjectFileV1,
+  isScientificProjectFileV2,
+  snapshotV1ToProjectV2,
+} from "./adapters/sgproj";
 
 export {
   formatProjectOpenError,

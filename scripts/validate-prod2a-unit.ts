@@ -5,9 +5,12 @@ import { fileURLToPath } from "url";
 import {
   hydrateProject,
   hydrateProjectJson,
+  isScientificProjectFileV2,
   loadProjectJson,
   migrateProjectJson,
   parseProjectJson,
+  projectFileToHydrateV1,
+  SCHEMA_VERSION_V2,
   serializeProject,
   validateScientificProjectFile,
 } from "../src/lib/project/index";
@@ -38,15 +41,25 @@ const dataset5Text = readFixture("project-v1-dataset5-minimal.sgproj");
 const emptyLoaded = loadProjectJson(emptyText);
 assertCase("empty.load", emptyLoaded.ok === true);
 assertCase(
+  "empty.migratedSchema",
+  emptyLoaded.ok && emptyLoaded.file?.schemaVersion === SCHEMA_VERSION_V2
+);
+assertCase(
   "empty.series",
-  emptyLoaded.ok && emptyLoaded.file?.project.dataset.series.length === 0
+  emptyLoaded.ok &&
+    projectFileToHydrateV1(emptyLoaded.file!).dataset.series.length === 0
 );
 
 const dataset5Loaded = loadProjectJson(dataset5Text);
 assertCase("dataset5.load", dataset5Loaded.ok === true);
 assertCase(
+  "dataset5.migratedSchema",
+  dataset5Loaded.ok && dataset5Loaded.file?.schemaVersion === SCHEMA_VERSION_V2
+);
+assertCase(
   "dataset5.series",
-  dataset5Loaded.ok && dataset5Loaded.file?.project.dataset.series.length === 4
+  dataset5Loaded.ok &&
+    projectFileToHydrateV1(dataset5Loaded.file!).dataset.series.length === 4
 );
 
 // --- round-trip parse → validate ---
@@ -62,7 +75,7 @@ if (parsed.ok) {
 
 if (dataset5Loaded.ok && dataset5Loaded.file) {
   const serialized = serializeProject({
-    snapshot: dataset5Loaded.file.project,
+    snapshot: projectFileToHydrateV1(dataset5Loaded.file),
     appVersion: "0.1.0",
   });
   assertCase("dataset5.serialize", serialized.ok === true);
@@ -71,12 +84,13 @@ if (dataset5Loaded.ok && dataset5Loaded.file) {
     assertCase(
       "dataset5.serialize.envelope",
       serialized.file.kind === "scientific-graph-ai.project" &&
-        serialized.file.schemaVersion === 1
+        serialized.file.schemaVersion === SCHEMA_VERSION_V2
     );
     assertCase(
       "dataset5.serialize.checksum",
-      typeof serialized.file.project.dataset.checksum === "string" &&
-        serialized.file.project.dataset.checksum.length > 0
+      isScientificProjectFileV2(serialized.file) &&
+        typeof serialized.file.project.datasets[0]?.checksum === "string" &&
+        serialized.file.project.datasets[0].checksum!.length > 0
     );
 
     const reloaded = loadProjectJson(serialized.json);
@@ -84,21 +98,22 @@ if (dataset5Loaded.ok && dataset5Loaded.file) {
     assertCase(
       "dataset5.roundtrip.series",
       reloaded.ok &&
-        reloaded.file?.project.dataset.series.length === 4 &&
-        reloaded.file?.project.dataset.info?.observationCount === 40
+        projectFileToHydrateV1(reloaded.file!).dataset.series.length === 4 &&
+        projectFileToHydrateV1(reloaded.file!).dataset.info?.observationCount ===
+          40
     );
     assertCase(
       "dataset5.roundtrip.selections",
       reloaded.ok &&
-        reloaded.file?.project.analysisConfig.selections.tTestSeriesA ===
-          "d5-control1"
+        projectFileToHydrateV1(reloaded.file!).analysisConfig.selections
+          .tTestSeriesA === "d5-control1"
     );
   }
 }
 
 if (emptyLoaded.ok && emptyLoaded.file) {
   const serializedEmpty = serializeProject({
-    snapshot: emptyLoaded.file.project,
+    snapshot: projectFileToHydrateV1(emptyLoaded.file),
     appVersion: "0.1.0",
   });
   assertCase("empty.serialize", serializedEmpty.ok === true);
@@ -130,7 +145,7 @@ if (dataset5Loaded.ok && dataset5Loaded.file) {
   }
 
   const serialized = serializeProject({
-    snapshot: dataset5Loaded.file.project,
+    snapshot: projectFileToHydrateV1(dataset5Loaded.file),
     appVersion: "0.1.0",
   });
   if (serialized.ok) {
@@ -206,9 +221,9 @@ assertCase("hydrate.badJson", hydrateBad.ok === false);
 
 if (dataset5Loaded.ok && dataset5Loaded.file) {
   const blankNameSnapshot = {
-    ...dataset5Loaded.file.project,
+    ...projectFileToHydrateV1(dataset5Loaded.file),
     metadata: {
-      ...dataset5Loaded.file.project.metadata,
+      ...projectFileToHydrateV1(dataset5Loaded.file).metadata,
       name: "   ",
     },
   };
@@ -217,7 +232,7 @@ if (dataset5Loaded.ok && dataset5Loaded.file) {
     appVersion: "0.1.0",
   });
   assertCase("serialize.blankName", invalidSerialize.ok === true);
-  if (invalidSerialize.ok) {
+  if (invalidSerialize.ok && isScientificProjectFileV2(invalidSerialize.file)) {
     assertCase(
       "serialize.blankName.default",
       invalidSerialize.file.project.metadata.name === "Proyecto sin título"

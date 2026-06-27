@@ -2,7 +2,9 @@ export const PROJECT_KIND = "scientific-graph-ai.project" as const;
 
 export const SCHEMA_VERSION_V1 = 1 as const;
 
-export const CURRENT_SCHEMA_VERSION = SCHEMA_VERSION_V1;
+export const SCHEMA_VERSION_V2 = 2 as const;
+
+export const CURRENT_SCHEMA_VERSION = SCHEMA_VERSION_V2;
 
 /** Soft warning threshold for serialized project size (bytes). */
 export const PROJECT_SIZE_WARN_BYTES = 10 * 1024 * 1024;

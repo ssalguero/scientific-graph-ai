@@ -3,6 +3,9 @@ import {
   INSPECTOR_SECTIONS,
   WORKSPACE_SECTIONS,
 } from "./constants";
+import { SCHEMA_VERSION_V2 } from "./constants";
+import { toDomainScientificProjectFile, isScientificProjectFileV2 } from "./adapters/sgproj/envelope";
+import { validateDomainProjectFileV2 } from "./domain/validate-v2";
 import {
   isBoolean,
   isNumber,
@@ -18,6 +21,7 @@ import type {
   ProjectValidationResult,
   ScientificProjectFile,
   ScientificProjectV1,
+  ScientificProjectV2,
 } from "./types";
 import {
   GUIDED_WORKFLOW_STATUS_VALUES,
@@ -462,9 +466,36 @@ export const validateScientificProjectV1 = (
   };
 };
 
+const mapDomainValidation = (
+  result: ReturnType<typeof validateDomainProjectFileV2>
+): ProjectValidationResult => ({
+  ok: result.ok,
+  errors: result.errors,
+  warnings: result.warnings,
+});
+
+export const validateScientificProjectV2 = (
+  project: ScientificProjectV2
+): ProjectValidationResult => {
+  const file = {
+    kind: "scientific-graph-ai.project" as const,
+    schemaVersion: SCHEMA_VERSION_V2,
+    appVersion: "0.0.0",
+    exportedAt: project.metadata.updatedAt,
+    project,
+  };
+  return mapDomainValidation(validateDomainProjectFileV2(toDomainScientificProjectFile(file)));
+};
+
 export const validateScientificProjectFile = (
   file: ScientificProjectFile
 ): ProjectValidationResult => {
+  if (isScientificProjectFileV2(file)) {
+    return mapDomainValidation(
+      validateDomainProjectFileV2(toDomainScientificProjectFile(file))
+    );
+  }
+
   const errors: ProjectValidationIssue[] = [];
   const warnings: ProjectValidationIssue[] = [];
 

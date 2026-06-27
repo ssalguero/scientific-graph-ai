@@ -12,9 +12,14 @@ import type {
   DatasetAnalysisProfileInferentialSnapshot,
   DatasetAnalysisProfileNormalitySnapshot,
 } from "@/lib/scientific/comparison/types";
-import type { SCHEMA_VERSION_V1 } from "./constants";
+import type { SCHEMA_VERSION_V1, SCHEMA_VERSION_V2 } from "./constants";
+import type { ScientificProjectV2 } from "./domain/types-v2";
 
-export type ProjectSchemaVersion = typeof SCHEMA_VERSION_V1;
+export type ProjectSchemaVersion =
+  | typeof SCHEMA_VERSION_V1
+  | typeof SCHEMA_VERSION_V2;
+
+export type { ScientificProjectV2 } from "./domain/types-v2";
 
 export type ProjectImportedDatasetInfo = ComparisonDatasetInfo;
 
@@ -147,13 +152,25 @@ export type ScientificProjectV1 = {
   graphContext: ProjectGraphContextV1 | null;
 };
 
-export type ScientificProjectFile = {
+export type ScientificProjectFileV1 = {
   kind: "scientific-graph-ai.project";
-  schemaVersion: ProjectSchemaVersion;
+  schemaVersion: typeof SCHEMA_VERSION_V1;
   appVersion: string;
   exportedAt: string;
   project: ScientificProjectV1;
 };
+
+export type ScientificProjectFileV2 = {
+  kind: "scientific-graph-ai.project";
+  schemaVersion: typeof SCHEMA_VERSION_V2;
+  appVersion: string;
+  exportedAt: string;
+  project: ScientificProjectV2;
+};
+
+export type ScientificProjectFile =
+  | ScientificProjectFileV1
+  | ScientificProjectFileV2;
 
 /** Runtime snapshot collected from GraphEditor — F4 boundary input. */
 export type GraphEditorProjectSnapshot = ScientificProjectV1;

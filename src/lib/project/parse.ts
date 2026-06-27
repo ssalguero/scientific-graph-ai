@@ -1,13 +1,18 @@
 import {
-  CURRENT_SCHEMA_VERSION,
   PROJECT_KIND,
   PROJECT_SIZE_WARN_BYTES,
+  SCHEMA_VERSION_V1,
+  SCHEMA_VERSION_V2,
 } from "./constants";
 import { isNumber, isRecord, isString, issue, pushIssue } from "./guards";
 import type {
   ParseProjectFileResult,
   ProjectValidationIssue,
   ScientificProjectFile,
+  ScientificProjectFileV1,
+  ScientificProjectFileV2,
+  ScientificProjectV1,
+  ScientificProjectV2,
 } from "./types";
 
 export const parseProjectJson = (text: string): ParseProjectFileResult => {
@@ -93,13 +98,33 @@ export const parseProjectUnknown = (
     return { ok: false, errors };
   }
 
-  const file: ScientificProjectFile = {
+  const schemaVersion = parsed.schemaVersion;
+  const envelope = {
     kind: PROJECT_KIND,
-    schemaVersion: parsed.schemaVersion as ScientificProjectFile["schemaVersion"],
     appVersion: parsed.appVersion as string,
     exportedAt: parsed.exportedAt as string,
-    project: parsed.project as ScientificProjectFile["project"],
   };
+
+  let file: ScientificProjectFile;
+  if (schemaVersion === SCHEMA_VERSION_V2) {
+    file = {
+      ...envelope,
+      schemaVersion: SCHEMA_VERSION_V2,
+      project: parsed.project as ScientificProjectV2,
+    } satisfies ScientificProjectFileV2;
+  } else if (schemaVersion === SCHEMA_VERSION_V1) {
+    file = {
+      ...envelope,
+      schemaVersion: SCHEMA_VERSION_V1,
+      project: parsed.project as ScientificProjectV1,
+    } satisfies ScientificProjectFileV1;
+  } else {
+    file = {
+      ...envelope,
+      schemaVersion: schemaVersion as ScientificProjectFile["schemaVersion"],
+      project: parsed.project as ScientificProjectV1,
+    } as ScientificProjectFile;
+  }
 
   return { ok: true, file, warnings };
 };

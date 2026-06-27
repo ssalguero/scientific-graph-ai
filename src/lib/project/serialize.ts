@@ -1,9 +1,8 @@
 import {
-  CURRENT_SCHEMA_VERSION,
   DEFAULT_PROJECT_NAME,
-  PROJECT_KIND,
   PROJECT_SIZE_WARN_BYTES,
 } from "./constants";
+import { buildScientificProjectFileV2 } from "./adapters/sgproj/serialize-v2";
 import { issue, pushIssue } from "./guards";
 import { VISIBILITY_KEYS_V1 } from "./keys";
 import type {
@@ -16,7 +15,7 @@ import type {
   SerializeProjectInput,
   SerializeProjectResult,
 } from "./types";
-import { validateScientificProjectV1 } from "./validate";
+import { validateScientificProjectV1, validateScientificProjectV2 } from "./validate";
 
 const ISO_8601_PATTERN =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
@@ -272,11 +271,7 @@ export const serializeProject = (
   preSerializeChecks(normalized, warnings);
 
   const exportedAt = input.exportedAt ?? new Date().toISOString();
-  const file: ScientificProjectFile = {
-    kind: PROJECT_KIND,
-    schemaVersion: CURRENT_SCHEMA_VERSION,
-    appVersion: input.appVersion.trim(),
-    exportedAt,
+  const v2Build = buildScientificProjectFileV2({
     project: {
       ...normalized,
       metadata: {
@@ -284,7 +279,23 @@ export const serializeProject = (
         updatedAt: exportedAt,
       },
     },
-  };
+    appVersion: input.appVersion.trim(),
+    exportedAt,
+  });
+
+  warnings.push(...v2Build.warnings);
+
+  const v2Validation = validateScientificProjectV2(v2Build.file.project);
+  if (!v2Validation.ok) {
+    return {
+      ok: false,
+      errors: v2Validation.errors,
+      warnings: [...warnings, ...v2Validation.warnings],
+    };
+  }
+  warnings.push(...v2Validation.warnings);
+
+  const file: ScientificProjectFile = v2Build.file;
 
   const pretty = input.options?.pretty !== false;
   const json = pretty ? JSON.stringify(file, null, 2) : JSON.stringify(file);

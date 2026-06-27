@@ -1,3 +1,5 @@
+import { collapseProjectV2ForHydrate } from "./adapters/sgproj/collapse-v2-for-hydrate";
+import { isScientificProjectFileV2 } from "./adapters/sgproj/envelope";
 import { migrateProjectJson } from "./migrate";
 import { sanitizeProjectSnapshot } from "./sanitize";
 import type {
@@ -24,6 +26,8 @@ import { validateScientificProjectFile } from "./validate";
  *
  * SCI-59 toggles are NOT re-applied; stored in analysisConfig.visibility.
  * SCI-53→60 outputs are NOT hydrated — recomputed via useMemo after patch.
+ *
+ * PROD-2B B1.4: V2 files collapse to V1-shaped patch until B2 multi-dataset UI.
  */
 
 const resolvePostHydrateActions = (
@@ -38,6 +42,13 @@ const resolvePostHydrateActions = (
   }
   return actions;
 };
+
+export const projectFileToHydrateV1 = (
+  file: ScientificProjectFile
+): ScientificProjectV1 =>
+  isScientificProjectFileV2(file)
+    ? collapseProjectV2ForHydrate(file.project)
+    : file.project;
 
 export const buildHydrateProjectPatch = (
   project: ScientificProjectV1,
@@ -65,9 +76,11 @@ export const hydrateProject = (
     };
   }
 
+  const hydrateProjectV1 = projectFileToHydrateV1(file);
+
   return {
     ok: true,
-    patch: buildHydrateProjectPatch(file.project, validation.warnings),
+    patch: buildHydrateProjectPatch(hydrateProjectV1, validation.warnings),
   };
 };
 
