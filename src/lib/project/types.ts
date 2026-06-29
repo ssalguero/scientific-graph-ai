@@ -14,6 +14,7 @@ import type {
 } from "@/lib/scientific/comparison/types";
 import type { SCHEMA_VERSION_V1, SCHEMA_VERSION_V2 } from "./constants";
 import type { ScientificProjectV2 } from "./domain/types-v2";
+import type { HydrateProjectV2Patch } from "./editor-hydrate-context-v2";
 
 export type ProjectSchemaVersion =
   | typeof SCHEMA_VERSION_V1
@@ -175,6 +176,22 @@ export type ScientificProjectFile =
 /** Runtime snapshot collected from GraphEditor — F4 boundary input. */
 export type GraphEditorProjectSnapshot = ScientificProjectV1;
 
+export type {
+  EditorProjectCollectContextV2,
+  GraphEditorProjectSnapshotV2,
+} from "./editor-collect-context-v2";
+
+export {
+  applyHydrateProjectV2Patch,
+  buildHydrateProjectV2Patch,
+  cloneScientificProjectV2,
+} from "./apply-hydrate-project-v2-patch";
+
+export {
+  collectProjectSnapshotV2,
+  prepareSessionDatasetsForCollect,
+} from "./collect-project-snapshot-v2";
+
 export type ProjectValidationIssue = {
   code: string;
   path: string;
@@ -208,6 +225,13 @@ export type SerializeProjectInput = {
   options?: SerializeProjectOptions;
 };
 
+export type SerializeProjectV2Input = {
+  project: ScientificProjectV2;
+  appVersion: string;
+  exportedAt?: string;
+  options?: SerializeProjectOptions;
+};
+
 export type SerializeProjectResult =
   | {
       ok: true;
@@ -229,8 +253,14 @@ export type HydrateProjectPatch = {
   warnings: ProjectValidationIssue[];
 };
 
+export type {
+  EditorComparisonSlotApplyV2,
+  EditorProjectApplyContextV2,
+  HydrateProjectV2Patch,
+} from "./editor-hydrate-context-v2";
+
 export type HydrateProjectResult =
-  | { ok: true; patch: HydrateProjectPatch }
+  | { ok: true; patch: HydrateProjectV2Patch }
   | { ok: false; errors: ProjectValidationIssue[]; warnings: ProjectValidationIssue[] };
 
 export const GUIDED_WORKFLOW_TEMPLATE_IDS: GuidedWorkflowTemplateId[] = [

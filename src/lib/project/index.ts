@@ -45,11 +45,13 @@ export type {
   ScientificProjectV1,
   ScientificProjectV2,
   SerializeProjectInput,
+  SerializeProjectV2Input,
   SerializeProjectOptions,
   SerializeProjectResult,
   PostHydrateAction,
   HydrateProjectPatch,
   HydrateProjectResult,
+  HydrateProjectV2Patch,
 } from "./types";
 
 export type { VisibilityKeyV1 } from "./keys";
@@ -78,6 +80,16 @@ export {
   serializeProject,
 } from "./serialize";
 
+export { normalizeScientificProjectV2 } from "./normalize-v2";
+
+export { serializeProjectV2 } from "./serialize-project-v2";
+
+export {
+  applyHydrateProjectV2Patch,
+  buildHydrateProjectV2Patch,
+  cloneScientificProjectV2,
+} from "./apply-hydrate-project-v2-patch";
+
 export {
   sanitizeComparison,
   sanitizeProjectSnapshot,
@@ -88,6 +100,13 @@ export {
 } from "./sanitize";
 
 export {
+  sanitizeComparisonV2,
+  sanitizeScientificProjectV2,
+} from "./sanitize-project-v2";
+
+export type { SanitizeScientificProjectV2Result } from "./sanitize-project-v2";
+
+export {
   buildHydrateProjectPatch,
   hydrateProject,
   hydrateProjectJson,
@@ -96,6 +115,7 @@ export {
 
 export {
   buildScientificProjectFileV2,
+  buildScientificProjectFileV2Native,
   collapseProjectV2ForHydrate,
   isScientificProjectFileV1,
   isScientificProjectFileV2,

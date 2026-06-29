@@ -1,0 +1,134 @@
+{
+  "kind": "scientific-graph-ai.project",
+  "schemaVersion": 2,
+  "appVersion": "0.1.0",
+  "exportedAt": "2026-06-17T12:00:00.000Z",
+  "project": {
+    "metadata": {
+      "id": "00000000-0000-4000-8000-000000009901",
+      "name": "B2.9 multi-dataset fixture",
+      "createdAt": "2026-06-17T10:00:00.000Z",
+      "updatedAt": "2026-06-17T12:00:00.000Z"
+    },
+    "datasets": [
+      {
+        "id": "00000000-0000-4000-8000-000000009901::primary",
+        "label": "DatasetA.csv",
+        "series": [
+          {
+            "id": "s1",
+            "name": "Series A",
+            "color": "#3366cc",
+            "points": [
+              {
+                "x": 1,
+                "y": 10
+              }
+            ]
+          }
+        ],
+        "info": {
+          "fileName": "DatasetA.csv",
+          "importedAt": "2026-06-17T12:00:00.000Z",
+          "seriesCount": 1,
+          "observationCount": 1
+        },
+        "importReport": null,
+        "checksum": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000009901::ds-2",
+        "label": "DatasetB.csv",
+        "series": [
+          {
+            "id": "s2",
+            "name": "Series B",
+            "color": "#dc3912",
+            "points": [
+              {
+                "x": 1,
+                "y": 5
+              },
+              {
+                "x": 2,
+                "y": 6
+              }
+            ]
+          }
+        ],
+        "info": {
+          "fileName": "DatasetB.csv",
+          "importedAt": "2026-06-17T12:00:00.000Z",
+          "seriesCount": 1,
+          "observationCount": 2
+        },
+        "importReport": null,
+        "preserveAnalysisOnReimport": true,
+        "checksum": null
+      }
+    ],
+    "activeDatasetId": "00000000-0000-4000-8000-000000009901::ds-2",
+    "analysisConfig": {
+      "visibility": {},
+      "modes": {
+        "regressionModel": "linear",
+        "errorBarMode": "sd",
+        "correlationMethod": "pearson",
+        "outlierMethod": "iqr",
+        "heatmapMode": "correlation",
+        "nonParametricMode": "mann-whitney",
+        "histogramBins": 10,
+        "axisScaleMode": "linear",
+        "naturalLanguageEnabled": false
+      },
+      "selections": {
+        "tTestSeriesA": "s2",
+        "tTestSeriesB": null,
+        "mannWhitneySeriesA": null,
+        "mannWhitneySeriesB": null
+      },
+      "legend": {
+        "hiddenKeys": []
+      }
+    },
+    "workflow": {
+      "session": {
+        "status": "idle",
+        "templateId": null,
+        "currentStepIndex": 0,
+        "completedStepIds": [],
+        "skippedStepIds": [],
+        "startedAt": null,
+        "completedAt": null
+      }
+    },
+    "comparison": {
+      "slots": {
+        "A": {
+          "label": "Slot A",
+          "profile": null,
+          "sourceDatasetId": "00000000-0000-4000-8000-000000009901::primary"
+        },
+        "B": {
+          "label": "Slot B",
+          "profile": null,
+          "sourceDatasetId": "00000000-0000-4000-8000-000000009901::ds-2"
+        }
+      }
+    },
+    "workspace": {
+      "activeSection": "data",
+      "inspectorSection": "visualization",
+      "enabledModules": {
+        "basic": true,
+        "mathematics": true,
+        "statistics": true,
+        "inference": true,
+        "assistant": true,
+        "reports": true
+      },
+      "controlPanelTab": "data"
+    },
+    "graphContext": null
+  }
+}

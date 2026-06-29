@@ -53,8 +53,6 @@ export {
   migrateDomainProjectFileToV2,
   migrateProjectToV2,
   migrateV1ToV2,
-  toPrimaryDatasetId,
-  PRIMARY_DATASET_ID_SUFFIX,
   type DomainMigrationWarning,
   type MigrateDomainFileToV2Result,
   type MigrateV1ToV2Result,
@@ -76,3 +74,28 @@ export {
   validateDomainProjectFileV2,
   validateScientificProjectV2,
 } from "./validate-v2";
+
+export {
+  assertPersistedDomainDatasetId,
+  assertStableDatasetId,
+  assertUniquePersistedDatasetIds,
+  createPersistedDatasetUuid,
+  DatasetIdPolicyError,
+  enforcePersistedDatasetIdentity,
+  isPersistedDomainDatasetId,
+  isPrimaryMigratedDatasetId,
+  isSessionRuntimeDatasetId,
+  isUuidDatasetId,
+  parseSequencedDatasetId,
+  preservePersistedDatasetId,
+  PERSISTED_DATASET_ID_SEPARATOR,
+  PRIMARY_DATASET_ID_SUFFIX,
+  SESSION_RUNTIME_DATASET_ID_PREFIX,
+  toPrimaryDatasetId,
+  toSequencedDatasetId,
+} from "./dataset-id-policy";
+
+export {
+  cloneExperimentalSeries,
+  computeDatasetMetrics,
+} from "./dataset-series-utils";

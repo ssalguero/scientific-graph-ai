@@ -1,7 +1,9 @@
-import { collapseProjectV2ForHydrate } from "./adapters/sgproj/collapse-v2-for-hydrate";
+import { buildHydrateProjectV2Patch } from "./apply-hydrate-project-v2-patch";
 import { isScientificProjectFileV2 } from "./adapters/sgproj/envelope";
+import { collapseProjectV2ForHydrate } from "./adapters/sgproj/collapse-v2-for-hydrate";
 import { migrateProjectJson } from "./migrate";
 import { sanitizeProjectSnapshot } from "./sanitize";
+import { sanitizeScientificProjectV2 } from "./sanitize-project-v2";
 import type {
   HydrateProjectPatch,
   HydrateProjectResult,
@@ -16,7 +18,7 @@ import { validateScientificProjectFile } from "./validate";
  * Hydration order for F4 applyProjectPatch:
  *
  * Phase 0 — reset ephemeral UI (page.tsx)
- * Phase 1 — metadata + dataset + importProvenance
+ * Phase 1 — metadata + sessionDatasets + active dataset editor payload
  * Phase 2 — graphContext
  * Phase 3 — analysisConfig modes + visibility + legend
  * Phase 4 — analysisConfig selections
@@ -27,10 +29,12 @@ import { validateScientificProjectFile } from "./validate";
  * SCI-59 toggles are NOT re-applied; stored in analysisConfig.visibility.
  * SCI-53→60 outputs are NOT hydrated — recomputed via useMemo after patch.
  *
- * PROD-2B B1.4: V2 files collapse to V1-shaped patch until B2 multi-dataset UI.
+ * PROD-2B B2.6: native V2 hydrate via buildHydrateProjectV2Patch (no collapse).
+ * PROD-2B B2.9: sanitizeScientificProjectV2 after validate, before hydrate patch.
+ * V1-shaped buildHydrateProjectPatch remains for legacy serialize/snapshot helpers only.
  */
 
-const resolvePostHydrateActions = (
+const resolvePostHydrateActionsV1 = (
   project: ScientificProjectV1
 ): PostHydrateAction[] => {
   const actions: PostHydrateAction[] = [];
@@ -43,6 +47,7 @@ const resolvePostHydrateActions = (
   return actions;
 };
 
+/** Legacy V1 collapse helper — retained for serialize/snapshot paths until Save wiring. */
 export const projectFileToHydrateV1 = (
   file: ScientificProjectFile
 ): ScientificProjectV1 =>
@@ -50,6 +55,7 @@ export const projectFileToHydrateV1 = (
     ? collapseProjectV2ForHydrate(file.project)
     : file.project;
 
+/** Legacy V1 sanitize patch builder — not used by the main hydrate pipeline after B2.6. */
 export const buildHydrateProjectPatch = (
   project: ScientificProjectV1,
   warnings: ProjectValidationIssue[] = []
@@ -59,7 +65,7 @@ export const buildHydrateProjectPatch = (
 
   return {
     project: sanitized,
-    postHydrateActions: resolvePostHydrateActions(sanitized),
+    postHydrateActions: resolvePostHydrateActionsV1(sanitized),
     warnings: [...warnings, ...sanitizeWarnings],
   };
 };
@@ -76,11 +82,30 @@ export const hydrateProject = (
     };
   }
 
-  const hydrateProjectV1 = projectFileToHydrateV1(file);
+  if (!isScientificProjectFileV2(file)) {
+    return {
+      ok: false,
+      errors: [
+        {
+          code: "H-NOT-V2",
+          path: "schemaVersion",
+          message:
+            "hydrateProject requires a migrated ScientificProjectFileV2 envelope.",
+          severity: "error",
+        },
+      ],
+      warnings: validation.warnings,
+    };
+  }
+
+  const { project: sanitizedProject, warnings: sanitizeWarnings } =
+    sanitizeScientificProjectV2(file.project);
 
   return {
     ok: true,
-    patch: buildHydrateProjectPatch(hydrateProjectV1, validation.warnings),
+    patch: buildHydrateProjectV2Patch(sanitizedProject, {
+      warnings: [...validation.warnings, ...sanitizeWarnings],
+    }),
   };
 };
 

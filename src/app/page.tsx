@@ -22147,6 +22147,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       [slotId]: {
         ...previous[slotId],
         profile,
+        sourceDatasetId: activeDatasetId,
       },
     }));
   };
@@ -22156,6 +22157,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       [slotId]: {
         ...previous[slotId],
         profile: null,
+        sourceDatasetId: null,
       },
     }));
   };
@@ -22177,12 +22179,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     clearProjectVisualGraphs();
 
     setComparisonSlots((previous) => ({
-      A: slotReferencesSessionDataset(previous.A.profile, target)
-        ? { ...previous.A, profile: null }
-        : previous.A,
-      B: slotReferencesSessionDataset(previous.B.profile, target)
-        ? { ...previous.B, profile: null }
-        : previous.B,
+      A:
+        slotReferencesSessionDataset(previous.A.profile, target) ||
+        previous.A.sourceDatasetId === datasetId
+          ? { ...previous.A, profile: null, sourceDatasetId: null }
+          : previous.A,
+      B:
+        slotReferencesSessionDataset(previous.B.profile, target) ||
+        previous.B.sourceDatasetId === datasetId
+          ? { ...previous.B, profile: null, sourceDatasetId: null }
+          : previous.B,
     }));
 
     const remaining = sessionDatasets.filter((dataset) => dataset.id !== datasetId);
@@ -23507,6 +23513,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setLastImportReport,
     preserveAnalysisConfiguration,
     setPreserveAnalysisConfiguration,
+    sessionDatasets,
+    setSessionDatasets,
+    activeDatasetId,
+    setActiveDatasetId,
+    worksheetModified,
+    activeColumnRegistry,
+    activeAuxiliaryColumns,
     title,
     setTitle,
     curves,
@@ -23570,6 +23583,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     createEmptyComparisonSlots,
     createDefaultEnabledModules,
     clearEphemeralUiState,
+    onProjectOpened: (patch) => {
+      const activeSession = patch.sessionDatasets.find(
+        (dataset) => dataset.id === patch.activeDatasetId
+      );
+      if (!activeSession) {
+        return;
+      }
+      setWorksheetModified(activeSession.worksheetModified);
+      setActiveAuxiliaryColumns(
+        activeSession.datasetPayload.auxiliaryColumns ?? []
+      );
+      setActiveColumnRegistry(
+        activeSession.datasetPayload.columnRegistry ??
+          buildColumnRegistryFromImportAuxiliary(
+            seriesToWorksheet(activeSession.datasetPayload.series).columns,
+            activeSession.datasetPayload.auxiliaryColumns
+          )
+      );
+    },
     showDerivative,
     setShowDerivative,
     showIntegral,
@@ -23699,8 +23731,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
   const handleOpenProjectFile = async (file: File) => {
     pendingSlotCaptureRef.current = null;
-    setSessionDatasets([]);
-    setActiveDatasetId(null);
     await openProjectFromHook(file);
   };
 

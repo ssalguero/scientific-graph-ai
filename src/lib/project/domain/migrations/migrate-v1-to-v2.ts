@@ -1,4 +1,8 @@
 import {
+  PRIMARY_DATASET_ID_SUFFIX,
+  toPrimaryDatasetId,
+} from "../dataset-id-policy";
+import {
   type ComparisonSlotV1,
   type DatasetAnalysisProfileV1,
   type ProjectComparisonV1,
@@ -20,7 +24,7 @@ import {
   type ScientificProject,
 } from "../scientific-project";
 
-export const PRIMARY_DATASET_ID_SUFFIX = "primary" as const;
+export { PRIMARY_DATASET_ID_SUFFIX, toPrimaryDatasetId } from "../dataset-id-policy";
 
 export type DomainMigrationWarning = {
   code: string;
@@ -33,14 +37,6 @@ export type MigrateV1ToV2Result = {
   project: ScientificProjectV2;
   warnings: DomainMigrationWarning[];
 };
-
-/**
- * Migrator-only rule: assigns `{projectMetadataId}::primary` to the dataset
- * created from legacy V1 `project.dataset`. Not a general V2 format requirement.
- * See `migrations/README.md`.
- */
-export const toPrimaryDatasetId = (projectMetadataId: string): string =>
-  `${projectMetadataId}::${PRIMARY_DATASET_ID_SUFFIX}`;
 
 const migrateProfileV1ToV2 = (
   profile: DatasetAnalysisProfileV1

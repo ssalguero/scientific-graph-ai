@@ -8,7 +8,7 @@ import {
   type GraphEditorProjectIntegrationInput,
 } from "./graphEditorProjectIntegration";
 import { buildEditorVisibilityBindings } from "./editorVisibilityBindings";
-import { collectProjectSnapshot, createInitialProjectMetadata } from "./projectPersistence";
+import { collectProjectSnapshotV2, createInitialProjectMetadata } from "./projectPersistence";
 
 export type UseGraphEditorProjectFileParams = Omit<
   GraphEditorProjectIntegrationInput,
@@ -210,7 +210,7 @@ export function useGraphEditorProjectFile(params: UseGraphEditorProjectFileParam
   });
 
   const projectReadSignature = JSON.stringify(
-    collectProjectSnapshot(projectActions.buildReadContext())
+    collectProjectSnapshotV2(projectActions.buildCollectContextV2())
   );
 
   useEffect(() => {

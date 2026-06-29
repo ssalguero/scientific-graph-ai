@@ -1,8 +1,10 @@
 import type { ExperimentalSeries } from "@/lib/experimentalData";
-import type { ImportReport } from "@/lib/import/types";
+import type { WorksheetColumnRegistry } from "@/lib/experimentalWorksheet";
+import type { ImportAuxiliaryColumn, ImportReport } from "@/lib/import/types";
 import type { GuidedWorkflowSession } from "@/lib/scientific/workflow/types";
 import type { ProjectImportedDatasetInfo, ProjectMetadataV1 } from "@/lib/project";
 import type { ComparisonSlotId } from "@/lib/scientific/comparison";
+import type { SessionDataset } from "@/lib/sessionDatasetRegistry";
 import { GUIDED_WORKFLOW_IDLE_SESSION } from "@/lib/scientific/workflow/catalog";
 
 import {
@@ -11,14 +13,13 @@ import {
 } from "./editorVisibilityBindings";
 import { createProjectFileActions } from "./projectFileActions";
 import {
-  applyHydrateProjectPatch,
-  collectProjectSnapshot,
+  collectProjectSnapshotV2,
   createInitialProjectMetadata,
   pickVisibilitySetters,
   pickVisibilityState,
   type EditorComparisonSlots,
   type EditorProjectApplyContext,
-  type EditorProjectReadContext,
+  type EditorProjectCollectContextV2,
 } from "./projectPersistence";
 
 type Curve = {
@@ -31,13 +32,14 @@ type EditorRuntimeComparisonSlot = {
   id: ComparisonSlotId;
   label: string;
   profile: EditorComparisonSlots["A"]["profile"];
+  sourceDatasetId?: string | null;
 };
 
 type PersistedWorkspaceSection =
-  EditorProjectReadContext["workspace"]["activeSection"];
+  EditorProjectCollectContextV2["workspace"]["activeSection"];
 type RuntimeWorkspaceSection = PersistedWorkspaceSection | "home";
 type AnalysisInspectorSection =
-  EditorProjectReadContext["workspace"]["inspectorSection"];
+  EditorProjectCollectContextV2["workspace"]["inspectorSection"];
 
 export type GraphEditorProjectIntegrationInput = {
   projectMetadata: ProjectMetadataV1;
@@ -55,6 +57,13 @@ export type GraphEditorProjectIntegrationInput = {
   setLastImportReport: (value: ImportReport | null) => void;
   preserveAnalysisConfiguration: boolean;
   setPreserveAnalysisConfiguration: (value: boolean) => void;
+  sessionDatasets: SessionDataset[];
+  setSessionDatasets: (value: SessionDataset[]) => void;
+  activeDatasetId: string | null;
+  setActiveDatasetId: (value: string | null) => void;
+  worksheetModified: boolean;
+  activeColumnRegistry: WorksheetColumnRegistry;
+  activeAuxiliaryColumns: ImportAuxiliaryColumn[];
   title: string;
   setTitle: (value: string) => void;
   curves: Curve[];
@@ -123,12 +132,13 @@ export type GraphEditorProjectIntegrationInput = {
   >;
   createDefaultEnabledModules: () => Record<string, boolean>;
   clearEphemeralUiState: () => void;
+  onProjectOpened?: (patch: import("@/lib/project/editor-hydrate-context-v2").HydrateProjectV2Patch) => void;
 };
 
 export const createGraphEditorProjectIntegration = (
   input: GraphEditorProjectIntegrationInput
 ) => {
-  const buildReadContext = (): EditorProjectReadContext => ({
+  const buildCollectContextV2 = (): EditorProjectCollectContextV2 => ({
     metadata: input.projectMetadata,
     experimentalSeries: input.experimentalSeries,
     currentDatasetInfo: input.currentDatasetInfo,
@@ -158,10 +168,12 @@ export const createGraphEditorProjectIntegration = (
       A: {
         label: input.comparisonSlots.A.label,
         profile: input.comparisonSlots.A.profile,
+        sourceDatasetId: input.comparisonSlots.A.sourceDatasetId ?? null,
       },
       B: {
         label: input.comparisonSlots.B.label,
         profile: input.comparisonSlots.B.profile,
+        sourceDatasetId: input.comparisonSlots.B.sourceDatasetId ?? null,
       },
     },
     workspace: {
@@ -181,6 +193,11 @@ export const createGraphEditorProjectIntegration = (
     autoScaleY: input.autoScaleY,
     useSecondaryYAxis: input.useSecondaryYAxis,
     curves: input.curves.map(({ expression, color }) => ({ expression, color })),
+    sessionDatasets: input.sessionDatasets,
+    activeDatasetId: input.activeDatasetId,
+    worksheetModified: input.worksheetModified,
+    activeColumnRegistry: input.activeColumnRegistry,
+    activeAuxiliaryColumns: input.activeAuxiliaryColumns,
   });
 
   const buildApplyContext = (): EditorProjectApplyContext => ({
@@ -189,6 +206,8 @@ export const createGraphEditorProjectIntegration = (
     setCurrentDatasetInfo: input.setCurrentDatasetInfo,
     setLastImportReport: input.setLastImportReport,
     setPreserveAnalysisConfiguration: input.setPreserveAnalysisConfiguration,
+    setSessionDatasets: input.setSessionDatasets,
+    setActiveDatasetId: (value) => input.setActiveDatasetId(value),
     setTitle: input.setTitle,
     setCurves: input.setCurves,
     setMinX: input.setMinX,
@@ -226,9 +245,20 @@ export const createGraphEditorProjectIntegration = (
     setHiddenLegendKeys: input.setHiddenLegendKeys,
     setGuidedWorkflowSession: input.setGuidedWorkflowSession,
     setComparisonSlots: (value) =>
-      input.setComparisonSlots(
-        value as Parameters<typeof input.setComparisonSlots>[0]
-      ),
+      input.setComparisonSlots({
+        A: {
+          id: "A",
+          label: value.A.label,
+          profile: value.A.profile,
+          sourceDatasetId: value.A.sourceDatasetId,
+        },
+        B: {
+          id: "B",
+          label: value.B.label,
+          profile: value.B.profile,
+          sourceDatasetId: value.B.sourceDatasetId,
+        },
+      }),
     setActiveWorkspaceSection: (value) =>
       input.setActiveWorkspaceSection(
         value as Parameters<typeof input.setActiveWorkspaceSection>[0]
@@ -255,6 +285,8 @@ export const createGraphEditorProjectIntegration = (
     input.setCurrentDatasetInfo(null);
     input.setLastImportReport(null);
     input.setPreserveAnalysisConfiguration(false);
+    input.setSessionDatasets([]);
+    input.setActiveDatasetId(null);
     input.setComparisonSlots(input.createEmptyComparisonSlots());
     input.setGuidedWorkflowSession(GUIDED_WORKFLOW_IDLE_SESSION);
     input.setTitle("");
@@ -277,16 +309,17 @@ export const createGraphEditorProjectIntegration = (
   };
 
   return {
-    buildReadContext,
+    buildCollectContextV2,
     ...createProjectFileActions({
       projectMetadata: input.projectMetadata,
       setProjectMetadata: input.setProjectMetadata,
       setIsProjectDirty: input.setIsProjectDirty,
       setProjectFileFeedback: input.setProjectFileFeedback,
       suppressProjectDirtyRef: input.suppressProjectDirtyRef,
-      buildReadContext,
+      buildCollectContextV2,
       buildApplyContext,
       resetScientificProject,
+      onProjectOpened: input.onProjectOpened,
     }),
   };
 };

@@ -14,6 +14,7 @@ import {
   serializeProject,
   validateScientificProjectFile,
 } from "../src/lib/project/index";
+import { getHydratedActiveSeries } from "../src/lib/project/__tests__/hydrate-v2-pipeline.cases";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, "fixtures");
@@ -131,7 +132,7 @@ if (dataset5Loaded.ok && dataset5Loaded.file) {
   if (hydrated.ok) {
     assertCase(
       "dataset5.hydrate.series",
-      hydrated.patch.project.dataset.series.length === 4
+      getHydratedActiveSeries(hydrated.patch).length === 4
     );
     assertCase(
       "dataset5.hydrate.selections",
@@ -154,7 +155,7 @@ if (dataset5Loaded.ok && dataset5Loaded.file) {
     if (hydratedJson.ok) {
       assertCase(
         "dataset5.hydrateJson.series",
-        hydratedJson.patch.project.dataset.series.length === 4
+        getHydratedActiveSeries(hydratedJson.patch).length === 4
       );
     }
   }
@@ -192,6 +193,10 @@ if (dataset5Loaded.ok && dataset5Loaded.file) {
     assertCase(
       "hydrate.workflowClamp.index",
       workflowHydrated.patch.project.workflow.session.currentStepIndex === 6
+    );
+    assertCase(
+      "hydrate.workflowClamp.warning",
+      workflowHydrated.patch.warnings.some((item) => item.code === "H-WF-STEP")
     );
   }
 

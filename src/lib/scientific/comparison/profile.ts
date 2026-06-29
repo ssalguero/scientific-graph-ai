@@ -26,8 +26,8 @@ export const createEmptyComparisonSlots = (): Record<
   ComparisonSlotId,
   ComparisonSlot
 > => ({
-  A: { id: "A", label: COMPARISON_SLOT_LABELS.A, profile: null },
-  B: { id: "B", label: COMPARISON_SLOT_LABELS.B, profile: null },
+  A: { id: "A", label: COMPARISON_SLOT_LABELS.A, profile: null, sourceDatasetId: null },
+  B: { id: "B", label: COMPARISON_SLOT_LABELS.B, profile: null, sourceDatasetId: null },
 });
 
 export const mapNormalitySummaryToProfileSnapshot = (

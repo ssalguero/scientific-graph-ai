@@ -1,9 +1,10 @@
 import {
   DEFAULT_PROJECT_NAME,
   hydrateProjectJson,
-  serializeProject,
+  serializeProjectV2,
   type ProjectMetadataV1,
 } from "@/lib/project";
+import type { SessionDataset } from "@/lib/sessionDatasetRegistry";
 import {
   formatProjectOpenError,
   formatProjectSaveError,
@@ -15,13 +16,12 @@ import {
 import { applyExperimentalXViewportFit } from "./chartViewport";
 import {
   applyHydrateProjectPatch,
-  collectProjectSnapshot,
+  collectProjectSnapshotV2,
   createInitialProjectMetadata,
   sanitizeProjectFileName,
   type EditorProjectApplyContext,
-  type EditorProjectReadContext,
-  type EditorVisibilitySetters,
-  type EditorVisibilityState,
+  type EditorProjectCollectContextV2,
+  type HydrateProjectV2Patch,
 } from "./projectPersistence";
 
 export const APP_VERSION = "0.1.0";
@@ -37,9 +37,10 @@ export type ProjectFileActionsDeps = {
   setIsProjectDirty: (value: boolean) => void;
   setProjectFileFeedback: (value: ProjectFileFeedback | null) => void;
   suppressProjectDirtyRef: { current: boolean };
-  buildReadContext: () => EditorProjectReadContext;
+  buildCollectContextV2: () => EditorProjectCollectContextV2;
   buildApplyContext: () => EditorProjectApplyContext;
   resetScientificProject: () => void;
+  onProjectOpened?: (patch: HydrateProjectV2Patch) => void;
 };
 
 export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
@@ -59,11 +60,13 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
     };
     deps.setProjectMetadata(nextMetadata);
 
-    const serialized = serializeProject({
-      snapshot: collectProjectSnapshot({
-        ...deps.buildReadContext(),
-        metadata: nextMetadata,
-      }),
+    const project = collectProjectSnapshotV2({
+      ...deps.buildCollectContextV2(),
+      metadata: nextMetadata,
+    });
+
+    const serialized = serializeProjectV2({
+      project,
       appVersion: APP_VERSION,
       options: { includeChecksum: false },
     });
@@ -123,14 +126,22 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
 
       const applyContext = deps.buildApplyContext();
       applyHydrateProjectPatch(hydrated.patch, applyContext);
+      deps.onProjectOpened?.(hydrated.patch);
       if (
         hydrated.patch.project.graphContext == null &&
-        hydrated.patch.project.dataset.series.length > 0
+        hydrated.patch.sessionDatasets.some(
+          (dataset: SessionDataset) => dataset.datasetPayload.series.length > 0
+        )
       ) {
-        applyExperimentalXViewportFit(
-          hydrated.patch.project.dataset.series,
-          applyContext
+        const activeSession = hydrated.patch.sessionDatasets.find(
+          (dataset: SessionDataset) => dataset.id === hydrated.patch.activeDatasetId
         );
+        if (activeSession) {
+          applyExperimentalXViewportFit(
+            activeSession.datasetPayload.series,
+            applyContext
+          );
+        }
       }
       deps.setProjectMetadata(hydrated.patch.project.metadata);
       deps.suppressProjectDirtyRef.current = true;
@@ -155,4 +166,4 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
   };
 };
 
-export type { EditorVisibilityState, EditorVisibilitySetters };
+export { createInitialProjectMetadata };

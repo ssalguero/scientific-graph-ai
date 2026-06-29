@@ -6,10 +6,10 @@ import {
   loadProjectJson,
   migrateProjectJson,
   projectFileToHydrateV1,
-  SCHEMA_VERSION_V1,
   SCHEMA_VERSION_V2,
   serializeProject,
 } from "../../index";
+import { getHydratedActiveSeries } from "../../__tests__/hydrate-v2-pipeline.cases";
 import {
   createAssertCase,
   type CaseResult,
@@ -51,7 +51,7 @@ export const runAdaptersB14Cases = (
 
   assertCase(
     "wire.parse.v1.stillSchema1",
-    JSON.parse(emptyV1).schemaVersion === SCHEMA_VERSION_V1
+    JSON.parse(emptyV1).schemaVersion === 1
   );
 
   if (migratedDataset5.ok && migratedDataset5.file) {
@@ -67,11 +67,18 @@ export const runAdaptersB14Cases = (
     if (serialized.ok) {
       const hydrated = hydrateProjectJson(serialized.json);
       assertCase(
-        "wire.hydrate.v2CollapsesToV1",
+        "wire.hydrate.v2NativeMultiDataset",
         hydrated.ok === true &&
-          hydrated.patch.project.dataset.series.length === 4 &&
+          hydrated.patch.sessionDatasets.length >= 1 &&
+          getHydratedActiveSeries(hydrated.patch).length === 4 &&
           hydrated.patch.project.analysisConfig.selections.tTestSeriesA ===
             "d5-control1"
+      );
+      assertCase(
+        "wire.hydrate.noCollapseToSingleDataset",
+        hydrated.ok === true &&
+          hydrated.patch.project.datasets.length ===
+            hydrated.patch.sessionDatasets.length
       );
     }
   }
@@ -80,7 +87,7 @@ export const runAdaptersB14Cases = (
   assertCase(
     "wire.hydrate.v2Fixture.series",
     hydratedV2Fixture.ok === true &&
-      hydratedV2Fixture.patch.project.dataset.series.length === 4
+      getHydratedActiveSeries(hydratedV2Fixture.patch).length === 4
   );
 
   assertCase(

@@ -99,6 +99,7 @@ export type ComparisonSlot = {
   id: ComparisonSlotId;
   label: string;
   profile: DatasetAnalysisProfile | null;
+  sourceDatasetId?: string | null;
 };
 
 export type ComparisonKpiRow = {
