@@ -3,6 +3,7 @@ import {
   applyHydrateProjectV2Patch,
   buildHydrateProjectV2Patch,
   cloneScientificProjectV2,
+  extractActiveWorksheetState,
 } from "@/lib/project/apply-hydrate-project-v2-patch";
 import {
   projectDatasetV2ToSessionDataset,
@@ -395,6 +396,34 @@ export const runApplyHydrateProjectV2PatchCaseSuite = (): CaseResult[] => {
     multiCaptured.regressionModel === "linear" &&
       multiCaptured.hiddenLegendKeys?.includes("legend-hidden") === true
   );
+
+  const worksheetContext = buildBaseCollectContext({
+    sessionDatasets: [
+      {
+        ...sessionA,
+        worksheetModified: true,
+        datasetPayload: {
+          ...sessionA.datasetPayload,
+          columnRegistry: { s1: { columnType: "numeric", transforms: [] } },
+        },
+      },
+      sessionB,
+    ],
+    activeDatasetId: PRIMARY_ID,
+    experimentalSeries: SAMPLE_SERIES_A,
+    worksheetModified: true,
+    activeColumnRegistry: { s1: { columnType: "numeric", transforms: [] } },
+  });
+  const { patch: worksheetPatch, captured: worksheetCaptured } =
+    runHydrateRoundTripFromCollect(worksheetContext);
+  assertCase(
+    "hydrate.apply.worksheetSessionPayload",
+    worksheetCaptured.sessionDatasets?.[0]?.datasetPayload.columnRegistry?.s1
+      ?.columnType === "numeric" &&
+      extractActiveWorksheetState(worksheetPatch)?.columnRegistry?.s1
+        ?.columnType === "numeric"
+  );
+
   assertCase(
     "hydrate.apply.graphContext",
     multiCaptured.title === "Graph title"

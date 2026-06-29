@@ -267,5 +267,35 @@ export const runCollectProjectSnapshotV2CaseSuite = (): CaseResult[] => {
       ?.preserveAnalysisOnReimport === true
   );
 
+  const inactivePreserveContext = buildBaseContext({
+    sessionDatasets: [
+      {
+        ...buildSessionDataset(PRIMARY_ID, "DatasetA.csv", SAMPLE_SERIES_A),
+        preserveAnalysisOnReimport: false,
+      },
+      {
+        ...buildSessionDataset(DATASET_B_ID, "DatasetB.csv", SAMPLE_SERIES_B),
+        preserveAnalysisOnReimport: false,
+      },
+    ],
+    activeDatasetId: DATASET_B_ID,
+    preserveAnalysisConfiguration: true,
+    experimentalSeries: SAMPLE_SERIES_B,
+    currentDatasetInfo: {
+      fileName: "DatasetB.csv",
+      importedAt: "2026-06-17T12:00:00.000Z",
+      seriesCount: 1,
+      observationCount: 2,
+    },
+  });
+  const inactivePreserveSnapshot = collectProjectSnapshotV2(inactivePreserveContext);
+  assertCase(
+    "collect.inactivePreserveAnalysisOnReimport",
+    inactivePreserveSnapshot.datasets.find((dataset) => dataset.id === PRIMARY_ID)
+      ?.preserveAnalysisOnReimport === false &&
+      inactivePreserveSnapshot.datasets.find((dataset) => dataset.id === DATASET_B_ID)
+        ?.preserveAnalysisOnReimport === true
+  );
+
   return results;
 };

@@ -34,6 +34,7 @@
     "validate:prod2b-b2-invariants": "npx tsx scripts/validate-prod2b-b2-invariants.ts",
     "validate:prod2b-b2-gate": "npx tsx scripts/validate-prod2b-b2-gate.ts",
     "validate:prod2c-c1-worksheet-domain": "npx tsx scripts/validate-prod2c-c1-worksheet-domain.ts",
+    "validate:prod2c-c2-worksheet-pipeline": "npx tsx scripts/validate-prod2c-c2-worksheet-pipeline.ts",
     "generate:prod2b-v2-fixtures": "npx tsx scripts/generate-prod2b-v2-fixtures.ts",
     "validate:variable-importance-unit": "npx tsx scripts/validate-variable-importance-unit.ts",
     "validate:worksheet-transforms-unit": "npx tsx scripts/validate-worksheet-transforms-unit.ts",

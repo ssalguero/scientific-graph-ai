@@ -54,6 +54,7 @@ const buildSessionDataset = (
   seriesCount: 2,
   observationCount: 3,
   worksheetModified: true,
+  preserveAnalysisOnReimport: true,
   datasetPayload: {
     series: SAMPLE_SERIES,
     importReport: null,
@@ -339,6 +340,51 @@ export const runMapSessionDatasetCaseSuite = (): CaseResult[] => {
       importReportPersisted.importReport,
       importReportSession.datasetPayload.importReport
     )
+  );
+
+  const preserveSession = buildSessionDataset({
+    preserveAnalysisOnReimport: false,
+  });
+  const preservePersisted = sessionDatasetToProjectDatasetV2(preserveSession, {
+    preserveAnalysisOnReimport: true,
+  });
+  assertCase(
+    "map.preserve.optionOverridesSession",
+    preservePersisted.preserveAnalysisOnReimport === true
+  );
+  const preserveRoundTrip = projectDatasetV2ToSessionDataset(
+    sessionDatasetToProjectDatasetV2(preserveSession)
+  );
+  assertCase(
+    "map.preserve.sessionRoundTrip",
+    preserveRoundTrip.preserveAnalysisOnReimport === false
+  );
+
+  const transformSession = buildSessionDataset({
+    datasetPayload: {
+      series: SAMPLE_SERIES,
+      importReport: null,
+      columnRegistry: {
+        s1: {
+          columnType: "numeric",
+          transforms: [
+            {
+              kind: "scale",
+              enabled: true,
+              params: { factor: 2 },
+              sourceSeriesIds: ["s1"],
+            },
+          ],
+        },
+      },
+    },
+  });
+  const transformPersisted = sessionDatasetToProjectDatasetV2(transformSession);
+  transformPersisted.worksheet!.columnRegistry!.s1.transforms[0]!.params!.factor = 99;
+  assertCase(
+    "map.worksheet.transformDeepClone",
+    transformSession.datasetPayload.columnRegistry?.s1.transforms[0]?.params
+      ?.factor === 2
   );
 
   return results;

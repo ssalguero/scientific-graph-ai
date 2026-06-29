@@ -31,6 +31,7 @@ const cloneSessionDataset = (dataset: SessionDataset): SessionDataset => ({
   seriesCount: dataset.seriesCount,
   observationCount: dataset.observationCount,
   worksheetModified: dataset.worksheetModified,
+  preserveAnalysisOnReimport: dataset.preserveAnalysisOnReimport,
   datasetPayload: {
     series: cloneExperimentalSeries(dataset.datasetPayload.series),
     importReport: cloneImportReport(dataset.datasetPayload.importReport),
@@ -86,6 +87,7 @@ const buildMonoSessionDataset = (
     seriesCount: metrics.seriesCount,
     observationCount: metrics.observationCount,
     worksheetModified: ctx.worksheetModified ?? false,
+    preserveAnalysisOnReimport: ctx.preserveAnalysisConfiguration,
     datasetPayload: {
       series: clonedSeries,
       importReport: cloneImportReport(ctx.lastImportReport),
@@ -229,10 +231,10 @@ const buildProjectDatasets = (
         id: persistedId,
       },
       isActive
-        ? {
-            preserveAnalysisOnReimport: ctx.preserveAnalysisConfiguration,
-          }
-        : undefined
+        ? { preserveAnalysisOnReimport: ctx.preserveAnalysisConfiguration }
+        : session.preserveAnalysisOnReimport !== undefined
+          ? { preserveAnalysisOnReimport: session.preserveAnalysisOnReimport }
+          : undefined
     );
   });
 

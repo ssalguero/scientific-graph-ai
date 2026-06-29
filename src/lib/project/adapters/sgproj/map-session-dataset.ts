@@ -1,8 +1,9 @@
-import type { ImportAuxiliaryColumn, ImportReport } from "@/lib/import/types";
-import type { WorksheetColumnRegistry } from "@/lib/experimentalWorksheet";
+import type { ImportReport } from "@/lib/import/types";
 import {
   cloneExperimentalSeries,
+  cloneProjectWorksheetV2,
   computeDatasetMetrics,
+  isWorksheetPayloadEmpty,
   preservePersistedDatasetId,
 } from "@/lib/project/domain";
 import type { ProjectDatasetV2 } from "@/lib/project/domain/types-v2";
@@ -16,21 +17,6 @@ export type SessionDatasetToProjectDatasetOptions = Readonly<{
 
 const cloneImportReport = (report: ImportReport | null): ImportReport | null =>
   report ? { ...report } : null;
-
-const cloneWorksheetColumnRegistry = (
-  registry: WorksheetColumnRegistry | undefined
-): WorksheetColumnRegistry | undefined =>
-  registry ? { ...registry } : undefined;
-
-const cloneAuxiliaryColumns = (
-  columns: ImportAuxiliaryColumn[] | undefined
-): ImportAuxiliaryColumn[] | undefined =>
-  columns
-    ? columns.map((item) => ({
-        ...item,
-        valuesByRowIndex: { ...item.valuesByRowIndex },
-      }))
-    : undefined;
 
 const buildProjectDatasetInfo = (
   session: SessionDataset
@@ -52,11 +38,32 @@ const buildWorksheetFromSession = (
     return undefined;
   }
 
-  return {
-    columnRegistry: cloneWorksheetColumnRegistry(columnRegistry),
-    auxiliaryColumns: cloneAuxiliaryColumns(auxiliaryColumns),
+  const cloned = cloneProjectWorksheetV2({
     modified: session.worksheetModified,
+    columnRegistry,
+    auxiliaryColumns,
+  });
+
+  if (isWorksheetPayloadEmpty(cloned)) {
+    return undefined;
+  }
+
+  return {
+    columnRegistry: cloned.columnRegistry,
+    auxiliaryColumns: cloned.auxiliaryColumns,
+    modified: cloned.modified,
   };
+};
+
+const resolvePreserveAnalysisOnReimport = (
+  session: SessionDataset,
+  options?: SessionDatasetToProjectDatasetOptions
+): boolean | undefined => {
+  if (options?.preserveAnalysisOnReimport !== undefined) {
+    return options.preserveAnalysisOnReimport;
+  }
+
+  return session.preserveAnalysisOnReimport;
 };
 
 const resolveSessionName = (dataset: ProjectDatasetV2): string => {
@@ -83,6 +90,10 @@ export const sessionDatasetToProjectDatasetV2 = (
   const persistedId = preservePersistedDatasetId(session.id);
   const clonedSeries = cloneExperimentalSeries(session.datasetPayload.series);
   const worksheet = buildWorksheetFromSession(session);
+  const preserveAnalysisOnReimport = resolvePreserveAnalysisOnReimport(
+    session,
+    options
+  );
 
   const persisted: ProjectDatasetV2 = {
     id: persistedId,
@@ -92,8 +103,8 @@ export const sessionDatasetToProjectDatasetV2 = (
     importReport: cloneImportReport(session.datasetPayload.importReport),
   };
 
-  if (options?.preserveAnalysisOnReimport !== undefined) {
-    persisted.preserveAnalysisOnReimport = options.preserveAnalysisOnReimport;
+  if (preserveAnalysisOnReimport !== undefined) {
+    persisted.preserveAnalysisOnReimport = preserveAnalysisOnReimport;
   }
 
   if (options?.checksum !== undefined) {
@@ -117,6 +128,9 @@ export const projectDatasetV2ToSessionDataset = (
   const sessionId = preservePersistedDatasetId(dataset.id);
   const clonedSeries = cloneExperimentalSeries(dataset.series);
   const metrics = computeDatasetMetrics(clonedSeries);
+  const clonedWorksheet = dataset.worksheet
+    ? cloneProjectWorksheetV2(dataset.worksheet)
+    : undefined;
 
   return {
     id: sessionId,
@@ -125,11 +139,12 @@ export const projectDatasetV2ToSessionDataset = (
     seriesCount: metrics.seriesCount,
     observationCount: metrics.observationCount,
     worksheetModified: dataset.worksheet?.modified ?? false,
+    preserveAnalysisOnReimport: dataset.preserveAnalysisOnReimport,
     datasetPayload: {
       series: clonedSeries,
       importReport: cloneImportReport(dataset.importReport),
-      columnRegistry: cloneWorksheetColumnRegistry(dataset.worksheet?.columnRegistry),
-      auxiliaryColumns: cloneAuxiliaryColumns(dataset.worksheet?.auxiliaryColumns),
+      columnRegistry: clonedWorksheet?.columnRegistry,
+      auxiliaryColumns: clonedWorksheet?.auxiliaryColumns,
     },
   };
 };

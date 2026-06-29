@@ -5,6 +5,7 @@ import type {
   HydrateProjectV2Patch,
 } from "@/lib/project/editor-hydrate-context-v2";
 import {
+  cloneProjectWorksheetV2,
   preservePersistedDatasetId,
 } from "@/lib/project/domain";
 import type { ProjectDatasetV2, ScientificProjectV2 } from "@/lib/project/domain/types-v2";
@@ -29,18 +30,7 @@ const cloneDataset = (dataset: ProjectDatasetV2): ProjectDatasetV2 => ({
   info: dataset.info ? { ...dataset.info } : null,
   importReport: dataset.importReport ? { ...dataset.importReport } : null,
   worksheet: dataset.worksheet
-    ? {
-        modified: dataset.worksheet.modified,
-        columnRegistry: dataset.worksheet.columnRegistry
-          ? { ...dataset.worksheet.columnRegistry }
-          : undefined,
-        auxiliaryColumns: dataset.worksheet.auxiliaryColumns
-          ? dataset.worksheet.auxiliaryColumns.map((item) => ({
-              ...item,
-              valuesByRowIndex: { ...item.valuesByRowIndex },
-            }))
-          : undefined,
-      }
+    ? cloneProjectWorksheetV2(dataset.worksheet)
     : undefined,
 });
 
@@ -124,25 +114,52 @@ const resolveActiveDataset = (
 };
 
 const cloneSessionDatasets = (datasets: SessionDataset[]): SessionDataset[] =>
-  datasets.map((dataset) => ({
-    ...dataset,
-    datasetPayload: {
-      ...dataset.datasetPayload,
-      series: cloneSeries(dataset.datasetPayload.series),
-      importReport: dataset.datasetPayload.importReport
-        ? { ...dataset.datasetPayload.importReport }
-        : null,
-      columnRegistry: dataset.datasetPayload.columnRegistry
-        ? { ...dataset.datasetPayload.columnRegistry }
-        : undefined,
-      auxiliaryColumns: dataset.datasetPayload.auxiliaryColumns
-        ? dataset.datasetPayload.auxiliaryColumns.map((item) => ({
-            ...item,
-            valuesByRowIndex: { ...item.valuesByRowIndex },
-          }))
-        : undefined,
-    },
-  }));
+  datasets.map((dataset) => {
+    const clonedWorksheetPayload =
+      dataset.datasetPayload.columnRegistry !== undefined ||
+      dataset.datasetPayload.auxiliaryColumns !== undefined ||
+      dataset.worksheetModified
+        ? cloneProjectWorksheetV2({
+            modified: dataset.worksheetModified,
+            columnRegistry: dataset.datasetPayload.columnRegistry,
+            auxiliaryColumns: dataset.datasetPayload.auxiliaryColumns,
+          })
+        : undefined;
+
+    return {
+      ...dataset,
+      datasetPayload: {
+        ...dataset.datasetPayload,
+        series: cloneSeries(dataset.datasetPayload.series),
+        importReport: dataset.datasetPayload.importReport
+          ? { ...dataset.datasetPayload.importReport }
+          : null,
+        columnRegistry: clonedWorksheetPayload?.columnRegistry,
+        auxiliaryColumns: clonedWorksheetPayload?.auxiliaryColumns,
+      },
+    };
+  });
+
+export const extractActiveWorksheetState = (
+  patch: HydrateProjectV2Patch
+): {
+  worksheetModified: boolean;
+  columnRegistry: SessionDataset["datasetPayload"]["columnRegistry"];
+  auxiliaryColumns: SessionDataset["datasetPayload"]["auxiliaryColumns"];
+} | null => {
+  const activeSession = patch.sessionDatasets.find(
+    (dataset) => dataset.id === patch.activeDatasetId
+  );
+  if (!activeSession) {
+    return null;
+  }
+
+  return {
+    worksheetModified: activeSession.worksheetModified,
+    columnRegistry: activeSession.datasetPayload.columnRegistry,
+    auxiliaryColumns: activeSession.datasetPayload.auxiliaryColumns,
+  };
+};
 
 /**
  * Builds a V2 hydrate patch from a validated native V2 project (no migration).
