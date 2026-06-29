@@ -1,6 +1,6 @@
 # Scientific Graph AI — Estado PROD-2B (Persistencia de Proyectos Científicos)
 
-**Fecha de actualización:** 2026-06-27  
+**Fecha de actualización:** 2026-06-25  
 **Épica:** PROD-2B — Persistencia de Proyectos Científicos  
 **Referencias:** [`PROJECT_DISCOVERY_PROD_2B.md`](./PROJECT_DISCOVERY_PROD_2B.md) · [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) · [`src/lib/project/README.md`](./src/lib/project/README.md)
 
@@ -13,75 +13,152 @@
 | B0 — Discovery | **CERRADO** |
 | Plan PROD-2B (B1–B7) | **APROBADO** |
 | **B1 — Schema V2 + contratos + migrador + adapters** | **COMPLETED** |
-| B2 — Multi-dataset UI | Pendiente |
+| **B2 — Multi-Dataset Persistence** | **COMPLETED** |
 | B3 — Worksheet persistence | Pendiente |
 | B4 — Visual Graph Builder persistence | Pendiente |
 | B5 — IndexedDB autosave | Pendiente |
 | B6 — UX hardening + gate final | Pendiente |
 | B7 — Cloud adapter (opcional) | Pendiente |
 
-**Commit de implementación B1:** `c195591` — `feat(prod-2b): complete B1 schema v2 persistence foundation`
+**Gate umbrella B2:** `npm run validate:prod2b-b2-gate` — **PASS (17/17)**
 
 ---
 
-## 2. Fase B1 — COMPLETED
+## 2. Fase B2 — COMPLETED
 
-### 2.1 Microetapas
+### 2.1 Objetivo
+
+Persistir `sessionDatasets[]` nativamente en schema V2, restaurarlos al abrir sin colapso a single-dataset, vincular slots SCI-58 A/B a `sourceDatasetId`, y cerrar el pipeline Save/Open multi-dataset con sanitización determinista en apertura.
+
+### 2.2 Arquitectura final
+
+```
+Save (Runtime → .sgproj V2):
+  collectProjectSnapshotV2 → serializeProjectV2 → .sgproj
+
+Open (.sgproj → Runtime):
+  parse → migrateProjectJson (si V1)
+       → validateScientificProjectFile
+       → sanitizeScientificProjectV2          ← B2.9 wiring
+       → buildHydrateProjectV2Patch
+       → applyHydrateProjectV2Patch (UI)
+```
+
+| Capa | Módulo principal |
+|------|------------------|
+| Mappers SessionDataset ↔ ProjectDatasetV2 | `src/lib/project/adapters/sgproj/map-session-dataset.ts` |
+| Política IDs estables | `src/lib/project/domain/dataset-id-policy.ts` |
+| Collect V2 | `src/lib/project/collect-project-snapshot-v2.ts` |
+| Serialize V2 | `src/lib/project/serialize-project-v2.ts` |
+| Hydrate patch V2 | `src/lib/project/apply-hydrate-project-v2-patch.ts` |
+| Sanitize V2 | `src/lib/project/sanitize-project-v2.ts` |
+| Hydrate wiring | `src/lib/project/hydrate.ts` |
+| UI Save/Open | `src/app/projectFileActions.ts`, `graphEditorProjectIntegration.ts`, `page.tsx` |
+
+### 2.3 Microetapas B2
 
 | Microetapa | Alcance | Gate | Estado |
 |------------|---------|------|--------|
-| **B1.1** | Dominio puro (`domain/types-v1`, `types-v2`, guards) | `validate:prod2b-b1-1-domain` | **CERRADA** |
-| **B1.2** | Migrador V1→V2 puro | `validate:prod2b-b1-2-migrate` | **CERRADA** |
-| **B1.3** | Validadores V2 en dominio | `validate:prod2b-b1-3-v2` | **CERRADA** |
-| **B1.4** | Adapters `.sgproj` + wiring mínimo | `validate:prod2b-b1-4-adapters`, `validate:prod2b-f0`, `validate:prod2b-migrate` | **CERRADA** |
+| **B2.1** | Mappers SessionDataset ↔ ProjectDatasetV2 | `validate:prod2b-b2-map` | **CERRADA** (20/20) |
+| **B2.2** | Política IDs estables (persisted vs session) | `validate:prod2b-b2-ids` | **CERRADA** (18/18) |
+| **B2.3** | `collectProjectSnapshotV2` | `validate:prod2b-b2-collect` | **CERRADA** (14/14) |
+| **B2.4** | `serializeProjectV2` multi-dataset nativo | `validate:prod2b-b2-serialize` | **CERRADA** (18/18) |
+| **B2.5** | `applyHydrateProjectV2Patch` — rebuild session registry | `validate:prod2b-b2-hydrate` | **CERRADA** (21/21) |
+| **B2.6** | `hydrate.ts` sin collapse V2→V1 | `validate:prod2b-b2-hydrate-wire` | **CERRADA** (20/20) |
+| **B2.7** | UI wiring Save/Open V2, `sourceDatasetId` en slots | `validate:prod2b-b2-ui-pipeline` | **CERRADA** (12/12) |
+| **B2.8** | `sanitizeScientificProjectV2` (standalone) | `validate:prod2b-b2-sanitize` | **CERRADA** (22/22) |
+| **B2.9** | Wiring sanitize + invariantes E2E + gate final | `validate:prod2b-b2-invariants`, `validate:prod2b-b2-gate` | **CERRADA** (21/21) |
 
-### 2.2 Entregables B1
+### 2.4 Invariantes verificados (B2.9)
 
-| Entregable | Ubicación |
-|------------|-----------|
-| Contrato dominio V1/V2 | `src/lib/project/domain/` |
-| Migrador V1→V2 (idempotente) | `src/lib/project/domain/migrations/migrate-v1-to-v2.ts` |
-| Validadores V2 | `src/lib/project/domain/validate-v2.ts` |
-| Adaptadores `.sgproj` | `src/lib/project/adapters/sgproj/` |
-| Wiring parse → migrate → validate → serialize → hydrate | `src/lib/project/{parse,migrate,validate,serialize,hydrate}.ts` |
-| Fixtures V2 golden | `scripts/fixtures/project-v2-*.sgproj` |
-| `CURRENT_SCHEMA_VERSION = 2` | `src/lib/project/constants.ts` |
+#### Invariante A — Save → Load → Save
 
-### 2.3 Comportamiento tras B1
+Proyectos funcionalmente equivalentes tras round-trip completo. Metadatos ignorados en comparación: `exportedAt`, `updatedAt`, `revisionHistory`, `cloudRef`.
 
-| Acción | Resultado |
-|--------|-----------|
-| Abrir `.sgproj` V1 | Auto-migra a V2 en memoria; hydrate colapsa a patch V1 para UI |
-| Guardar proyecto | Escribe `schemaVersion: 2` con `datasets[]` |
-| UI / multi-dataset | Sin cambios visibles (colapso V2→V1 hasta B2) |
+| Caso | Resultado |
+|------|-----------|
+| Multi-dataset sintético (2 datasets, slots A/B) | **PASS** |
+| Fixture `project-v2-dataset5-minimal.sgproj` | **PASS** |
+| Fixture generado `project-v2-dataset5-dataset6-comparison.sgproj` | **PASS** (escrito + re-hidratable, 2 datasets) |
 
-### 2.4 Regla del migrador (no contrato V2)
+#### Invariante B — V1 → Migración → Runtime → Save → V2
 
-El id `{projectId}::primary` es **regla exclusiva del migrador V1→V2** (determinismo e idempotencia). No es obligatorio en proyectos V2 nativos. Documentado en `src/lib/project/domain/migrations/README.md`.
+Preserva: `datasets`, `activeDatasetId`, `sourceDatasetId`, `workflow`, `workspace`, `graphContext`, `analysisConfig`, IDs persistidos.
 
-### 2.5 Gates B1 — PASS
+| Caso | Resultado |
+|------|-----------|
+| Fixture `project-v1-dataset5-minimal.sgproj` → migrate → hydrate → save V2 | **PASS** (10 asserts) |
+| Orphan selection via hydrate+sanitize (`H-SEL-ORPHAN`) | **PASS** |
+
+### 2.5 Fixtures B2
+
+| Fixture | Descripción |
+|---------|-------------|
+| `scripts/fixtures/project-v2-dataset5-minimal.sgproj` | V2 mono-dataset golden |
+| `scripts/fixtures/project-v2-dataset5-dataset6-comparison.sgproj` | **Nuevo** — V2 multi-dataset (D5+D6, slots comparison) |
+| `scripts/fixtures/project-v1-dataset5-minimal.sgproj` | V1 compat (migración Invariante B) |
+
+### 2.6 Gates B2 — PASS
 
 | Gate | Resultado |
 |------|-----------|
-| `npx tsc --noEmit` | PASS |
-| `npm run validate:prod2b-b1-1-domain` | PASS (9/9) |
-| `npm run validate:prod2b-b1-2-migrate` | PASS (17/17) |
-| `npm run validate:prod2b-b1-3-v2` | PASS (13/13) |
-| `npm run validate:prod2b-b1-4-adapters` | PASS (8/8) |
-| `npm run validate:prod2b-f0` | PASS |
-| `npm run validate:prod2b-migrate` | PASS (8/8) |
-| `npm run validate:prod2a-unit` | PASS (37/37) |
-| `npm run build` | PASS |
+| `validate:prod2b-b2-map` | PASS (20/20) |
+| `validate:prod2b-b2-ids` | PASS (18/18) |
+| `validate:prod2b-b2-collect` | PASS (14/14) |
+| `validate:prod2b-b2-serialize` | PASS (18/18) |
+| `validate:prod2b-b2-hydrate` | PASS (21/21) |
+| `validate:prod2b-b2-hydrate-wire` | PASS (20/20) |
+| `validate:prod2b-b2-sanitize` | PASS (22/22) |
+| `validate:prod2b-b2-ui-pipeline` | PASS (12/12) |
+| `validate:prod2b-b2-invariants` | PASS (21/21) |
+| **`validate:prod2b-b2-gate`** | **PASS (17/17)** |
 
-### 2.6 Regresión PROD-2A
+Gate umbrella incluye regresión B1, `validate:prod2b-f0`, `validate:prod2b-migrate`, `validate:prod2a-unit` (38/38) y `tsc --noEmit`.
 
-| Gate | Resultado | Notas |
-|------|-----------|-------|
-| `validate:prod2a-gate` | FAIL intermitente en pasos Playwright (`baseline`, `e2e`) | Clasificado como **deuda técnica de infraestructura** (harness/servidor). No bloquea cierre B1. Pasos f0, unit, f6, tsc, build, prod1-gate: PASS. |
+### 2.7 Riesgos resueltos en B2
+
+| Riesgo | Resolución |
+|--------|------------|
+| Colapso V2→V1 en hydrate destruía multi-dataset | Eliminado en B2.6; hydrate nativo V2 |
+| IDs de dataset inconsistentes entre runtime y persistencia | Política explícita B2.2 (`::primary`, secuenciados) |
+| Selecciones huérfanas / `sourceDatasetId` inválido al abrir | `sanitizeScientificProjectV2` wired en B2.9 |
+| Save UI no persistía registry completo | Wiring B2.7 en `projectFileActions` + `page.tsx` |
+| V1 round-trip perdía campos V2 | Invariante B verificado; migrador idempotente |
+
+### 2.8 Riesgos pendientes (fuera de B2)
+
+| Riesgo | Clasificación |
+|--------|---------------|
+| `validate:prod2a-gate` Playwright intermitente | Deuda infraestructura; no bloquea B2 |
+| Worksheet / Visual Graph Builder persistence | B3 / B4 |
+| IndexedDB autosave | B5 |
 
 ---
 
-## 3. Principios arquitectónicos (vigentes)
+## 3. Fase B1 — COMPLETED (referencia)
+
+### 3.1 Microetapas
+
+| Microetapa | Gate | Estado |
+|------------|------|--------|
+| B1.1 Dominio V1/V2 | `validate:prod2b-b1-1-domain` | CERRADA (9/9) |
+| B1.2 Migrador V1→V2 | `validate:prod2b-b1-2-migrate` | CERRADA (17/17) |
+| B1.3 Validadores V2 | `validate:prod2b-b1-3-v2` | CERRADA (13/13) |
+| B1.4 Adapters + wiring mínimo | `validate:prod2b-b1-4-adapters` | CERRADA (9/9) |
+
+**Commit B1:** `c195591` — `feat(prod-2b): complete B1 schema v2 persistence foundation`
+
+### 3.2 Comportamiento post-B1 (actualizado post-B2)
+
+| Acción | Resultado |
+|--------|-----------|
+| Abrir `.sgproj` V1 | Auto-migra a V2; hydrate multi-dataset nativo |
+| Abrir `.sgproj` V2 | Validate → sanitize → hydrate full registry |
+| Guardar proyecto | Escribe `schemaVersion: 2` con `datasets[]` completos |
+
+---
+
+## 4. Principios arquitectónicos (vigentes)
 
 1. **Estado Persistente del Dominio** — `.sgproj` almacena solo dominio científico; artefactos derivados se reconstruyen al abrir.
 2. **Independencia del Dominio** — `ScientificProject` es modelo puro; persistencia actúa como adaptador.
@@ -90,21 +167,20 @@ El id `{projectId}::primary` es **regla exclusiva del migrador V1→V2** (determ
 
 ---
 
-## 4. Próxima fase — B2 (no iniciada)
+## 5. Próxima fase — B3
 
-**Objetivo:** Persistir `sessionDatasets[]` en V2 y restaurarlos al abrir; vincular slots SCI-58 A/B a `sourceDatasetId`.
+**Objetivo:** Persistencia de worksheet (columnas, fórmulas, lineage) en el proyecto V2.
 
-**Inicio:** conversación dedicada exclusivamente a B2, metodología incremental (implementación → gates → validación → commit → documentación).
-
-**Dependencia:** B1 COMPLETED ✓
+**Dependencia:** B2 COMPLETED ✓
 
 ---
 
-## 5. Histórico de cierre B1
+## 6. Histórico de cierre
 
 | Fecha | Evento |
 |-------|--------|
 | 2026-06-27 | Discovery PROD-2B cerrado |
 | 2026-06-27 | Plan PROD-2B aprobado |
-| 2026-06-27 | B1.1–B1.4 implementadas y aprobadas |
-| 2026-06-27 | **Fase B1 cerrada oficialmente** |
+| 2026-06-27 | B1.1–B1.4 implementadas; **Fase B1 cerrada** |
+| 2026-06-25 | B2.1–B2.9 implementadas; invariantes A/B verificados |
+| 2026-06-25 | **`validate:prod2b-b2-gate` PASS — Fase B2 cerrada oficialmente** |
