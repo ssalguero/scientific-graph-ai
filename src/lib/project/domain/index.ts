@@ -119,3 +119,27 @@ export {
   cloneExperimentalSeries,
   computeDatasetMetrics,
 } from "./dataset-series-utils";
+
+export {
+  PERSISTED_VISUAL_GRAPH_ENTRY_KEYS,
+  VisualGraphDomainError,
+  assertVisualGraphIdConsistency,
+  cloneGraphSpecification,
+  cloneProjectVisualGraphPersistedList,
+  cloneProjectVisualGraphPersistedV2,
+  isVisualGraphPayloadEmpty,
+  remapVisualGraphSourceDatasetId,
+  remapVisualGraphSourceDatasetIds,
+} from "./visual-graph-domain";
+
+export {
+  buildVisualGraphHydrateContextFromDataset,
+  persistedVisualGraphsEquivalent,
+  projectVisualGraphEntriesToPersistedV2,
+  projectVisualGraphEntryToPersistedV2,
+  projectVisualGraphPersistedListToRuntimeEntries,
+  projectVisualGraphPersistedV2ToRuntimeEntry,
+  type VisualGraphCollectInput,
+  type VisualGraphEntriesToPersistedOptions,
+  type VisualGraphHydrateContext,
+} from "./mappers/visual-graph";
