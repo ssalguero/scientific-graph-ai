@@ -56,6 +56,10 @@ type ScientificWorksheetPanelProps = {
   series: ExperimentalSeries[];
   modified: boolean;
   onSeriesChange: (nextSeries: ExperimentalSeries[]) => void;
+  onWorksheetPayloadChange?: (payload: {
+    columnRegistry: WorksheetColumnRegistry;
+    modified?: boolean;
+  }) => void;
   auxiliaryColumns?: ImportAuxiliaryColumn[];
   initialColumnRegistry?: WorksheetColumnRegistry;
   btnOutlineSm: string;
@@ -93,6 +97,7 @@ export function ScientificWorksheetPanel({
   series,
   modified,
   onSeriesChange,
+  onWorksheetPayloadChange,
   auxiliaryColumns = [],
   initialColumnRegistry,
   btnOutlineSm,
@@ -164,6 +169,11 @@ export function ScientificWorksheetPanel({
     updater: Parameters<typeof applyWorksheetModelUpdate>[1]
   ) => {
     onSeriesChange(applyWorksheetModelUpdate(series, updater));
+  };
+
+  const commitColumnRegistryChange = (nextRegistry: WorksheetColumnRegistry) => {
+    setColumnRegistry(nextRegistry);
+    onWorksheetPayloadChange?.({ columnRegistry: nextRegistry, modified: true });
   };
 
   const toggleSort = (column: WorksheetSortColumn) => {
@@ -274,13 +284,11 @@ export function ScientificWorksheetPanel({
       (column) => !previousIds.has(column.seriesId)
     );
 
-    setColumnRegistry((previous) => {
-      const next = createDefaultColumnRegistry(nextModel.columns, previous);
-      if (duplicatedColumn) {
-        next[duplicatedColumn.seriesId] = cloneColumnMetadata(sourceMeta);
-      }
-      return next;
-    });
+    const nextRegistry = createDefaultColumnRegistry(nextModel.columns, columnRegistry);
+    if (duplicatedColumn) {
+      nextRegistry[duplicatedColumn.seriesId] = cloneColumnMetadata(sourceMeta);
+    }
+    commitColumnRegistryChange(nextRegistry);
     onSeriesChange(nextSeries);
     setOpenColumnMenu(null);
   };
@@ -294,11 +302,9 @@ export function ScientificWorksheetPanel({
       return;
     }
     commitSeriesUpdate((model) => deleteWorksheetColumn(model, seriesId));
-    setColumnRegistry((previous) => {
-      const next = { ...previous };
-      delete next[seriesId];
-      return next;
-    });
+    const nextRegistry = { ...columnRegistry };
+    delete nextRegistry[seriesId];
+    commitColumnRegistryChange(nextRegistry);
     setSelectedColumns((previous) =>
       previous.filter((column) => column !== seriesId)
     );
@@ -309,14 +315,14 @@ export function ScientificWorksheetPanel({
     seriesId: string,
     columnType: WorksheetColumnType
   ) => {
-    setColumnRegistry((previous) => ({
-      ...previous,
+    commitColumnRegistryChange({
+      ...columnRegistry,
       [seriesId]: {
-        ...(previous[seriesId] ?? DEFAULT_COLUMN_METADATA),
+        ...(columnRegistry[seriesId] ?? DEFAULT_COLUMN_METADATA),
         columnType,
-        transforms: previous[seriesId]?.transforms ?? [],
+        transforms: columnRegistry[seriesId]?.transforms ?? [],
       },
-    }));
+    });
     setOpenColumnMenu(null);
   };
 
@@ -349,15 +355,13 @@ export function ScientificWorksheetPanel({
       return;
     }
 
-    setColumnRegistry((previous) => {
-      const next = createDefaultColumnRegistry(nextModel.columns, previous);
-      next[transformedColumn.seriesId] = createTransformColumnMetadata(
-        seriesId,
-        sourceMeta,
-        transform
-      );
-      return next;
-    });
+    const nextRegistry = createDefaultColumnRegistry(nextModel.columns, columnRegistry);
+    nextRegistry[transformedColumn.seriesId] = createTransformColumnMetadata(
+      seriesId,
+      sourceMeta,
+      transform
+    );
+    commitColumnRegistryChange(nextRegistry);
     onSeriesChange(nextSeries);
     setClipboardMessage(`Columna "${transformedColumn.label}" creada.`);
     setOpenColumnMenu(null);
@@ -452,11 +456,9 @@ export function ScientificWorksheetPanel({
       return;
     }
 
-    setColumnRegistry((previous) => {
-      const next = createDefaultColumnRegistry(nextModel.columns, previous);
-      next[formulaColumn.seriesId] = createFormulaColumnMetadata(createdTransform!);
-      return next;
-    });
+    const nextRegistry = createDefaultColumnRegistry(nextModel.columns, columnRegistry);
+    nextRegistry[formulaColumn.seriesId] = createFormulaColumnMetadata(createdTransform!);
+    commitColumnRegistryChange(nextRegistry);
     onSeriesChange(nextSeries);
     setClipboardMessage(`Columna "${formulaColumn.label}" creada.`);
     closeFormulaBuilder();

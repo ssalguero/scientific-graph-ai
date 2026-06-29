@@ -133,6 +133,9 @@ export type GraphEditorProjectIntegrationInput = {
   createDefaultEnabledModules: () => Record<string, boolean>;
   clearEphemeralUiState: () => void;
   onProjectOpened?: (patch: import("@/lib/project/editor-hydrate-context-v2").HydrateProjectV2Patch) => void;
+  prepareCollectContextForSave?: (
+    ctx: EditorProjectCollectContextV2
+  ) => EditorProjectCollectContextV2;
 };
 
 export const createGraphEditorProjectIntegration = (
@@ -320,6 +323,7 @@ export const createGraphEditorProjectIntegration = (
       buildApplyContext,
       resetScientificProject,
       onProjectOpened: input.onProjectOpened,
+      prepareCollectContextForSave: input.prepareCollectContextForSave,
     }),
   };
 };

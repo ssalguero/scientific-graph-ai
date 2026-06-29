@@ -1,12 +1,17 @@
 import type { ExperimentalSeries } from "@/lib/experimentalData";
-import type { ImportAuxiliaryColumn } from "@/lib/import/types";
-import type { WorksheetColumnRegistry } from "@/lib/experimentalWorksheet";
+import {
+  buildColumnRegistryFromImportAuxiliary,
+  seriesToWorksheet,
+  type WorksheetColumnRegistry,
+} from "@/lib/experimentalWorksheet";
+import type { ImportAuxiliaryColumn, ImportReport } from "@/lib/import/types";
 import { collectProjectSnapshotV2 } from "@/lib/project/collect-project-snapshot-v2";
 import type { EditorProjectCollectContextV2 } from "@/lib/project/editor-collect-context-v2";
 import type { HydrateProjectV2Patch } from "@/lib/project/editor-hydrate-context-v2";
 import type { ScientificProjectV2 } from "@/lib/project/domain/types-v2";
 import { hydrateProjectJson, serializeProjectV2 } from "@/lib/project";
 import type { SessionDataset } from "@/lib/sessionDatasetRegistry";
+import { updateSessionDatasetPayload } from "@/lib/sessionDatasetRegistry";
 import { GUIDED_WORKFLOW_IDLE_SESSION } from "@/lib/scientific/workflow/catalog";
 
 import { normalizeProjectForRoundTrip } from "./b2-9-invariants.cases";
@@ -296,3 +301,90 @@ export const runWorksheetPipelineRoundTrip = (
     hydratedPatch: hydrated.patch,
   };
 };
+
+export type WorksheetEditorState = {
+  experimentalSeries: ExperimentalSeries[];
+  lastImportReport: ImportReport | null;
+  worksheetModified: boolean;
+  columnRegistry: WorksheetColumnRegistry;
+  auxiliaryColumns: ImportAuxiliaryColumn[];
+};
+
+export const persistActiveSessionDatasetForTest = (
+  registry: SessionDataset[],
+  activeId: string | null,
+  editor: WorksheetEditorState
+): SessionDataset[] => {
+  if (!activeId) {
+    return registry;
+  }
+
+  return registry.map((dataset) =>
+    dataset.id === activeId
+      ? updateSessionDatasetPayload(
+          dataset,
+          editor.experimentalSeries,
+          editor.lastImportReport,
+          editor.worksheetModified,
+          {
+            columnRegistry: editor.columnRegistry,
+            auxiliaryColumns: editor.auxiliaryColumns,
+          }
+        )
+      : dataset
+  );
+};
+
+export const loadSessionDatasetEditorState = (
+  dataset: SessionDataset
+): WorksheetEditorState => {
+  const series = dataset.datasetPayload.series;
+
+  return {
+    experimentalSeries: series,
+    lastImportReport: dataset.datasetPayload.importReport,
+    worksheetModified: dataset.worksheetModified,
+    columnRegistry:
+      dataset.datasetPayload.columnRegistry ??
+      buildColumnRegistryFromImportAuxiliary(
+        seriesToWorksheet(series).columns,
+        dataset.datasetPayload.auxiliaryColumns
+      ),
+    auxiliaryColumns: dataset.datasetPayload.auxiliaryColumns ?? [],
+  };
+};
+
+export const activateSessionDatasetForTest = (
+  registry: SessionDataset[],
+  activeId: string | null,
+  targetId: string,
+  editor: WorksheetEditorState
+): {
+  registry: SessionDataset[];
+  activeId: string;
+  editor: WorksheetEditorState;
+} | null => {
+  const persisted = persistActiveSessionDatasetForTest(registry, activeId, editor);
+  const target = persisted.find((dataset) => dataset.id === targetId);
+  if (!target) {
+    return null;
+  }
+
+  return {
+    registry: persisted,
+    activeId: targetId,
+    editor: loadSessionDatasetEditorState(target),
+  };
+};
+
+export const prepareCollectContextForSaveForTest = (
+  ctx: EditorProjectCollectContextV2,
+  editor: WorksheetEditorState
+): EditorProjectCollectContextV2 => ({
+  ...ctx,
+  sessionDatasets: persistActiveSessionDatasetForTest(
+    [...ctx.sessionDatasets],
+    ctx.activeDatasetId,
+    editor
+  ),
+});

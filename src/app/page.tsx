@@ -19928,6 +19928,33 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     });
   };
 
+  const handleWorksheetPayloadChange = (payload: {
+    columnRegistry: WorksheetColumnRegistry;
+    modified?: boolean;
+  }) => {
+    setActiveColumnRegistry(payload.columnRegistry);
+    setWorksheetModified(payload.modified ?? true);
+
+    if (activeDatasetId) {
+      setSessionDatasets((registry) =>
+        registry.map((dataset) =>
+          dataset.id === activeDatasetId
+            ? updateSessionDatasetPayload(
+                dataset,
+                experimentalSeries,
+                lastImportReport,
+                payload.modified ?? true,
+                {
+                  columnRegistry: payload.columnRegistry,
+                  auxiliaryColumns: activeAuxiliaryColumns,
+                }
+              )
+            : dataset
+        )
+      );
+    }
+  };
+
   const exportChartPng = async () => {
     if (
       !chartExportRef.current ||
@@ -23590,18 +23617,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       if (!activeSession) {
         return;
       }
-      setWorksheetModified(activeSession.worksheetModified);
-      setActiveAuxiliaryColumns(
-        activeSession.datasetPayload.auxiliaryColumns ?? []
-      );
-      setActiveColumnRegistry(
-        activeSession.datasetPayload.columnRegistry ??
-          buildColumnRegistryFromImportAuxiliary(
-            seriesToWorksheet(activeSession.datasetPayload.series).columns,
-            activeSession.datasetPayload.auxiliaryColumns
-          )
-      );
+      loadSessionDatasetIntoEditor(activeSession);
     },
+    prepareCollectContextForSave: (ctx) => ({
+      ...ctx,
+      sessionDatasets: persistActiveSessionDataset([...ctx.sessionDatasets]),
+    }),
     showDerivative,
     setShowDerivative,
     showIntegral,
@@ -23726,6 +23747,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setSessionDatasets([]);
     setActiveDatasetId(null);
     setWorksheetModified(false);
+    setActiveColumnRegistry({});
+    setActiveAuxiliaryColumns([]);
     resetProjectFromHook();
   };
 
@@ -24459,6 +24482,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   series={experimentalSeries}
                   modified={worksheetModified}
                   onSeriesChange={handleWorksheetSeriesChange}
+                  onWorksheetPayloadChange={handleWorksheetPayloadChange}
                   auxiliaryColumns={activeAuxiliaryColumns}
                   initialColumnRegistry={activeColumnRegistry}
                   btnOutlineSm={btnOutlineSm}

@@ -41,6 +41,9 @@ export type ProjectFileActionsDeps = {
   buildApplyContext: () => EditorProjectApplyContext;
   resetScientificProject: () => void;
   onProjectOpened?: (patch: HydrateProjectV2Patch) => void;
+  prepareCollectContextForSave?: (
+    ctx: EditorProjectCollectContextV2
+  ) => EditorProjectCollectContextV2;
 };
 
 export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
@@ -60,8 +63,11 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
     };
     deps.setProjectMetadata(nextMetadata);
 
+    const baseCtx = deps.buildCollectContextV2();
+    const ctx = deps.prepareCollectContextForSave?.(baseCtx) ?? baseCtx;
+
     const project = collectProjectSnapshotV2({
-      ...deps.buildCollectContextV2(),
+      ...ctx,
       metadata: nextMetadata,
     });
 
