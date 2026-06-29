@@ -73,7 +73,27 @@ export {
 export {
   validateDomainProjectFileV2,
   validateScientificProjectV2,
+  validateProjectWorksheetV2,
 } from "./validate-v2";
+
+export {
+  AUXILIARY_COLUMN_ROLES,
+  WORKSHEET_COLUMN_TYPES,
+  WORKSHEET_TRANSFORM_KINDS,
+  buildWorksheetSanitizeContext,
+  cloneProjectWorksheetV2,
+  isAuxiliaryColumnRole,
+  isWorksheetColumnType,
+  isWorksheetPayloadEmpty,
+  isWorksheetTransformKind,
+  sanitizeProjectWorksheetV2,
+  type AuxiliaryColumnRole,
+  type WorksheetColumnType,
+  type WorksheetSanitizeContext,
+  type WorksheetSanitizeWarning,
+  type WorksheetSanitizeWarningHandler,
+  type WorksheetTransformKind,
+} from "./worksheet-domain";
 
 export {
   assertPersistedDomainDatasetId,

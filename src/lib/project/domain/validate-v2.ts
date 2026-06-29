@@ -22,6 +22,11 @@ import {
 } from "./guards";
 import { isDomainProjectFileV2, type DomainScientificProjectFile } from "./scientific-project";
 import { DOMAIN_SCHEMA_VERSION_V2, type ScientificProjectV2 } from "./types-v2";
+import {
+  isAuxiliaryColumnRole,
+  isWorksheetColumnType,
+  isWorksheetTransformKind,
+} from "./worksheet-domain";
 
 const VISUAL_GRAPH_TYPES = [
   "scatter",
@@ -307,25 +312,352 @@ const validateGraphContext = (
   }
 };
 
-const validateWorksheet = (
-  worksheet: unknown,
+const validateWorksheetTransform = (
+  transform: unknown,
+  path: string,
+  seriesIds: Set<string>,
+  errors: DomainValidationIssue[],
+  warnings: DomainValidationIssue[]
+) => {
+  if (!isRecord(transform)) {
+    pushDomainIssue(
+      errors,
+      domainIssue("V2-WSH-XFORM", path, "transform must be an object")
+    );
+    return;
+  }
+
+  if (!isWorksheetTransformKind(transform.kind)) {
+    pushDomainIssue(
+      errors,
+      domainIssue(
+        "V2-WSH-XFORM-KIND",
+        `${path}.kind`,
+        "Invalid transform kind"
+      )
+    );
+  }
+
+  if (!isBoolean(transform.enabled)) {
+    pushDomainIssue(
+      errors,
+      domainIssue("V2-WSH-XFORM", `${path}.enabled`, "enabled boolean required")
+    );
+  }
+
+  if (transform.params !== undefined) {
+    if (!isRecord(transform.params)) {
+      pushDomainIssue(
+        errors,
+        domainIssue("V2-WSH-XFORM", `${path}.params`, "params must be an object when present")
+      );
+    } else {
+      for (const [paramKey, paramValue] of Object.entries(transform.params)) {
+        if (!isNumber(paramValue)) {
+          pushDomainIssue(
+            errors,
+            domainIssue(
+              "V2-WSH-XFORM",
+              `${path}.params.${paramKey}`,
+              "param value must be a finite number"
+            )
+          );
+        }
+      }
+    }
+  }
+
+  if (transform.sourceSeriesId !== undefined && isString(transform.sourceSeriesId)) {
+    if (!seriesIds.has(transform.sourceSeriesId)) {
+      pushDomainIssue(
+        warnings,
+        domainIssue(
+          "V2-WSH-ORPHAN",
+          `${path}.sourceSeriesId`,
+          `Orphan sourceSeriesId "${transform.sourceSeriesId}"`,
+          "warning"
+        )
+      );
+    }
+  }
+
+  if (transform.sourceSeriesIds !== undefined) {
+    if (!Array.isArray(transform.sourceSeriesIds)) {
+      pushDomainIssue(
+        errors,
+        domainIssue(
+          "V2-WSH-XFORM",
+          `${path}.sourceSeriesIds`,
+          "sourceSeriesIds must be an array when present"
+        )
+      );
+    } else {
+      transform.sourceSeriesIds.forEach((seriesId, index) => {
+        if (!isString(seriesId)) {
+          pushDomainIssue(
+            errors,
+            domainIssue(
+              "V2-WSH-XFORM",
+              `${path}.sourceSeriesIds[${index}]`,
+              "sourceSeriesId must be a string"
+            )
+          );
+          return;
+        }
+        if (!seriesIds.has(seriesId)) {
+          pushDomainIssue(
+            warnings,
+            domainIssue(
+              "V2-WSH-ORPHAN",
+              `${path}.sourceSeriesIds[${index}]`,
+              `Orphan sourceSeriesId "${seriesId}"`,
+              "warning"
+            )
+          );
+        }
+      });
+    }
+  }
+};
+
+const validateWorksheetColumnRegistry = (
+  columnRegistry: unknown,
+  path: string,
+  validColumnIds: Set<string>,
+  seriesIds: Set<string>,
+  errors: DomainValidationIssue[],
+  warnings: DomainValidationIssue[]
+) => {
+  if (columnRegistry === undefined) {
+    return;
+  }
+
+  if (!isRecord(columnRegistry)) {
+    pushDomainIssue(
+      errors,
+      domainIssue("V2-WSH-REG", path, "columnRegistry must be an object when present")
+    );
+    return;
+  }
+
+  for (const [key, metadata] of Object.entries(columnRegistry)) {
+    const entryPath = `${path}[${key}]`;
+
+    if (!isString(key) || key.trim() === "") {
+      pushDomainIssue(
+        errors,
+        domainIssue("V2-WSH-REG-KEY", entryPath, "columnRegistry key must be a non-empty string")
+      );
+      continue;
+    }
+
+    if (!validColumnIds.has(key)) {
+      pushDomainIssue(
+        warnings,
+        domainIssue(
+          "V2-WSH-ORPHAN",
+          entryPath,
+          `Orphan columnRegistry key "${key}"`,
+          "warning"
+        )
+      );
+    }
+
+    if (!isRecord(metadata)) {
+      pushDomainIssue(
+        errors,
+        domainIssue("V2-WSH-REG", entryPath, "column metadata must be an object")
+      );
+      continue;
+    }
+
+    if (!isWorksheetColumnType(metadata.columnType)) {
+      pushDomainIssue(
+        errors,
+        domainIssue(
+          "V2-WSH-TYPE",
+          `${entryPath}.columnType`,
+          "Invalid columnType"
+        )
+      );
+    }
+
+    if (!Array.isArray(metadata.transforms)) {
+      pushDomainIssue(
+        errors,
+        domainIssue("V2-WSH-XFORM", `${entryPath}.transforms`, "transforms must be an array")
+      );
+      continue;
+    }
+
+    metadata.transforms.forEach((transform, index) =>
+      validateWorksheetTransform(
+        transform,
+        `${entryPath}.transforms[${index}]`,
+        seriesIds,
+        errors,
+        warnings
+      )
+    );
+  }
+};
+
+const validateWorksheetAuxiliaryColumns = (
+  auxiliaryColumns: unknown,
   path: string,
   errors: DomainValidationIssue[]
 ) => {
-  if (worksheet === undefined) return;
+  if (auxiliaryColumns === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(auxiliaryColumns)) {
+    pushDomainIssue(
+      errors,
+      domainIssue("V2-WSH-AUX", path, "auxiliaryColumns must be an array when present")
+    );
+    return;
+  }
+
+  auxiliaryColumns.forEach((column, index) => {
+    const entryPath = `${path}[${index}]`;
+
+    if (!isRecord(column)) {
+      pushDomainIssue(
+        errors,
+        domainIssue("V2-WSH-AUX", entryPath, "auxiliary column must be an object")
+      );
+      return;
+    }
+
+    if (!isString(column.id) || column.id.trim() === "") {
+      pushDomainIssue(
+        errors,
+        domainIssue("V2-WSH-AUX", `${entryPath}.id`, "auxiliary column id is required")
+      );
+    }
+
+    if (!isString(column.label)) {
+      pushDomainIssue(
+        errors,
+        domainIssue("V2-WSH-AUX", `${entryPath}.label`, "auxiliary column label is required")
+      );
+    }
+
+    if (!isAuxiliaryColumnRole(column.role)) {
+      pushDomainIssue(
+        errors,
+        domainIssue("V2-WSH-AUX-ROLE", `${entryPath}.role`, "Invalid auxiliary column role")
+      );
+    }
+
+    if (!isRecord(column.valuesByRowIndex)) {
+      pushDomainIssue(
+        errors,
+        domainIssue(
+          "V2-WSH-AUX-VALUES",
+          `${entryPath}.valuesByRowIndex`,
+          "valuesByRowIndex must be an object"
+        )
+      );
+      return;
+    }
+
+    for (const [rowKey, value] of Object.entries(column.valuesByRowIndex)) {
+      const rowIndex = Number(rowKey);
+      if (!Number.isInteger(rowIndex)) {
+        pushDomainIssue(
+          errors,
+          domainIssue(
+            "V2-WSH-AUX-VALUES",
+            `${entryPath}.valuesByRowIndex[${rowKey}]`,
+            "valuesByRowIndex keys must be integer row indices"
+          )
+        );
+      }
+      if (!isString(value)) {
+        pushDomainIssue(
+          errors,
+          domainIssue(
+            "V2-WSH-AUX-VALUES",
+            `${entryPath}.valuesByRowIndex[${rowKey}]`,
+            "valuesByRowIndex values must be strings"
+          )
+        );
+      }
+    }
+  });
+};
+
+export const validateProjectWorksheetV2 = (
+  worksheet: unknown,
+  seriesIds: Set<string>,
+  path: string
+): DomainValidationResult => {
+  const errors: DomainValidationIssue[] = [];
+  const warnings: DomainValidationIssue[] = [];
+
+  if (worksheet === undefined) {
+    return { ok: true, errors, warnings };
+  }
+
   if (!isRecord(worksheet)) {
     pushDomainIssue(
       errors,
       domainIssue("V2-WSH", path, "worksheet must be an object when present")
     );
-    return;
+    return { ok: false, errors, warnings };
   }
+
   if (!isBoolean(worksheet.modified)) {
     pushDomainIssue(
       errors,
       domainIssue("V2-WSH-MOD", `${path}.modified`, "modified boolean required")
     );
   }
+
+  const auxiliaryIds = new Set<string>();
+  if (Array.isArray(worksheet.auxiliaryColumns)) {
+    for (const column of worksheet.auxiliaryColumns) {
+      if (isRecord(column) && isString(column.id) && column.id.trim() !== "") {
+        auxiliaryIds.add(column.id);
+      }
+    }
+  }
+
+  const validColumnIds = new Set([...seriesIds, ...auxiliaryIds]);
+
+  validateWorksheetColumnRegistry(
+    worksheet.columnRegistry,
+    `${path}.columnRegistry`,
+    validColumnIds,
+    seriesIds,
+    errors,
+    warnings
+  );
+  validateWorksheetAuxiliaryColumns(
+    worksheet.auxiliaryColumns,
+    `${path}.auxiliaryColumns`,
+    errors
+  );
+
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings,
+  };
+};
+
+const validateWorksheet = (
+  worksheet: unknown,
+  seriesIds: Set<string>,
+  path: string,
+  errors: DomainValidationIssue[],
+  warnings: DomainValidationIssue[]
+) => {
+  const result = validateProjectWorksheetV2(worksheet, seriesIds, path);
+  errors.push(...result.errors);
+  warnings.push(...result.warnings);
 };
 
 const validateGraphSpec = (
@@ -629,7 +961,14 @@ export const validateScientificProjectV2 = (
         );
       }
 
-      validateWorksheet(dataset.worksheet, `${basePath}.worksheet`, errors);
+      const datasetSeriesIds = new Set(dataset.series.map((series) => series.id));
+      validateWorksheet(
+        dataset.worksheet,
+        datasetSeriesIds,
+        `${basePath}.worksheet`,
+        errors,
+        warnings
+      );
     });
 
     if (!isString(activeDatasetId) || activeDatasetId.trim() === "") {

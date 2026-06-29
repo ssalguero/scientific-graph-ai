@@ -4,6 +4,10 @@ import type {
   ProjectVisualGraphPersistedV2,
   ScientificProjectV2,
 } from "./domain/types-v2";
+import {
+  buildWorksheetSanitizeContext,
+  sanitizeProjectWorksheetV2,
+} from "./domain/worksheet-domain";
 import type { ComparisonSlotIdV1 } from "./types";
 import { issue, pushIssue } from "./guards";
 import type { ProjectValidationIssue } from "./types";
@@ -193,7 +197,7 @@ export const sanitizeScientificProjectV2 = (
 
   const sanitized: ScientificProjectV2 = {
     metadata: { ...cloned.metadata },
-    datasets: cloned.datasets.map((dataset) => ({
+    datasets: cloned.datasets.map((dataset, datasetIndex) => ({
       ...dataset,
       series: dataset.series.map((series) => ({
         ...series,
@@ -201,20 +205,19 @@ export const sanitizeScientificProjectV2 = (
       })),
       info: dataset.info ? { ...dataset.info } : null,
       importReport: dataset.importReport ? { ...dataset.importReport } : null,
-      worksheet: dataset.worksheet
-        ? {
-            modified: dataset.worksheet.modified,
-            columnRegistry: dataset.worksheet.columnRegistry
-              ? { ...dataset.worksheet.columnRegistry }
-              : undefined,
-            auxiliaryColumns: dataset.worksheet.auxiliaryColumns
-              ? dataset.worksheet.auxiliaryColumns.map((item) => ({
-                  ...item,
-                  valuesByRowIndex: { ...item.valuesByRowIndex },
-                }))
-              : undefined,
-          }
-        : undefined,
+      worksheet: sanitizeProjectWorksheetV2(
+        dataset.worksheet,
+        buildWorksheetSanitizeContext(
+          dataset.series,
+          dataset.worksheet?.auxiliaryColumns
+        ),
+        `datasets[${datasetIndex}].worksheet`,
+        (warning) =>
+          pushIssue(
+            warnings,
+            issue(warning.code, warning.path, warning.message, "warning")
+          )
+      ),
     })),
     activeDatasetId,
     analysisConfig: {
