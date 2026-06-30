@@ -38,6 +38,7 @@
     "validate:prod2c-c3-worksheet-ui": "npx tsx scripts/validate-prod2c-c3-worksheet-ui.ts",
     "validate:prod2c-c4-visual-graph-mapper": "npx tsx scripts/validate-prod2c-c4-visual-graph-mapper.ts",
     "validate:prod2c-c5-visual-graph-collect": "npx tsx scripts/validate-prod2c-c5-visual-graph-collect.ts",
+    "validate:prod2c-c6-visual-graph-hydrate": "npx tsx scripts/validate-prod2c-c6-visual-graph-hydrate.ts",
     "generate:prod2b-v2-fixtures": "npx tsx scripts/generate-prod2b-v2-fixtures.ts",
     "validate:variable-importance-unit": "npx tsx scripts/validate-variable-importance-unit.ts",
     "validate:worksheet-transforms-unit": "npx tsx scripts/validate-worksheet-transforms-unit.ts",

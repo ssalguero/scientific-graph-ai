@@ -66,6 +66,7 @@ export type GraphEditorProjectIntegrationInput = {
   activeColumnRegistry: WorksheetColumnRegistry;
   activeAuxiliaryColumns: ImportAuxiliaryColumn[];
   projectVisualGraphs: ProjectVisualGraphEntry[];
+  setProjectVisualGraphs: (value: ProjectVisualGraphEntry[]) => void;
   title: string;
   setTitle: (value: string) => void;
   curves: Curve[];
@@ -215,6 +216,7 @@ export const createGraphEditorProjectIntegration = (
     setPreserveAnalysisConfiguration: input.setPreserveAnalysisConfiguration,
     setSessionDatasets: input.setSessionDatasets,
     setActiveDatasetId: (value) => input.setActiveDatasetId(value),
+    setProjectVisualGraphs: input.setProjectVisualGraphs,
     setTitle: input.setTitle,
     setCurves: input.setCurves,
     setMinX: input.setMinX,

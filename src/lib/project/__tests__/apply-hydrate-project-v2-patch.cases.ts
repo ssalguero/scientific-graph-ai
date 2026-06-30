@@ -178,6 +178,7 @@ const createCaptureApplyContext = (): {
     setActiveDatasetId: (value) => {
       captured.activeDatasetId = value;
     },
+    setProjectVisualGraphs: () => undefined,
     setTitle: (value) => {
       captured.title = value;
     },

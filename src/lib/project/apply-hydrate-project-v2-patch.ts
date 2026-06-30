@@ -8,7 +8,12 @@ import {
   cloneProjectWorksheetV2,
   preservePersistedDatasetId,
 } from "@/lib/project/domain";
+import {
+  buildVisualGraphHydrateContextFromDataset,
+  projectVisualGraphPersistedListToRuntimeEntries,
+} from "@/lib/project/domain/mappers/visual-graph";
 import type { ProjectDatasetV2, ScientificProjectV2 } from "@/lib/project/domain/types-v2";
+import type { ProjectVisualGraphEntry } from "@/lib/visualGraphBuilder";
 import { VISIBILITY_KEYS_V1, type VisibilityKeyV1 } from "@/lib/project/keys";
 import type {
   PostHydrateAction,
@@ -139,6 +144,21 @@ const cloneSessionDatasets = (datasets: SessionDataset[]): SessionDataset[] =>
       },
     };
   });
+
+export const rebuildVisualGraphRuntimeEntriesFromPatch = (
+  patch: HydrateProjectV2Patch
+): ProjectVisualGraphEntry[] =>
+  projectVisualGraphPersistedListToRuntimeEntries(
+    patch.project.visualGraphs ?? [],
+    (sourceDatasetId) => {
+      const dataset = patch.project.datasets.find(
+        (item) => item.id === sourceDatasetId
+      );
+      return dataset ? buildVisualGraphHydrateContextFromDataset(dataset) : undefined;
+    }
+  );
+
+export const extractVisualGraphRuntimeState = rebuildVisualGraphRuntimeEntriesFromPatch;
 
 export const extractActiveWorksheetState = (
   patch: HydrateProjectV2Patch
@@ -280,6 +300,7 @@ export const applyHydrateProjectV2Patch = (
   apply.setSessionDatasets(cloneSessionDatasets(patch.sessionDatasets));
   apply.setActiveDatasetId(patch.activeDatasetId);
   loadActiveDatasetIntoEditor(patch, apply);
+  apply.setProjectVisualGraphs(rebuildVisualGraphRuntimeEntriesFromPatch(patch));
 
   applyGraphContext(project.graphContext, apply);
 

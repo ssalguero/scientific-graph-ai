@@ -94,6 +94,7 @@ const captureApplyFromPatch = (patch: HydrateProjectV2Patch): CapturedUiRuntime 
     setActiveDatasetId: (value) => {
       captured.activeDatasetId = value;
     },
+    setProjectVisualGraphs: () => undefined,
     setTitle: () => undefined,
     setCurves: () => undefined,
     setMinX: () => undefined,

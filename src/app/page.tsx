@@ -23548,6 +23548,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     activeColumnRegistry,
     activeAuxiliaryColumns,
     projectVisualGraphs,
+    setProjectVisualGraphs,
     title,
     setTitle,
     curves,

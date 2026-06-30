@@ -2,6 +2,7 @@ import type { ExperimentalSeries } from "@/lib/experimentalData";
 import type { ImportReport } from "@/lib/import/types";
 import type { GuidedWorkflowSession } from "@/lib/scientific/workflow/types";
 import type { SessionDataset } from "@/lib/sessionDatasetRegistry";
+import type { ProjectVisualGraphEntry } from "@/lib/visualGraphBuilder";
 
 import type { ScientificProjectV2 } from "./domain/types-v2";
 import type { VisibilityKeyV1 } from "./keys";
@@ -37,6 +38,7 @@ export type EditorProjectApplyContextV2 = {
   setPreserveAnalysisConfiguration: (value: boolean) => void;
   setSessionDatasets: (value: SessionDataset[]) => void;
   setActiveDatasetId: (value: string) => void;
+  setProjectVisualGraphs: (value: ProjectVisualGraphEntry[]) => void;
   setTitle: (value: string) => void;
   setCurves: (
     value: { id: number; expression: string; color: string }[]

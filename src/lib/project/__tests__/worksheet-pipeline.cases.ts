@@ -290,6 +290,7 @@ export const runWorksheetPipelineCaseSuite = (): CaseResult[] => {
       applyCapture.sessions = value;
     },
     setActiveDatasetId: () => undefined,
+    setProjectVisualGraphs: () => undefined,
     setTitle: () => undefined,
     setCurves: () => undefined,
     setMinX: () => undefined,
