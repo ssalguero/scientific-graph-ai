@@ -18,6 +18,15 @@ import {
   createAssertCase,
   type CaseResult,
 } from "@/lib/scientific/comparison/__tests__/run-assertions";
+import {
+  buildDistinctVisualGraphEntries,
+  buildUiVisualGraphCollectContext,
+  runVisualGraphUiSaveOpenRoundTrip,
+} from "./visual-graph-ui-helpers";
+import {
+  persistActiveVisualGraphsInRegistry,
+  readVisualGraphEntriesFromDataset,
+} from "@/lib/project/visual-graph-session-ui";
 
 const APP_VERSION = "0.1.0";
 const FIXTURES_DIR = path.join(process.cwd(), "scripts", "fixtures");
@@ -348,6 +357,31 @@ export const runUiProjectPipelineV2CaseSuite = (): CaseResult[] => {
       monoSaveOpen.captured.sessionDatasets?.length === 1
     );
   }
+
+  const { datasetBId: vgbDatasetBId, entryA, entryB } = buildDistinctVisualGraphEntries();
+  const vgbRegistry = persistActiveVisualGraphsInRegistry(
+    persistActiveVisualGraphsInRegistry(
+      buildUiVisualGraphCollectContext().sessionDatasets,
+      buildUiVisualGraphCollectContext().activeDatasetId,
+      [entryA]
+    ),
+    vgbDatasetBId,
+    [entryB]
+  );
+  const vgbRoundTrip = runVisualGraphUiSaveOpenRoundTrip(
+    buildUiVisualGraphCollectContext({
+      sessionDatasets: vgbRegistry,
+      activeDatasetId: vgbDatasetBId,
+    }),
+    [entryB]
+  );
+  assertCase(
+    "ui.saveOpen.vgb.multiDatasetPersisted",
+    vgbRoundTrip.merged.visualGraphs?.length === 2 &&
+      readVisualGraphEntriesFromDataset(
+        vgbRoundTrip.injectedRegistry.find((dataset) => dataset.id === vgbDatasetBId)
+      ).length === 1
+  );
 
   return results;
 };

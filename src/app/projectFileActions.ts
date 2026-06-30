@@ -5,6 +5,7 @@ import {
   type ProjectMetadataV1,
 } from "@/lib/project";
 import type { SessionDataset } from "@/lib/sessionDatasetRegistry";
+import type { ScientificProjectV2 } from "@/lib/project/domain/types-v2";
 import {
   formatProjectOpenError,
   formatProjectSaveError,
@@ -44,6 +45,10 @@ export type ProjectFileActionsDeps = {
   prepareCollectContextForSave?: (
     ctx: EditorProjectCollectContextV2
   ) => EditorProjectCollectContextV2;
+  finalizeProjectSnapshotForSave?: (
+    project: ScientificProjectV2,
+    ctx: EditorProjectCollectContextV2
+  ) => ScientificProjectV2;
 };
 
 export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
@@ -66,10 +71,12 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
     const baseCtx = deps.buildCollectContextV2();
     const ctx = deps.prepareCollectContextForSave?.(baseCtx) ?? baseCtx;
 
-    const project = collectProjectSnapshotV2({
+    const collected = collectProjectSnapshotV2({
       ...ctx,
       metadata: nextMetadata,
     });
+    const project =
+      deps.finalizeProjectSnapshotForSave?.(collected, ctx) ?? collected;
 
     const serialized = serializeProjectV2({
       project,

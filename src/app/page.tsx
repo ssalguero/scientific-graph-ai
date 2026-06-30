@@ -49,9 +49,17 @@ import {
   getMostRecentSessionDatasetId,
   sessionDatasetIdentityKey,
   slotReferencesSessionDataset,
-  updateSessionDatasetPayload,
   type SessionDataset,
 } from "@/lib/sessionDatasetRegistry";
+import { extractVisualGraphRuntimeState } from "@/lib/project/apply-hydrate-project-v2-patch";
+import {
+  injectVisualGraphEntriesBySourceDatasetId,
+  mergeVisualGraphsFromSessionIntoProjectSnapshot,
+  persistActiveVisualGraphsInRegistry,
+  prepareCollectContextWithSessionVisualGraphs,
+  readVisualGraphEntriesFromDataset,
+  updateSessionDatasetPayloadPreservingVisualGraphs,
+} from "@/lib/project/visual-graph-session-ui";
 import { ScientificMultiDatasetComparisonDashboard } from "@/components/comparison/ScientificMultiDatasetComparisonDashboard";
 import { ImportReportPanel } from "@/components/import/ImportReportPanel";
 import { WorkbookImportWizard } from "@/components/import/WorkbookImportWizard";
@@ -19403,7 +19411,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [projectVisualGraphs, setProjectVisualGraphs] = useState<
     ProjectVisualGraphEntry[]
   >([]);
-  const clearProjectVisualGraphs = () => setProjectVisualGraphs([]);
+  const resetProjectVisualGraphState = () => setProjectVisualGraphs([]);
   const [labUsageProfile, setLabUsageProfile] =
     useState<LabUsageProfile>("standard");
   const [labProfileLoaded, setLabProfileLoaded] = useState(false);
@@ -19532,7 +19540,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       currentDatasetInfo.importedAt
     );
     const bootstrapped = worksheetModified
-      ? updateSessionDatasetPayload(
+      ? updateSessionDatasetPayloadPreservingVisualGraphs(
           dataset,
           experimentalSeries,
           lastImportReport,
@@ -19771,7 +19779,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
     return registry.map((dataset) =>
       dataset.id === activeDatasetId
-        ? updateSessionDatasetPayload(
+        ? updateSessionDatasetPayloadPreservingVisualGraphs(
             dataset,
             experimentalSeries,
             lastImportReport,
@@ -19785,9 +19793,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     );
   };
 
+  const persistSessionRegistryWithActiveVisualGraphs = (
+    registry: SessionDataset[]
+  ): SessionDataset[] =>
+    persistActiveSessionDataset(
+      persistActiveVisualGraphsInRegistry(
+        registry,
+        activeDatasetId,
+        projectVisualGraphs
+      )
+    );
+
   const activateSessionDataset = (targetId: string) => {
-    clearProjectVisualGraphs();
-    const persisted = persistActiveSessionDataset(sessionDatasets);
+    const persisted = persistSessionRegistryWithActiveVisualGraphs(sessionDatasets);
     const target = persisted.find((dataset) => dataset.id === targetId);
     if (!target) {
       return;
@@ -19795,6 +19813,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
     setSessionDatasets(persisted);
     setActiveDatasetId(targetId);
+    setProjectVisualGraphs(readVisualGraphEntriesFromDataset(target));
     loadSessionDatasetIntoEditor(target);
   };
 
@@ -19808,8 +19827,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       columnRegistry?: WorksheetColumnRegistry;
     }
   ) => {
-    clearProjectVisualGraphs();
-    const persisted = persistActiveSessionDataset(sessionDatasets);
+    const persisted = persistSessionRegistryWithActiveVisualGraphs(sessionDatasets);
     const columnRegistry =
       payloadExtras?.columnRegistry ??
       buildColumnRegistryFromImportAuxiliary(
@@ -19827,6 +19845,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
     setSessionDatasets([...persisted, newDataset]);
     setActiveDatasetId(newDataset.id);
+    setProjectVisualGraphs([]);
     setExperimentalImportError(null);
     setLastImportReport(report);
     setActiveAuxiliaryColumns(auxiliaryColumns);
@@ -19869,7 +19888,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setSessionDatasets((registry) =>
         registry.map((dataset) =>
           dataset.id === activeDatasetId
-            ? updateSessionDatasetPayload(
+            ? updateSessionDatasetPayloadPreservingVisualGraphs(
                 dataset,
                 next,
                 lastImportReport,
@@ -19905,7 +19924,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setSessionDatasets((registry) =>
         registry.map((dataset) =>
           dataset.id === activeDatasetId
-            ? updateSessionDatasetPayload(
+            ? updateSessionDatasetPayloadPreservingVisualGraphs(
                 dataset,
                 nextSeries,
                 lastImportReport,
@@ -19939,7 +19958,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setSessionDatasets((registry) =>
         registry.map((dataset) =>
           dataset.id === activeDatasetId
-            ? updateSessionDatasetPayload(
+            ? updateSessionDatasetPayloadPreservingVisualGraphs(
                 dataset,
                 experimentalSeries,
                 lastImportReport,
@@ -22203,7 +22222,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       return;
     }
 
-    clearProjectVisualGraphs();
+    const persisted = persistSessionRegistryWithActiveVisualGraphs(sessionDatasets);
+    const remaining = persisted.filter((dataset) => dataset.id !== datasetId);
 
     setComparisonSlots((previous) => ({
       A:
@@ -22218,7 +22238,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           : previous.B,
     }));
 
-    const remaining = sessionDatasets.filter((dataset) => dataset.id !== datasetId);
     setSessionDatasets(remaining);
 
     if (datasetId !== activeDatasetId) {
@@ -22228,6 +22247,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     if (remaining.length === 0) {
       pendingSlotCaptureRef.current = null;
       setActiveDatasetId(null);
+      setProjectVisualGraphs([]);
       setExperimentalSeries([]);
       setCurrentDatasetInfo(null);
       setLastImportReport(null);
@@ -22242,6 +22262,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
 
     setActiveDatasetId(nextActiveId);
+    setProjectVisualGraphs(readVisualGraphEntriesFromDataset(nextDataset));
     loadSessionDatasetIntoEditor(nextDataset);
   };
 
@@ -23613,18 +23634,34 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     createDefaultEnabledModules,
     clearEphemeralUiState,
     onProjectOpened: (patch) => {
-      const activeSession = patch.sessionDatasets.find(
+      const runtimeEntries = extractVisualGraphRuntimeState(patch);
+      const injected = injectVisualGraphEntriesBySourceDatasetId(
+        patch.sessionDatasets,
+        patch.project.visualGraphs ?? [],
+        runtimeEntries
+      );
+      setSessionDatasets(injected);
+      const activeSession = injected.find(
         (dataset) => dataset.id === patch.activeDatasetId
       );
       if (!activeSession) {
         return;
       }
+      setProjectVisualGraphs(readVisualGraphEntriesFromDataset(activeSession));
       loadSessionDatasetIntoEditor(activeSession);
     },
-    prepareCollectContextForSave: (ctx) => ({
-      ...ctx,
-      sessionDatasets: persistActiveSessionDataset([...ctx.sessionDatasets]),
-    }),
+    prepareCollectContextForSave: (ctx) => {
+      const withWorksheet = {
+        ...ctx,
+        sessionDatasets: persistActiveSessionDataset([...ctx.sessionDatasets]),
+      };
+      return prepareCollectContextWithSessionVisualGraphs(
+        withWorksheet,
+        projectVisualGraphs
+      );
+    },
+    finalizeProjectSnapshotForSave: (project, ctx) =>
+      mergeVisualGraphsFromSessionIntoProjectSnapshot(project, ctx),
     showDerivative,
     setShowDerivative,
     showIntegral,
@@ -23745,7 +23782,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
   const handleNewProject = () => {
     pendingSlotCaptureRef.current = null;
-    clearProjectVisualGraphs();
+    resetProjectVisualGraphState();
     setSessionDatasets([]);
     setActiveDatasetId(null);
     setWorksheetModified(false);
@@ -24876,6 +24913,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 <VisualGraphBuilder
                   key={activeDatasetId ?? "no-dataset"}
                   series={experimentalSeries}
+                  columnRegistry={activeColumnRegistry}
                   onCreateGraph={handleVisualGraphCreate}
                   btnOutlineSm={btnOutlineSm}
                   btnPrimary={btnPrimary}
@@ -26966,7 +27004,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   icon="📊"
                   subtitle={`${projectVisualGraphs.length} gráfico${
                     projectVisualGraphs.length === 1 ? "" : "s"
-                  } creado${projectVisualGraphs.length === 1 ? "" : "s"} en esta sesión`}
+                  } del dataset activo${
+                    currentDatasetInfo?.fileName
+                      ? ` (${currentDatasetInfo.fileName})`
+                      : ""
+                  }`}
                   defaultOpen
                 >
                   <div className="space-y-4">

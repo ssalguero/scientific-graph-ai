@@ -139,6 +139,10 @@ export type GraphEditorProjectIntegrationInput = {
   prepareCollectContextForSave?: (
     ctx: EditorProjectCollectContextV2
   ) => EditorProjectCollectContextV2;
+  finalizeProjectSnapshotForSave?: (
+    project: import("@/lib/project/domain/types-v2").ScientificProjectV2,
+    ctx: EditorProjectCollectContextV2
+  ) => import("@/lib/project/domain/types-v2").ScientificProjectV2;
 };
 
 export const createGraphEditorProjectIntegration = (
@@ -296,6 +300,7 @@ export const createGraphEditorProjectIntegration = (
     input.setPreserveAnalysisConfiguration(false);
     input.setSessionDatasets([]);
     input.setActiveDatasetId(null);
+    input.setProjectVisualGraphs([]);
     input.setComparisonSlots(input.createEmptyComparisonSlots());
     input.setGuidedWorkflowSession(GUIDED_WORKFLOW_IDLE_SESSION);
     input.setTitle("");
@@ -330,6 +335,7 @@ export const createGraphEditorProjectIntegration = (
       resetScientificProject,
       onProjectOpened: input.onProjectOpened,
       prepareCollectContextForSave: input.prepareCollectContextForSave,
+      finalizeProjectSnapshotForSave: input.finalizeProjectSnapshotForSave,
     }),
   };
 };
