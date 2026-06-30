@@ -14,6 +14,8 @@ import type {
   ProjectDatasetV2,
   ScientificProjectV2,
 } from "@/lib/project/domain/types-v2";
+import { projectVisualGraphEntriesToPersistedV2 } from "@/lib/project/domain/mappers/visual-graph";
+import { resolveVisualGraphCollectInputs } from "@/lib/project/collect-visual-graph-v2";
 import type {
   EditorProjectCollectContextV2,
   EditorComparisonSlotCollect,
@@ -265,6 +267,10 @@ export const collectProjectSnapshotV2 = (
   const idRemap = buildDatasetIdRemap(preparedSessions, ctx.metadata.id);
   const datasets = buildProjectDatasets(ctx, preparedSessions, idRemap);
   const activeDatasetId = resolveActiveDatasetId(ctx, datasets, idRemap);
+  const visualGraphs = projectVisualGraphEntriesToPersistedV2(
+    resolveVisualGraphCollectInputs(ctx, preparedSessions),
+    { remap: idRemap, projectMetadataId: ctx.metadata.id }
+  );
 
   return {
     metadata: { ...ctx.metadata },
@@ -282,5 +288,6 @@ export const collectProjectSnapshotV2 = (
     comparison: buildComparisonSlots(ctx, idRemap),
     workspace: { ...ctx.workspace },
     graphContext: buildGraphContext(ctx),
+    ...(visualGraphs !== undefined ? { visualGraphs } : {}),
   };
 };

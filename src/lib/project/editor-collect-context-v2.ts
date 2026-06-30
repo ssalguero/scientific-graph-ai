@@ -3,6 +3,7 @@ import type { ImportAuxiliaryColumn, ImportReport } from "@/lib/import/types";
 import type { WorksheetColumnRegistry } from "@/lib/experimentalWorksheet";
 import type { GuidedWorkflowSession } from "@/lib/scientific/workflow/types";
 import type { SessionDataset } from "@/lib/sessionDatasetRegistry";
+import type { ProjectVisualGraphEntry } from "@/lib/visualGraphBuilder";
 
 import type { VisibilityKeyV1 } from "./keys";
 import type {
@@ -57,6 +58,7 @@ export type EditorProjectCollectContextV2 = {
   worksheetModified?: boolean;
   activeColumnRegistry?: WorksheetColumnRegistry;
   activeAuxiliaryColumns?: ImportAuxiliaryColumn[];
+  projectVisualGraphEntries?: readonly ProjectVisualGraphEntry[];
 };
 
 export type GraphEditorProjectSnapshotV2 = ScientificProjectV2;

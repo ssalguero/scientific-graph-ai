@@ -5,6 +5,7 @@ import type { GuidedWorkflowSession } from "@/lib/scientific/workflow/types";
 import type { ProjectImportedDatasetInfo, ProjectMetadataV1 } from "@/lib/project";
 import type { ComparisonSlotId } from "@/lib/scientific/comparison";
 import type { SessionDataset } from "@/lib/sessionDatasetRegistry";
+import type { ProjectVisualGraphEntry } from "@/lib/visualGraphBuilder";
 import { GUIDED_WORKFLOW_IDLE_SESSION } from "@/lib/scientific/workflow/catalog";
 
 import {
@@ -64,6 +65,7 @@ export type GraphEditorProjectIntegrationInput = {
   worksheetModified: boolean;
   activeColumnRegistry: WorksheetColumnRegistry;
   activeAuxiliaryColumns: ImportAuxiliaryColumn[];
+  projectVisualGraphs: ProjectVisualGraphEntry[];
   title: string;
   setTitle: (value: string) => void;
   curves: Curve[];
@@ -201,6 +203,8 @@ export const createGraphEditorProjectIntegration = (
     worksheetModified: input.worksheetModified,
     activeColumnRegistry: input.activeColumnRegistry,
     activeAuxiliaryColumns: input.activeAuxiliaryColumns,
+    projectVisualGraphEntries:
+      input.projectVisualGraphs.length > 0 ? input.projectVisualGraphs : undefined,
   });
 
   const buildApplyContext = (): EditorProjectApplyContext => ({
