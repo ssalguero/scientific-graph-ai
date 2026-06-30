@@ -1,5 +1,7 @@
 # Plan PROD-2B — Persistencia de Proyectos Científicos
 
+> **Plan histórico aprobado** — B1–B4 implementadas (B3/B4 vía PROD-2C). Estado de implementación: [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) · Cierre worksheet/VGB: [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md). **Próxima fase de implementación:** B5 IndexedDB autosave (§B5).
+
 **Estado:** **PLAN APROBADO**  
 **Fecha de aprobación:** 2026-06-27  
 **Identificador:** PROD-2B (continúa [PROD-2A](src/lib/project/README.md))  

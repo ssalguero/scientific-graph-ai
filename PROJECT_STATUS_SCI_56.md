@@ -1,5 +1,7 @@
 # Scientific Graph AI — Estado del Proyecto (Cierre QA-1 + UX-1A.1 LITE + ARCH-5 Fase 4 + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 + DATA-3A)
 
+> **Snapshot histórico** — documento de cierre QA-1 (2026-06-27). No refleja PROD-2B B2–B4 ni PROD-2C. Para persistencia worksheet y Visual Graph Builder en `.sgproj`, ver [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md). Para estado actual del roadmap, ver [`ROADMAP.md`](./ROADMAP.md).
+
 Fecha: 2026-06-27 (actualizado)
 Versión actual: SCI-56 + SCI-29B + SCI-37B + SCI-57 + SCI-57B + SCI-58 + **SCI-58 v2 (COMPLETED)** + SCI-59 + SCI-60 + ARCH-5 (Fase 1–4 COMPLETED) + PROD-1A + PROD-2A + HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 + **UX-1A.1 LITE** + **DATA-3A / HOTFIX-DATA-3A (COMPLETED)** + **Sprint QA-1 (CERRADO)**
 Referencia SCI-58 v2: [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md)

@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-06-27 (cierre PROD-2B B1)
+**Actualizado:** 2026-06-30 (ARCH-6-DOC — alineación post-PROD-2C)
 
 ---
 
@@ -16,12 +16,16 @@
 | Sprint QA-1 (Validación Manual) | **CERRADO** |
 | **SCI-58 v2** (A1 + A2 + A3 + HOTFIX PDF-1/2/3) | **COMPLETED** |
 | **PROD-2B B1** — Schema V2 + migrador + adapters `.sgproj` | **COMPLETED** |
+| **PROD-2B B2** — Multi-dataset persistence | **COMPLETED** |
+| **PROD-2C** — Worksheet + Visual Graph Builder persistence | **COMPLETED** |
 
 Referencia de estado detallado:
 
-- [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) — cierre B1 y roadmap PROD-2B
+- [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) — persistencia `.sgproj` B1–B4, handoff B5
+- [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md) — cierre worksheet + VGB (documento congelado)
+- [`src/lib/project/README.md`](./src/lib/project/README.md) — arquitectura técnica persistencia V2
 - [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md) — cierre SCI-58 v2
-- [`PROJECT_STATUS_SCI_56.md`](./PROJECT_STATUS_SCI_56.md) — estado general del proyecto
+- [`PROJECT_STATUS_SCI_56.md`](./PROJECT_STATUS_SCI_56.md) — snapshot histórico cierre QA-1
 
 ---
 
@@ -45,24 +49,47 @@ Documentación completa: [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md
 
 ## PROD-2B — Persistencia de Proyectos Científicos
 
-**Estado:** **B1 COMPLETED** · B2–B7 pendientes (2026-06-27)
+**Estado:** **B1–B4 COMPLETED** · B5–B7 pendientes (2026-06-30)
 
-Épica que evoluciona `.sgproj` de schema v1 a v2: dominio multi-dataset, migrador, validadores y adaptadores de archivo. B1 establece el contrato V2 y el wiring mínimo; la UI multi-dataset llega en B2.
+Épica que evoluciona `.sgproj` de schema v1 a v2: dominio multi-dataset, worksheet, Visual Graph Builder, migrador, validadores y adaptadores de archivo.
 
-| Fase | Estado |
-|------|--------|
-| B0 Discovery | CERRADO |
-| **B1** Schema V2 + migrador + adapters | **COMPLETED** |
-| B2 Multi-dataset UI | Pendiente |
-| B3 Worksheet | Pendiente |
-| B4 Visual Graph Builder | Pendiente |
-| B5 IndexedDB | Pendiente |
-| B6 UX hardening | Pendiente |
-| B7 Cloud (opcional) | Pendiente |
+| Fase | Estado | Notas |
+|------|--------|-------|
+| B0 Discovery | CERRADO | |
+| **B1** Schema V2 + migrador + adapters | **COMPLETED** | |
+| **B2** Multi-dataset persistence | **COMPLETED** | Gate `validate:prod2b-b2-gate` |
+| **B3** Worksheet | **COMPLETED** | Implementado vía PROD-2C C1–C3 |
+| **B4** Visual Graph Builder | **COMPLETED** | Implementado vía PROD-2C C4–C8 |
+| B5 IndexedDB autosave | Pendiente | **Próxima fase** |
+| B6 UX hardening + gate unificado | Pendiente | |
+| B7 Cloud (opcional) | Pendiente | |
 
 Documentación: [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) · [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md)
 
-**Próxima acción:** iniciar **B2** en conversación dedicada.
+**Próxima acción:** iniciar **B5 — IndexedDB autosave** ([`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B5).
+
+---
+
+## PROD-2C — Worksheet + Visual Graph Persistence
+
+**Estado:** **COMPLETED** (2026-06-30)
+
+Épica de implementación que cierra el alcance original PROD-2B B3 + B4 sobre schema V2.
+
+| Microetapa | Alcance | Gate umbrella |
+|------------|---------|---------------|
+| C1–C3 | Worksheet por dataset | `validate:prod2c-c3-worksheet-ui` |
+| C4–C8 | Visual Graph Builder + fixtures + regresión | `validate:prod2c-c8-regression-gate` |
+
+Documentación de cierre (congelada): [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md)
+
+---
+
+## ARCH-6-DOC — Alineación documental
+
+**Estado:** **COMPLETED** (2026-06-30)
+
+Sincronización de README, ROADMAP, README técnico y referencias de estado con la arquitectura real post-PROD-2C. Sin cambios funcionales.
 
 ---
 
@@ -70,10 +97,10 @@ Documentación: [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) · [`
 
 | Candidato | Descripción |
 |-----------|-------------|
-| **PROD-2B B2** | Multi-dataset persistence + slot bindings (siguiente en plan PROD-2B) |
+| **PROD-2B B5** | IndexedDB autosave — siguiente en plan PROD-2B |
 | **PROD-1B** | Validación avanzada de importación + reportes completos |
 | **ARCH-5 Fase 4+** | Metodología SCI-50→56 en módulos, reporting, PDF |
-| **ARCH-6** | Mejoras UX: estado persistente Constructor Visual por dataset; refinamiento progressive disclosure |
+| **ARCH-6** | Mejoras UX post-QA-1: refinamiento progressive disclosure (persistencia VGB por dataset entregada en PROD-2C) |
 | **PROD-1 v1.1** | Multi-serie side-by-side (RW-04) |
 | **SCI-59 v1.1** | Branching condicional avanzado, persistencia workflow |
 | **SCI-58 v3** (evolución) | Comparación N>2 slots; persistencia extendida de perfiles comparativos |
@@ -82,4 +109,4 @@ Documentación: [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) · [`
 
 ## Histórico de hitos cerrados
 
-SCI-55 → SCI-60 · SCI-58 v1 · **SCI-58 v2** · SCI-59 · ARCH-5 F1–F4 · PROD-1A · PROD-2A · **PROD-2B B1** · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 · UX-1A.1 LITE · DATA-3A · **QA-1** · **HOTFIX PDF-1/2/3**
+SCI-55 → SCI-60 · SCI-58 v1 · **SCI-58 v2** · SCI-59 · ARCH-5 F1–F4 · PROD-1A · PROD-2A · **PROD-2B B1** · **PROD-2B B2** · **PROD-2C C1–C9** · **ARCH-6-DOC** · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 · UX-1A.1 LITE · DATA-3A · **QA-1** · **HOTFIX PDF-1/2/3**

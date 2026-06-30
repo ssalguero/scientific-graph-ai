@@ -1,8 +1,8 @@
 # Scientific Graph AI — Estado PROD-2B (Persistencia de Proyectos Científicos)
 
-**Fecha de actualización:** 2026-06-25  
+**Fecha de actualización:** 2026-06-30 (ARCH-6-DOC)  
 **Épica:** PROD-2B — Persistencia de Proyectos Científicos  
-**Referencias:** [`PROJECT_DISCOVERY_PROD_2B.md`](./PROJECT_DISCOVERY_PROD_2B.md) · [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) · [`src/lib/project/README.md`](./src/lib/project/README.md)
+**Referencias:** [`PROJECT_DISCOVERY_PROD_2B.md`](./PROJECT_DISCOVERY_PROD_2B.md) · [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) · [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md) · [`src/lib/project/README.md`](./src/lib/project/README.md)
 
 ---
 
@@ -14,8 +14,8 @@
 | Plan PROD-2B (B1–B7) | **APROBADO** |
 | **B1 — Schema V2 + contratos + migrador + adapters** | **COMPLETED** |
 | **B2 — Multi-Dataset Persistence** | **COMPLETED** |
-| B3 — Worksheet persistence | Pendiente |
-| B4 — Visual Graph Builder persistence | Pendiente |
+| B3 — Worksheet persistence | **COMPLETED** (PROD-2C C1–C3) |
+| B4 — Visual Graph Builder persistence | **COMPLETED** (PROD-2C C4–C8) |
 | B5 — IndexedDB autosave | Pendiente |
 | B6 — UX hardening + gate final | Pendiente |
 | B7 — Cloud adapter (opcional) | Pendiente |
@@ -130,7 +130,6 @@ Gate umbrella incluye regresión B1, `validate:prod2b-f0`, `validate:prod2b-migr
 | Riesgo | Clasificación |
 |--------|---------------|
 | `validate:prod2a-gate` Playwright intermitente | Deuda infraestructura; no bloquea B2 |
-| Worksheet / Visual Graph Builder persistence | B3 / B4 |
 | IndexedDB autosave | B5 |
 
 ---
@@ -167,20 +166,34 @@ Gate umbrella incluye regresión B1, `validate:prod2b-f0`, `validate:prod2b-migr
 
 ---
 
-## 5. Próxima fase — B3
+## 5. Mapeo PROD-2B ↔ PROD-2C
 
-**Objetivo:** Persistencia de worksheet (columnas, fórmulas, lineage) en el proyecto V2.
+| Fase PROD-2B | Microetapas PROD-2C | Gate umbrella PROD-2C |
+|--------------|---------------------|------------------------|
+| B3 Worksheet | C1 domain · C2 pipeline · C3 UI | `validate:prod2c-c3-worksheet-ui` |
+| B4 Visual Graph Builder | C4 mapper · C5 collect · C6 hydrate · C7 runtime/UI · C8 fixtures | `validate:prod2c-c8-regression-gate` |
 
-**Dependencia:** B2 COMPLETED ✓
+Detalle de cierre: [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md) (documento congelado).
 
 ---
 
-## 6. Histórico de cierre
+## 6. Próxima fase — B5
+
+**Objetivo:** IndexedDB autosave — borradores locales, recovery prompt, proyectos recientes.
+
+**Dependencias:** B1 ✓ · B2 ✓ · B3 (PROD-2C) ✓ · B4 (PROD-2C) ✓
+
+Referencia: [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B5 · Gate previsto: `validate:prod2b-indexeddb`
+
+---
+
+## 7. Histórico de cierre
 
 | Fecha | Evento |
 |-------|--------|
 | 2026-06-27 | Discovery PROD-2B cerrado |
 | 2026-06-27 | Plan PROD-2B aprobado |
 | 2026-06-27 | B1.1–B1.4 implementadas; **Fase B1 cerrada** |
-| 2026-06-25 | B2.1–B2.9 implementadas; invariantes A/B verificados |
-| 2026-06-25 | **`validate:prod2b-b2-gate` PASS — Fase B2 cerrada oficialmente** |
+| 2026-06-25 | B2.1–B2.9 implementadas; invariantes A/B verificados; **`validate:prod2b-b2-gate` PASS** |
+| 2026-06-30 | B3/B4 cerradas vía PROD-2C C1–C8 — ver [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md) |
+| 2026-06-30 | ARCH-6-DOC — alineación documental post-PROD-2C |
