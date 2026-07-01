@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { createLocalProjectRepository } from "@/lib/project/adapters/indexeddb";
+import { detectPersistenceConflict } from "@/lib/project/application/persistence-conflict";
+import type { DetectPersistenceConflictInput } from "@/lib/project/application/persistence-conflict";
 import type { LocalProjectRepository } from "@/lib/project/domain/local-project";
 import type { LocalProjectSummary } from "@/lib/project/domain/local-project";
 import {
-  detectRecoverableDraft,
   openLocalProjectDraft,
 } from "@/lib/project/application/local-project";
 
@@ -21,6 +22,7 @@ import {
   type EditorProjectCollectContextV2,
 } from "./projectPersistence";
 import type { HydrateProjectV2Patch } from "@/lib/project/editor-hydrate-context-v2";
+import { buildLocalCommittedRevisionRef } from "./persistence/revisionRefs";
 
 let sharedRepo: LocalProjectRepository | null = null;
 
@@ -55,6 +57,8 @@ export function useLocalProjectPersistence(params: UseLocalProjectPersistencePar
   );
   const [recoveryPrompt, setRecoveryPrompt] =
     useState<LocalProjectRecoveryPrompt | null>(null);
+  const [recoveryConflictInput, setRecoveryConflictInput] =
+    useState<DetectPersistenceConflictInput | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   const actions: LocalProjectActions = useMemo(
@@ -105,14 +109,35 @@ export function useLocalProjectPersistence(params: UseLocalProjectPersistencePar
   }, []);
 
   const checkRecovery = useCallback(async (projectId: string, projectName: string) => {
-    const draft = await detectRecoverableDraft(repo, projectId);
-    if (draft) {
+    const committed = await repo.getById(projectId);
+    const draft = await repo.getAutosaveDraft(projectId);
+    if (!committed || !draft) {
+      return;
+    }
+
+    const localCommittedRevision = buildLocalCommittedRevisionRef(committed.summary);
+    const localDraftRevision = {
+      projectId: draft.summary.id,
+      updatedAt: draft.summary.updatedAt,
+      source: "local-draft" as const,
+    };
+    const conflictInput: DetectPersistenceConflictInput = {
+      isSessionDirty: false,
+      incomingRevision: localCommittedRevision,
+      localCommittedRevision,
+      localDraftRevision,
+    };
+    const { conflict } = detectPersistenceConflict(conflictInput);
+
+    if (conflict?.kind === "RECOVERABLE_DRAFT") {
+      setRecoveryConflictInput(conflictInput);
       setRecoveryPrompt({ projectId, projectName });
     }
   }, [repo]);
 
   const dismissRecovery = useCallback(() => {
     setRecoveryPrompt(null);
+    setRecoveryConflictInput(null);
   }, []);
 
   const restoreRecoveryDraft = useCallback(async () => {
@@ -135,6 +160,7 @@ export function useLocalProjectPersistence(params: UseLocalProjectPersistencePar
     params.setIsProjectDirty(true);
     setActiveLocalProjectId(recoveryPrompt.projectId);
     setRecoveryPrompt(null);
+    setRecoveryConflictInput(null);
     params.setProjectFileFeedback({
       kind: "success",
       message: `Borrador recuperado: ${recoveryPrompt.projectName}.`,
@@ -162,6 +188,7 @@ export function useLocalProjectPersistence(params: UseLocalProjectPersistencePar
     activeLocalProjectId,
     setActiveLocalProjectId,
     recoveryPrompt,
+    recoveryConflictInput,
     dismissRecovery,
     restoreRecoveryDraft,
     isLibraryOpen,

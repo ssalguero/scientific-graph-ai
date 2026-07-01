@@ -7,7 +7,10 @@ import {
   PROJECT_FILE_EXTENSION,
   type ProjectMetadataV1,
 } from "@/lib/project";
+import { formatPersistenceConflictResolutionLabel } from "@/lib/project/userMessages";
 
+import type { PendingFileOpenConflict } from "./persistence";
+import type { AutosaveIndicatorView, PersistenceConflictView } from "./persistence/types";
 import type { ProjectFileFeedback } from "./projectFileActions";
 import { btnPrimary, btnSave, btnSecondary, fieldLabel, inputField } from "./projectFileUiStyles";
 
@@ -26,9 +29,18 @@ export type ProjectScientificFilePanelProps = {
   onSaveLocalProject?: (projectName: string) => void | Promise<void>;
   onOpenLocalLibrary?: () => void | Promise<void>;
   localStorageState?: "NORMAL" | "DIRTY" | "RECOVERABLE" | "CORRUPTED" | null;
+  autosaveIndicator: AutosaveIndicatorView;
+  sessionConflict: PersistenceConflictView;
+  projectSizeMessage?: string | null;
   recoveryPrompt?: { projectName: string } | null;
+  recoveryPromptMessage?: string | null;
   onRestoreRecovery?: () => void | Promise<void>;
   onDismissRecovery?: () => void;
+  pendingFileOpenConflict?: PendingFileOpenConflict | null;
+  onDismissPendingFileOpenConflict?: () => void;
+  onResolvePendingFileOpenConflict?: (
+    resolution: "LOAD_INCOMING" | "DISCARD_AND_LOAD" | "CANCEL"
+  ) => void | Promise<void>;
   openProjectButtonRef?: RefObject<HTMLButtonElement | null>;
 };
 
@@ -43,9 +55,16 @@ export function ProjectScientificFilePanel({
   onSaveLocalProject,
   onOpenLocalLibrary,
   localStorageState,
+  autosaveIndicator,
+  sessionConflict,
+  projectSizeMessage,
   recoveryPrompt,
+  recoveryPromptMessage,
   onRestoreRecovery,
   onDismissRecovery,
+  pendingFileOpenConflict,
+  onDismissPendingFileOpenConflict,
+  onResolvePendingFileOpenConflict,
   openProjectButtonRef,
 }: ProjectScientificFilePanelProps) {
   const toDisplayName = (name: string) =>
@@ -65,7 +84,7 @@ export function ProjectScientificFilePanel({
   }, [projectMetadata.id, projectMetadata.name]);
 
   const requestNewProject = () => {
-    if (isProjectDirty) {
+    if (sessionConflict.shouldBlock) {
       setPendingDiscard("new");
       return;
     }
@@ -73,7 +92,7 @@ export function ProjectScientificFilePanel({
   };
 
   const requestOpenProject = () => {
-    if (isProjectDirty) {
+    if (sessionConflict.shouldBlock) {
       openAfterDiscardRef.current = true;
       setPendingDiscard("open");
       return;
@@ -115,6 +134,9 @@ export function ProjectScientificFilePanel({
           ? "text-[var(--app-success-text)] bg-[var(--app-success-bg)] border-emerald-200"
           : "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)] border-[var(--app-border)]";
 
+  const discardPrompt =
+    pendingDiscard && sessionConflict.prompt ? sessionConflict.prompt : null;
+
   return (
     <div className="space-y-1.5">
       <div>
@@ -129,23 +151,23 @@ export function ProjectScientificFilePanel({
           placeholder="Nombre del proyecto"
           className={`${inputField} mt-0.5`}
         />
-        <p className="text-[11px] text-[var(--app-text-muted)] mt-0.5">
-          {isProjectDirty
-            ? localStorageState === "DIRTY" || localStorageState === "RECOVERABLE"
-              ? "Cambios sin guardar · autoguardado local activo"
-              : "Cambios sin guardar"
-            : localStorageState === "NORMAL"
-              ? "Guardado localmente"
-              : "Guardado en esta sesión"}
+        <p className={`text-[11px] mt-0.5 font-medium ${autosaveIndicator.className}`}>
+          {autosaveIndicator.label}
+          {isProjectDirty &&
+          (localStorageState === "DIRTY" || localStorageState === "RECOVERABLE")
+            ? " · cambios pendientes"
+            : null}
         </p>
+        {projectSizeMessage ? (
+          <p className="text-[11px] text-[var(--app-warning-text)] mt-0.5">
+            {projectSizeMessage}
+          </p>
+        ) : null}
       </div>
 
-      {recoveryPrompt ? (
+      {recoveryPrompt && recoveryPromptMessage ? (
         <div className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-xs text-orange-900 space-y-2">
-          <p>
-            Hay un borrador más reciente de &quot;{recoveryPrompt.projectName}&quot;.
-            ¿Desea recuperarlo?
-          </p>
+          <p>{recoveryPromptMessage}</p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -165,23 +187,70 @@ export function ProjectScientificFilePanel({
         </div>
       ) : null}
 
-      {pendingDiscard ? (
+      {pendingFileOpenConflict?.view.prompt ? (
         <div className="rounded-lg border border-amber-300 bg-[var(--app-warning-bg)] px-3 py-2 text-xs text-[var(--app-warning-text)] space-y-2">
-          <p>Hay cambios sin guardar. ¿Descartarlos y continuar?</p>
+          <p>{pendingFileOpenConflict.view.prompt}</p>
+          <div className="flex flex-wrap gap-2">
+            {pendingFileOpenConflict.view.shouldBlock ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void onResolvePendingFileOpenConflict?.("DISCARD_AND_LOAD")
+                  }
+                  className="rounded-md border border-amber-400 px-2 py-1 text-xs font-semibold hover:bg-amber-100/40"
+                >
+                  {formatPersistenceConflictResolutionLabel("DISCARD_AND_LOAD")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDismissPendingFileOpenConflict?.()}
+                  className="rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]"
+                >
+                  {formatPersistenceConflictResolutionLabel("CANCEL")}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void onResolvePendingFileOpenConflict?.("LOAD_INCOMING")
+                  }
+                  className="rounded-md border border-amber-400 px-2 py-1 text-xs font-semibold hover:bg-amber-100/40"
+                >
+                  {formatPersistenceConflictResolutionLabel("LOAD_INCOMING")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDismissPendingFileOpenConflict?.()}
+                  className="rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]"
+                >
+                  {formatPersistenceConflictResolutionLabel("CANCEL")}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {discardPrompt ? (
+        <div className="rounded-lg border border-amber-300 bg-[var(--app-warning-bg)] px-3 py-2 text-xs text-[var(--app-warning-text)] space-y-2">
+          <p>{discardPrompt}</p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={confirmDiscard}
               className="rounded-md border border-amber-400 px-2 py-1 text-xs font-semibold hover:bg-amber-100/40"
             >
-              Descartar cambios y continuar
+              {formatPersistenceConflictResolutionLabel("DISCARD_AND_LOAD")}
             </button>
             <button
               type="button"
               onClick={cancelDiscard}
               className="rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]"
             >
-              Cancelar
+              {formatPersistenceConflictResolutionLabel("CANCEL")}
             </button>
           </div>
         </div>

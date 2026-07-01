@@ -23566,6 +23566,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     recoveryPrompt,
     dismissRecovery,
     restoreRecoveryDraft,
+    persistenceUi,
+    pendingFileOpenConflict,
+    dismissPendingFileOpenConflict,
+    resolvePendingFileOpenConflict,
   } = useGraphEditorProjectFile({
     projectMetadata,
     setProjectMetadata,
@@ -24009,15 +24013,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 onSaveLocalProject={handleSaveLocalProject}
                 onOpenLocalLibrary={openLibrary}
                 localStorageState={activeLocalStorageState}
+                autosaveIndicator={persistenceUi.autosaveIndicator}
+                sessionConflict={persistenceUi.sessionConflict}
+                projectSizeMessage={persistenceUi.projectSize.message}
                 recoveryPrompt={
                   recoveryPrompt
                     ? { projectName: recoveryPrompt.projectName }
                     : null
                 }
+                recoveryPromptMessage={persistenceUi.recoveryPromptMessage}
                 onRestoreRecovery={() => {
                   void restoreRecoveryDraft();
                 }}
                 onDismissRecovery={dismissRecovery}
+                pendingFileOpenConflict={pendingFileOpenConflict}
+                onDismissPendingFileOpenConflict={dismissPendingFileOpenConflict}
+                onResolvePendingFileOpenConflict={(resolution) => {
+                  void resolvePendingFileOpenConflict(resolution);
+                }}
                 openProjectButtonRef={openProjectButtonRef}
               />
               <LocalProjectsPanel

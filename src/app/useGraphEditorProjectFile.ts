@@ -11,6 +11,11 @@ import { buildEditorVisibilityBindings } from "./editorVisibilityBindings";
 import { collectProjectSnapshotV2, createInitialProjectMetadata } from "./projectPersistence";
 import { useLocalProjectPersistence } from "./useLocalProjectPersistence";
 import { useProjectDraftAutosave } from "./useProjectDraftAutosave";
+import {
+  buildSessionRevisionRef,
+  usePersistenceFileOpen,
+  useProjectPersistenceUi,
+} from "./persistence";
 import { DEFAULT_PROJECT_NAME } from "@/lib/project";
 
 export type UseGraphEditorProjectFileParams = Omit<
@@ -216,6 +221,25 @@ export function useGraphEditorProjectFile(params: UseGraphEditorProjectFileParam
     collectProjectSnapshotV2(projectActions.buildCollectContextV2())
   );
 
+  const projectSnapshotByteLength = useMemo(
+    () => new TextEncoder().encode(projectReadSignature).byteLength,
+    [projectReadSignature]
+  );
+
+  const sessionRevision = useMemo(
+    () => buildSessionRevisionRef(params.projectMetadata),
+    [params.projectMetadata.id, params.projectMetadata.updatedAt]
+  );
+
+  const sessionConflictInput = useMemo(
+    () => ({
+      isSessionDirty: params.isProjectDirty,
+      sessionRevision,
+      incomingRevision: sessionRevision,
+    }),
+    [params.isProjectDirty, sessionRevision]
+  );
+
   useEffect(() => {
     if (!projectDirtyInitRef.current) {
       projectDirtyInitRef.current = true;
@@ -243,6 +267,8 @@ export function useGraphEditorProjectFile(params: UseGraphEditorProjectFileParam
   });
 
   const [autosaveTick, setAutosaveTick] = useState(0);
+  const [isAutosaving, setIsAutosaving] = useState(false);
+  const [autosaveHasError, setAutosaveHasError] = useState(false);
 
   useProjectDraftAutosave({
     enabled: localPersistence.activeLocalProjectId != null,
@@ -252,6 +278,30 @@ export function useGraphEditorProjectFile(params: UseGraphEditorProjectFileParam
     repo: localPersistence.repo,
     buildCollectContextV2: projectActions.buildCollectContextV2,
     onAutosaved: () => setAutosaveTick((value) => value + 1),
+    onAutosaveError: (message) => setAutosaveHasError(message != null),
+    onSavingChange: setIsAutosaving,
+  });
+
+  const persistenceUi = useProjectPersistenceUi({
+    sessionConflictInput,
+    recoveryConflictInput: localPersistence.recoveryConflictInput,
+    recoveryPromptOptions: localPersistence.recoveryPrompt
+      ? { projectName: localPersistence.recoveryPrompt.projectName }
+      : undefined,
+    autosaveEnabled: localPersistence.activeLocalProjectId != null,
+    hasActiveLocalProject: localPersistence.activeLocalProjectId != null,
+    isProjectDirty: params.isProjectDirty,
+    isAutosaving,
+    autosaveHasError,
+    projectSnapshotByteLength,
+  });
+
+  const fileOpen = usePersistenceFileOpen({
+    repo: localPersistence.repo,
+    projectMetadata: params.projectMetadata,
+    isProjectDirty: params.isProjectDirty,
+    activeLocalProjectId: localPersistence.activeLocalProjectId,
+    openProjectFile: projectActions.handleOpenProjectFile,
   });
 
   const handleSaveLocalProject = useCallback(
@@ -279,9 +329,14 @@ export function useGraphEditorProjectFile(params: UseGraphEditorProjectFileParam
     suppressProjectDirtyRef,
     createInitialProjectMetadata,
     autosaveTick,
+    persistenceUi,
+    pendingFileOpenConflict: fileOpen.pendingFileOpenConflict,
+    dismissPendingFileOpenConflict: fileOpen.dismissPendingFileOpenConflict,
+    resolvePendingFileOpenConflict: fileOpen.resolvePendingFileOpenConflict,
     ...projectActions,
     ...localPersistence,
     handleSaveLocalProject,
     handleOpenLocalProject,
+    handleOpenProjectFile: fileOpen.handleOpenProjectFile,
   };
 }

@@ -18,12 +18,18 @@ export type UseProjectDraftAutosaveParams = {
   repo: LocalProjectRepository;
   buildCollectContextV2: () => EditorProjectCollectContextV2;
   onAutosaved?: () => void;
-  onAutosaveError?: (message: string) => void;
+  onAutosaveError?: (message: string | null) => void;
+  onSavingChange?: (isSaving: boolean) => void;
 };
 
 export function useProjectDraftAutosave(params: UseProjectDraftAutosaveParams) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
+
+  const setSaving = (value: boolean) => {
+    savingRef.current = value;
+    params.onSavingChange?.(value);
+  };
 
   useEffect(() => {
     if (!params.enabled || !params.isProjectDirty || !params.activeLocalProjectId) {
@@ -36,7 +42,7 @@ export function useProjectDraftAutosave(params: UseProjectDraftAutosaveParams) {
 
     timerRef.current = setTimeout(() => {
       if (savingRef.current) return;
-      savingRef.current = true;
+      setSaving(true);
       void saveLocalProjectDraft({
         repo: params.repo,
         ctx: params.buildCollectContextV2(),
@@ -45,13 +51,14 @@ export function useProjectDraftAutosave(params: UseProjectDraftAutosaveParams) {
       })
         .then((result) => {
           if (result.ok) {
+            params.onAutosaveError?.(null);
             params.onAutosaved?.();
             return;
           }
           params.onAutosaveError?.(result.error.message);
         })
         .finally(() => {
-          savingRef.current = false;
+          setSaving(false);
         });
     }, AUTOSAVE_DEBOUNCE_MS);
 
@@ -69,5 +76,6 @@ export function useProjectDraftAutosave(params: UseProjectDraftAutosaveParams) {
     params.buildCollectContextV2,
     params.onAutosaved,
     params.onAutosaveError,
+    params.onSavingChange,
   ]);
 }
