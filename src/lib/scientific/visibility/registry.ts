@@ -1,18 +1,119 @@
+import {
+  VISIBILITY_KEYS_V1,
+  type VisibilityKeyV1,
+} from "@/lib/project/keys";
+
 import type {
-  MethodologyRegistryToggleKey,
+  ToggleCategory,
   ToggleRegistryEntry,
+  VisibilityToggleKey,
   VisibilityToggleRegistry,
 } from "./types";
 
-const entry = (
-  config: ToggleRegistryEntry
-): ToggleRegistryEntry => config;
+const entry = (config: ToggleRegistryEntry): ToggleRegistryEntry => config;
 
-/**
- * Declarative registry — methodology SCI-50→SCI-60, related dashboards, inference
- * and report toggles (QA-1 §7.1–7.3). Full {@link VISIBILITY_KEYS_V1} parity in D4.2.
- */
-export const VISIBILITY_TOGGLE_REGISTRY: VisibilityToggleRegistry = {
+const GRAPH_MATH_KEYS = new Set<VisibilityKeyV1>([
+  "showDerivative",
+  "showIntegral",
+  "showIntersections",
+  "showCriticalPoints",
+  "showRoots",
+]);
+
+const DESCRIPTIVE_KEYS = new Set<VisibilityKeyV1>([
+  "showStatistics",
+  "showErrorBars",
+  "showCorrelation",
+  "showOutliers",
+  "showHistogram",
+  "showBoxPlot",
+  "showNormality",
+  "showQQPlot",
+  "showViolinPlot",
+  "showHeatmap",
+  "showBubblePlot",
+  "showRadarPlot",
+  "showKernelDensity",
+  "showForestPlot",
+]);
+
+const MULTIVARIATE_KEYS = new Set<VisibilityKeyV1>([
+  "showPCA",
+  "showScatterMatrix",
+  "showParallelCoordinates",
+  "showCorrelationNetwork",
+  "showMDS",
+  "showDistanceMatrix",
+  "showSimilarityNetwork",
+  "showVariableImportance",
+  "showClusterHeatmap",
+  "showClusteredDistanceHeatmap",
+  "showManovaExplorer",
+  "showLdaExplorer",
+  "showCanonicalCorrelationExplorer",
+  "showPcrExplorer",
+  "showPlsExplorer",
+  "showBootstrapExplorer",
+  "showSensitivityExplorer",
+  "showTsneExplorer",
+  "showUmapExplorer",
+  "showHierarchicalClustering",
+]);
+
+const INFERENCE_KEYS = new Set<VisibilityKeyV1>([
+  "showTTest",
+  "showAnova",
+  "showPostHoc",
+  "showNonParametric",
+  "showEffectSizePower",
+]);
+
+const REPORT_KEYS = new Set<VisibilityKeyV1>([
+  "showStatisticalAdvisor",
+  "showScientificInterpretation",
+  "showScientificReport",
+  "showScientificAssistant",
+]);
+
+const inferCategory = (key: VisibilityKeyV1): ToggleCategory => {
+  if (GRAPH_MATH_KEYS.has(key)) return "graph-math";
+  if (DESCRIPTIVE_KEYS.has(key)) return "descriptive";
+  if (MULTIVARIATE_KEYS.has(key)) return "multivariate";
+  if (INFERENCE_KEYS.has(key)) return "inference";
+  if (REPORT_KEYS.has(key)) return "report";
+  if (
+    key === "showMultivariateDashboard" ||
+    key === "showMultiDatasetComparison" ||
+    key === "showMethodologicalDashboard" ||
+    key === "showPublicationDashboard"
+  ) {
+    return "dashboard";
+  }
+  return "methodology";
+};
+
+const inferWorkspaceTab = (
+  key: VisibilityKeyV1
+): ToggleRegistryEntry["workspaceTab"] => {
+  if (GRAPH_MATH_KEYS.has(key)) return "analysis";
+  if (REPORT_KEYS.has(key)) {
+    return key === "showScientificReport" ? "reports" : "results";
+  }
+  if (key === "showStatisticalAdvisor") return "analysis";
+  return "results";
+};
+
+const inferPdfExportPolicy = (
+  key: VisibilityKeyV1
+): ToggleRegistryEntry["pdfExportPolicy"] => {
+  if (GRAPH_MATH_KEYS.has(key)) return "never";
+  return "when-visible";
+};
+
+const toPdfSectionId = (key: VisibilityKeyV1): string =>
+  key.replace(/^show/, "panel-").replace(/([A-Z])/g, "-$1").toLowerCase();
+
+const CORE_ENTRIES: Partial<Record<VisibilityKeyV1, ToggleRegistryEntry>> = {
   showConsistencyEngine: entry({
     key: "showConsistencyEngine",
     category: "methodology",
@@ -152,10 +253,44 @@ export const VISIBILITY_TOGGLE_REGISTRY: VisibilityToggleRegistry = {
   }),
 };
 
-export const METHODOLOGY_REGISTRY_TOGGLE_KEYS = Object.keys(
-  VISIBILITY_TOGGLE_REGISTRY
-) as MethodologyRegistryToggleKey[];
+const buildFallbackEntry = (key: VisibilityKeyV1): ToggleRegistryEntry => {
+  const category = inferCategory(key);
+  const pdfExportPolicy = inferPdfExportPolicy(key);
+
+  return entry({
+    key,
+    category,
+    defaultVisible: false,
+    workspaceTab: inferWorkspaceTab(key),
+    pdfExportPolicy,
+    pdfSectionIds:
+      pdfExportPolicy === "when-visible" ? [toPdfSectionId(key)] : undefined,
+  });
+};
+
+const buildRegistry = (): VisibilityToggleRegistry => {
+  const registry = {} as Record<VisibilityKeyV1, ToggleRegistryEntry>;
+
+  for (const key of VISIBILITY_KEYS_V1) {
+    registry[key] = CORE_ENTRIES[key] ?? buildFallbackEntry(key);
+  }
+
+  return registry;
+};
+
+export const VISIBILITY_TOGGLE_REGISTRY: VisibilityToggleRegistry = buildRegistry();
+
+export const VISIBILITY_TOGGLE_KEYS = [...VISIBILITY_KEYS_V1] as VisibilityToggleKey[];
+
+export const METHODOLOGY_REGISTRY_TOGGLE_KEYS = VISIBILITY_TOGGLE_KEYS.filter(
+  (key) => VISIBILITY_TOGGLE_REGISTRY[key].category === "methodology"
+);
 
 export const getToggleRegistryEntry = (
-  key: MethodologyRegistryToggleKey
+  key: VisibilityToggleKey
 ): ToggleRegistryEntry => VISIBILITY_TOGGLE_REGISTRY[key];
+
+export const isVisibilityToggleKey = (
+  key: string
+): key is VisibilityToggleKey =>
+  (VISIBILITY_KEYS_V1 as readonly string[]).includes(key);

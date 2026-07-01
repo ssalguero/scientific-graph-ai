@@ -3,6 +3,8 @@
  * Pure TypeScript — no React, Next.js, or persistence imports.
  */
 
+import type { VisibilityKeyV1 } from "@/lib/project/keys";
+
 export type ToggleCategory =
   | "graph-math"
   | "descriptive"
@@ -16,28 +18,18 @@ export type PdfExportPolicy = "always-include" | "when-visible" | "never";
 
 export type VisibilityWorkspaceTab = "analysis" | "results" | "reports";
 
-/**
- * Toggle keys covered by the D4.1 methodology registry slice.
- * D4.2 extends {@link VisibilityToggleKey} to full parity with project keys.
- */
-export type MethodologyRegistryToggleKey =
+/** Aligned with persisted {@link VisibilityKeyV1} — parity enforced in validate.ts. */
+export type VisibilityToggleKey = VisibilityKeyV1;
+
+export type MethodologyRegistryToggleKey = Extract<
+  VisibilityToggleKey,
   | "showConsistencyEngine"
   | "showReportQualityEngine"
   | "showReproducibilityExplorer"
   | "showEvidenceStrengthEngine"
   | "showAssumptionTracker"
   | "showPublicationReadinessAnalyzer"
-  | "showMethodologicalDashboard"
-  | "showPublicationDashboard"
-  | "showMultivariateDashboard"
-  | "showMultiDatasetComparison"
-  | "showEffectSizePower"
-  | "showStatisticalAdvisor"
-  | "showScientificInterpretation"
-  | "showScientificReport";
-
-/** Public toggle key alias — methodology slice until D4.2 completes the registry. */
-export type VisibilityToggleKey = MethodologyRegistryToggleKey;
+>;
 
 export type VisibilityState = Partial<Record<VisibilityToggleKey, boolean>>;
 
@@ -53,5 +45,10 @@ export type ToggleRegistryEntry = {
 };
 
 export type VisibilityToggleRegistry = Readonly<
-  Record<MethodologyRegistryToggleKey, ToggleRegistryEntry>
+  Record<VisibilityToggleKey, ToggleRegistryEntry>
 >;
+
+export type RegistryValidationIssue = {
+  code: string;
+  message: string;
+};
