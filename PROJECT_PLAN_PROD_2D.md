@@ -3,7 +3,8 @@
 **Estado:** **PLAN APROBADO (congelado en D0)**  
 **Fecha de aprobación:** 2026-07-01  
 **Identificador:** PROD-2D (continúa PROD-2C histórico CLOSED)  
-**Próxima microfase:** **D0.5 — Baseline arquitectónico**
+**Próxima microfase:** **D1 — UX-2A metadata**  
+**Baseline:** [`PROJECT_BASELINE_PROD_2D.md`](PROJECT_BASELINE_PROD_2D.md) — D0.5 COMPLETED
 
 **Referencias:**
 
@@ -68,10 +69,9 @@ Cada microfase D1–D23 cumple: implementación · gates PASS · tests · docs �
 
 | Campo | Contenido |
 |-------|-----------|
-| **Objetivo** | Línea base objetiva pre-ARCH-5 para comparación en D17 |
-| **Alcance** | Documentación; inventario manual |
-| **Archivos** | Anexo en discovery o `PROJECT_BASELINE_PROD_2D.md` |
-| **Entregables mínimos** | LOC `page.tsx`; LOC por bloque SCI-50→60; componentes React inline; `useState`/`useMemo`/handlers; deps internas; snapshot gates (`validate:full`, PROD-2B, PROD-2C); evaluación acoplamiento D9–D13; **baseline tiempos** `validate:full` (duración, casos, PASS) |
+| **Estado** | **COMPLETED** |
+| **Entregable** | [`PROJECT_BASELINE_PROD_2D.md`](PROJECT_BASELINE_PROD_2D.md) |
+| **Recomendación D9–D13** | **NO subdividir** (excepción condicional solo D13) |
 | **Gate** | N/A |
 
 ---

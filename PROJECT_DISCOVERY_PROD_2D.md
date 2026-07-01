@@ -3,7 +3,8 @@
 **Estado:** **DISCOVERY CERRADO (D0 COMPLETED)**  
 **Fecha de cierre:** 2026-07-01  
 **Identificador:** PROD-2D (continúa PROD-2C histórico CLOSED)  
-**Próxima microfase:** **D0.5 — Baseline arquitectónico** (sin código)
+**Próxima microfase:** **D1 — UX-2A metadata** (post-revisión D0.5)  
+**Baseline:** [`PROJECT_BASELINE_PROD_2D.md`](PROJECT_BASELINE_PROD_2D.md) — **D0.5 COMPLETED**
 
 **Base:** PROD-2A / PROD-2B / PROD-2C **CLOSED** · [`MASTER_ROADMAP_V1.md`](MASTER_ROADMAP_V1.md) §13 · QA-1 **CLOSED**
 
@@ -442,12 +443,14 @@ Consolidado (Master Roadmap §13 + plan maestro):
 | Decisiones arquitectónicas | **Congeladas** §7 |
 | Riesgos | **Identificados** §9 |
 | Plan operativo | [`PROJECT_PLAN_PROD_2D.md`](PROJECT_PLAN_PROD_2D.md) |
+| Baseline arquitectónico | [`PROJECT_BASELINE_PROD_2D.md`](PROJECT_BASELINE_PROD_2D.md) — **D0.5 COMPLETED** |
 | **Microfase D0** | **COMPLETED** |
+| **Microfase D0.5** | **COMPLETED** |
 
-**Restricciones respetadas:** documentación únicamente · sin cambios de código · sin modificar `page.tsx` · sin componentes/adapters/tests/scripts/package.json.
+**Restricciones respetadas (D0 + D0.5):** documentación únicamente · sin cambios de código · sin modificar `page.tsx` · sin componentes/adapters/tests/scripts/package.json.
 
-**Siguiente microfase:** **D0.5 — Baseline arquitectónico** (esperar revisión antes de continuar).
+**Siguiente microfase:** **D1 — UX-2A metadata** (esperar revisión antes de continuar).
 
 ---
 
-*Documento generado al cierre del Discovery PROD-2D D0 (2026-07-01). Baseline detallado pendiente D0.5.*
+*Documento generado al cierre del Discovery PROD-2D D0 (2026-07-01). Baseline detallado: [`PROJECT_BASELINE_PROD_2D.md`](PROJECT_BASELINE_PROD_2D.md) (D0.5 COMPLETED).*
