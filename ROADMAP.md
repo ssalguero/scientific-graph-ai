@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-06-30 (ARCH-6-DOC — alineación post-PROD-2C)
+**Actualizado:** 2026-07-01 (cierre oficial PROD-2B)
 
 ---
 
@@ -15,13 +15,12 @@
 | UX-1A.1 LITE | **COMPLETED** |
 | Sprint QA-1 (Validación Manual) | **CERRADO** |
 | **SCI-58 v2** (A1 + A2 + A3 + HOTFIX PDF-1/2/3) | **COMPLETED** |
-| **PROD-2B B1** — Schema V2 + migrador + adapters `.sgproj` | **COMPLETED** |
-| **PROD-2B B2** — Multi-dataset persistence | **COMPLETED** |
+| **PROD-2B** — Persistencia de proyectos científicos (B1–B6) | **COMPLETED** |
 | **PROD-2C** — Worksheet + Visual Graph Builder persistence | **COMPLETED** |
 
 Referencia de estado detallado:
 
-- [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) — persistencia `.sgproj` B1–B5, handoff B6
+- [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) — cierre oficial PROD-2B (B1–B6.5)
 - [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md) — cierre IndexedDB autosave (B5)
 - [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md) — cierre worksheet + VGB (documento congelado)
 - [`src/lib/project/README.md`](./src/lib/project/README.md) — arquitectura técnica persistencia V2
@@ -50,9 +49,9 @@ Documentación completa: [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md
 
 ## PROD-2B — Persistencia de Proyectos Científicos
 
-**Estado:** **B1–B5 COMPLETED** · B6–B7 pendientes (2026-06-30)
+**Estado:** **COMPLETED** (2026-07-01)
 
-Épica que evoluciona `.sgproj` de schema v1 a v2: dominio multi-dataset, worksheet, Visual Graph Builder, migrador, validadores y adaptadores de archivo.
+Épica que evoluciona `.sgproj` de schema v1 a v2: dominio multi-dataset, worksheet, Visual Graph Builder, biblioteca local IndexedDB, autosave, conflict detection, UX hardening, migrador, validadores y adaptadores de archivo.
 
 | Fase | Estado | Notas |
 |------|--------|-------|
@@ -62,12 +61,14 @@ Documentación completa: [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md
 | **B3** Worksheet | **COMPLETED** | Implementado vía PROD-2C C1–C3 |
 | **B4** Visual Graph Builder | **COMPLETED** | Implementado vía PROD-2C C4–C8 |
 | **B5** IndexedDB autosave | **COMPLETED** | Gate `validate:prod2b-indexeddb` — [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md) |
-| B6 UX hardening + gate unificado | Pendiente | **Próxima fase** |
-| B7 Cloud (opcional) | Pendiente | |
+| **B6.1–B6.5** UX hardening | **COMPLETED** | Conflict, views, size, wiring — gates `validate:prod2b-b6-*` |
+| B7 Cloud (opcional) | Fuera de alcance | Backlog PROD-2C |
 
-Documentación: [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) · [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md)
+Documentación de cierre: [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) · [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md)
 
-**Próxima acción:** iniciar **B6 — UX hardening + `validate:prod2b-gate`** ([`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B6). Cierre B5: [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md).
+**Backlog PROD-2B:** vacío. Futuras funcionalidades de persistencia avanzada (cloud, sync) → **PROD-2C**.
+
+**Nota de cierre:** PROD-2B queda oficialmente cerrado. [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) pasa a ser referencia histórica. Toda evolución futura de persistencia continúa mediante PROD-2C y épicas posteriores.
 
 ---
 
@@ -98,7 +99,7 @@ Sincronización de README, ROADMAP, README técnico y referencias de estado con 
 
 | Candidato | Descripción |
 |-----------|-------------|
-| **PROD-2B B6** | UX hardening + `validate:prod2b-gate` — siguiente en plan PROD-2B |
+| **PROD-2C** (evolución) | Cloud adapter, sync, persistencia avanzada post-PROD-2B |
 | **PROD-1B** | Validación avanzada de importación + reportes completos |
 | **ARCH-5 Fase 4+** | Metodología SCI-50→56 en módulos, reporting, PDF |
 | **ARCH-6** | Mejoras UX post-QA-1: refinamiento progressive disclosure (persistencia VGB por dataset entregada en PROD-2C) |
@@ -110,4 +111,4 @@ Sincronización de README, ROADMAP, README técnico y referencias de estado con 
 
 ## Histórico de hitos cerrados
 
-SCI-55 → SCI-60 · SCI-58 v1 · **SCI-58 v2** · SCI-59 · ARCH-5 F1–F4 · PROD-1A · PROD-2A · **PROD-2B B1** · **PROD-2B B2** · **PROD-2C C1–C9** · **ARCH-6-DOC** · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 · UX-1A.1 LITE · DATA-3A · **QA-1** · **HOTFIX PDF-1/2/3**
+SCI-55 → SCI-60 · SCI-58 v1 · **SCI-58 v2** · SCI-59 · ARCH-5 F1–F4 · PROD-1A · PROD-2A · **PROD-2B** (B1–B6) · **PROD-2C C1–C9** · **ARCH-6-DOC** · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 · UX-1A.1 LITE · DATA-3A · **QA-1** · **HOTFIX PDF-1/2/3**
