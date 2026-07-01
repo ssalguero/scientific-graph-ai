@@ -36,6 +36,7 @@
     "validate:prod2b-b6-domain": "npx tsx scripts/validate-prod2b-b6-domain.ts",
     "validate:prod2b-b6-conflict": "npx tsx scripts/validate-prod2b-b6-conflict.ts",
     "validate:prod2b-b6-size": "npx tsx scripts/validate-prod2b-b6-size.ts",
+    "validate:prod2b-b6-ux": "npx tsx scripts/validate-prod2b-b6-ux.ts",
     "validate:prod2c-c1-worksheet-domain": "npx tsx scripts/validate-prod2c-c1-worksheet-domain.ts",
     "validate:prod2c-c2-worksheet-pipeline": "npx tsx scripts/validate-prod2c-c2-worksheet-pipeline.ts",
     "validate:prod2c-c3-worksheet-ui": "npx tsx scripts/validate-prod2c-c3-worksheet-ui.ts",

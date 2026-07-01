@@ -1,4 +1,13 @@
 import { PROJECT_FILE_EXTENSION, PROJECT_KIND } from "./constants";
+import type {
+  PersistenceConflict,
+  PersistenceConflictResolution,
+} from "./domain/persistence-conflict";
+import type {
+  AutosaveIndicatorState,
+  ProjectSizeAssessment,
+  ProjectSizeWarningTier,
+} from "./domain/persistence-status";
 import type { ProjectValidationIssue } from "./types";
 
 export type ProjectFileFeedbackKind = "success" | "error" | "warning" | "info";
@@ -21,6 +30,10 @@ const CODE_MESSAGES: Record<string, string> = {
     "Este proyecto fue creado con una versión más nueva de la aplicación. Actualice Scientific Graph AI e intente de nuevo.",
   "M-MISSING": "No se puede migrar este proyecto a la versión actual.",
   "V-META-NAME": "El nombre del proyecto en el archivo no es válido.",
+  "S-SIZE":
+    "Advertencia: el proyecto supera el límite recomendado de 10 MB al serializar.",
+  "P-SIZE":
+    "Advertencia: el archivo supera el límite recomendado de 10 MB al abrir.",
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -145,5 +158,88 @@ export const formatLocalProjectIntegrityWarning = (): string =>
 export const formatLocalProjectRecoveryPrompt = (projectName: string): string =>
   `Hay un borrador más reciente de "${projectName}". ¿Desea recuperarlo?`;
 
+const AUTOSAVE_INDICATOR_MESSAGES: Record<AutosaveIndicatorState, string> = {
+  idle: "Autoguardado inactivo",
+  pending: "Autoguardado pendiente…",
+  saving: "Autoguardando localmente…",
+  saved: "Autoguardado local",
+  error: "Error de autoguardado local",
+};
+
+export const formatAutosaveIndicatorState = (
+  state: AutosaveIndicatorState
+): string => AUTOSAVE_INDICATOR_MESSAGES[state];
+
 export const formatLocalProjectAutosaveStatus = (saved: boolean): string =>
-  saved ? "Autoguardado local" : "Autoguardado pendiente…";
+  formatAutosaveIndicatorState(saved ? "saved" : "pending");
+
+const SIZE_WARNING_APPROACHING_MESSAGE =
+  "Advertencia: el proyecto se acerca al límite recomendado de 10 MB.";
+
+const SIZE_WARNING_EXCEEDED_GENERIC_MESSAGE =
+  "Advertencia: el proyecto supera el límite recomendado de 10 MB.";
+
+export const getProjectSizeWarningFeedbackKind = (
+  tier: ProjectSizeWarningTier
+): ProjectFileFeedbackKind | null =>
+  tier === "none" ? null : "warning";
+
+export const formatProjectSizeWarning = (
+  assessment: ProjectSizeAssessment
+): string | null => {
+  if (assessment.tier === "none") {
+    return null;
+  }
+  if (assessment.tier === "approaching") {
+    return SIZE_WARNING_APPROACHING_MESSAGE;
+  }
+  if (assessment.issueCodes.includes("P-SIZE")) {
+    return CODE_MESSAGES["P-SIZE"];
+  }
+  if (assessment.issueCodes.includes("S-SIZE")) {
+    return CODE_MESSAGES["S-SIZE"];
+  }
+  return SIZE_WARNING_EXCEEDED_GENERIC_MESSAGE;
+};
+
+const PERSISTENCE_CONFLICT_MESSAGES: Record<
+  PersistenceConflict["kind"],
+  string
+> = {
+  SESSION_DIRTY:
+    "Hay cambios sin guardar en la sesión actual. Guarde, descarte los cambios o cancele antes de continuar.",
+  INCOMING_NEWER:
+    "El archivo seleccionado contiene una versión más reciente de este proyecto. ¿Desea cargarla?",
+  INCOMING_OLDER_THAN_LOCAL:
+    "El archivo seleccionado es anterior a la copia guardada en la biblioteca local. ¿Desea cargarlo de todos modos?",
+  RECOVERABLE_DRAFT:
+    "Hay un borrador autoguardado más reciente. ¿Desea recuperarlo?",
+};
+
+export type FormatPersistenceConflictPromptOptions = {
+  projectName?: string;
+};
+
+export const formatPersistenceConflictPrompt = (
+  conflict: PersistenceConflict,
+  options?: FormatPersistenceConflictPromptOptions
+): string => {
+  if (conflict.kind === "RECOVERABLE_DRAFT" && options?.projectName) {
+    return formatLocalProjectRecoveryPrompt(options.projectName);
+  }
+  return PERSISTENCE_CONFLICT_MESSAGES[conflict.kind];
+};
+
+const PERSISTENCE_CONFLICT_RESOLUTION_LABELS: Record<
+  PersistenceConflictResolution,
+  string
+> = {
+  KEEP_CURRENT: "Mantener versión actual",
+  LOAD_INCOMING: "Cargar versión del archivo",
+  DISCARD_AND_LOAD: "Descartar cambios y cargar",
+  CANCEL: "Cancelar",
+};
+
+export const formatPersistenceConflictResolutionLabel = (
+  resolution: PersistenceConflictResolution
+): string => PERSISTENCE_CONFLICT_RESOLUTION_LABELS[resolution];
