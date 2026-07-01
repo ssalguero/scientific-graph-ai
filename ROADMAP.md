@@ -21,7 +21,8 @@
 
 Referencia de estado detallado:
 
-- [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) — persistencia `.sgproj` B1–B4, handoff B5
+- [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) — persistencia `.sgproj` B1–B5, handoff B6
+- [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md) — cierre IndexedDB autosave (B5)
 - [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md) — cierre worksheet + VGB (documento congelado)
 - [`src/lib/project/README.md`](./src/lib/project/README.md) — arquitectura técnica persistencia V2
 - [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md) — cierre SCI-58 v2
@@ -49,7 +50,7 @@ Documentación completa: [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md
 
 ## PROD-2B — Persistencia de Proyectos Científicos
 
-**Estado:** **B1–B4 COMPLETED** · B5–B7 pendientes (2026-06-30)
+**Estado:** **B1–B5 COMPLETED** · B6–B7 pendientes (2026-06-30)
 
 Épica que evoluciona `.sgproj` de schema v1 a v2: dominio multi-dataset, worksheet, Visual Graph Builder, migrador, validadores y adaptadores de archivo.
 
@@ -60,13 +61,13 @@ Documentación completa: [`PROJECT_STATUS_SCI_58.md`](./PROJECT_STATUS_SCI_58.md
 | **B2** Multi-dataset persistence | **COMPLETED** | Gate `validate:prod2b-b2-gate` |
 | **B3** Worksheet | **COMPLETED** | Implementado vía PROD-2C C1–C3 |
 | **B4** Visual Graph Builder | **COMPLETED** | Implementado vía PROD-2C C4–C8 |
-| B5 IndexedDB autosave | Pendiente | **Próxima fase** |
-| B6 UX hardening + gate unificado | Pendiente | |
+| **B5** IndexedDB autosave | **COMPLETED** | Gate `validate:prod2b-indexeddb` — [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md) |
+| B6 UX hardening + gate unificado | Pendiente | **Próxima fase** |
 | B7 Cloud (opcional) | Pendiente | |
 
 Documentación: [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) · [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md)
 
-**Próxima acción:** iniciar **B5 — IndexedDB autosave** ([`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B5).
+**Próxima acción:** iniciar **B6 — UX hardening + `validate:prod2b-gate`** ([`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B6). Cierre B5: [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md).
 
 ---
 
@@ -97,7 +98,7 @@ Sincronización de README, ROADMAP, README técnico y referencias de estado con 
 
 | Candidato | Descripción |
 |-----------|-------------|
-| **PROD-2B B5** | IndexedDB autosave — siguiente en plan PROD-2B |
+| **PROD-2B B6** | UX hardening + `validate:prod2b-gate` — siguiente en plan PROD-2B |
 | **PROD-1B** | Validación avanzada de importación + reportes completos |
 | **ARCH-5 Fase 4+** | Metodología SCI-50→56 en módulos, reporting, PDF |
 | **ARCH-6** | Mejoras UX post-QA-1: refinamiento progressive disclosure (persistencia VGB por dataset entregada en PROD-2C) |

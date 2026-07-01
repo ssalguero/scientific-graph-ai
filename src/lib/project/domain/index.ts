@@ -143,3 +143,31 @@ export {
   type VisualGraphEntriesToPersistedOptions,
   type VisualGraphHydrateContext,
 } from "./mappers/visual-graph";
+
+export type {
+  PersistenceConflict,
+  PersistenceConflictKind,
+  PersistenceConflictResolution,
+  PersistenceConflictSeverity,
+  ProjectRevisionProjectId,
+  ProjectRevisionRef,
+  ProjectRevisionSource,
+  RevisionTimeComparison,
+} from "./persistence-conflict";
+
+export {
+  areProjectRevisionIdsEqual,
+  areRevisionsEquivalent,
+  compareRevisionTimes,
+  createProjectRevisionRef,
+  getEffectiveRevisionTimestamp,
+  isIncomingRevisionNewerThan,
+  isIncomingRevisionOlderThan,
+  parseRevisionIsoTimestamp,
+} from "./persistence-conflict";
+
+export type {
+  AutosaveIndicatorState,
+  ProjectSizeAssessment,
+  ProjectSizeWarningTier,
+} from "./persistence-status";

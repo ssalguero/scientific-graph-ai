@@ -25,7 +25,8 @@ Variables opcionales para gates E2E y baselines (valores por defecto apuntan a r
 | Documento | Contenido |
 |-----------|-----------|
 | [`ROADMAP.md`](./ROADMAP.md) | Hitos del proyecto, fases PROD-2B/2C, candidatos futuros |
-| [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) | Estado persistencia `.sgproj` — B1–B4, handoff B5 |
+| [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) | Estado persistencia `.sgproj` — B1–B5, handoff B6 |
+| [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md) | Cierre PROD-2B B5 — IndexedDB biblioteca local + autosave |
 | [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md) | Cierre worksheet + Visual Graph Builder (documento congelado) |
 | [`src/lib/project/README.md`](./src/lib/project/README.md) | Arquitectura técnica de persistencia V2 |
 | [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) | Plan aprobado PROD-2B (B1–B7) |
@@ -44,7 +45,7 @@ Variables opcionales para gates E2E y baselines (valores por defecto apuntan a r
 | PROD-2B B1 — Schema V2 + migrador | **COMPLETED** |
 | PROD-2B B2 — Multi-dataset persistence | **COMPLETED** |
 | PROD-2C — Worksheet + Visual Graph persistence | **COMPLETED** |
-| PROD-2B B5 — IndexedDB autosave | Pendiente (próxima fase) |
+| PROD-2B B5 — IndexedDB autosave | **COMPLETED** |
 | PROD-2B B6/B7 — UX gate / Cloud | Pendiente |
 
 Detalle de persistencia worksheet y Visual Graph Builder: [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md).
@@ -59,9 +60,12 @@ Ejecutar desde la raíz del repositorio.
 |---------|---------|---------------|
 | `npm run validate:full` | Regresión general: PROD-2A, PROD-1, build, tsc, comparison-unit, E2E save/reload | CI / smoke test amplio del núcleo científico |
 | `npm run validate:prod2b-b2-gate` | Umbrella PROD-2B B1+B2: multi-dataset, migración, invariantes A/B (17 sub-gates) | Certificar persistencia multi-dataset |
+| `npm run validate:prod2b-indexeddb` | Umbrella PROD-2B B5: biblioteca local IndexedDB, CRUD, borrador, integridad | Certificar persistencia local B5 |
 | `npm run validate:prod2c-c8-regression-gate` | Umbrella PROD-2C C4–C8: Visual Graph Builder persistido (5 sub-gates) | Certificar regresión VGB post-PROD-2C |
 
-**Nota:** `validate:full` no incluye los gates PROD-2B B2 ni PROD-2C. Para certificar persistencia V2 completa, ejecutar también `validate:prod2b-b2-gate` y los gates PROD-2C según el cambio (ver README técnico).
+**Nota:** `validate:full` no incluye los gates PROD-2B B2/B5 ni PROD-2C. Para certificar persistencia V2 completa, ejecutar también `validate:prod2b-b2-gate`, `validate:prod2b-indexeddb` (B5) y los gates PROD-2C según el cambio (ver README técnico).
+
+**B5 y E2E:** un `ERR_CONNECTION_REFUSED` en `validate:full` por servidor local ausente no invalida la certificación B5 si pasan los gates de fase; ver [criterio de certificación B5](src/lib/project/README.md#criterio-de-certificación-de-b5-respecto-de-validatefull) en el README técnico.
 
 Gates adicionales por microetapa: [`src/lib/project/README.md`](./src/lib/project/README.md#gates-técnicos).
 
@@ -69,6 +73,6 @@ Gates adicionales por microetapa: [`src/lib/project/README.md`](./src/lib/projec
 
 ## Roadmap
 
-Ver [`ROADMAP.md`](./ROADMAP.md) para el detalle de hitos cerrados, fases PROD-2B pendientes (B5→B7) y candidatos de evolución (PROD-1B, ARCH-6 UX, SCI-58 v3, etc.).
+Ver [`ROADMAP.md`](./ROADMAP.md) para el detalle de hitos cerrados, fases PROD-2B pendientes (B6→B7) y candidatos de evolución (PROD-1B, ARCH-6 UX, SCI-58 v3, etc.).
 
-**Próxima acción recomendada:** PROD-2B **B5 — IndexedDB autosave** ([`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B5).
+**Próxima acción recomendada:** PROD-2B **B6 — UX hardening + `validate:prod2b-gate`** ([`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B6). Cierre B5: [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md).

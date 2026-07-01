@@ -118,3 +118,32 @@ export const formatProjectSaveError = (
 
 export const formatProjectWarningCount = (count: number): string =>
   count === 1 ? " (1 advertencia)" : ` (${count} advertencias)`;
+
+const LOCAL_PROJECT_ERROR_MESSAGES: Record<string, string> = {
+  NOT_FOUND: "No se encontró el proyecto en la biblioteca local.",
+  QUOTA_EXCEEDED:
+    "Espacio local agotado. Exporte el proyecto como .sgproj y libere espacio.",
+  CORRUPT: "El proyecto local está dañado.",
+  UNSUPPORTED_STORAGE_VERSION:
+    "La biblioteca local requiere una versión más nueva de la aplicación.",
+  STORAGE_UNAVAILABLE: "Almacenamiento local no disponible en este navegador.",
+  INVALID_NAME: "El nombre del proyecto no es válido.",
+  DUPLICATE_ID: "Ya existe un proyecto con ese identificador.",
+  HYDRATE_FAILED: "No se pudo restaurar el proyecto local.",
+  SERIALIZE_FAILED: "No se pudo serializar el proyecto para guardarlo localmente.",
+  TRANSACTION_FAILED: "Falló la operación de almacenamiento local.",
+};
+
+export const formatLocalProjectError = (error: {
+  code: string;
+  message: string;
+}): string => LOCAL_PROJECT_ERROR_MESSAGES[error.code] ?? error.message;
+
+export const formatLocalProjectIntegrityWarning = (): string =>
+  "Advertencia: la integridad del proyecto local no pudo verificarse. Los datos podrían estar dañados.";
+
+export const formatLocalProjectRecoveryPrompt = (projectName: string): string =>
+  `Hay un borrador más reciente de "${projectName}". ¿Desea recuperarlo?`;
+
+export const formatLocalProjectAutosaveStatus = (saved: boolean): string =>
+  saved ? "Autoguardado local" : "Autoguardado pendiente…";

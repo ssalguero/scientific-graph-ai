@@ -275,11 +275,32 @@ npm run validate:prod2c-c8-visual-graph-fixtures
 npm run validate:prod2c-c8-regression-gate   # umbrella C4→C8 (5 sub-gates)
 ```
 
+### PROD-2B B5 (IndexedDB)
+
+```bash
+npm run validate:prod2b-indexeddb   # umbrella B5: InMemory + CRUD/rename/draft/integrity
+```
+
 ### Gap `validate:full`
 
-`npm run validate:full` (raíz) cubre regresión PROD-2A, PROD-1, build y tsc. **No incluye** `validate:prod2b-b2-gate` ni gates PROD-2C. Ejecutarlos explícitamente al validar cambios en persistencia V2.
+`npm run validate:full` (raíz) cubre regresión PROD-2A, PROD-1, build y tsc. **No incluye** `validate:prod2b-b2-gate`, `validate:prod2b-indexeddb` ni gates PROD-2C. Ejecutarlos explícitamente al validar cambios en persistencia V2.
 
 E2E y baselines requieren `DATASET5_PATH` / `DATASET6_PATH` cuando aplique.
+
+#### Criterio de certificación de B5 respecto de `validate:full`
+
+`npm run validate:full` puede reportar `ERR_CONNECTION_REFUSED` cuando el servidor local requerido por los tests E2E (Playwright) y/o el baseline SCI-60 (`http://localhost:3000`) **no está en ejecución** o no es alcanzable.
+
+La certificación funcional de PROD-2B B5 se basa en los gates específicos de la fase (`validate:prod2b-indexeddb`, `validate:prod2b-b2-gate`, `validate:prod2c-c8-regression-gate` y `tsc`). La ejecución satisfactoria de `validate:full` continúa siendo requerida para la regresión global del producto, pero un `ERR_CONNECTION_REFUSED` causado exclusivamente por la ausencia del servidor local no constituye, por sí mismo, una regresión funcional de B5.
+
+Criterios obligatorios para cerrar B5:
+
+- `npm run validate:prod2b-indexeddb` — **PASS**
+- `npm run validate:prod2b-b2-gate` — **PASS**
+- `npm run validate:prod2c-c8-regression-gate` — **PASS**
+- `npx tsc --noEmit` — **PASS**
+
+Antes de certificar regresión global del producto (p. ej. cierre B6 / smoke CI), `validate:full` (pasos `baseline` + `e2e`) debe **re-ejecutarse con el servidor local disponible**.
 
 ---
 

@@ -186,13 +186,16 @@ export const runVisualGraphHydrateCaseSuite = (): CaseResult[] => {
     mixedRuntime.length === 1 && mixedRuntime[0]?.id === validPersisted.id
   );
 
-  let applyCaptured: ProjectVisualGraphEntry[] | null = null;
+  const applyCapturedRef: { current: ProjectVisualGraphEntry[] | null } = {
+    current: null,
+  };
   applyHydrateProjectV2Patch(
     withGraphRoundTrip.hydratedPatch,
     createNoOpApplyContext((value) => {
-      applyCaptured = value;
+      applyCapturedRef.current = value;
     })
   );
+  const applyCaptured = applyCapturedRef.current;
   assertCase(
     "hydrate.vgb.applySetsRuntime",
     applyCaptured !== null &&

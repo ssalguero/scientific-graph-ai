@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { EditorVisibilityBindingsInput } from "./editorVisibilityBindings";
 import {
@@ -9,6 +9,9 @@ import {
 } from "./graphEditorProjectIntegration";
 import { buildEditorVisibilityBindings } from "./editorVisibilityBindings";
 import { collectProjectSnapshotV2, createInitialProjectMetadata } from "./projectPersistence";
+import { useLocalProjectPersistence } from "./useLocalProjectPersistence";
+import { useProjectDraftAutosave } from "./useProjectDraftAutosave";
+import { DEFAULT_PROJECT_NAME } from "@/lib/project";
 
 export type UseGraphEditorProjectFileParams = Omit<
   GraphEditorProjectIntegrationInput,
@@ -230,9 +233,55 @@ export function useGraphEditorProjectFile(params: UseGraphEditorProjectFileParam
     }
   }, [projectReadSignature, params.setIsProjectDirty]);
 
+  const localPersistence = useLocalProjectPersistence({
+    buildCollectContextV2: projectActions.buildCollectContextV2,
+    buildApplyContext: projectActions.buildApplyContext,
+    setProjectFileFeedback: params.setProjectFileFeedback,
+    setIsProjectDirty: params.setIsProjectDirty,
+    suppressProjectDirtyRef,
+    onProjectOpened: params.onProjectOpened,
+  });
+
+  const [autosaveTick, setAutosaveTick] = useState(0);
+
+  useProjectDraftAutosave({
+    enabled: localPersistence.activeLocalProjectId != null,
+    isProjectDirty: params.isProjectDirty,
+    projectName: params.projectMetadata.name.trim() || DEFAULT_PROJECT_NAME,
+    activeLocalProjectId: localPersistence.activeLocalProjectId,
+    repo: localPersistence.repo,
+    buildCollectContextV2: projectActions.buildCollectContextV2,
+    onAutosaved: () => setAutosaveTick((value) => value + 1),
+  });
+
+  const handleSaveLocalProject = useCallback(
+    async (projectName: string) => {
+      const summary = await localPersistence.handleSaveLocalProject(projectName);
+      if (summary) {
+        await localPersistence.refreshProjects();
+      }
+    },
+    [localPersistence]
+  );
+
+  const handleOpenLocalProject = useCallback(
+    async (id: string) => {
+      const ok = await localPersistence.handleOpenLocalProject(id);
+      if (ok) {
+        localPersistence.closeLibrary();
+        await localPersistence.refreshProjects();
+      }
+    },
+    [localPersistence]
+  );
+
   return {
     suppressProjectDirtyRef,
     createInitialProjectMetadata,
+    autosaveTick,
     ...projectActions,
+    ...localPersistence,
+    handleSaveLocalProject,
+    handleOpenLocalProject,
   };
 }

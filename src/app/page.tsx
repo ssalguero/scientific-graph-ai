@@ -72,6 +72,7 @@ import {
   ProjectScientificFilePanel,
   type ProjectFileFeedback,
 } from "./ProjectScientificFilePanel";
+import { LocalProjectsPanel } from "./LocalProjectsPanel";
 import { useGraphEditorProjectFile, type UseGraphEditorProjectFileParams } from "./useGraphEditorProjectFile";
 import {
   LabExpertModeToast,
@@ -23547,6 +23548,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     handleNewProject: resetProjectFromHook,
     handleSaveProject,
     handleOpenProjectFile: openProjectFromHook,
+    handleSaveLocalProject,
+    handleOpenLocalProject,
+    handleDeleteLocalProject,
+    handleDuplicateLocalProject,
+    handleRenameLocalProject,
+    handleExportLocalProjectSgproj,
+    openLibrary,
+    closeLibrary,
+    refreshProjects,
+    isLibraryOpen,
+    projects: localProjects,
+    isLoading: localProjectsLoading,
+    loadError: localProjectsLoadError,
+    activeLocalProjectId,
+    setActiveLocalProjectId,
+    recoveryPrompt,
+    dismissRecovery,
+    restoreRecoveryDraft,
   } = useGraphEditorProjectFile({
     projectMetadata,
     setProjectMetadata,
@@ -23788,8 +23807,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setWorksheetModified(false);
     setActiveColumnRegistry({});
     setActiveAuxiliaryColumns([]);
+    setActiveLocalProjectId(null);
     resetProjectFromHook();
   };
+
+  const activeLocalStorageState =
+    localProjects.find((item) => item.id === activeLocalProjectId)?.storageState ??
+    null;
 
   const handleOpenProjectFile = async (file: File) => {
     pendingSlotCaptureRef.current = null;
@@ -23982,7 +24006,42 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 onNewProject={handleNewProject}
                 onSaveProject={handleSaveProject}
                 onOpenProjectFile={handleOpenProjectFile}
+                onSaveLocalProject={handleSaveLocalProject}
+                onOpenLocalLibrary={openLibrary}
+                localStorageState={activeLocalStorageState}
+                recoveryPrompt={
+                  recoveryPrompt
+                    ? { projectName: recoveryPrompt.projectName }
+                    : null
+                }
+                onRestoreRecovery={() => {
+                  void restoreRecoveryDraft();
+                }}
+                onDismissRecovery={dismissRecovery}
                 openProjectButtonRef={openProjectButtonRef}
+              />
+              <LocalProjectsPanel
+                isOpen={isLibraryOpen}
+                projects={localProjects}
+                isLoading={localProjectsLoading}
+                loadError={localProjectsLoadError}
+                activeProjectId={activeLocalProjectId}
+                onClose={closeLibrary}
+                onRefresh={() => void refreshProjects()}
+                onOpen={(id) => void handleOpenLocalProject(id)}
+                onDelete={async (id) => {
+                  await handleDeleteLocalProject(id);
+                  await refreshProjects();
+                }}
+                onDuplicate={async (id, name) => {
+                  await handleDuplicateLocalProject(id, name);
+                  await refreshProjects();
+                }}
+                onRename={async (id, name) => {
+                  await handleRenameLocalProject(id, name);
+                  await refreshProjects();
+                }}
+                onExport={(id) => void handleExportLocalProjectSgproj(id)}
               />
             </div>
             <button

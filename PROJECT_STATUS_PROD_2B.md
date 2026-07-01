@@ -16,7 +16,7 @@
 | **B2 — Multi-Dataset Persistence** | **COMPLETED** |
 | B3 — Worksheet persistence | **COMPLETED** (PROD-2C C1–C3) |
 | B4 — Visual Graph Builder persistence | **COMPLETED** (PROD-2C C4–C8) |
-| B5 — IndexedDB autosave | Pendiente |
+| **B5 — IndexedDB autosave** | **COMPLETED** — ver [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md) |
 | B6 — UX hardening + gate final | Pendiente |
 | B7 — Cloud adapter (opcional) | Pendiente |
 
@@ -177,17 +177,27 @@ Detalle de cierre: [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md) (d
 
 ---
 
-## 6. Próxima fase — B5
+## 6. Fase B5 — COMPLETED
 
-**Objetivo:** IndexedDB autosave — borradores locales, recovery prompt, proyectos recientes.
+**Objetivo:** IndexedDB autosave — biblioteca local, borradores, recovery prompt, proyectos recientes.
 
 **Dependencias:** B1 ✓ · B2 ✓ · B3 (PROD-2C) ✓ · B4 (PROD-2C) ✓
 
-Referencia: [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B5 · Gate previsto: `validate:prod2b-indexeddb`
+**Gate:** `npm run validate:prod2b-indexeddb` — **PASS (25/25)**
+
+Documento de cierre: [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md) · Plan: [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B5
 
 ---
 
-## 7. Histórico de cierre
+## 7. Próxima fase — B6
+
+**Objetivo:** UX hardening — indicador autosave, detección de conflictos, gate umbrella `validate:prod2b-gate`.
+
+Referencia: [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B6
+
+---
+
+## 8. Histórico de cierre
 
 | Fecha | Evento |
 |-------|--------|
@@ -197,3 +207,4 @@ Referencia: [`PROJECT_PLAN_PROD_2B.md`](./PROJECT_PLAN_PROD_2B.md) §B5 · Gate 
 | 2026-06-25 | B2.1–B2.9 implementadas; invariantes A/B verificados; **`validate:prod2b-b2-gate` PASS** |
 | 2026-06-30 | B3/B4 cerradas vía PROD-2C C1–C8 — ver [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md) |
 | 2026-06-30 | ARCH-6-DOC — alineación documental post-PROD-2C |
+| 2026-06-30 | **B5 COMPLETED** — IndexedDB autosave; ver [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md) |

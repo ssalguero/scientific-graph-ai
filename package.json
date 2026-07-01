@@ -33,6 +33,7 @@
     "validate:prod2b-b2-sanitize": "npx tsx scripts/validate-prod2b-b2-sanitize.ts",
     "validate:prod2b-b2-invariants": "npx tsx scripts/validate-prod2b-b2-invariants.ts",
     "validate:prod2b-b2-gate": "npx tsx scripts/validate-prod2b-b2-gate.ts",
+    "validate:prod2b-b6-domain": "npx tsx scripts/validate-prod2b-b6-domain.ts",
     "validate:prod2c-c1-worksheet-domain": "npx tsx scripts/validate-prod2c-c1-worksheet-domain.ts",
     "validate:prod2c-c2-worksheet-pipeline": "npx tsx scripts/validate-prod2c-c2-worksheet-pipeline.ts",
     "validate:prod2c-c3-worksheet-ui": "npx tsx scripts/validate-prod2c-c3-worksheet-ui.ts",

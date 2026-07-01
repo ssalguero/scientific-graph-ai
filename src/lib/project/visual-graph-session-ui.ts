@@ -31,10 +31,10 @@ const cloneVisualGraphPreview = (
     ...series,
     points: series.points.map((point) => ({ ...point })),
   })),
-  bars: preview.bars?.map((bar) => ({ ...bar })),
+  barData: preview.barData?.map((bar) => ({ ...bar })),
   histogramBins: preview.histogramBins?.map((bin) => ({ ...bin })),
-  boxPlots: preview.boxPlots?.map((box) => ({ ...box })),
-  violinPlots: preview.violinPlots?.map((violin) => ({ ...violin })),
+  boxPlotData: preview.boxPlotData?.map((box) => ({ ...box })),
+  violinData: preview.violinData?.map((violin) => ({ ...violin })),
 });
 
 export const cloneProjectVisualGraphEntry = (

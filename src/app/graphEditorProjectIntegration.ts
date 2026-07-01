@@ -324,6 +324,7 @@ export const createGraphEditorProjectIntegration = (
 
   return {
     buildCollectContextV2,
+    buildApplyContext,
     ...createProjectFileActions({
       projectMetadata: input.projectMetadata,
       setProjectMetadata: input.setProjectMetadata,

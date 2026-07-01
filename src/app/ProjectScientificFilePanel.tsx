@@ -13,7 +13,7 @@ import { btnPrimary, btnSave, btnSecondary, fieldLabel, inputField } from "./pro
 
 export type { ProjectFileFeedback };
 
-type PendingDiscardAction = "new" | "open";
+type PendingDiscardAction = "new" | "open" | "local-open";
 
 export type ProjectScientificFilePanelProps = {
   projectMetadata: ProjectMetadataV1;
@@ -23,6 +23,12 @@ export type ProjectScientificFilePanelProps = {
   onNewProject: () => void;
   onSaveProject: (projectName: string) => void;
   onOpenProjectFile: (file: File) => Promise<void>;
+  onSaveLocalProject?: (projectName: string) => void | Promise<void>;
+  onOpenLocalLibrary?: () => void | Promise<void>;
+  localStorageState?: "NORMAL" | "DIRTY" | "RECOVERABLE" | "CORRUPTED" | null;
+  recoveryPrompt?: { projectName: string } | null;
+  onRestoreRecovery?: () => void | Promise<void>;
+  onDismissRecovery?: () => void;
   openProjectButtonRef?: RefObject<HTMLButtonElement | null>;
 };
 
@@ -34,6 +40,12 @@ export function ProjectScientificFilePanel({
   onNewProject,
   onSaveProject,
   onOpenProjectFile,
+  onSaveLocalProject,
+  onOpenLocalLibrary,
+  localStorageState,
+  recoveryPrompt,
+  onRestoreRecovery,
+  onDismissRecovery,
   openProjectButtonRef,
 }: ProjectScientificFilePanelProps) {
   const toDisplayName = (name: string) =>
@@ -118,9 +130,40 @@ export function ProjectScientificFilePanel({
           className={`${inputField} mt-0.5`}
         />
         <p className="text-[11px] text-[var(--app-text-muted)] mt-0.5">
-          {isProjectDirty ? "Cambios sin guardar" : "Guardado en esta sesión"}
+          {isProjectDirty
+            ? localStorageState === "DIRTY" || localStorageState === "RECOVERABLE"
+              ? "Cambios sin guardar · autoguardado local activo"
+              : "Cambios sin guardar"
+            : localStorageState === "NORMAL"
+              ? "Guardado localmente"
+              : "Guardado en esta sesión"}
         </p>
       </div>
+
+      {recoveryPrompt ? (
+        <div className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-xs text-orange-900 space-y-2">
+          <p>
+            Hay un borrador más reciente de &quot;{recoveryPrompt.projectName}&quot;.
+            ¿Desea recuperarlo?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void onRestoreRecovery?.()}
+              className="rounded-md border border-orange-400 px-2 py-1 text-xs font-semibold hover:bg-orange-100/40"
+            >
+              Recuperar borrador
+            </button>
+            <button
+              type="button"
+              onClick={onDismissRecovery}
+              className="rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]"
+            >
+              Descartar
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {pendingDiscard ? (
         <div className="rounded-lg border border-amber-300 bg-[var(--app-warning-bg)] px-3 py-2 text-xs text-[var(--app-warning-text)] space-y-2">
@@ -155,8 +198,28 @@ export function ProjectScientificFilePanel({
           }
           className={`w-full h-8 ${btnSave}`}
         >
-          Guardar proyecto
+          Guardar proyecto (.sgproj)
         </button>
+        {onSaveLocalProject ? (
+          <button
+            type="button"
+            onClick={() =>
+              void onSaveLocalProject(draftName.trim() || DEFAULT_PROJECT_NAME)
+            }
+            className={`w-full h-8 ${btnSave}`}
+          >
+            Guardar localmente
+          </button>
+        ) : null}
+        {onOpenLocalLibrary ? (
+          <button
+            type="button"
+            onClick={() => void onOpenLocalLibrary()}
+            className={`w-full h-8 ${btnSecondary}`}
+          >
+            Proyectos locales
+          </button>
+        ) : null}
         <button
           ref={openProjectButtonRef}
           type="button"
