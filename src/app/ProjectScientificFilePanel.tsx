@@ -20,7 +20,6 @@ type PendingDiscardAction = "new" | "open" | "local-open";
 
 export type ProjectScientificFilePanelProps = {
   projectMetadata: ProjectMetadataV1;
-  isProjectDirty: boolean;
   feedback: ProjectFileFeedback | null;
   onDismissFeedback: () => void;
   onNewProject: () => void;
@@ -28,7 +27,6 @@ export type ProjectScientificFilePanelProps = {
   onOpenProjectFile: (file: File) => Promise<void>;
   onSaveLocalProject?: (projectName: string) => void | Promise<void>;
   onOpenLocalLibrary?: () => void | Promise<void>;
-  localStorageState?: "NORMAL" | "DIRTY" | "RECOVERABLE" | "CORRUPTED" | null;
   autosaveIndicator: AutosaveIndicatorView;
   sessionConflict: PersistenceConflictView;
   projectSizeMessage?: string | null;
@@ -46,7 +44,6 @@ export type ProjectScientificFilePanelProps = {
 
 export function ProjectScientificFilePanel({
   projectMetadata,
-  isProjectDirty,
   feedback,
   onDismissFeedback,
   onNewProject,
@@ -54,7 +51,6 @@ export function ProjectScientificFilePanel({
   onOpenProjectFile,
   onSaveLocalProject,
   onOpenLocalLibrary,
-  localStorageState,
   autosaveIndicator,
   sessionConflict,
   projectSizeMessage,
@@ -137,6 +133,8 @@ export function ProjectScientificFilePanel({
   const discardPrompt =
     pendingDiscard && sessionConflict.prompt ? sessionConflict.prompt : null;
 
+  const showAutosaveIndicator = autosaveIndicator.state !== "idle";
+
   return (
     <div className="space-y-1.5">
       <div>
@@ -151,13 +149,13 @@ export function ProjectScientificFilePanel({
           placeholder="Nombre del proyecto"
           className={`${inputField} mt-0.5`}
         />
-        <p className={`text-[11px] mt-0.5 font-medium ${autosaveIndicator.className}`}>
-          {autosaveIndicator.label}
-          {isProjectDirty &&
-          (localStorageState === "DIRTY" || localStorageState === "RECOVERABLE")
-            ? " · cambios pendientes"
-            : null}
-        </p>
+        {showAutosaveIndicator ? (
+          <p
+            className={`text-[11px] mt-0.5 font-medium ${autosaveIndicator.className}`}
+          >
+            {autosaveIndicator.label}
+          </p>
+        ) : null}
         {projectSizeMessage ? (
           <p className="text-[11px] text-[var(--app-warning-text)] mt-0.5">
             {projectSizeMessage}
@@ -174,14 +172,14 @@ export function ProjectScientificFilePanel({
               onClick={() => void onRestoreRecovery?.()}
               className="rounded-md border border-orange-400 px-2 py-1 text-xs font-semibold hover:bg-orange-100/40"
             >
-              Recuperar borrador
+              {formatPersistenceConflictResolutionLabel("LOAD_INCOMING")}
             </button>
             <button
               type="button"
               onClick={onDismissRecovery}
               className="rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]"
             >
-              Descartar
+              {formatPersistenceConflictResolutionLabel("KEEP_CURRENT")}
             </button>
           </div>
         </div>

@@ -120,20 +120,19 @@ export const runPersistenceWiringCaseSuite = (): CaseResult[] => {
         createdAt: "2026-06-30T10:00:00.000Z",
         updatedAt: "2026-06-30T10:00:00.000Z",
       },
-      isProjectDirty: false,
       feedback: null,
       onDismissFeedback: () => {},
       onNewProject: () => {},
       onSaveProject: () => {},
       onOpenProjectFile: async () => {},
-      autosaveIndicator: idleAutosave,
+      autosaveIndicator: savingAutosave,
       sessionConflict: noneConflict,
       projectSizeMessage: warningSize.message,
     })
   );
   assertCase(
     "wire.render.autosaveLabel",
-    markup.includes(idleAutosave.label)
+    markup.includes(savingAutosave.label)
   );
   assertCase(
     "wire.render.sizeWarning",

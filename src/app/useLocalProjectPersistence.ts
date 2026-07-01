@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { createLocalProjectRepository } from "@/lib/project/adapters/indexeddb";
-import { detectPersistenceConflict } from "@/lib/project/application/persistence-conflict";
 import type { DetectPersistenceConflictInput } from "@/lib/project/application/persistence-conflict";
 import type { LocalProjectRepository } from "@/lib/project/domain/local-project";
 import type { LocalProjectSummary } from "@/lib/project/domain/local-project";
@@ -22,6 +21,7 @@ import {
   type EditorProjectCollectContextV2,
 } from "./projectPersistence";
 import type { HydrateProjectV2Patch } from "@/lib/project/editor-hydrate-context-v2";
+import { buildPersistenceConflictView } from "./persistence/persistenceViews";
 import { buildLocalCommittedRevisionRef } from "./persistence/revisionRefs";
 
 let sharedRepo: LocalProjectRepository | null = null;
@@ -127,9 +127,9 @@ export function useLocalProjectPersistence(params: UseLocalProjectPersistencePar
       localCommittedRevision,
       localDraftRevision,
     };
-    const { conflict } = detectPersistenceConflict(conflictInput);
+    const recoveryConflict = buildPersistenceConflictView(conflictInput);
 
-    if (conflict?.kind === "RECOVERABLE_DRAFT") {
+    if (recoveryConflict.conflict?.kind === "RECOVERABLE_DRAFT") {
       setRecoveryConflictInput(conflictInput);
       setRecoveryPrompt({ projectId, projectName });
     }

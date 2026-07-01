@@ -23815,10 +23815,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     resetProjectFromHook();
   };
 
-  const activeLocalStorageState =
-    localProjects.find((item) => item.id === activeLocalProjectId)?.storageState ??
-    null;
-
   const handleOpenProjectFile = async (file: File) => {
     pendingSlotCaptureRef.current = null;
     await openProjectFromHook(file);
@@ -24004,7 +24000,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             >
               <ProjectScientificFilePanel
                 projectMetadata={projectMetadata}
-                isProjectDirty={isProjectDirty}
                 feedback={projectFileFeedback}
                 onDismissFeedback={() => setProjectFileFeedback(null)}
                 onNewProject={handleNewProject}
@@ -24012,7 +24007,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 onOpenProjectFile={handleOpenProjectFile}
                 onSaveLocalProject={handleSaveLocalProject}
                 onOpenLocalLibrary={openLibrary}
-                localStorageState={activeLocalStorageState}
                 autosaveIndicator={persistenceUi.autosaveIndicator}
                 sessionConflict={persistenceUi.sessionConflict}
                 projectSizeMessage={persistenceUi.projectSize.message}
