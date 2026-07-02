@@ -126,8 +126,10 @@ import {
   type GuidedWorkflowSession,
   type GuidedWorkflowTemplateId,
   type GuidedWorkflowToggleSetters,
+  type GuidedWorkflowWorkspaceTab,
 } from "@/lib/scientific/workflow";
 import { ComparisonFreshnessBadge } from "@/components/comparison/ComparisonFreshnessBadge";
+import { WorkflowSessionIndicator } from "@/components/workflow/WorkflowSessionIndicator";
 import {
   buildCaptureMetadata,
   buildDatasetAnalysisProfile,
@@ -21673,6 +21675,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     guidedWorkflowHostTab !== null &&
     (guidedWorkflowSession.status === "completed" ||
       activeWorkspaceSection === guidedWorkflowHostTab);
+  const showWorkflowSessionIndicator =
+    activeGuidedWorkflowPlan !== null &&
+    (guidedWorkflowSession.status === "active" ||
+      guidedWorkflowSession.status === "completed") &&
+    activeWorkspaceSection !== "home";
   const activeVisibilityToggleCount = useMemo(() => {
     const visibilityState = {
       showDerivative,
@@ -24218,6 +24225,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               />
             ))}
           </nav>
+
+          {showWorkflowSessionIndicator && activeGuidedWorkflowPlan ? (
+            <div className="mb-2">
+              <WorkflowSessionIndicator
+                plan={activeGuidedWorkflowPlan}
+                session={guidedWorkflowSession}
+                hostTab={
+                  guidedWorkflowHostTab !== null &&
+                  guidedWorkflowHostTab !== "home"
+                    ? guidedWorkflowHostTab
+                    : null
+                }
+                activeTab={activeWorkspaceSection as GuidedWorkflowWorkspaceTab}
+                onCancel={cancelGuidedWorkflow}
+              />
+            </div>
+          ) : null}
 
           {activeWorkspaceSection !== "home" ? (
             <p className="text-[11px] sm:text-xs text-[var(--app-text-muted)] leading-snug -mt-1">
