@@ -131,6 +131,11 @@ import {
 import { ComparisonFreshnessBadge } from "@/components/comparison/ComparisonFreshnessBadge";
 import { WorkflowSessionIndicator } from "@/components/workflow/WorkflowSessionIndicator";
 import {
+  MethodologyVisibilityCallout,
+  ToggleVisibilityHint,
+  resolveToggleVisibilityShortHint,
+} from "@/components/analysis";
+import {
   buildCaptureMetadata,
   buildDatasetAnalysisProfile,
   buildMultiDatasetComparisonAnalysis,
@@ -300,6 +305,8 @@ const toggleTrackBg =
   "pointer-events-none absolute inset-0 rounded-full border border-[var(--app-border)] bg-[var(--app-toggle-track)] transition-colors duration-200 peer-checked:border-[var(--app-accent)] peer-checked:bg-[var(--app-accent)] peer-disabled:opacity-50";
 const toggleThumb =
   "pointer-events-none absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[var(--app-toggle-thumb)] shadow-sm transition-transform duration-200 peer-checked:translate-x-4 peer-disabled:opacity-50";
+const METHODOLOGY_PUBLICATION_VISIBILITY_CALLOUT_MESSAGE = `Los motores SCI-50→55: ${resolveToggleVisibilityShortHint("showConsistencyEngine")}.`;
+
 const toggleLabel =
   "flex items-center justify-between gap-2 cursor-pointer text-xs sm:text-sm text-[var(--app-text)] leading-tight py-0.5";
 const actionBarBtn =
@@ -26603,6 +26610,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         defaultOpen={false}
                         open={forceExpertInspectorOpen ? true : undefined}
                       >
+                      <MethodologyVisibilityCallout
+                        message={METHODOLOGY_PUBLICATION_VISIBILITY_CALLOUT_MESSAGE}
+                        className="mb-1"
+                      />
+                      <div className="space-y-0.5">
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForConsistencyEngine
@@ -26627,7 +26639,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showConsistencyEngine"
+                        visible={showConsistencyEngine}
+                        disabled={!hasEnoughSeriesForConsistencyEngine}
+                      />
+                      </div>
 
+                      <div className="space-y-0.5">
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForReportQualityEngine
@@ -26652,7 +26671,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showReportQualityEngine"
+                        visible={showReportQualityEngine}
+                        disabled={!hasEnoughSeriesForReportQualityEngine}
+                      />
+                      </div>
 
+                      <div className="space-y-0.5">
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForReproducibilityExplorer
@@ -26677,7 +26703,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showReproducibilityExplorer"
+                        visible={showReproducibilityExplorer}
+                        disabled={!hasEnoughSeriesForReproducibilityExplorer}
+                      />
+                      </div>
 
+                      <div className="space-y-0.5">
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForEvidenceStrengthEngine
@@ -26702,7 +26735,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showEvidenceStrengthEngine"
+                        visible={showEvidenceStrengthEngine}
+                        disabled={!hasEnoughSeriesForEvidenceStrengthEngine}
+                      />
+                      </div>
 
+                      <div className="space-y-0.5">
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForPublicationReadinessAnalyzer
@@ -26731,6 +26771,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showPublicationReadinessAnalyzer"
+                        visible={showPublicationReadinessAnalyzer}
+                        disabled={
+                          !hasEnoughSeriesForPublicationReadinessAnalyzer
+                        }
+                      />
+                      </div>
                       </InspectorToggleGroup>
                       ) : null}
 
@@ -26740,6 +26788,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         defaultOpen={false}
                         open={forceExpertInspectorOpen ? true : undefined}
                       >
+                      <div className="space-y-0.5">
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForAssumptionTracker
@@ -26764,6 +26813,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showAssumptionTracker"
+                        visible={showAssumptionTracker}
+                        disabled={!hasEnoughSeriesForAssumptionTracker}
+                      />
+                      </div>
                       </InspectorToggleGroup>
                       ) : null}
 
