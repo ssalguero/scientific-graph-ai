@@ -26833,6 +26833,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }
                         onOpenChange={setStatisticsDashboardsOpen}
                       >
+                      <div className="space-y-0.5">
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForMethodologicalDashboard
@@ -26866,7 +26867,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showMethodologicalDashboard"
+                        visible={showMethodologicalDashboard}
+                        disabled={!hasEnoughSeriesForMethodologicalDashboard}
+                      />
+                      </div>
 
+                      <div className="space-y-0.5">
                       <label
                         className={`${toggleLabel} ${
                           !hasEnoughSeriesForPublicationDashboard
@@ -26900,6 +26908,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showPublicationDashboard"
+                        visible={showPublicationDashboard}
+                        disabled={!hasEnoughSeriesForPublicationDashboard}
+                      />
+                      </div>
 
                       <label
                         className={`${toggleLabel} ${
