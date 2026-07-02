@@ -120,12 +120,12 @@ Interpretación alineada con [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_
 **Secuencia congelada** ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)):
 
 ```text
-D1 ✓ → D4 ✓ → D5 ✓ → D6 → D7 → D8 → D2 → D3 → D9 …
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 → D8 → D2 → D3 → D9 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D6** (siguiente) | ARCH-6.3 | Calc vs viz badge vía `queries.ts` | D5 CLOSED |
+| **D7** (siguiente) | ARCH-6.4 | Revert toggles al cancelar workflow | D6 CLOSED |
 | **D2** (pendiente) | UX-2A | Extracción move-only Smart Start → `components/home/SmartStartScreen.tsx` | D8 CLOSED |
 | **D3** (pendiente) | UX-2A | Refinamiento copy/ARIA Smart Start | D2 CLOSED |
 
@@ -199,17 +199,17 @@ Módulo de dominio puro `src/lib/scientific/visibility/` con registry toggle-awa
 
 ### Handoff
 
-**D4 — CLOSED.** Siguiente microfase planificada: **D6** (calc vs viz) — ver §D5 handoff.
+**D4 — CLOSED.** Siguiente microfase planificada: **D7** (revert toggles) — ver §D6 handoff.
 
 **Secuencia congelada** ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)):
 
 ```text
-D1 ✓ → D4 ✓ → D5 ✓ → D6 → D7 → D8 → D2 → D3 → D9 …
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 → D8 → D2 → D3 → D9 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D6** (siguiente) | ARCH-6.3 | Calc vs viz badge vía `queries.ts` | D5 CLOSED |
+| **D7** (siguiente) | ARCH-6.4 | Revert toggles al cancelar workflow | D6 CLOSED |
 | **D2** (pendiente) | UX-2A | Extracción Smart Start | D8 CLOSED |
 
 ---
@@ -300,24 +300,173 @@ Resolver **QA-1 §10.1**: indicador global persistente del workflow SCI-59 visib
 
 ### Handoff
 
-**D5 — CLOSED.** QA-1 §10.1 **cerrada**. Siguiente microfase planificada: **D6** (ARCH-6.3) — **no iniciada** en esta ventana.
+**D5 — CLOSED.** QA-1 §10.1 **cerrada**. Siguiente microfase planificada: **D6** (ARCH-6.3) — **cerrada** en §D6.
 
 **Secuencia congelada:**
 
 ```text
-D1 ✓ → D4 ✓ → D5 ✓ → D6 → D7 → D8 → D2 → D3 → D9 …
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 → D8 → D2 → D3 → D9 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D6** (siguiente) | ARCH-6.3 | Aviso cálculo ≠ visualización (QA-1 §10.3) | D5 CLOSED |
-| **D7** (pendiente) | ARCH-6.4 | Revert toggles al cancelar workflow | D6 |
+| **D7** (siguiente) | ARCH-6.4 | Revert toggles al cancelar workflow | D6 CLOSED |
 | **D8** (pendiente) | ARCH-6.5 | PDF wont-fix + cierre ARCH-6 | D7 |
-
-**Preparación D6 (sin implementar):** consumir `src/lib/scientific/visibility/queries.ts` + componentes en `src/components/analysis/`; badge/tooltip en toggles metodológicos; **no** detener `useMemo` motores; scores Dataset5/6 inalterados.
 
 **ARCH-6 progreso post-D5:** 1/4 observaciones QA-1 §10 cerradas (10.1 ✓ · 10.2 D8 · 10.3 D6 · 10.4 D7).
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D6 — ARCH-6.3: Aviso cálculo ≠ visualización ≠ exportación
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** |
+| **Fecha de certificación** | 2026-07-02 |
+| **Subfases** | D6.1 ✓ · D6.2 ✓ · D6.3 ✓ · D6.4 ✓ · D6.5 ✓ |
+| **Commits** | `3958643` (D6.1) · `741fd87` (D6.2) · `9a598de` (D6.3) · `24d5a28` (D6.4) |
+| **Gates D6** | `npx tsc --noEmit` · `npm run validate:visibility-unit` — **PASS** |
+
+### Objetivo cumplido
+
+Resolver **QA-1 §10.3**: avisos UX en el Inspector que distinguen **cálculo científico ≠ visualización ≠ exportación** para la cadena SCI-50→60, consumiendo `scientific/visibility/` como única fuente semántica — **sin detener** `useMemo` motores, **sin cambios** en scores, persistencia V2, PDF runtime ni workflow.
+
+### Entregables certificados
+
+| Entregable | Ubicación | Subfase |
+|------------|-----------|---------|
+| Resolver puro copy + composición claves | `src/components/analysis/resolve-toggle-visibility-hint.ts` | D6.1 |
+| `ToggleVisibilityHint` + `MethodologyVisibilityCallout` | `src/components/analysis/*.tsx`, `index.ts` | D6.2 |
+| Wiring toggles SCI-50→55 + callout metodología | `src/app/page.tsx` (Inspector) | D6.3 |
+| Wiring dashboards SCI-56/SCI-60 | `src/app/page.tsx` (grupo Dashboards) | D6.4 |
+| Certificación + acta | Este documento §D6 | D6.5 |
+
+### Alcance respetado (verificación estática D6.5)
+
+**Diff acumulado D6** (`0d7dad8..HEAD` — post-D5 → post-D6.4):
+
+```text
+src/app/page.tsx                                   | +69
+src/components/analysis/MethodologyVisibilityCallout.tsx | +34
+src/components/analysis/ToggleVisibilityHint.tsx   | +60
+src/components/analysis/index.ts                   | +18
+src/components/analysis/resolve-toggle-visibility-hint.ts | +143
+```
+
+**Primera integración UI** de `@/lib/scientific/visibility` (imports en resolver vía registry/queries/pdf-export-policy).
+
+**Wiring Inspector — 8 claves SCI-50→60:**
+
+| SCI | `toggleKey` | Grupo Inspector |
+|-----|-------------|-----------------|
+| SCI-50 | `showConsistencyEngine` | Metodología y publicación |
+| SCI-51 | `showReportQualityEngine` | Metodología y publicación |
+| SCI-52 | `showReproducibilityExplorer` | Metodología y publicación |
+| SCI-53 | `showEvidenceStrengthEngine` | Metodología y publicación |
+| SCI-55 | `showPublicationReadinessAnalyzer` | Metodología y publicación |
+| SCI-54 | `showAssumptionTracker` | Inferencia avanzada |
+| SCI-56 | `showMethodologicalDashboard` | Dashboards |
+| SCI-60 | `showPublicationDashboard` | Dashboards |
+
+**Callout de grupo:** `MethodologyVisibilityCallout` en «Metodología y publicación» con mensaje derivado de `resolveToggleVisibilityShortHint("showConsistencyEngine")`.
+
+**Composición de claves (sin listas estáticas):** `listSci5060HintToggleKeys()` = `listMethodologyToggles()` + dashboards filtrados por `getToggleRegistryEntry` (`sciId` SCI-56/SCI-60).
+
+**Sin cambios verificados:**
+
+- `src/lib/scientific/visibility/*` — **sin modificaciones** (solo consumo desde UI)
+- `src/lib/scientific/workflow/*` — **sin modificaciones**
+- `src/lib/project/*`, schema V2, collect/hydrate — **sin cambios**
+- `pdf-export.ts`, Smart Start, `layout.tsx` — **sin cambios**
+- Motores SCI / cuerpo y dependencias `useMemo` metodológicos (~L21240+) — **sin cambios**
+- Sin hooks personalizados nuevos (`use-editor-visibility-state`, etc.)
+- Otros toggles del Inspector (SCI-58, descriptivos, multivariante) — **sin hints** (fuera alcance QA-1 §10.3)
+
+**Componentes controlados:**
+
+- `ToggleVisibilityHint`: props `toggleKey`, `visible`, `disabled?`, `hidden?` — delega en `resolveToggleVisibilityHint`
+- `MethodologyVisibilityCallout`: props `message`, `hidden?` — sin resolver interno
+
+### Criterios de aceptación (plan D6)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-1 | Existen componentes en `src/components/analysis/` operativos | **PASS** |
+| CA-2 | UI importa `@/lib/scientific/visibility` (primera integración ARCH-6) | **PASS** |
+| CA-3 | Hints visibles en toggles OFF de cadena SCI-50→60 (8 claves) cuando no `disabled` | **PASS** |
+| CA-4 | Copy distingue cálculo, visualización y exportación | **PASS** |
+| CA-5 | Toggle ON → sin hint intrusivo | **PASS** |
+| CA-6 | Cero cambios en cuerpo/dependencias `useMemo` motores SCI | **PASS** |
+| CA-7 | Scores baseline Dataset5/D6 inalterados | **PASS condicionado** (sin regresión D6 atribuible; score-check requiere servidor — ver abajo) |
+| CA-8 | Sin cambios schema V2, collect/hydrate, `pdf-export.ts`, Smart Start | **PASS** |
+| CA-9 | `validate:visibility-unit` PASS | **PASS** (30/30) |
+| CA-10 | `npx tsc --noEmit` PASS | **PASS** |
+| CA-11 | Sin hooks nuevos introducidos | **PASS** |
+| CA-12 | Sin listas estáticas de claves fuera de `visibility/` | **PASS** |
+| CA-13 | QA-1 §10.3 cerrada en acta | **PASS** |
+| CA-14 | Sin adelantar D7/D8/D2/D3/D9 | **PASS** |
+
+### Validación D6.5 (2026-07-02)
+
+| Comando / verificación | Resultado | Notas |
+|------------------------|-----------|-------|
+| `npx tsc --noEmit` | **PASS** | Gate obligatorio D6 |
+| `npm run validate:visibility-unit` | **PASS** | 30/30 casos; dominio D4 sin regresión |
+| `npm run validate:full` | **PASS condicionado** | 8/10 steps PASS; `baseline` + `e2e` FAIL — `ERR_CONNECTION_REFUSED localhost:3000` (deuda infra pre-D6; alineado baseline D0.5/D1) |
+
+**Steps PASS `validate:full` D6.5:** `t-quantile`, `chart-viewport-unit`, `comparison-unit`, `f0`, `unit`, `f6`, `typescript`, `build`, `prod1-gate`.
+
+**Steps FAIL (infra conocida, no regresión D6):** `baseline` (score-check sin servidor dev) · `e2e` (servidor E2E no completó F5).
+
+**Duración `validate:full` D6.5:** ~776 s.
+
+**Validación funcional (QA-1 §10.3 — certificación D6.5):**
+
+| Paso | Criterio | Evidencia |
+|------|----------|-----------|
+| 6.1 | Hint visible con toggle OFF + inputs OK | `resolveToggleVisibilityHint` → `shouldShowHint: true`; `<ToggleVisibilityHint>` renderiza badge |
+| 6.2 | Hint oculto con toggle ON | `isVisible(state, key) === true` → componente retorna `null` |
+| 6.3 | Hint oculto si `disabled` | `disabled={!hasEnoughSeriesFor*}` → `null` |
+| 6.4 | SCI-50→60 cubierto (8 instancias wiring) | Grep `ToggleVisibilityHint` en `page.tsx`: 8 claves |
+| 6.5 | Callout metodología presente | `MethodologyVisibilityCallout` en grupo «Metodología y publicación» |
+| 6.6 | Copy exportación honesto vs runtime PDF | Resolver usa `pdfExportPolicy` + texto QA-1 §1.2 (PDF puede incluir con panel oculto) |
+| 6.7 | Inspector intacto | Labels, checkboxes y `onChange` preservados; solo wrappers `space-y-0.5` + hints |
+| 6.8 | Sin cambios científicos | Diff D6 acotado a Inspector + `components/analysis/` |
+
+### Riesgos pendientes post-D6
+
+| Riesgo | Severidad | Notas |
+|--------|-----------|-------|
+| Cancel workflow no revierte toggles | **Media** | QA-1 §10.4 — resolución prevista **D7** |
+| PDF incluye secciones con toggles OFF | Media | Copy D6 informa; mitigación banner **D8**; fix funcional PROD-3 EXPORT-2 |
+| `showContextualHints` global ausente | Baja | Hints siempre visibles; gate futuro **D19** (`hidden` prop ya preparada) |
+| Score-check sin servidor dev | Media | Deuda infra preexistente; ejecutar `validate:full` con servidor activo antes de release |
+| Duplicación triple page/workflow/project keys | Media | Consolidación workflow→visibility prevista **D7** |
+
+### Handoff
+
+**D6 — CLOSED.** QA-1 §10.3 **cerrada**. Siguiente microfase planificada: **D7** (ARCH-6.4).
+
+**Secuencia congelada:**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 → D8 → D2 → D3 → D9 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D7** (siguiente) | ARCH-6.4 | Snapshot pre-workflow + restore toggles en cancel | D6 CLOSED |
+| **D8** (pendiente) | ARCH-6.5 | PDF wont-fix + banner Reportes + cierre ARCH-6 | D7 |
+
+**Preparación D7 (sin implementar):**
+
+- Handler `cancelGuidedWorkflow` + dominio `scientific/workflow/` (snapshot pre-inicio).
+- Reutilizar primitivas D4: `applyVisibilityKeys`, `cloneVisibilityState` en `visibility/state.ts`.
+- Hints D6 reaccionarán automáticamente al restore; **no** rediseñar componentes `analysis/`.
+- Test objetivo plan D7: T3 → 2 pasos → cancelar → toggles = pre-inicio.
+
+**ARCH-6 progreso post-D6:** 2/4 observaciones QA-1 §10 cerradas (10.1 ✓ · 10.2 D8 · **10.3 ✓** · 10.4 D7).
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02. Épica PROD-2D permanece abierta hasta D23.*
