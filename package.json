@@ -17,6 +17,7 @@
     "validate:full": "node scripts/validate-full-gate.mjs",
     "validate:chart-viewport": "npx tsx scripts/validate-chart-viewport.ts",
     "validate:comparison-unit": "npx tsx scripts/validate-comparison-unit.ts",
+    "validate:visibility-unit": "npx tsx scripts/validate-visibility-unit.ts",
     "validate:prod2b-b1-1-domain": "npx tsx scripts/validate-prod2b-b1-1-domain.ts",
     "validate:prod2b-b1-2-migrate": "npx tsx scripts/validate-prod2b-b1-2-migrate.ts",
     "validate:prod2b-b1-3-v2": "npx tsx scripts/validate-prod2b-b1-3-v2.ts",

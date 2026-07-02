@@ -120,12 +120,12 @@ Interpretación alineada con [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_
 **Secuencia congelada** ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)):
 
 ```text
-D1 ✓ → D4 → D5 → D6 → D7 → D8 → D2 → D3 → D9 …
+D1 ✓ → D4 ✓ → D5 → D6 → D7 → D8 → D2 → D3 → D9 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D4** (siguiente) | ARCH-6.1 | Modelo toggle-aware en `src/lib/scientific/visibility/` | D1 CLOSED |
+| **D5** (siguiente) | UX / workflow | Indicador workflow (MVP) | D4 CLOSED |
 | **D2** (pendiente) | UX-2A | Extracción move-only Smart Start → `components/home/SmartStartScreen.tsx` | D8 CLOSED |
 | **D3** (pendiente) | UX-2A | Refinamiento copy/ARIA Smart Start | D2 CLOSED |
 
@@ -133,4 +133,86 @@ D1 ✓ → D4 → D5 → D6 → D7 → D8 → D2 → D3 → D9 …
 
 ---
 
-*Acta D1 certificada 2026-07-01. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D4 — ARCH-6.1: Modelo toggle-aware (`scientific/visibility/`)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** |
+| **Fecha de certificación** | 2026-07-01 |
+| **Subfases** | D4.1 ✓ · D4.2 ✓ · D4.3 ✓ |
+| **Gate D4** | `npm run validate:visibility-unit` — **PASS** |
+
+### Objetivo cumplido
+
+Módulo de dominio puro `src/lib/scientific/visibility/` con registry toggle-aware (58 claves, paridad `VISIBILITY_KEYS_V1`), estado/consultas inmutables, validación registry↔project keys, prep EXPORT-2 vía `pdf-export-policy.ts` — **sin wiring UI**, **sin cambios** en persistencia V2, workflow, PDF runtime ni monolito `page.tsx`.
+
+### Entregables certificados
+
+| Entregable | Ubicación | Subfase |
+|------------|-----------|---------|
+| Tipos + registry core | `types.ts`, `registry.ts`, `index.ts` | D4.1 |
+| Estado, consultas, validación, PDF policy | `defaults.ts`, `state.ts`, `queries.ts`, `validate.ts`, `pdf-export-policy.ts` | D4.2 |
+| Suite unitaria + gate | `__tests__/visibility-*.cases.ts`, `scripts/validate-visibility-unit.ts` | D4.3 |
+
+### Alcance respetado (verificación estática)
+
+- `src/app/page.tsx`, `layout.tsx`, `components/` — **sin cambios D4**
+- `src/lib/scientific/workflow/*` — **sin cambios**
+- `src/lib/project/*` (collect/hydrate/schema V2) — **sin cambios** (`keys.ts` solo lectura desde `validate.ts`)
+- `src/lib/scientific/report/pdf-export.ts` — **sin cambios**
+- Motores SCI / `useMemo` runtime — **sin cambios**
+- Módulo `visibility/` **no importado** desde UI ni adapters en D4
+
+### Criterios de aceptación (plan D4)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-1 | Existe `src/lib/scientific/visibility/` operativo con exports `index.ts` | **PASS** |
+| CA-2 | Registry cubre 100% `VISIBILITY_KEYS_V1` (58 claves) | **PASS** |
+| CA-3 | Entradas metodológicas SCI-50→55 + dashboards SCI-56/60/58/40 documentadas | **PASS** |
+| CA-4 | Default OFF toggles metodológicos/dashboards (UX-1A.1 / QA-1 §7) | **PASS** |
+| CA-5 | Funciones puras state/query sin React/Next | **PASS** |
+| CA-6 | Prep EXPORT-2 (`pdfExportPolicy`, section mapping) sin cambiar PDF runtime | **PASS** |
+| CA-7 | ≥20 casos unitarios PASS | **PASS** (30 casos) |
+| CA-8 | `npm run validate:visibility-unit` PASS | **PASS** |
+| CA-9 | Sin cambio UI — `page.tsx`, `components/`, `layout.tsx` intactos | **PASS** |
+| CA-10 | Sin cambio schema V2 / pipeline persistencia | **PASS** |
+| CA-11 | Acta §D4 en este documento | **PASS** |
+
+### Validación D4.3 (2026-07-01)
+
+| Comando | Resultado | Notas |
+|---------|-----------|-------|
+| `npx tsc --noEmit` | **PASS** | |
+| `npm run validate:visibility-unit` | **PASS** | 30/30 casos; `minCaseCount` 20 |
+
+**Grupos de casos:** registry parity (9) · defaults/state/queries (13) · PDF policy prep (8).
+
+### Riesgos pendientes post-D4
+
+| Riesgo | Severidad | Notas |
+|--------|-----------|-------|
+| Registry no cableado a UI hasta D6+ | Baja | Comportamiento QA-1 idéntico al pre-D4; wiring explícito en fases posteriores |
+| Duplicación triple page/workflow/project keys | Media | Consolidación workflow→visibility prevista en **D7** |
+| PDF ignora toggles (QA-1 wont-fix) | Media | `pdf-export-policy.ts` es prep EXPORT-2; runtime sin cambio hasta PROD-3 |
+| Deriva futura registry ↔ `VISIBILITY_KEYS_V1` | Media | Gate `validate:visibility-unit` debe ejecutarse en CI local al tocar keys/registry |
+
+### Handoff
+
+**D4 — CLOSED.** Siguiente microfase planificada: **D5** (indicador workflow) — **no iniciada** en esta ventana.
+
+**Secuencia congelada** ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)):
+
+```text
+D1 ✓ → D4 ✓ → D5 → D6 → D7 → D8 → D2 → D3 → D9 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D5** (siguiente) | UX / workflow | Indicador workflow (MVP) | D4 CLOSED |
+| **D6** (pendiente) | ARCH-6 | Calc vs viz badge vía `queries.ts` | D5 |
+| **D2** (pendiente) | UX-2A | Extracción Smart Start | D8 CLOSED |
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01. Épica PROD-2D permanece abierta hasta D23.*
