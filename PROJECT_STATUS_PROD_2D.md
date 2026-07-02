@@ -120,12 +120,12 @@ Interpretación alineada con [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_
 **Secuencia congelada** ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)):
 
 ```text
-D1 ✓ → D4 ✓ → D5 → D6 → D7 → D8 → D2 → D3 → D9 …
+D1 ✓ → D4 ✓ → D5 ✓ → D6 → D7 → D8 → D2 → D3 → D9 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D5** (siguiente) | UX / workflow | Indicador workflow (MVP) | D4 CLOSED |
+| **D6** (siguiente) | ARCH-6.3 | Calc vs viz badge vía `queries.ts` | D5 CLOSED |
 | **D2** (pendiente) | UX-2A | Extracción move-only Smart Start → `components/home/SmartStartScreen.tsx` | D8 CLOSED |
 | **D3** (pendiente) | UX-2A | Refinamiento copy/ARIA Smart Start | D2 CLOSED |
 
@@ -199,20 +199,125 @@ Módulo de dominio puro `src/lib/scientific/visibility/` con registry toggle-awa
 
 ### Handoff
 
-**D4 — CLOSED.** Siguiente microfase planificada: **D5** (indicador workflow) — **no iniciada** en esta ventana.
+**D4 — CLOSED.** Siguiente microfase planificada: **D6** (calc vs viz) — ver §D5 handoff.
 
 **Secuencia congelada** ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)):
 
 ```text
-D1 ✓ → D4 ✓ → D5 → D6 → D7 → D8 → D2 → D3 → D9 …
+D1 ✓ → D4 ✓ → D5 ✓ → D6 → D7 → D8 → D2 → D3 → D9 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D5** (siguiente) | UX / workflow | Indicador workflow (MVP) | D4 CLOSED |
-| **D6** (pendiente) | ARCH-6 | Calc vs viz badge vía `queries.ts` | D5 |
+| **D6** (siguiente) | ARCH-6.3 | Calc vs viz badge vía `queries.ts` | D5 CLOSED |
 | **D2** (pendiente) | UX-2A | Extracción Smart Start | D8 CLOSED |
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D5 — ARCH-6.2: Indicador workflow activo
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** |
+| **Fecha de certificación** | 2026-07-01 |
+| **Subfases** | D5.1 ✓ · D5.2 ✓ · D5.3 ✓ |
+| **Gate D5** | `npx tsc --noEmit` + validación funcional QA-1 §6.4 — **PASS** |
+
+### Objetivo cumplido
+
+Resolver **QA-1 §10.1**: indicador global persistente del workflow SCI-59 visible en **Datos / Análisis / Resultados / Reportes** con CTA «Cancelar workflow» funcional al cambiar de pestaña — sin reset automático de sesión, sin modificar dominio `scientific/workflow`, sin wiring a `scientific/visibility`, y con `GuidedWorkflowPanel` inline intacto (cancel + apply/skip en host tab).
+
+### Entregables certificados
+
+| Entregable | Ubicación | Subfase |
+|------------|-----------|---------|
+| Componente presentacional | `src/components/workflow/WorkflowSessionIndicator.tsx` | D5.1 |
+| Wiring global post-nav | `src/app/page.tsx` (`showWorkflowSessionIndicator`, props, `onCancel`) | D5.2 |
+| Certificación + acta | Este documento §D5 | D5.3 |
+
+### Alcance respetado (verificación estática D5.3)
+
+**Archivos tocados por D5 (acumulado):**
+
+- `src/components/workflow/WorkflowSessionIndicator.tsx` — **nuevo** (D5.1)
+- `src/app/page.tsx` — wiring mínimo ~24 LOC: import, condición de visibilidad, render (D5.2)
+
+**Sin cambios verificados:**
+
+- `GuidedWorkflowPanel` inline (L13495+) — apply/skip + «Cancelar workflow» en host tab **preservados**
+- `src/lib/scientific/workflow/*` — **sin modificaciones**
+- `src/lib/scientific/visibility/*` — **sin import ni wiring desde UI**
+- `src/lib/project/*`, schema V2, adapters, collect/hydrate — **sin cambios**
+- `pdf-export.ts`, Smart Start, `layout.tsx` — **sin cambios**
+- Sin `data-testid` ni scripts gate nuevos
+
+**Componente controlado:** `WorkflowSessionIndicator` recibe únicamente `plan`, `session`, `hostTab`, `activeTab`, `onCancel` — sin estado interno de negocio ni acceso a estado global.
+
+### Criterios de aceptación (plan D5)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-1 | Existe `WorkflowSessionIndicator.tsx` en `components/workflow/` | **PASS** |
+| CA-2 | Indicator visible en Datos/Análisis/Resultados/Reportes con sesión `active`/`completed` | **PASS** |
+| CA-3 | CTA «Cancelar workflow» del indicator funcional desde cualquier tab científica | **PASS** |
+| CA-4 | Sesión persiste al cambiar tab (sin auto-reset) | **PASS** |
+| CA-5 | `GuidedWorkflowPanel` sin cambios: apply/skip + cancel en host tab | **PASS** |
+| CA-6 | Sin import/wiring de `scientific/visibility/` | **PASS** |
+| CA-7 | Sin cambios `scientific/workflow/*`, `project/*`, schema V2 | **PASS** |
+| CA-8 | Sin cambios `pdf-export.ts`, Smart Start, `layout.tsx` | **PASS** |
+| CA-9 | `npx tsc --noEmit` PASS | **PASS** |
+| CA-10 | Acta §D5 en este documento | **PASS** |
+| CA-11 | `validate-hotfix-sci-normality-2.mjs` (recomendado, no bloqueante) | **NO EJECUTADO** (opcional D5.3) |
+
+### Validación D5.3 (2026-07-01)
+
+| Comando / verificación | Resultado | Notas |
+|------------------------|-----------|-------|
+| `npx tsc --noEmit` | **PASS** | Gate obligatorio D5 |
+| Validación funcional QA-1 §6.4 | **PASS** | Trazado estático + revisión wiring (ver abajo) |
+| `node scripts/validate-hotfix-sci-normality-2.mjs` | **No ejecutado** | Verificación adicional recomendada; no gate D5 |
+
+**Validación funcional (QA-1 §6.4 — certificación D5.3):**
+
+| Paso | Criterio | Evidencia |
+|------|----------|-----------|
+| 4.1 | Indicator visible al navegar tabs con sesión activa | `showWorkflowSessionIndicator` cuando `status ∈ {active, completed}` y `activeWorkspaceSection !== "home"` |
+| 4.2 | Apply/skip permanecen en host tab vía panel | `showGuidedWorkflowPanel` sin modificar |
+| 4.3 | Sesión mantiene estado entre tabs | Lógica de sesión/handlers sin cambios D5; solo UI adicional |
+| 4.4 | Cancel vía indicator → `cancelGuidedWorkflow` | `onCancel={cancelGuidedWorkflow}`; toggles no revierten (pre-D7, esperado) |
+| Coexistencia | Cancel en panel + indicator en host tab | Plan aprobado: ambos CTAs invocan mismo handler |
+| Completed | Indicator visible en estado `completed` | Condición incluye `completed`; mensaje en componente D5.1 |
+
+### Riesgos pendientes post-D5
+
+| Riesgo | Severidad | Notas |
+|--------|-----------|-------|
+| Cancel duplicado en host tab (panel + indicator) | Baja | Decisión explícita plan D5; unificar en D15 si se extrae panel |
+| Cancel no revierte toggles | Media | QA-1 §10.4 — resolución prevista **D7** |
+| Indicator no usa `visibility/` | Baja | Correcto D5; badge calc≠viz en **D6** |
+| Smoke SCI-59 no ejecutado en certificación | Baja | Ejecutar localmente antes de release si se desea regresión E2E |
+| Extracción `GuidedWorkflowPanel` pendiente | Baja | **D15** (F5G); monolito sigue con panel inline |
+
+### Handoff
+
+**D5 — CLOSED.** QA-1 §10.1 **cerrada**. Siguiente microfase planificada: **D6** (ARCH-6.3) — **no iniciada** en esta ventana.
+
+**Secuencia congelada:**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 → D7 → D8 → D2 → D3 → D9 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D6** (siguiente) | ARCH-6.3 | Aviso cálculo ≠ visualización (QA-1 §10.3) | D5 CLOSED |
+| **D7** (pendiente) | ARCH-6.4 | Revert toggles al cancelar workflow | D6 |
+| **D8** (pendiente) | ARCH-6.5 | PDF wont-fix + cierre ARCH-6 | D7 |
+
+**Preparación D6 (sin implementar):** consumir `src/lib/scientific/visibility/queries.ts` + componentes en `src/components/analysis/`; badge/tooltip en toggles metodológicos; **no** detener `useMemo` motores; scores Dataset5/6 inalterados.
+
+**ARCH-6 progreso post-D5:** 1/4 observaciones QA-1 §10 cerradas (10.1 ✓ · 10.2 D8 · 10.3 D6 · 10.4 D7).
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01. Épica PROD-2D permanece abierta hasta D23.*
