@@ -608,4 +608,148 @@ D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 → D2 → D3 → D9 �
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D8 — ARCH-6.5: PDF wont-fix + banner Reportes + cierre ARCH-6
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** |
+| **Fecha de certificación** | 2026-07-03 |
+| **Subfases** | D8.1 ✓ · D8.2 ✓ · D8.3 ✓ · D8.4 ✓ · D8.5 ✓ |
+| **Commits** | Pendiente de commit post-certificación |
+| **Gates D8** | `npx tsc --noEmit` · `validate:visibility-unit` · `validate:workflow-unit` · `validate:full` — ver §Validación D8.4 |
+
+### Objetivo cumplido
+
+Resolver **QA-1 §10.2** mediante **wont-fix funcional documentado** (decisión **DA-4**) y **mitigación UX** en la pestaña Reportes — sin modificar runtime PDF, `scientific/visibility/*`, workflow, persistencia V2 ni motores SCI. Cerrar la épica **ARCH-6** (4/4 observaciones §10).
+
+### Resumen técnico
+
+| Subfase | Entregable | Ubicación |
+|---------|------------|-----------|
+| D8.1 | Resolver estático de copy | `src/components/reports/resolve-pdf-export-disclaimer.ts` |
+| D8.1 | Barrel inicial `reports/` | `src/components/reports/index.ts` |
+| D8.2 | Componente presentacional | `src/components/reports/PdfExportVisibilityBanner.tsx` |
+| D8.3 | Wiring mínimo Reportes | `src/app/page.tsx` (~+15 LOC) |
+| D8.4 | Certificación gates | Sin cambios de código |
+| D8.5 | Acta + cierre ARCH-6 | Este documento §D8 |
+
+**D8.1 — `resolvePdfExportDisclaimer()`:** función pura sin parámetros; devuelve `{ shortMessage, longMessage }`; copy estático alineado con DA-4; **no** consulta `VisibilityState`, toggles runtime ni políticas de exportación.
+
+**D8.2 — `PdfExportVisibilityBanner`:** componente React presentacional; props `shortMessage`, `longMessage`, `hidden?`, `className?`; `role="note"` + `aria-label`; patrón visual coherente con `MethodologyVisibilityCallout`.
+
+**D8.3 — Wiring:** import desde `@/components/reports`; constante de módulo `PDF_EXPORT_DISCLAIMER`; render en `NotebookSection` «Exportaciones» (pestaña Reportes), antes del bloque de botones PDF, condicionado a `scientificReport`.
+
+**Runtime PDF:** `exportScientificReportPdf`, `handleExportScientificReportPdf`, `scientific/report/*` — **sin modificaciones**.
+
+### Alcance respetado (verificación estática D8.5)
+
+**Diff acumulado D8** (post-D7):
+
+```text
+src/components/reports/resolve-pdf-export-disclaimer.ts | +18 (nuevo)
+src/components/reports/PdfExportVisibilityBanner.tsx    | +37 (nuevo)
+src/components/reports/index.ts                         | +7  (nuevo)
+src/app/page.tsx                                        | +15
+```
+
+**Sin cambios verificados:**
+
+- `src/lib/scientific/visibility/*` — **sin modificaciones**
+- `src/lib/scientific/workflow/*` — **sin modificaciones**
+- `src/lib/scientific/report/*`, `exportScientificReportPdf` inline — **sin modificaciones**
+- `src/lib/project/*`, schema V2, collect/hydrate — **sin cambios**
+- `WorkflowSessionIndicator`, `GuidedWorkflowPanel`, `components/analysis/*` (D6) — **sin cambios**
+- Smart Start, `layout.tsx` — **sin cambios**
+- Motores SCI / `useMemo` metodológicos — **sin cambios**
+
+### Registro obligatorio DA-4
+
+| Punto | Registro |
+|-------|----------|
+| **DA-4 vigente** | Decisión congelada en [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §7: ARCH-6.2 PDF = **wont-fix funcional** en PROD-2D; mitigación UX + modelo toggle-aware D4; EXPORT-2 requiere PROD-3. |
+| **QA-1 §10.2** | **CLOSED** — wont-fix funcional con mitigación UX. |
+| **Mitigación aprobada** | Banner informativo `PdfExportVisibilityBanner` en pestaña Reportes / sección Exportaciones. |
+| **Decisión arquitectónica aceptada** | La diferencia entre visibilidad de paneles (Inspector → Resultados) y contenido exportado al PDF es comportamiento **aceptado y documentado** en PROD-2D. |
+| **Fuera de alcance ARCH-6/D8** | Alineación completa visibilidad ↔ exportación PDF → **PROD-3 / EXPORT-2**, utilizando infraestructura preparada en `scientific/visibility/pdf-export-policy.ts`. |
+
+### ARCH-6 — cierre épica
+
+| QA-1 §10 | Observación | Resolución | Microfase | Estado |
+|----------|-------------|------------|-----------|--------|
+| **10.1** | Sesión SCI-59 persiste al cambiar pestaña | Indicador global + cancel | D5 | **CLOSED** |
+| **10.2** | PDF incluye metodología con toggles OFF | Wont-fix + banner Reportes | D4 + **D8** | **CLOSED** (wont-fix) |
+| **10.3** | Cálculo ≠ visualización | Hints Inspector | D6 | **CLOSED** |
+| **10.4** | Cancel no revierte toggles | Snapshot restore | D7 | **CLOSED** |
+
+**ARCH-6: CLOSED** (2026-07-03).
+
+### Criterios de aceptación (plan D8)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-1 | Banner visible en Reportes / Exportaciones | **PASS** |
+| CA-2 | Copy honesto: PDF puede incluir metodología con paneles ocultos | **PASS** |
+| CA-3 | Referencia PROD-3 / EXPORT-2 en copy y acta | **PASS** |
+| CA-4 | Sin cambios runtime PDF, `visibility/*`, `workflow/*`, schema V2 | **PASS** |
+| CA-4b | `resolvePdfExportDisclaimer()` sin estado ni lógica condicional por toggles | **PASS** |
+| CA-5 | Export PDF operativo (mismo comportamiento pre-D8) | **PASS** |
+| CA-6 | `validate:full` PASS condicionado | **PASS condicionado** |
+| CA-7 | `validate:visibility-unit` + workflow PASS | **PASS** |
+| CA-8 | ARCH-6: 4/4 §10 cerradas | **PASS** |
+| CA-9 | Sin adelantar D2/D3/D9 | **PASS** |
+| CA-10 | Acta §D8 + DA-4 registrada | **PASS** |
+
+### Validación D8.4 (2026-07-03)
+
+| Comando / verificación | Resultado | Notas |
+|------------------------|-----------|-------|
+| `npx tsc --noEmit` | **PASS** | Exit 0 |
+| `npm run validate:visibility-unit` | **PASS** | 30/30 casos; regresión D4/D6 |
+| `npm run validate:workflow-unit` | **FAIL** (alias npm) | Script ausente en `package.json` — deuda histórica D7 |
+| `npx tsx scripts/validate-workflow-unit.ts` | **PASS** | 9/9 casos (W1–W9); regresión D7 sin impacto D8 |
+| `npm run validate:full` | **PASS condicionado** | 8/10 steps PASS |
+
+**Steps PASS `validate:full` D8.4:** `t-quantile`, `chart-viewport-unit`, `comparison-unit`, `f0`, `unit`, `f6`, `typescript`, `build`, `prod1-gate`.
+
+**Steps FAIL (infra conocida, no regresión D8):** `baseline` (`ERR_CONNECTION_REFUSED localhost:3000`) · `e2e` (servidor E2E no completó F5).
+
+**Duración `validate:full` D8.4:** ~280 s.
+
+**Correcciones durante D8.4:** ninguna — no fue necesario modificar código.
+
+### Riesgos residuales post-D8
+
+| Riesgo | Severidad | Notas |
+|--------|-----------|-------|
+| Alias `validate:workflow-unit` ausente en `package.json` | Baja | Deuda histórica D7; script directo PASS 9/9 |
+| Alineación PDF ↔ toggles | — | Planificada PROD-3 / EXPORT-2; no deuda funcional D8 |
+| Score-check / E2E sin servidor dev | Media | Deuda infra preexistente (baseline D0.5) |
+| `showContextualHints` global ausente | Baja | Prop `hidden` preparada; gate futuro **D19** |
+| Commits D8 pendientes | Baja | Implementación certificada; commits atómicos post-certificación |
+
+**D8 no deja deuda técnica funcional** dentro de su alcance.
+
+### Handoff
+
+**D8 — CLOSED.** QA-1 §10.2 **cerrada** (wont-fix + mitigación UX). **ARCH-6 — CLOSED.**
+
+**Secuencia congelada:**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 → D3 → D9 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D2** (siguiente) | UX-2A | Extracción move-only Smart Start → `components/home/SmartStartScreen.tsx` | D8 CLOSED |
+| **D3** (pendiente) | UX-2A | Refinamiento copy/ARIA Smart Start | D2 CLOSED |
+
+**Próxima microfase:** **D2 — UX-2A Smart Start Extract**
+
+**Preparación D2 (sin implementar):** bloque inline ~L13615–13845 en `page.tsx` (~231 LOC); handlers `handleSmartStart*`; gate smoke manual.
+
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D2**.
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03. Épica PROD-2D permanece abierta hasta D23.*
