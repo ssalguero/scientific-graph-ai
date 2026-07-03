@@ -25,3 +25,9 @@ export {
   buildGuidedWorkflowPlan,
   resolveGuidedWorkflowStepToggles,
 } from "./plan";
+
+export {
+  captureWorkflowVisibilitySnapshot,
+  restoreWorkflowVisibilitySnapshot,
+  type WorkflowVisibilitySnapshot,
+} from "./snapshot";

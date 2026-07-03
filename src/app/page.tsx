@@ -118,8 +118,10 @@ import {
 import {
   applyGuidedWorkflowToggles,
   buildGuidedWorkflowPlan,
+  captureWorkflowVisibilitySnapshot,
   GUIDED_WORKFLOW_IDLE_SESSION,
   GUIDED_WORKFLOW_TEMPLATE_CATALOG,
+  restoreWorkflowVisibilitySnapshot,
   resolveGuidedWorkflowStepToggles,
   type GuidedWorkflowContext,
   type GuidedWorkflowPlan,
@@ -127,6 +129,7 @@ import {
   type GuidedWorkflowTemplateId,
   type GuidedWorkflowToggleSetters,
   type GuidedWorkflowWorkspaceTab,
+  type WorkflowVisibilitySnapshot,
 } from "@/lib/scientific/workflow";
 import { ComparisonFreshnessBadge } from "@/components/comparison/ComparisonFreshnessBadge";
 import { WorkflowSessionIndicator } from "@/components/workflow/WorkflowSessionIndicator";
@@ -21650,6 +21653,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showScientificInterpretation: setShowScientificInterpretation,
     showScientificReport: setShowScientificReport,
   };
+  const workflowVisibilitySnapshotRef = useRef<WorkflowVisibilitySnapshot | null>(
+    null
+  );
   const activeGuidedWorkflowPlan = useMemo(() => {
     if (
       !guidedWorkflowSession.templateId ||
@@ -21814,6 +21820,33 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     if (!plan) {
       return;
     }
+    workflowVisibilitySnapshotRef.current = captureWorkflowVisibilitySnapshot({
+      showStatistics,
+      showErrorBars,
+      showNormality,
+      showQQPlot,
+      showCorrelation,
+      showHeatmap,
+      showPCA,
+      showHierarchicalClustering,
+      showMultivariateDashboard,
+      showTTest,
+      showAnova,
+      showPostHoc,
+      showNonParametric,
+      showEffectSizePower,
+      showConsistencyEngine,
+      showReportQualityEngine,
+      showReproducibilityExplorer,
+      showEvidenceStrengthEngine,
+      showAssumptionTracker,
+      showPublicationReadinessAnalyzer,
+      showMethodologicalDashboard,
+      showPublicationDashboard,
+      showStatisticalAdvisor,
+      showScientificInterpretation,
+      showScientificReport,
+    });
     setGuidedWorkflowSession({
       status: "active",
       templateId,
@@ -21832,6 +21865,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
   };
   const cancelGuidedWorkflow = () => {
+    const snapshot = workflowVisibilitySnapshotRef.current;
+    if (snapshot !== null) {
+      restoreWorkflowVisibilitySnapshot(snapshot, guidedWorkflowToggleSetters);
+      workflowVisibilitySnapshotRef.current = null;
+    }
     setGuidedWorkflowSession(GUIDED_WORKFLOW_IDLE_SESSION);
   };
   useEffect(() => {
