@@ -134,6 +134,10 @@ import {
 import { ComparisonFreshnessBadge } from "@/components/comparison/ComparisonFreshnessBadge";
 import { WorkflowSessionIndicator } from "@/components/workflow/WorkflowSessionIndicator";
 import {
+  PdfExportVisibilityBanner,
+  resolvePdfExportDisclaimer,
+} from "@/components/reports";
+import {
   MethodologyVisibilityCallout,
   ToggleVisibilityHint,
   resolveToggleVisibilityShortHint,
@@ -309,6 +313,7 @@ const toggleTrackBg =
 const toggleThumb =
   "pointer-events-none absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[var(--app-toggle-thumb)] shadow-sm transition-transform duration-200 peer-checked:translate-x-4 peer-disabled:opacity-50";
 const METHODOLOGY_PUBLICATION_VISIBILITY_CALLOUT_MESSAGE = `Los motores SCI-50→55: ${resolveToggleVisibilityShortHint("showConsistencyEngine")}.`;
+const PDF_EXPORT_DISCLAIMER = resolvePdfExportDisclaimer();
 
 const toggleLabel =
   "flex items-center justify-between gap-2 cursor-pointer text-xs sm:text-sm text-[var(--app-text)] leading-tight py-0.5";
@@ -31444,6 +31449,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 subtitle="Gráfico y documento científico"
                 defaultOpen={false}
               >
+                {scientificReport ? (
+                  <PdfExportVisibilityBanner
+                    shortMessage={PDF_EXPORT_DISCLAIMER.shortMessage}
+                    longMessage={PDF_EXPORT_DISCLAIMER.longMessage}
+                    className="mb-2"
+                  />
+                ) : null}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
                   <div className={actionBarGroup}>
                     <button
