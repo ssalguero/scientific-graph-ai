@@ -469,4 +469,143 @@ D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 → D8 → D2 → D3 → D9 …
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D7 — ARCH-6.4: Revert toggles al cancelar workflow
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** |
+| **Fecha de certificación** | 2026-07-02 |
+| **Subfases** | D7.1 ✓ · D7.2 ✓ · D7.3 ✓ · D7.4 ✓ · D7.5 ✓ |
+| **Commits** | Pendiente de commit post-certificación |
+| **Gates D7** | `validate:workflow-unit` · `validate:visibility-unit` · `tsc --noEmit` · `validate:full` — ver §Validación D7.5 |
+
+### Objetivo cumplido
+
+Resolver **QA-1 §10.4**: al cancelar el workflow SCI-59, restaurar las 25 claves workflow al snapshot de visibilidad capturado **inmediatamente antes** del inicio — descartando cambios automáticos y manuales intermedios (DD-D7-1) — sin modificar persistencia V2, motores SCI, PDF runtime, Smart Start ni componentes D5/D6.
+
+### Entregables certificados
+
+| Entregable | Ubicación | Subfase |
+|------------|-----------|---------|
+| Dominio capture/restore puro | `src/lib/scientific/workflow/snapshot.ts` | D7.1 |
+| Exports barrel | `src/lib/scientific/workflow/index.ts` | D7.1 |
+| Suite unitaria W1–W9 + gate | `src/lib/scientific/workflow/__tests__/workflow-visibility-snapshot.cases.ts`, `scripts/validate-workflow-unit.ts` | D7.2 |
+| Wiring React (`useRef` + handlers) | `src/app/page.tsx` | D7.3 |
+| Script npm | `package.json` (`validate:workflow-unit`) | D7.2 |
+| Certificación + acta | Este documento §D7 | D7.5 |
+
+### Alcance respetado (verificación estática D7.5)
+
+**Diff acumulado D7** (working tree post-D6):
+
+```text
+src/lib/scientific/workflow/snapshot.ts                          | +29 (nuevo)
+src/lib/scientific/workflow/__tests__/workflow-visibility-snapshot.cases.ts | +149 (nuevo)
+scripts/validate-workflow-unit.ts                                | +16 (nuevo)
+src/lib/scientific/workflow/index.ts                             | +6
+src/app/page.tsx                                                 | +38
+package.json                                                     | +1
+```
+
+**DD-D7-1 — verificación arquitectónica:**
+
+| Criterio DD-D7-1 | Evidencia | Resultado |
+|------------------|-----------|-----------|
+| Snapshot capturado antes de inicio workflow | `captureWorkflowVisibilitySnapshot` en `startGuidedWorkflow` **antes** de `setGuidedWorkflowSession` (`page.tsx` L21823–21850) | **PASS** |
+| Restore antes de retorno a idle | `restoreWorkflowVisibilitySnapshot` + `ref = null` **antes** de `GUIDED_WORKFLOW_IDLE_SESSION` (`page.tsx` L21867–21873) | **PASS** |
+| Snapshot efímero `useRef` | `workflowVisibilitySnapshotRef` (`page.tsx` L21656–21658); no en sesión V2 | **PASS** |
+| Restore ciego, sin tracking incremental | `snapshot.ts` — loop sobre `listWorkflowToggleKeys()`; sin diff de origen | **PASS** |
+| Cambios manuales mid-workflow descartados | Caso **W9** PASS | **PASS** |
+| Snapshot no persistido en V2 | Grep `src/lib/project/*` — sin referencias a snapshot workflow | **PASS** |
+
+**Sin cambios verificados:**
+
+- `src/lib/scientific/visibility/*` — **sin modificaciones** (solo consumo desde `snapshot.ts`)
+- `src/lib/scientific/workflow/apply.ts`, `templates.ts`, `plan.ts` — **sin cambios** semánticos
+- `src/lib/project/*`, schema V2, collect/hydrate — **sin cambios**
+- `pdf-export.ts`, Smart Start, `layout.tsx` — **sin cambios**
+- Motores SCI / cuerpo y dependencias `useMemo` metodológicos (~L21240+) — **sin cambios**
+- `WorkflowSessionIndicator`, `GuidedWorkflowPanel` inline, `components/analysis/*` — **sin cambios**
+- Registry visibility — **sin modificaciones**
+
+### Criterios de aceptación (plan D7)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-1 | Existe `workflow/snapshot.ts` con capture + restore operativos | **PASS** |
+| CA-2 | Snapshot capturado en `startGuidedWorkflow` antes de sesión `active` | **PASS** |
+| CA-3 | Restore en `cancelGuidedWorkflow` antes de idle | **PASS** |
+| CA-4 | Scope 25 claves `listWorkflowToggleKeys()` / `GuidedWorkflowToggleKey` | **PASS** (W5) |
+| CA-5 | Escenario T3 → 2 pasos → restore = pre-inicio | **PASS** (W3) |
+| CA-6 | W9: cambio manual mid-workflow descartado (DD-D7-1) | **PASS** |
+| CA-7 | Sin cambio schema V2, collect/hydrate, persistencia | **PASS** |
+| CA-8 | Sin cambio motores SCI, `useMemo`, PDF, Smart Start | **PASS** |
+| CA-9 | `validate:workflow-unit` PASS (≥9 casos) | **PASS** |
+| CA-10 | `validate:visibility-unit` PASS (regresión D4/D6) | **PASS** |
+| CA-11 | `npx tsc --noEmit` PASS | **PASS** |
+| CA-12 | `validate:full` PASS condicionado | **PASS condicionado** |
+| CA-13 | QA-1 §10.4 cerrada en acta | **PASS** |
+| CA-14 | Sin adelantar D8/D2/D3/D9 | **PASS** |
+
+### Validación D7.5 (2026-07-02)
+
+| Comando / verificación | Resultado | Notas |
+|------------------------|-----------|-------|
+| `npm run validate:workflow-unit` | **PASS** | 9/9 casos (W1–W9); exit 0 |
+| `npm run validate:visibility-unit` | **PASS** | 30/30 casos; dominio D4 sin regresión |
+| `npx tsc --noEmit` | **PASS** | |
+| `npm run validate:full` | **PASS condicionado** | 8/10 steps PASS; `baseline` + `e2e` FAIL — `ERR_CONNECTION_REFUSED localhost:3000` (deuda infra pre-D7; alineado baseline D0.5/D1/D6) |
+
+**Steps PASS `validate:full` D7.5:** `t-quantile`, `chart-viewport-unit`, `comparison-unit`, `f0`, `unit`, `f6`, `typescript`, `build`, `prod1-gate`.
+
+**Steps FAIL (infra conocida, no regresión D7):** `baseline` (score-check sin servidor dev) · `e2e` (servidor E2E no completó F5).
+
+**Duración `validate:full` (BUILD D7.4):** ~757 s.
+
+**Validación funcional (QA-1 §10.4 — certificación D7.5):**
+
+| Paso | Criterio | Evidencia |
+|------|----------|-----------|
+| 7.1 | Snapshot pre-inicio en start | Captura L21823–21849 precede `setGuidedWorkflowSession` L21850 |
+| 7.2 | Restore en cancel desde cualquier CTA D5 | Mismo handler enriquecido; restore L21868–21871 |
+| 7.3 | T3 paso 1+2 revertidos | W3 PASS en gate unitario |
+| 7.4 | Manual mid-workflow descartado | W9 PASS (DD-D7-1) |
+| 7.5 | Hints D6 reactivos post-restore | Sin cambios `components/analysis/`; toggles OFF → hints visibles |
+| 7.6 | Claves no-workflow intactas | W4 PASS; restore acotado a 25 claves |
+
+### Riesgos pendientes post-D7
+
+| Riesgo | Severidad | Notas |
+|--------|-----------|-------|
+| PDF incluye secciones con toggles OFF | Media | Copy D6 informa; mitigación banner **D8**; fix funcional PROD-3 EXPORT-2 |
+| Usuario espera conservar cambios manuales mid-workflow | Baja | Comportamiento explícito DD-D7-1; evaluación fase futura si necesario |
+| `showContextualHints` global ausente | Baja | Hints siempre visibles; gate futuro **D19** |
+| Score-check / E2E sin servidor dev | Media | Deuda infra preexistente; ejecutar `validate:full` con servidor activo antes de release |
+| Commits D7 pendientes | Baja | Implementación certificada; commit atómicos post-certificación |
+
+### Handoff
+
+**D7 — CLOSED.** QA-1 §10.4 **cerrada**. Siguiente microfase planificada: **D8** (ARCH-6.5) — requiere **PLAN** (ya aprobado en [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
+
+**Secuencia congelada:**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 → D2 → D3 → D9 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D8** (siguiente) | ARCH-6.5 | PDF wont-fix + banner Reportes + cierre ARCH-6 | D7 CLOSED |
+| **D2** (pendiente) | UX-2A | Extracción move-only Smart Start | D8 CLOSED |
+
+**Preparación D8 (sin implementar):**
+
+- Banner informativo en Reportes sobre PDF vs toggles OFF (QA-1 §10.2 wont-fix).
+- Cierre formal ARCH-6: 4/4 observaciones §10 resueltas o wont-fix documentado.
+- Gate: `validate:full` PASS.
+
+**ARCH-6 progreso post-D7:** 3/4 observaciones QA-1 §10 cerradas (10.1 ✓ · 10.2 D8 · **10.3 ✓** · **10.4 ✓**).
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02. Épica PROD-2D permanece abierta hasta D23.*
