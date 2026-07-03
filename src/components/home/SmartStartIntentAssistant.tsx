@@ -12,7 +12,7 @@ import {
   btnSecondary,
   fieldLabel,
   inputField,
-} from "./projectFileUiStyles";
+} from "@/app/projectFileUiStyles";
 
 type SmartStartIntentAssistantProps = {
   onStartRecommendation: (recommendation: IntentRecommendation) => void;

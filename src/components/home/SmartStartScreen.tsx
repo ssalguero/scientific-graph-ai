@@ -4,7 +4,7 @@ import {
   SMART_START_OPTIONS,
   type IntentRecommendation,
 } from "@/lib/smart-start";
-import { SmartStartIntentAssistant } from "@/app/SmartStartIntentAssistant";
+import { SmartStartIntentAssistant } from "@/components/home/SmartStartIntentAssistant";
 
 const card =
   "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-3 sm:p-4 transition-colors duration-200";
