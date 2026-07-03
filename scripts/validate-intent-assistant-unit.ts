@@ -1,7 +1,7 @@
 import {
   classifyIntent,
   type SmartStartIntentId,
-} from "../src/app/intentAssistant";
+} from "../src/lib/smart-start";
 
 type CaseResult = {
   id: string;

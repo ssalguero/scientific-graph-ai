@@ -64,8 +64,8 @@ assertCase(
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const pageSource = readFileSync(join(repoRoot, "src/app/page.tsx"), "utf8");
-const intentAssistantSource = readFileSync(
-  join(repoRoot, "src/app/intentAssistant.ts"),
+const intentRulesSource = readFileSync(
+  join(repoRoot, "src/lib/smart-start/intent-rules.ts"),
   "utf8"
 );
 const barrelSource = readFileSync(
@@ -96,7 +96,7 @@ assertCase(
 );
 
 const intentRuleIds = [
-  ...intentAssistantSource.matchAll(/^\s*id: "([^"]+)",/gm),
+  ...intentRulesSource.matchAll(/^\s*id: "([^"]+)",/gm),
 ].map((match) => match[1]);
 
 assertCase(
