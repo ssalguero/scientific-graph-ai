@@ -6,7 +6,7 @@ import {
   classifyIntent,
   formatIntentRecommendationSummary,
   type IntentRecommendation,
-} from "./intentAssistant";
+} from "@/lib/smart-start";
 import {
   btnPrimary,
   btnSecondary,

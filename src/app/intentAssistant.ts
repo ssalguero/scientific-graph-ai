@@ -1,25 +1,12 @@
+import type {
+  IntentConfidence,
+  IntentRecommendation,
+  SmartStartIntentId,
+} from "@/lib/smart-start/types";
 import type { LabUsageProfile } from "./labUsageProfile";
 import { LAB_USAGE_PROFILE_META } from "./labUsageProfile";
 
-export type SmartStartIntentId =
-  | "analyze-dataset"
-  | "compare-datasets"
-  | "math-graph"
-  | "evaluate-publication"
-  | "open-project"
-  | "expert-mode";
-
-export type IntentConfidence = "high" | "medium" | "low";
-
-export type IntentRecommendation = {
-  intentId: SmartStartIntentId;
-  flowLabel: string;
-  destinationLabel: string;
-  recommendedProfile: LabUsageProfile;
-  profileLabel: string;
-  confidence: IntentConfidence;
-  matchedKeywords: string[];
-};
+export type { IntentConfidence, IntentRecommendation, SmartStartIntentId };
 
 type IntentRule = {
   id: SmartStartIntentId;

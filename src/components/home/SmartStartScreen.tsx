@@ -1,61 +1,14 @@
 "use client";
 
-import type { IntentRecommendation } from "@/app/intentAssistant";
+import {
+  SMART_START_OPTIONS,
+  type IntentRecommendation,
+} from "@/lib/smart-start";
 import { SmartStartIntentAssistant } from "@/app/SmartStartIntentAssistant";
 
 const card =
   "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-3 sm:p-4 transition-colors duration-200";
 const panelHeadingSubtext = "text-xs sm:text-sm text-[var(--app-text-muted)] mt-0.5";
-
-type SmartStartOption = {
-  id: string;
-  icon: string;
-  title: string;
-  description: string;
-  actionLabel: string;
-};
-
-const SMART_START_OPTIONS: SmartStartOption[] = [
-  {
-    id: "analyze-dataset",
-    icon: "📥",
-    title: "Analizar un dataset",
-    description:
-      "Importe CSV, Excel, TXT u ODS para análisis científico descriptivo e inferencial.",
-    actionLabel: "Ir a importación",
-  },
-  {
-    id: "compare-datasets",
-    icon: "📊",
-    title: "Comparar datasets",
-    description:
-      "Capture perfiles en Slot A y Slot B con comparación multi-dataset (SCI-59 / ARCH-5).",
-    actionLabel: "Abrir comparación A/B",
-  },
-  {
-    id: "evaluate-publication",
-    icon: "📰",
-    title: "Evaluar publicación",
-    description:
-      "Workflow guiado hacia SCI-60 Publication Readiness y dashboards ejecutivos.",
-    actionLabel: "Iniciar workflow",
-  },
-  {
-    id: "math-graph",
-    icon: "📐",
-    title: "Crear gráfico matemático",
-    description: "Trabaje con expresiones y=f(x) en el constructor de curvas.",
-    actionLabel: "Abrir constructor",
-  },
-  {
-    id: "open-project",
-    icon: "📁",
-    title: "Abrir proyecto existente",
-    description:
-      "Recupere un archivo .sgproj con dataset, análisis y curvas guardados.",
-    actionLabel: "Usar panel de proyecto",
-  },
-];
 
 type SmartStartScreenProps = {
   onSelect: (optionId: string) => void;

@@ -78,7 +78,10 @@ import {
   LabExpertModeToast,
   LabUsageProfileSelector,
 } from "./LabUsageProfileSelector";
-import type { IntentRecommendation } from "./intentAssistant";
+import type {
+  IntentRecommendation,
+  SmartStartNavIntent,
+} from "@/lib/smart-start";
 import {
   profileForcesInspectorGroupsOpen,
   profileShowsAdvancedResults,
@@ -13721,14 +13724,6 @@ function GraphSaveToast({ title, onDismiss }: GraphSaveToastProps) {
     </div>
   );
 }
-
-type SmartStartNavIntent =
-  | "idle"
-  | "analyze-dataset"
-  | "compare-datasets"
-  | "evaluate-publication"
-  | "math-graph"
-  | "open-project";
 
 // SCI-58 — Domain: src/lib/scientific/comparison/ · UI dashboard: src/components/comparison/
 
