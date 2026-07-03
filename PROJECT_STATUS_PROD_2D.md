@@ -736,20 +736,167 @@ src/app/page.tsx                                        | +15
 **Secuencia congelada:**
 
 ```text
-D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 → D3 → D9 …
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 → D9 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D2** (siguiente) | UX-2A | Extracción move-only Smart Start → `components/home/SmartStartScreen.tsx` | D8 CLOSED |
-| **D3** (pendiente) | UX-2A | Refinamiento copy/ARIA Smart Start | D2 CLOSED |
+| **D2** | UX-2A | Extracción move-only Smart Start | D8 CLOSED — **ver §D2 CLOSED** |
+| **D3** (siguiente post-D2) | UX-2B | Smart Start Refinement | D2 CLOSED |
 
-**Próxima microfase:** **D2 — UX-2A Smart Start Extract**
+**Próxima microfase post-D8 (histórico):** D2 — completada; ver §D2.
 
-**Preparación D2 (sin implementar):** bloque inline ~L13615–13845 en `page.tsx` (~231 LOC); handlers `handleSmartStart*`; gate smoke manual.
-
-**PROD-2D** permanece abierta hasta D23; lista para iniciar **D2**.
+**ARCH-6 progreso post-D8:** 4/4 observaciones QA-1 §10 cerradas. **ARCH-6 — CLOSED.**
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D2 — UX-2A: Extracción Smart Start
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** |
+| **Fecha de certificación** | 2026-07-03 |
+| **Subfases** | D2.1 ✓ · D2.2 ✓ · D2.3 ✓ · D2.4 ✓ · D2.5 ✓ |
+| **Commits** | `e0ef339` (D2.1) · `fed73f7` (D2.2) |
+| **Épica UX-2A** | **CLOSED** (D1 + D2) |
+
+### Estado
+
+**COMPLETED**
+
+### Microfases
+
+| Subfase | Objetivo | Certificación |
+|---------|----------|---------------|
+| **D2.1** | Scaffold + move del componente a `src/components/home/SmartStartScreen.tsx` | **PASS** |
+| **D2.2** | Wiring mínimo en `page.tsx` (import + eliminación bloque inline) | **PASS** |
+| **D2.3** | Verificación estática move-only | **PASS** |
+| **D2.4** | Certificación técnica (gates) | **PASS** |
+| **D2.5** | Acta + cierre D2 / UX-2A | **PASS** |
+
+### Objetivo cumplido
+
+Extracción **move-only** del componente presentacional `SmartStartScreen` desde el monolito `page.tsx` hacia `src/components/home/SmartStartScreen.tsx`, preservando handlers, estado y orquestación en el boundary `Home` — sin cambios funcionales, de copy, ARIA ni navegación.
+
+### Resumen técnico
+
+| Subfase | Entregable | Ubicación |
+|---------|------------|-----------|
+| D2.1 | Componente presentacional + constantes CSS locales | `src/components/home/SmartStartScreen.tsx` (+132 LOC) |
+| D2.2 | Eliminación bloque inline + import | `src/app/page.tsx` (−126 LOC netas) |
+| D2.3 | Auditoría diff move-only (sin cambios de código) | Verificación estática |
+| D2.4 | Gates compilación / regresión / intent assistant | Sin cambios de código |
+| D2.5 | Acta + cierre épica UX-2A | Este documento §D2 |
+
+**Extracción move-only:** bloque L13576–13698 (`SmartStartOption`, `SMART_START_OPTIONS`, `SmartStartScreenProps`, `SmartStartScreen`) trasladado literalmente; constantes `card` y `panelHeadingSubtext` copiadas sin renombrar ni consolidar.
+
+**Wiring mínimo:** `page.tsx` importa `SmartStartScreen` desde `@/components/home/SmartStartScreen`; render Home (L24189–24193) con callbacks `handleSmartStartSelect`, `handleSmartStartExpertMode`, `handleIntentRecommendationStart` inalterados.
+
+**Verificación estática (D2.3):** una sola definición de `SmartStartScreen` en el proyecto; `CompareStepsBanner`, `PublicationEntryBanner` y `GuidedWorkflowPanel` intactos; JSX/copy/props/ARIA idénticos al inline original; grafo de imports acíclico.
+
+**Certificación (D2.4):** compilación y regresión nucleo PASS; intent assistant operativo.
+
+**Ausencia de cambios funcionales:** confirmada en D2.3 y D2.4.
+
+### Resultado arquitectónico
+
+| Punto | Registro |
+|-------|----------|
+| **SmartStartScreen inline** | **Eliminado** de `page.tsx` — componente vive en `src/components/home/SmartStartScreen.tsx` |
+| **Boundary `Home`** | `page.tsx` conserva **exclusivamente orquestación**: estado (`smartStartDismissed`, `smartStartNavIntent`), `showSmartStartScreen`, handlers Smart Start, efectos scroll, render condicional |
+| **Handlers Smart Start** | Permanecen en `Home`: `handleSmartStartSelect`, `handleSmartStartExpertMode`, `handleIntentRecommendationStart` |
+| **Principio move-only** | Respetado íntegramente — diff acumulado `2d6d91c..fed73f7` = traslado + imports + eliminación inline; sin refactors semánticos |
+| **Dependencias circulares** | **Ninguna** — `page.tsx` → `SmartStartScreen` → `SmartStartIntentAssistant` → `intentAssistant` |
+| **API pública módulo** | Superficie mínima: export único `SmartStartScreen`; tipos internos no exportados |
+
+### Alcance respetado (verificación estática D2.3 / D2.5)
+
+**Diff acumulado D2** (`2d6d91c..fed73f7`):
+
+```text
+src/components/home/SmartStartScreen.tsx | +132 (nuevo)
+src/app/page.tsx                         | −126 (bloque inline + import SmartStartIntentAssistant; +import SmartStartScreen)
+```
+
+**Sin cambios verificados:**
+
+- `SmartStartIntentAssistant.tsx`, `intentAssistant.ts` — **sin modificaciones**
+- `CompareStepsBanner`, `PublicationEntryBanner`, `GuidedWorkflowPanel` — **sin modificaciones**
+- `src/lib/scientific/*`, `src/lib/project/*`, schema V2 — **sin cambios**
+- `layout.tsx`, workflow, visibility, PDF runtime — **sin cambios**
+
+### Gates (D2.4 — 2026-07-03)
+
+| Comando | Resultado | Notas |
+|---------|-----------|-------|
+| `npx tsc --noEmit` | **PASS** | Exit 0 |
+| `npm run validate:full` | **PASS condicionado** | 8/10 steps PASS; duración ~276 s |
+| `npx tsx scripts/validate-intent-assistant-unit.ts` | **PASS** | 8/8 casos |
+
+**Steps PASS `validate:full` D2.4:** `t-quantile`, `chart-viewport-unit`, `comparison-unit`, `f0`, `unit`, `f6`, `typescript`, `build`, `prod1-gate`.
+
+**Steps FAIL (infra conocida — no atribuibles a D2):**
+
+| Step | Motivo |
+|------|--------|
+| `baseline` | `ERR_CONNECTION_REFUSED` — servidor `localhost:3000` ausente |
+| `e2e` | Servidor E2E no completó F5 |
+
+> Los FAIL históricos de `baseline` y `e2e` están documentados desde D0.5 y se repitieron en D1/D6/D8 **sin regresión atribuible a D2**. Interpretación alineada con [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) §4.1.
+
+### Criterios de aceptación (plan D2)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-1 | Existe `src/components/home/SmartStartScreen.tsx` | **PASS** |
+| CA-2 | `page.tsx` sin bloque inline Smart Start | **PASS** |
+| CA-3 | Handlers Smart Start en `Home` | **PASS** |
+| CA-4 | Extracción move-only certificada (D2.3) | **PASS** |
+| CA-5 | `tsc --noEmit` PASS | **PASS** |
+| CA-6 | `validate:full` PASS condicionado | **PASS** |
+| CA-7 | `validate-intent-assistant` PASS | **PASS** |
+| CA-8 | Sin cambios schema V2 / scientific / project | **PASS** |
+| CA-9 | Sin dependencias circulares | **PASS** |
+| CA-10 | Acta §D2 en este documento | **PASS** |
+
+### Riesgos residuales post-D2
+
+| Riesgo | Severidad | Notas |
+|--------|-----------|-------|
+| FAIL históricos infra `baseline` / `e2e` | Media | Deuda infra preexistente (D0.5); no introducida por D2 |
+| Refinamientos D3 (copy, ARIA, posible `validate:smart-start-unit`) | Baja | Fuera alcance D2; microfase planificada post-D2 |
+
+**D2 no deja deuda técnica funcional** dentro de su alcance.
+
+### UX-2A — cierre épica
+
+| Microfase | Entregable UX-2A | Estado |
+|-----------|------------------|--------|
+| **D1** | Metadata y branding production-ready | **CLOSED** |
+| **D2** | Extracción Smart Start move-only | **CLOSED** |
+
+**UX-2A: CLOSED** (2026-07-03).
+
+### Handoff
+
+**D2 — CLOSED.** **UX-2A — CLOSED.**
+
+**Secuencia congelada:**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 → D9 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D3** (siguiente) | UX-2B | Smart Start Refinement (copy, ARIA) | D2 CLOSED |
+
+**Próxima fase:** **D3 — UX-2B Smart Start Refinement**
+
+No iniciar D3 en esta ventana. No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
+
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D3**.
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03. Épica PROD-2D permanece abierta hasta D23.*
