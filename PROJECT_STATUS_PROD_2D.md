@@ -1368,4 +1368,152 @@ No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D13 — ARCH-5 F5E: Dominio SCI-60
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** (dominio move-only) |
+| **Fecha de certificación** | 2026-07-06 |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D13 |
+| **Nota de alineación** | SCI-60 (Executive Publication Dashboard) pertenece **oficialmente a D13 / F5E** |
+
+### Objetivo cumplido
+
+Extracción arquitectónica **move-only** del agregador cross-domain **SCI-60 (Executive Publication Dashboard)** desde `src/app/page.tsx` hacia `src/lib/scientific/methodology/publication/`, preservando UI React (`ScientificPublicationDashboard`), `useMemo`, handlers, toggles, comparison capture y wiring en boundary.
+
+| Motor | SCI | Ubicación |
+|-------|-----|-----------|
+| Executive Publication Dashboard (dominio) | SCI-60 | `src/lib/scientific/methodology/publication/` |
+
+### Microfases D13.1–D13.6
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D13.1** | Baseline + inventario (`D13_1_SCI60_PREP.md`) | **CLOSED** |
+| **D13.2** | `types.ts` + `input-types.ts` | **CLOSED** |
+| **D13.3** | `build.ts` (orquestador + sub-builders) | **CLOSED** |
+| **D13.4** | `reporting.ts` + helpers privados de formato/advisor | **CLOSED** |
+| **D13.5** | `index.ts` (API Freeze) + wiring + eliminación inline en `page.tsx` | **CLOSED** |
+| **D13.6** | Gate final + acta §D13 | **CLOSED** |
+
+### Arquitectura resultante (F5E)
+
+```text
+src/lib/scientific/methodology/publication/
+  types.ts           ← tipos de dominio SCI-60
+  input-types.ts     ← tipos de frontera (MultivariateSource, AdvisorSource, BuildInput)
+  build.ts           ← gate, orquestador, sub-builders (3 exportados para comparison)
+  reporting.ts       ← getPublicationDashboardReportLines + helpers privados
+  index.ts           ← barrel API Freeze
+src/app/page.tsx     ← useMemo + comparison capture + ScientificPublicationDashboard (UI) + toggles
+```
+
+**Boundary congelado:** `publication/` no importa React, UI, hooks, CSS ni `page.tsx`. Consumidores externos importan exclusivamente `@/lib/scientific/methodology/publication` (barrel).
+
+**Dependencias upstream:** `readiness`, `summary`, `evidence`, `normality`, `inference`, `@/lib/scientific/shared/text`.
+
+### API pública congelada (`publication/index.ts`)
+
+| Export | Origen |
+|--------|--------|
+| `PublicationDashboardAnalysis` | `types.ts` |
+| `PublicationDashboardBuildInput` | `input-types.ts` |
+| `buildPublicationDashboardAnalysis` | `build.ts` |
+| `canBuildPublicationDashboard` | `build.ts` |
+| `buildPublicationDashboardNormalitySummary` | `build.ts` |
+| `buildPublicationDashboardMultivariateHighlights` | `build.ts` |
+| `buildPublicationDashboardInferentialHighlight` | `build.ts` |
+| `getPublicationDashboardReportLines` | `reporting.ts` |
+
+**No exportados (privados):** sub-builders de diagnóstico/riesgos/recomendaciones; `formatPCAVariancePercent`, `formatVariableImportanceCoLeaders`, `getStatisticalAdvisorConfidenceLabel` (copias move-only internas en `build.ts` / `reporting.ts`).
+
+### Certificación arquitectónica
+
+| Afirmación | Resultado |
+|------------|-----------|
+| SCI-60 ya no reside inline en `page.tsx` (dominio) | **CONFIRMADO** — solo consumo vía barrel |
+| Dominio aislado del árbol React | **CONFIRMADO** — cero imports React/hooks/UI en `publication/` |
+| `publication/` es implementación canónica SCI-60 | **CONFIRMADO** |
+| Sin duplicación funcional SCI-60 pendiente | **CONFIRMADO** — grep repo: implementaciones solo en `publication/`; `page.tsx` retiene UI + wiring |
+| SSOT análisis | **CONFIRMADO** — UI y PDF consumen el mismo `PublicationDashboardAnalysis` vía `buildPublicationDashboardAnalysis` |
+
+Baselines QA-1 Publication Status (move-only, referencia): Dataset5 **Near Ready 77.0** · Dataset6 **Requires Review 67.5**.
+
+### Verificación gate final (2026-07-06)
+
+| Comando / criterio | Resultado |
+|--------------------|-----------|
+| `npx tsc --noEmit` | **PASS** |
+| Estructura módulo `publication/` (5 archivos) | **PASS** |
+| API Freeze — 8 exports en barrel | **PASS** |
+| `page.tsx` sin builders/helpers inline SCI-60 | **PASS** |
+| Imports `page.tsx` vía barrel únicamente | **PASS** |
+| Sin deep imports hacia `methodology/publication/*` | **PASS** |
+| `publication/` sin React / `@/app` / `@/components` | **PASS** |
+| Gate duplicación repo-wide `PublicationDashboard*` | **PASS** |
+| Gate unitario F5E (`validate:methodology-f5e-unit`) | **Pendiente** — script planificado D16 (consolidación `validate:methodology-unit`) |
+
+### Criterios de certificación D13 (épica)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D13-1 | Módulo `methodology/publication/` operativo con barrel | **PASS** |
+| CA-D13-2 | `page.tsx` sin dominio inline SCI-60 | **PASS** |
+| CA-D13-3 | Baselines Publication Status 77.0 / 67.5 inalterados (move-only) | **PASS** |
+| CA-D13-4 | Scores upstream Evidence/Overall Health inalterados | **PASS** |
+| CA-D13-5 | UI/toggles/useMemo sin cambio funcional | **PASS** |
+| CA-D13-6 | Comparison capture produce snapshots equivalentes | **PASS** |
+| CA-D13-7 | PDF SCI-17 sección Executive Publication Dashboard presente | **PASS** |
+| CA-D13-8 | `tsc` PASS | **PASS** |
+| CA-D13-9 | Consumidores sin deep imports; solo barrel | **PASS** |
+| CA-D13-10 | `publication/` acyclic; sin React/UI/page imports | **PASS** |
+| CA-D13-11 | Acta §D13 en este documento | **PASS** |
+| CA-D13-12 | ARCH-5 F5E marcado CLOSED; handoff D14 | **PASS** |
+| CA-D13-13 | Ningún archivo de `publication/` depende de React/JSX/hooks/CSS/UI | **PASS** |
+
+### Criterios de certificación D13.6 (gate final)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D13.6-1 | Gate final ejecutado | **PASS** |
+| CA-D13.6-2 | `PROJECT_STATUS_PROD_2D.md` actualizado | **PASS** |
+| CA-D13.6-3 | ARCH-5 F5E marcado CLOSED | **PASS** |
+| CA-D13.6-4 | Resultados de validación registrados | **PASS** |
+| CA-D13.6-5 | Handoff hacia D14 documentado | **PASS** |
+| CA-D13.6-6 | Sin cambios funcionales | **PASS** |
+| CA-D13.6-7 | `npx tsc --noEmit` PASS | **PASS** |
+
+**D13 no deja deuda técnica funcional** dentro de su alcance F5E (dominio). UI `ScientificPublicationDashboard` permanece en `page.tsx` hasta **D14 — ARCH-5 F5F**.
+
+### ARCH-5 F5E — cierre parcial épica
+
+| Microfase | Entregable ARCH-5 | Estado |
+|-----------|-------------------|--------|
+| **D13** | Dominio SCI-60 modularizado | **CLOSED** |
+
+**ARCH-5 F5E: CLOSED** (2026-07-06). Épica ARCH-5 permanece abierta (D14–D17).
+
+### Handoff
+
+**D12 — CLOSED.** **ARCH-5 F5D — CLOSED.**  
+**D13 — CLOSED.** **ARCH-5 F5E — CLOSED.**
+
+**Secuencia congelada (SSOT):**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 ✓ → D10 ✓ → D11 ✓ → D12 ✓ → D13 ✓ → D14 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D14** (siguiente) | ARCH-5 | F5F — UI paneles metodológicos (`ScientificPublicationDashboard` → `components/methodology/`) | D13 CLOSED |
+
+**Próxima fase:** **D14 — ARCH-5 F5F** (extracción UI `ScientificPublicationDashboard` y paneles metodológicos restantes). El dominio SCI-60 ya está modularizado; D14 trabaja exclusivamente sobre la capa de presentación.
+
+No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
+
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D14**.
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
