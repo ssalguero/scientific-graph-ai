@@ -64,6 +64,10 @@ assertCase(
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const pageSource = readFileSync(join(repoRoot, "src/app/page.tsx"), "utf8");
+const useSmartStartSource = readFileSync(
+  join(repoRoot, "src/app/useSmartStart.ts"),
+  "utf8"
+);
 const intentRulesSource = readFileSync(
   join(repoRoot, "src/lib/smart-start/intent-rules.ts"),
   "utf8"
@@ -73,7 +77,7 @@ const barrelSource = readFileSync(
   "utf8"
 );
 
-const handlerSwitchMatch = pageSource.match(
+const handlerSwitchMatch = useSmartStartSource.match(
   /const handleSmartStartSelect = \(optionId: string\) => \{[\s\S]*?switch \(optionId\) \{([\s\S]*?)\n\s*default:/
 );
 

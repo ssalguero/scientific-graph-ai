@@ -74,14 +74,11 @@ import {
 } from "./ProjectScientificFilePanel";
 import { LocalProjectsPanel } from "./LocalProjectsPanel";
 import { useGraphEditorProjectFile, type UseGraphEditorProjectFileParams } from "./useGraphEditorProjectFile";
+import { useSmartStart } from "./useSmartStart";
 import {
   LabExpertModeToast,
   LabUsageProfileSelector,
 } from "./LabUsageProfileSelector";
-import type {
-  IntentRecommendation,
-  SmartStartNavIntent,
-} from "@/lib/smart-start";
 import {
   profileForcesInspectorGroupsOpen,
   profileShowsAdvancedResults,
@@ -19108,17 +19105,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState(false);
   const [guidedWorkflowSession, setGuidedWorkflowSession] =
     useState<GuidedWorkflowSession>(GUIDED_WORKFLOW_IDLE_SESSION);
-  const [smartStartDismissed, setSmartStartDismissed] = useState(false);
-  const [smartStartNavIntent, setSmartStartNavIntent] =
-    useState<SmartStartNavIntent>("idle");
   const [dataSectionOpen, setDataSectionOpen] = useState({
     constructor: false,
     import: true,
     multiDataset: false,
   });
-  const [showCompareStepsBanner, setShowCompareStepsBanner] = useState(false);
-  const [showPublicationEntryBanner, setShowPublicationEntryBanner] =
-    useState(false);
   const [highlightPublicationDashboards, setHighlightPublicationDashboards] =
     useState(false);
   const [statisticsDashboardsOpen, setStatisticsDashboardsOpen] =
@@ -19335,10 +19326,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   ]);
 
   useEffect(() => {
-    setSmartStartDismissed(false);
-  }, [projectMetadata.id]);
-
-  useEffect(() => {
     if (!graphSaveToast) return;
     const timer = window.setTimeout(() => setGraphSaveToast(null), 4500);
     return () => window.clearTimeout(timer);
@@ -19363,48 +19350,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }, 12000);
     return () => window.clearTimeout(timer);
   }, [highlightPublicationDashboards, highlightProjectPanel]);
-
-  useEffect(() => {
-    if (smartStartNavIntent === "idle") return;
-
-    const timer = window.setTimeout(() => {
-      switch (smartStartNavIntent) {
-        case "analyze-dataset":
-          dataImportSectionRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-          break;
-        case "compare-datasets":
-          dataMultiDatasetSectionRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-          break;
-        case "evaluate-publication":
-          break;
-        case "math-graph":
-          dataConstructorSectionRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-          firstCurveExpressionRef.current?.focus();
-          break;
-        case "open-project":
-          projectPanelRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-          });
-          openProjectButtonRef.current?.focus();
-          break;
-        default:
-          break;
-      }
-      setSmartStartNavIntent("idle");
-    }, 150);
-
-    return () => window.clearTimeout(timer);
-  }, [smartStartNavIntent]);
 
   useEffect(() => {
     const visible = ANALYSIS_INSPECTOR_CATEGORIES.filter((category) =>
@@ -21627,6 +21572,47 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       }
     }
   };
+  const {
+    showSmartStartScreen,
+    showCompareStepsBanner,
+    showPublicationEntryBanner,
+    handleSmartStartSelect,
+    handleSmartStartExpertMode,
+    handleIntentRecommendationStart,
+    handlePublicationEntryGoToImport,
+    handlePublicationEntryStartWorkflow,
+    selectWorkspaceSection,
+    dismissCompareStepsBanner,
+    dismissPublicationEntryBanner,
+  } = useSmartStart({
+    projectId: projectMetadata.id,
+    currentDatasetInfo,
+    experimentalSeries,
+    curves,
+    chartData,
+    selectedGraphId,
+    guidedWorkflowSession,
+    guidedWorkflowContext,
+    labUsageProfile,
+    dataImportSectionRef,
+    dataMultiDatasetSectionRef,
+    dataConstructorSectionRef,
+    firstCurveExpressionRef,
+    projectPanelRef,
+    openProjectButtonRef,
+    setActiveWorkspaceSection,
+    setDataWorkspaceView,
+    setDataSectionOpen,
+    setLabUsageProfile,
+    setStatisticsDashboardsOpen,
+    setExpertModeToastVisible,
+    setAnalysisInspectorSection,
+    setControlPanelTab,
+    setShowMultiDatasetComparison,
+    setHighlightPublicationDashboards,
+    setHighlightProjectPanel,
+    startGuidedWorkflow,
+  });
   const cancelGuidedWorkflow = () => {
     const snapshot = workflowVisibilitySnapshotRef.current;
     if (snapshot !== null) {
@@ -21741,42 +21727,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
     advanceGuidedWorkflowStep(step.id, true);
   };
-  const hasActiveCurveExpressions = curves.some(
-    (curve) => curve.expression.trim().length > 0
-  );
-  const isGuidedWorkflowInactive =
-    guidedWorkflowSession.status === "idle" ||
-    guidedWorkflowSession.status === "cancelled";
-  const showSmartStartScreen =
-    !smartStartDismissed &&
-    !currentDatasetInfo &&
-    experimentalSeries.length === 0 &&
-    !hasActiveCurveExpressions &&
-    chartData.length === 0 &&
-    !selectedGraphId &&
-    isGuidedWorkflowInactive;
-  useEffect(() => {
-    if (showSmartStartScreen) {
-      setActiveWorkspaceSection("home");
-    }
-  }, [showSmartStartScreen]);
-  const handleSmartStartExpertMode = () => {
-    setLabUsageProfile("expert");
-    setSmartStartDismissed(true);
-    setActiveWorkspaceSection("data");
-    setDataWorkspaceView("advanced");
-    setStatisticsDashboardsOpen(true);
-    setExpertModeToastVisible(true);
-  };
-  const selectWorkspaceSection = (section: WorkspaceSection) => {
-    if (section === "home") {
-      setSmartStartDismissed(false);
-      setActiveWorkspaceSection("home");
-      return;
-    }
-    setSmartStartDismissed(true);
-    setActiveWorkspaceSection(section);
-  };
   const handleVisualGraphCreate = (result: {
     graphSpec: GraphSpecification;
     preview: VisualGraphPreview;
@@ -21795,108 +21745,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       result.graphSpec.title?.trim() || result.preview.title || title
     );
     selectWorkspaceSection("results");
-  };
-  const handleSmartStartSelect = (optionId: string) => {
-    setSmartStartDismissed(true);
-    setShowPublicationEntryBanner(false);
-    setHighlightPublicationDashboards(false);
-    setHighlightProjectPanel(false);
-    switch (optionId) {
-      case "analyze-dataset":
-        setActiveWorkspaceSection("data");
-        setDataWorkspaceView("experimental");
-        setShowCompareStepsBanner(false);
-        setDataSectionOpen({
-          constructor: false,
-          import: true,
-          multiDataset: false,
-        });
-        setSmartStartNavIntent("analyze-dataset");
-        break;
-      case "compare-datasets":
-        if (labUsageProfile === "basic") {
-          setLabUsageProfile("standard");
-        }
-        setActiveWorkspaceSection("data");
-        setShowMultiDatasetComparison(true);
-        setShowCompareStepsBanner(true);
-        setDataSectionOpen({
-          constructor: false,
-          import: false,
-          multiDataset: true,
-        });
-        setSmartStartNavIntent("compare-datasets");
-        break;
-      case "evaluate-publication": {
-        setActiveWorkspaceSection("analysis");
-        setAnalysisInspectorSection("statistics");
-        setStatisticsDashboardsOpen(true);
-        setHighlightPublicationDashboards(true);
-        setShowCompareStepsBanner(false);
-        const plan = buildGuidedWorkflowPlan(
-          "evaluate-publication",
-          guidedWorkflowContext
-        );
-        if (plan) {
-          startGuidedWorkflow("evaluate-publication");
-        } else {
-          setShowPublicationEntryBanner(true);
-        }
-        setSmartStartNavIntent("evaluate-publication");
-        break;
-      }
-      case "math-graph":
-        if (labUsageProfile === "basic") {
-          setLabUsageProfile("standard");
-        }
-        setActiveWorkspaceSection("data");
-        setDataWorkspaceView("curves");
-        setControlPanelTab("graph");
-        setShowCompareStepsBanner(false);
-        setDataSectionOpen({
-          constructor: true,
-          import: false,
-          multiDataset: false,
-        });
-        setSmartStartNavIntent("math-graph");
-        break;
-      case "open-project":
-        setHighlightProjectPanel(true);
-        setSmartStartNavIntent("open-project");
-        break;
-      default:
-        break;
-    }
-  };
-  const handleIntentRecommendationStart = (
-    recommendation: IntentRecommendation
-  ) => {
-    setLabUsageProfile(recommendation.recommendedProfile);
-    if (recommendation.intentId === "expert-mode") {
-      handleSmartStartExpertMode();
-      return;
-    }
-    handleSmartStartSelect(recommendation.intentId);
-  };
-  const handlePublicationEntryGoToImport = () => {
-    setShowPublicationEntryBanner(false);
-    setActiveWorkspaceSection("data");
-    setDataSectionOpen({
-      constructor: false,
-      import: true,
-      multiDataset: false,
-    });
-    setSmartStartNavIntent("analyze-dataset");
-  };
-  const handlePublicationEntryStartWorkflow = () => {
-    const plan = buildGuidedWorkflowPlan(
-      "evaluate-publication",
-      guidedWorkflowContext
-    );
-    if (plan) {
-      setShowPublicationEntryBanner(false);
-      startGuidedWorkflow("evaluate-publication");
-    }
   };
   const buildCurrentDatasetAnalysisProfile = (
     slotLabel: ComparisonSlotId
@@ -24114,7 +23962,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 <CompareStepsBanner
                   slotAReady={comparisonSlots.A.profile !== null}
                   slotBReady={comparisonSlots.B.profile !== null}
-                  onDismiss={() => setShowCompareStepsBanner(false)}
+                  onDismiss={dismissCompareStepsBanner}
                 />
               ) : null}
               <NotebookSection
@@ -24856,7 +24704,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 }
                 onStartWorkflow={handlePublicationEntryStartWorkflow}
                 onGoToImport={handlePublicationEntryGoToImport}
-                onDismiss={() => setShowPublicationEntryBanner(false)}
+                onDismiss={dismissPublicationEntryBanner}
               />
             ) : null}
             {guidedWorkflowHostTab === "analysis" &&
