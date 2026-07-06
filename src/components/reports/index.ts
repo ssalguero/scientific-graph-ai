@@ -1,3 +1,5 @@
+export { ScientificPublicationDashboard } from "./ScientificPublicationDashboard";
+
 export { PdfExportVisibilityBanner } from "./PdfExportVisibilityBanner";
 export type { PdfExportVisibilityBannerProps } from "./PdfExportVisibilityBanner";
 
