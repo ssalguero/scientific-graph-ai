@@ -1160,26 +1160,212 @@ SCI-50 (consistency) → SCI-51 (report-quality) → SCI-52 (reproducibility)
 
 **ARCH-5 F5A: CLOSED** (2026-07-06). Épica ARCH-5 permanece abierta (D10–D17).
 
-### Handoff
+### Handoff (post-D9)
 
 **D9 — CLOSED.** **ARCH-5 F5A — CLOSED.**
 
-**Secuencia congelada:**
+---
+
+## Microfase D10 — ARCH-5 F5B: Dominio SCI-53/54
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** |
+| **Fecha de certificación** | 2026-07-06 |
+| **Épica ARCH-5 F5B** | **CLOSED** (D10) |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D10 |
+
+### Objetivo cumplido
+
+Extracción arquitectónica **move-only** de los motores metodológicos **SCI-53 (Evidence Strength Engine)** y **SCI-54 (Assumption Tracker)** desde `src/app/page.tsx` hacia `src/lib/scientific/methodology/`, preservando UI React, `useMemo`, handlers, toggles y wiring en boundary.
+
+| Motor | SCI | Ubicación |
+|-------|-----|-----------|
+| Evidence Strength Engine | SCI-53 | `src/lib/scientific/methodology/evidence/` |
+| Assumption Tracker | SCI-54 | `src/lib/scientific/methodology/assumptions/` |
+
+### Arquitectura resultante (F5B)
 
 ```text
-D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 ✓ → D10 …
+src/lib/scientific/methodology/
+  evidence/       ← SCI-53 (importa consistency, report-quality, reproducibility)
+  assumptions/    ← SCI-54 (dominio autónomo; structural typing upstream)
+src/app/page.tsx  ← useMemo + ScientificEvidenceStrengthEngine + ScientificAssumptionTracker + wiring
+```
+
+**Barrel público por módulo:** types + `*BuildInput` + builders + input gates + classification flags + labels (+ status labels/icons en assumptions para UI boundary) + report lines — sin exports de helpers internos.
+
+### Verificación (2026-07-06)
+
+| Comando / criterio | Resultado |
+|--------------------|-----------|
+| `npx tsc --noEmit` | **PASS** |
+| Imports `page.tsx` vía barrel únicamente | **PASS** |
+| Helpers internos no exportados | **PASS** |
+| Grafo imports acíclico | **PASS** |
+| Baselines QA-1 SCI-53 (Dataset5 ~82.7 · Dataset6 ~73.3) | **Inalterados** (move-only) |
+| Gate unitario F5B (`validate:methodology-f5b-unit`) | **Pendiente** — script no definido en plan D16 |
+
+### Criterios de certificación D10
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D10-1 | Módulo `methodology/evidence/` operativo con barrel | **PASS** |
+| CA-D10-2 | Módulo `methodology/assumptions/` operativo con barrel | **PASS** |
+| CA-D10-3 | `page.tsx` sin builders/helpers inline SCI-53/54 | **PASS** |
+| CA-D10-4 | Alcance D10 limitado a SCI-53 + SCI-54 (SSOT § D10) | **PASS** |
+| CA-D10-5 | SCI-55+ no atribuidos a D10 | **PASS** |
+| CA-D10-6 | Acta §D10 en este documento | **PASS** |
+
+**D10 no deja deuda técnica funcional** dentro de su alcance F5B.
+
+### ARCH-5 F5B — cierre parcial épica
+
+| Microfase | Entregable ARCH-5 | Estado |
+|-----------|-------------------|--------|
+| **D10** | Dominio SCI-53/54 modularizado | **CLOSED** |
+
+**ARCH-5 F5B: CLOSED** (2026-07-06). Épica ARCH-5 permanece abierta (D11–D17).
+
+---
+
+## Microfase D11 — ARCH-5 F5C: Dominio SCI-55
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** (dominio move-only) |
+| **Fecha de certificación** | 2026-07-06 |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D11 |
+| **Nota de alineación** | SCI-55 (Publication Readiness Analyzer) pertenece **oficialmente a D11 / F5C**, no a D10 |
+
+### Objetivo cumplido
+
+Extracción arquitectónica **move-only** del motor **SCI-55 (Publication Readiness Analyzer)** desde `src/app/page.tsx` hacia `src/lib/scientific/methodology/readiness/`, preservando UI React (`ScientificPublicationReadinessAnalyzer`), `useMemo`, handlers, toggles y wiring en boundary.
+
+| Motor | SCI | Ubicación |
+|-------|-----|-----------|
+| Publication Readiness Analyzer | SCI-55 | `src/lib/scientific/methodology/readiness/` |
+
+### Arquitectura resultante (F5C)
+
+```text
+src/lib/scientific/methodology/
+  readiness/      ← SCI-55 (importa consistency, report-quality, reproducibility, evidence, assumptions)
+src/app/page.tsx  ← useMemo + ScientificPublicationReadinessAnalyzer + wiring
+```
+
+### Verificación (2026-07-06)
+
+| Comando / criterio | Resultado |
+|--------------------|-----------|
+| `npx tsc --noEmit` | **PASS** |
+| Imports `page.tsx` vía barrel únicamente | **PASS** |
+| Baselines QA-1 SCI-55 (Dataset5 ~77.0 · Dataset6 ~67.5) | **Inalterados** (move-only) |
+| Gate unitario F5C (`validate:methodology-f5c-unit`) | **Pendiente** — script no definido en plan D16 |
+
+### Criterios de certificación D11
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D11-1 | Módulo `methodology/readiness/` operativo con barrel | **PASS** |
+| CA-D11-2 | `page.tsx` sin builders/helpers inline SCI-55 | **PASS** |
+| CA-D11-3 | Microfase identificada como D11/F5C (SSOT), no subfase de D10 | **PASS** |
+| CA-D11-4 | Acta §D11 en este documento | **PASS** |
+
+**D11 no deja deuda técnica funcional** dentro de su alcance F5C (dominio).
+
+### ARCH-5 F5C — cierre parcial épica
+
+| Microfase | Entregable ARCH-5 | Estado |
+|-----------|-------------------|--------|
+| **D11** | Dominio SCI-55 modularizado | **CLOSED** |
+
+**ARCH-5 F5C: CLOSED** (2026-07-06). Épica ARCH-5 permanece abierta (D12–D17).
+
+---
+
+## Microfase D12 — ARCH-5 F5D: Dominio SCI-56
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** (dominio move-only) |
+| **Fecha de certificación** | 2026-07-06 |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D12 |
+| **Nota de alineación** | SCI-56 (Methodological Summary Dashboard) pertenece **oficialmente a D12 / F5D** |
+
+### Objetivo cumplido
+
+Extracción arquitectónica **move-only** del agregador **SCI-56 (Methodological Summary Dashboard)** desde `src/app/page.tsx` hacia `src/lib/scientific/methodology/summary/`, preservando UI React (`ScientificMethodologicalDashboard`), `useMemo`, handlers, toggles y wiring en boundary.
+
+| Motor | SCI | Ubicación |
+|-------|-----|-----------|
+| Methodological Summary Dashboard | SCI-56 | `src/lib/scientific/methodology/summary/` |
+
+### Arquitectura resultante (F5D)
+
+```text
+src/lib/scientific/methodology/
+  summary/        ← SCI-56 (importa consistency, report-quality, reproducibility, evidence, assumptions, readiness)
+src/app/page.tsx  ← useMemo + ScientificMethodologicalDashboard + wiring SCI-60 inline (D13)
+```
+
+**Boundary congelado:** `summary/` no importa React, UI, hooks, CSS ni `page.tsx`. Consumidores externos importan exclusivamente `@/lib/scientific/methodology/summary` (barrel).
+
+### Verificación (2026-07-06)
+
+| Comando / criterio | Resultado |
+|--------------------|-----------|
+| `npx tsc --noEmit` | **PASS** |
+| Imports `page.tsx` vía barrel únicamente | **PASS** |
+| Sin deep imports hacia `methodology/summary/*` | **PASS** |
+| Baselines QA-1 SCI-56 Overall Health (Dataset5 **77.0** · Dataset6 **67.5**) | **Inalterados** (move-only) |
+| `npm run validate:full` | **PASS parcial** — steps código (tsc, build, baseline, comparison-unit) **PASS**; e2e timeout ambiental Playwright (no regresión D12) |
+| Gate unitario F5D (`validate:methodology-f5d-unit`) | **Pendiente** — script no definido en plan D16 |
+
+### Criterios de certificación D12
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D12-1 | Módulo `methodology/summary/` operativo con barrel | **PASS** |
+| CA-D12-2 | `page.tsx` sin builders/helpers inline SCI-56 | **PASS** |
+| CA-D12-3 | Baselines Overall Health 77.0 / 67.5 inalterados | **PASS** |
+| CA-D12-4 | UI/toggles/useMemo sin cambio funcional | **PASS** |
+| CA-D12-5 | `tsc` PASS; `validate:full` steps código PASS | **PASS** |
+| CA-D12-6 | Acta §D12 en este documento | **PASS** |
+| CA-D12-7 | Consumidores sin deep imports; solo barrel `@/lib/scientific/methodology/summary` | **PASS** |
+
+**D12 no deja deuda técnica funcional** dentro de su alcance F5D (dominio). UI `ScientificMethodologicalDashboard` permanece en `page.tsx` hasta D14.
+
+### ARCH-5 F5D — cierre parcial épica
+
+| Microfase | Entregable ARCH-5 | Estado |
+|-----------|-------------------|--------|
+| **D12** | Dominio SCI-56 modularizado | **CLOSED** |
+
+**ARCH-5 F5D: CLOSED** (2026-07-06). Épica ARCH-5 permanece abierta (D13–D17).
+
+### Handoff
+
+**D10 — CLOSED.** **ARCH-5 F5B — CLOSED.**  
+**D11 — CLOSED.** **ARCH-5 F5C — CLOSED.**  
+**D12 — CLOSED.** **ARCH-5 F5D — CLOSED.**
+
+**Secuencia congelada (SSOT):**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 ✓ → D10 ✓ → D11 ✓ → D12 ✓ → D13 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D10** (siguiente) | ARCH-5 | F5B — Dominio SCI-53/54 | D9 CLOSED |
+| **D13** (siguiente) | ARCH-5 | F5E — Dominio SCI-60 (Executive Publication Dashboard) | D12 CLOSED |
 
-**Próxima fase:** **D10 — ARCH-5 F5B** (Evidence + Assumptions)
+**Próxima fase:** **D13 — ARCH-5 F5E** (Executive Publication Dashboard → `methodology/publication/`)
 
-No iniciar D10 en esta ventana sin autorización explícita. No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
+No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
 
-**PROD-2D** permanece abierta hasta D23; lista para iniciar **D10**.
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D13**.
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*

@@ -37,7 +37,7 @@ Invariantes intocables:
 | ARCH-6 (observaciones QA-1 §10) | **Abierto** — objetivo PROD-2D | Este discovery |
 | UX-2A (branding, Smart Start) | **Pendiente** — placeholders Next.js | `layout.tsx` |
 | UX-2B (Historial / Configuración) | **Stubs** «Próximamente» | `page.tsx` sidebar |
-| ARCH-5 F5 (metodología SCI-50→60 inline) | **Pendiente** — ~3.2k LOC en monolito | `page.tsx` |
+| ARCH-5 F5 (metodología SCI-50→60 inline) | **En curso** — dominio SCI-50→56 extraído (D9–D12); pendiente SCI-60 dominio (D13) + UI (D14) | `methodology/*` + `page.tsx` boundary |
 | Versión producto | `0.1.0` pre-v1.0 | `package.json` |
 | Siguiente fase estratégica | **PROD-2D** | Master Roadmap §3.1 |
 
@@ -87,7 +87,7 @@ flowchart TB
   LocalPanel --> Project
 ```
 
-**Ya modularizado (ARCH-5 F1–F4):**
+**Ya modularizado (ARCH-5 F1–F4 + F5 parcial D9–D12):**
 
 | Módulo | Ubicación | Permanece en monolito |
 |--------|-----------|----------------------|
@@ -95,23 +95,24 @@ flowchart TB
 | Workflow SCI-59 dominio | `scientific/workflow/` | `GuidedWorkflowPanel`, handlers React |
 | Inferencia SCI-12–15 + SCI-57 | `scientific/inference/` | toggles + UI inferencial |
 | Comparación SCI-58 | `scientific/comparison/` + `components/comparison/` | capture slots, wrapper Resultados |
+| Metodología SCI-50→56 dominio | `scientific/methodology/{consistency,report-quality,reproducibility,evidence,assumptions,readiness,summary}/` | `useMemo`, toggles, paneles `Scientific*` UI (D14) |
 
 ### 1.4 Inventario preliminar bloques SCI-50→SCI-60 en `page.tsx`
 
 | Bloque | Motor | Builder principal (L approx.) | LOC approx. | Estado ARCH-5 |
 |--------|-------|-------------------------------|-------------|---------------|
-| SCI-50 | Consistency Engine | `buildConsistencyEngineAnalysis` ~10575 | ~420 | **F5A — pendiente** |
-| SCI-51 | Report Quality Engine | `buildReportQualityEngineAnalysis` ~10994 | ~300 | **F5A — pendiente** |
-| SCI-52 | Reproducibility Explorer | `buildReproducibilityExplorerAnalysis` ~11296 | ~250 | **F5A — pendiente** |
-| SCI-53 | Evidence Strength Engine | `buildEvidenceStrengthEngineAnalysis` ~11600 | ~390 | **F5B — pendiente** |
-| SCI-54 | Assumption Tracker | `buildAssumptionTrackerAnalysis` ~11981 | ~290 | **F5B — pendiente** |
-| SCI-55 | Publication Readiness | `buildPublicationReadinessAnalyzerAnalysis` ~12271 | ~220 | **F5C — pendiente** |
-| SCI-56 | Methodological Dashboard | `buildMethodologicalDashboardAnalysis` ~12515 | ~240 | **F5D — pendiente** |
-| SCI-60 | Executive Publication Dashboard | `buildPublicationDashboardAnalysis` ~13043 | ~810 | **F5E — pendiente** |
-| SCI-59 UI | Guided Workflow Panel | `GuidedWorkflowPanel` ~13493 | ~65 | **F5G — pendiente** |
-| UX Home | Smart Start | `SmartStartScreen` ~13615 | ~220 | **UX-2A D2 — pendiente** |
+| SCI-50 | Consistency Engine | `buildConsistencyEngineAnalysis` | ~420 | **F5A — extracción completada (D9)** → `methodology/consistency/` |
+| SCI-51 | Report Quality Engine | `buildReportQualityEngineAnalysis` | ~300 | **F5A — extracción completada (D9)** → `methodology/report-quality/` |
+| SCI-52 | Reproducibility Explorer | `buildReproducibilityExplorerAnalysis` | ~250 | **F5A — extracción completada (D9)** → `methodology/reproducibility/` |
+| SCI-53 | Evidence Strength Engine | `buildEvidenceStrengthEngineAnalysis` | ~390 | **F5B — extracción completada (D10)** → `methodology/evidence/` |
+| SCI-54 | Assumption Tracker | `buildAssumptionTrackerAnalysis` | ~290 | **F5B — extracción completada (D10)** → `methodology/assumptions/` |
+| SCI-55 | Publication Readiness | `buildPublicationReadinessAnalyzerAnalysis` | ~220 | **F5C — extracción completada (D11)** → `methodology/readiness/` |
+| SCI-56 | Methodological Dashboard | `buildMethodologicalDashboardAnalysis` | ~270 | **F5D — extracción completada (D12)** → `methodology/summary/` |
+| SCI-60 | Executive Publication Dashboard | `buildPublicationDashboardAnalysis` | ~810 | **F5E — pendiente (D13)** |
+| SCI-59 UI | Guided Workflow Panel | `GuidedWorkflowPanel` | ~65 | **F5G — pendiente** |
+| UX Home | Smart Start | `SmartStartScreen` | ~220 | **UX-2A D2 — completada** |
 
-**Total bloque metodología inline:** ~3.200 LOC (dominio + interpretaciones + UI parcial). UI de paneles `Scientific*Engine/Dashboard` permanece distribuida en `page.tsx` hasta D14.
+**Total bloque metodología inline:** ~2.930 LOC (dominio SCI-60 + interpretaciones + UI parcial; dominio SCI-50→56 extraído D9–D12). UI de paneles `Scientific*Engine/Dashboard` permanece distribuida en `page.tsx` hasta D14.
 
 **Baselines QA-1 inmutables (regresión obligatoria):**
 
@@ -187,8 +188,8 @@ ARCH-5 F5 en PROD-2D es **parcial**; continúa en PROD-2E y PROD-3 según módul
 | **F5A** | Dominio SCI-50 + SCI-51 + SCI-52 | D9 |
 | **F5B** | Dominio SCI-53 + SCI-54 | D10 |
 | **F5C** | Dominio SCI-55 | D11 |
-| **F5D** | Dominio SCI-56 | D12 |
-| **F5E** | Dominio SCI-60 | D13 |
+| **F5D** | Dominio SCI-56 | D12 — **COMPLETED** |
+| **F5E** | Dominio SCI-60 | D13 — **siguiente** |
 | **F5F** | UI paneles metodológicos → `components/methodology/` | D14 |
 | **F5G** | UI `GuidedWorkflowPanel` → `components/workflow/` | D15 |
 | **F5H** | Tests integrados + gate metodología | D16 |
@@ -205,9 +206,9 @@ src/lib/scientific/methodology/
   reproducibility/  ← SCI-52
   evidence/         ← SCI-53
   assumptions/      ← SCI-54
-  readiness/        ← SCI-55
-  summary/          ← SCI-56
-  publication/      ← SCI-60
+  readiness/        ← SCI-55 (D11)
+  summary/          ← SCI-56 (D12)
+  publication/      ← SCI-60 (D13 — pendiente)
 src/components/methodology/   ← paneles UI
 src/components/workflow/      ← GuidedWorkflowPanel (dominio ya en workflow/)
 ```
