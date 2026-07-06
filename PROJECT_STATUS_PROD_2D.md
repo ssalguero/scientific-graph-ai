@@ -1405,7 +1405,7 @@ src/lib/scientific/methodology/publication/
   build.ts           ← gate, orquestador, sub-builders (3 exportados para comparison)
   reporting.ts       ← getPublicationDashboardReportLines + helpers privados
   index.ts           ← barrel API Freeze
-src/app/page.tsx     ← useMemo + comparison capture + ScientificPublicationDashboard (UI) + toggles
+src/app/page.tsx     ← useMemo + comparison capture + import UI SCI-60 (D14) + toggles
 ```
 
 **Boundary congelado:** `publication/` no importa React, UI, hooks, CSS ni `page.tsx`. Consumidores externos importan exclusivamente `@/lib/scientific/methodology/publication` (barrel).
@@ -1483,7 +1483,7 @@ Baselines QA-1 Publication Status (move-only, referencia): Dataset5 **Near Ready
 | CA-D13.6-6 | Sin cambios funcionales | **PASS** |
 | CA-D13.6-7 | `npx tsc --noEmit` PASS | **PASS** |
 
-**D13 no deja deuda técnica funcional** dentro de su alcance F5E (dominio). UI `ScientificPublicationDashboard` permanece en `page.tsx` hasta **D14 — ARCH-5 F5F**.
+**D13 no deja deuda técnica funcional** dentro de su alcance F5E (dominio). UI `ScientificPublicationDashboard` fue extraída en **D14 — ARCH-5 F5F** (ver §D14).
 
 ### ARCH-5 F5E — cierre parcial épica
 
@@ -1493,27 +1493,162 @@ Baselines QA-1 Publication Status (move-only, referencia): Dataset5 **Near Ready
 
 **ARCH-5 F5E: CLOSED** (2026-07-06). Épica ARCH-5 permanece abierta (D14–D17).
 
+---
+
+## Microfase D14 — ARCH-5 F5F: UI SCI-60 (Scientific Reports)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** (extracción UI move-only) |
+| **Fecha de certificación** | 2026-07-06 |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D14 · [`D14_1_SCI60_UI_PREP.md`](./D14_1_SCI60_UI_PREP.md) |
+| **Nota de alineación** | D14 acotado exclusivamente a SCI-60 UI → `components/reports/`; SCI-50–56 permanecen inline |
+
+### Objetivo cumplido
+
+Extracción arquitectónica **move-only** del componente presentacional **`ScientificPublicationDashboard`** desde `src/app/page.tsx` hacia `src/components/reports/ScientificPublicationDashboard.tsx`, preservando wiring `useMemo`, toggles, panel shell, Visibility Registry, Workflow SCI-59, PDF y dominio `methodology/publication/` sin cambios.
+
+| Capa | SCI | Ubicación post-D14 |
+|------|-----|-------------------|
+| Dominio Executive Publication Dashboard | SCI-60 | `src/lib/scientific/methodology/publication/` (D13 — intocable) |
+| UI Executive Publication Dashboard | SCI-60 | `src/components/reports/ScientificPublicationDashboard.tsx` |
+
+### Microfases D14.1–D14.3
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D14.1** | Baseline + inventario UI (`D14_1_SCI60_UI_PREP.md`) | **CLOSED** |
+| **D14.2** | `ScientificPublicationDashboard.tsx` + barrel + wiring `page.tsx` | **CLOSED** |
+| **D14.3** | Gate final + acta §D14 | **CLOSED** |
+
+**Commits de referencia:** `1c50a7c` (D14.1 prep) · `b50060c` (D14.2 extract)
+
+### Arquitectura resultante (F5F — SCI-60 UI)
+
+```text
+src/components/reports/
+  ScientificPublicationDashboard.tsx   ← UI SCI-60 monolítica (move-only)
+  index.ts                             ← barrel (+ export ScientificPublicationDashboard)
+  PdfExportVisibilityBanner.tsx        ← D8 — intocable
+  resolve-pdf-export-disclaimer.ts     ← D8 — intocable
+src/lib/scientific/methodology/publication/   ← dominio D13 — intocable
+src/app/page.tsx                       ← useMemo + toggles + panel shell + import UI
+```
+
+**Boundary congelado:** `ScientificPublicationDashboard` recibe `analysis: PublicationDashboardAnalysis` pre-construido; no hooks; no estado. Subdivisiones internas JSX (**backlog**, no D14).
+
+**Estructura plana:** sin subcarpeta `components/reports/publication/`.
+
+### API pública congelada (`components/reports/index.ts` — adición D14)
+
+| Export D14 | Origen |
+|------------|--------|
+| `ScientificPublicationDashboard` | `ScientificPublicationDashboard.tsx` |
+
+**No exportado (privado):** `ScientificPublicationDashboardProps` (type interno del archivo).
+
+**Exports D8 existentes — inalterados:** `PdfExportVisibilityBanner`, `resolvePdfExportDisclaimer`, tipos asociados.
+
+**API `publication/` — inalterada (D13):** 8 exports congelados; cero diffs en D14.
+
+### Métricas finales D14
+
+| Métrica | Valor |
+|---------|-------|
+| LOC `page.tsx` antes (baseline D14.1) | **26.631** |
+| LOC `page.tsx` después (post-D14.2) | **26.409** |
+| Reducción neta `page.tsx` | **−222 LOC** |
+| LOC componente extraído | **233** (`ScientificPublicationDashboard.tsx`) |
+| Archivos creados | **1** |
+| Archivos modificados (D14.2) | **2** (`page.tsx`, `components/reports/index.ts`) |
+| Definiciones `ScientificPublicationDashboard` repo-wide | **1** |
+
+Baselines QA-1 Publication Status (move-only, referencia): Dataset5 **Near Ready 77.0** · Dataset6 **Requires Review 67.5**.
+
+### Verificación gate final D14.3 (2026-07-06)
+
+| Comando / criterio | Resultado |
+|--------------------|-----------|
+| `npx tsc --noEmit` | **PASS** |
+| Una sola definición `ScientificPublicationDashboard` | **PASS** — `components/reports/ScientificPublicationDashboard.tsx` |
+| `publication/` sin cambios en D14 | **PASS** |
+| `workflow/` sin cambios en D14 | **PASS** |
+| Visibility Registry sin cambios en D14 | **PASS** |
+| Barrel mínimo — solo `ScientificPublicationDashboard` export nuevo | **PASS** |
+| Props privadas — no export en barrel | **PASS** |
+| Estructura plana `components/reports/` (4 archivos, sin subcarpetas) | **PASS** |
+| Move-only certificado (D14.2 diff) | **PASS** — traslado literal + copias CSS/helpers |
+| Paneles SCI-50–56, SCI-59 inline sin cambios | **PASS** |
+| Wiring `useMemo` / panel shell / toggles intactos | **PASS** |
+
+### Criterios de certificación D14 (épica)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D14-1** | `npx tsc --noEmit` PASS | **PASS** |
+| **CA-D14-2** | Move-only certificado | **PASS** |
+| **CA-D14-3** | Sin cambios visuales (JSX/CSS/orden idénticos) | **PASS** |
+| **CA-D14-4** | Sin cambios funcionales (toggle, gate, PDF, shell) | **PASS** |
+| **CA-D14-5** | Barrel mínimo correcto | **PASS** |
+| **CA-D14-6** | Sin deep imports hacia `publication/*` desde UI | **PASS** |
+| **CA-D14-7** | API Freeze `publication/` respetada | **PASS** |
+| **CA-D14-8** | Baselines QA-1 77.0 / 67.5 inalterados (move-only) | **PASS** |
+| **CA-D14-9** | Una sola definición `ScientificPublicationDashboard` | **PASS** |
+| **CA-D14-10** | `publication/` sin React/components | **PASS** |
+| **CA-D14-11** | Acta §D14 en este documento | **PASS** |
+| **CA-D14-12** | Paneles SCI-50–56 y SCI-59 sin cambios | **PASS** |
+| **CA-D14-13** | D14 cerrado con extracción única (sin splits internos) | **PASS** |
+
+### Criterios de certificación D14.3 (gate final)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D14.3-1** | Gate final ejecutado | **PASS** |
+| **CA-D14.3-2** | `PROJECT_STATUS_PROD_2D.md` actualizado | **PASS** |
+| **CA-D14.3-3** | ARCH-5 F5F (SCI-60 UI) marcado CLOSED | **PASS** |
+| **CA-D14.3-4** | Resultados de validación registrados | **PASS** |
+| **CA-D14.3-5** | Handoff hacia D15 documentado | **PASS** |
+| **CA-D14.3-6** | Sin cambios de código en D14.3 | **PASS** |
+| **CA-D14.3-7** | `npx tsc --noEmit` PASS | **PASS** |
+
+**D14 no deja deuda técnica funcional** dentro de su alcance F5F (UI SCI-60). Subdivisiones internas del dashboard permanecen en **backlog arquitectónico** (fuera de CA-D14).
+
+### ARCH-5 F5F — cierre SCI-60 UI
+
+| Microfase | Entregable ARCH-5 | Estado |
+|-----------|-------------------|--------|
+| **D14** | UI SCI-60 → `components/reports/` | **CLOSED** |
+
+**ARCH-5 F5F (SCI-60 UI): CLOSED** (2026-07-06). Épica ARCH-5 permanece abierta (D15–D17; F5F bis para SCI-50–56 UI pendiente).
+
 ### Handoff
 
 **D12 — CLOSED.** **ARCH-5 F5D — CLOSED.**  
-**D13 — CLOSED.** **ARCH-5 F5E — CLOSED.**
+**D13 — CLOSED.** **ARCH-5 F5E — CLOSED.**  
+**D14 — CLOSED.** **ARCH-5 F5F (SCI-60 UI) — CLOSED.**
 
 **Secuencia congelada (SSOT):**
 
 ```text
-D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 ✓ → D10 ✓ → D11 ✓ → D12 ✓ → D13 ✓ → D14 …
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 ✓ → D10 ✓ → D11 ✓ → D12 ✓ → D13 ✓ → D14 ✓ → D15 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D14** (siguiente) | ARCH-5 | F5F — UI paneles metodológicos (`ScientificPublicationDashboard` → `components/methodology/`) | D13 CLOSED |
+| **D15** (siguiente) | ARCH-5 | F5G — UI `GuidedWorkflowPanel` (SCI-59) → `components/workflow/` | D14 CLOSED |
 
-**Próxima fase:** **D14 — ARCH-5 F5F** (extracción UI `ScientificPublicationDashboard` y paneles metodológicos restantes). El dominio SCI-60 ya está modularizado; D14 trabaja exclusivamente sobre la capa de presentación.
+**Próxima fase:** **D15 — ARCH-5 F5G** (extracción UI `GuidedWorkflowPanel` / SCI-59).
+
+**Pendiente explícito post-D14:**
+
+- **SCI-50–56:** paneles metodológicos UI permanecen inline en `page.tsx` (F5F bis / microfases ARCH-5 posteriores).
+- **SCI-59:** `GuidedWorkflowPanel` → D15.
+- **`methodology/publication/`:** API Freeze congelada — no modificar sin microfase dedicada.
 
 No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
 
-**PROD-2D** permanece abierta hasta D23; lista para iniciar **D14**.
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D15**.
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
