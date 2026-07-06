@@ -19,6 +19,7 @@
     "validate:comparison-unit": "npx tsx scripts/validate-comparison-unit.ts",
     "validate:visibility-unit": "npx tsx scripts/validate-visibility-unit.ts",
     "validate:smart-start-unit": "npx tsx scripts/validate-smart-start-unit.ts",
+    "validate:methodology-f5a-unit": "npx tsx scripts/validate-methodology-f5a-unit.ts",
     "validate:prod2b-b1-1-domain": "npx tsx scripts/validate-prod2b-b1-1-domain.ts",
     "validate:prod2b-b1-2-migrate": "npx tsx scripts/validate-prod2b-b1-2-migrate.ts",
     "validate:prod2b-b1-3-v2": "npx tsx scripts/validate-prod2b-b1-3-v2.ts",

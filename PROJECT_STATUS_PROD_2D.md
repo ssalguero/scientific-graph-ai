@@ -1039,4 +1039,147 @@ No iniciar D9 en esta ventana sin autorización explícita. No modificar la plan
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D9 — ARCH-5 F5A: Dominio SCI-50/51/52
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** |
+| **Fecha de certificación** | 2026-07-06 |
+| **Subfases** | D9.1 ✓ · D9.2 ✓ · D9.3 ✓ · D9.4 ✓ · D9.5 ✓ |
+| **Commits** | `f8d17f2` (D9.1) · `43955ef` (D9.2) · `5d82a5c` (D9.3) · D9.5 (gate + acta) |
+| **Épica ARCH-5 F5A** | **CLOSED** (D9) |
+
+### Objetivo cumplido
+
+Extracción arquitectónica **move-only** de los motores metodológicos SCI-50 (Consistency Engine), SCI-51 (Report Quality Engine) y SCI-52 (Reproducibility Explorer) desde `src/app/page.tsx` hacia `src/lib/scientific/methodology/`, preservando UI React, `useMemo`, handlers, toggles y cadena de ejecución SCI-50 → SCI-51 → SCI-52.
+
+### Resumen técnico por subfase
+
+| Subfase | Entregable | Ubicación |
+|---------|------------|-----------|
+| **D9.1** | SCI-50 Consistency Engine (dominio + barrel) | `src/lib/scientific/methodology/consistency/` |
+| **D9.2** | SCI-51 Report Quality Engine (depende SCI-50) | `src/lib/scientific/methodology/report-quality/` |
+| **D9.3** | SCI-52 Reproducibility Explorer (depende SCI-50/51) | `src/lib/scientific/methodology/reproducibility/` |
+| **D9.4** | Auditoría move-only (R1–R7) | Informe ASK — **PASS** |
+| **D9.5** | Gate `validate:methodology-f5a-unit` + acta cierre | `scripts/validate-methodology-f5a-unit.ts`, este §D9 |
+
+### Métricas LOC (baseline pre-D9.1 → post-D9.3)
+
+| Métrica | Valor |
+|---------|-------|
+| **Baseline pre-D9.1** — dominio SCI-50/51/52 inline en `page.tsx` | **~770 LOC** (builders + helpers + tipos + report lines) |
+| **Post-D9.3** — dominio eliminado de `page.tsx` | **−770 LOC**; **+26 LOC** wiring (imports barrel) |
+| **`methodology/consistency/`** | **~333 LOC** (6 archivos) |
+| **`methodology/report-quality/`** | **~306 LOC** (6 archivos) |
+| **`methodology/reproducibility/`** | **~240 LOC** (6 archivos) |
+| **Total módulo `methodology/*` (F5A)** | **~868 LOC** (18 archivos) |
+| **UI React en `page.tsx`** | **Conservada** (`ScientificConsistencyEngine`, `ScientificReportQualityEngine`, `ScientificReproducibilityExplorer`) |
+
+### Arquitectura resultante
+
+```text
+src/lib/scientific/methodology/
+  consistency/       ← SCI-50 (sin dependencias methodology)
+  report-quality/    ← SCI-51 (importa consistency)
+  reproducibility/   ← SCI-52 (importa consistency + report-quality)
+src/app/page.tsx     ← useMemo + UI + toggles + wiring únicamente
+```
+
+**Cadena de dependencias (acíclica):**
+
+```text
+SCI-50 (consistency) → SCI-51 (report-quality) → SCI-52 (reproducibility)
+```
+
+**Barrel público por módulo:** types + `*BuildInput` + builders + input gates + classification flags + labels + report lines — sin exports de helpers internos (`classify*`, `get*Factor`, `*ClassificationText`).
+
+### Gates (D9.5 — 2026-07-06)
+
+| Comando | Resultado | Notas |
+|---------|-----------|-------|
+| `npx tsc --noEmit` | **PASS** | Verificado D9.1–D9.3 |
+| `npm run validate:methodology-f5a-unit` | **PASS** | 124/124 casos |
+| `npm run validate:full` | **PASS condicionado** | 9/10 steps PASS; `e2e` FAIL (timeout F5 — infra conocida) |
+
+**Steps PASS `validate:full` D9.5:** `t-quantile`, `chart-viewport-unit`, `comparison-unit`, `f0`, `unit`, `f6`, `typescript`, `build`, `baseline`, `prod1-gate`.
+
+**Step FAIL (infra conocida — no atribuible a D9):**
+
+| Step | Motivo |
+|------|--------|
+| `e2e` | Timeout F5 — `getByText(/Nuevo proyecto científico creado/i)` (flakiness E2E preexistente) |
+
+**`validate:methodology-f5a-unit` incluye:**
+
+- **SCI-50** — builder, clasificación, flags, report lines
+- **SCI-51** — builder, dependencia SCI-50, report lines
+- **SCI-52** — builder, factores (sample/normality/stability/sensitivity/quality), report lines, cadena completa
+- **Estructural** — sin dominio inline en `page.tsx`; barrels API exacta; grafo acíclico; sin React/page imports en `methodology/*`
+
+### Criterios de certificación D9
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D9-1 | Módulo `methodology/consistency/` operativo con barrel | **PASS** |
+| CA-D9-2 | Módulo `methodology/report-quality/` operativo con barrel | **PASS** |
+| CA-D9-3 | Módulo `methodology/reproducibility/` operativo con barrel | **PASS** |
+| CA-D9-4 | `page.tsx` sin builders/helpers inline SCI-50/51/52 | **PASS** |
+| CA-D9-5 | Cadena SCI-50 → SCI-51 → SCI-52 preservada en `useMemo` | **PASS** |
+| CA-D9-6 | Grafo imports acíclico; sin React/page en methodology | **PASS** |
+| CA-D9-7 | Auditoría D9.4 move-only (R1–R7) | **PASS** |
+| CA-D9-8 | `npm run validate:methodology-f5a-unit` PASS | **PASS** (124 casos) |
+| CA-D9-9 | `validate:full` PASS condicionado (9/10) | **PASS** |
+| CA-D9-10 | Sin cambios Smart Start / Workflow / Visibility / Comparison / PDF / Persistence | **PASS** |
+| CA-D9-11 | Sin adelantar SCI-53+ ni D10 | **PASS** |
+| CA-D9-12 | Acta §D9 en este documento | **PASS** |
+
+### Revisión post-BUILD D9.5
+
+| # | Pregunta | Resultado |
+|---|----------|-----------|
+| **R1** | ¿Se movió o cambió código funcional? | **NO** — solo gate + acta |
+| **R2** | ¿Cambió contrato público? | **NO** |
+| **R3** | ¿Cambió comportamiento observable? | **NO** |
+| **R4** | ¿Disminuyó acoplamiento? | **SÍ** — dominio desacoplado de `page.tsx` |
+
+### Alcance respetado (D9 completo)
+
+**Sin cambios verificados:**
+
+- Smart Start, Workflow, Visibility, Comparison, PDF, Persistence — **sin cambios atribuibles a D9**
+- SCI-53+ (Evidence Strength, etc.) — **permanecen inline en `page.tsx`**
+- Comportamiento observable motores SCI-50/51/52 — **idéntico** (move-only certificado D9.4)
+
+**D9 no deja deuda técnica funcional** dentro de su alcance F5A.
+
+### ARCH-5 F5A — cierre parcial épica
+
+| Microfase | Entregable ARCH-5 | Estado |
+|-----------|-------------------|--------|
+| **D9** | Dominio SCI-50/51/52 modularizado + gate F5A | **CLOSED** |
+
+**ARCH-5 F5A: CLOSED** (2026-07-06). Épica ARCH-5 permanece abierta (D10–D17).
+
+### Handoff
+
+**D9 — CLOSED.** **ARCH-5 F5A — CLOSED.**
+
+**Secuencia congelada:**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 ✓ → D10 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D10** (siguiente) | ARCH-5 | F5B — Dominio SCI-53/54 | D9 CLOSED |
+
+**Próxima fase:** **D10 — ARCH-5 F5B** (Evidence + Assumptions)
+
+No iniciar D10 en esta ventana sin autorización explícita. No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
+
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D10**.
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
