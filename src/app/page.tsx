@@ -184,6 +184,14 @@ import {
   type ReportQualityEngineAnalysis,
 } from "@/lib/scientific/methodology/report-quality";
 import {
+  buildReproducibilityExplorerAnalysis,
+  getReproducibilityExplorerClassificationLabel,
+  getReproducibilityExplorerReportLines,
+  hasReproducibilityExplorerLow,
+  hasReproducibilityExplorerVeryHigh,
+  type ReproducibilityExplorerAnalysis,
+} from "@/lib/scientific/methodology/reproducibility";
+import {
   buildEffectSizePowerAnalysis,
   buildPostHocSummary,
   calculateIndependentTTest,
@@ -6598,13 +6606,6 @@ type UmapExplorerAnalysis = {
   interpretation: string[];
 };
 
-type ReproducibilityExplorerAnalysis = {
-  reproducibilityScore: number;
-  classification: "very-high" | "high" | "moderate" | "low";
-  evaluatedFactors: number;
-  interpretation: string[];
-};
-
 type EvidenceStrengthEngineAnalysis = {
   evidenceScore: number;
   classification: "very-strong" | "strong" | "moderate" | "limited";
@@ -10627,200 +10628,6 @@ function ScientificReportQualityEngine({
     </div>
   );
 }
-
-const hasReproducibilityExplorerInput = (input: {
-  experimentalStatistics: ExperimentalStatistics[];
-  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
-  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
-  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
-  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
-}) =>
-  input.experimentalStatistics.length > 0 ||
-  input.bootstrapExplorerAnalysis !== null ||
-  input.sensitivityExplorerAnalysis !== null ||
-  input.reportQualityEngineAnalysis !== null ||
-  input.consistencyEngineAnalysis !== null;
-
-const getReproducibilitySampleFactor = (
-  experimentalStatistics: ExperimentalStatistics[]
-) => {
-  if (experimentalStatistics.length === 0) return 50;
-
-  const averageSampleSize =
-    experimentalStatistics.reduce((sum, stats) => sum + stats.count, 0) /
-    experimentalStatistics.length;
-
-  if (averageSampleSize >= 30) return 100;
-  if (averageSampleSize >= 15) return 80;
-  if (averageSampleSize >= 10) return 60;
-  return 40;
-};
-
-const getReproducibilityNormalityFactor = (
-  normalityConsensus: NormalityConsensus[]
-) => {
-  if (normalityConsensus.length === 0) return 50;
-
-  return (
-    normalityConsensus.reduce(
-      (sum, consensus) =>
-        sum + getCanonicalNormalityScore(consensus.conclusion),
-      0
-    ) / normalityConsensus.length
-  );
-};
-
-const getReproducibilityExplorerClassificationLabel = (
-  classification: ReproducibilityExplorerAnalysis["classification"]
-) => {
-  if (classification === "very-high") return "Very High";
-  if (classification === "high") return "High";
-  if (classification === "moderate") return "Moderate";
-  return "Low";
-};
-
-const classifyReproducibilityExplorer = (
-  reproducibilityScore: number
-): ReproducibilityExplorerAnalysis["classification"] => {
-  if (reproducibilityScore >= 85) return "very-high";
-  if (reproducibilityScore >= 70) return "high";
-  if (reproducibilityScore >= 50) return "moderate";
-  return "low";
-};
-
-const getReproducibilityExplorerClassificationText = (
-  classification: ReproducibilityExplorerAnalysis["classification"]
-) => {
-  if (classification === "very-high") {
-    return "La reproducibilidad potencial del análisis es muy alta.";
-  }
-  if (classification === "high") {
-    return "La reproducibilidad potencial del análisis es alta.";
-  }
-  if (classification === "moderate") {
-    return "La reproducibilidad potencial del análisis es moderada.";
-  }
-  return "La reproducibilidad potencial del análisis es limitada.";
-};
-
-const hasReproducibilityExplorerVeryHigh = (
-  analysis: ReproducibilityExplorerAnalysis | null
-) => analysis !== null && analysis.reproducibilityScore >= 85;
-
-const hasReproducibilityExplorerLow = (
-  analysis: ReproducibilityExplorerAnalysis | null
-) => analysis !== null && analysis.classification === "low";
-
-const buildReproducibilityExplorerInterpretation = (input: {
-  classification: ReproducibilityExplorerAnalysis["classification"];
-  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
-  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
-  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
-  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
-}): string[] => {
-  const interpretation: string[] = [
-    getReproducibilityExplorerClassificationText(input.classification),
-  ];
-
-  if (
-    input.bootstrapExplorerAnalysis &&
-    input.bootstrapExplorerAnalysis.stabilityScore >= 85
-  ) {
-    interpretation.push(
-      "La estabilidad observada favorece la reproducibilidad de los resultados."
-    );
-  }
-
-  if (
-    input.sensitivityExplorerAnalysis &&
-    input.sensitivityExplorerAnalysis.sensitivityScore >= 85
-  ) {
-    interpretation.push(
-      "Las conclusiones muestran robustez frente a variaciones potenciales."
-    );
-  }
-
-  if (
-    input.reportQualityEngineAnalysis &&
-    input.reportQualityEngineAnalysis.qualityScore >= 85
-  ) {
-    interpretation.push(
-      "La calidad metodológica observada respalda la reproducibilidad."
-    );
-  }
-
-  if (
-    input.consistencyEngineAnalysis &&
-    input.consistencyEngineAnalysis.consistencyScore >= 85
-  ) {
-    interpretation.push(
-      "La convergencia entre análisis fortalece la reproducibilidad potencial."
-    );
-  }
-
-  return deduplicateTextLines(interpretation);
-};
-
-const buildReproducibilityExplorerAnalysis = (input: {
-  experimentalStatistics: ExperimentalStatistics[];
-  normalityConsensus: NormalityConsensus[];
-  bootstrapExplorerAnalysis: BootstrapExplorerAnalysis | null;
-  sensitivityExplorerAnalysis: SensitivityExplorerAnalysis | null;
-  reportQualityEngineAnalysis: ReportQualityEngineAnalysis | null;
-  consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
-}): ReproducibilityExplorerAnalysis | null => {
-  if (!hasReproducibilityExplorerInput(input)) {
-    return null;
-  }
-
-  const sampleFactor = getReproducibilitySampleFactor(input.experimentalStatistics);
-  const normalityFactor = getReproducibilityNormalityFactor(
-    input.normalityConsensus
-  );
-  const bootstrapFactor =
-    input.bootstrapExplorerAnalysis?.stabilityScore ?? 50;
-  const sensitivityFactor =
-    input.sensitivityExplorerAnalysis?.sensitivityScore ?? 50;
-  const qualityFactor = input.reportQualityEngineAnalysis?.qualityScore ?? 50;
-  const reproducibilityScore =
-    (sampleFactor +
-      normalityFactor +
-      bootstrapFactor +
-      sensitivityFactor +
-      qualityFactor) /
-    5;
-  const classification = classifyReproducibilityExplorer(reproducibilityScore);
-
-  return {
-    reproducibilityScore,
-    classification,
-    evaluatedFactors: 5,
-    interpretation: buildReproducibilityExplorerInterpretation({
-      classification,
-      bootstrapExplorerAnalysis: input.bootstrapExplorerAnalysis,
-      sensitivityExplorerAnalysis: input.sensitivityExplorerAnalysis,
-      reportQualityEngineAnalysis: input.reportQualityEngineAnalysis,
-      consistencyEngineAnalysis: input.consistencyEngineAnalysis,
-    }),
-  };
-};
-
-const getReproducibilityExplorerReportLines = (
-  analysis: ReproducibilityExplorerAnalysis | null
-): string[] => {
-  if (!analysis) {
-    return ["No hay datos suficientes para generar Reproducibility Explorer."];
-  }
-
-  const lines = [
-    `Reproducibility Score: ${analysis.reproducibilityScore.toFixed(1)}.`,
-    `Clasificación: ${getReproducibilityExplorerClassificationLabel(analysis.classification)}.`,
-    `Factores evaluados: ${analysis.evaluatedFactors}.`,
-  ];
-
-  analysis.interpretation.forEach((line) => lines.push(line));
-  return deduplicateTextLines(lines);
-};
 
 type ScientificReproducibilityExplorerProps = {
   analysis: ReproducibilityExplorerAnalysis;
