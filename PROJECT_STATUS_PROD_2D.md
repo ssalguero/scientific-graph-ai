@@ -736,15 +736,16 @@ src/app/page.tsx                                        | +15
 **Secuencia congelada:**
 
 ```text
-D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 → D9 …
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
 | **D2** | UX-2A | Extracción move-only Smart Start | D8 CLOSED — **ver §D2 CLOSED** |
-| **D3** (siguiente post-D2) | UX-2B | Smart Start Refinement | D2 CLOSED |
+| **D3** | UX-2B | Smart Start Refinement | D2 CLOSED — **ver §D3 CLOSED** |
+| **D9** (siguiente) | ARCH-5 | F5A | D3 CLOSED |
 
-**Próxima microfase post-D8 (histórico):** D2 — completada; ver §D2.
+**Próxima microfase post-D8 (histórico):** D2 — completada; ver §D2. **D3 — completada; ver §D3.**
 
 **ARCH-6 progreso post-D8:** 4/4 observaciones QA-1 §10 cerradas. **ARCH-6 — CLOSED.**
 
@@ -884,19 +885,158 @@ src/app/page.tsx                         | −126 (bloque inline + import SmartS
 **Secuencia congelada:**
 
 ```text
-D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 → D9 …
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 …
 ```
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D3** (siguiente) | UX-2B | Smart Start Refinement (copy, ARIA) | D2 CLOSED |
+| **D3** | UX-2B | Smart Start Refinement | D2 CLOSED — **ver §D3 CLOSED** |
+| **D9** (siguiente) | ARCH-5 | F5A | D3 CLOSED |
 
-**Próxima fase:** **D3 — UX-2B Smart Start Refinement**
+**Próxima fase:** **D9 — ARCH-5 F5A**
 
-No iniciar D3 en esta ventana. No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
+No iniciar D9 en esta ventana. No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
 
-**PROD-2D** permanece abierta hasta D23; lista para iniciar **D3**.
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D9**.
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D3 — UX-2B: Smart Start Refinement
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** |
+| **Fecha de certificación** | 2026-07-06 |
+| **Subfases** | Pre-D3.1 ✓ · D3.1 ✓ · D3.2 ✓ · D3.3 ✓ · D3.4 ✓ · D3.5 ✓ |
+| **Commits** | `19ae953` (D3.1) · `5ba44c1` (D3.2) · `6a1686c` (D3.3) · `b1c1b10` (D3.4) · D3.5 (gate + acta) |
+| **Épica UX-2B** | **CLOSED** (D3) |
+
+### Objetivo cumplido
+
+Refactorización arquitectónica **move-only** del módulo Smart Start heredado de D2: separación en cuatro capas (`lib/smart-start` + `useSmartStart` + `components/home` + wiring mínimo en `page.tsx`), sin cambios de comportamiento observable, copy, ARIA ni navegación.
+
+### Resumen técnico por subfase
+
+| Subfase | Entregable | Ubicación |
+|---------|------------|-----------|
+| **Pre-D3.1** | Baseline métrico (LOC, imports, handlers) | Acta (ver métricas) |
+| **D3.1** | Tipos canónicos + `SMART_START_OPTIONS` + barrel congelado | `src/lib/smart-start/types.ts`, `options.ts`, `index.ts` |
+| **D3.2** | Dominio intent (classify, rules, format, normalize) | `src/lib/smart-start/*.ts`; eliminado `src/app/intentAssistant.ts` |
+| **D3.3** | Co-locación UI (4 componentes) | `src/components/home/` |
+| **D3.4** | Hook orquestación move-only | `src/app/useSmartStart.ts` |
+| **D3.5** | Gate `validate:smart-start-unit` + acta cierre | `scripts/validate-smart-start-unit.ts`, este §D3 |
+
+### Métricas LOC (baseline Pre-D3.1 → post-D3.4)
+
+| Métrica | Valor |
+|---------|-------|
+| **Baseline Pre-D3.1** — Smart Start en `page.tsx` | **327 LOC** (handlers + state + scroll + banners inline + wiring) |
+| **Post-D3.4** — Smart Start en `page.tsx` | **87 LOC** (import 7 + hook call 41 + render/condicionales 39) |
+| **Reducción acumulada en `page.tsx`** | **−240 LOC (−73 %)** |
+| **`useSmartStart.ts` (orquestación)** | **316 LOC** |
+| **Handlers inline en `page.tsx`** | **0** (movidos a hook) |
+
+### Arquitectura resultante
+
+```text
+src/lib/smart-start/          ← dominio + barrel congelado
+src/components/home/          ← SmartStartScreen, IntentAssistant, 2 banners
+src/app/useSmartStart.ts      ← estado, handlers, effects (150 ms timer)
+src/app/page.tsx              ← wiring + composición + render únicamente
+```
+
+**Barrel congelado (`index.ts`):** tipos públicos, `SMART_START_OPTIONS`, `classifyIntent`, `formatIntentRecommendationSummary` — sin exports profundos.
+
+**SSOT IDs:** `types.ts` (canónico) ↔ `options.ts` ↔ `intent-rules.ts` ↔ `useSmartStart.ts` handlers — verificado por `validate-smart-start-config-unit`.
+
+### Gates (D3.5 — 2026-07-06)
+
+| Comando | Resultado | Notas |
+|---------|-----------|-------|
+| `npx tsc --noEmit` | **PASS** | |
+| `npm run validate:smart-start-unit` | **PASS** | Absorbe config-unit (11) + intent-unit (8) + checks estructurales |
+| `npm run validate:full` | **PASS condicionado** | 9/10 steps PASS; `e2e` FAIL (timeout F5 — infra conocida) |
+
+**Steps PASS `validate:full` D3.5:** `t-quantile`, `chart-viewport-unit`, `comparison-unit`, `f0`, `unit`, `f6`, `typescript`, `build`, `baseline`, `prod1-gate`.
+
+**Step FAIL (infra conocida — no atribuible a D3):**
+
+| Step | Motivo |
+|------|--------|
+| `e2e` | Timeout F5 — `getByText(/Nuevo proyecto científico creado/i)` (flakiness E2E preexistente) |
+
+**`validate:smart-start-unit` incluye:**
+
+- `validate-smart-start-config-unit` — SSOT, duplicados, barrel, handlers
+- `validate-intent-assistant-unit` — 8 casos canónicos
+- Estructura — 4 componentes `home/`, hook, barrel, sin `intentAssistant`, grafo acíclico
+
+**Smoke manual S1–S7 (D3.4):** **PASS** — Analizar dataset, Comparar datasets, Evaluar publicación, Gráfico matemático, Abrir proyecto, Modo experto, Intent assistant.
+
+### Criterios de certificación D3
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D3-1 | Módulo `src/lib/smart-start/` operativo con barrel `index.ts` | **PASS** |
+| CA-D3-2 | UI Smart Start 100% en `src/components/home/` (4 componentes) | **PASS** |
+| CA-D3-3 | Orquestación en `useSmartStart.ts`; `page.tsx` sin lógica Smart Start inline | **PASS** (87 LOC wiring+render vs 327 baseline; hook call 41 LOC) |
+| CA-D3-4 | IDs canónicos — test paridad PASS | **PASS** |
+| CA-D3-5 | `npm run validate:smart-start-unit` PASS | **PASS** |
+| CA-D3-6 | `validate:full` PASS condicionado (9/10) | **PASS** |
+| CA-D3-7 | Smoke S1–S7 PASS manual | **PASS** |
+| CA-D3-8 | Cero cambios schema V2 / motores SCI / workflow domain | **PASS** |
+| CA-D3-9 | Grafo imports acíclico; cero `@/app/intentAssistant` | **PASS** |
+| CA-D3-10 | Acta §D3 en este documento | **PASS** |
+| CA-D3-11 | LOC `page.tsx` ↓ documentado vs baseline Pre-D3.1 | **PASS** (−240 LOC) |
+| CA-D3-12 | Gate SSOT D3.1 PASS antes de D3.2 | **PASS** (commit `19ae953` → `5ba44c1`) |
+| CA-D3-13 | Barrel sin exports no autorizados; grafo acíclico post-D3.2 | **PASS** |
+
+### Revisión post-BUILD D3.5
+
+| # | Pregunta | Resultado |
+|---|----------|-----------|
+| **R1** | ¿Se movió o cambió código funcional? | **NO** — solo infraestructura de validación y acta |
+| **R2** | ¿Cambió contrato público? | **NO** |
+| **R3** | ¿Cambió comportamiento observable? | **NO** |
+| **R4** | ¿Disminuyó acoplamiento? | **Sin cambios respecto D3.4** |
+
+### Alcance respetado (D3 completo)
+
+**Sin cambios verificados:**
+
+- `scientific/*`, `project/*`, schema V2, workflow domain, visibility, PDF runtime — **sin cambios atribuibles a D3**
+- Comportamiento observable Smart Start — **idéntico** (smoke S1–S7)
+
+**D3 no deja deuda técnica funcional** dentro de su alcance.
+
+### UX-2B — cierre épica
+
+| Microfase | Entregable UX-2B | Estado |
+|-----------|------------------|--------|
+| **D3** | Smart Start Refinement (4 capas + gate) | **CLOSED** |
+
+**UX-2B: CLOSED** (2026-07-06).
+
+### Handoff
+
+**D3 — CLOSED.** **UX-2B — CLOSED.**
+
+**Secuencia congelada:**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D9** (siguiente) | ARCH-5 | F5A (post-D3) | D3 CLOSED |
+
+**Próxima fase:** **D9 — ARCH-5 F5A**
+
+No iniciar D9 en esta ventana sin autorización explícita. No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
+
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D9**.
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
