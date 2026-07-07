@@ -1843,8 +1843,395 @@ en gate agregado. **No modifica SCI.**
 
 No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
 
-**PROD-2D** permanece abierta hasta D23; lista para iniciar **D16**.
+**PROD-2D** permanece abierta hasta D23; **D16 iniciado** (ver §D16).
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06 · Acta D15 certificada 2026-07-06 · **ARCH-5 F5G (SCI-59 UI Panel) CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D16 — ARCH-5 F5H: Consolidación infraestructura de validación
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** (certificación gates — cero cambios funcionales dominio/UI) |
+| **Fecha de certificación** | 2026-07-07 |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D16 · [`D16_1_METHODOLOGY_GATE_PREP.md`](./D16_1_METHODOLOGY_GATE_PREP.md) |
+| **Épica ARCH-5 F5H** | **CLOSED** (D16) |
+
+### Objetivo cumplido
+
+Consolidar la infraestructura de validación automatizada para la cadena metodológica SCI-50→60 y SCI-59 workflow, mediante gates unitarios F5A–F5E, umbrella orquestador y registro npm — **sin modificar dominio SCI, UI, `page.tsx` ni barrels metodológicos**.
+
+| Capa | Alcance D16 | Estado post-D16 |
+|------|-------------|-----------------|
+| Dominio metodología SCI-50→60 | `src/lib/scientific/methodology/` | **Intacto** (move-only previo D9–D13) |
+| UI metodología / workflow | `src/components/`, `src/app/page.tsx` | **Intacto** |
+| Infraestructura validación | `scripts/validate-methodology-*`, `scripts/lib/methodology-gate-utils.ts` | **Consolidada** |
+
+### Microfases D16.1–D16.5
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D16.1** | Preparación + baseline (`D16_1_METHODOLOGY_GATE_PREP.md`) | **CLOSED** |
+| **D16.2** | Util compartido + Gate F5B (SCI-53/54) + refactor move-only F5A | **CLOSED** |
+| **D16.3** | Gates F5C (SCI-55) + F5D (SCI-56) | **CLOSED** |
+| **D16.4** | Gate F5E (SCI-60) + umbrella + registro `validate:workflow-unit` | **CLOSED** |
+| **D16.5** | Certificación final + acta §D16 + handoff D17 | **CLOSED** |
+
+### Arquitectura — infraestructura de validación consolidada
+
+```text
+scripts/
+  lib/
+    methodology-gate-utils.ts          ← util agnóstico dominio (D16.2+)
+  validate-methodology-f5a-unit.ts     ← SCI-50/51/52 (208 casos)
+  validate-methodology-f5b-unit.ts     ← SCI-53/54   (65 casos)
+  validate-methodology-f5c-unit.ts     ← SCI-55      (37 casos)
+  validate-methodology-f5d-unit.ts     ← SCI-56      (27 casos)
+  validate-methodology-f5e-unit.ts     ← SCI-60      (40 casos)
+  validate-methodology-unit.ts         ← umbrella orquestador puro (377 acum.)
+  validate-workflow-unit.ts            ← SCI-59 W1–W9 (9 casos; registro D16.4)
+```
+
+**Diagrama de orquestación (umbrella):**
+
+```text
+validate:methodology-unit
+  ├── spawn → validate:methodology-f5a-unit  (behavioral + structural SCI-50→52)
+  ├── spawn → validate:methodology-f5b-unit  (SCI-53/54)
+  ├── spawn → validate:methodology-f5c-unit  (SCI-55)
+  ├── spawn → validate:methodology-f5d-unit  (SCI-56)
+  └── spawn → validate:methodology-f5e-unit  (SCI-60 + baselines QA-1)
+        ↓
+  JSON { phase, pass, caseCount, subGates[] }
+  (sin imports @/lib/scientific/methodology/* — orquestador puro)
+```
+
+**Util compartido (`methodology-gate-utils.ts`):** `createCaseRecorder`, `approxEqual`, `extractBarrelExports`, `assertBarrelApiFreeze`, `assertMethodologyBoundaryClean` (`structure.methodology.boundary-clean`), `assertPageNoInlinePatterns`, `assertModuleFilesPresent`, `runNpmScriptGate`, `emitUmbrellaSummary` — **agnóstico del dominio SCI**.
+
+**API Freeze:** cada gate F5A–F5E verifica exports exactos de su barrel (`consistency/`, `evidence/`, `readiness/`, `summary/`, `publication/`, etc.) — **sin exports adicionales certificados**.
+
+**Boundary:** `structure.methodology.boundary-clean` — cero imports React/Next/`@/app`/`@/components` en `methodology/`.
+
+**Anti-inline:** cada gate verifica ausencia de dominio inline correspondiente en `page.tsx` (consumo vía barrels únicamente).
+
+### Verificación de alcance D16 (arquitectura)
+
+| Regla | Verificación D16.5 | Resultado |
+|-------|---------------------|-----------|
+| `src/lib/scientific/methodology/` sin diffs funcionales | `git diff HEAD -- src/lib/scientific/methodology/` vacío | **PASS** |
+| `src/components/` sin diffs | Sin modificaciones en D16 | **PASS** |
+| `src/app/page.tsx` sin diffs | Sin modificaciones en D16 | **PASS** |
+| Infraestructura aislada en `scripts/` + `package.json` | Solo artefactos gate bajo `scripts/` | **PASS** |
+| Umbrella orquestador puro | Sin imports dominio; solo `spawn` sub-gates | **PASS** |
+| API Freeze respetada | Asserts barrel exactos F5A–F5E | **PASS** |
+| Boundary limpio | `structure.methodology.boundary-clean` PASS en F5B–F5E | **PASS** |
+
+### Métricas finales D16 (certificación 2026-07-07)
+
+| Gate / verificación | `caseCount` | PASS |
+|---------------------|-------------|------|
+| `npx tsc --noEmit` | — | **PASS** |
+| `validate:methodology-f5a-unit` | **208** | **PASS** |
+| `validate:methodology-f5b-unit` | **65** | **PASS** |
+| `validate:methodology-f5c-unit` | **37** | **PASS** |
+| `validate:methodology-f5d-unit` | **27** | **PASS** |
+| `validate:methodology-f5e-unit` | **40** | **PASS** |
+| `validate:methodology-unit` (umbrella acumulado) | **377** | **PASS** |
+| `validate:workflow-unit` | **9** | **PASS** |
+
+**Baselines QA-1 Publication (F5E — lectura exclusiva):** Dataset5 **77.0** / Near Ready · Dataset6 **67.5** / Requires Review — verificados vía `EPIC_B_BASELINE` sin alterar cálculos.
+
+### Scripts npm registrados (D16)
+
+| Script | Archivo | Microfase registro |
+|--------|---------|-------------------|
+| `validate:methodology-f5b-unit` | `validate-methodology-f5b-unit.ts` | D16.2 |
+| `validate:methodology-f5c-unit` | `validate-methodology-f5c-unit.ts` | D16.3 |
+| `validate:methodology-f5d-unit` | `validate-methodology-f5d-unit.ts` | D16.3 |
+| `validate:methodology-f5e-unit` | `validate-methodology-f5e-unit.ts` | D16.4 |
+| `validate:methodology-unit` | `validate-methodology-unit.ts` | D16.4 |
+| `validate:workflow-unit` | `validate-workflow-unit.ts` | D16.4 |
+
+**No registrado (decisión CA-D16.4-11):** `validate:publication-unit` — alias redundante; SCI-60 se certifica vía `validate:methodology-f5e-unit`.
+
+### Criterios de aceptación D16.1 (preparación)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D16.1-1** | Existe `D16_1_METHODOLOGY_GATE_PREP.md` con inventario F5A–E | **PASS** |
+| **CA-D16.1-2** | Confirmado F5A PASS (baseline) | **PASS** (208 casos) |
+| **CA-D16.1-3** | Confirmado F5B–E scripts y util ausentes en D16.1 | **PASS** |
+| **CA-D16.1-4** | `validate:workflow-unit` existía sin registro npm | **PASS** |
+| **CA-D16.1-5** | Matriz cobertura funcional documentada | **PASS** |
+| **CA-D16.1-6** | Cero diffs en `src/` en D16.1 | **PASS** |
+
+### Criterios de aceptación D16.2 (util + F5B)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D16.2-1** | `scripts/lib/methodology-gate-utils.ts` creado (agnóstico dominio) | **PASS** |
+| **CA-D16.2-2** | F5A refactor move-only → import util | **PASS** |
+| **CA-D16.2-3** | Gate F5B implementado (SCI-53/54 cobertura API completa) | **PASS** (65 casos) |
+| **CA-D16.2-4** | `structure.methodology.boundary-clean` en F5B | **PASS** |
+| **CA-D16.2-5** | `validate:methodology-f5b-unit` registrado en `package.json` | **PASS** |
+| **CA-D16.2-6** | F5A continúa PASS post-refactor | **PASS** (208 casos) |
+| **CA-D16.2-7** | Dominio SCI / UI / `page.tsx` sin cambios | **PASS** |
+
+### Criterios de aceptación D16.3 (F5C + F5D)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D16.3-1** | Gate F5C implementado (SCI-55 / `readiness/`) | **PASS** (37 casos) |
+| **CA-D16.3-2** | Gate F5D implementado (SCI-56 / `summary/`) | **PASS** (27 casos) |
+| **CA-D16.3-3** | API Freeze `readiness/index.ts` (9 exports) | **PASS** |
+| **CA-D16.3-4** | API Freeze `summary/index.ts` (6 exports) | **PASS** |
+| **CA-D16.3-5** | Anti-inline SCI-55/56 en `page.tsx` | **PASS** |
+| **CA-D16.3-6** | F5A + F5B continúan PASS | **PASS** |
+| **CA-D16.3-7** | Sin cambios fuera de alcance D16.3 | **PASS** |
+
+### Criterios de aceptación D16.4 (F5E + umbrella)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D16.4-1** | Gate F5E implementado (SCI-60 / `publication/`) | **PASS** (40 casos) |
+| **CA-D16.4-2** | Baselines QA-1 77.0 / 67.5 verificados (lectura) | **PASS** |
+| **CA-D16.4-3** | API Freeze `publication/index.ts` (8 exports D13) | **PASS** |
+| **CA-D16.4-4** | Umbrella `validate-methodology-unit.ts` orquestador puro | **PASS** (377 acum.) |
+| **CA-D16.4-5** | `validate:methodology-unit` registrado | **PASS** |
+| **CA-D16.4-6** | `validate:workflow-unit` registrado | **PASS** |
+| **CA-D16.4-7** | F5A–F5D continúan PASS | **PASS** |
+| **CA-D16.4-8** | Umbrella sin imports dominio SCI | **PASS** |
+| **CA-D16.4-9** | Sin alias `validate:publication-unit` | **PASS** (CA-D16.4-11) |
+| **CA-D16.4-10** | Dominio / UI / `page.tsx` sin cambios | **PASS** |
+
+### Criterios de aceptación D16.5 (certificación final)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D16.5-1** | Certificación completa re-ejecutada (8 comandos) | **PASS** |
+| **CA-D16.5-2** | Métricas `caseCount` registradas en acta | **PASS** |
+| **CA-D16.5-3** | Verificación arquitectónica (dominio/UI/page intactos) | **PASS** |
+| **CA-D16.5-4** | Acta §D16 en `PROJECT_STATUS_PROD_2D.md` | **PASS** |
+| **CA-D16.5-5** | Todos los CA-D16.* marcados PASS | **PASS** |
+| **CA-D16.5-6** | Handoff D17 documentado | **PASS** |
+| **CA-D16.5-7** | Sin cambios de código en D16.5 (solo documentación) | **PASS** |
+
+### Verificación gate final D16.5 (2026-07-07)
+
+| Comando | Resultado | `caseCount` |
+|---------|-----------|-------------|
+| `npx tsc --noEmit` | **PASS** | — |
+| `npm run validate:methodology-f5a-unit` | **PASS** | 208 |
+| `npm run validate:methodology-f5b-unit` | **PASS** | 65 |
+| `npm run validate:methodology-f5c-unit` | **PASS** | 37 |
+| `npm run validate:methodology-f5d-unit` | **PASS** | 27 |
+| `npm run validate:methodology-f5e-unit` | **PASS** | 40 |
+| `npm run validate:methodology-unit` | **PASS** | 377 (acum.) |
+| `npm run validate:workflow-unit` | **PASS** | 9 |
+
+**D16 no deja deuda técnica funcional** dentro de su alcance F5H (infraestructura validación). Pendiente explícito post-D16: extracción UI SCI-50–56 inline (F5F bis) — fuera de D16.
+
+### ARCH-5 F5H — cierre infraestructura validación
+
+| Microfase | Entregable ARCH-5 | Estado |
+|-----------|-------------------|--------|
+| **D16.1** | Preparación + inventario gates | **CLOSED** |
+| **D16.2** | Util + F5B | **CLOSED** |
+| **D16.3** | F5C + F5D | **CLOSED** |
+| **D16.4** | F5E + umbrella + workflow npm | **CLOSED** |
+| **D16.5** | Certificación + acta | **CLOSED** |
+
+**ARCH-5 F5H: CLOSED** (2026-07-07). Épica ARCH-5 permanece abierta (D17 — F5I certificación modularización; F5F bis SCI-50–56 UI pendiente).
+
+---
+
+## Microfase D17 — ARCH-5 F5I: Certificación modularización
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** (certificación vs baseline D0.5 — cero cambios funcionales en `src/`) |
+| **Fecha de certificación** | 2026-07-07 |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D17 · [`D17_1_MODULARIZATION_GATE_PREP.md`](./D17_1_MODULARIZATION_GATE_PREP.md) (ARCHIVED) · [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) §8 |
+| **Épica ARCH-5 F5I** | **CLOSED** (D17) |
+
+### Objetivo cumplido
+
+Certificar de forma **automatizada y auditable** que ARCH-5 F5 (D9–D16) produjo **disminución efectiva de responsabilidades arquitectónicas** en el monolito `page.tsx`, comparando contra el baseline inmutable D0.5, mediante gate orquestador `validate:arch5-f5-modularization-gate` — **sin modificar dominio SCI, UI, `page.tsx` ni barrels metodológicos**.
+
+| Capa | Alcance D17 | Estado post-D17 |
+|------|-------------|-----------------|
+| Dominio metodología SCI-50→60 | `src/lib/scientific/methodology/` | **Intacto** (extraído D9–D13; certificado vía sub-gates) |
+| UI SCI-59 / SCI-60 | `components/workflow/`, `components/reports/` | **Intacto** (extraído D14–D15; certificado) |
+| UI SCI-50–56 | `page.tsx` inline | **Intacto** — deuda **F5F-BIS** documentada |
+| Infraestructura certificación F5I | `scripts/validate-arch5-f5-modularization-gate.ts` + npm | **Consolidada** (D17.2–D17.3) |
+
+### Microfases D17.1–D17.5
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D17.1** | Preparación + baseline (`D17_1_MODULARIZATION_GATE_PREP.md`) | **CLOSED** |
+| **D17.2** | Gate orquestador F5I + helpers certificación genéricos | **CLOSED** |
+| **D17.3** | Registro npm `validate:arch5-f5-modularization-gate` + smoke | **CLOSED** |
+| **D17.4** | Verificación integral + registro métricas (evidencia §11 prep) | **CLOSED** |
+| **D17.5** | Certificación final + acta §D17 + handoff D18 | **CLOSED** |
+
+### Arquitectura — gate F5I (delegación estricta)
+
+```text
+validate:arch5-f5-modularization-gate
+  ├── spawn → validate:methodology-unit        (377 casos F5A–F5E)
+  ├── spawn → validate:workflow-unit           (9 casos W1–W9)
+  ├── spawn → validate:prod2c-c8-regression-gate (5 sub-gates)
+  └── local → certification.* (11 casos — solo nivel arquitectónico global)
+        ↓
+  JSON { schemaVersion: 1, generatedAt, phase, pass, caseCount, subGates[], metrics{}, knownDebts[] }
+  (orquestador sin imports @/lib/scientific/methodology/*)
+```
+
+**Principio delegación estricta:** anti-inline dominio, API Freeze, boundary-clean y baselines QA-1 **delegados** a F5A–F5E; orquestador solo invoca sub-gates + agregadores globales.
+
+### Evidencia certificación D17.4 (registrada — no re-ejecutada en D17.5)
+
+| Comando | Resultado | Duración | Observaciones |
+|---------|-----------|----------|---------------|
+| `npx tsc --noEmit` | **PASS** | ~31,4 s | — |
+| `npm run validate:arch5-f5-modularization-gate` | **PASS** | ~102,5 s | `pass: true`, `caseCount: 11` |
+| `npm run validate:methodology-unit` *(sub-gate)* | **PASS** | *(incl.)* | **377** casos |
+| `npm run validate:workflow-unit` *(sub-gate)* | **PASS** | *(incl.)* | **9** casos |
+| `npm run validate:prod2c-c8-regression-gate` | **PASS** | ~56,7 s | 5/5 sub-gates PASS |
+| `npm run validate:full` | **FAIL** *(no bloqueante)* | ~288,3 s | **8/10 steps PASS** |
+
+**`validate:full` — FAIL infraestructura (no bloqueante):** steps `baseline` y `e2e` fallan por `ERR_CONNECTION_REFUSED` / servidor E2E no disponible — **reproduce el comportamiento histórico del baseline D0.5 §4.1** (PASS condicionado 8/10; sin fallos funcionales atribuibles a ARCH-5 F5). **No condiciona cierre D17.**
+
+### Métricas finales D17 (evidencia D17.4 — vs D0.5)
+
+| Métrica | Baseline D0.5 | Post-D17 | Δ |
+|---------|---------------|----------|---|
+| LOC `page.tsx` (`Measure-Object -Line`) | 28.862 | **26.340** | **−2.522** *(informativo)* |
+| LOC `page.tsx` (total física) | — | **28.661** | — |
+| Dominio SCI-50→60 inline | ~2.716 | **0** | **−2.716** |
+| UI metodología inline SCI-50–56 | ~1.703 (total baseline) | **711** | F5F-BIS deferido |
+| Wiring useMemo metodología | ~361 (ref.) | **361** | Sin cambio |
+| Submódulos `methodology/*` | 0 | **8** | **+8** |
+| Barrels `methodology/*/index.ts` | 0 | **8** | **+8** |
+
+**Criterio primario:** disminución de **responsabilidades arquitectónicas** (dominio encapsulado), no LOC absoluto.
+
+**JSON gate F5I (referencia):** `generatedAt: 2026-07-07T13:52:56.891Z` · `metrics.pageTsxLOC: 26340` · `methodologyModuleCount: 8` · `workflowModuleCount: 3` · `reportModuleCount: 1` · `knownDebtCount: 1`.
+
+### Certificación arquitectónica D17
+
+| Verificación | Resultado |
+|--------------|-----------|
+| Delegación estricta orquestador | **PASS** — 3 sub-gates exactos; sin imports dominio |
+| Ausencia regresiones arquitectónicas | **PASS** — `src/` sin diffs funcionales en D17 |
+| Cero cambios funcionales producto | **PASS** — D17 = infraestructura certificación + acta |
+| Dominio SCI-50→60 extraído | **PASS** — 8 barrels; 377 casos methodology-unit |
+| SCI-59 UI extraído | **PASS** — `components/workflow/`; workflow-unit 9 casos |
+| SCI-60 UI extraído | **PASS** — `components/reports/ScientificPublicationDashboard` |
+| F5F-BIS documentado | **PASS** — `knownDebts[]` id `F5F-BIS`, severity `LOW` |
+
+### Riesgos residuales (sin deuda nueva)
+
+| Riesgo | Severidad | Estado |
+|--------|-----------|--------|
+| **F5F-BIS** — UI SCI-50–56 inline (~711 LOC) | LOW | Deuda conocida → PROD-2E |
+| **`validate:full`** E2E/baseline sin servidor | INFO | No bloqueante; patrón D0.5 |
+| Methodology gates fuera de `validate:full` | MEDIA | D22 `validate:prod2d-gate` |
+
+### Excepción formal baseline §8 UI
+
+Baseline D0.5 objetivo UI ausente en `page.tsx` → `components/methodology/`. **Certificación D17 con excepción documentada:** UI SCI-50–56 permanece inline (F5F-BIS); SCI-60 en `components/reports/` (desviación D14 aceptada).
+
+### Criterios de aceptación CA-D17.6 (certificación final D17.5)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D17.6-1** | Acta §D17 en `PROJECT_STATUS_PROD_2D.md` | **PASS** |
+| **CA-D17.6-2** | ARCH-5 F5I marcado CLOSED | **PASS** |
+| **CA-D17.6-3** | Bloque ARCH-5 F5 (D9–D17) marcado CLOSED con deuda F5F-BIS | **PASS** |
+| **CA-D17.6-4** | Handoff D18 (UX-2B Config) documentado | **PASS** |
+| **CA-D17.6-5** | Secuencia congelada actualizada: `D16 ✓ → D17 ✓ → D18 …` | **PASS** |
+| **CA-D17.6-6** | Prep doc archivado (`D17_1_MODULARIZATION_GATE_PREP.md` CLOSED · ARCHIVED) | **PASS** |
+
+**D17 no deja deuda técnica funcional** dentro de su alcance F5I (certificación). Pendiente explícito post-D17: extracción UI SCI-50–56 inline (**F5F bis**) — fuera de D17, backlog PROD-2E.
+
+### ARCH-5 F5I — cierre certificación modularización
+
+| Microfase | Entregable ARCH-5 | Estado |
+|-----------|-------------------|--------|
+| **D17.1** | Preparación + baseline | **CLOSED** |
+| **D17.2** | Gate orquestador F5I | **CLOSED** |
+| **D17.3** | Registro npm + smoke | **CLOSED** |
+| **D17.4** | Verificación integral | **CLOSED** |
+| **D17.5** | Certificación + acta | **CLOSED** |
+
+**ARCH-5 F5I: CLOSED** (2026-07-07).
+
+### ARCH-5 F5 (D9–D17) — cierre bloque modularización SCI-50→60
+
+| Subfase | Microfases | Estado |
+|---------|------------|--------|
+| F5A | D9 — SCI-50/51/52 dominio | **CLOSED** |
+| F5B | D10 — SCI-53/54 dominio | **CLOSED** |
+| F5C | D11 — SCI-55 dominio | **CLOSED** |
+| F5D | D12 — SCI-56 dominio | **CLOSED** |
+| F5E | D13 — SCI-60 dominio | **CLOSED** |
+| F5F | D14 — SCI-60 UI | **CLOSED** (parcial — F5F bis pendiente) |
+| F5G | D15 — SCI-59 UI | **CLOSED** |
+| F5H | D16 — Infraestructura validación | **CLOSED** |
+| F5I | D17 — Certificación modularización | **CLOSED** |
+
+**ARCH-5 F5 (D9–D17): CLOSED** (2026-07-07). Deuda documentada: **F5F-BIS** (UI SCI-50–56 inline).
+
+**Épica ARCH-5 global** continúa en **PROD-2E** (módulos fuera SCI-50→60; ver [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §3.1).
+
+### Handoff
+
+**D9 — CLOSED.** **ARCH-5 F5A — CLOSED.**  
+**D10 — CLOSED.** **ARCH-5 F5B — CLOSED.**  
+**D11 — CLOSED.** **ARCH-5 F5C — CLOSED.**  
+**D12 — CLOSED.** **ARCH-5 F5D — CLOSED.**  
+**D13 — CLOSED.** **ARCH-5 F5E — CLOSED.**  
+**D14 — CLOSED.** **ARCH-5 F5F (SCI-60 UI) — CLOSED.**  
+**D15 — CLOSED.** **ARCH-5 F5G (SCI-59 UI Panel) — CLOSED.**  
+**D16 — CLOSED.** **ARCH-5 F5H (infraestructura validación) — CLOSED.**  
+**D17 — CLOSED.** **ARCH-5 F5I (certificación modularización) — CLOSED.** **ARCH-5 F5 (D9–D17) — CLOSED.**
+
+**Secuencia congelada (SSOT):**
+
+```text
+D1 ✓ → … → D16 ✓ → D17 ✓ → D18 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D18** (siguiente) | UX-2B | D18 — UX-2B.1: Dominio preferencias usuario (`UserPreferences`, localStorage) | D17 CLOSED |
+
+**Estado arquitectónico post-F5I:**
+
+- Modularización SCI-50→60 **certificada** vs baseline D0.5: dominio en `methodology/*` (8 submódulos, 377 casos PASS); gate F5I operativo.
+- UI SCI-59 (`components/workflow/`) y SCI-60 (`components/reports/`) **extraídas y certificadas**.
+- UI SCI-50–56 **inline** — deuda **F5F-BIS** registrada en gate JSON; backlog PROD-2E.
+- Wiring `useMemo` (~361 LOC) permanece en `page.tsx` — acoplamiento runtime esperado.
+- **`methodology/*` barrels:** API Freeze — intocable.
+
+**Objetivos esperados D18 — UX-2B.1 (según [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D18):**
+
+- Dominio `UserPreferences`: tema, `showContextualHints`, versión display.
+- Archivos: `src/lib/app-preferences/domain/`, adapter localStorage.
+- Gate: unit tests preferencias.
+- **Sin iniciar D18 en esta ventana.**
+
+**Pendiente explícito post-D17:**
+
+- **F5F bis:** UI SCI-50–56 inline (~711 LOC) → PROD-2E.
+- **Template picker SCI-59:** permanece inline en `page.tsx`.
+- **`validate:full` + methodology gates:** consolidación D22 `validate:prod2d-gate`.
+
+No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
+
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D18** (planificación/build en chat independiente).
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06 · Acta D15 certificada 2026-07-06 · **ARCH-5 F5G (SCI-59 UI Panel) CLOSED** 2026-07-06 · Acta D16 certificada 2026-07-07 · **ARCH-5 F5H (infraestructura validación) CLOSED** 2026-07-07 · Acta D17 certificada 2026-07-07 · **ARCH-5 F5I (certificación modularización) CLOSED** 2026-07-07 · **ARCH-5 F5 (D9–D17) CLOSED** 2026-07-07. Épica PROD-2D permanece abierta hasta D23.*
