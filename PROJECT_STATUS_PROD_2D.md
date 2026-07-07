@@ -2200,29 +2200,146 @@ Baseline D0.5 objetivo UI ausente en `page.tsx` → `components/methodology/`. *
 **Secuencia congelada (SSOT):**
 
 ```text
-D1 ✓ → … → D16 ✓ → D17 ✓ → D18 …
+D1 ✓ → … → D16 ✓ → D17 ✓ → D18.1 ✓ → D18.2 …
 ```
 
-| Microfase | Épica | Objetivo | Prerequisito |
-|-----------|-------|----------|--------------|
-| **D18** (siguiente) | UX-2B | D18 — UX-2B.1: Dominio preferencias usuario (`UserPreferences`, localStorage) | D17 CLOSED |
+---
 
-**Estado arquitectónico post-F5I:**
+## Microfase D18 — UX-2B.1: Dominio preferencias usuario
 
-- Modularización SCI-50→60 **certificada** vs baseline D0.5: dominio en `methodology/*` (8 submódulos, 377 casos PASS); gate F5I operativo.
-- UI SCI-59 (`components/workflow/`) y SCI-60 (`components/reports/`) **extraídas y certificadas**.
-- UI SCI-50–56 **inline** — deuda **F5F-BIS** registrada en gate JSON; backlog PROD-2E.
-- Wiring `useMemo` (~361 LOC) permanece en `page.tsx` — acoplamiento runtime esperado.
-- **`methodology/*` barrels:** API Freeze — intocable.
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **IN PROGRESS** (D18.1 CLOSED — dominio pendiente D18.2–D18.7) |
+| **Fecha inicio** | 2026-07-07 |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D18 · [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §5.4 · §6.1 |
+| **Épica** | **UX-2B** (D18–D21 — Historial + Config MVP) |
+| **Prerequisito** | D17 CLOSED · ARCH-5 F5 (D9–D17) CLOSED |
 
-**Objetivos esperados D18 — UX-2B.1 (según [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D18):**
+### Microfases D18.1–D18.7
 
-- Dominio `UserPreferences`: tema, `showContextualHints`, versión display.
-- Archivos: `src/lib/app-preferences/domain/`, adapter localStorage.
-- Gate: unit tests preferencias.
-- **Sin iniciar D18 en esta ventana.**
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D18.1** | Baseline + preparación documental (acta §D18) | **CLOSED** |
+| **D18.2** | Domain core (types, defaults, validation, version) | Pendiente |
+| **D18.3** | Adapter localStorage round-trip | Pendiente |
+| **D18.4** | Barrel raíz + API Freeze | Pendiente |
+| **D18.5** | Unit tests + gate script | Pendiente |
+| **D18.6** | Registro npm + verificación integral | Pendiente |
+| **D18.7** | Certificación final + handoff D19 | Pendiente |
 
-**Pendiente explícito post-D17:**
+---
+
+### D18.1 — Baseline + preparación documental
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-07 |
+| **Código modificado** | **Ninguno** |
+| **Archivos nuevos** | **Ninguno** |
+| **Documento modificado** | [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) (este acta) |
+
+#### Objetivo
+
+Inicio de **UX-2B.1**. Preparación del dominio **`UserPreferences`**: registrar baseline técnico e inventario del estado actual antes de implementar `src/lib/app-preferences/` en D18.2+. Esta microfase **reemplaza** cualquier documento temporal de preparación — baseline único en acta §D18.
+
+#### Baseline técnico
+
+| Verificación | Resultado |
+|--------------|-----------|
+| **D17** | **CLOSED** (2026-07-07) — F5I certificación modularización |
+| **ARCH-5 F5 (D9–D17)** | **CLOSED** — bloque modularización SCI-50→60 finalizado |
+| **Handoff oficial** | D17 → **D18 UX-2B.1** (CA-D17.6-4 PASS) |
+| **Épica D18** | **UX-2B** — dominio preferencias usuario ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) L51, L269–L277) |
+| **Secuencia congelada** | `… → D17 ✓ → D18 → D19 → D20 → D21 → D22 → D23` — sin amend activo que altere D18 |
+
+**Estado arquitectónico heredado post-D17 (referencia):**
+
+- Dominio metodología en `methodology/*` — **API Freeze** intocable.
+- UI SCI-59/SCI-60 extraídas; UI SCI-50–56 inline — deuda **F5F-BIS** → PROD-2E.
+- Wiring `useMemo` (~361 LOC) permanece en `page.tsx`.
+
+#### Inventario actual
+
+| Artefacto | Ubicación / estado | Detalle |
+|-----------|-------------------|---------|
+| **Tema** | [`src/app/page.tsx`](src/app/page.tsx) — **implementación inline** | Constante `THEME_STORAGE_KEY` L298; state `themeMode` L16712; toggle sidebar L21242–L21249; effects read/write L20490–L20510 |
+| **Key tema** | `localStorage` | **`scientific-graph-theme`** |
+| **Semántica tema (congelada)** | Read L20492–L20495 | `"dark"` → modo oscuro; cualquier otro valor o ausente → `"light"` |
+| | Write L20506 | Persiste `"light"` \| `"dark"` (string literal) |
+| | Errores storage | Swallow + fallback (patrón `readStoredLabUsageProfile`) |
+| **Hints contextuales** | — | **Inexistentes** como preferencia global persistida |
+| **ToggleVisibilityHint** | [`src/components/analysis/ToggleVisibilityHint.tsx`](src/components/analysis/ToggleVisibilityHint.tsx) L18 | Prop **`hidden`** preparada — wiring global diferido a **D19** |
+| **Key hints (planificada D18.3)** | — | `scientific-graph-ai.contextual-hints` (default `true`) — discovery §5.2 C2 |
+| **UserPreferences** | — | **Módulo inexistente** |
+| **`app-preferences/`** | `src/lib/app-preferences/` | **Inexistente** |
+| **SettingsPanel** | — | **Inexistente** — stub Config sidebar L21265–L21267 (`aria-disabled`, «Próximamente») |
+| **Historial MVP** | Sidebar L21231–L21234 | Stub «Próximamente» — **fuera de alcance D18** (D20–D21) |
+| **Perfil laboratorio** | [`src/app/labUsageProfile.ts`](src/app/labUsageProfile.ts) | **Funcional** — key `scientific-graph-ai.lab-usage-profile`; **no** absorber en `UserPreferences` (DA-11) |
+
+#### Alcance D18 (microfases D18.2–D18.7)
+
+**IN:**
+
+| Entregable | Microfase |
+|------------|-----------|
+| Dominio `UserPreferences` (tema, `showContextualHints`, versión display) | D18.2 |
+| Defaults + validación pura | D18.2 |
+| Adapter localStorage round-trip | D18.3 |
+| Barrel `app-preferences/index.ts` + **API Freeze** | D18.4 |
+| Gate unitario `validate:app-preferences-unit` | D18.5–D18.6 |
+
+**OUT (explícito — no iniciar en D18):**
+
+| Exclusión | Motivo / microfase |
+|-----------|-------------------|
+| `page.tsx` (wiring tema/hints) | D19 — Panel Configuración MVP |
+| `SettingsPanel` / `components/settings/` | D19 |
+| Historial / `RecentProjectsPanel` | D20–D21 |
+| IndexedDB / `recent-projects.ts` | D20 |
+| Schema V2 / `.sgproj` | DA-2 — prefs en localStorage |
+| Motores SCI / `methodology/*` | ARCH-5 cerrado |
+| Workflow domain | Fuera UX-2B.1 |
+| ARCH-5 extracciones / SCI-28 / PCA | Bloque D9–D17 cerrado |
+
+#### Restricciones (congeladas D18)
+
+| ID | Restricción |
+|----|-------------|
+| **R-D18-1** | **Sin cambios funcionales** — comportamiento observable idéntico hasta D19 wiring |
+| **R-D18-7** | **Sin React** en `domain/` ni `adapters/` |
+| **R-D18-2** | **No tocar `page.tsx`** en D18 |
+| **R-D18-4** | **No adelantar D19** (SettingsPanel, stubs, UI prefs) |
+| **R-D18-4b** | **No adelantar D20** (historial, IndexedDB wrapper) |
+| **R-D18-11** | **API Freeze** en D18.4 — consumidores solo `@/lib/app-preferences`; prohibido deep import a submódulos |
+
+#### Baseline verificado (SSOT D18.1)
+
+Documentos revisados antes de registrar este acta:
+
+| Documento | Confirmación |
+|-----------|--------------|
+| [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D18 | D18 = **UX-2B.1** — dominio + adapter + unit tests |
+| [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §5.4, §6.1 | Capa `app-preferences/`; keys tema/hints; separación prefs app ≠ proyecto |
+| [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) §D17 | D17 CLOSED; handoff D18 documentado |
+| Amendments activos | **Ninguno** que modifique secuencia D18 — único amend documentado: subdivisión condicional D13 ([`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) L321) |
+
+#### Verificaciones D18.1
+
+| Verificación | Resultado |
+|--------------|-----------|
+| Cambios fuera de `PROJECT_STATUS_PROD_2D.md` | **NINGUNO** |
+| Archivos nuevos creados | **NINGUNO** |
+| Código fuente modificado | **NINGUNO** |
+| `src/lib/app-preferences/` creado | **NO** (correcto D18.1) |
+| Adapters / tests / `package.json` | **NO modificados** (correcto D18.1) |
+| `npx tsc --noEmit` | **No re-ejecutado** — sin cambios en `src/` |
+
+#### Handoff D18.1 → D18.2
+
+**D18.2 puede iniciar.** Próximo entregable: `src/lib/app-preferences/domain/` (types, defaults, validation, version) — sin adapter, sin barrel raíz, sin gate.
+
+**Pendiente explícito post-D17 (sin cambio D18.1):**
 
 - **F5F bis:** UI SCI-50–56 inline (~711 LOC) → PROD-2E.
 - **Template picker SCI-59:** permanece inline en `page.tsx`.
@@ -2230,7 +2347,13 @@ D1 ✓ → … → D16 ✓ → D17 ✓ → D18 …
 
 No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
 
-**PROD-2D** permanece abierta hasta D23; lista para iniciar **D18** (planificación/build en chat independiente).
+**PROD-2D** permanece abierta hasta D23.
+
+---
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D18.2** (siguiente) | UX-2B | D18.2 — Domain core (`UserPreferences`, defaults, validation) | D18.1 CLOSED |
 
 ---
 
