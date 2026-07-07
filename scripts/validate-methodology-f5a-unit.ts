@@ -1,7 +1,18 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
+import {
+  assertBarrelApiFreeze,
+  assertMethodologyLegacyForbiddenImports,
+  assertModuleFilesPresent,
+  assertPageImportsBarrels,
+  assertPageNoInlinePatterns,
+  approxEqual,
+  collectMethodologyTsFiles,
+  createCaseRecorder,
+  emitGateSummary,
+  getRepoRoot,
+} from "./lib/methodology-gate-utils";
 import {
   buildConsistencyEngineAnalysis,
   getConsistencyEngineClassificationLabel,
@@ -25,22 +36,8 @@ import {
   hasReproducibilityExplorerVeryHigh,
 } from "../src/lib/scientific/methodology/reproducibility";
 
-type CaseResult = {
-  id: string;
-  pass: boolean;
-  detail?: string;
-};
-
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const results: CaseResult[] = [];
-
-function assertCase(id: string, pass: boolean, detail?: string) {
-  results.push({ id, pass, detail });
-}
-
-function approxEqual(actual: number, expected: number, epsilon = 0.05) {
-  return Math.abs(actual - expected) <= epsilon;
-}
+const repoRoot = getRepoRoot(import.meta.url);
+const { results, assertCase } = createCaseRecorder();
 
 const emptyConsistencyInput = {
   pcaAnalysis: null,
@@ -302,7 +299,8 @@ assertCase(
 // --- Structural: page.tsx has no inline SCI-50/51/52 domain ---
 
 const pageSource = readFileSync(join(repoRoot, "src/app/page.tsx"), "utf8");
-const inlineDomainPatterns = [
+
+assertPageNoInlinePatterns(assertCase, pageSource, [
   /const\s+buildConsistencyEngineAnalysis\s*=/,
   /const\s+buildReportQualityEngineAnalysis\s*=/,
   /const\s+buildReproducibilityExplorerAnalysis\s*=/,
@@ -315,32 +313,26 @@ const inlineDomainPatterns = [
   /type\s+ConsistencyEngineAnalysis\s*=\s*\{/,
   /type\s+ReportQualityEngineAnalysis\s*=\s*\{/,
   /type\s+ReproducibilityExplorerAnalysis\s*=\s*\{/,
-];
+]);
 
-for (const pattern of inlineDomainPatterns) {
-  assertCase(
-    `structure.page.no-inline.${pattern.source}`,
-    !pattern.test(pageSource),
-    pattern.source
-  );
-}
-
-assertCase(
-  "structure.page.imports-consistency-barrel",
-  pageSource.includes('from "@/lib/scientific/methodology/consistency"')
-);
-assertCase(
-  "structure.page.imports-report-quality-barrel",
-  pageSource.includes('from "@/lib/scientific/methodology/report-quality"')
-);
-assertCase(
-  "structure.page.imports-reproducibility-barrel",
-  pageSource.includes('from "@/lib/scientific/methodology/reproducibility"')
-);
+assertPageImportsBarrels(assertCase, pageSource, [
+  {
+    id: "consistency-barrel",
+    needle: 'from "@/lib/scientific/methodology/consistency"',
+  },
+  {
+    id: "report-quality-barrel",
+    needle: 'from "@/lib/scientific/methodology/report-quality"',
+  },
+  {
+    id: "reproducibility-barrel",
+    needle: 'from "@/lib/scientific/methodology/reproducibility"',
+  },
+]);
 
 // --- Structural: barrel public API ---
 
-const allowedBarrelExports: Record<string, string[]> = {
+assertBarrelApiFreeze(assertCase, repoRoot, {
   "src/lib/scientific/methodology/consistency/index.ts": [
     "ConsistencyEngineAnalysis",
     "ConsistencyEngineClassification",
@@ -374,83 +366,14 @@ const allowedBarrelExports: Record<string, string[]> = {
     "getReproducibilityExplorerClassificationLabel",
     "getReproducibilityExplorerReportLines",
   ],
-};
-
-function extractBarrelExports(source: string): string[] {
-  const exports: string[] = [];
-  const typeExportBlocks = source.matchAll(
-    /export\s+type\s*\{([^}]+)\}/g
-  );
-  for (const match of typeExportBlocks) {
-    for (const item of match[1].split(",")) {
-      const name = item.trim().split(/\s+as\s+/)[0].trim();
-      if (name) exports.push(name);
-    }
-  }
-  const valueExportBlocks = source.matchAll(
-    /export\s*\{([^}]+)\}/g
-  );
-  for (const match of valueExportBlocks) {
-    for (const item of match[1].split(",")) {
-      const name = item.trim().split(/\s+as\s+/)[0].trim();
-      if (name && !name.startsWith("type ")) exports.push(name);
-    }
-  }
-  return exports.sort();
-}
-
-for (const [relPath, allowed] of Object.entries(allowedBarrelExports)) {
-  const source = readFileSync(join(repoRoot, relPath), "utf8");
-  const actual = extractBarrelExports(source);
-  const allowedSorted = [...allowed].sort();
-  const unexpected = actual.filter((name) => !allowedSorted.includes(name));
-  const missing = allowedSorted.filter((name) => !actual.includes(name));
-  assertCase(
-    `structure.barrel.${relPath.split("/").slice(-2, -1)[0]}.exact-api`,
-    unexpected.length === 0 && missing.length === 0,
-    unexpected.length > 0
-      ? `unexpected: ${unexpected.join(", ")}`
-      : missing.length > 0
-        ? `missing: ${missing.join(", ")}`
-        : actual.join(", ")
-  );
-}
+});
 
 // --- Structural: acyclic imports + no React/page ---
 
 const methodologyRoot = join(repoRoot, "src/lib/scientific/methodology");
-const methodologyFiles: string[] = [];
+const methodologyFiles = collectMethodologyTsFiles(repoRoot);
 
-function collectTsFiles(dir: string) {
-  for (const name of readdirSync(dir)) {
-    const abs = join(dir, name);
-    if (statSync(abs).isDirectory()) {
-      collectTsFiles(abs);
-    } else if (name.endsWith(".ts")) {
-      methodologyFiles.push(abs);
-    }
-  }
-}
-
-collectTsFiles(methodologyRoot);
-
-const forbiddenImportPatterns = [
-  { id: "react", pattern: /from\s+["']react["']/ },
-  { id: "page", pattern: /from\s+["']@\/app\/page/ },
-  { id: "page-relative", pattern: /from\s+["'].*page\.tsx["']/ },
-];
-
-for (const filePath of methodologyFiles) {
-  const rel = filePath.replace(repoRoot + "\\", "").replace(repoRoot + "/", "");
-  const source = readFileSync(filePath, "utf8");
-  for (const { id, pattern } of forbiddenImportPatterns) {
-    assertCase(
-      `structure.methodology.no-${id}.${rel.split("/").pop()}`,
-      !pattern.test(source),
-      rel
-    );
-  }
-}
+assertMethodologyLegacyForbiddenImports(assertCase, repoRoot, methodologyFiles);
 
 const consistencySources = methodologyFiles
   .filter((path) => path.includes(`${join("methodology", "consistency")}`))
@@ -487,28 +410,18 @@ assertCase(
 
 // --- Module presence ---
 
-for (const moduleName of ["consistency", "report-quality", "reproducibility"]) {
-  for (const fileName of [
+assertModuleFilesPresent(
+  assertCase,
+  repoRoot,
+  ["consistency", "report-quality", "reproducibility"],
+  [
     "types.ts",
     "input-types.ts",
     "build.ts",
     "labels.ts",
     "reporting.ts",
     "index.ts",
-  ]) {
-    assertCase(
-      `structure.module.${moduleName}.${fileName}`,
-      existsSync(join(methodologyRoot, moduleName, fileName))
-    );
-  }
-}
+  ]
+);
 
-const summary = {
-  phase: "methodology-f5a-unit",
-  pass: results.every((item) => item.pass),
-  caseCount: results.length,
-  cases: results,
-};
-
-console.log(JSON.stringify(summary, null, 2));
-process.exit(summary.pass ? 0 : 1);
+emitGateSummary("methodology-f5a-unit", results);
