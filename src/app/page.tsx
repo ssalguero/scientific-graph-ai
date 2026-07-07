@@ -123,7 +123,6 @@ import {
   restoreWorkflowVisibilitySnapshot,
   resolveGuidedWorkflowStepToggles,
   type GuidedWorkflowContext,
-  type GuidedWorkflowPlan,
   type GuidedWorkflowSession,
   type GuidedWorkflowTemplateId,
   type GuidedWorkflowToggleSetters,
@@ -131,6 +130,7 @@ import {
   type WorkflowVisibilitySnapshot,
 } from "@/lib/scientific/workflow";
 import { ComparisonFreshnessBadge } from "@/components/comparison/ComparisonFreshnessBadge";
+import { GuidedWorkflowPanel } from "@/components/workflow";
 import { WorkflowSessionIndicator } from "@/components/workflow/WorkflowSessionIndicator";
 import { SmartStartScreen } from "@/components/home/SmartStartScreen";
 import { CompareStepsBanner } from "@/components/home/CompareStepsBanner";
@@ -11000,82 +11000,6 @@ function ScientificPublicationReadinessAnalyzer({
     </div>
   );
 }
-
-// BEGIN SCI-59 — Guided Scientific Workflow (orchestration layer)
-
-type GuidedWorkflowPanelProps = {
-  plan: GuidedWorkflowPlan;
-  session: GuidedWorkflowSession;
-  onApplyStep: () => void;
-  onSkipStep: () => void;
-  onCancel: () => void;
-};
-
-function GuidedWorkflowPanel({
-  plan,
-  session,
-  onApplyStep,
-  onSkipStep,
-  onCancel,
-}: GuidedWorkflowPanelProps) {
-  const currentStep = plan.steps[session.currentStepIndex];
-  const progressLabel = currentStep
-    ? `Paso ${session.currentStepIndex + 1}/${plan.steps.length} · ${plan.templateTitle}`
-    : `${plan.templateTitle} · completado`;
-
-  return (
-    <div className={`${contentPanel} border border-[var(--app-accent)]/25`}>
-      <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-        <div>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
-            🧭 Guided Scientific Workflow
-          </p>
-          <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
-            {progressLabel}
-          </p>
-        </div>
-        {session.status === "active" ? (
-          <button type="button" onClick={onCancel} className={btnOutlineSm}>
-            Cancelar workflow
-          </button>
-        ) : null}
-      </div>
-
-      {session.status === "completed" ? (
-        <p className="text-sm text-[var(--app-text)]">
-          Workflow &quot;{plan.templateTitle}&quot; completado. Puede continuar
-          en modo experto o exportar reportes.
-        </p>
-      ) : currentStep ? (
-        <>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
-            {currentStep.title}
-          </p>
-          <p className="text-sm text-[var(--app-text-muted)] mt-1">
-            {currentStep.explanation}
-          </p>
-          <div className="flex flex-wrap gap-2 mt-4">
-            <button type="button" onClick={onApplyStep} className={btnPrimary}>
-              Aplicar paso
-            </button>
-            <button type="button" onClick={onSkipStep} className={btnOutlineSm}>
-              Omitir paso
-            </button>
-          </div>
-        </>
-      ) : null}
-
-      {session.completedStepIds.length > 0 ? (
-        <p className="text-xs text-[var(--app-text-muted)] mt-3">
-          Completados: {session.completedStepIds.length} · Omitidos:{" "}
-          {session.skippedStepIds.length}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-// END SCI-59
 
 type GraphSaveToastProps = {
   title: string;

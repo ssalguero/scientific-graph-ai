@@ -1633,22 +1633,218 @@ Baselines QA-1 Publication Status (move-only, referencia): Dataset5 **Near Ready
 D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 ✓ → D10 ✓ → D11 ✓ → D12 ✓ → D13 ✓ → D14 ✓ → D15 …
 ```
 
-| Microfase | Épica | Objetivo | Prerequisito |
-|-----------|-------|----------|--------------|
-| **D15** (siguiente) | ARCH-5 | F5G — UI `GuidedWorkflowPanel` (SCI-59) → `components/workflow/` | D14 CLOSED |
-
-**Próxima fase:** **D15 — ARCH-5 F5G** (extracción UI `GuidedWorkflowPanel` / SCI-59).
+**Próxima fase:** **D16 — ARCH-5 F5H** (consolidación infraestructura de validación — sin extracciones UI).
 
 **Pendiente explícito post-D14:**
 
 - **SCI-50–56:** paneles metodológicos UI permanecen inline en `page.tsx` (F5F bis / microfases ARCH-5 posteriores).
-- **SCI-59:** `GuidedWorkflowPanel` → D15.
 - **`methodology/publication/`:** API Freeze congelada — no modificar sin microfase dedicada.
 
 No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
 
-**PROD-2D** permanece abierta hasta D23; lista para iniciar **D15**.
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D16**.
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D15 — ARCH-5 F5G: UI SCI-59 (Guided Workflow Panel)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **COMPLETED** (extracción UI move-only) |
+| **Fecha de certificación** | 2026-07-06 |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D15 · [`D15_1_SCI59_UI_PREP.md`](./D15_1_SCI59_UI_PREP.md) |
+| **Nota de alineación** | D15 acotado exclusivamente a SCI-59 UI → `components/workflow/`; dominio `lib/scientific/workflow/` intocable |
+
+### Objetivo cumplido
+
+Extracción arquitectónica **move-only** del componente presentacional **`GuidedWorkflowPanel`** desde `src/app/page.tsx` hacia `src/components/workflow/GuidedWorkflowPanel.tsx`, preservando orquestación (`useState`, `useMemo`, `useEffect`, callbacks, snapshot), mount shells, template picker, `WorkflowSessionIndicator` y dominio SCI-59 sin cambios.
+
+| Capa | SCI | Ubicación post-D15 |
+|------|-----|-------------------|
+| Dominio Guided Workflow | SCI-59 | `src/lib/scientific/workflow/` (Fase 2 — intocable) |
+| UI Guided Workflow Panel | SCI-59 | `src/components/workflow/GuidedWorkflowPanel.tsx` |
+| UI Session Indicator | SCI-59 | `src/components/workflow/WorkflowSessionIndicator.tsx` (D5 — intocable) |
+
+### Microfases D15.1–D15.5
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D15.1** | Baseline + inventario UI (`D15_1_SCI59_UI_PREP.md`) | **CLOSED** |
+| **D15.2** | Contrato 5 props congelado + presentational-only | **CLOSED** |
+| **D15.3** | `GuidedWorkflowPanel.tsx` + `index.ts` (sin wiring) | **CLOSED** |
+| **D15.4** | Import barrel + eliminación inline `page.tsx` | **CLOSED** |
+| **D15.5** | Gate final + acta §D15 | **CLOSED** |
+
+### Arquitectura resultante (F5G — SCI-59 UI)
+
+```text
+src/components/workflow/
+  GuidedWorkflowPanel.tsx          ← UI SCI-59 panel (move-only, D15)
+  WorkflowSessionIndicator.tsx     ← UI SCI-59 indicador (D5 — intocable)
+  index.ts                         ← barrel congelado (export GuidedWorkflowPanel)
+src/lib/scientific/workflow/       ← dominio SCI-59 — intocable
+src/app/page.tsx                   ← useState + useMemo + callbacks + mount shells + import UI
+```
+
+**Diagrama de límites:**
+
+```text
+page.tsx (orquestador)
+  ├── guidedWorkflowSession, activeGuidedWorkflowPlan, callbacks
+  ├── mount shells ×3 (condicionales — intocados)
+  ├── template picker (inline)
+  └── import { GuidedWorkflowPanel } from "@/components/workflow"
+              │
+              ▼
+GuidedWorkflowPanel.tsx (presentacional)
+  ├── props: plan, session, onApplyStep, onSkipStep, onCancel
+  ├── derivaciones: currentStep, progressLabel
+  └── import type ← lib/scientific/workflow
+```
+
+**Boundary congelado:** exactamente **5 props**; sin hooks; sin Context/Provider/Store; sin props auxiliares (`isCompleted`, `progress`, etc.).
+
+### API pública congelada (`components/workflow/index.ts`)
+
+| Export D15 | Origen |
+|------------|--------|
+| `GuidedWorkflowPanel` | `GuidedWorkflowPanel.tsx` |
+
+**No exportado (privado):** `GuidedWorkflowPanelProps`, constantes CSS internas.
+
+**`WorkflowSessionIndicator`:** import directo desde `page.tsx` (D5) — fuera del barrel D15.
+
+**API `lib/scientific/workflow/` — inalterada:** cero diffs en D15.
+
+### Métricas finales D15
+
+| Métrica | Valor |
+|---------|-------|
+| LOC `page.tsx` antes (baseline D15.1) | **28.737** |
+| LOC `page.tsx` después (post-D15.4) | **28.662** |
+| Reducción neta `page.tsx` | **−75 LOC** |
+| LOC componente extraído | **85** (`GuidedWorkflowPanel.tsx`) |
+| LOC barrel | **1** (`index.ts`) |
+| Archivos creados | **2** |
+| Archivos modificados | **2** (`page.tsx`, `PROJECT_STATUS_PROD_2D.md`) + prep `D15_1_SCI59_UI_PREP.md` |
+| Definiciones `GuidedWorkflowPanel` repo-wide | **1** |
+| Imports `page.tsx` antes | **55** |
+| Imports `page.tsx` después | **56** (+1 barrel) |
+| Imports dominio eliminados | **0** (orquestación conserva bloque L117–132) |
+| Import añadido | `@/components/workflow` → `GuidedWorkflowPanel` |
+
+### Riesgos y mitigaciones (D15)
+
+| Riesgo | Mitigación | Resultado |
+|--------|------------|-----------|
+| Import circular | UI → types only; dominio sin `@/components` | **PASS** (R6) |
+| Props creep | 5 props congeladas §D15.2 | **PASS** |
+| CSS drift | Copia literal move-only | **PASS** (CA-D15-11) |
+| Scope creep | Template picker / indicator / mount shells fuera de alcance | **PASS** |
+| Duplicación componente | grep única definición post-D15.4 | **PASS** |
+
+### Revisión arquitectónica R1–R6 (D15.5)
+
+| ID | Verificación | Resultado |
+|----|--------------|-----------|
+| **R1** | Sin JSX duplicado de `GuidedWorkflowPanel` en `page.tsx` | **PASS** — solo mount sites |
+| **R2** | Sin callbacks duplicados | **PASS** — wiring único |
+| **R3** | `lib/scientific/workflow/*` sin diffs | **PASS** |
+| **R4** | Componente presentacional-only (0 hooks) | **PASS** |
+| **R5** | `page.tsx` LOC −75 (28.737 → 28.662) | **PASS** |
+| **R6** | Sin imports `page.tsx` / `src/app/*` en componente | **PASS** |
+
+### Verificación gate final D15.5 (2026-07-06)
+
+| Comando / criterio | Resultado |
+|--------------------|-----------|
+| `npx tsc --noEmit` | **PASS** |
+| `npm run lint` (repo completo) | **FAIL** — 101 problemas preexistentes (42 errors); deuda histórica ajena a D15 |
+| `eslint` artefactos D15 (`GuidedWorkflowPanel.tsx`, `index.ts`) | **PASS** |
+| `npx tsx scripts/validate-workflow-unit.ts` | **PASS** — 9/9 (W1–W9) |
+| `grep "function GuidedWorkflowPanel"` | **PASS** — 1 definición (`components/workflow/GuidedWorkflowPanel.tsx`) |
+| Barrel única exportación | **PASS** |
+| `lib/scientific/workflow/` sin cambios | **PASS** |
+| Move-only certificado | **PASS** |
+| Mount sites byte-identical | **PASS** |
+| Igualdad visual JSX (textos, iconos, spacing, botones, orden) | **PASS** (traslado literal) |
+
+**Observación lint:** warning `GuidedWorkflowPlan` type unused en `page.tsx` L126 (import de tipo tras retirar `GuidedWorkflowPanelProps` inline). `tsc` PASS; limpieza opcional en microfase futura — fuera de alcance D15.5 (sin modificar `page.tsx`).
+
+### Criterios de certificación D15 (épica)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D15-1** | `npx tsc --noEmit` PASS | **PASS** |
+| **CA-D15-2** | Move-only certificado | **PASS** |
+| **CA-D15-3** | SCI-59 sin cambios funcionales | **PASS** |
+| **CA-D15-3-A** | Una sola definición `GuidedWorkflowPanel` | **PASS** |
+| **CA-D15-4** | Dominio `lib/scientific/workflow/` intacto | **PASS** |
+| **CA-D15-5** | Sin dependencias circulares | **PASS** |
+| **CA-D15-6** | Barrel congelado — solo `GuidedWorkflowPanel` | **PASS** |
+| **CA-D15-7** | Contrato exactamente 5 props | **PASS** |
+| **CA-D15-8** | `page.tsx` LOC reducidas (−75) | **PASS** |
+| **CA-D15-9** | Sin lógica duplicada | **PASS** |
+| **CA-D15-10** | Acta §D15 en este documento | **PASS** |
+| **CA-D15-11** | Igualdad visual certificada (move-only literal) | **PASS** |
+
+### Criterios de certificación D15.5 (gate final)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D15.5-1** | Gates técnicos ejecutados y registrados | **PASS** |
+| **CA-D15.5-2** | R1–R6 certificados | **PASS** |
+| **CA-D15.5-3** | Métricas finales registradas | **PASS** |
+| **CA-D15.5-4** | `PROJECT_STATUS_PROD_2D.md` actualizado | **PASS** |
+| **CA-D15.5-5** | ARCH-5 F5G marcado CLOSED | **PASS** |
+| **CA-D15.5-6** | Handoff D16 documentado | **PASS** |
+| **CA-D15.5-7** | Sin cambios de código en D15.5 | **PASS** |
+
+**D15 no deja deuda técnica funcional** dentro de su alcance F5G (UI SCI-59 panel).
+
+### ARCH-5 F5G — cierre SCI-59 UI Panel
+
+| Microfase | Entregable ARCH-5 | Estado |
+|-----------|-------------------|--------|
+| **D15** | UI `GuidedWorkflowPanel` → `components/workflow/` | **CLOSED** |
+
+**ARCH-5 F5G (SCI-59 UI Panel): CLOSED** (2026-07-06). Épica ARCH-5 permanece abierta (D16–D17; F5F bis SCI-50–56 UI pendiente).
+
+### Handoff
+
+**D12 — CLOSED.** **ARCH-5 F5D — CLOSED.**  
+**D13 — CLOSED.** **ARCH-5 F5E — CLOSED.**  
+**D14 — CLOSED.** **ARCH-5 F5F (SCI-60 UI) — CLOSED.**  
+**D15 — CLOSED.** **ARCH-5 F5G (SCI-59 UI Panel) — CLOSED.**
+
+**Secuencia congelada (SSOT):**
+
+```text
+D1 ✓ → D4 ✓ → D5 ✓ → D6 ✓ → D7 ✓ → D8 ✓ → D2 ✓ → D3 ✓ → D9 ✓ → D10 ✓ → D11 ✓ → D12 ✓ → D13 ✓ → D14 ✓ → D15 ✓ → D16 …
+```
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D16** (siguiente) | ARCH-5 | F5H — Consolidación infraestructura validación (gates unitarios) | D15 CLOSED |
+
+**D16 — sin nuevas extracciones UI.** Consolida:
+
+- `validate:methodology-unit` (F5A–F5E)
+- `validate:workflow-unit` (SCI-59, W1–W9)
+- `validate:publication-unit` (SCI-60 dominio)
+
+en gate agregado. **No modifica SCI.**
+
+**Pendiente explícito post-D15:**
+
+- **SCI-50–56:** paneles metodológicos UI inline (F5F bis / fases posteriores).
+- **Template picker SCI-59:** permanece inline en `page.tsx`.
+- **`methodology/publication/`:** API Freeze — intocable.
+
+No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
+
+**PROD-2D** permanece abierta hasta D23; lista para iniciar **D16**.
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06 · Acta D15 certificada 2026-07-06 · **ARCH-5 F5G (SCI-59 UI Panel) CLOSED** 2026-07-06. Épica PROD-2D permanece abierta hasta D23.*
