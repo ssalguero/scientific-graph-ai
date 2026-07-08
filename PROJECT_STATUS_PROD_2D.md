@@ -1,7 +1,7 @@
 # Scientific Graph AI — Estado PROD-2D (UX profesional + arquitectura transversal)
 
 **Épica:** PROD-2D  
-**Documento:** acta incremental de microfases (cierre parcial hasta D23)  
+**Documento:** acta incremental de microfases (cierre parcial hasta D24)  
 **Baseline de referencia:** [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) (D0.5 COMPLETED)  
 **Plan operativo:** [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)
 
@@ -2136,7 +2136,7 @@ validate:arch5-f5-modularization-gate
 |--------|-----------|--------|
 | **F5F-BIS** — UI SCI-50–56 inline (~711 LOC) | LOW | Deuda conocida → PROD-2E |
 | **`validate:full`** E2E/baseline sin servidor | INFO | No bloqueante; patrón D0.5 |
-| Methodology gates fuera de `validate:full` | MEDIA | D22 `validate:prod2d-gate` |
+| Methodology gates fuera de `validate:full` | MEDIA | D23 `validate:prod2d-gate` |
 
 ### Excepción formal baseline §8 UI
 
@@ -2200,7 +2200,7 @@ Baseline D0.5 objetivo UI ausente en `page.tsx` → `components/methodology/`. *
 **Secuencia congelada (SSOT):**
 
 ```text
-D1 ✓ → … → D16 ✓ → D17 ✓ → D18.1 ✓ → D18.2 …
+D1 ✓ → … → D16 ✓ → D17 ✓ → D18 ✓ → D19 ✓ → D20 … → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
 ```
 
 ---
@@ -2209,27 +2209,143 @@ D1 ✓ → … → D16 ✓ → D17 ✓ → D18.1 ✓ → D18.2 …
 
 | Campo | Valor |
 |-------|-------|
-| **Estado** | **IN PROGRESS** (D18.1 CLOSED — dominio pendiente D18.2–D18.7) |
+| **Estado** | **COMPLETED** (certificación D18.1–D18.7 — cero cambios funcionales en `page.tsx`) |
 | **Fecha inicio** | 2026-07-07 |
+| **Fecha de cierre** | 2026-07-08 |
 | **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D18 · [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §5.4 · §6.1 |
 | **Épica** | **UX-2B** (D18–D21 — Historial + Config MVP) |
-| **Prerequisito** | D17 CLOSED · ARCH-5 F5 (D9–D17) CLOSED |
+| **UX-2B.1** | **COMPLETED** (D18) |
+| **ARCH-5 F5 (D9–D17)** | **CLOSED** (sin cambios en D18) |
+| **Prerequisito** | D17 CLOSED · ARCH-5 F5 CLOSED |
+
+### Objetivo cumplido
+
+Módulo **`app-preferences`** operativo: dominio puro `UserPreferences` (tema, `showContextualHints`, versión display), adapter **localStorage** round-trip, barrel raíz con **API Freeze** (13 exports), gate **`validate:app-preferences-unit`** (28 casos PASS) — **sin wiring UI**, **sin modificar `page.tsx`**, comportamiento observable idéntico hasta D19.
 
 ### Microfases D18.1–D18.7
 
 | Microfase | Entregable | Estado |
 |-----------|------------|--------|
 | **D18.1** | Baseline + preparación documental (acta §D18) | **CLOSED** |
-| **D18.2** | Domain core (types, defaults, validation, version) | Pendiente |
-| **D18.3** | Adapter localStorage round-trip | Pendiente |
-| **D18.4** | Barrel raíz + API Freeze | Pendiente |
-| **D18.5** | Unit tests + gate script | Pendiente |
-| **D18.6** | Registro npm + verificación integral | Pendiente |
-| **D18.7** | Certificación final + handoff D19 | Pendiente |
+| **D18.2** | Domain core (`domain/` — types, defaults, validation, version) | **CLOSED** |
+| **D18.3** | Adapter localStorage round-trip (`adapters/local-storage/`) | **CLOSED** |
+| **D18.4** | Root barrel + API Freeze (`app-preferences/index.ts`) | **CLOSED** |
+| **D18.5** | Suite unitaria + `scripts/validate-app-preferences-unit.ts` | **CLOSED** |
+| **D18.6** | Registro npm `validate:app-preferences-unit` + certificación técnica | **CLOSED** |
+| **D18.7** | Certificación final + acta + handoff D19 | **CLOSED** |
+
+### Resumen técnico por microfase
+
+| Microfase | Entregable | Ubicación |
+|-----------|------------|-----------|
+| **D18.1** | Baseline tema inline, keys, alcance IN/OUT, restricciones | Acta §D18 (este documento) |
+| **D18.2** | `ThemeMode`, `UserPreferences`, defaults, validación pura, `APP_DISPLAY_VERSION` | `src/lib/app-preferences/domain/` (5 archivos) |
+| **D18.3** | `readUserPreferences`, `writeUserPreferences`, `clearUserPreferences`, keys congeladas | `src/lib/app-preferences/adapters/local-storage/` (3 archivos) |
+| **D18.4** | API Freeze — 13 exports explícitos, sin `export *` | `src/lib/app-preferences/index.ts` |
+| **D18.5** | 28 casos (domain + adapter + version + API Freeze) | `src/lib/app-preferences/__tests__/` (3 archivos) + `scripts/validate-app-preferences-unit.ts` |
+| **D18.6** | Script npm registrado | `package.json` — 1 script añadido |
+| **D18.7** | Acta certificación + handoff D19 | Este §D18 |
+
+### Arquitectura resultante
+
+```text
+src/lib/app-preferences/
+  domain/                    ← puro (sin React, sin browser)
+  adapters/local-storage/    ← persistencia (depende solo de domain)
+  __tests__/                 ← suites unitarias + gate
+  index.ts                   ← API Freeze (único entry point consumidores)
+```
+
+| Capa | Dependencias | Estado post-D18 |
+|------|--------------|-----------------|
+| **Dominio** | Solo `./types`, `./defaults`, `./validation`, `./version` | **Desacoplado** — cero React/Next/`@/app` |
+| **Adapter** | `../../domain`, `./keys` | **Desacoplado** — dominio no importa adapter |
+| **Barrel raíz** | Re-exports explícitos domain + adapter | **API Freeze vigente** — 13 exports |
+| **Consumidores** | `@/lib/app-preferences` únicamente | **0** en D18 — wiring diferido D19 |
+| **`page.tsx`** | Tema inline legacy | **Sin cambios** — toggle sidebar operativo |
+
+**Contrato público congelado (13 exports):** `ThemeMode`, `UserPreferences`, `DEFAULT_USER_PREFERENCES`, `createDefaultUserPreferences`, `parseThemeMode`, `parseShowContextualHints`, `mergeUserPreferences`, `validateUserPreferences`, `APP_DISPLAY_VERSION`, `USER_PREFERENCES_STORAGE_KEYS`, `readUserPreferences`, `writeUserPreferences`, `clearUserPreferences`.
+
+**Deep imports:** prohibidos para consumidores — `@/lib/app-preferences/domain/*` y `@/lib/app-preferences/adapters/*` no requeridos.
+
+**Keys localStorage:**
+
+| Preferencia | Key |
+|-------------|-----|
+| Tema | `scientific-graph-theme` |
+| Hints contextuales | `scientific-graph-ai.contextual-hints` |
+
+### Gates (D18.6–D18.7 — evidencia registrada)
+
+| Comando | Resultado | Observaciones |
+|---------|-----------|---------------|
+| `npx tsc --noEmit` | **PASS** | D18.2–D18.6 |
+| `npm run validate:app-preferences-unit` | **PASS** | **28 casos** (mín. 18); incl. **4 casos API Freeze** |
+| API Freeze automático | **PASS** | **13 exports** — ninguno faltante, ninguno adicional |
+
+**Casos API Freeze (gate):** `apiFreeze.exportCount` · `apiFreeze.noUnexpectedExports` · `apiFreeze.allRequiredExportsPresent` · `apiFreeze.exactContractMatch` — todos **PASS**.
+
+### Métricas D18
+
+| Métrica | Valor |
+|---------|-------|
+| Archivos **dominio** | **5** (`types`, `defaults`, `validation`, `version`, `index`) |
+| Archivos **adapter** | **3** (`keys`, `adapter`, `index`) |
+| Archivos **barrel raíz** | **1** (`index.ts`) |
+| Archivos **tests** | **3** (`user-preferences.cases`, `local-storage-adapter.cases`, `run-assertions`) |
+| Script **validate** | **1** (`scripts/validate-app-preferences-unit.ts`) |
+| Cambios **`package.json`** | **1 script** (`validate:app-preferences-unit`) — D18.6 |
+| Cambios **`page.tsx`** | **0** |
+| Cambios **`src/lib/scientific/*`** | **0** |
+| Cambios **schema V2 / IndexedDB / workflow / visibility** | **0** |
+| Casos gate | **28** |
+| Exports públicos API Freeze | **13** |
+
+### Criterios de aceptación CA-D18 (certificación final D18.7)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D18-1** | Módulo `src/lib/app-preferences/domain/` operativo con tipos, defaults, validación pura | **PASS** |
+| **CA-D18-2** | `UserPreferences` incluye `theme` y `showContextualHints` con defaults congelados | **PASS** |
+| **CA-D18-3** | `APP_DISPLAY_VERSION` exportado; paridad `package.json` `0.1.0` | **PASS** |
+| **CA-D18-4** | Adapter keys `scientific-graph-theme` + `scientific-graph-ai.contextual-hints` | **PASS** |
+| **CA-D18-5** | Round-trip adapter PASS (tema + hints + defaults + inválidos) | **PASS** |
+| **CA-D18-6** | Validación pura coerce sin throw; adapter read fallback seguro | **PASS** |
+| **CA-D18-7** | Barrel API Freeze — 13 exports; prohibido deep import submódulos | **PASS** |
+| **CA-D18-8** | Cero imports React/Next/`@/app`/`@/components` en domain/adapters | **PASS** |
+| **CA-D18-9** | `npm run validate:app-preferences-unit` PASS (≥18 casos) | **PASS** (28) |
+| **CA-D18-10** | `npx tsc --noEmit` PASS | **PASS** |
+| **CA-D18-11** | Cero cambios `page.tsx`; comportamiento observable inalterado | **PASS** |
+| **CA-D18-12** | Cero cambios schema V2, motores SCI, workflow, visibility | **PASS** |
+| **CA-D18-13** | `labUsageProfile` no absorbido en `UserPreferences` | **PASS** |
+| **CA-D18-14** | Script npm `validate:app-preferences-unit` registrado | **PASS** |
+| **CA-D18-15** | Acta §D18 incluye baseline D18.1 + certificación D18.7 | **PASS** |
+| **CA-D18-16** | Gate valida contrato barrel automáticamente | **PASS** |
+| **CA-D18-17** | Handoff D19 documentado (`@/lib/app-preferences` únicamente) | **PASS** |
+| **CA-D18-18** | Secuencia actualizada: `D17 ✓ → D18 ✓ → D19 …` | **PASS** |
+
+### Revisión post-BUILD D18.7
+
+| # | Pregunta | Resultado |
+|---|----------|-----------|
+| **R1** | ¿Se movió o cambió código funcional en `page.tsx`? | **NO** |
+| **R2** | ¿Cambió contrato V2 / motores SCI? | **NO** |
+| **R3** | ¿Cambió comportamiento observable? | **NO** — tema sigue inline hasta D19 |
+| **R4** | ¿Módulo listo para consumo D19? | **SÍ** — `@/lib/app-preferences` API Freeze |
+
+**D18 no deja deuda técnica funcional** dentro de su alcance UX-2B.1. Wiring UI, stub Configuración e hints globales → **D19**.
+
+### UX-2B.1 — cierre dominio preferencias
+
+| Microfase | Entregable UX-2B.1 | Estado |
+|-----------|-------------------|--------|
+| **D18** | UserPreferences domain + adapter + gate | **CLOSED** |
+
+**UX-2B.1 (D18): CLOSED** (2026-07-08). **UX-2B.2 (D19): CLOSED** (2026-07-08). Épica **UX-2B** permanece abierta (D20–D21 pendientes).
 
 ---
 
-### D18.1 — Baseline + preparación documental
+### D18.1 — Baseline + preparación documental (referencia histórica)
 
 | Campo | Valor |
 |-------|-------|
@@ -2335,26 +2451,550 @@ Documentos revisados antes de registrar este acta:
 | Adapters / tests / `package.json` | **NO modificados** (correcto D18.1) |
 | `npx tsc --noEmit` | **No re-ejecutado** — sin cambios en `src/` |
 
-#### Handoff D18.1 → D18.2
+#### Handoff D18.1 → D18.2 (histórico)
 
-**D18.2 puede iniciar.** Próximo entregable: `src/lib/app-preferences/domain/` (types, defaults, validation, version) — sin adapter, sin barrel raíz, sin gate.
-
-**Pendiente explícito post-D17 (sin cambio D18.1):**
-
-- **F5F bis:** UI SCI-50–56 inline (~711 LOC) → PROD-2E.
-- **Template picker SCI-59:** permanece inline en `page.tsx`.
-- **`validate:full` + methodology gates:** consolidación D22 `validate:prod2d-gate`.
-
-No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)).
-
-**PROD-2D** permanece abierta hasta D23.
+Baseline registrado; dominio implementado D18.2–D18.4; gate D18.5–D18.6.
 
 ---
+
+### Handoff D18 → D19
+
+**D18 — CLOSED.** **UX-2B.1 (UserPreferences domain) — CLOSED.**
 
 | Microfase | Épica | Objetivo | Prerequisito |
 |-----------|-------|----------|--------------|
-| **D18.2** (siguiente) | UX-2B | D18.2 — Domain core (`UserPreferences`, defaults, validation) | D18.1 CLOSED |
+| **D19** (siguiente) | UX-2B | D19 — UX-2B.2: Panel Configuración MVP (`SettingsPanel`) | D18 CLOSED |
+
+**D19 iniciará UX-2B.2 — SettingsPanel MVP**, consumiendo **exclusivamente** `@/lib/app-preferences` (API Freeze — prohibido deep import).
+
+| Tarea D19 | API / módulo |
+|-----------|--------------|
+| Crear `src/components/settings/SettingsPanel.tsx` | `@/lib/app-preferences` |
+| Reemplazar stub «Próximamente» Configuración sidebar | Wiring `page.tsx` |
+| Migrar toggle tema sidebar → panel Config | `readUserPreferences` / `writeUserPreferences` |
+| Toggle `showContextualHints` global | `UserPreferences.showContextualHints` |
+| Display versión read-only | `APP_DISPLAY_VERSION` |
+| Wiring hints UI | `ToggleVisibilityHint` prop `hidden` |
+
+**Pendiente explícito D19:**
+
+- Wiring UI prefs en `page.tsx`
+- Reemplazo stub Configuración
+- Consumo `UserPreferences` vía barrel público
+- Toggle `showContextualHints` conectado a hints contextuales
+- Display `APP_DISPLAY_VERSION` en panel
+
+**Fuera de D19 (sin adelantar):** Historial D20–D21 · IndexedDB · schema V2 · motores SCI · `labUsageProfile` en Config (discovery §5.3).
+
+**Pendiente explícito post-D17 (sin cambio D18):**
+
+- **F5F bis:** UI SCI-50–56 inline (~711 LOC) → PROD-2E.
+- **Template picker SCI-59:** permanece inline en `page.tsx`.
+- **`validate:full` + methodology gates:** consolidación D23 `validate:prod2d-gate`.
+
+No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)) salvo amend D22.1 (UX-2C / renumeración D23–D24).
+
+**PROD-2D** permanece abierta hasta D24; **D19 CLOSED** — lista para iniciar **D20** (application layer recientes).
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06 · Acta D15 certificada 2026-07-06 · **ARCH-5 F5G (SCI-59 UI Panel) CLOSED** 2026-07-06 · Acta D16 certificada 2026-07-07 · **ARCH-5 F5H (infraestructura validación) CLOSED** 2026-07-07 · Acta D17 certificada 2026-07-07 · **ARCH-5 F5I (certificación modularización) CLOSED** 2026-07-07 · **ARCH-5 F5 (D9–D17) CLOSED** 2026-07-07. Épica PROD-2D permanece abierta hasta D23.*
+## Microfase D19 — UX-2B.2: Panel Configuración MVP (`SettingsPanel`)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** — 2026-07-08 |
+| **Épica** | **UX-2B** (D18–D21 — Historial + Config MVP) |
+| **UX-2B.2** | **COMPLETED** (D19) |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D19 · [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §5 · §6.1 |
+| **Prerequisito** | D18 CLOSED (`@/lib/app-preferences` API Freeze) |
+
+### Objetivo cumplido
+
+**UX-2B.2 — Panel Configuración MVP:** reemplazar el stub «Configuración» del sidebar Sistema por un panel funcional expandible, centralizando **tema**, **hints contextuales** y **versión de aplicación**, consumiendo exclusivamente `@/lib/app-preferences` (D18). Eliminada la duplicación del manejo de tema en `page.tsx` (`THEME_STORAGE_KEY`, lectura/escritura manual `localStorage`). Wiring global de **8** instancias `ToggleVisibilityHint` vía `hidden={!showContextualHints}`. **`MethodologyVisibilityCallout`** — resolución **R-D19-2**: **OUT OF SCOPE** (sin evidencia en handoff D18).
+
+### Resumen funcional
+
+| Preferencia | Comportamiento |
+|-------------|----------------|
+| **C1 Tema** | Toggle claro/oscuro en `SettingsPanel`; persiste vía adapter (`scientific-graph-theme`) |
+| **C2 Hints contextuales** | Toggle global `showContextualHints`; oculta/muestra badges `ToggleVisibilityHint` en inspector análisis |
+| **C3 Versión** | Display read-only `APP_DISPLAY_VERSION` (`0.1.0`) |
+| **Sidebar** | Botón «Configuración» expand/collapse (patrón «Actividad del proyecto»); cerrado por defecto |
+
+**Fuera de alcance D19 (intocable):** stub «Historial» (D21) · `project-history` / `HistoryPanel` (D22) · `MethodologyVisibilityCallout` · `labUsageProfile` en Config · IndexedDB · motores SCI.
+
+### Arquitectura final D19
+
+```text
+src/components/settings/
+  SettingsPanel.tsx    ← UI presentacional (props only)
+  index.ts             ← barrel mínimo (SettingsPanel + SettingsPanelProps)
+src/app/page.tsx       ← composición: estado, read/write prefs, wiring sidebar + hints
+src/lib/app-preferences/   ← dominio D18 reutilizado (sin cambios D19)
+  domain/ + adapters/local-storage/ + index.ts (API Freeze 13 exports)
+```
+
+| Capa | Responsabilidad | Verificación D19.5 |
+|------|-----------------|-------------------|
+| **`SettingsPanel`** | Render + callbacks; cero dominio, cero hooks, cero persistencia | **PASS** |
+| **`page.tsx`** | Único consumidor UI `@/lib/app-preferences`; `getCachedInitialUserPreferences` (lectura única); `prefsLoaded` gate escritura | **PASS** |
+| **Dominio D18** | `UserPreferences`, adapter localStorage — **sin modificaciones** | **PASS** |
+| **API Freeze** | 13 exports barrel — contrato intacto | **PASS** |
+
+**Eliminación deuda tema:** `THEME_STORAGE_KEY` · `localStorage.getItem/setItem` manual para tema · effects dedicados tema — **eliminados**. Persistencia exclusiva: `readUserPreferences()` / `writeUserPreferences()`.
+
+### Microfases D19.1–D19.6
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D19.1** | Baseline documental (inventario, API Freeze, alcance IN/OUT, métricas) | **CLOSED** |
+| **D19.2** | `SettingsPanel.tsx` + `index.ts` presentacionales | **CLOSED** |
+| **D19.3** | Wiring `page.tsx`: sidebar Config, prefs, 8× `ToggleVisibilityHint.hidden` | **CLOSED** |
+| **D19.4** | Polish UX: tipografía `text-xs`, lazy init anti-flash tema | **CLOSED** |
+| **D19.4A** | Micro-fix: `getCachedInitialUserPreferences` — lectura única en hidratación | **CLOSED** |
+| **D19.5** | Gates `tsc --noEmit` + `validate:app-preferences-unit` | **CLOSED** |
+| **D19.6** | Acta certificación + handoff D20 (este §D19) | **CLOSED** |
+
+### Archivos creados (D19)
+
+| Archivo | Microfase |
+|---------|-----------|
+| [`src/components/settings/SettingsPanel.tsx`](src/components/settings/SettingsPanel.tsx) | D19.2 |
+| [`src/components/settings/index.ts`](src/components/settings/index.ts) | D19.2 |
+
+### Archivos modificados (D19)
+
+| Archivo | Microfases | Cambio |
+|---------|------------|--------|
+| [`src/app/page.tsx`](src/app/page.tsx) | D19.3 · D19.4 · D19.4A | Wiring Config, prefs, hints; eliminación tema inline; caché lectura única |
+| [`src/components/settings/SettingsPanel.tsx`](src/components/settings/SettingsPanel.tsx) | D19.4 | Polish tipografía (`text-sm` → `text-xs`) — sin cambio API |
+
+**Sin modificaciones en D19:** `src/lib/app-preferences/` · `scripts/` · `package.json` · `project-history` · `HistoryPanel` · `MethodologyVisibilityCallout`.
+
+### Métricas D19
+
+| Métrica | Valor |
+|---------|-------|
+| Archivos UI creados | **2** (`SettingsPanel.tsx`, `index.ts`) |
+| Archivos modificados (código) | **2** (`page.tsx`, `SettingsPanel.tsx` polish) |
+| Exports API Freeze `@/lib/app-preferences` | **13** (sin cambio) |
+| Gate `validate:app-preferences-unit` | **28/28 PASS** |
+| Gate `npx tsc --noEmit` | **PASS** |
+| `THEME_STORAGE_KEY` en `page.tsx` | **0** (eliminado D19.3) |
+| Persistencia manual tema (`localStorage` directo) | **0** |
+| Consumidores UI `@/lib/app-preferences` | **1** (`page.tsx`) |
+| Deep imports `@/lib/app-preferences/…` | **0** |
+| `ToggleVisibilityHint` wired (`hidden`) | **8** |
+| `MethodologyVisibilityCallout` wired | **0** (OUT OF SCOPE R-D19-2) |
+| LOC `SettingsPanel.tsx` (aprox.) | **~105** |
+| LOC wiring neto `page.tsx` (aprox.) | **~+50 / −58** (migración tema + Config) |
+| Hooks nuevos | **0** |
+| Nuevas APIs / dominio / adapter | **0** |
+
+### Gates (D19.5 — evidencia registrada)
+
+| Gate | Comando | Resultado |
+|------|---------|-----------|
+| **G1** | `npx tsc --noEmit` | **PASS** |
+| **G2** | `npm run validate:app-preferences-unit` | **PASS** — **28/28** casos; API Freeze 13 exports |
+
+### Criterios de aceptación CA-D19 (certificación final D19.6)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D19-01** | Stub «Configuración» reemplazado por panel funcional | **PASS** |
+| **CA-D19-02** | Tema migrado del sidebar inline al panel | **PASS** |
+| **CA-D19-03** | `showContextualHints` persiste y controla `ToggleVisibilityHint` | **PASS** |
+| **CA-D19-04** | `APP_DISPLAY_VERSION` visible read-only | **PASS** |
+| **CA-D19-05** | Consumo exclusivo `@/lib/app-preferences` (sin deep imports) | **PASS** |
+| **CA-D19-06** | Sin nuevo dominio / persistencia / hooks / APIs | **PASS** |
+| **CA-D19-07** | Stub «Historial» intocable | **PASS** |
+| **CA-D19-08** | `npx tsc --noEmit` PASS | **PASS** |
+| **CA-D19-09** | `validate:app-preferences-unit` PASS (28/28) | **PASS** |
+| **CA-D19-10** | `PROJECT_STATUS_PROD_2D.md` actualizado + handoff D20 | **PASS** |
+| **CA-D19-11** | Eliminación duplicación tema (`THEME_STORAGE_KEY`, `localStorage` manual, effects duplicados) | **PASS** |
+
+### Riesgos residuales post-D19
+
+| ID | Severidad | Riesgo | Estado |
+|----|-----------|--------|--------|
+| **R-D19-1** | P3 | Escritura post-hidratación al activar `prefsLoaded` (sync, posible write redundante si valores = storage) | **Aceptado** — sin impacto funcional |
+| **R-D19-2** | — | `MethodologyVisibilityCallout` sin wiring `showContextualHints` | **Cerrado** — OUT OF SCOPE por acta R-D19-2 |
+
+**Sin riesgos bloqueantes.**
+
+### Acta de cierre
+
+**D19 — CLOSED** (2026-07-08). **UX-2B.2 (SettingsPanel MVP) — CLOSED.**
+
+| Verificación cierre | Resultado |
+|---------------------|-----------|
+| Stub Configuración eliminado | **PASS** |
+| Tema sin duplicación en `page.tsx` | **PASS** |
+| `SettingsPanel` baseline estable (API congelada D19.2) | **PASS** |
+| `@/lib/app-preferences` API Freeze vigente | **PASS** |
+| Código sin cambios en D19.6 | **PASS** |
+
+### Handoff D19 → D20
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D20** (siguiente) | UX-2B | D20 — UX-2B.3: Application layer historial recientes (`listRecentProjects`) | **D19 CLOSED** |
+
+**No reabrir D19.** `@/lib/app-preferences` queda **consolidado** (13 exports, gate 28/28). `SettingsPanel` es **baseline estable** — consumir vía `@/components/settings` sin deep imports.
+
+**D20 iniciará** wrapper fino sobre IndexedDB en `src/lib/project/application/local-project/recent-projects.ts` — **sin tocar** Config ni `app-preferences`.
+
+**Pendiente explícito D20–D21:** `RecentProjectsPanel` · reemplazo stub «Historial» · `validate:prod2b-indexeddb`.
+
+**Fuera de D20 (sin adelantar):** schema V2 · motores SCI · `labUsageProfile` en Config · persistencia historial actividad (D22 ya CLOSED).
+
+---
+
+## Microfase D22 — UX-2C: Historial de actividad del proyecto
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** — 2026-07-08 |
+| **Épica** | **UX-2C** (**≠ PROD-2C** — épica histórica CLOSED) |
+| **Prerequisito documental** | D19 **CLOSED** · D20, D21 **pendientes** (D22 implementado sin bloqueo técnico) |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D22 · [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §4.5 · §6.1b |
+
+### Resumen D22 (certificación final D22.5)
+
+Módulo **`project-history`** operativo: dominio puro (7 tipos de evento), adapter in-memory con ring buffer, barrel `@/lib/project-history` con **API Freeze** (12 exports), hook `useProjectHistory`, wiring de **6/7 eventos** en `page.tsx`, UI presentacional `HistoryPanel` («Actividad del proyecto» en sidebar Proyecto científico). Gate **`validate:project-history-unit`** (26 casos PASS). **`report.generated`** — tipo definido; wiring diferido post-D22. Stub sidebar **Historial** (D21) **intocable**.
+
+### Microfases D22.1–D22.5
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D22.1** | Baseline + amend SSOT + API Freeze documental | **CLOSED** |
+| **D22.2** | Dominio (`types`, `events`, `builders`) + tests | **CLOSED** |
+| **D22.3** | Adapter + hook + wiring 6 eventos | **CLOSED** |
+| **D22.4** | UI `HistoryPanel` + integración sidebar | **CLOSED** |
+| **D22.5** | Gate + certificación CA-D22 + handoff D23 | **CLOSED** |
+
+### Secuencia congelada post-amend D22.1
+
+```text
+D18 ✓ → D19 ✓ → D20 → D21 → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
+```
+
+### Arquitectura final D22
+
+```text
+src/lib/project-history/
+  types.ts · events.ts · builders.ts · adapter.ts · index.ts
+  __tests__/ (domain + adapter + API freeze cases)
+src/app/useProjectHistory.ts
+src/components/project-activity/HistoryPanel.tsx · index.ts
+```
+
+| Capa | Responsabilidad | Verificación D22.5 |
+|------|-----------------|-------------------|
+| **Dominio** | Tipos, guards, `buildProjectHistoryEntry`, descripciones ES — cero React/browser | **PASS** — `architecture.domainPure` |
+| **Adapter** | Store in-memory, ring buffer (max 100), append/list desc/clear | **PASS** — 4 casos adapter |
+| **Barrel** | `@/lib/project-history` — 12 exports explícitos, sin `export *` | **PASS** — 4 casos API Freeze |
+| **Hook** | `record(entry)` · `clear()` · `entries` | **PASS** — `hook.useProjectHistory.exported` |
+| **UI** | Presentacional — props `entries` only; iconos/timestamp en UI | **PASS** — sin lógica negocio |
+| **`page.tsx`** | Builders + `record` en handlers; wiring aditivo ~40 LOC | **PASS** — 6 eventos wired |
+
+**Desviaciones arquitectónicas:** ninguna.
+
+### Métricas D22
+
+| Métrica | Valor |
+|---------|-------|
+| Tipos de evento (dominio) | **7** |
+| Eventos wired (sesión) | **6** (`report.generated` diferido) |
+| Exports barrel (API Freeze) | **12** (4 tipos + 8 valores) |
+| Casos gate `validate:project-history-unit` | **26** (mín. 18) |
+| Archivos módulo dominio+adapter | **5** (`types`, `events`, `builders`, `adapter`, `index`) |
+| Archivos tests | **4** (`project-history.cases`, `project-history-adapter.cases`, `run-assertions`, `run-project-history-domain`) |
+| Hook | **1** (`useProjectHistory.ts`) |
+| UI | **2** (`HistoryPanel.tsx`, `index.ts`) |
+| Deep imports en consumidores | **0** |
+| Cambios funcionales D22.5 | **Ninguno** (solo gate script + acta) |
+
+### Gates y validaciones D22.5
+
+| Comando | Resultado | Detalle |
+|---------|-----------|---------|
+| `npx tsc --noEmit` | **PASS** | Compilación sin errores |
+| `npm run validate:project-history-unit` | **PASS** | **26/26** casos; API Freeze + deep imports + dominio puro |
+| `npm run validate:app-preferences-unit` | **PASS** | **28/28** — regresión `@/lib/app-preferences` intocable (CA-D22-16) |
+| API Freeze (12 exports) | **PASS** | Sin `export *`; contrato exacto |
+| Deep imports (`@/lib/project-history/…`) | **PASS** | Cero en `page.tsx`, `useProjectHistory.ts`, `HistoryPanel.tsx` |
+| Stub sidebar Historial (D21) | **PASS** | `page.tsx` L21315–L21318 — «Próximamente» sin cambio |
+| Smoke manual D22 | **PASS** | Toggle «Actividad del proyecto» + panel vacío/lista — verificado en build D22.4 |
+
+**Regresión umbrella (`validate:full`, `validate:prod2d-gate`):** alcance **D23** — no bloqueante para cierre D22 (gate D22 = `validate:project-history-unit` + smoke según PLAN §D22).
+
+---
+
+## D22.1 — Baseline + SSOT Amendment + API Freeze (documental)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-08 |
+| **Código modificado** | **Ninguno** |
+| **Archivos nuevos** | **Ninguno** |
+
+### Objetivo D22.1
+
+Preparación documental de **UX-2C**: renumeración oficial del roadmap (D22–D24), inventario SSOT, API Freeze congelado en acta, arquitectura prevista y handoff D22.2 — **cero código**.
+
+### Baseline técnico
+
+| Verificación | Resultado |
+|--------------|-----------|
+| **D18** | **CLOSED** — `@/lib/app-preferences` API Freeze (13 exports) |
+| **D19–D21** | **Prerequisito duro D22.2+** — pendientes al cierre D22.1 |
+| **Épica UX-2C** | Registrada — **≠ PROD-2C** |
+| **Módulo `project-history/`** | **Inexistente** (correcto D22.1) |
+| **`useProjectHistory`** | **Inexistente** (correcto D22.1) |
+| **Stub sidebar Historial** | [`page.tsx`](src/app/page.tsx) L21227–L21234 — reservado **D21** |
+| **Actividad del proyecto UI** | **Inexistente** — D22.4 |
+
+### Inventario documental actualizado (D22.1)
+
+| Documento | Amend D22.1 |
+|-----------|-------------|
+| [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) | §D22 UX-2C; gate → D23; cierre → D24; épica UX-2C |
+| [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) | Este §D22 / §D22.1 |
+| [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) | §4.3 enmienda; §4.5 UX-2C; §6.1b; §8 D0→D24 |
+| [`D17_1_MODULARIZATION_GATE_PREP.md`](./D17_1_MODULARIZATION_GATE_PREP.md) | GAP-4 gate → D23 |
+| [`MASTER_ROADMAP_V1.md`](./MASTER_ROADMAP_V1.md) | UX-2C en épica PROD-2D |
+
+**Estrategia refs cruzadas:** grep `D22|D23|UX-2C|prod2d-gate|hasta D23` — gate umbrella renumerado D23; cierre D24; D22 = UX-2C exclusivamente.
+
+### Disambiguación de nomenclatura (congelada)
+
+| Concepto | Etiqueta UI (ES) | Código / schema | Microfase |
+|----------|------------------|-----------------|-----------|
+| Proyectos recientes IndexedDB | **Historial** (sidebar Recursos) | `RecentProjectsPanel` · `components/history/` | D21 |
+| Log actividad sesión | **Actividad del proyecto** (sidebar Proyecto científico) | `HistoryPanel` · `components/project-activity/` | D22 |
+| Trazabilidad columnas worksheet | Ver historial (menú columna) | `WorksheetColumnHistoryModal` | intocable |
+| Audit export `.sgproj` | — | `metadata.revisionHistory` | intocable |
+
+### Arquitectura prevista (sin implementación)
+
+```text
+src/lib/project-history/
+  types.ts · events.ts · builders.ts · adapter.ts · index.ts
+src/app/useProjectHistory.ts
+src/components/project-activity/HistoryPanel.tsx
+```
+
+| Capa | Responsabilidad |
+|------|-----------------|
+| **Dominio** | Tipos, guards, `buildProjectHistoryEntry`, descripciones ES |
+| **Adapter** | Store in-memory, ring buffer (max 100), append/list/clear |
+| **Barrel** | `@/lib/project-history` — API Freeze 12 exports |
+| **Hook** | `record(entry)` · `clear()` · `entries` — [`src/app/useProjectHistory.ts`](src/app/useProjectHistory.ts) |
+| **UI** | Presentacional — props `entries` only |
+| **`page.tsx`** | Builders + record en handlers; `onProjectOpened` / `onProjectSaved?` |
+
+**Wiring previsto (D22.3 — referencia):**
+
+| Evento | Estrategia |
+|--------|------------|
+| `project.opened` | Extensión `onProjectOpened` existente → `clear()` + `record` |
+| `project.saved` | Callback opcional `onProjectSaved?` en `useGraphEditorProjectFile` |
+| `dataset.*` / `workflow.*` | Handlers directos en `page.tsx` |
+| `report.generated` | Wiring diferido post-D22 |
+| Autosave | **Sin wiring** (R-D22-6) |
+
+---
+
+## D22.2 — Dominio (types, events, builders)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-08 |
+| **Alcance** | Dominio puro únicamente — sin adapter, hook, UI, wiring |
+
+**Archivos creados:** `types.ts` · `events.ts` · `builders.ts` · `__tests__/project-history.cases.ts` · `__tests__/run-assertions.ts` · `__tests__/run-project-history-domain.ts`
+
+**Verificación:** 15 casos dominio PASS vía runner interno.
+
+---
+
+## D22.3 — Adapter + Hook + Wiring
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-08 |
+
+**Archivos creados:** `adapter.ts` · `index.ts` · `useProjectHistory.ts` · `__tests__/project-history-adapter.cases.ts`
+
+**Archivos modificados:** `graphEditorProjectIntegration.ts` (`onProjectSaved?`) · `projectFileActions.ts` · `useGraphEditorProjectFile.ts` · `page.tsx` (wiring 6 eventos)
+
+**Wiring operativo:** `project.opened` · `project.saved` · `dataset.added` · `dataset.removed` · `workflow.started` · `workflow.cancelled`
+
+---
+
+## D22.4 — UI HistoryPanel
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-08 |
+
+**Archivos creados:** `src/components/project-activity/HistoryPanel.tsx` · `index.ts`
+
+**Archivos modificados:** `page.tsx` — toggle «Actividad del proyecto» + `<HistoryPanel entries={…} />`
+
+**UI:** presentacional; imports solo tipos desde `@/lib/project-history`.
+
+---
+
+## D22.5 — Gate + Certificación + Acta Final
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-08 |
+| **Código funcional nuevo** | **Ninguno** |
+
+**Archivos creados:** `scripts/validate-project-history-unit.ts`
+
+**Archivos modificados:** `package.json` (script `validate:project-history-unit`) · `PROJECT_STATUS_PROD_2D.md` (esta acta §D22)
+
+**Gate oficial:** `npm run validate:project-history-unit` — **26/26 PASS**
+
+---
+
+### API Freeze documental (contrato D22.4 — congelado en acta)
+
+**Entry point único:** `@/lib/project-history` — **prohibido deep import**.
+
+**Tipos (4):** `ProjectHistoryEventType` · `ProjectHistoryPayloadMap` · `ProjectHistoryEntry` · `ProjectHistoryStore`
+
+**Valores (8):** `PROJECT_HISTORY_EVENT_TYPES` · `DEFAULT_MAX_PROJECT_HISTORY_ENTRIES` · `isProjectHistoryEventType` · `buildProjectHistoryEntry` · `createProjectHistoryStore` · `appendProjectHistoryEntry` · `listProjectHistoryEntries` · `clearProjectHistory`
+
+**Total: 12 exports.** Builders por evento y helpers de presentación **privados** — no congelados.
+
+**Hook contrato único:**
+
+```text
+record(entry: ProjectHistoryEntry): void
+clear(): void
+entries: readonly ProjectHistoryEntry[]
+```
+
+Flujo: `buildProjectHistoryEntry(type, payload)` → `record(entry)`.
+
+### Tipos de evento (7 — dominio D22.2)
+
+| Tipo | Wiring D22 |
+|------|------------|
+| `project.opened` | SÍ |
+| `project.saved` | SÍ |
+| `dataset.added` | SÍ |
+| `dataset.removed` | SÍ |
+| `workflow.started` | SÍ |
+| `workflow.cancelled` | SÍ |
+| `report.generated` | NO (tipo listo; wiring D23+) |
+
+### Evolución futura (fuera de D22)
+
+| Capacidad | D22 | Post-D22 |
+|-----------|-----|----------|
+| Persistencia | OUT | Adapter sessionStorage / V2 (revisar clear-on-open) |
+| Undo/redo | OUT | Stack sobre entries |
+| Auditoría / export | OUT | Serialización JSON/CSV |
+| Sync | OUT | Replay + sequence field |
+
+### Criterios CA-D22 (certificación final — D22.5)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D22-1** | Módulo `src/lib/project-history/` operativo | **PASS** |
+| **CA-D22-2** | 7 tipos de evento definidos | **PASS** |
+| **CA-D22-3** | Builders puros — cero React/browser en dominio/adapter | **PASS** |
+| **CA-D22-4** | Adapter in-memory: append, list desc, clear, ring buffer | **PASS** |
+| **CA-D22-5** | Barrel API Freeze — **12 exports** exactos | **PASS** |
+| **CA-D22-6** | Prohibido deep import | **PASS** |
+| **CA-D22-7** | `validate:project-history-unit` PASS (≥18 casos) | **PASS** (26) |
+| **CA-D22-8** | `npx tsc --noEmit` PASS | **PASS** |
+| **CA-D22-9** | ≥6 eventos wired | **PASS** (6/7) |
+| **CA-D22-10** | `report.generated` — wiring diferido | **PASS** |
+| **CA-D22-11** | `HistoryPanel` funcional | **PASS** |
+| **CA-D22-12** | Cero lógica negocio en UI | **PASS** |
+| **CA-D22-13** | Sin cambios schema V2 / IndexedDB / SCI / workflow | **PASS** |
+| **CA-D22-14** | Sin regresiones save/open/import/workflow | **PASS** |
+| **CA-D22-15** | Stub sidebar Historial (D21) no modificado en D22 | **PASS** |
+| **CA-D22-16** | `@/lib/app-preferences` intocable | **PASS** (28/28 gate) |
+| **CA-D22-17** | Handoff D23 documentado | **PASS** |
+| **CA-D22-18** | Amend secuencia D22–D24 + inventario documental completo | **PASS** |
+
+**Total CA-D22: 18/18 PASS**
+
+### Handoff D22 → D23 (PROD-2D Gate)
+
+**D23 iniciará BUILD del gate umbrella `validate:prod2d-gate`:**
+
+| Componente | Estado al handoff |
+|------------|-------------------|
+| `scripts/validate-prod2d-gate.ts` | **Pendiente D23** |
+| `package.json` script `validate:prod2d-gate` | **Pendiente D23** |
+| Incorporar `validate:project-history-unit` | **Listo** — script registrado D22.5 |
+| `validate:full` | Existente — composición D23 |
+| `validate:prod2b-b2-gate` | Existente — composición D23 |
+| `validate:prod2c-c8-regression-gate` | Existente — composición D23 |
+| `validate:methodology-unit` | Existente — composición D23 |
+| `validate:visibility-unit` | Existente — composición D23 |
+| Checks LOC/responsabilidades | **Pendiente D23** |
+
+**Dependencias satisfechas para D23:**
+
+- **UX-2C (D22)** — **CLOSED** — dominio, adapter, hook, wiring, UI, gate unitario.
+- **API Freeze `@/lib/project-history`** — congelado (12 exports).
+- **Gate `validate:project-history-unit`** — operativo; incluir en composición `validate:prod2d-gate`.
+
+**Roadmap post-D22:**
+
+```text
+D23 (gate umbrella) → D24 (cierre documental PROD-2D)
+```
+
+**Fuera de D23 (sin adelantar):** wiring `report.generated` · persistencia historial · undo/redo · export/sync · implementación D19–D21 si aún pendientes.
+
+### Criterios CA-D22.1 (certificación D22.1)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D22.1-1** | Cero cambios código fuente | **PASS** |
+| **CA-D22.1-2** | Renumeración D22–D24 en PLAN + DISCOVERY + STATUS | **PASS** |
+| **CA-D22.1-3** | UX-2C registrada; UX-2C ≠ PROD-2C documentado | **PASS** |
+| **CA-D22.1-4** | API Freeze 12 exports documentado en acta | **PASS** |
+| **CA-D22.1-5** | Disambiguación nomenclatura registrada | **PASS** |
+| **CA-D22.1-6** | Arquitectura + wiring previsto sin implementación | **PASS** |
+| **CA-D22.1-7** | Inventario documental D22.1 completo | **PASS** |
+| **CA-D22.1-8** | Handoff D22.2 documentado | **PASS** |
+
+### Restricciones (R-D22 — vigentes desde D22.1)
+
+| ID | Restricción |
+|----|-------------|
+| **R-D22-1** | API Freeze 12 exports en D22.4 |
+| **R-D22-2** | No deep imports |
+| **R-D22-3** | No lógica negocio en UI |
+| **R-D22-4** | No undo/redo |
+| **R-D22-5** | No persistencia |
+| **R-D22-6** | No autosave como evento |
+| **R-D22-7** | No tocar stub Historial sidebar (D21) |
+| **R-D22-8** | Wiring aditivo en D22.3 |
+| **R-D22-9** | Compatible ARCH-5, UX-2A, UX-2B |
+
+### Handoff D22.1 → D22.2 (histórico — cumplido en D22.2)
+
+**D22.2 completó BUILD de dominio** — ver §D22.2.
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06 · Acta D15 certificada 2026-07-06 · **ARCH-5 F5G (SCI-59 UI Panel) CLOSED** 2026-07-06 · Acta D16 certificada 2026-07-07 · **ARCH-5 F5H (infraestructura validación) CLOSED** 2026-07-07 · Acta D17 certificada 2026-07-07 · **ARCH-5 F5I (certificación modularización) CLOSED** 2026-07-07 · **ARCH-5 F5 (D9–D17) CLOSED** 2026-07-07 · Acta D18 certificada 2026-07-08 · **UX-2B.1 (UserPreferences domain) CLOSED** 2026-07-08 · **UX-2B.2 (SettingsPanel MVP) CLOSED** 2026-07-08 · **D22.1 (UX-2C baseline + SSOT amend) CLOSED** 2026-07-08 · **UX-2C (D22) CLOSED** 2026-07-08. Épica PROD-2D permanece abierta hasta D24.*

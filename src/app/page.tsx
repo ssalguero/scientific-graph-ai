@@ -74,6 +74,16 @@ import {
 } from "./ProjectScientificFilePanel";
 import { LocalProjectsPanel } from "./LocalProjectsPanel";
 import { useGraphEditorProjectFile, type UseGraphEditorProjectFileParams } from "./useGraphEditorProjectFile";
+import { useProjectHistory } from "./useProjectHistory";
+import { buildProjectHistoryEntry } from "@/lib/project-history";
+import { HistoryPanel } from "@/components/project-activity";
+import { SettingsPanel } from "@/components/settings";
+import {
+  APP_DISPLAY_VERSION,
+  readUserPreferences,
+  writeUserPreferences,
+  type ThemeMode,
+} from "@/lib/app-preferences";
 import { useSmartStart } from "./useSmartStart";
 import {
   LabExpertModeToast,
@@ -295,8 +305,17 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const THEME_STORAGE_KEY = "scientific-graph-theme";
-type ThemeMode = "light" | "dark";
+let cachedInitialUserPreferences: ReturnType<typeof readUserPreferences> | null =
+  null;
+
+const getCachedInitialUserPreferences = (): ReturnType<
+  typeof readUserPreferences
+> => {
+  if (cachedInitialUserPreferences === null) {
+    cachedInitialUserPreferences = readUserPreferences();
+  }
+  return cachedInitialUserPreferences;
+};
 
 const appShellLight =
   "bg-slate-50 text-[var(--app-text)] transition-colors duration-200 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-text-muted:#64748b] [--app-heading:#0f172a] [--app-accent:#2563eb] [--app-success:#16a34a] [--app-warning:#d97706] [--app-danger:#dc2626] [--app-success-bg:#dcfce7] [--app-success-text:#166534] [--app-info-bg:#fef3c7] [--app-info-text:#92400e] [--app-danger-bg:#fef2f2] [--app-danger-border:#fecaca] [--app-danger-text:#b91c1c] [--app-warning-bg:#fffbeb] [--app-warning-border:#fde68a] [--app-warning-text:#92400e] [--app-toggle-track:#e2e8f0] [--app-toggle-thumb:#ffffff]";
@@ -16599,6 +16618,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [dataWorkspaceView, setDataWorkspaceView] =
     useState<DataWorkspaceView>("experimental");
   const [sidebarGraphLibraryOpen, setSidebarGraphLibraryOpen] = useState(false);
+  const [projectActivityPanelOpen, setProjectActivityPanelOpen] = useState(false);
+  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
   const [importReportExpanded, setImportReportExpanded] = useState(true);
   const [worksheetModified, setWorksheetModified] = useState(false);
   const [projectVisualGraphs, setProjectVisualGraphs] = useState<
@@ -16709,14 +16730,22 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     datasetId: string;
     slotId: ComparisonSlotId;
   } | null>(null);
-  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
-  const [themeLoaded, setThemeLoaded] = useState(false);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(
+    () => getCachedInitialUserPreferences().theme
+  );
+  const [showContextualHints, setShowContextualHints] = useState(
+    () => getCachedInitialUserPreferences().showContextualHints
+  );
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [projectMetadata, setProjectMetadata] = useState<ProjectMetadataV1>(() =>
     createInitialProjectMetadata()
   );
   const [isProjectDirty, setIsProjectDirty] = useState(false);
   const [projectFileFeedback, setProjectFileFeedback] =
     useState<ProjectFileFeedback | null>(null);
+  const projectOpenSourceRef = useRef<"local" | "file">("file");
+  const { entries: projectHistoryEntries, record: recordProjectHistory, clear: clearProjectHistory } =
+    useProjectHistory();
 
   useEffect(() => {
     if (sessionDatasets.length > 0) {
@@ -17007,6 +17036,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setVisibleMinX,
       setVisibleMaxX,
     });
+    recordProjectHistory(
+      buildProjectHistoryEntry("dataset.added", {
+        datasetName: newDataset.name,
+        fileName: importedFileName,
+      })
+    );
   };
 
   const removeExperimentalSeries = (id: string) => {
@@ -18997,6 +19032,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         setAnalysisInspectorSection(firstStep.inspectorSection);
       }
     }
+    const templateLabel =
+      GUIDED_WORKFLOW_TEMPLATE_CATALOG.find((entry) => entry.id === templateId)
+        ?.title ?? templateId;
+    recordProjectHistory(
+      buildProjectHistoryEntry("workflow.started", {
+        templateId,
+        templateLabel,
+      })
+    );
   };
   const {
     showSmartStartScreen,
@@ -19040,12 +19084,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     startGuidedWorkflow,
   });
   const cancelGuidedWorkflow = () => {
+    const cancelledTemplateId = guidedWorkflowSession.templateId;
     const snapshot = workflowVisibilitySnapshotRef.current;
     if (snapshot !== null) {
       restoreWorkflowVisibilitySnapshot(snapshot, guidedWorkflowToggleSetters);
       workflowVisibilitySnapshotRef.current = null;
     }
     setGuidedWorkflowSession(GUIDED_WORKFLOW_IDLE_SESSION);
+    if (cancelledTemplateId) {
+      const templateLabel =
+        GUIDED_WORKFLOW_TEMPLATE_CATALOG.find(
+          (entry) => entry.id === cancelledTemplateId
+        )?.title ?? cancelledTemplateId;
+      recordProjectHistory(
+        buildProjectHistoryEntry("workflow.cancelled", {
+          templateId: cancelledTemplateId,
+          templateLabel,
+        })
+      );
+    }
   };
   useEffect(() => {
     if (
@@ -19311,6 +19368,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     ) {
       return;
     }
+
+    recordProjectHistory(
+      buildProjectHistoryEntry("dataset.removed", {
+        datasetName: target.name,
+      })
+    );
 
     const persisted = persistSessionRegistryWithActiveVisualGraphs(sessionDatasets);
     const remaining = persisted.filter((dataset) => dataset.id !== datasetId);
@@ -20488,26 +20551,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   }, [expertModeToastVisible]);
 
   useEffect(() => {
-    try {
-      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-      if (savedTheme === "dark") {
-        setThemeMode("dark");
-      }
-    } catch {
-      // ignore storage errors
-    }
-    setThemeLoaded(true);
+    setPrefsLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (!themeLoaded) return;
+    if (!prefsLoaded) return;
 
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, themeMode);
-    } catch {
-      // ignore storage errors
-    }
-  }, [themeMode, themeLoaded]);
+    writeUserPreferences({
+      theme: themeMode,
+      showContextualHints,
+    });
+  }, [themeMode, showContextualHints, prefsLoaded]);
 
   useEffect(() => {
     loadGraphs();
@@ -20746,6 +20800,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     createDefaultEnabledModules,
     clearEphemeralUiState,
     onProjectOpened: (patch) => {
+      clearProjectHistory();
       const runtimeEntries = extractVisualGraphRuntimeState(patch);
       const injected = injectVisualGraphEntriesBySourceDatasetId(
         patch.sessionDatasets,
@@ -20757,10 +20812,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         (dataset) => dataset.id === patch.activeDatasetId
       );
       if (!activeSession) {
+        recordProjectHistory(
+          buildProjectHistoryEntry("project.opened", {
+            source: projectOpenSourceRef.current,
+            projectName: patch.project.metadata.name,
+          })
+        );
         return;
       }
       setProjectVisualGraphs(readVisualGraphEntriesFromDataset(activeSession));
       loadSessionDatasetIntoEditor(activeSession);
+      recordProjectHistory(
+        buildProjectHistoryEntry("project.opened", {
+          source: projectOpenSourceRef.current,
+          projectName: patch.project.metadata.name,
+        })
+      );
+    },
+    onProjectSaved: (meta) => {
+      recordProjectHistory(buildProjectHistoryEntry("project.saved", meta));
     },
     prepareCollectContextForSave: (ctx) => {
       const withWorksheet = {
@@ -20901,12 +20971,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setActiveColumnRegistry({});
     setActiveAuxiliaryColumns([]);
     setActiveLocalProjectId(null);
+    clearProjectHistory();
     resetProjectFromHook();
   };
 
   const handleOpenProjectFile = async (file: File) => {
     pendingSlotCaptureRef.current = null;
+    projectOpenSourceRef.current = "file";
     await openProjectFromHook(file);
+  };
+
+  const handleOpenLocalProjectWithSource = async (id: string) => {
+    projectOpenSourceRef.current = "local";
+    await handleOpenLocalProject(id);
   };
 
   const graphSidebarLabels = useMemo(() => {
@@ -21116,6 +21193,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 }}
                 openProjectButtonRef={openProjectButtonRef}
               />
+              <button
+                type="button"
+                onClick={() => setProjectActivityPanelOpen((open) => !open)}
+                className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left mt-1.5`}
+                aria-expanded={projectActivityPanelOpen}
+              >
+                <span>📋 Actividad del proyecto</span>
+                <span
+                  className="text-[10px] text-[var(--app-text-muted)]"
+                  aria-hidden
+                >
+                  {projectActivityPanelOpen ? "▼" : "▶"}
+                </span>
+              </button>
+              {projectActivityPanelOpen ? (
+                <HistoryPanel
+                  entries={projectHistoryEntries}
+                  className="mt-1"
+                />
+              ) : null}
               <LocalProjectsPanel
                 isOpen={isLibraryOpen}
                 projects={localProjects}
@@ -21124,7 +21221,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 activeProjectId={activeLocalProjectId}
                 onClose={closeLibrary}
                 onRefresh={() => void refreshProjects()}
-                onOpen={(id) => void handleOpenLocalProject(id)}
+                onOpen={(id) => void handleOpenLocalProjectWithSource(id)}
                 onDelete={async (id) => {
                   await handleDeleteLocalProject(id);
                   await refreshProjects();
@@ -21236,37 +21333,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           </DashboardSection>
 
           <DashboardSection title="Sistema" icon="⚙" defaultOpen>
-            <div
-              className={`${contentPanel} flex items-center justify-between gap-2 py-1.5`}
-            >
-              <span className="text-sm text-[var(--app-text)]">Tema oscuro</span>
-              <label className={`${toggleShell} cursor-pointer shrink-0`}>
-                <input
-                  type="checkbox"
-                  className={toggleInput}
-                  checked={themeMode === "dark"}
-                  onChange={(e) =>
-                    setThemeMode(e.target.checked ? "dark" : "light")
-                  }
-                  aria-label="Alternar tema oscuro"
-                />
-                <span className={toggleTrackBg} aria-hidden />
-                <span className={toggleThumb} aria-hidden />
-              </label>
-            </div>
-            <div className="flex items-center justify-between gap-2 px-2.5 py-1 text-xs text-[var(--app-text-muted)]">
-              <span>☀ Claro</span>
-              <span>🌙 Oscuro</span>
-            </div>
-            <div
-              className={`${sidebarNavItem} opacity-60 cursor-not-allowed`}
-              aria-disabled
+            <button
+              type="button"
+              onClick={() => setSettingsPanelOpen((open) => !open)}
+              className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left`}
+              aria-expanded={settingsPanelOpen}
             >
               <span>Configuración</span>
-              <span className="text-xs text-[var(--app-text-muted)]">
-                Próximamente
+              <span
+                className="text-[10px] text-[var(--app-text-muted)]"
+                aria-hidden
+              >
+                {settingsPanelOpen ? "▼" : "▶"}
               </span>
-            </div>
+            </button>
+            {settingsPanelOpen ? (
+              <SettingsPanel
+                theme={themeMode}
+                showContextualHints={showContextualHints}
+                appVersion={APP_DISPLAY_VERSION}
+                onThemeChange={setThemeMode}
+                onShowContextualHintsChange={setShowContextualHints}
+                className="mt-1"
+              />
+            ) : null}
           </DashboardSection>
         </div>
       </aside>
@@ -23718,6 +23808,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         toggleKey="showConsistencyEngine"
                         visible={showConsistencyEngine}
                         disabled={!hasEnoughSeriesForConsistencyEngine}
+                        hidden={!showContextualHints}
                       />
                       </div>
 
@@ -23750,6 +23841,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         toggleKey="showReportQualityEngine"
                         visible={showReportQualityEngine}
                         disabled={!hasEnoughSeriesForReportQualityEngine}
+                        hidden={!showContextualHints}
                       />
                       </div>
 
@@ -23782,6 +23874,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         toggleKey="showReproducibilityExplorer"
                         visible={showReproducibilityExplorer}
                         disabled={!hasEnoughSeriesForReproducibilityExplorer}
+                        hidden={!showContextualHints}
                       />
                       </div>
 
@@ -23814,6 +23907,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         toggleKey="showEvidenceStrengthEngine"
                         visible={showEvidenceStrengthEngine}
                         disabled={!hasEnoughSeriesForEvidenceStrengthEngine}
+                        hidden={!showContextualHints}
                       />
                       </div>
 
@@ -23852,6 +23946,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         disabled={
                           !hasEnoughSeriesForPublicationReadinessAnalyzer
                         }
+                        hidden={!showContextualHints}
                       />
                       </div>
                       </InspectorToggleGroup>
@@ -23892,6 +23987,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         toggleKey="showAssumptionTracker"
                         visible={showAssumptionTracker}
                         disabled={!hasEnoughSeriesForAssumptionTracker}
+                        hidden={!showContextualHints}
                       />
                       </div>
                       </InspectorToggleGroup>
@@ -23946,6 +24042,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         toggleKey="showMethodologicalDashboard"
                         visible={showMethodologicalDashboard}
                         disabled={!hasEnoughSeriesForMethodologicalDashboard}
+                        hidden={!showContextualHints}
                       />
                       </div>
 
@@ -23987,6 +24084,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         toggleKey="showPublicationDashboard"
                         visible={showPublicationDashboard}
                         disabled={!hasEnoughSeriesForPublicationDashboard}
+                        hidden={!showContextualHints}
                       />
                       </div>
 

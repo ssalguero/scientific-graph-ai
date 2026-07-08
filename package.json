@@ -18,6 +18,7 @@
     "validate:chart-viewport": "npx tsx scripts/validate-chart-viewport.ts",
     "validate:comparison-unit": "npx tsx scripts/validate-comparison-unit.ts",
     "validate:app-preferences-unit": "npx tsx scripts/validate-app-preferences-unit.ts",
+    "validate:project-history-unit": "npx tsx scripts/validate-project-history-unit.ts",
     "validate:visibility-unit": "npx tsx scripts/validate-visibility-unit.ts",
     "validate:smart-start-unit": "npx tsx scripts/validate-smart-start-unit.ts",
     "validate:methodology-f5a-unit": "npx tsx scripts/validate-methodology-f5a-unit.ts",

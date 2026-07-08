@@ -154,7 +154,7 @@ Ya implementadas en PROD-2B B5 (sin cambios de schema en PROD-2D):
 | `validate:prod2b-b2-gate` | Multi-dataset V2 | Sí — cada microfase crítica |
 | `validate:prod2b-indexeddb` | IndexedDB B5 | Sí — especialmente D20–D21 |
 | `validate:prod2c-c8-regression-gate` | VGB persist | Sí — ARCH-5 no debe romper VGB |
-| `validate:prod2d-gate` (nuevo D22) | Umbrella fase | Cierre PROD-2D |
+| `validate:prod2d-gate` (nuevo D23) | Umbrella fase | Cierre PROD-2D |
 
 ---
 
@@ -253,7 +253,7 @@ src/components/workflow/      ← GuidedWorkflowPanel (dominio ya en workflow/)
 | Exclusión | Motivo |
 |-----------|--------|
 | Búsqueda / filtros / favoritos | Scope creep; panel completo ya existe en `LocalProjectsPanel` |
-| Historial de acciones del usuario (undo/audit log) | Fuera de v1.0; no hay modelo de dominio |
+| Historial de acciones del usuario (undo/audit log) | **Movido a UX-2C (D22)** — ver §4.5; fuera de §4 Historial recientes |
 | Metadata avanzada (autor, tags, descripción editable) | Pertenece a evolución PROD-3 / cloud |
 | Estadísticas de uso | Fuera de MVP |
 | Sincronización cloud | PROD-2B B7 post-v1.0 |
@@ -266,6 +266,23 @@ src/components/workflow/      ← GuidedWorkflowPanel (dominio ya en workflow/)
 - `listLocalProjects` / `openLocalProject` — **read-only reuse**, sin nuevo adaptador IndexedDB.
 - Integración con detección de conflictos PROD-2B B6 al abrir desde Historial (**riesgo P2** — D21).
 - Sin persistencia de preferencias de Historial en `.sgproj`.
+
+### 4.5 MVP — Actividad del proyecto (UX-2C / D22)
+
+**Nota:** **UX-2C ≠ PROD-2C** (épica histórica CLOSED — worksheet + VGB). UX-2C es sub-épica UX dentro de PROD-2D.
+
+**Definición:** log cronológico append-only de acciones del **proyecto activo** en sesión (abrir, guardar, dataset, workflow), desacoplado del sidebar «Historial» recientes (§4).
+
+| # | Funcionalidad | Detalle |
+|---|---------------|---------|
+| A1 | Dominio `@/lib/project-history` | Tipos, builder genérico, adapter in-memory |
+| A2 | Panel «Actividad del proyecto» | Sidebar Proyecto científico — **no** reemplaza stub Historial (D21) |
+| A3 | Wiring parcial | 6/7 tipos de evento; `report.generated` diferido |
+| A4 | API Freeze | 12 exports; prohibido deep import |
+
+**Exclusiones (OUT):** undo/redo · persistencia avanzada · sync · filtros · autosave como evento · cambios schema V2.
+
+**Referencia SSOT:** acta §D22 en [`PROJECT_STATUS_PROD_2D.md`](PROJECT_STATUS_PROD_2D.md).
 
 ---
 
@@ -324,6 +341,12 @@ UX-2B agrupa Historial + Configuración MVP (Master Roadmap §7.A).
 | Panel Historial MVP | D21 |
 | Eliminación stubs «Próximamente» en sidebar home | D19 + D21 |
 
+### 6.1b UX-2C (PROD-2D)
+
+| Entregable | Microfase |
+|------------|------------|
+| Historial de actividad del proyecto (dominio + UI) | D22 |
+
 ### 6.2 Fuera de UX-2B
 
 | Item | Épica / fase |
@@ -332,7 +355,7 @@ UX-2B agrupa Historial + Configuración MVP (Master Roadmap §7.A).
 | Observaciones QA-1 workflow/PDF/toggles | **ARCH-6** (D4–D8) |
 | Biblioteca local CRUD completa | Ya entregada PROD-2B; no reimplementar |
 | Cloud sync proyectos | PROD-3A / post-v1.0 |
-| Historial científico de columnas worksheet | Ya existe `WorksheetColumnHistoryModal` — **no confundir** con UX-2B Historial |
+| Historial científico de columnas worksheet | Ya existe `WorksheetColumnHistoryModal` — **no confundir** con UX-2B Historial ni UX-2C Actividad |
 | i18n, PWA, mobile | Master Roadmap §12 |
 
 ### 6.3 Criterio de cierre UX-2B
@@ -361,13 +384,13 @@ UX-2B agrupa Historial + Configuración MVP (Master Roadmap §7.A).
 
 ---
 
-## 8. Orden de implementación D0→D23 (confirmado)
+## 8. Orden de implementación D0→D24 (confirmado — amend D22.1)
 
 Secuencia oficial congelada — detalle por microfase en [`PROJECT_PLAN_PROD_2D.md`](PROJECT_PLAN_PROD_2D.md):
 
 ```
 D0  Discovery          → COMPLETED (este documento)
-D0.5 Baseline arq.     → siguiente (sin código)
+D0.5 Baseline arq.     → COMPLETED
 D1  UX-2A metadata
 D4  ARCH-6.1 toggle model
 D5  ARCH-6.2 workflow indicator
@@ -380,9 +403,10 @@ D9–D13  ARCH-5 F5A–E dominio
 D14–D15 ARCH-5 F5F–G UI
 D16–D17 ARCH-5 F5H–I gates + certificación
 D18–D19 UX-2B Config
-D20–D21 UX-2B Historial
-D22 Gate umbrella PROD-2D
-D23 Cierre documental
+D20–D21 UX-2B Historial recientes
+D22 UX-2C Actividad del proyecto
+D23 Gate umbrella PROD-2D
+D24 Cierre documental
 ```
 
 ```mermaid
@@ -394,11 +418,12 @@ flowchart TD
   D2[D2-D3 UX-2A Smart Start]
   D9[D9-D17 ARCH-5 F5]
   D18[D18-D21 UX-2B]
-  D22[D22-D23 Cierre]
-  D0 --> D05 --> D1 --> D4 --> D2 --> D9 --> D18 --> D22
+  D22[D22 UX-2C]
+  D23[D23-D24 Cierre]
+  D0 --> D05 --> D1 --> D4 --> D2 --> D9 --> D18 --> D22 --> D23
 ```
 
-**Nota numeración:** D2–D3 se ejecutan **después** de D8 (ARCH-6 completo) aunque numericamente preceden a D4 en la tabla de épicas. La numeración D1–D23 se mantiene por convención del plan maestro aprobado.
+**Nota numeración:** D2–D3 se ejecutan **después** de D8 (ARCH-6 completo) aunque numericamente preceden a D4 en la tabla de épicas. Amend D22.1 (2026-07-08): D22 = UX-2C; gate → D23; cierre → D24.
 
 ---
 
@@ -411,8 +436,8 @@ flowchart TD
 | D21 Historial + conflict B6 | **Media** | Reutilizar handler apertura existente; smoke manual |
 | Scope creep UX-2B (buscar, favoritos, sync) | **Alta** | MVP congelado §4–§6; amend explícito para expandir |
 | PDF wont-fix mal comunicado | **Media** | Banner D8 + doc EXPORT-2 PROD-3 |
-| `validate:full` no cubre PROD-2B/2C | **Media** | Gate umbrella D22 |
-| Divergencia README vs estado real | **Baja** | D23 alinea documentación |
+| `validate:full` no cubre PROD-2B/2C | **Media** | Gate umbrella D23 |
+| Divergencia README vs estado real | **Baja** | D24 alinea documentación |
 | Subdivisión D9–D13 no ejecutada si acoplamiento alto | **Media** | D0.5 evalúa; amend plan antes de D9 |
 
 ---
@@ -440,7 +465,7 @@ Consolidado (Master Roadmap §13 + plan maestro):
 | Alcance/exclusiones UX-2B | **Documentado** §6 |
 | Verificación ARCH-6 | **Completado** §2 |
 | Verificación ARCH-5 F5 | **Completado** §3 |
-| Orden D0→D23 confirmado | **Completado** §8 |
+| Orden D0→D24 confirmado | **Completado** §8 (amend D22.1) |
 | Decisiones arquitectónicas | **Congeladas** §7 |
 | Riesgos | **Identificados** §9 |
 | Plan operativo | [`PROJECT_PLAN_PROD_2D.md`](PROJECT_PLAN_PROD_2D.md) |

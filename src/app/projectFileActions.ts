@@ -42,6 +42,10 @@ export type ProjectFileActionsDeps = {
   buildApplyContext: () => EditorProjectApplyContext;
   resetScientificProject: () => void;
   onProjectOpened?: (patch: HydrateProjectV2Patch) => void;
+  onProjectSaved?: (meta: {
+    target: "local" | "file";
+    projectName: string;
+  }) => void;
   prepareCollectContextForSave?: (
     ctx: EditorProjectCollectContextV2
   ) => EditorProjectCollectContextV2;
@@ -113,6 +117,10 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
     deps.setProjectFileFeedback({
       kind: serialized.warnings.length > 0 ? "warning" : "success",
       message: `Proyecto guardado como ${downloadName}${formatProjectWarningCount(serialized.warnings.length)}.`,
+    });
+    deps.onProjectSaved?.({
+      target: "file",
+      projectName: nextMetadata.name,
     });
   };
 

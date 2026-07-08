@@ -433,9 +433,9 @@ flowchart LR
 | Campo | Contenido |
 |-------|-----------|
 | **Objetivo** | Profesionalizar la experiencia de usuario y avanzar la modularización del monolito |
-| **Épicas** | ARCH-6, UX-2A, UX-2B, ARCH-5 F5 (extracción metodología/reporting por microfases) |
+| **Épicas** | ARCH-6, UX-2A, UX-2B, **UX-2C** (D22 — actividad proyecto; **≠ PROD-2C**), ARCH-5 F5 |
 | **Dependencias** | PROD-2C (histórico) CLOSED; QA-1 CLOSED |
-| **Criterios de cierre** | Observaciones QA-1 §10 resueltas; branding/metadata production-ready; Historial/Config MVP; reducción neta de LOC del monolito certificada por gate; Definition of Done completa |
+| **Criterios de cierre** | Observaciones QA-1 §10 resueltas; branding/metadata production-ready; Historial/Config MVP; actividad del proyecto (UX-2C); reducción neta de LOC del monolito certificada por gate; Definition of Done completa |
 
 ### PROD-2E — Motor gráfico profesional
 

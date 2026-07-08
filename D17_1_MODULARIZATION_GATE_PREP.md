@@ -218,7 +218,7 @@ Solo gaps pendientes documentados — **sin deuda nueva**.
 | **GAP-1** | Gate `validate:arch5-f5-modularization-gate` ausente | **Alta** | D17.2 | Script + npm |
 | **GAP-2** | F5F bis — UI SCI-50–56 inline (711 LOC) | **LOW** | PROD-2E / microfase ARCH-5 dedicada | Fuera D17 per handoff D16 |
 | **GAP-3** | `src/components/methodology/` inexistente | **LOW** | F5F bis | Discovery target path |
-| **GAP-4** | `validate:full` no incluye gates methodology | **Media** | D22 | GAP-8 D16 — `validate:prod2d-gate` |
+| **GAP-4** | `validate:full` no incluye gates methodology | **Media** | D23 | GAP-8 D16 — `validate:prod2d-gate` |
 | **GAP-5** | Baseline §8 UI target vs F5F bis deferido | **Documental** | D17.5 acta | Excepción formal CA-D17.4-4 |
 | **GAP-6** | SCI-60 UI en `components/reports/` vs `components/methodology/` | **Documental** | — | Desviación aceptada D14 |
 | **GAP-7** | Template picker SCI-59 inline en `page.tsx` | **Baja** | Post-D17 | Fuera alcance F5G D15 |
@@ -272,7 +272,7 @@ El orquestador `validate-arch5-f5-modularization-gate.ts`:
 | Baselines QA-1 Dataset5/6 | F5E |
 | Behavioral builders | F5A–F5E |
 | Extracción UI SCI-50–56 | F5F bis — fuera D17 |
-| `validate:full` | D22 |
+| `validate:full` | D23 |
 | Cambios funcionales runtime | D17 no modifica `src/` |
 
 ### 6.5 Composición planificada
@@ -543,7 +543,7 @@ D17 certifica que ARCH-5 F5 (D9–D16) produjo **disminución efectiva de respon
 | F5F bis UI SCI-50–56 inline | LOW | Deuda registrada |
 | `validate:full` E2E/baseline sin servidor | INFO | No bloqueante; patrón D0.5 |
 | useMemo wiring 361 LOC en monolito | LOW | Esperado post-F5 |
-| Methodology gates fuera de `validate:full` | MEDIA | D22 `validate:prod2d-gate` |
+| Methodology gates fuera de `validate:full` | MEDIA | D23 `validate:prod2d-gate` |
 
 ### 12.6 Deuda conocida
 

@@ -309,9 +309,13 @@ export function useGraphEditorProjectFile(params: UseGraphEditorProjectFileParam
       const summary = await localPersistence.handleSaveLocalProject(projectName);
       if (summary) {
         await localPersistence.refreshProjects();
+        params.onProjectSaved?.({
+          target: "local",
+          projectName: summary.name,
+        });
       }
     },
-    [localPersistence]
+    [localPersistence, params.onProjectSaved]
   );
 
   const handleOpenLocalProject = useCallback(
