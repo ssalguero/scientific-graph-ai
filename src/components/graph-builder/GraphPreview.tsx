@@ -15,6 +15,9 @@ import {
 
 import type { VisualGraphPreview } from "@/lib/visualGraphBuilder";
 
+import { HeatmapPreview } from "./HeatmapPreview";
+import { BubblePreview } from "./BubblePreview";
+
 /** Width / height — ResponsiveContainer derives height from width (no parent height needed). */
 const CHART_ASPECT_RATIO = 1.8;
 
@@ -196,6 +199,14 @@ export function GraphPreview({ preview, errorMessage }: GraphPreviewProps) {
 
         {preview.graphType === "violin" && preview.violinData.length > 0 ? (
           <ViolinPreview data={preview.violinData} />
+        ) : null}
+
+        {preview.graphType === "heatmap" ? (
+          <HeatmapPreview data={preview.heatmapData} />
+        ) : null}
+
+        {preview.graphType === "bubble" ? (
+          <BubblePreview data={preview.bubbleData} />
         ) : null}
 
         {preview.graphType === "scatter" &&
