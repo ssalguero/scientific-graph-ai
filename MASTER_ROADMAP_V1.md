@@ -83,13 +83,16 @@ Scientific Graph AI es un editor científico web (Next.js 16, React 19) para imp
 | PROD-2A — Project File Core | **CLOSED** |
 | PROD-2B — Persistencia científica V2 | **CLOSED** (2026-07-01) |
 | PROD-2C — Worksheet + Visual Graph Builder persistence | **CLOSED** (2026-06-30) — épica histórica |
+| **PROD-2D** — UX profesional + arquitectura transversal | **CLOSED** (2026-07-09) |
 | ARCH-5 Fases 1–4 | **CLOSED** |
+| ARCH-5 F5 (metodología; PROD-2D D9–D17) | **CLOSED** |
+| ARCH-6 (visibility; PROD-2D D4–D8) | **CLOSED** |
 | Sprint QA-1 | **CLOSED** |
 | Versión del producto | `0.1.0` — **pre-v1.0** |
 | Backlog de épicas cerradas | Vacío |
-| **Siguiente fase de implementación** | **PROD-2D** |
+| **Siguiente fase de implementación** | **PROD-2E** |
 
-> **Nomenclatura PROD-2C:** la épica **PROD-2C (histórico)** — worksheet + Visual Graph Builder persistence, C1–C9 — está **CLOSED** y congelada en [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md). El identificador PROD-2C **no se reutiliza** para trabajo futuro. La siguiente fase es **PROD-2D**.
+> **Nomenclatura:** la épica **PROD-2C (histórico)** — worksheet + Visual Graph Builder persistence, C1–C9 — está **CLOSED** y congelada en [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md). El identificador PROD-2C **no se reutiliza** para trabajo futuro. **PROD-2D** está **CLOSED** ([`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md)). La siguiente fase es **PROD-2E**.
 
 ### 3.2 Arquitectura existente
 
@@ -432,10 +435,11 @@ flowchart LR
 
 | Campo | Contenido |
 |-------|-----------|
+| **Estado** | **CLOSED** (2026-07-09) — acta [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) |
 | **Objetivo** | Profesionalizar la experiencia de usuario y avanzar la modularización del monolito |
-| **Épicas** | ARCH-6, UX-2A, UX-2B, **UX-2C** (D22 — actividad proyecto; **≠ PROD-2C**), ARCH-5 F5 |
+| **Épicas** | ARCH-6, UX-2A, UX-2B, ARCH-5 F5 (+ microfase D22 actividad proyecto) |
 | **Dependencias** | PROD-2C (histórico) CLOSED; QA-1 CLOSED |
-| **Criterios de cierre** | Observaciones QA-1 §10 resueltas; branding/metadata production-ready; Historial/Config MVP; actividad del proyecto (UX-2C); reducción neta de LOC del monolito certificada por gate; Definition of Done completa |
+| **Criterios de cierre** | Observaciones QA-1 §10 resueltas; branding/metadata production-ready; Historial/Config MVP; actividad del proyecto; reducción neta de LOC del monolito certificada por gate; `validate:prod2d-gate` PASS; Definition of Done completa — **cumplidos** |
 
 ### PROD-2E — Motor gráfico profesional
 
@@ -492,7 +496,7 @@ flowchart LR
 1. **El Master Roadmap define la estrategia.** Ninguna épica nueva entra en implementación sin incorporarse primero a este documento mediante amend explícito.
 2. **Los `PROJECT_STATUS_*` documentan la ejecución.** Cada fase CLOSED genera o actualiza su acta de cierre conforme a la Definition of Done.
 3. **Las fases cerradas son inmutables.** Ninguna fase posterior modifica retrospectivamente la documentación de fases ya declaradas CLOSED.
-4. **La secuencialidad es obligatoria.** PROD-2D es la siguiente fase; PROD-2C (histórico) no se reabre ni se reutiliza como identificador de fase futura.
+4. **La secuencialidad es obligatoria.** PROD-2E es la siguiente fase; PROD-2D y PROD-2C (histórico) están CLOSED y no se reabren ni se reutilizan como identificadores de fase futura.
 
 ### Documentos de referencia verificados
 

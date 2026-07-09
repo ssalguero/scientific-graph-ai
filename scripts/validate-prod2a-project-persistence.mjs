@@ -316,7 +316,9 @@ async function verifyGraphContext(page) {
 
 async function verifyNewProjectClean(page) {
   await page.getByRole("button", { name: "Nuevo proyecto" }).click();
-  const discard = page.getByRole("button", { name: "Descartar cambios y continuar" });
+  // SSOT: src/lib/project/userMessages.ts → DISCARD_AND_LOAD
+  // (formatPersistenceConflictResolutionLabel — mantener literal alineado si el copy cambia)
+  const discard = page.getByRole("button", { name: "Descartar cambios y cargar" });
   if ((await discard.count()) > 0) {
     await discard.click();
   }

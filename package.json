@@ -31,6 +31,7 @@
     "validate:methodology-unit": "npx tsx scripts/validate-methodology-unit.ts",
     "validate:workflow-unit": "npx tsx scripts/validate-workflow-unit.ts",
     "validate:arch5-f5-modularization-gate": "npx tsx scripts/validate-arch5-f5-modularization-gate.ts",
+    "validate:prod2d-gate": "npx tsx scripts/validate-prod2d-gate.ts",
     "validate:prod2b-b1-1-domain": "npx tsx scripts/validate-prod2b-b1-1-domain.ts",
     "validate:prod2b-b1-2-migrate": "npx tsx scripts/validate-prod2b-b1-2-migrate.ts",
     "validate:prod2b-b1-3-v2": "npx tsx scripts/validate-prod2b-b1-3-v2.ts",

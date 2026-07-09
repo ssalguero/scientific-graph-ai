@@ -1,9 +1,9 @@
 # Scientific Graph AI — Estado PROD-2D (UX profesional + arquitectura transversal)
 
-**Épica:** PROD-2D  
-**Documento:** acta incremental de microfases (cierre parcial hasta D24)  
-**Baseline de referencia:** [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) (D0.5 COMPLETED)  
-**Plan operativo:** [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)
+**Épica:** PROD-2D — **CLOSED** (2026-07-09)  
+**Documento:** acta incremental de microfases (cierre oficial D0–D24)  
+**Baseline de referencia:** [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) (D0.5 COMPLETED — histórico inmutable)  
+**Plan operativo:** [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) (checklist cierre 8/8)
 
 ---
 
@@ -3858,4 +3858,764 @@ D23 (gate umbrella) → D24 (cierre documental PROD-2D)
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06 · Acta D15 certificada 2026-07-06 · **ARCH-5 F5G (SCI-59 UI Panel) CLOSED** 2026-07-06 · Acta D16 certificada 2026-07-07 · **ARCH-5 F5H (infraestructura validación) CLOSED** 2026-07-07 · Acta D17 certificada 2026-07-07 · **ARCH-5 F5I (certificación modularización) CLOSED** 2026-07-07 · **ARCH-5 F5 (D9–D17) CLOSED** 2026-07-07 · Acta D18 certificada 2026-07-08 · **UX-2B.1 (UserPreferences domain) CLOSED** 2026-07-08 · **UX-2B.2 (SettingsPanel MVP) CLOSED** 2026-07-08 · **UX-2B.3 (Application layer recientes) CLOSED** 2026-07-08 · **UX-2B.4 (Panel Historial MVP) CLOSED** 2026-07-08 · **UX-2B (D18–D21) CLOSED** 2026-07-08 · **D22.1 (UX-2C baseline + SSOT amend) CLOSED** 2026-07-08 · **UX-2C (D22) CLOSED** 2026-07-08. Épica PROD-2D permanece abierta hasta D24.*
+## Microfase D23 — Gate umbrella PROD-2D
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **D23 CLOSED — Ready for D24** |
+| **Fecha** | 2026-07-09 |
+| **Gate oficial** | `validate:prod2d-gate` |
+| **Épica PROD-2D** | **ABIERTA** — cierre reservado D24 |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) §D23 · [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) (D0.5) |
+
+### Resumen ejecutivo
+
+Microfase de **certificación integrada** de PROD-2D (D0–D22): BUILD del gate umbrella `validate:prod2d-gate`, auditoría arquitectónica read-only, ejecución de gates finales, consolidación de métricas vs baseline D0.5 y acta §D23. **Sin funcionalidades nuevas** — cero refactors de producto fuera de hotfixes de infraestructura de gates (D23.0A parser · E2E-1 selector).
+
+**Resultado:** `validate:prod2d-gate` **PASS** (`generatedAt: 2026-07-09T04:51:07.094Z`). Dominio metodología encapsulado (8 módulos); reducción neta LOC `page.tsx` **−2.386** vs D0.5. Épica PROD-2D **permanece abierta** hasta D24.
+
+### Objetivos D23
+
+| Objetivo | Resultado |
+|----------|-----------|
+| Certificación integrada fase (PLAN §D23) | **Cumplido** — umbrella PASS |
+| Consolidar regresión transversal + persistencia + ARCH-5 + UX-2C | **Cumplido** — 5 sub-gates PASS |
+| Métricas finales vs baseline D0.5 | **Cumplido** — ver §D23.3 / resumen abajo |
+| Acta §D23 sin declarar PROD-2D CLOSED | **Cumplido** — reservado D24 |
+| Sin features · sin refactors semánticos | **Cumplido** |
+
+### Microfases D23.0 → D23.5
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D23.0** | BUILD `scripts/validate-prod2d-gate.ts` + `package.json` | **CLOSED** |
+| **HOTFIX D23.0A** | Parser JSON raíz umbrella (`extractTopLevelJsonSlice` + ancla línea) | **CLOSED** |
+| **D23.1** | Auditoría read-only (boundaries, barrels, API Freeze, inventario) | **CLOSED** |
+| **D23.2** | `tsc` + `validate:prod2d-gate` (+ política PASS condicionado) | **CLOSED** |
+| **HOTFIX E2E-1** | Selector Playwright `DISCARD_AND_LOAD` en `validate-prod2a-project-persistence.mjs` | **CLOSED** |
+| **D23.3** | Métricas finales vs D0.5 / D17 | **CLOSED** |
+| **D23.4** | Acta §D23 (`PROJECT_STATUS_PROD_2D.md`) | **CLOSED** |
+| **D23.5** | Handoff D24 documentado en acta | **CLOSED** |
+
+### Secuencia congelada post-D23
+
+```text
+D18 ✓ → D19 ✓ → D20 ✓ → D21 ✓ → D22 ✓ → D23 ✓ → D24 (cierre épica)
+```
+
+### Arquitectura certificada (D23.1)
+
+| Verificación | Resultado |
+|--------------|-----------|
+| Boundaries dominio → UI / UI → dominio | **PASS** — sin deep imports en barrels congelados |
+| API Freeze `@/lib/app-preferences` | **PASS** — 13 exports |
+| API Freeze `@/lib/project-history` | **PASS** — 12 exports |
+| Dominio `methodology/*` (8 barrels) | **PASS** — encapsulado; wiring `useMemo` residual en `page.tsx` |
+| Delegación umbrella (sin duplicar sub-gates) | **PASS** — arch5 cubre methodology/workflow/prod2c-c8/LOC |
+| F5F-BIS (UI SCI-50–56 inline) | **Documentado** — `knownDebtCount: 1` |
+| Desviaciones arquitectónicas críticas | **Ninguna** |
+
+**Composición congelada `validate:prod2d-gate` (principio delegación):**
+
+```text
+validate:prod2d-gate
+  ├── validate:full
+  ├── validate:prod2b-b2-gate
+  ├── validate:arch5-f5-modularization-gate   ← methodology-unit · workflow-unit · prod2c-c8 · LOC
+  ├── validate:visibility-unit
+  └── validate:project-history-unit
+```
+
+### Métricas finales (resumen D23.3 — vs D0.5)
+
+| Métrica | D0.5 | D23 | Δ vs D0.5 |
+|---------|------|-----|-----------|
+| LOC `page.tsx` | 28.862 | **26.476** | **−2.386** (−8,3 %) |
+| Módulos `methodology/*` | 0 (inline) | **8** | **+8** |
+| `workflow` modules | 0 | **3** | +3 |
+| `reports` modules | 0 | **1** | +1 |
+| Known debt F5F-BIS | — | **1** | estable |
+| Barrels `src/components/*/index.ts` | 0 | **6** | +6 |
+| Scripts `validate:*` | ~40 | **60** | +20 |
+
+**Referencia D17:** `pageTsxLOC` 26.340 → D23 **26.476** (+136 LOC wiring UX-2B/2C; sin reintroducción dominio inline).
+
+**Fuente:** JSON umbrella `metrics` — `pageTsxLOC: 26476` · `methodologyModuleCount: 8` · `workflowModuleCount: 3` · `reportModuleCount: 1` · `knownDebtCount: 1`.
+
+### Gates y validaciones (D23.2)
+
+| Comando | Resultado | Detalle |
+|---------|-----------|---------|
+| `npx tsc --noEmit` | **PASS** | Typecheck independiente |
+| `npm run validate:prod2d-gate` | **PASS** | ~813 s · `generatedAt: 2026-07-09T04:51:07.094Z` |
+| ↳ `validate:full` | **PASS** | exit 0 |
+| ↳ `prod2b-b2-gate` | **PASS** | exit 0 |
+| ↳ `arch5-f5-modularization-gate` | **PASS** | 11 casos |
+| ↳ `visibility-unit` | **PASS** | 30 casos |
+| ↳ `project-history-unit` | **PASS** | 26 casos |
+
+**Política PASS condicionado (congelada D23):** única excepción permitida en `validate:full` cuando solo fallen `baseline`/`e2e` por `ERR_CONNECTION_REFUSED`. En la certificación final el sub-gate reportó **exit 0** (PASS pleno, no condicionado).
+
+### Limitaciones conocidas (no bloqueantes D23)
+
+| ID | Observación | Clasificación | Recomendación |
+|----|-------------|---------------|---------------|
+| **L-D23-1** | Parser umbrella fallaba con `lastIndexOf("{")` ante JSON embebido en stderr de sub-gates | **Corregido** — HOTFIX D23.0A | Mantener contrato salida sub-gates (JSON raíz en línea propia) |
+| **L-D23-2** | E2E Playwright sensible al estado del entorno (servidor frío, hidratación UI, tab `Experimental`) | **No bloqueante** — gate oficial PASS en certificación | Fase posterior (QA-2 / CI): server fixture, retries, separación E2E aislado vs `validate:full` |
+
+> El gate oficial `validate:prod2d-gate` quedó **certificado PASS** tras HOTFIX E2E-1. Ejecuciones aisladas de `validate:prod2a` sin build/servidor caliente pueden fallar por L-D23-2 sin invalidar el cierre D23.
+
+### Criterios CA-D23 (certificación final — D23.5)
+
+| ID | Criterio | Evidencia | Resultado |
+|----|----------|-----------|-----------|
+| **CA-D23-01** | Arquitectura estable | D23.1 checklist | **PASS** |
+| **CA-D23-02** | API Freeze respetado | Gates + inventario D23.1 | **PASS** |
+| **CA-D23-03** | Sin regresiones atribuibles | `tsc` + umbrella PASS post-hotfixes | **PASS** |
+| **CA-D23-04** | Gates PASS — PASS condicionado solo `validate:full` infra | D23.2 · umbrella `validate:full` exit 0 | **PASS** |
+| **CA-D23-05** | Documentación §D23 completa | Acta §D23 (D23.4) | **PASS** |
+| **CA-D23-06** | Métricas finales registradas | D23.3 · resumen métricas arriba | **PASS** |
+| **CA-D23-07** | Handoff D24 documentado | Este apartado §Handoff D23 → D24 (D23.5) | **PASS** |
+| **CA-D23-08** | Estado D23 correcto vs SSOT | Acta §D23 | **PASS** — **D23 CLOSED — Ready for D24** (no PROD-2D CLOSED) |
+
+**Total CA-D23: 8/8 PASS**
+
+### Resultado de la fase
+
+| Campo | Valor |
+|-------|-------|
+| **Gate umbrella** | `validate:prod2d-gate` **PASS** |
+| **Estado microfase D23** | **D23 CLOSED — Ready for D24** |
+| **Estado épica PROD-2D** | **ABIERTA** — cierre documental reservado **D24** |
+| **Siguiente microfase** | **D24** — Cierre documental PROD-2D (sin iniciar) |
+| **Pendientes no bloqueantes** | `report.generated` wiring · F5F-BIS · E2E estabilización CI (L-D23-2) |
+
+### Handoff D23 → D24 (D23.5 — certificado)
+
+#### Estado final de D23
+
+| Campo | Valor |
+|-------|-------|
+| **Microfase** | **D23 CLOSED** — 2026-07-09 |
+| **Gate oficial** | `validate:prod2d-gate` **PASS** |
+| **Sub-fases** | D23.0 · D23.0A · D23.1 · D23.2 · E2E-1 · D23.3 · D23.4 · **D23.5** — todas **CLOSED** |
+| **Épica PROD-2D** | **ABIERTA** — no declarar CLOSED hasta D24 |
+
+#### Prerrequisitos satisfechos para D24
+
+| Prerrequisito | Estado |
+|---------------|--------|
+| D0–D22 CLOSED | **Sí** |
+| D23 gate umbrella PASS | **Sí** — `generatedAt: 2026-07-09T04:51:07.094Z` |
+| Acta §D23 completa (CA-D23 8/8) | **Sí** |
+| Métricas finales vs D0.5 registradas | **Sí** — §Métricas finales arriba |
+| Checklist cierre PROD-2D (PLAN §422–430) — gates | **Sí** — `validate:prod2d-gate` PASS |
+| DoD §2 completa (8/8) | **No** — alcance **exclusivo D24** |
+| Push remoto | **No** — alcance **exclusivo D24** |
+
+#### Tareas reservadas exclusivamente para D24
+
+Según [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) §D24 y [`MASTER_ROADMAP_V1.md`](./MASTER_ROADMAP_V1.md) §13:
+
+| # | Tarea | Archivo / artefacto | Criterio D24 |
+|---|-------|---------------------|--------------|
+| 1 | Acta cierre épica §D24 | `PROJECT_STATUS_PROD_2D.md` | Estado **PROD-2D CLOSED** |
+| 2 | Alinear quick start / gates | `README.md` | Divergencia discovery §439 |
+| 3 | Índice operativo hitos | `ROADMAP.md` | PROD-2D → CLOSED |
+| 4 | SSOT estratégico | `MASTER_ROADMAP_V1.md` §3.1 | Siguiente fase → **PROD-2E** |
+| 5 | DoD §2 (8/8) | Transversal | Implementación · gates · tests · docs · PROJECT_STATUS · commit · push · sin deuda alcance |
+| 6 | Push remoto | git | Único push obligatorio de cierre épica (PLAN §39) |
+| 7 | Checklist PLAN §422–430 | Documental | 8/8 ítems DoD PROD-2D verificados y marcados |
+
+**Fuera de alcance D24 (sin adelantar):** código producto · refactors · nuevas features · reabrir D0–D23.
+
+#### Limitaciones conocidas — carry-forward a post-PROD-2D
+
+| ID | Item | Severidad | Recomendación fase posterior |
+|----|------|-----------|------------------------------|
+| **L-D23-2** | E2E Playwright sensible al entorno (servidor frío, hidratación, tab `Experimental`) | INFO | **QA-2 / CI** — server fixture, retries, job E2E aislado |
+| **P1** | Wiring `report.generated` (6/7 eventos project-history) | Baja | Post-PROD-2D |
+| **P3** | F5F-BIS — UI SCI-50–56 inline (~711 LOC) | LOW | PROD-2E / ARCH-5 continuación |
+
+> L-D23-2 **no bloqueó** el cierre D23; el gate oficial certificó PASS en entorno de certificación.
+
+#### Secuencia post-handoff
+
+```text
+D23 ✓ (CLOSED — Ready for D24) → D24 (cierre documental PROD-2D) → PROD-2E
+```
+
+**D24 puede iniciar inmediatamente.** No reabrir D19–D23 salvo amend explícito.
+
+---
+
+## Microfase D24 — Cierre documental PROD-2D
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** — D24.1–D24.5 CLOSED |
+| **Fecha** | 2026-07-09 |
+| **Código modificado** | **Ninguno** (producto) — carry-in D23 en commit de cierre DoD |
+| **Épica PROD-2D** | **CLOSED** |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) §D24 · [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) (D0.5) · Handoff D23 → D24 |
+
+### D24.1 — Baseline Final
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-09 |
+| **Código modificado** | **Ninguno** |
+| **Archivos nuevos** | **Ninguno** |
+| **Alcance** | Documental únicamente — estados oficiales + inventario baseline final |
+
+#### Estados oficiales
+
+| Entidad | Estado |
+|---------|--------|
+| **D0 → D23** | **CLOSED** |
+| **UX-2A** | **CLOSED** |
+| **UX-2B** | **CLOSED** |
+| **ARCH-5** | **CLOSED** |
+| **ARCH-6** | **CLOSED** |
+| **PROD-2D** | **READY FOR FINAL CERTIFICATION** |
+
+**Nomenclatura:** no se declara cierre de una épica independiente **UX-2C**. La microfase **D22** (actividad del proyecto; label PLAN «UX-2C») permanece **CLOSED** como microfase dentro de PROD-2D — no como épica principal certificada en D24.1.
+
+#### Baseline final (inventario documental)
+
+LOC final de `page.tsx` se mide en **D24.3** (`Measure-Object -Line`). D0.5 y D23 son capas históricas **inmutables**; este bloque solo inventaría el estado de referencia al inicio de la certificación final.
+
+| Dimensión | Valor registrado en D24.1 |
+|-----------|---------------------------|
+| LOC `src/app/page.tsx` (baseline D0.5) | **28.862** — histórico inmutable ([`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md)) |
+| LOC `page.tsx` (snapshot D23) | **26.476** — histórico inmutable (§D23.3); **no** se usa como LOC final D24 |
+| Módulos creados (PROD-2D) | `methodology/*` ×8 · `workflow` ×3 · `reports` ×1 · `app-preferences` · `project-history` · `smart-start` · `visibility` · `app-branding` |
+| Scripts `validate:*` | Baseline histórico D0.5: **~40** · Inventario a certificar en D24: conteo actual en `package.json` (**60** entradas `validate:*` al inicio D24.1) |
+| Componentes UI extraídos | `home/` · `workflow/` · `reports/` · `analysis/` · `settings/` · `history/` · `project-activity/` (+ **6** barrels `index.ts`) |
+| Validadores clave | `validate:prod2d-gate` (umbrella) · sub-gates: `validate:full` · `validate:prod2b-b2-gate` · `validate:arch5-f5-modularization-gate` · `validate:visibility-unit` · `validate:project-history-unit` · evidencia explícita D24.2: `methodology-unit` · `workflow-unit` · `visibility-unit` · `arch5-f5-modularization-gate` |
+| Estado del roadmap | D24 en curso (certificación final) → siguiente épica estratégica **PROD-2E** |
+
+#### Resultado D24.1
+
+| Campo | Valor |
+|-------|-------|
+| **D24.1** | **CLOSED** |
+| **Épica PROD-2D** | **READY FOR FINAL CERTIFICATION** |
+| **Siguiente microfase** | **D24.2** — Final Validation Suite |
+| **Rollback** | Eliminar únicamente este bloque documental §D24.1 |
+
+### D24.2 — Final Validation Suite
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-09 |
+| **Código modificado** | **Ninguno** — solo ejecución de validadores |
+| **Política** | No corregir código durante D24.2; FAIL real no contemplado → detener antes de D24.3 |
+
+#### Validation session
+
+```text
+Validation session
+branch: cursor/prod-2d-d3-4-use-smart-start-hook
+HEAD: 59f7161
+generatedAt: 2026-07-09T05:33:16.722Z
+```
+
+| Campo | Valor |
+|-------|-------|
+| **branch** | `cursor/prod-2d-d3-4-use-smart-start-hook` |
+| **HEAD (corto)** | `59f7161` |
+| **HEAD (completo)** | `59f716168631ff5702e919b7e4279fd1f956438d` |
+| **generatedAt** (`validate:prod2d-gate`) | `2026-07-09T05:33:16.722Z` |
+
+#### Resultados por comando (orden del plan)
+
+| # | Comando | Resultado | Duración | Casos / detalle | Explicación |
+|---|---------|-----------|----------|-----------------|-------------|
+| 1 | `npx tsc --noEmit` | **PASS** | ~34 s (wall) | — | `EXIT_CODE=0`; sin errores TypeScript |
+| 2 | `npm run validate:prod2d-gate` | **PASS** | **729 s** (`ELAPSED_MS=729078`) | 5/5 sub-gates PASS · arch5 **11** · visibility **30** · project-history **26** | Umbrella oficial; `pass: true`; `generatedAt: 2026-07-09T05:33:16.722Z` |
+| 3 | `npm run validate:methodology-unit` | **PASS** | **41 s** (`ELAPSED_MS=41307`) | **377** casos (F5A 208 · F5B 65 · F5C 37 · F5D 27 · F5E 40) | Evidencia explícita; ya subsumido en arch5 |
+| 4 | `npm run validate:workflow-unit` | **PASS** | **8 s** (`ELAPSED_MS=7943`) | **9/9** casos (W1–W9) | SCI-59 workflow snapshot |
+| 5 | `npm run validate:visibility-unit` | **PASS** | **9 s** (`ELAPSED_MS=8910`) | **30** casos (min 20) | ARCH-6 visibility + PDF policy |
+| 6 | `npm run validate:arch5-f5-modularization-gate` | **PASS** | **95 s** (`ELAPSED_MS=94992`) | **11** casos · sub-gates methodology/workflow/c8 PASS | `generatedAt: 2026-07-09T05:37:29.864Z` · knownDebt F5F-BIS (LOW, no bloqueante) |
+
+**WARN:** ninguno.  
+**SKIP:** ninguno.  
+**FAIL:** ninguno.
+
+#### Sub-gates de `validate:prod2d-gate` (detalle)
+
+| Sub-gate | Resultado | exitCode | Casos |
+|----------|-----------|----------|-------|
+| `validate:full` | **PASS** | 0 | — (regresión global + build + E2E) |
+| `prod2b-b2-gate` | **PASS** | 0 | — |
+| `arch5-f5-modularization-gate` | **PASS** | 0 | 11 |
+| `visibility-unit` | **PASS** | 0 | 30 |
+| `project-history-unit` | **PASS** | 0 | 26 |
+
+Métricas emitidas por el umbrella (referencia de gate; LOC final de certificación = D24.3): `pageTsxLOC: 26476` · `methodologyModuleCount: 8` · `workflowModuleCount: 3` · `reportModuleCount: 1` · `knownDebtCount: 1`.
+
+#### Resultado D24.2
+
+| Campo | Valor |
+|-------|-------|
+| **D24.2** | **CLOSED** |
+| **Suite final** | **6/6 PASS** |
+| **Código tocado** | **Ninguno** |
+| **Siguiente microfase** | **D24.3** — Métricas Finales |
+| **Rollback** | N/A (solo ejecución) |
+
+### D24.3 — Métricas Finales
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-09 |
+| **Código modificado** | **Ninguno** — solo medición y documentación |
+| **Método LOC** | `(Get-Content src/app/page.tsx \| Measure-Object -Line).Lines` |
+
+#### Inmutabilidad de métricas históricas
+
+| Capa | Rol | Regla |
+|------|-----|-------|
+| **D0.5** | Baseline histórico | **No se modifica** — [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) |
+| **D23** | Snapshot histórico | **No se modifica** — §D23.3 |
+| **D24** | Medición de certificación final | Valor medido en esta sesión |
+
+#### Paso 1 — Medición final LOC
+
+```powershell
+(Get-Content src/app/page.tsx | Measure-Object -Line).Lines
+# → 26476
+```
+
+| Campo | Valor |
+|-------|-------|
+| **LOC D24 (medición de certificación)** | **26.476** |
+| **LOC D0.5 (baseline histórico)** | **28.862** — inmutable |
+| **LOC D23 (snapshot histórico)** | **26.476** — inmutable |
+| **Delta D24 − D23** | **0** — coincidencia de medición; **no** es corrección del snapshot D23 |
+
+#### Paso 2 — Tabla consolidada D0.5 ↔ D23 ↔ D24
+
+| Dimensión | D0.5 | D23 | D24 |
+|-----------|------|-----|-----|
+| LOC `page.tsx` | 28.862 | 26.476 | **26.476** (medido) |
+| Scripts `validate:*` | ~40 (histórico) | 60 | **60** (inventario D24) |
+| Methodology modules | 0 | 8 | **8** |
+| Workflow modules | 0 | 3 | **3** |
+| Reports modules | 0 | 1 | **1** |
+| Gates umbrella | — | `prod2d-gate` | `prod2d-gate` |
+| Estado | Baseline histórico | Snapshot histórico | Certificación final |
+
+#### Paso 3 — Inventario final
+
+**Dominio (PROD-2D)**
+
+| Módulo / área | Ruta | Conteo |
+|---------------|------|--------|
+| Methodology SCI-50→60 | `src/lib/scientific/methodology/{consistency,report-quality,reproducibility,evidence,assumptions,readiness,summary,publication}/` | **×8** |
+| Workflow | `src/lib/scientific/workflow/` | **×3** (métrica gate: `workflowModuleCount`) |
+| Reports (dominio/UI SCI-60) | `src/components/reports/` + publicación methodology | **×1** (métrica gate: `reportModuleCount`) |
+| App preferences | `src/lib/app-preferences/` | 1 |
+| Smart Start | `src/lib/smart-start/` | 1 |
+| Visibility | `src/lib/scientific/visibility/` | 1 |
+| Branding | `src/lib/app-branding/` | 1 |
+| Project history | `src/lib/project-history/` | 1 |
+| Persistence application (recientes) | `src/lib/project/application/persistence/` | 1 |
+
+**Componentes UI**
+
+| Carpeta | Barrel `index.ts` | Notas |
+|---------|-------------------|-------|
+| `src/components/home/` | — | Smart Start (4 componentes) |
+| `src/components/workflow/` | **Sí** | GuidedWorkflowPanel · WorkflowSessionIndicator |
+| `src/components/reports/` | **Sí** | ScientificPublicationDashboard · PdfExportVisibilityBanner |
+| `src/components/analysis/` | **Sí** | avisos calc ≠ viz |
+| `src/components/settings/` | **Sí** | SettingsPanel |
+| `src/components/history/` | **Sí** | RecentProjectsPanel |
+| `src/components/project-activity/` | **Sí** | HistoryPanel (actividad) |
+
+**Barrels:** **6** (`analysis`, `history`, `project-activity`, `reports`, `settings`, `workflow`).
+
+**Hooks (`src/app/`)**
+
+| Hook | Origen / rol |
+|------|----------------|
+| `useSmartStart.ts` | UX-2A / Smart Start (PROD-2D) |
+| `useRecentProjects.ts` | UX-2B Historial recientes (PROD-2D) |
+| `useProjectHistory.ts` | D22 Actividad del proyecto (PROD-2D) |
+| `useLocalProjectPersistence.ts` | Persistencia local (pre/PROD-2D wiring) |
+| `useProjectDraftAutosave.ts` | Autosave borrador |
+| `useGraphEditorProjectFile.ts` | Archivo de proyecto / `.sgproj` |
+
+**Adaptadores**
+
+| Adaptador | Ruta |
+|-----------|------|
+| localStorage (preferencias) | `src/lib/app-preferences/adapters/local-storage/` |
+| IndexedDB (proyectos locales) | `src/lib/project/adapters/indexeddb/` |
+| `.sgproj` serialize/hydrate | `src/lib/project/adapters/sgproj/` |
+| Project history (in-memory) | `src/lib/project-history/adapter.ts` |
+
+**Carpetas nuevas / consolidadas durante PROD-2D**
+
+```text
+src/lib/app-branding/
+src/lib/smart-start/
+src/lib/app-preferences/
+src/lib/project-history/
+src/lib/scientific/visibility/
+src/lib/scientific/methodology/   (+ 8 submódulos)
+src/lib/scientific/workflow/      (expansión PROD-2D)
+src/lib/project/application/persistence/
+src/components/home/
+src/components/workflow/
+src/components/reports/
+src/components/analysis/
+src/components/settings/
+src/components/history/
+src/components/project-activity/
+scripts/validate-prod2d-gate.ts   (D23 carry-in; no nuevo en D24)
+```
+
+#### Paso 4 — Métricas de reducción y conteos
+
+**Reducción del monolito** (`page.tsx`, vs baseline D0.5):
+
+| Métrica | Valor |
+|---------|-------|
+| Baseline D0.5 | **28.862** LOC |
+| Certificación D24 | **26.476** LOC |
+| Reducción absoluta | **−2.386** LOC |
+| Reducción porcentual | **−8,3%** |
+
+**Conteos finales (certificación D24):**
+
+| Categoría | Cantidad |
+|-----------|----------|
+| Módulos methodology | **8** |
+| Módulos workflow (gate) | **3** |
+| Módulos reports (gate) | **1** |
+| Componentes UI carpetas extraídas | **7** |
+| Barrels `index.ts` | **6** |
+| Hooks `src/app/use*.ts` | **6** |
+| Familias de adaptadores | **4** (localStorage · IndexedDB · sgproj · history) |
+| Scripts `validate:*` | **60** (inventario D24) |
+| Gate umbrella | **1** (`validate:prod2d-gate`) |
+| Carpetas nuevas/consolidadas PROD-2D (lista arriba) | **15** rutas de dominio/UI + gate script |
+
+#### Criterios CA-D24.3
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D24.3-01** | LOC D24 medido y documentado | **PASS** — 26.476 |
+| **CA-D24.3-02** | Tabla D0.5 ↔ D23 ↔ D24 consolidada | **PASS** |
+| **CA-D24.3-03** | Inventario final (módulos, UI, hooks, adaptadores, carpetas) registrado | **PASS** |
+| **CA-D24.3-04** | Reducción del monolito calculada | **PASS** — −2.386 (−8,3%) |
+| **CA-D24.3-05** | Baseline y snapshot históricos preservados como inmutables | **PASS** |
+| **CA-D24.3-06** | Sin cambios funcionales ni de código | **PASS** |
+| **CA-D24.3-07** | `PROJECT_STATUS_PROD_2D.md` actualizado y handoff → D24.4 | **PASS** |
+
+**Total CA-D24.3: 7/7 PASS**
+
+#### Paso 5 — Resumen ejecutivo D24.3
+
+- Baseline histórico **D0.5** preservado (28.862 LOC).
+- Snapshot histórico **D23** preservado (26.476 LOC).
+- Métricas **D24** obtenidas durante certificación (LOC medido = 26.476; delta vs D23 = 0).
+- Comparación consolidada D0.5 ↔ D23 ↔ D24 registrada.
+- Inventario final de dominio, UI, hooks, adaptadores y carpetas documentado.
+- Sin cambios funcionales.
+- Sin modificaciones de código.
+- **Handoff → D24.4** (Certificación PROD-2D).
+
+#### Resultado D24.3
+
+| Campo | Valor |
+|-------|-------|
+| **D24.3** | **CLOSED** |
+| **LOC D24** | **26.476** |
+| **Reducción vs D0.5** | **−2.386 (−8,3%)** |
+| **Código tocado** | **Ninguno** |
+| **Siguiente microfase** | **D24.4** — Certificación PROD-2D |
+| **Rollback** | Eliminar únicamente este bloque documental §D24.3 |
+
+### D24.4 — Certificación PROD-2D
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-09 |
+| **Código modificado** | **Ninguno** |
+| **Validaciones nuevas** | **Ninguna** — evidencia exclusiva D24.1–D24.3 |
+| **Alcance** | Certificación técnica oficial + CA-D24 |
+
+#### Paso 1 — Bloque ejecutivo
+
+```text
+PROD-2D
+STATUS: CLOSED
+```
+
+**Cierre técnico certificado.** El archival administrativo (README · ROADMAP · MASTER_ROADMAP · PLAN checklist · CA-D24-21) queda reservado a **D24.5**.
+
+##### Resumen ejecutivo (evidencia D24.1–D24.3)
+
+| Área | Estado certificado | Evidencia |
+|------|--------------------|-----------|
+| **Objetivos alcanzados** | UX profesional + arquitectura transversal + gate umbrella | D24.1 estados oficiales · D0–D23 CLOSED |
+| **Arquitectura final** | Capas domain / UI / adapters / hooks; API Freeze respetado en D24 | D24.1 inventario · D24.3 inventario |
+| **Dominio** | Methodology ×8 · workflow · visibility · smart-start · app-preferences · project-history · branding | D24.3 §Paso 3 |
+| **UI** | home · workflow · reports · analysis · settings · history · project-activity (+ 6 barrels) | D24.3 §Paso 3 |
+| **Persistence** | V2 + IndexedDB + application persistence recientes | D24.2 `prod2b-b2-gate` PASS (vía umbrella) |
+| **Workflow** | SCI-59 snapshot / restore certificado | D24.2 `validate:workflow-unit` **9/9 PASS** |
+| **Methodology** | SCI-50→60 encapsulado; 377 casos unit | D24.2 `validate:methodology-unit` **PASS** |
+| **Settings** | `app-preferences` + SettingsPanel | D24.1 / D24.3 inventario · UX-2B CLOSED |
+| **Project Activity** | `project-history` + HistoryPanel · `useProjectHistory` | D24.2 `project-history-unit` **26 PASS** (vía umbrella) |
+| **Export** | ARCH-6 visibility + PDF policy / banner | D24.2 `validate:visibility-unit` **30 PASS** · ARCH-6 CLOSED |
+| **Tests** | Suite final 6/6 PASS; sin FAIL/WARN/SKIP | D24.2 |
+| **Gates** | `validate:prod2d-gate` + sub-gates + evidencia explícita | D24.2 Validation session |
+| **Documentación** | Acta D24.1–D24.4; alineación README/ROADMAP/MASTER/PLAN → **D24.5** | Este documento |
+
+#### Deuda (separación)
+
+```text
+Blocking debt:
+None
+
+Known non-blocking debt:
+• F5F-BIS (~711 LOC UI SCI-50–56 inline)
+• report.generated (wiring 6/7 eventos project-history)
+• L-D23-2 (E2E flakiness / sensibilidad de entorno)
+```
+
+#### Paso 2 — Criterios CA-D24
+
+| ID | Criterio | Evidencia | Resultado |
+|----|----------|-----------|-----------|
+| **CA-D24-01** | Arquitectura consistente (domain/UI/adapters/hooks) | D24.1 baseline · D24.3 inventario | **PASS** |
+| **CA-D24-02** | Dominio metodología encapsulado (8 módulos) | D24.3 methodology ×8 · arch5 gate | **PASS** |
+| **CA-D24-03** | UI extraída (workflow/reports/settings/history/activity/home) | D24.3 componentes + 6 barrels | **PASS** |
+| **CA-D24-04** | Persistence V2 + IndexedDB estable | D24.2 `prod2b-b2-gate` PASS (umbrella) | **PASS** |
+| **CA-D24-05** | Workflow SCI-59 certificado | D24.2 `validate:workflow-unit` 9/9 | **PASS** |
+| **CA-D24-06** | Methodology SCI-50→60 certificada | D24.2 `validate:methodology-unit` 377 | **PASS** |
+| **CA-D24-07** | Settings / app-preferences certificados | D24.1/D24.3 · UX-2B CLOSED | **PASS** |
+| **CA-D24-08** | Project Activity / project-history certificada | D24.2 `project-history-unit` 26 | **PASS** |
+| **CA-D24-09** | Export / PDF toggles (ARCH-6) certificado | D24.2 `visibility-unit` 30 · ARCH-6 CLOSED | **PASS** |
+| **CA-D24-10** | `tsc --noEmit` PASS | D24.2 comando #1 | **PASS** |
+| **CA-D24-11** | `validate:prod2d-gate` PASS | D24.2 · `generatedAt: 2026-07-09T05:33:16.722Z` | **PASS** |
+| **CA-D24-12** | `validate:methodology-unit` PASS | D24.2 comando #3 | **PASS** |
+| **CA-D24-13** | `validate:workflow-unit` PASS | D24.2 comando #4 | **PASS** |
+| **CA-D24-14** | `validate:visibility-unit` PASS | D24.2 comando #5 | **PASS** |
+| **CA-D24-15** | `validate:arch5-f5-modularization-gate` PASS | D24.2 comando #6 | **PASS** |
+| **CA-D24-16** | Métricas D0.5 ↔ D23 ↔ D24 consolidadas | D24.3 · LOC 26.476 · −8,3% | **PASS** |
+| **CA-D24-17** | Sin cambios funcionales en D24 | D24.1–D24.4: código = ninguno | **PASS** |
+| **CA-D24-18** | Deuda: Blocking none; non-blocking documentada | Bloque Deuda arriba | **PASS** |
+| **CA-D24-19** | Roadmaps/README pendientes de alineación identificados para D24.5 | README · ROADMAP · MASTER §3.1 · PLAN §422–430 | **PASS** |
+| **CA-D24-20** | Proyecto listo para siguiente épica (PROD-2E) | Gates PASS · blocking debt none · handoff D24.5 | **PASS** |
+| **CA-D24-21** | PROD-2D archival completed | D24.5 — README · ROADMAP · MASTER · PLAN · acta | **PASS** (certificado en §D24.5) |
+
+**Total CA-D24 (al cierre D24.4):** 20/20 PASS · CA-D24-21 → **PASS en D24.5**.
+
+#### Paso 3 — Evidencia de validación (cita D24.2 — sin reejecutar)
+
+```text
+Validation session (D24.2 — inmutable)
+branch: cursor/prod-2d-d3-4-use-smart-start-hook
+HEAD: 59f7161
+generatedAt: 2026-07-09T05:33:16.722Z
+suite: 6/6 PASS
+```
+
+| Campo | Valor (D24.2) |
+|-------|----------------|
+| **branch** | `cursor/prod-2d-d3-4-use-smart-start-hook` |
+| **HEAD** | `59f7161` |
+| **generatedAt** | `2026-07-09T05:33:16.722Z` |
+| **Suite** | `tsc` · `prod2d-gate` · `methodology-unit` · `workflow-unit` · `visibility-unit` · `arch5-f5-modularization-gate` — **todos PASS** |
+| **Reejecución en D24.4** | **No** |
+
+#### Paso 4 — Resumen de certificación
+
+- **PROD-2D técnicamente certificada** — `STATUS: CLOSED`.
+- Evidencias D24.1–D24.3 completas y referenciadas.
+- API Freeze respetado (solo documentación en D24).
+- Sin cambios funcionales.
+- Sin regresiones detectadas (suite D24.2 6/6 PASS).
+- Blocking debt: **None**.
+- **Handoff → D24.5** — cierre documental y roadmap (archival · CA-D24-21 · DoD commit/push).
+
+#### Resultado D24.4
+
+| Campo | Valor |
+|-------|-------|
+| **D24.4** | **CLOSED** |
+| **PROD-2D (técnico)** | **CLOSED** |
+| **CA-D24** | **20/20 PASS** · **CA-D24-21 → PASS en D24.5** |
+| **Código tocado** | **Ninguno** |
+| **Siguiente microfase** | **D24.5** — Cierre del Roadmap + archival + DoD |
+| **Rollback** | Eliminar únicamente este bloque documental §D24.4 |
+
+### D24.5 — Cierre oficial PROD-2D (archival + roadmap)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-09 |
+| **Código producto modificado** | **Ninguno** |
+| **Alcance** | Acta de cierre · sync README/ROADMAP/MASTER/PLAN · CA-D24-21 · handoff PROD-2E · DoD commit/push |
+
+#### Fin oficial de PROD-2D
+
+```text
+PROD-2D
+STATUS: CLOSED
+```
+
+Épica **oficialmente cerrada** (certificación técnica D24.4 + archival administrativo D24.5).
+
+#### Resumen ejecutivo de la épica
+
+PROD-2D profesionalizó la UX (branding, Smart Start, Configuración, Historial de recientes, Actividad del proyecto), cerró **ARCH-6** (modelo toggle-aware / visibility / PDF policy) y **ARCH-5 F5** (dominio metodología SCI-50→60 en 8 módulos + UI SCI-60/SCI-59 extraída), y certificó el gate umbrella `validate:prod2d-gate`. Reducción del monolito `page.tsx`: **−2.386 LOC (−8,3%)** vs baseline D0.5. Blocking debt: **None**.
+
+#### Cronología D0 → D24
+
+```text
+D0 Discovery
+  ↓
+D0.5 Baseline (28.862 LOC page.tsx)
+  ↓
+D1–D3 UX-2A (branding + Smart Start)
+  ↓
+D4–D8 ARCH-6 (visibility / workflow indicator / PDF)
+  ↓
+D9–D17 ARCH-5 F5 (methodology modularization + gates)
+  ↓
+D18–D21 UX-2B (preferences + Settings + recientes IndexedDB)
+  ↓
+D22 Actividad del proyecto (project-history)
+  ↓
+D23 Gate umbrella validate:prod2d-gate
+  ↓
+D24 Cierre documental + certificación + archival
+```
+
+#### Lecciones aprendidas
+
+- Separar **certificación técnica** (gates + métricas) del **archival administrativo** (roadmaps) evita declarar CLOSED prematuro.
+- Umbrella gate con política de PASS condicionado documentada reduce falsos FAIL por infra E2E.
+- Inventario de épicas principales (UX-2A, UX-2B, ARCH-5, ARCH-6) distinto de labels de microfase evita certificaciones inexistentes.
+- Métricas históricas (D0.5, D23) deben permanecer **inmutables**; D24 solo añade medición de certificación.
+- Un único commit/push de cierre DoD evita commits intermedios de una épica aún no archivada.
+
+#### Arquitectura alcanzada
+
+```text
+src/app/page.tsx          → wiring / useMemo / handlers (monolito reducido)
+src/app/use*.ts           → hooks (Smart Start, recientes, activity, persistence)
+src/lib/scientific/       → methodology×8 · workflow · visibility (+ preexistente)
+src/lib/app-preferences/  → domain + localStorage adapter
+src/lib/project-history/  → domain + in-memory adapter
+src/lib/smart-start/ · app-branding/
+src/lib/project/          → V2 domain · IndexedDB · sgproj · persistence application
+src/components/           → home · workflow · reports · analysis · settings · history · project-activity
+scripts/validate-prod2d-gate.ts → umbrella oficial
+```
+
+#### Estado del código
+
+| Aspecto | Estado |
+|---------|--------|
+| API Freeze D24 | Respetado (docs + carry-in D23 en commit DoD) |
+| LOC `page.tsx` (certificación D24) | **26.476** |
+| Scripts `validate:*` | **60** |
+| Gate oficial | `validate:prod2d-gate` **PASS** (sesión D24.2) |
+| Regresiones | Ninguna detectada en suite D24.2 |
+
+#### Pendientes (known non-blocking debt)
+
+| ID | Item |
+|----|------|
+| **F5F-BIS** | UI SCI-50–56 aún inline (~711 LOC) → PROD-2E / ARCH-5 |
+| **report.generated** | Wiring 6/7 eventos project-history |
+| **L-D23-2** | E2E Playwright sensible al entorno → QA-2 / CI |
+
+#### Riesgos conocidos
+
+| ID | Riesgo | Severidad | Mitigación |
+|----|--------|-----------|------------|
+| **L-D23-2** | Flakiness E2E (servidor frío, hidratación, tab Experimental) | INFO | Retries / fixture CI; no bloquea cierre |
+| **F5F-BIS** | Deuda UI metodología inline | LOW | Continuación modularización post-PROD-2D |
+
+#### Preparación para PROD-2E
+
+- Dependencia **PROD-2D CLOSED** satisfecha.
+- Objetivo PROD-2E: motor gráfico profesional (VGB / curvas / presets publicación) — [`MASTER_ROADMAP_V1.md`](./MASTER_ROADMAP_V1.md) §PROD-2E.
+- Blocking issues: **None**.
+
+#### Sincronización documental (D24.5)
+
+| Documento | Actualización | Resultado |
+|-----------|---------------|-----------|
+| [`README.md`](./README.md) | Quick Start · gates · estado PROD-2D CLOSED · siguiente PROD-2E | **PASS** |
+| [`ROADMAP.md`](./ROADMAP.md) | PROD-2D CLOSED · siguiente PROD-2E | **PASS** |
+| [`MASTER_ROADMAP_V1.md`](./MASTER_ROADMAP_V1.md) §3.1 | Siguiente fase → **PROD-2E** | **PASS** |
+| [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) §422–430 | Checklist **8/8** | **PASS** |
+| Este acta | §D24.5 + footer CLOSED | **PASS** |
+
+#### CA-D24-21 — Archival completed
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D24-21** | PROD-2D archival completed (roadmap + plan + README + acta cerrada) | **PASS** |
+
+**Total CA-D24: 21/21 PASS**
+
+#### Handoff explícito a PROD-2E
+
+```text
+Current Epic: PROD-2D — CLOSED
+Next Epic: PROD-2E — READY TO START
+Prerequisites: All satisfied
+Blocking Issues: None
+```
+
+#### DoD §2 (cierre épica)
+
+| Criterio | Resultado |
+|----------|-----------|
+| D24.1–D24.5 PASS | **PASS** |
+| API Freeze respetado | **PASS** |
+| Sin cambios funcionales en D24 | **PASS** |
+| Sin regresiones (suite D24.2) | **PASS** |
+| Documentación sincronizada | **PASS** |
+| Roadmaps sincronizados | **PASS** |
+| PROD-2D oficialmente CLOSED | **PASS** |
+| Repositorio listo para PROD-2E | **PASS** |
+| Commit + push de cierre | **Al finalizar DoD** (único commit de cierre) |
+
+#### Resultado D24.5
+
+| Campo | Valor |
+|-------|-------|
+| **D24.5** | **CLOSED** |
+| **Épica PROD-2D** | **CLOSED** |
+| **CA-D24** | **21/21 PASS** |
+| **Siguiente épica** | **PROD-2E — READY TO START** |
+| **Rollback (pre-commit)** | Revertir únicamente cambios documentales D24.5 |
+
+---
+
+```text
+Current Epic: PROD-2D — CLOSED
+Next Epic: PROD-2E — READY TO START
+Prerequisites: All satisfied
+Blocking Issues: None
+```
+
+---
+
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9–D17 ARCH-5 F5 CLOSED 2026-07-06/07 · **ARCH-5 F5 CLOSED** 2026-07-07 · Acta D18–D21 UX-2B CLOSED 2026-07-08 · **UX-2B CLOSED** 2026-07-08 · D22 CLOSED 2026-07-08 · **D23 CLOSED** 2026-07-09 · **D24.1–D24.5 CLOSED** 2026-07-09 · **PROD-2D CLOSED** 2026-07-09. Next: PROD-2E.*

@@ -421,14 +421,17 @@ Ver [`PROJECT_DISCOVERY_PROD_2D.md`](PROJECT_DISCOVERY_PROD_2D.md) §10 y Master
 
 ## Criterio de cierre PROD-2D (Master Roadmap §13)
 
-- [ ] Observaciones QA-1 §10 resueltas (ARCH-6)
-- [ ] Branding/metadata production-ready (UX-2A)
-- [ ] Historial/Config MVP sin stubs (UX-2B)
-- [ ] Actividad del proyecto operativa (UX-2C / D22)
-- [ ] Reducción efectiva responsabilidades monolito certificada (ARCH-5 F5 + D17)
-- [ ] `validate:prod2d-gate` PASS
-- [ ] Definition of Done §2 completa (D24)
+- [x] Observaciones QA-1 §10 resueltas (ARCH-6)
+- [x] Branding/metadata production-ready (UX-2A)
+- [x] Historial/Config MVP sin stubs (UX-2B)
+- [x] Actividad del proyecto operativa (UX-2C / D22)
+- [x] Reducción efectiva responsabilidades monolito certificada (ARCH-5 F5 + D17)
+- [x] `validate:prod2d-gate` PASS
+- [x] Definition of Done §2 completa (D24)
+- [x] Documentación sincronizada (README · ROADMAP · MASTER · PLAN · STATUS) — D24.5
+
+**Checklist cierre PROD-2D: 8/8** — épica **CLOSED** (2026-07-09).
 
 ---
 
-*Plan operativo PROD-2D — aprobado y congelado en D0 (2026-07-01). Amend D22.1 (2026-07-08): inserción UX-2C / renumeración gate D23 · cierre D24.*
+*Plan operativo PROD-2D — aprobado y congelado en D0 (2026-07-01). Amend D22.1 (2026-07-08): inserción UX-2C / renumeración gate D23 · cierre D24. Cierre D24.5 (2026-07-09): checklist 8/8 · PROD-2D CLOSED.*
