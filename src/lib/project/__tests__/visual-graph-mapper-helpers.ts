@@ -81,6 +81,23 @@ export const SAMPLE_VGB_LINE_SPEC_INPUT = {
   yVariable: "tratamiento1",
 };
 
+export const SAMPLE_VGB_HEATMAP_SPEC_INPUT = {
+  ...DEFAULT_VISUAL_GRAPH_SPECIFICATION,
+  graphType: "heatmap" as const,
+  xVariable: null,
+  yVariable: null,
+  colorVariable: null,
+};
+
+export const SAMPLE_VGB_BUBBLE_SPEC_INPUT = {
+  ...DEFAULT_VISUAL_GRAPH_SPECIFICATION,
+  graphType: "bubble" as const,
+  xVariable: "x",
+  yVariable: "control1",
+  sizeVariable: "tratamiento1",
+  groupVariable: "grupo",
+};
+
 const buildGraphSpecFromInput = (
   input: VisualGraphSpecification,
   graphId: string,

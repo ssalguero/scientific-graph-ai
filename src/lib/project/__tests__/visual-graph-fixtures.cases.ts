@@ -5,7 +5,8 @@ import {
   extractVisualGraphRuntimeState,
 } from "@/lib/project/apply-hydrate-project-v2-patch";
 import { persistedVisualGraphsEquivalent } from "@/lib/project/domain/mappers/visual-graph";
-import { hydrateProjectJson } from "@/lib/project";
+import { hydrateProjectJson, serializeProjectV2 } from "@/lib/project";
+import { collectProjectSnapshotV2 } from "@/lib/project/collect-project-snapshot-v2";
 import {
   injectVisualGraphEntriesBySourceDatasetId,
   readVisualGraphEntriesFromDataset,
@@ -17,6 +18,11 @@ import {
 
 import { normalizeProjectForRoundTrip } from "./b2-9-invariants.cases";
 import { runUiSaveOpenRoundTrip } from "./ui-project-pipeline-v2.cases";
+import {
+  buildVisualGraphPreview,
+  type VisualGraphPreview,
+} from "@/lib/visualGraphBuilder";
+import { seriesToWorksheet } from "@/lib/experimentalWorksheet";
 import {
   hasOnlyPersistedVisualGraphKeys,
   PREVIEW_ONLY_EPHEMERAL_KEYS,
@@ -31,6 +37,8 @@ import { patchToCollectContextV2WithWorksheet } from "./worksheet-pipeline-helpe
 const FIXTURES_DIR = path.join(process.cwd(), "scripts", "fixtures");
 
 const MONO_GOLDEN_FIXTURE = "project-v2-dataset5-with-visual-graph.sgproj";
+const HEATMAP_GOLDEN_FIXTURE = "project-v2-dataset5-with-heatmap.sgproj";
+const BUBBLE_GOLDEN_FIXTURE = "project-v2-dataset5-with-bubble.sgproj";
 const MULTI_GOLDEN_FIXTURE = "project-v2-dataset5-dataset6-with-visual-graphs.sgproj";
 const B2_MINIMAL_FIXTURE = "project-v2-dataset5-minimal.sgproj";
 
@@ -53,7 +61,12 @@ const visualGraphsPersistedEquivalent = (
   left.every((entry, index) => persistedVisualGraphsEquivalent(entry, right[index]!));
 
 const assertVgbR1InSerializedJson = (json: string): boolean => {
-  if (json.includes('"preview"') || json.includes('"displaySeries"')) {
+  if (
+    json.includes('"preview"') ||
+    json.includes('"displaySeries"') ||
+    json.includes('"heatmapData"') ||
+    json.includes('"bubbleData"')
+  ) {
     return false;
   }
 
@@ -135,6 +148,217 @@ export const runVisualGraphFixturesCaseSuite = (): CaseResult[] => {
   assertCase(
     "fixtures.vgbR1.golden.mono.noPreviewLeakInJson",
     assertVgbR1InSerializedJson(monoGoldenText)
+  );
+
+  const heatmapGoldenText = readFixture(HEATMAP_GOLDEN_FIXTURE);
+  const heatmapGoldenHydrated = hydrateProjectJson(heatmapGoldenText);
+  assertCase(
+    "fixtures.vgb.golden.heatmap.fixtureLoads",
+    heatmapGoldenHydrated.ok === true &&
+      (heatmapGoldenHydrated.patch.project.visualGraphs?.length ?? 0) === 1 &&
+      heatmapGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec.graphType ===
+        "heatmap" &&
+      heatmapGoldenHydrated.patch.project.visualGraphs?.[0]?.sourceDatasetId ===
+        MONO_PRIMARY_DATASET_ID
+  );
+
+  if (heatmapGoldenHydrated.ok) {
+    const heatmapRuntime = extractVisualGraphRuntimeState(heatmapGoldenHydrated.patch);
+    const heatmapPreview = heatmapRuntime[0]?.preview as VisualGraphPreview | undefined;
+
+    assertCase(
+      "fixtures.vgb.golden.heatmap.hydrateRebuildsPreview",
+      heatmapRuntime.length === 1 &&
+        heatmapPreview?.graphType === "heatmap" &&
+        (heatmapPreview?.heatmapData.length ?? 0) > 0
+    );
+
+    const heatmapRoundTrip = runVisualGraphHydrateRoundTrip(
+      patchToCollectContextV2WithVisualGraphs(heatmapGoldenHydrated.patch)
+    );
+    const heatmapFirstPersisted = heatmapRoundTrip.firstProject.visualGraphs ?? [];
+    const heatmapSecondPersisted = heatmapRoundTrip.secondProject.visualGraphs ?? [];
+
+    assertCase(
+      "fixtures.vgb.golden.heatmap.roundtrip",
+      visualGraphsPersistedEquivalent(heatmapFirstPersisted, heatmapSecondPersisted)
+    );
+
+    const heatmapSpec = heatmapGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec;
+    const sessionDataset = heatmapGoldenHydrated.patch.sessionDatasets.find(
+      (dataset) => dataset.id === MONO_PRIMARY_DATASET_ID
+    );
+    const series = sessionDataset?.datasetPayload.series ?? [];
+    const columnRegistry = sessionDataset?.datasetPayload.columnRegistry ?? {};
+
+    if (heatmapSpec) {
+      const worksheetModel = seriesToWorksheet(series);
+      const previewA = buildVisualGraphPreview(
+        heatmapSpec,
+        worksheetModel,
+        columnRegistry
+      );
+      const previewB = buildVisualGraphPreview(
+        heatmapSpec,
+        worksheetModel,
+        columnRegistry
+      );
+      assertCase(
+        "fixtures.vgb.golden.heatmap.determinism",
+        !("error" in previewA) &&
+          !("error" in previewB) &&
+          JSON.stringify(previewA.heatmapData) === JSON.stringify(previewB.heatmapData)
+      );
+    } else {
+      assertCase("fixtures.vgb.golden.heatmap.determinism", false);
+    }
+
+    assertCase(
+      "fixtures.vgbR1.golden.heatmap.reCollectClean",
+      heatmapSecondPersisted.every((entry) =>
+        hasOnlyPersistedVisualGraphKeys(entry as unknown as Record<string, unknown>)
+      ) &&
+        heatmapSecondPersisted.every((entry) =>
+          PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+            (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
+          )
+        )
+    );
+  } else {
+    assertCase("fixtures.vgb.golden.heatmap.hydrateRebuildsPreview", false);
+    assertCase("fixtures.vgb.golden.heatmap.roundtrip", false);
+    assertCase("fixtures.vgb.golden.heatmap.determinism", false);
+    assertCase("fixtures.vgbR1.golden.heatmap.reCollectClean", false);
+  }
+
+  assertCase(
+    "fixtures.vgbR1.golden.heatmap.noPreviewLeakInJson",
+    assertVgbR1InSerializedJson(heatmapGoldenText)
+  );
+
+  const bubbleGoldenText = readFixture(BUBBLE_GOLDEN_FIXTURE);
+  const bubbleGoldenHydrated = hydrateProjectJson(bubbleGoldenText);
+  assertCase(
+    "fixtures.vgb.golden.bubble.fixtureLoads",
+    bubbleGoldenHydrated.ok === true &&
+      (bubbleGoldenHydrated.patch.project.visualGraphs?.length ?? 0) === 1 &&
+      bubbleGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec.graphType ===
+        "bubble" &&
+      bubbleGoldenHydrated.patch.project.visualGraphs?.[0]?.sourceDatasetId ===
+        MONO_PRIMARY_DATASET_ID
+  );
+
+  if (bubbleGoldenHydrated.ok) {
+    const bubbleRuntime = extractVisualGraphRuntimeState(bubbleGoldenHydrated.patch);
+    const bubblePreview = bubbleRuntime[0]?.preview as VisualGraphPreview | undefined;
+
+    assertCase(
+      "fixtures.vgb.golden.bubble.hydrateRebuildsPreview",
+      bubbleRuntime.length === 1 &&
+        bubblePreview?.graphType === "bubble" &&
+        (bubblePreview?.bubbleData.length ?? 0) > 0
+    );
+
+    const bubbleRoundTrip = runVisualGraphHydrateRoundTrip(
+      patchToCollectContextV2WithVisualGraphs(bubbleGoldenHydrated.patch)
+    );
+    const bubbleFirstPersisted = bubbleRoundTrip.firstProject.visualGraphs ?? [];
+    const bubbleSecondPersisted = bubbleRoundTrip.secondProject.visualGraphs ?? [];
+
+    assertCase(
+      "fixtures.vgb.golden.bubble.roundtrip",
+      visualGraphsPersistedEquivalent(bubbleFirstPersisted, bubbleSecondPersisted)
+    );
+
+    const bubbleSpec = bubbleGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec;
+    const bubbleSessionDataset = bubbleGoldenHydrated.patch.sessionDatasets.find(
+      (dataset) => dataset.id === MONO_PRIMARY_DATASET_ID
+    );
+    const bubbleSeries = bubbleSessionDataset?.datasetPayload.series ?? [];
+    const bubbleColumnRegistry = bubbleSessionDataset?.datasetPayload.columnRegistry ?? {};
+
+    if (bubbleSpec) {
+      const bubbleWorksheetModel = seriesToWorksheet(bubbleSeries);
+      const bubblePreviewA = buildVisualGraphPreview(
+        bubbleSpec,
+        bubbleWorksheetModel,
+        bubbleColumnRegistry
+      );
+      const bubblePreviewB = buildVisualGraphPreview(
+        bubbleSpec,
+        bubbleWorksheetModel,
+        bubbleColumnRegistry
+      );
+      assertCase(
+        "fixtures.vgb.golden.bubble.determinism",
+        !("error" in bubblePreviewA) &&
+          !("error" in bubblePreviewB) &&
+          JSON.stringify(bubblePreviewA.bubbleData) ===
+            JSON.stringify(bubblePreviewB.bubbleData)
+      );
+    } else {
+      assertCase("fixtures.vgb.golden.bubble.determinism", false);
+    }
+
+    const bubbleCollectContext = patchToCollectContextV2WithVisualGraphs(
+      bubbleGoldenHydrated.patch
+    );
+    const bubbleFirstProject = collectProjectSnapshotV2(bubbleCollectContext);
+    const bubbleFirstSerialized = serializeProjectV2({
+      project: bubbleFirstProject,
+      appVersion: "0.1.0",
+      exportedAt: "2026-06-30T10:00:00.000Z",
+      options: { includeChecksum: false },
+    });
+    const bubbleReloaded = bubbleFirstSerialized.ok
+      ? hydrateProjectJson(bubbleFirstSerialized.json)
+      : { ok: false as const, errors: [] as string[] };
+    const bubbleSecondProject =
+      bubbleReloaded.ok === true
+        ? collectProjectSnapshotV2(
+            patchToCollectContextV2WithVisualGraphs(bubbleReloaded.patch)
+          )
+        : null;
+    const bubbleSecondSerialized =
+      bubbleSecondProject !== null
+        ? serializeProjectV2({
+            project: bubbleSecondProject,
+            appVersion: "0.1.0",
+            exportedAt: "2026-06-30T10:00:00.000Z",
+            options: { includeChecksum: false },
+          })
+        : { ok: false as const, errors: [] as string[] };
+
+    assertCase(
+      "fixtures.vgb.golden.bubble.idempotent",
+      bubbleFirstSerialized.ok === true &&
+        bubbleReloaded.ok === true &&
+        bubbleSecondSerialized.ok === true &&
+        bubbleFirstSerialized.json === bubbleSecondSerialized.json
+    );
+
+    assertCase(
+      "fixtures.vgbR1.golden.bubble.reCollectClean",
+      bubbleSecondPersisted.every((entry) =>
+        hasOnlyPersistedVisualGraphKeys(entry as unknown as Record<string, unknown>)
+      ) &&
+        bubbleSecondPersisted.every((entry) =>
+          PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+            (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
+          )
+        )
+    );
+  } else {
+    assertCase("fixtures.vgb.golden.bubble.hydrateRebuildsPreview", false);
+    assertCase("fixtures.vgb.golden.bubble.roundtrip", false);
+    assertCase("fixtures.vgb.golden.bubble.determinism", false);
+    assertCase("fixtures.vgb.golden.bubble.idempotent", false);
+    assertCase("fixtures.vgbR1.golden.bubble.reCollectClean", false);
+  }
+
+  assertCase(
+    "fixtures.vgbR1.golden.bubble.noPreviewLeakInJson",
+    assertVgbR1InSerializedJson(bubbleGoldenText)
   );
 
   const multiGoldenText = readFixture(MULTI_GOLDEN_FIXTURE);

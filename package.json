@@ -63,13 +63,19 @@
     "validate:prod2c-c8-visual-graph-fixtures": "npx tsx scripts/validate-prod2c-c8-visual-graph-fixtures.ts",
     "validate:prod2c-c8-regression-gate": "npx tsx scripts/validate-prod2c-c8-regression-gate.ts",
     "generate:prod2c-c8-golden-fixture": "npx tsx scripts/generate-prod2c-c8-golden-fixture.ts",
+    "generate:prod2e-d26-heatmap-golden-fixture": "npx tsx scripts/generate-prod2e-d26-heatmap-golden-fixture.ts",
+    "generate:prod2e-d27-bubble-golden-fixture": "npx tsx scripts/generate-prod2e-d27-bubble-golden-fixture.ts",
     "generate:prod2b-v2-fixtures": "npx tsx scripts/generate-prod2b-v2-fixtures.ts",
     "validate:variable-importance-unit": "npx tsx scripts/validate-variable-importance-unit.ts",
     "validate:worksheet-transforms-unit": "npx tsx scripts/validate-worksheet-transforms-unit.ts",
     "validate:formula-builder-unit": "npx tsx scripts/validate-formula-builder-unit.ts",
     "validate:worksheet-lineage-unit": "npx tsx scripts/validate-worksheet-lineage-unit.ts",
     "validate:visual-graph-builder-unit": "npx tsx scripts/validate-visual-graph-builder-unit.ts",
-    "validate:visual-graph-builder-render-unit": "npx tsx scripts/validate-visual-graph-builder-render-unit.tsx"
+    "validate:visual-graph-builder-render-unit": "npx tsx scripts/validate-visual-graph-builder-render-unit.tsx",
+    "validate:prod2e-d26-heatmap-unit": "npx tsx scripts/validate-prod2e-d26-heatmap-unit.ts",
+    "validate:prod2e-d26-heatmap-perf": "npx tsx scripts/validate-prod2e-d26-heatmap-perf.ts",
+    "validate:prod2e-d27-bubble-unit": "npx tsx scripts/validate-prod2e-d27-bubble-unit.ts",
+    "validate:prod2e-d27-bubble-perf": "npx tsx scripts/validate-prod2e-d27-bubble-perf.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
