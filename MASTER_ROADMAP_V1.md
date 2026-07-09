@@ -455,9 +455,11 @@ flowchart LR
 | Campo | Contenido |
 |-------|-----------|
 | **Objetivo** | Salida profesional (figuras + PDF + paquete) e importación validada |
-| **Épicas** | EXPORT-1, EXPORT-2, EXPORT-3, PROD-1B, ARCH-5 F5 (reporting/export según aplique) |
+| **Épicas** | **DATA-3D** (D39 Scatter VGB), EXPORT-1, EXPORT-2, EXPORT-3, PROD-1B, ARCH-5 F5 (reporting/export según aplique) |
 | **Dependencias** | PROD-2E CLOSED |
-| **Criterios de cierre** | Export VGB en alta resolución; PDF toggle-aware; ImportReport UI; RW en CI; Definition of Done completa |
+| **Criterios de cierre** | DATA-3D scatter certificado; Export VGB en alta resolución; PDF toggle-aware; ImportReport UI; RW en CI; Definition of Done completa |
+
+**Amend DATA-3D (2026-07-09):** Microfase **D39 — Scatter Plot VGB profesional** (upgrade tipo `scatter` v1). Ver [`PROJECT_PLAN_PROD_3.md`](PROJECT_PLAN_PROD_3.md).
 
 ### Release Candidate (RC-1)
 
