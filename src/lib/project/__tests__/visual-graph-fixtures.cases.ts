@@ -39,6 +39,7 @@ const FIXTURES_DIR = path.join(process.cwd(), "scripts", "fixtures");
 const MONO_GOLDEN_FIXTURE = "project-v2-dataset5-with-visual-graph.sgproj";
 const HEATMAP_GOLDEN_FIXTURE = "project-v2-dataset5-with-heatmap.sgproj";
 const BUBBLE_GOLDEN_FIXTURE = "project-v2-dataset5-with-bubble.sgproj";
+const SCATTER_PRO_GOLDEN_FIXTURE = "project-v2-dataset5-with-scatter-pro.sgproj";
 const MULTI_GOLDEN_FIXTURE = "project-v2-dataset5-dataset6-with-visual-graphs.sgproj";
 const B2_MINIMAL_FIXTURE = "project-v2-dataset5-minimal.sgproj";
 
@@ -65,7 +66,8 @@ const assertVgbR1InSerializedJson = (json: string): boolean => {
     json.includes('"preview"') ||
     json.includes('"displaySeries"') ||
     json.includes('"heatmapData"') ||
-    json.includes('"bubbleData"')
+    json.includes('"bubbleData"') ||
+    json.includes('"scatterPoints"')
   ) {
     return false;
   }
@@ -359,6 +361,88 @@ export const runVisualGraphFixturesCaseSuite = (): CaseResult[] => {
   assertCase(
     "fixtures.vgbR1.golden.bubble.noPreviewLeakInJson",
     assertVgbR1InSerializedJson(bubbleGoldenText)
+  );
+
+  const scatterProGoldenText = readFixture(SCATTER_PRO_GOLDEN_FIXTURE);
+  const scatterProGoldenHydrated = hydrateProjectJson(scatterProGoldenText);
+  assertCase(
+    "fixtures.vgb.golden.scatterPro.fixtureLoads",
+    scatterProGoldenHydrated.ok === true &&
+      (scatterProGoldenHydrated.patch.project.visualGraphs?.length ?? 0) === 1 &&
+      scatterProGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec.graphType ===
+        "scatter" &&
+      scatterProGoldenHydrated.patch.project.visualGraphs?.[0]?.sourceDatasetId ===
+        MONO_PRIMARY_DATASET_ID
+  );
+
+  if (scatterProGoldenHydrated.ok) {
+    const scatterProRuntime = extractVisualGraphRuntimeState(scatterProGoldenHydrated.patch);
+    const scatterProPreview = scatterProRuntime[0]?.preview as VisualGraphPreview | undefined;
+
+    assertCase(
+      "fixtures.vgb.golden.scatterPro.hydrateRebuildsPreview",
+      scatterProRuntime.length === 1 &&
+        scatterProPreview?.graphType === "scatter" &&
+        (scatterProPreview?.scatterPoints.length ?? 0) > 0
+    );
+
+    const scatterProRoundTrip = runVisualGraphHydrateRoundTrip(
+      patchToCollectContextV2WithVisualGraphs(scatterProGoldenHydrated.patch)
+    );
+    const scatterProFirstPersisted = scatterProRoundTrip.firstProject.visualGraphs ?? [];
+    const scatterProSecondPersisted = scatterProRoundTrip.secondProject.visualGraphs ?? [];
+
+    assertCase(
+      "fixtures.vgb.golden.scatterPro.roundtrip",
+      visualGraphsPersistedEquivalent(scatterProFirstPersisted, scatterProSecondPersisted)
+    );
+
+    const scatterProSpec =
+      scatterProGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec;
+    const scatterProSession = scatterProGoldenHydrated.patch.sessionDatasets.find(
+      (dataset) => dataset.id === MONO_PRIMARY_DATASET_ID
+    );
+    const scatterProSeries = scatterProSession?.datasetPayload.series ?? [];
+    const scatterProRegistry = scatterProSession?.datasetPayload.columnRegistry ?? {};
+
+    if (scatterProSpec) {
+      const worksheetModel = seriesToWorksheet(scatterProSeries);
+      const previewA = buildVisualGraphPreview(
+        scatterProSpec,
+        worksheetModel,
+        scatterProRegistry
+      );
+      const previewB = buildVisualGraphPreview(
+        scatterProSpec,
+        worksheetModel,
+        scatterProRegistry
+      );
+      assertCase(
+        "fixtures.vgb.golden.scatterPro.determinism",
+        !("error" in previewA) &&
+          !("error" in previewB) &&
+          JSON.stringify(previewA.scatterPoints) === JSON.stringify(previewB.scatterPoints)
+      );
+    } else {
+      assertCase("fixtures.vgb.golden.scatterPro.determinism", false);
+    }
+
+    assertCase(
+      "fixtures.vgbR1.golden.scatterPro.reCollectClean",
+      scatterProSecondPersisted.every((entry) =>
+        hasOnlyPersistedVisualGraphKeys(entry as unknown as Record<string, unknown>)
+      )
+    );
+  } else {
+    assertCase("fixtures.vgb.golden.scatterPro.hydrateRebuildsPreview", false);
+    assertCase("fixtures.vgb.golden.scatterPro.roundtrip", false);
+    assertCase("fixtures.vgb.golden.scatterPro.determinism", false);
+    assertCase("fixtures.vgbR1.golden.scatterPro.reCollectClean", false);
+  }
+
+  assertCase(
+    "fixtures.vgbR1.golden.scatterPro.noPreviewLeakInJson",
+    assertVgbR1InSerializedJson(scatterProGoldenText)
   );
 
   const multiGoldenText = readFixture(MULTI_GOLDEN_FIXTURE);

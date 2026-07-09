@@ -75,7 +75,11 @@
     "validate:prod2e-d26-heatmap-unit": "npx tsx scripts/validate-prod2e-d26-heatmap-unit.ts",
     "validate:prod2e-d26-heatmap-perf": "npx tsx scripts/validate-prod2e-d26-heatmap-perf.ts",
     "validate:prod2e-d27-bubble-unit": "npx tsx scripts/validate-prod2e-d27-bubble-unit.ts",
-    "validate:prod2e-d27-bubble-perf": "npx tsx scripts/validate-prod2e-d27-bubble-perf.ts"
+    "validate:prod2e-d27-bubble-perf": "npx tsx scripts/validate-prod2e-d27-bubble-perf.ts",
+    "generate:prod3-d39-scatter-golden-fixture": "npx tsx scripts/generate-prod3-d39-scatter-golden-fixture.ts",
+    "validate:prod3-d39-scatter-unit": "npx tsx scripts/validate-prod3-d39-scatter-unit.ts",
+    "validate:prod3-d39-scatter-perf": "npx tsx scripts/validate-prod3-d39-scatter-perf.ts",
+    "validate:prod3-data3d-gate": "npx tsx scripts/validate-prod3-data3d-gate.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
