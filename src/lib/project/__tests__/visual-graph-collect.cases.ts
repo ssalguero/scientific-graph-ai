@@ -18,6 +18,8 @@ import {
   hasOnlyPersistedVisualGraphKeys,
   PREVIEW_ONLY_EPHEMERAL_KEYS,
   SAMPLE_VGB_LINE_SPEC_INPUT,
+  SAMPLE_VGB_HEATMAP_SPEC_INPUT,
+  SAMPLE_VGB_BUBBLE_SPEC_INPUT,
   SAMPLE_VGB_SCATTER_SPEC_INPUT,
 } from "./visual-graph-mapper-helpers";
 
@@ -258,6 +260,84 @@ export const runVisualGraphCollectCaseSuite = (): CaseResult[] => {
     serialized.ok === true &&
       serialized.json.includes('"visualGraphs"') &&
       serialized.json.includes('"sourceDatasetId"')
+  );
+
+  const heatmapEntry = buildSampleVisualGraphEntry({
+    graphId: "vg-heatmap-collect",
+    specInput: SAMPLE_VGB_HEATMAP_SPEC_INPUT,
+  });
+  const heatmapSnapshot = collectProjectSnapshotV2(
+    buildBaseContext({
+      projectVisualGraphEntries: [heatmapEntry],
+    })
+  );
+
+  assertCase(
+    "collect.vgb.heatmap.entry",
+    heatmapSnapshot.visualGraphs?.length === 1 &&
+      heatmapSnapshot.visualGraphs[0]?.graphSpec.graphType === "heatmap"
+  );
+
+  const heatmapSerialized = serializeProjectV2({
+    project: heatmapSnapshot,
+    appVersion: "0.1.0",
+    options: { includeChecksum: false, pretty: true },
+  });
+
+  assertCase(
+    "collect.vgbR1.heatmap.noPreviewLeakInJson",
+    heatmapSerialized.ok === true &&
+      !heatmapSerialized.json.includes('"preview"') &&
+      !heatmapSerialized.json.includes('"displaySeries"') &&
+      !heatmapSerialized.json.includes('"heatmapData"') &&
+      (heatmapSnapshot.visualGraphs ?? []).every((entry) =>
+        hasOnlyPersistedVisualGraphKeys(entry as unknown as Record<string, unknown>)
+      ) &&
+      (heatmapSnapshot.visualGraphs ?? []).every((entry) =>
+        PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+          (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
+        )
+      )
+  );
+
+  const bubbleEntry = buildSampleVisualGraphEntry({
+    graphId: "vg-bubble-collect",
+    specInput: SAMPLE_VGB_BUBBLE_SPEC_INPUT,
+  });
+  const bubbleSnapshot = collectProjectSnapshotV2(
+    buildBaseContext({
+      projectVisualGraphEntries: [bubbleEntry],
+    })
+  );
+
+  assertCase(
+    "collect.vgb.bubble.entry",
+    bubbleSnapshot.visualGraphs?.length === 1 &&
+      bubbleSnapshot.visualGraphs[0]?.graphSpec.graphType === "bubble" &&
+      bubbleSnapshot.visualGraphs[0]?.graphSpec.sizeVariable === "tratamiento1"
+  );
+
+  const bubbleSerialized = serializeProjectV2({
+    project: bubbleSnapshot,
+    appVersion: "0.1.0",
+    options: { includeChecksum: false, pretty: true },
+  });
+
+  assertCase(
+    "collect.vgbR1.bubble.noPreviewLeakInJson",
+    bubbleSerialized.ok === true &&
+      !bubbleSerialized.json.includes('"preview"') &&
+      !bubbleSerialized.json.includes('"displaySeries"') &&
+      !bubbleSerialized.json.includes('"bubbleData"') &&
+      !bubbleSerialized.json.includes('"heatmapData"') &&
+      (bubbleSnapshot.visualGraphs ?? []).every((entry) =>
+        hasOnlyPersistedVisualGraphKeys(entry as unknown as Record<string, unknown>)
+      ) &&
+      (bubbleSnapshot.visualGraphs ?? []).every((entry) =>
+        PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+          (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
+        )
+      )
   );
 
   const b2Results = runCollectProjectSnapshotV2CaseSuite();

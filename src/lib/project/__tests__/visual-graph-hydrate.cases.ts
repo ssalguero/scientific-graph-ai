@@ -26,6 +26,8 @@ import {
   hasOnlyPersistedVisualGraphKeys,
   PREVIEW_ONLY_EPHEMERAL_KEYS,
   SAMPLE_VGB_LINE_SPEC_INPUT,
+  SAMPLE_VGB_HEATMAP_SPEC_INPUT,
+  SAMPLE_VGB_BUBBLE_SPEC_INPUT,
   SAMPLE_VGB_REGISTRY,
   SAMPLE_VGB_SCATTER_SPEC_INPUT,
   SAMPLE_VGB_SERIES,
@@ -36,6 +38,7 @@ import {
   buildVisualGraphHydrateCollectContext,
   buildVisualGraphSessionDataset,
   HYDRATE_VGB_PRIMARY_ID,
+  patchToCollectContextV2WithVisualGraphs,
   runVisualGraphHydrateRoundTrip,
 } from "./visual-graph-hydrate-helpers";
 
@@ -244,7 +247,76 @@ export const runVisualGraphHydrateCaseSuite = (): CaseResult[] => {
         )
       ) &&
       !reSerialized.json.includes('"preview"') &&
-      !reSerialized.json.includes('"displaySeries"')
+      !reSerialized.json.includes('"displaySeries"') &&
+      !reSerialized.json.includes('"heatmapData"')
+  );
+
+  const heatmapPersisted = buildSampleVisualGraphPersisted({
+    graphId: "vg-heatmap-hydrate",
+    sourceDatasetId: HYDRATE_VGB_PRIMARY_ID,
+    specInput: SAMPLE_VGB_HEATMAP_SPEC_INPUT,
+  });
+  const heatmapProject = collectProjectSnapshotV2(buildVisualGraphHydrateCollectContext());
+  heatmapProject.visualGraphs = [heatmapPersisted];
+  const heatmapPatch = buildHydratePatchFromProject(heatmapProject);
+  const heatmapRuntime = extractVisualGraphRuntimeState(heatmapPatch);
+
+  assertCase(
+    "hydrate.vgb.heatmap.rebuildsPreview",
+    heatmapRuntime.length === 1 &&
+      heatmapRuntime[0]?.preview.graphType === "heatmap" &&
+      (heatmapRuntime[0]?.preview.heatmapData.length ?? 0) > 0
+  );
+
+  const heatmapRoundTrip = runVisualGraphHydrateRoundTrip(
+    patchToCollectContextV2WithVisualGraphs(heatmapPatch)
+  );
+  const heatmapReSerialized = serializeProjectV2({
+    project: heatmapRoundTrip.secondProject,
+    appVersion: "0.1.0",
+    options: { includeChecksum: false, pretty: true },
+  });
+
+  assertCase(
+    "hydrate.vgbR1.heatmap.noHeatmapDataLeak",
+    heatmapReSerialized.ok === true &&
+      !heatmapReSerialized.json.includes('"heatmapData"') &&
+      !heatmapReSerialized.json.includes('"preview"') &&
+      !heatmapReSerialized.json.includes('"displaySeries"')
+  );
+
+  const bubblePersisted = buildSampleVisualGraphPersisted({
+    graphId: "vg-bubble-hydrate",
+    sourceDatasetId: HYDRATE_VGB_PRIMARY_ID,
+    specInput: SAMPLE_VGB_BUBBLE_SPEC_INPUT,
+  });
+  const bubbleProject = collectProjectSnapshotV2(buildVisualGraphHydrateCollectContext());
+  bubbleProject.visualGraphs = [bubblePersisted];
+  const bubblePatch = buildHydratePatchFromProject(bubbleProject);
+  const bubbleRuntime = extractVisualGraphRuntimeState(bubblePatch);
+
+  assertCase(
+    "hydrate.vgb.bubble.rebuildsPreview",
+    bubbleRuntime.length === 1 &&
+      bubbleRuntime[0]?.preview.graphType === "bubble" &&
+      (bubbleRuntime[0]?.preview.bubbleData.length ?? 0) > 0
+  );
+
+  const bubbleRoundTrip = runVisualGraphHydrateRoundTrip(
+    patchToCollectContextV2WithVisualGraphs(bubblePatch)
+  );
+  const bubbleReSerialized = serializeProjectV2({
+    project: bubbleRoundTrip.secondProject,
+    appVersion: "0.1.0",
+    options: { includeChecksum: false, pretty: true },
+  });
+
+  assertCase(
+    "hydrate.vgbR1.bubble.noBubbleDataLeak",
+    bubbleReSerialized.ok === true &&
+      !bubbleReSerialized.json.includes('"bubbleData"') &&
+      !bubbleReSerialized.json.includes('"preview"') &&
+      !bubbleReSerialized.json.includes('"displaySeries"')
   );
 
   const firstPersisted = withGraphRoundTrip.firstProject.visualGraphs ?? [];

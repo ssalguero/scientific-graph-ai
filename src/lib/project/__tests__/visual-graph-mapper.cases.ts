@@ -22,6 +22,8 @@ import {
   PREVIEW_ONLY_EPHEMERAL_KEYS,
   SAMPLE_VGB_DATASET_ID,
   SAMPLE_VGB_LINE_SPEC_INPUT,
+  SAMPLE_VGB_HEATMAP_SPEC_INPUT,
+  SAMPLE_VGB_BUBBLE_SPEC_INPUT,
   SAMPLE_VGB_PROJECT_ID,
   SAMPLE_VGB_SCATTER_SPEC_INPUT,
   cloneVisualGraphPreview,
@@ -248,6 +250,82 @@ export const runVisualGraphMapperCaseSuite = (): CaseResult[] => {
     "mapper.collect.remapOption",
     collectRemapped !== undefined &&
       collectRemapped[0]?.sourceDatasetId === remappedDatasetId
+  );
+
+  const heatmapEntry = buildSampleVisualGraphEntry({
+    graphId: "vg-heatmap-mapper",
+    specInput: SAMPLE_VGB_HEATMAP_SPEC_INPUT,
+  });
+  const heatmapPersisted = projectVisualGraphEntryToPersistedV2(
+    heatmapEntry,
+    SAMPLE_VGB_DATASET_ID
+  );
+
+  assertCase(
+    "mapper.heatmap.runtimeToPersisted",
+    heatmapPersisted.graphSpec.graphType === "heatmap" &&
+      heatmapPersisted.graphSpec.colorVariable === null &&
+      hasOnlyPersistedVisualGraphKeys(heatmapPersisted as unknown as Record<string, unknown>)
+  );
+
+  assertCase(
+    "mapper.heatmap.vgbR1.noHeatmapDataInGraphSpec",
+    !("heatmapData" in (heatmapPersisted.graphSpec as unknown as Record<string, unknown>)) &&
+      !("preview" in (heatmapPersisted as unknown as Record<string, unknown>)) &&
+      !("displaySeries" in (heatmapPersisted as unknown as Record<string, unknown>)) &&
+      PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+        (key) => !(key in (heatmapPersisted.graphSpec as unknown as Record<string, unknown>))
+      )
+  );
+
+  const heatmapRebuilt = projectVisualGraphPersistedV2ToRuntimeEntry(
+    heatmapPersisted,
+    hydrateContext
+  );
+  assertCase(
+    "mapper.heatmap.runtimeRebuild",
+    heatmapRebuilt !== null &&
+      heatmapRebuilt.preview.graphType === "heatmap" &&
+      heatmapRebuilt.preview.heatmapData.length > 0 &&
+      heatmapRebuilt.displaySeries.length === 0
+  );
+
+  const bubbleEntry = buildSampleVisualGraphEntry({
+    graphId: "vg-bubble-mapper",
+    specInput: SAMPLE_VGB_BUBBLE_SPEC_INPUT,
+  });
+  const bubblePersisted = projectVisualGraphEntryToPersistedV2(
+    bubbleEntry,
+    SAMPLE_VGB_DATASET_ID
+  );
+
+  assertCase(
+    "mapper.bubble.runtimeToPersisted",
+    bubblePersisted.graphSpec.graphType === "bubble" &&
+      bubblePersisted.graphSpec.sizeVariable === "tratamiento1" &&
+      hasOnlyPersistedVisualGraphKeys(bubblePersisted as unknown as Record<string, unknown>)
+  );
+
+  assertCase(
+    "mapper.bubble.vgbR1.noBubbleDataInGraphSpec",
+    !("bubbleData" in (bubblePersisted.graphSpec as unknown as Record<string, unknown>)) &&
+      !("preview" in (bubblePersisted as unknown as Record<string, unknown>)) &&
+      !("displaySeries" in (bubblePersisted as unknown as Record<string, unknown>)) &&
+      PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+        (key) => !(key in (bubblePersisted.graphSpec as unknown as Record<string, unknown>))
+      )
+  );
+
+  const bubbleRebuilt = projectVisualGraphPersistedV2ToRuntimeEntry(
+    bubblePersisted,
+    hydrateContext
+  );
+  assertCase(
+    "mapper.bubble.runtimeRebuild",
+    bubbleRebuilt !== null &&
+      bubbleRebuilt.preview.graphType === "bubble" &&
+      bubbleRebuilt.preview.bubbleData.length > 0 &&
+      bubbleRebuilt.displaySeries.length === 0
   );
 
   return results;

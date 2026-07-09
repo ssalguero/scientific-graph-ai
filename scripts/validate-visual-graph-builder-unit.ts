@@ -13,6 +13,8 @@ import {
   validateVisualGraphConfiguration,
 } from "../src/lib/visualGraphBuilder";
 
+import { runBubbleCaseSuite } from "../src/lib/visualGraphBuilder/__tests__/bubble.cases";
+
 type CaseResult = { id: string; pass: boolean; detail?: string };
 
 const results: CaseResult[] = [];
@@ -82,6 +84,23 @@ const boxPlotSpec = {
   groupVariable: "grupo",
 };
 
+const bubbleSpec = {
+  ...DEFAULT_VISUAL_GRAPH_SPECIFICATION,
+  graphType: "bubble" as const,
+  xVariable: "x",
+  yVariable: "control1",
+  sizeVariable: "tratamiento1",
+  groupVariable: "grupo",
+};
+
+const heatmapSpec = {
+  ...DEFAULT_VISUAL_GRAPH_SPECIFICATION,
+  graphType: "heatmap" as const,
+  xVariable: null,
+  yVariable: null,
+  colorVariable: null,
+};
+
 results.push({
   id: "visual-graph.scatter.valid",
   pass: validateVisualGraphConfiguration(scatterSpec, model, registry).ok === true,
@@ -95,6 +114,25 @@ results.push({
 results.push({
   id: "visual-graph.boxplot.valid",
   pass: validateVisualGraphConfiguration(boxPlotSpec, model, registry).ok === true,
+});
+
+results.push({
+  id: "visual-graph.heatmap.valid",
+  pass: validateVisualGraphConfiguration(heatmapSpec, model, registry).ok === true,
+});
+
+const heatmapPreview = buildVisualGraphPreview(heatmapSpec, model, registry);
+results.push({
+  id: "visual-graph.heatmap.preview.matrix",
+  pass:
+    !("error" in heatmapPreview) &&
+    heatmapPreview.heatmapData.length >= 4 &&
+    heatmapPreview.heatmapData.every(
+      (cell) =>
+        cell.row === cell.column
+          ? Math.abs(cell.value - 1) < 1e-12
+          : Number.isFinite(cell.value)
+    ),
 });
 
 const missingVariable = validateVisualGraphConfiguration(
@@ -188,6 +226,41 @@ results.push({
     ? `${histogramInProject.graphs.length} graph(s) total`
     : histogramInProject.message,
 });
+
+const heatmapInProject = incorporateVisualGraphIntoProject(
+  histogramInProject.ok ? histogramInProject.graphs : [],
+  heatmapSpec,
+  series,
+  registry
+);
+results.push({
+  id: "visual-graph.heatmap.incorporate",
+  pass:
+    heatmapInProject.ok &&
+    heatmapInProject.graphs.length === (histogramInProject.ok ? 3 : 2) &&
+    heatmapInProject.entry.graphSpec.graphType === "heatmap",
+});
+
+results.push({
+  id: "visual-graph.heatmap.v1-regression.scatter",
+  pass: validateVisualGraphConfiguration(scatterSpec, model, registry).ok === true,
+});
+
+const bubbleInProject = incorporateVisualGraphIntoProject(
+  heatmapInProject.ok ? heatmapInProject.graphs : [],
+  bubbleSpec,
+  series,
+  registry
+);
+results.push({
+  id: "visual-graph.bubble.incorporate.chain",
+  pass:
+    bubbleInProject.ok &&
+    bubbleInProject.graphs.length === (heatmapInProject.ok ? 4 : 3) &&
+    bubbleInProject.entry.graphSpec.graphType === "bubble",
+});
+
+results.push(...runBubbleCaseSuite());
 
 const summary = {
   phase: "visual-graph-builder-unit",
