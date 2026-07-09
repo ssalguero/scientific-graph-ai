@@ -38,6 +38,12 @@ export const cloneGraphSpecification = (
   errorBars: spec.errorBars,
   bins: spec.bins,
   title: spec.title,
+  ...(spec.graphType === "heatmap" || spec.colorVariable !== undefined
+    ? { colorVariable: spec.colorVariable ?? null }
+    : {}),
+  ...(spec.graphType === "bubble"
+    ? { sizeVariable: spec.sizeVariable ?? null }
+    : {}),
   id: spec.id,
   createdAt: spec.createdAt,
   xLabel: spec.xLabel,

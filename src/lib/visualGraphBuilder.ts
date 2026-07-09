@@ -17,7 +17,9 @@ export type VisualGraphType =
   | "bar"
   | "histogram"
   | "boxPlot"
-  | "violin";
+  | "violin"
+  | "heatmap"
+  | "bubble";
 
 export type VisualGraphMarkerStyle = "none" | "circle" | "square" | "diamond";
 export type VisualGraphLineStyle = "solid" | "dashed" | "dotted";
@@ -35,6 +37,8 @@ export type VisualGraphSpecification = {
   errorBars: VisualGraphErrorBars;
   bins: number;
   title?: string;
+  colorVariable?: string | null;
+  sizeVariable?: string | null;
 };
 
 export type GraphSpecification = VisualGraphSpecification & {
@@ -93,6 +97,25 @@ export type VisualGraphPreviewViolinItem = {
   values: number[];
 };
 
+export type VisualGraphPreviewHeatmapCell = {
+  row: string;
+  column: string;
+  value: number;
+};
+
+export type HeatmapMatrixAnalysis = {
+  rows: string[];
+  columns: string[];
+  cells: VisualGraphPreviewHeatmapCell[];
+};
+
+export type VisualGraphPreviewBubblePoint = {
+  x: number;
+  y: number;
+  size: number;
+  group?: string;
+};
+
 export type VisualGraphPreview = {
   graphType: VisualGraphType;
   title: string;
@@ -104,6 +127,8 @@ export type VisualGraphPreview = {
   histogramBins: VisualGraphPreviewHistogramBin[];
   boxPlotData: VisualGraphPreviewBoxPlotItem[];
   violinData: VisualGraphPreviewViolinItem[];
+  heatmapData: VisualGraphPreviewHeatmapCell[];
+  bubbleData: VisualGraphPreviewBubblePoint[];
 };
 
 export const VISUAL_GRAPH_TYPES_V1: VisualGraphType[] = [
@@ -113,6 +138,8 @@ export const VISUAL_GRAPH_TYPES_V1: VisualGraphType[] = [
   "histogram",
   "boxPlot",
   "violin",
+  "heatmap",
+  "bubble",
 ];
 
 export const VISUAL_GRAPH_TYPE_LABELS: Record<VisualGraphType, string> = {
@@ -122,15 +149,15 @@ export const VISUAL_GRAPH_TYPE_LABELS: Record<VisualGraphType, string> = {
   histogram: "Histogram",
   boxPlot: "Box Plot",
   violin: "Violin Plot",
+  heatmap: "Heatmap",
+  bubble: "Bubble",
 };
 
 export const VISUAL_GRAPH_TYPES_FUTURE: Array<{ id: string; label: string }> = [
-  { id: "heatmap", label: "Heatmap" },
   { id: "pca", label: "PCA" },
   { id: "clustering", label: "Clustering" },
   { id: "parallel", label: "Parallel Coordinates" },
   { id: "radar", label: "Radar" },
-  { id: "bubble", label: "Bubble" },
   { id: "3d", label: "3D" },
 ];
 
@@ -152,6 +179,8 @@ export const DEFAULT_VISUAL_GRAPH_SPECIFICATION: VisualGraphSpecification = {
   markerSize: 6,
   errorBars: "none",
   bins: 10,
+  colorVariable: null,
+  sizeVariable: null,
 };
 
 /** Estado inicial del Constructor Visual: sin tipo preseleccionado. */
@@ -166,7 +195,15 @@ export const INITIAL_VISUAL_GRAPH_BUILDER_DRAFT: VisualGraphBuilderDraft = {
   markerSize: 6,
   errorBars: "none",
   bins: 10,
+  colorVariable: null,
+  sizeVariable: null,
 };
+
+export const BUBBLE_SIZE_MIN = 0.25;
+export const BUBBLE_SIZE_MAX = 1.0;
+export const BUBBLE_SIZE_FIXED = 1.0;
+
+const HEATMAP_CORRELATION_EPSILON = 1e-12;
 
 const NUMERIC_COLUMN_TYPES = new Set<WorksheetColumnType>(["numeric", "date"]);
 
@@ -231,21 +268,107 @@ function readNumericColumnValues(
     .filter((value): value is number => value !== null && Number.isFinite(value));
 }
 
+function readCellNumeric(
+  row: WorksheetModel["rows"][number],
+  variable: string
+): number {
+  if (variable === "x") {
+    return row.x;
+  }
+  return row.values[variable] ?? Number.NaN;
+}
+
 function readAlignedPairs(
   model: WorksheetModel,
   xVariable: string,
   yVariable: string
 ): VisualGraphPreviewPoint[] {
   return model.rows.flatMap((row) => {
-    const x =
-      xVariable === "x" ? row.x : (row.values[xVariable] ?? Number.NaN);
-    const y =
-      yVariable === "x" ? row.x : (row.values[yVariable] ?? Number.NaN);
+    const x = readCellNumeric(row, xVariable);
+    const y = readCellNumeric(row, yVariable);
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
       return [];
     }
     return [{ x, y }];
   });
+}
+
+function normalizeBubbleSizeValue(
+  value: number,
+  minValue: number,
+  maxValue: number
+): number {
+  if (minValue === maxValue) {
+    return BUBBLE_SIZE_FIXED;
+  }
+
+  return (
+    BUBBLE_SIZE_MIN +
+    ((value - minValue) / (maxValue - minValue)) *
+      (BUBBLE_SIZE_MAX - BUBBLE_SIZE_MIN)
+  );
+}
+
+function resolveBubbleSizeRange(
+  model: WorksheetModel,
+  sizeVariable: string
+): { min: number; max: number; hasFiniteValues: boolean } {
+  const finiteValues = model.rows
+    .map((row) => readCellNumeric(row, sizeVariable))
+    .filter((value) => Number.isFinite(value));
+
+  if (finiteValues.length === 0) {
+    return { min: 0, max: 0, hasFiniteValues: false };
+  }
+
+  return {
+    min: Math.min(...finiteValues),
+    max: Math.max(...finiteValues),
+    hasFiniteValues: true,
+  };
+}
+
+export function buildBubblePointsFromWorksheet(
+  model: WorksheetModel,
+  xVariable: string,
+  yVariable: string,
+  sizeVariable: string | null,
+  groupVariable: string | null = null
+): VisualGraphPreviewBubblePoint[] {
+  const sizeRange = sizeVariable
+    ? resolveBubbleSizeRange(model, sizeVariable)
+    : null;
+  const useFixedSize =
+    !sizeVariable ||
+    !sizeRange?.hasFiniteValues ||
+    sizeRange.min === sizeRange.max;
+
+  const points: VisualGraphPreviewBubblePoint[] = [];
+
+  model.rows.forEach((row, rowIndex) => {
+    const x = readCellNumeric(row, xVariable);
+    const y = readCellNumeric(row, yVariable);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      return;
+    }
+
+    let size = BUBBLE_SIZE_FIXED;
+    if (!useFixedSize && sizeVariable && sizeRange) {
+      const rawSize = readCellNumeric(row, sizeVariable);
+      if (!Number.isFinite(rawSize)) {
+        return;
+      }
+      size = normalizeBubbleSizeValue(rawSize, sizeRange.min, sizeRange.max);
+    }
+
+    const point: VisualGraphPreviewBubblePoint = { x, y, size };
+    if (groupVariable) {
+      point.group = readGroupLabel(model, rowIndex, groupVariable);
+    }
+    points.push(point);
+  });
+
+  return points;
 }
 
 function readGroupLabel(
@@ -331,6 +454,124 @@ function computeErrorMargin(values: number[], mode: VisualGraphErrorBars): numbe
   return (1.96 * sd) / Math.sqrt(values.length);
 }
 
+function sanitizeHeatmapValue(value: number): number {
+  return Number.isFinite(value) ? value : 0;
+}
+
+function readHeatmapColumnValues(
+  model: WorksheetModel,
+  seriesId: string
+): number[] {
+  if (seriesId === "x") {
+    return model.rows.map((row) => sanitizeHeatmapValue(row.x));
+  }
+
+  return model.rows.map((row) =>
+    sanitizeHeatmapValue(row.values[seriesId] ?? Number.NaN)
+  );
+}
+
+function computePearsonCorrelation(left: number[], right: number[]): number {
+  const length = Math.min(left.length, right.length);
+  if (length === 0) {
+    return 0;
+  }
+
+  const xs = left.slice(0, length);
+  const ys = right.slice(0, length);
+  const meanX = xs.reduce((sum, value) => sum + value, 0) / length;
+  const meanY = ys.reduce((sum, value) => sum + value, 0) / length;
+
+  let covariance = 0;
+  let varianceX = 0;
+  let varianceY = 0;
+
+  for (let index = 0; index < length; index += 1) {
+    const deltaX = xs[index] - meanX;
+    const deltaY = ys[index] - meanY;
+    covariance += deltaX * deltaY;
+    varianceX += deltaX * deltaX;
+    varianceY += deltaY * deltaY;
+  }
+
+  if (
+    varianceX < HEATMAP_CORRELATION_EPSILON ||
+    varianceY < HEATMAP_CORRELATION_EPSILON
+  ) {
+    return 0;
+  }
+
+  const denominator = Math.sqrt(varianceX * varianceY);
+  if (Math.abs(denominator) < HEATMAP_CORRELATION_EPSILON) {
+    return 0;
+  }
+
+  const correlation = covariance / denominator;
+  return Math.max(-1, Math.min(1, correlation));
+}
+
+function resolveHeatmapColumnIds(
+  model: WorksheetModel,
+  registry: WorksheetColumnRegistry,
+  xVariable: string | null,
+  yVariable: string | null
+): string[] {
+  const variables = buildVisualGraphVariables(model, registry);
+  const numericColumnIds = model.columns
+    .map((column) => column.seriesId)
+    .filter((seriesId) => findVariable(variables, seriesId)?.numericCompatible);
+
+  if (xVariable && yVariable) {
+    const startIndex = numericColumnIds.indexOf(xVariable);
+    const endIndex = numericColumnIds.indexOf(yVariable);
+    if (startIndex === -1 || endIndex === -1) {
+      return numericColumnIds;
+    }
+
+    const lowerBound = Math.min(startIndex, endIndex);
+    const upperBound = Math.max(startIndex, endIndex);
+    return numericColumnIds.slice(lowerBound, upperBound + 1);
+  }
+
+  return numericColumnIds;
+}
+
+export function buildHeatmapMatrixFromWorksheet(
+  model: WorksheetModel,
+  columnIds: readonly string[],
+  registry: WorksheetColumnRegistry = {},
+  variables: VisualGraphVariable[] = buildVisualGraphVariables(model, registry)
+): HeatmapMatrixAnalysis {
+  const rows = columnIds.map(
+    (seriesId) => findVariable(variables, seriesId)?.label ?? seriesId
+  );
+  const columns = [...rows];
+  const valueSeries = columnIds.map((seriesId) =>
+    readHeatmapColumnValues(model, seriesId)
+  );
+  const cells: VisualGraphPreviewHeatmapCell[] = [];
+
+  for (let rowIndex = 0; rowIndex < columnIds.length; rowIndex += 1) {
+    for (let columnIndex = 0; columnIndex < columnIds.length; columnIndex += 1) {
+      const value =
+        rowIndex === columnIndex
+          ? 1
+          : computePearsonCorrelation(
+              valueSeries[rowIndex],
+              valueSeries[columnIndex]
+            );
+
+      cells.push({
+        row: rows[rowIndex],
+        column: columns[columnIndex],
+        value,
+      });
+    }
+  }
+
+  return { rows, columns, cells };
+}
+
 export function validateVisualGraphConfiguration(
   spec: VisualGraphSpecification | VisualGraphBuilderDraft,
   model: WorksheetModel,
@@ -407,6 +648,53 @@ export function validateVisualGraphConfiguration(
       }
       return { ok: true };
     }
+    case "heatmap": {
+      const columnIds = resolveHeatmapColumnIds(
+        model,
+        registry,
+        spec.xVariable,
+        spec.yVariable
+      );
+      if (columnIds.length < 2) {
+        return {
+          ok: false,
+          message: "Se requieren al menos 2 columnas numéricas.",
+        };
+      }
+
+      if (spec.colorVariable) {
+        const colorError = requireVariable(spec.colorVariable, "variable");
+        if (colorError) return colorError;
+      }
+
+      return { ok: true };
+    }
+    case "bubble": {
+      const xError = requireVariable(spec.xVariable, "x");
+      if (xError) return xError;
+      const yError = requireVariable(spec.yVariable, "y");
+      if (yError) return yError;
+      if (!spec.xVariable || !spec.yVariable) {
+        return { ok: false, message: "Seleccione variables X e Y." };
+      }
+
+      if (spec.sizeVariable) {
+        const sizeError = requireVariable(spec.sizeVariable, "variable");
+        if (sizeError) return sizeError;
+      }
+
+      if (spec.groupVariable) {
+        const group = findVariable(variables, spec.groupVariable);
+        if (!group) {
+          return {
+            ok: false,
+            message: `Variable "${spec.groupVariable}" no encontrada.`,
+          };
+        }
+      }
+
+      return { ok: true };
+    }
     default:
       return { ok: false, message: "Tipo de gráfico no soportado." };
   }
@@ -436,6 +724,14 @@ export function buildGraphSpecification(
 
   const variables = buildVisualGraphVariables(model, registry);
   const resolved: VisualGraphSpecification = { ...spec, graphType };
+  if (graphType === "heatmap" || spec.colorVariable !== undefined) {
+    resolved.colorVariable = spec.colorVariable ?? null;
+  }
+  if (graphType === "bubble") {
+    resolved.sizeVariable = spec.sizeVariable ?? null;
+  } else {
+    delete resolved.sizeVariable;
+  }
 
   return {
     ...resolved,
@@ -465,7 +761,9 @@ export function buildVisualGraphPreview(
   const variables = buildVisualGraphVariables(model, registry);
   const title =
     spec.title?.trim() ||
-    `${VISUAL_GRAPH_TYPE_LABELS[graphType]} · ${resolveLabel(variables, spec.yVariable) || resolveLabel(variables, spec.xVariable)}`;
+    (graphType === "heatmap"
+      ? `${VISUAL_GRAPH_TYPE_LABELS[graphType]} · ${resolveHeatmapColumnIds(model, registry, spec.xVariable, spec.yVariable).length} columnas`
+      : `${VISUAL_GRAPH_TYPE_LABELS[graphType]} · ${resolveLabel(variables, spec.yVariable) || resolveLabel(variables, spec.xVariable)}`);
 
   const emptyPreview: VisualGraphPreview = {
     graphType,
@@ -478,6 +776,8 @@ export function buildVisualGraphPreview(
     histogramBins: [],
     boxPlotData: [],
     violinData: [],
+    heatmapData: [],
+    bubbleData: [],
   };
 
   switch (graphType) {
@@ -571,6 +871,41 @@ export function buildVisualGraphPreview(
           group,
           values,
         })),
+      };
+    }
+    case "heatmap": {
+      const columnIds = resolveHeatmapColumnIds(
+        model,
+        registry,
+        spec.xVariable,
+        spec.yVariable
+      );
+      const matrix = buildHeatmapMatrixFromWorksheet(
+        model,
+        columnIds,
+        registry,
+        variables
+      );
+
+      return {
+        ...emptyPreview,
+        xLabel: "Correlación",
+        yLabel: "",
+        heatmapData: matrix.cells,
+      };
+    }
+    case "bubble": {
+      const bubbleData = buildBubblePointsFromWorksheet(
+        model,
+        spec.xVariable!,
+        spec.yVariable!,
+        spec.sizeVariable ?? null,
+        spec.groupVariable
+      );
+
+      return {
+        ...emptyPreview,
+        bubbleData,
       };
     }
     default:

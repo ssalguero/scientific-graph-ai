@@ -35,6 +35,8 @@ const VISUAL_GRAPH_TYPES = [
   "histogram",
   "boxPlot",
   "violin",
+  "heatmap",
+  "bubble",
 ] as const;
 
 const validatePoint = (
