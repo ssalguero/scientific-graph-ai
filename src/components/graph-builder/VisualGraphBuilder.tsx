@@ -63,7 +63,7 @@ export function VisualGraphBuilder({
   const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (spec.graphType === null) return;
+    if (spec.graphType === null || spec.graphType === "heatmap") return;
     const defaultY = suggestDefaultYVariable(variables);
     if (!defaultY) return;
     setSpec((previous) =>
@@ -125,7 +125,9 @@ export function VisualGraphBuilder({
             soonBadgeClassName={soonBadgeClassName}
           />
 
-          {(spec.graphType === "scatter" || spec.graphType === "line") && (
+          {(spec.graphType === "scatter" ||
+            spec.graphType === "line" ||
+            spec.graphType === "bubble") && (
             <>
               <VariableSelector
                 label="Variable X"
@@ -144,6 +146,7 @@ export function VisualGraphBuilder({
                 inputClassName={inputField}
                 fieldLabelClassName={fieldLabel}
                 errorMessage={
+                  spec.graphType !== "bubble" &&
                   spec.yVariable &&
                   !variables.find((item) => item.seriesId === spec.yVariable)
                     ?.numericCompatible
@@ -151,68 +154,98 @@ export function VisualGraphBuilder({
                     : null
                 }
               />
-              <div>
-                <label className={fieldLabel}>Color</label>
-                <input
-                  type="color"
-                  value={spec.color}
-                  onChange={(event) => updateSpec({ color: event.target.value })}
-                  className="h-9 w-14 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)]"
-                />
-              </div>
-              {spec.graphType === "scatter" ? (
-                <div>
-                  <label className={fieldLabel}>Tamaño puntos</label>
-                  <input
-                    type="number"
-                    min={2}
-                    max={20}
-                    value={spec.markerSize}
-                    onChange={(event) =>
-                      updateSpec({
-                        markerSize: Number(event.target.value) || 6,
-                      })
-                    }
-                    className={inputField}
+              {spec.graphType === "bubble" ? (
+                <>
+                  <VariableSelector
+                    label="Variable de tamaño (opcional)"
+                    value={spec.sizeVariable ?? null}
+                    variables={variables}
+                    onChange={(sizeVariable) => updateSpec({ sizeVariable })}
+                    allowEmpty
+                    requireNumeric
+                    inputClassName={inputField}
+                    fieldLabelClassName={fieldLabel}
                   />
-                </div>
-              ) : (
+                  <VariableSelector
+                    label="Variable de grupo (opcional)"
+                    value={spec.groupVariable}
+                    variables={variables}
+                    onChange={(groupVariable) => updateSpec({ groupVariable })}
+                    allowEmpty
+                    inputClassName={inputField}
+                    fieldLabelClassName={fieldLabel}
+                  />
+                </>
+              ) : null}
+              {spec.graphType === "scatter" || spec.graphType === "line" ? (
                 <>
                   <div>
-                    <label className={fieldLabel}>Línea</label>
-                    <select
-                      value={spec.lineStyle}
+                    <label className={fieldLabel}>Color</label>
+                    <input
+                      type="color"
+                      value={spec.color}
                       onChange={(event) =>
-                        updateSpec({
-                          lineStyle: event.target.value as VisualGraphSpecification["lineStyle"],
-                        })
+                        updateSpec({ color: event.target.value })
                       }
-                      className={inputField}
-                    >
-                      <option value="solid">Sólida</option>
-                      <option value="dashed">Discontinua</option>
-                      <option value="dotted">Punteada</option>
-                    </select>
+                      className="h-9 w-14 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)]"
+                    />
                   </div>
-                  <div>
-                    <label className={fieldLabel}>Marcadores</label>
-                    <select
-                      value={spec.marker}
-                      onChange={(event) =>
-                        updateSpec({
-                          marker: event.target.value as VisualGraphSpecification["marker"],
-                        })
-                      }
-                      className={inputField}
-                    >
-                      <option value="none">Ninguno</option>
-                      <option value="circle">Círculo</option>
-                      <option value="square">Cuadrado</option>
-                      <option value="diamond">Diamante</option>
-                    </select>
-                  </div>
+                  {spec.graphType === "scatter" ? (
+                    <div>
+                      <label className={fieldLabel}>Tamaño puntos</label>
+                      <input
+                        type="number"
+                        min={2}
+                        max={20}
+                        value={spec.markerSize}
+                        onChange={(event) =>
+                          updateSpec({
+                            markerSize: Number(event.target.value) || 6,
+                          })
+                        }
+                        className={inputField}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label className={fieldLabel}>Línea</label>
+                        <select
+                          value={spec.lineStyle}
+                          onChange={(event) =>
+                            updateSpec({
+                              lineStyle:
+                                event.target.value as VisualGraphSpecification["lineStyle"],
+                            })
+                          }
+                          className={inputField}
+                        >
+                          <option value="solid">Sólida</option>
+                          <option value="dashed">Discontinua</option>
+                          <option value="dotted">Punteada</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className={fieldLabel}>Marcadores</label>
+                        <select
+                          value={spec.marker}
+                          onChange={(event) =>
+                            updateSpec({
+                              marker: event.target.value as VisualGraphSpecification["marker"],
+                            })
+                          }
+                          className={inputField}
+                        >
+                          <option value="none">Ninguno</option>
+                          <option value="circle">Círculo</option>
+                          <option value="square">Cuadrado</option>
+                          <option value="diamond">Diamante</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
                 </>
-              )}
+              ) : null}
             </>
           )}
 
@@ -284,6 +317,52 @@ export function VisualGraphBuilder({
                   </select>
                 </div>
               ) : null}
+            </>
+          )}
+
+          {spec.graphType === "heatmap" && (
+            <>
+              <p className="text-xs text-[var(--app-text-muted)]">
+                Sin columnas X/Y se correlacionan todas las variables numéricas.
+                Con ambas, se acota el subconjunto al rango en el worksheet.
+              </p>
+              <VariableSelector
+                label="Columna X (opcional)"
+                value={spec.xVariable}
+                variables={variables}
+                onChange={(xVariable) => updateSpec({ xVariable })}
+                allowEmpty
+                requireNumeric
+                inputClassName={inputField}
+                fieldLabelClassName={fieldLabel}
+              />
+              <VariableSelector
+                label="Columna Y (opcional)"
+                value={spec.yVariable}
+                variables={variables}
+                onChange={(yVariable) => updateSpec({ yVariable })}
+                allowEmpty
+                requireNumeric
+                inputClassName={inputField}
+                fieldLabelClassName={fieldLabel}
+              />
+              <VariableSelector
+                label="Variable de color (opcional)"
+                value={spec.colorVariable ?? null}
+                variables={variables}
+                onChange={(colorVariable) => updateSpec({ colorVariable })}
+                allowEmpty
+                requireNumeric
+                inputClassName={inputField}
+                fieldLabelClassName={fieldLabel}
+                errorMessage={
+                  spec.colorVariable &&
+                  !variables.find((item) => item.seriesId === spec.colorVariable)
+                    ?.numericCompatible
+                    ? "Variable no compatible con este gráfico."
+                    : null
+                }
+              />
             </>
           )}
 
