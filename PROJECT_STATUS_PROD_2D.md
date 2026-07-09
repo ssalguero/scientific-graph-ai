@@ -2200,7 +2200,7 @@ Baseline D0.5 objetivo UI ausente en `page.tsx` → `components/methodology/`. *
 **Secuencia congelada (SSOT):**
 
 ```text
-D1 ✓ → … → D16 ✓ → D17 ✓ → D18 ✓ → D19 ✓ → D20 … → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
+D1 ✓ → … → D16 ✓ → D17 ✓ → D18 ✓ → D19 ✓ → D20 ✓ → D21 … → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
 ```
 
 ---
@@ -2341,7 +2341,7 @@ src/lib/app-preferences/
 |-----------|-------------------|--------|
 | **D18** | UserPreferences domain + adapter + gate | **CLOSED** |
 
-**UX-2B.1 (D18): CLOSED** (2026-07-08). **UX-2B.2 (D19): CLOSED** (2026-07-08). Épica **UX-2B** permanece abierta (D20–D21 pendientes).
+**UX-2B.1 (D18): CLOSED** (2026-07-08). **UX-2B.2 (D19): CLOSED** (2026-07-08). **UX-2B.3 (D20): CLOSED** (2026-07-08). Épica **UX-2B** permanece abierta (**D21** pendiente).
 
 ---
 
@@ -2494,13 +2494,12 @@ Baseline registrado; dominio implementado D18.2–D18.4; gate D18.5–D18.6.
 
 No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)) salvo amend D22.1 (UX-2C / renumeración D23–D24).
 
-**PROD-2D** permanece abierta hasta D24; **D19 CLOSED** — lista para iniciar **D20** (application layer recientes).
+**PROD-2D** permanece abierta hasta D24; **D20 CLOSED** (2026-07-08) — listo para **D21** (`RecentProjectsPanel` + wiring).
 
 ---
 
 ## Microfase D19 — UX-2B.2: Panel Configuración MVP (`SettingsPanel`)
 
-| Campo | Valor |
 |-------|-------|
 | **Estado** | **CLOSED** — 2026-07-08 |
 | **Épica** | **UX-2B** (D18–D21 — Historial + Config MVP) |
@@ -2651,13 +2650,375 @@ src/lib/app-preferences/   ← dominio D18 reutilizado (sin cambios D19)
 
 ---
 
+## Microfase D20 — UX-2B.3: Application layer recientes (`listRecentProjects`)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** — 2026-07-08 |
+| **Épica** | **UX-2B** (D18–D21 — Historial + Config MVP) |
+| **UX-2B.3** | **COMPLETED** (D20) |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D20 · [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §4 · §6.1 · Plan D20 congelado |
+| **Prerequisito** | D19 CLOSED · `@/lib/app-preferences` API Freeze vigente (13 exports) |
+
+### Objetivo cumplido
+
+**UX-2B.3 — Application layer recientes:** módulo `@/lib/project/application/persistence` operativo con `listRecentProjects(repo, query?)` como wrapper **move-only** sobre `listLocalProjects` (orden `lastAccessedAt` desc, limit default **10**), barrel **API Freeze** (2 exports), gate **`validate:persistence-unit`** (23 casos PASS) — **sin wiring UI**, **sin modificar `page.tsx`**, **sin consumidores production**, comportamiento observable idéntico. Principio **Keep D20 Small** respetado: sin `commands.ts`, sin `coordinator.ts`.
+
+### Resumen ejecutivo
+
+| Aspecto | Resultado |
+|---------|-----------|
+| **Objetivo** | Encapsular consulta top-N proyectos recientes en capa application |
+| **Alcance ejecutado** | `types.ts` · `recent-projects.ts` · `index.ts` · tests · script gate · npm `validate:persistence-unit` |
+| **Alcance excluido** | `page.tsx`, hooks, UI, dominio, adapters, coordinator, commands |
+| **Resultado final** | Módulo certificado; 0 consumidores; zero behavior changes |
+| **Estado** | **D20 CLOSED** |
+
+### Arquitectura final D20
+
+```text
+src/lib/project/application/persistence/
+  types.ts              ← RecentProjectsQuery
+  recent-projects.ts    ← listRecentProjects (delega listLocalProjects + slice)
+  index.ts              ← API Freeze (único entry point)
+  __tests__/            ← suite unitaria (23 casos)
+```
+
+| Capa | Responsabilidad | Verificación |
+|------|-----------------|--------------|
+| **`persistence/`** | Consulta recientes top-N vía puerto `LocalProjectRepository` | **PASS** |
+| **`listLocalProjects`** (B5) | Use-case existente — **reutilizado read-only** | **PASS** |
+| **Barrel** | `@/lib/project/application/persistence` — 2 exports | **PASS** |
+| **Consumidores production** | **0** — solo tests importan el barrel | **PASS** |
+| **`page.tsx` / hooks** | Sin cambios D20 | **PASS** |
+
+**Keep D20 Small:** una sola operación pública (`listRecentProjects`); constante `DEFAULT_RECENT_PROJECTS_LIMIT` interna; sin fachada coordinator.
+
+### Microfases D20.1–D20.6
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D20.1** | Baseline documental (inventario, API Freeze draft, alcance IN/OUT, métricas baseline, riesgos) | **CLOSED** |
+| **D20.2** | `types.ts` + `recent-projects.ts` (`RecentProjectsQuery`, `listRecentProjects`) | **CLOSED** |
+| **D20.3** | `index.ts` barrel API Freeze (2 exports) | **CLOSED** |
+| **D20.4** | `__tests__/persistence.cases.ts` + `scripts/validate-persistence-unit.ts` | **CLOSED** |
+| **D20.5** | Registro npm `validate:persistence-unit` + gates PASS | **CLOSED** |
+| **D20.6** | Acta certificación CA-D20 + handoff D21 (este §D20) | **CLOSED** |
+
+### Resumen técnico por microfase
+
+| Microfase | Entregable | Ubicación |
+|-----------|------------|-----------|
+| **D20.1** | Baseline, inventario, restricciones, API Freeze draft | Acta §D20.1 (este documento) |
+| **D20.2** | `RecentProjectsQuery` + `listRecentProjects` move-only | `persistence/types.ts`, `persistence/recent-projects.ts` |
+| **D20.3** | Barrel explícito sin `export *` | `persistence/index.ts` |
+| **D20.4** | 23 casos (comportamiento + API Freeze + arquitectura) | `persistence/__tests__/`, `scripts/validate-persistence-unit.ts` |
+| **D20.5** | Script npm + gates `tsc` · `validate:persistence-unit` · `validate:prod2b-indexeddb` | `package.json` (1 script) |
+| **D20.6** | Certificación final + handoff D21 | Este §D20 |
+
+### Archivos creados (D20)
+
+| Archivo | Microfase |
+|---------|-----------|
+| [`src/lib/project/application/persistence/types.ts`](src/lib/project/application/persistence/types.ts) | D20.2 |
+| [`src/lib/project/application/persistence/recent-projects.ts`](src/lib/project/application/persistence/recent-projects.ts) | D20.2 |
+| [`src/lib/project/application/persistence/index.ts`](src/lib/project/application/persistence/index.ts) | D20.3 |
+| [`src/lib/project/application/persistence/__tests__/persistence.cases.ts`](src/lib/project/application/persistence/__tests__/persistence.cases.ts) | D20.4 |
+| [`src/lib/project/application/persistence/__tests__/run-assertions.ts`](src/lib/project/application/persistence/__tests__/run-assertions.ts) | D20.4 |
+| [`scripts/validate-persistence-unit.ts`](scripts/validate-persistence-unit.ts) | D20.4 |
+
+### Archivos modificados (D20)
+
+| Archivo | Microfase | Cambio |
+|---------|-----------|--------|
+| [`package.json`](package.json) | D20.5 | 1 script: `validate:persistence-unit` |
+| [`PROJECT_STATUS_PROD_2D.md`](PROJECT_STATUS_PROD_2D.md) | D20.1 · D20.6 | Acta §D20 |
+
+**Sin modificaciones en D20:** `page.tsx` · hooks `src/app/use*.ts` · `domain/local-project` · adapters IndexedDB · `@/lib/app-preferences` · `@/lib/project-history` · `SettingsPanel` · `HistoryPanel` · stub Historial L21324–L21332.
+
+### API Freeze (certificado D20.3–D20.5)
+
+**Barrel:** `@/lib/project/application/persistence`
+
+| Export | Tipo |
+|--------|------|
+| `listRecentProjects` | `function` |
+| `RecentProjectsQuery` | `type` |
+
+**Total exports congelados: 2.** Sin `export *`. Deep imports a `recent-projects.ts` / `types.ts` **prohibidos** para consumidores.
+
+**Contrato validado por gate:** 4 casos `apiFreeze.*` + `apiFreeze.noExportStar` — **PASS**.
+
+### Métricas D20 (finales)
+
+| Métrica | Valor |
+|---------|-------|
+| Archivos módulo creados | **3** (`types.ts`, `recent-projects.ts`, `index.ts`) |
+| Archivos tests creados | **2** |
+| Script gate creado | **1** (`validate-persistence-unit.ts`) |
+| Archivos modificados (código) | **1** (`package.json` — 1 script) |
+| LOC módulo `persistence/` (sin tests) | **39** (`types` 4 + `recent-projects` 33 + `index` 2) |
+| API Freeze exports | **2** |
+| Gate `validate:persistence-unit` | **23/23 PASS** |
+| Gate `validate:prod2b-indexeddb` | **25/25 PASS** (vía `npx tsx`; sin entrada npm) |
+| Gate `npx tsc --noEmit` | **PASS** |
+| Consumidores production del barrel | **0** |
+| Deep imports consumidores | **0** |
+| Cambios `page.tsx` | **0** |
+| Cambios hooks persistencia | **0** |
+| Exports `@/lib/app-preferences` | **13** (inalterado) |
+| Exports `@/lib/project-history` | **12** (inalterado) |
+| Exports `@/lib/project/application/local-project` | **30** (inalterado) |
+
+### Gates (D20.5 — evidencia registrada)
+
+| Gate | Comando | Resultado |
+|------|---------|-----------|
+| **G1** | `npx tsc --noEmit` | **PASS** |
+| **G2** | `npm run validate:persistence-unit` | **PASS** — **23/23** casos; API Freeze 2 exports |
+| **G3** | `npx tsx scripts/validate-prod2b-indexeddb.ts` | **PASS** — **25/25** casos |
+
+### Criterios de aceptación CA-D20 (certificación final D20.6)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D20-01** | Existe `src/lib/project/application/persistence/` operativo | **PASS** |
+| **CA-D20-02** | `listRecentProjects` ordena por `lastAccessedAt` desc y respeta `limit` default 10 | **PASS** |
+| **CA-D20-03** | Delegación estricta a `listLocalProjects` — cero reglas de negocio nuevas | **PASS** |
+| **CA-D20-04** | API Freeze **2 exports**; gate `apiFreeze.*` PASS | **PASS** |
+| **CA-D20-05** | Cero deep imports requeridos; barrel único `@/lib/project/application/persistence` | **PASS** |
+| **CA-D20-06** | Cero imports React/Next en módulo persistence | **PASS** |
+| **CA-D20-07** | Cero cambios `page.tsx` — diff vacío respecto pre-D20 | **PASS** |
+| **CA-D20-08** | Cero cambios hooks `src/app/use*.ts` relacionados persistencia | **PASS** |
+| **CA-D20-09** | Cero cambios dominio `domain/local-project` y adapters IndexedDB | **PASS** |
+| **CA-D20-10** | Cero cambios `@/lib/app-preferences` (13 exports intactos) | **PASS** |
+| **CA-D20-11** | Stub Historial `page.tsx` L21324–L21332 intocable | **PASS** |
+| **CA-D20-12** | `validate:persistence-unit` PASS | **PASS** |
+| **CA-D20-13** | `validate:prod2b-indexeddb` PASS (25/25) | **PASS** |
+| **CA-D20-14** | `npx tsc --noEmit` PASS | **PASS** |
+| **CA-D20-15** | Comportamiento observable idéntico — zero behavior changes | **PASS** |
+| **CA-D20-16** | Métricas finales registradas en acta §D20 | **PASS** |
+| **CA-D20-17** | `package.json` registra `validate:persistence-unit` | **PASS** |
+| **CA-D20-18** | Acta §D20 + handoff D21 en `PROJECT_STATUS_PROD_2D.md` | **PASS** |
+
+### Riesgos residuales post-D20
+
+| ID | Severidad | Riesgo | Estado |
+|----|-----------|--------|--------|
+| **R-D20-1** | P2 | Confusión Historial recientes (D21) vs Actividad (D22) | **Mitigado** — documentado en acta |
+| **R-D20-2** | P2 | Scope creep en D20 | **Cerrado** — CA-D20-07/08 PASS |
+| **R-D20-5** | P3 | `validate:prod2b-indexeddb` sin entrada npm | **Aceptado** — gate PASS vía `npx tsx`; registro npm diferible |
+| **R-D20-6** | P2 | Performance slice sobre lista completa | **Aceptado** — suficiente MVP top-10 |
+
+**Sin riesgos bloqueantes para D21.**
+
+### Acta de cierre
+
+**D20 — CLOSED** (2026-07-08). **UX-2B.3 (Application layer recientes) — CLOSED.**
+
+| Verificación cierre | Resultado |
+|---------------------|-----------|
+| Módulo `persistence/` operativo | **PASS** |
+| API Freeze 2 exports consolidado | **PASS** |
+| Gates D20 PASS (tsc + persistence-unit + indexeddb) | **PASS** |
+| Zero behavior changes | **PASS** |
+| Código sin cambios en D20.6 | **PASS** |
+
+### Handoff D20 → D21
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D21** (siguiente) | UX-2B | D21 — UX-2B.4: Panel Historial MVP (`RecentProjectsPanel`) | **D20 CLOSED** |
+
+**No reabrir D20.** `@/lib/project/application/persistence` queda **consolidado** (2 exports, gate 23/23).
+
+**D21 iniciará** wiring del barrel: `RecentProjectsPanel` · reemplazo stub «Historial» (`page.tsx` L21324–L21332) · hook candidato `useRecentProjects()` · apertura vía flujo existente + B6 conflict.
+
+**Criterio evolución coordinator (D21):** introducir `PersistenceCoordinator` **solo si** existen ≥ 2 operaciones públicas relacionadas con persistencia de proyectos recientes; si continúa una sola operación, mantener API funcional basada en `listRecentProjects` y posponer fachada.
+
+**Pendiente explícito D21:** `RecentProjectsPanel` · stub Historial · smoke manual · `validate:prod2b-indexeddb`.
+
+**Fuera de D21 (sin adelantar):** schema V2 · motores SCI · `labUsageProfile` en Config · modificar API Freeze D20 sin amend.
+
+### Objetivo D20 (congelado — referencia)
+
+Encapsular la consulta de **proyectos recientes** (top-N por `lastAccessedAt`) en la capa de aplicación `src/lib/project/application/persistence/`, mediante `listRecentProjects` como wrapper move-only sobre `listLocalProjects` — **sin** modificar dominio, adapters, `page.tsx`, hooks ni UI. Principio **Keep D20 Small**: API público mínimo (2 exports).
+
+**UX-2C ≠ D20:** actividad del proyecto (`@/lib/project-history`, D22 CLOSED) es concepto distinto del sidebar «Historial» recientes (D21).
+
+### D20.1 — Baseline + preparación documental
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-08 |
+| **Código modificado** | **Ninguno** |
+| **Archivos nuevos** | **Ninguno** |
+| **Documento modificado** | [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) (este acta) |
+
+#### Objetivo D20.1
+
+Inicio de **UX-2B.3**. Registrar baseline técnico e inventario del estado actual **antes** de implementar `src/lib/project/application/persistence/` en D20.2+. Esta microfase **reemplaza** cualquier documento temporal de preparación — baseline único en acta §D20.
+
+#### Baseline técnico
+
+| Verificación | Resultado |
+|--------------|-----------|
+| **D19** | **CLOSED** (2026-07-08) — UX-2B.2 SettingsPanel MVP |
+| **D18** | **CLOSED** (2026-07-08) — `@/lib/app-preferences` API Freeze 13 exports |
+| **D22 (UX-2C)** | **CLOSED** (2026-07-08) — `@/lib/project-history`; **fuera de alcance D20** |
+| **Handoff oficial** | D19 → **D20 UX-2B.3** (acta §D19 handoff PASS) |
+| **Épica D20** | **UX-2B** — application layer recientes ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D20) |
+| **Secuencia congelada** | `… → D18 ✓ → D19 ✓ → D20 → D21 → D22 ✓ → D23 → D24` |
+| **Plan D20** | **Congelado y aprobado** — Keep D20 Small; sin `commands.ts` ni `coordinator.ts` en D20 |
+
+#### Handoff D19 → D20 (confirmado en D20.1)
+
+| Verificación | Resultado |
+|--------------|-----------|
+| D19 oficialmente **CLOSED** | **PASS** |
+| `@/lib/app-preferences` consolidado (13 exports, gate 28/28) | **PASS** |
+| `SettingsPanel` baseline estable — `@/components/settings` | **PASS** |
+| Stub «Historial» intocable (`page.tsx` L21324–L21332) | **PASS** |
+| Sin adelantar D21 (`RecentProjectsPanel`, wiring UI) | **PASS** |
+
+#### Inventario actual (sin modificar)
+
+| Capa | Artefacto | Ubicación / estado | Detalle |
+|------|-----------|-------------------|---------|
+| **UI** | Stub «Historial» | [`src/app/page.tsx`](src/app/page.tsx) L21324–L21332 | `aria-disabled`, badge «Próximamente» — **D21** |
+| **UI** | `SettingsPanel` | [`src/components/settings/`](src/components/settings/) | **Operativo** (D19 CLOSED) — **intocable D20** |
+| **UI** | `HistoryPanel` (actividad) | [`src/components/project-activity/`](src/components/project-activity/) | **Operativo** (D22 CLOSED) — **intocable D20** |
+| **UI** | Coordinación persistencia `page.tsx` | L66–86 imports · L16733–16748 state · L20553–20564 prefs · L20689–20987 hooks/handlers · L21146–21359 sidebar | ~550–620 LOC persistencia (estimado) |
+| **Hooks** | `useGraphEditorProjectFile` | [`src/app/useGraphEditorProjectFile.ts`](src/app/useGraphEditorProjectFile.ts) | Orquesta file + IndexedDB + autosave |
+| **Hooks** | `useLocalProjectPersistence` | [`src/app/useLocalProjectPersistence.ts`](src/app/useLocalProjectPersistence.ts) | Repo singleton L27–34; lista vía `localProjectActions` |
+| **Hooks** | `useProjectDraftAutosave` | [`src/app/useProjectDraftAutosave.ts`](src/app/useProjectDraftAutosave.ts) | Autosave borrador IndexedDB |
+| **Hooks** | `useProjectHistory` | [`src/app/useProjectHistory.ts`](src/app/useProjectHistory.ts) | Actividad sesión (D22) — **no confundir con recientes** |
+| **App actions** | `handleListLocalProjects` | [`src/app/localProjectActions.ts`](src/app/localProjectActions.ts) L128–129 | Llama `listLocalProjects(repo, "lastAccessedAt")` — lista **completa** |
+| **Application** | `listLocalProjects` | [`src/lib/project/application/local-project/use-cases.ts`](src/lib/project/application/local-project/use-cases.ts) L179–182 | Use-case B5 certificado — **reutilizar read-only** |
+| **Application** | Módulos existentes | `local-project/`, `persistence-conflict/`, `persistence-size/`, `persistence-status/` | Operativos B5/B6 — **sin cambios D20** |
+| **Application** | **`persistence/` (recientes)** | `src/lib/project/application/persistence/` | **Inexistente** (correcto pre-D20.2) |
+| **Application** | `listRecentProjects` | — | **Inexistente** en código — 0 consumidores |
+| **Domain** | `LocalProjectRepository` | [`src/lib/project/domain/local-project/`](src/lib/project/domain/local-project/) | Puerto certificado B5 — **intocable D20** |
+| **Adapters** | IndexedDB | [`src/lib/project/adapters/indexeddb/`](src/lib/project/adapters/indexeddb/) | B5 certificado — **intocable D20** (DA-3) |
+| **Gate script** | `validate:prod2b-indexeddb` | [`scripts/validate-prod2b-indexeddb.ts`](scripts/validate-prod2b-indexeddb.ts) | Existe; **sin entrada npm** en `package.json` (registrar D20.6) |
+
+#### Alcance D20 (microfases D20.2–D20.7)
+
+**IN:**
+
+| Entregable | Microfase |
+|------------|-----------|
+| `src/lib/project/application/persistence/` (`types`, `recent-projects`, `index`) | D20.2–D20.4 |
+| `listRecentProjects(repo, query?)` — `lastAccessedAt` desc, limit default **10** | D20.3 |
+| `RecentProjectsQuery` | D20.2 |
+| Gate `validate:persistence-coordinator-unit` | D20.5–D20.6 |
+| Registro `validate:prod2b-indexeddb` en npm (si ausente) | D20.6 |
+
+**OUT (explícito — no iniciar en D20):**
+
+| Exclusión | Motivo / fase |
+|-----------|---------------|
+| `commands.ts`, Command Bus, IDs reservados | Sin responsabilidad clara — eliminado del plan |
+| `coordinator.ts`, `createPersistenceCoordinator` | Pospuesto — criterio evolución D21 (≥ 2 operaciones públicas) |
+| `page.tsx`, hooks, UI | D20 SSOT estricto; wiring → **D21** |
+| `RecentProjectsPanel` / stub Historial | **D21** |
+| Dominio `domain/local-project` | Certificado B5 — intocable |
+| Adapters IndexedDB | DA-3 read-only reuse |
+| Use-cases existentes (mutación) | Sin reglas nuevas |
+| `@/lib/app-preferences` / `SettingsPanel` | D18/D19 CLOSED |
+| `@/lib/project-history` / `HistoryPanel` | D22 CLOSED — fuera alcance y gates D20 |
+| Schema V2 / motores SCI | API Freeze PROD-2D |
+
+#### API Freeze previsto (D20.4 — draft D20.1)
+
+**Barrel:** `@/lib/project/application/persistence`
+
+| Export | Tipo |
+|--------|------|
+| `listRecentProjects` | `function` |
+| `RecentProjectsQuery` | `type` |
+
+**Total exports previstos: 2.** Prohibido deep import a submódulos. Sin `export *`.
+
+**Eliminados del contrato (no exportar):** `DEFAULT_RECENT_PROJECTS_LIMIT` (interno), `createPersistenceCoordinator`, `PersistenceCoordinator`, `commands.ts` y derivados.
+
+#### Principio Keep D20 Small
+
+D20 introduce únicamente la mínima capa de aplicación para encapsular la consulta de proyectos recientes. Infraestructura adicional (command bus, coordinator multi-operación, wiring React) queda diferida a **D21** o posteriores. Toda nueva abstracción debe responder a necesidad arquitectónica real (criterio evolución D21: coordinator solo si ≥ 2 operaciones públicas relacionadas con persistencia de proyectos recientes).
+
+#### Restricciones (congeladas D20)
+
+| ID | Restricción |
+|----|-------------|
+| **R-D20-01** | Barrel `index.ts` — exports nombrados explícitos; **sin `export *`** |
+| **R-D20-02** | **Cero React/Next** en módulo `persistence/` |
+| **R-D20-03** | **`@/lib/app-preferences` intocable** |
+| **R-D20-04** | Barrel `local-project/index.ts` **sin cambios** en D20 |
+| **R-D20-05** | Gate valida contrato barrel (`apiFreeze.*`) |
+| **R-D20-06** | **Sin cambios funcionales** — zero behavior changes hasta D21 wiring |
+| **R-D20-07** | **No tocar `page.tsx`** en D20 |
+| **R-D20-08** | **No tocar hooks** `src/app/use*.ts` persistencia en D20 |
+| **R-D20-09** | **Move-only** — delegación estricta a `listLocalProjects` |
+
+#### Baseline de métricas (D20.1 — solo punto de partida)
+
+| Métrica | Valor baseline |
+|---------|----------------|
+| LOC persistencia en `page.tsx` (estimado) | **~550–620** |
+| Stub Historial | L21324–L21332 (~9 LOC) |
+| Exports `@/lib/app-preferences` | **13** (congelado D18/D19) |
+| Exports `@/lib/project-history` | **12** (congelado D22) |
+| Exports `@/lib/project/application/local-project` | **30** (sin cambio D20) |
+| Módulo `application/persistence/` | **Inexistente** |
+| `listRecentProjects` en código | **0** definiciones · **0** consumidores |
+| Casos `validate:prod2b-indexeddb` (baseline B5) | **25/25** |
+| Script npm `validate:prod2b-indexeddb` | **Ausente** en `package.json` |
+| Gate `validate:persistence-coordinator-unit` | **Inexistente** (crear D20.5) |
+
+#### Riesgos (plan D20 — sin adiciones)
+
+| ID | Severidad | Riesgo | Mitigación planificada |
+|----|-----------|--------|------------------------|
+| **R-D20-1** | P2 | Confusión Historial recientes (D21) vs Actividad (D22) | Nombres `RecentProjects*` vs `ProjectHistory*` en acta |
+| **R-D20-2** | P2 | Scope creep — mover hooks/`page.tsx` en D20 | CA-D20-07/08; SSOT estricto |
+| **R-D20-3** | P3 | Duplicar lógica de `listLocalProjects` | Delegación única en `listRecentProjects` |
+| **R-D20-4** | P3 | Ampliar barrel `local-project/index.ts` | Barrel separado `persistence/` (R-D20-04) |
+| **R-D20-5** | P3 | `validate:prod2b-indexeddb` sin npm script | Registrar D20.6 |
+| **R-D20-6** | P2 | Performance slice sobre lista completa | Aceptado MVP B5; optimización post-D21 si aplica |
+
+#### Verificaciones D20.1
+
+| Verificación | Resultado |
+|--------------|-----------|
+| Solo `PROJECT_STATUS_PROD_2D.md` modificado | **PASS** |
+| Archivos nuevos creados | **NINGUNO** |
+| Código fuente modificado | **NINGUNO** |
+| `src/lib/project/application/persistence/` creado | **NO** (correcto D20.1) |
+| `page.tsx` / hooks / adapters / dominio / UI | **NO modificados** |
+| `package.json` / scripts / tests | **NO modificados** |
+| Cambios funcionales / arquitectónicos runtime | **NINGUNO** |
+| Comportamiento observable | **Idéntico** |
+
+#### Handoff D20.1 → D20.2
+
+**D20.2** comenzará la implementación de `src/lib/project/application/persistence/` (`types.ts` — `RecentProjectsQuery`).
+
+| Compromiso D20.2+ | Detalle |
+|-------------------|---------|
+| **No tocar** | `page.tsx`, hooks, adapters IndexedDB, dominio `local-project` |
+| **Extracción** | **Move-only** — wrapper sobre `listLocalProjects`; cero reglas de negocio nuevas |
+| **Sin adelantar** | UI, `RecentProjectsPanel`, coordinator, commands |
+
+---
+
 ## Microfase D22 — UX-2C: Historial de actividad del proyecto
 
 | Campo | Valor |
 |-------|-------|
 | **Estado** | **CLOSED** — 2026-07-08 |
 | **Épica** | **UX-2C** (**≠ PROD-2C** — épica histórica CLOSED) |
-| **Prerequisito documental** | D19 **CLOSED** · D20, D21 **pendientes** (D22 implementado sin bloqueo técnico) |
+| **Prerequisito documental** | D19 **CLOSED** · D20 **CLOSED** · D21 **pendiente** (D22 implementado sin bloqueo técnico) |
 | **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D22 · [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §4.5 · §6.1b |
 
 ### Resumen D22 (certificación final D22.5)
@@ -2677,7 +3038,7 @@ Módulo **`project-history`** operativo: dominio puro (7 tipos de evento), adapt
 ### Secuencia congelada post-amend D22.1
 
 ```text
-D18 ✓ → D19 ✓ → D20 → D21 → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
+D18 ✓ → D19 ✓ → D20 ✓ → D21 → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
 ```
 
 ### Arquitectura final D22
