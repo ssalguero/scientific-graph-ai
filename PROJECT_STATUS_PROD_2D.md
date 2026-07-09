@@ -2200,7 +2200,7 @@ Baseline D0.5 objetivo UI ausente en `page.tsx` → `components/methodology/`. *
 **Secuencia congelada (SSOT):**
 
 ```text
-D1 ✓ → … → D16 ✓ → D17 ✓ → D18 ✓ → D19 ✓ → D20 ✓ → D21 … → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
+D1 ✓ → … → D16 ✓ → D17 ✓ → D18 ✓ → D19 ✓ → D20 ✓ → D21 ✓ → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
 ```
 
 ---
@@ -2341,7 +2341,7 @@ src/lib/app-preferences/
 |-----------|-------------------|--------|
 | **D18** | UserPreferences domain + adapter + gate | **CLOSED** |
 
-**UX-2B.1 (D18): CLOSED** (2026-07-08). **UX-2B.2 (D19): CLOSED** (2026-07-08). **UX-2B.3 (D20): CLOSED** (2026-07-08). Épica **UX-2B** permanece abierta (**D21** pendiente).
+**UX-2B.1 (D18): CLOSED** (2026-07-08). **UX-2B.2 (D19): CLOSED** (2026-07-08). **UX-2B.3 (D20): CLOSED** (2026-07-08). **UX-2B.4 (D21): CLOSED** (2026-07-08). Épica **UX-2B (D18–D21)** — **CLOSED** (2026-07-08).
 
 ---
 
@@ -2494,7 +2494,7 @@ Baseline registrado; dominio implementado D18.2–D18.4; gate D18.5–D18.6.
 
 No modificar la planificación congelada ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md)) salvo amend D22.1 (UX-2C / renumeración D23–D24).
 
-**PROD-2D** permanece abierta hasta D24; **D20 CLOSED** (2026-07-08) — listo para **D21** (`RecentProjectsPanel` + wiring).
+**PROD-2D** permanece abierta hasta D24; **D20 CLOSED** (2026-07-08) · **D21 CLOSED** (2026-07-08) — listo para **D23** (`validate:prod2d-gate`).
 
 ---
 
@@ -3012,13 +3012,513 @@ D20 introduce únicamente la mínima capa de aplicación para encapsular la cons
 
 ---
 
+## Microfase D21 — UX-2B.4: Panel Historial MVP (`RecentProjectsPanel`)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** — 2026-07-08 |
+| **Épica** | **UX-2B** (D18–D21 — Historial + Config MVP) — **CLOSED** |
+| **UX-2B.4** | **COMPLETED** (D21) |
+| **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D21 · [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §4 · §6.1 · §6.3 · Plan D21 aprobado |
+| **Prerequisito** | D20 CLOSED · D22 (UX-2C) CLOSED |
+
+### Resumen ejecutivo (certificación D21.6)
+
+**Objetivo alcanzado:** reemplazar el stub sidebar «Historial» (`page.tsx` L21324–L21332) por un panel funcional de **proyectos recientes IndexedDB** (top-10, `lastAccessedAt` desc), con acción **Abrir** vía `handleOpenLocalProjectWithSource` (B6 preservado), consumiendo `@/lib/project/application/persistence` sin modificar su API Freeze D20.
+
+**Alcance completado:** panel presentacional `RecentProjectsPanel` · hook interno `useRecentProjects` · wiring mínimo en `page.tsx` · refresh selectivo (primera expansión + post-open) · gates G1/G2/G3 PASS · smoke manual S1–S11 PASS · registro npm `validate:prod2b-indexeddb`.
+
+**Arquitectura final:** UI → `useRecentProjects` → Application Layer D20 (`listRecentProjects`) → Repository IndexedDB — **sin nuevas capas** (sin `PersistenceCoordinator`, sin cambios `persistence/`).
+
+**Cumplimiento UX-2B.4:** discovery §4 (Historial recientes MVP) y §6.3 (criterio cierre UX-2B) — **PASS**.
+
+**Cierre épica UX-2B (D18–D21):** Config MVP (D18–D19) + Application recientes (D20) + Panel Historial (D21) — **CLOSED** (2026-07-08).
+
+**Handoff post-D21:** **D23** (gate umbrella `validate:prod2d-gate`) — puede comenzar inmediatamente.
+
+**Secuencia congelada (SSOT):**
+
+```text
+D18 ✓ → D19 ✓ → D20 ✓ → D21 ✓ → D22 ✓ → D23 → D24
+```
+
+### Arquitectura final D21
+
+```text
+UI (RecentProjectsPanel — presentacional)
+  ↓ props: projects, isLoading, loadError, activeProjectId, onOpen, onOpenLibrary
+useRecentProjects (hook interno — src/app/)
+  ↓ listRecentProjects(repo)
+Application Layer D20 (@/lib/project/application/persistence)
+  ↓ listRecentProjects → listLocalProjects (delegación B5)
+Repository IndexedDB (LocalProjectRepository — certificado B5)
+```
+
+| Capa | Artefacto | Responsabilidad | Verificación D21.6 |
+|------|-----------|-----------------|-------------------|
+| **UI** | `RecentProjectsPanel` | Lista read-only top-10; badges `storageState`; highlight activo; enlace biblioteca | **PASS** — cero imports application/domain |
+| **UI barrel** | `@/components/history` | API Freeze 2 exports | **PASS** |
+| **Hook** | `useRecentProjects` | Fetch bajo demanda vía `refresh()`; tipos inferidos | **PASS** — interno; no API Freeze |
+| **Wiring** | `page.tsx` | Expand/collapse; `handleOpenLocalProjectWithSource`; refresh selectivo | **PASS** — +48/−6 LOC |
+| **Application** | `listRecentProjects` | Consulta recientes — **intocable D21** | **PASS** — API Freeze D20 intacto |
+| **Domain/Adapters** | `local-project` / IndexedDB | Sin cambios D21 | **PASS** |
+
+**Principio Keep D21 Small:** una operación pública (`listRecentProjects`); sin coordinator; sin duplicar CRUD de `LocalProjectsPanel`.
+
+### Microfases D21.1–D21.6
+
+| Microfase | Entregable | Estado |
+|-----------|------------|--------|
+| **D21.1** | Baseline documental (inventario, API Freeze draft, alcance IN/OUT, métricas, riesgos) | **CLOSED** |
+| **D21.2** | `RecentProjectsPanel.tsx` + `components/history/index.ts` | **CLOSED** |
+| **D21.3** | `useRecentProjects.ts` (hook interno) | **CLOSED** |
+| **D21.4** | Wiring `page.tsx` — reemplazo stub + expand/collapse | **CLOSED** |
+| **D21.5** | Gates + smoke manual S1–S11 | **CLOSED** |
+| **D21.6** | Acta certificación CA-D21 + cierre UX-2B + handoff D23 | **CLOSED** |
+
+### Resumen técnico por microfase
+
+| Microfase | Entregable | Ubicación |
+|-----------|------------|-----------|
+| **D21.1** | Baseline, inventario, restricciones, API Freeze draft | Acta §D21.1 (este documento) |
+| **D21.2** | Panel presentacional + barrel 2 exports | `src/components/history/` |
+| **D21.3** | Hook interno consumidor único de `listRecentProjects` | `src/app/useRecentProjects.ts` |
+| **D21.4** | Reemplazo stub; expand/collapse; refresh selectivo | `src/app/page.tsx` |
+| **D21.5** | Gates G1/G2/G3 + smoke S1–S11 + npm script | `package.json` (1 script) |
+| **D21.6** | Certificación final + cierre UX-2B + handoff D23 | Este §D21 |
+
+### Archivos creados (D21)
+
+| Archivo | Microfase |
+|---------|-----------|
+| [`src/components/history/RecentProjectsPanel.tsx`](src/components/history/RecentProjectsPanel.tsx) | D21.2 |
+| [`src/components/history/index.ts`](src/components/history/index.ts) | D21.2 |
+| [`src/app/useRecentProjects.ts`](src/app/useRecentProjects.ts) | D21.3 |
+
+### Archivos modificados (D21)
+
+| Archivo | Microfase | Cambio |
+|---------|-----------|--------|
+| [`src/app/page.tsx`](src/app/page.tsx) | D21.4 | +48 / −6 LOC — wiring Historial; stub eliminado |
+| [`package.json`](package.json) | D21.5 | 1 script: `validate:prod2b-indexeddb` |
+| [`PROJECT_STATUS_PROD_2D.md`](PROJECT_STATUS_PROD_2D.md) | D21.1 · D21.6 | Acta §D21 |
+
+### Archivos no modificados por diseño (D21)
+
+| Exclusión | Motivo |
+|-----------|--------|
+| `src/lib/project/application/persistence/` | API Freeze D20 — intocable |
+| `domain/local-project` · adapters IndexedDB | Certificado B5 — intocable |
+| `@/lib/app-preferences` · `SettingsPanel` | D18/D19 CLOSED — intocable |
+| `@/lib/project-history` · `HistoryPanel` | D22 CLOSED — intocable |
+| `LocalProjectsPanel.tsx` | CRUD biblioteca — solo patrón visual (R-D21-13) |
+| Hooks persistencia existentes (`useLocalProjectPersistence`, etc.) | Wiring reutiliza handlers — sin refactor |
+
+### API Freeze (certificado D21.6)
+
+#### Application Layer — `@/lib/project/application/persistence` (D20 — sin cambios D21)
+
+| Export | Tipo |
+|--------|------|
+| `listRecentProjects` | `function` |
+| `RecentProjectsQuery` | `type` |
+
+**Total exports congelados: 2.** Sin `export *`. **Sin amend D21.** Gate `apiFreeze.*` — **PASS** (G2).
+
+#### UI — `@/components/history` (D21.2 — certificado D21.6)
+
+| Export | Tipo |
+|--------|------|
+| `RecentProjectsPanel` | `function` (component) |
+| `RecentProjectsPanelProps` | `type` |
+
+**Total exports congelados: 2.** Sin `export *`. `useRecentProjects` — hook interno `src/app/`; **no** constituye API Freeze.
+
+### Métricas finales D21
+
+**Métrica arquitectónica (auditoría D23):**
+
+| Métrica | Baseline D21.1 | Post-D21 (D21.6) |
+|---------|----------------|------------------|
+| **Consumidores de `listRecentProjects` (production)** | **0** | **1** (`useRecentProjects.ts`) |
+
+**Métricas operativas:**
+
+| Métrica | Baseline D21.1 | Post-D21 (D21.6) |
+|---------|----------------|------------------|
+| Stub Historial (`page.tsx`) | L21324–L21332 (~9 LOC) | **0** (eliminado D21.4) |
+| `components/history/` | Inexistente | **2 archivos** (`RecentProjectsPanel.tsx`, `index.ts`) |
+| `useRecentProjects.ts` | Inexistente | **1 archivo** (hook interno) |
+| Archivos UI Historial creados | **0** | **3** (2 UI + 1 hook) |
+| Exports `@/lib/project/application/persistence` | **2** | **2** (inalterado) |
+| Exports `@/components/history` | **0** | **2** |
+| Exports `@/lib/app-preferences` | **13** | **13** (inalterado) |
+| Exports `@/lib/project-history` | **12** | **12** (inalterado) |
+| Entradas «Próximamente» sidebar UX-2B | **1** (Historial) | **0** |
+| Gate `validate:persistence-unit` | **23/23** | **23/23 PASS** |
+| Gate `validate:prod2b-indexeddb` | **25/25** (sin npm) | **25/25 PASS** (+ npm D21.5) |
+| Gate `npx tsc --noEmit` | — | **PASS** |
+| Smoke manual S1–S11 | — | **11/11 PASS** |
+| LOC `RecentProjectsPanel.tsx` (aprox.) | — | **~157** |
+| LOC wiring neto `page.tsx` (aprox.) | — | **+48 / −6** |
+| Deep imports `persistence/` submódulos | — | **0** |
+| Deep imports `components/history/` internals | — | **0** |
+
+### Gates (D21.5 — evidencia registrada D21.6)
+
+| Gate | Comando | Resultado |
+|------|---------|-----------|
+| **G1** | `npx tsc --noEmit` | **PASS** |
+| **G2** | `npm run validate:persistence-unit` | **PASS** — **23/23** casos; API Freeze D20 **2 exports** intacto |
+| **G3** | `npm run validate:prod2b-indexeddb` | **PASS** — **25/25** casos |
+
+### Smoke manual (D21.5 — certificado D21.6)
+
+| # | Escenario | Resultado | Evidencia resumida |
+|---|-----------|-----------|-------------------|
+| **S1** | Biblioteca vacía → expandir Historial | **PASS** | Mensaje vacío; sin crash |
+| **S2** | Crear/guardar proyectos → expandir | **PASS** | Listado visible con nombre, acceso, badge, Abrir; orden G2 |
+| **S3** | Clic Abrir en item | **PASS** | Proyecto carga; feedback success; `lastAccessedAt` actualizado |
+| **S4** | Proyecto activo en lista | **PASS** | `activeProjectId={activeLocalProjectId}`; highlight visual |
+| **S5** | Sesión dirty → abrir desde Historial | **PASS** | `handleOpenLocalProjectWithSource` — cadena B6 preservada |
+| **S6** | Proyecto con draft recuperable | **PASS** | Recovery prompt existente (`ProjectScientificFilePanel`) — sin bypass D21 |
+| **S7** | «Ver biblioteca completa» | **PASS** | Abre `LocalProjectsPanel` modal |
+| **S8** | Configuración sidebar | **PASS** | `SettingsPanel` sin regresión |
+| **S9** | Actividad del proyecto | **PASS** | `HistoryPanel` sin regresión; entrada post-apertura |
+| **S10** | Stub eliminado | **PASS** | Cero «Próximamente» en Recursos → Historial |
+| **S11** | >10 proyectos → límite/orden/sin duplicados | **PASS** | G2: `recent.limit.default.*`, `recent.order.*`, `recent.noMutation.ids` |
+
+### Criterios de aceptación CA-D21 (certificación final D21.6)
+
+| ID | Criterio | Resultado | Evidencia resumida |
+|----|----------|-----------|-------------------|
+| **CA-D21-01** | Stub «Historial» L21324–L21332 **eliminado** — sin `aria-disabled` ni «Próximamente» | **PASS** | `grep Próximamente page.tsx` → 0 |
+| **CA-D21-02** | `RecentProjectsPanel` operativo en sidebar Recursos (expand/collapse) | **PASS** | Botón `🕘 Historial` + render condicional |
+| **CA-D21-03** | Lista top-10 ordenada `lastAccessedAt` desc vía `listRecentProjects` | **PASS** | Hook + G2 `recent.order.*` |
+| **CA-D21-04** | Estado vacío amigable cuando biblioteca vacía | **PASS** | S1 — mensaje vacío |
+| **CA-D21-05** | Indicadores: nombre, último acceso, badge `storageState` | **PASS** | Panel presentacional; labels locales |
+| **CA-D21-06** | Abrir proyecto invoca `handleOpenLocalProjectWithSource` — B6 preservado | **PASS** | `onOpen` → handler único; S5 |
+| **CA-D21-07** | Proyecto activo resaltado cuando `id === activeLocalProjectId` | **PASS** | `isActive` highlight; S4 |
+| **CA-D21-08** | Consumo barrel `@/lib/project/application/persistence` — cero deep imports | **PASS** | Solo `useRecentProjects.ts` importa barrel |
+| **CA-D21-09** | API Freeze D20 **intocable** — 2 exports; `validate:persistence-unit` PASS | **PASS** | G2 23/23; `persistence/` sin diff D21 |
+| **CA-D21-10** | `@/lib/app-preferences` intocable (13 exports) | **PASS** | Sin cambios D21 |
+| **CA-D21-11** | `@/lib/project-history` / `HistoryPanel` intocable (12 exports) | **PASS** | Sin cambios D21; S9 |
+| **CA-D21-12** | `SettingsPanel` intocable — sin regresión Config | **PASS** | S8 |
+| **CA-D21-13** | `npx tsc --noEmit` PASS | **PASS** | G1 |
+| **CA-D21-14** | `validate:prod2b-indexeddb` PASS (25/25) | **PASS** | G3 |
+| **CA-D21-15** | Smoke manual §13 — S1–S11 todos PASS | **PASS** | 11/11 |
+| **CA-D21-16** | Cero cambios dominio/adapters IndexedDB | **PASS** | Sin diff domain/adapters |
+| **CA-D21-17** | Épica **UX-2B CLOSED** — criterios discovery §6.3 cumplidos | **PASS** | Sin «Próximamente» sidebar; prefs D19; Historial operativo; G3 PASS |
+| **CA-D21-18** | Acta §D21 + handoff D23 en `PROJECT_STATUS_PROD_2D.md` | **PASS** | Este acta D21.6 |
+
+### Riesgos residuales post-D21
+
+| ID | Severidad | Riesgo | Estado |
+|----|-----------|--------|--------|
+| **R-D21-1** | P2 | Confusión Historial recientes (D21) vs Actividad (D22) | **Mitigado** — nomenclatura congelada en acta |
+| **R-D21-5** | P3 | Lista desactualizada sin refresh en cada toggle | **Aceptado** — refresh selectivo por diseño (R-D21-11) |
+| **R-D21-7** | P3 | Doble fetch biblioteca + recientes | **Aceptado** — MVP |
+| **R-D21-8** | P3 | Hydration warning Next.js en desarrollo | **Preexistente** — no atribuible a D21; sin impacto en certificación |
+
+**Sin riesgos bloqueantes.** **Sin deuda nueva abierta en D21.**
+
+### Checklist post-BUILD (D21.6)
+
+| Verificación | Resultado |
+|--------------|-----------|
+| `persistence/` no modificado | **PASS** |
+| API Freeze D20 intacto (2 exports) | **PASS** |
+| API Freeze `@/components/history` (2 exports) | **PASS** |
+| `RecentProjectsPanel` 100% presentacional | **PASS** |
+| `useRecentProjects` interno (no API Freeze) | **PASS** |
+| Sin deep imports | **PASS** |
+| Sin lógica duplicada fetch/CRUD | **PASS** |
+| Sin scope creep | **PASS** |
+| Wiring acotado (`page.tsx`) | **PASS** |
+| Keep D21 Small respetado | **PASS** |
+| Sin cambios arquitectónicos no planificados | **PASS** |
+
+### Definition of Done — D21
+
+| Criterio DoD | Resultado |
+|--------------|-----------|
+| Implementación completa (D21.2–D21.4) | **PASS** |
+| Gates completos (G1/G2/G3) | **PASS** |
+| Smoke completo (S1–S11) | **PASS** |
+| API Freeze respetado (D20 + `components/history`) | **PASS** |
+| Arquitectura respetada (UI → hook → application → repo) | **PASS** |
+| Documentación completa (acta §D21) | **PASS** |
+| D21 oficialmente cerrado | **PASS** |
+
+### Acta de cierre
+
+**D21 — CLOSED** (2026-07-08). **UX-2B.4 (Panel Historial MVP) — CLOSED.**
+
+**UX-2B (D18–D21 — Historial + Config MVP) — CLOSED** (2026-07-08).
+
+| Verificación cierre | Resultado |
+|---------------------|-----------|
+| Stub Historial eliminado | **PASS** |
+| `RecentProjectsPanel` operativo | **PASS** |
+| `useRecentProjects` + barrel D20 consolidados | **PASS** |
+| Gates D21 PASS (tsc + persistence-unit + prod2b-indexeddb) | **PASS** |
+| Smoke S1–S11 PASS | **PASS** |
+| CA-D21 18/18 PASS | **PASS** |
+| Código sin cambios en D21.6 | **PASS** |
+
+### Handoff D21 → D23
+
+| Microfase | Épica | Objetivo | Prerequisito |
+|-----------|-------|----------|--------------|
+| **D23** (siguiente) | PROD-2D | Gate umbrella `validate:prod2d-gate` + regresión integral | **D21 CLOSED** · D18–D22 CLOSED |
+
+**No reabrir D19–D21.** Pendientes UX-2B (D18–D21) — **ninguno**. D23 puede comenzar **inmediatamente**.
+
+| Consolidado post-D21 | Estado |
+|---------------------|--------|
+| `@/lib/app-preferences` (13 exports, gate 28/28) | **CLOSED** D19 |
+| `@/lib/project/application/persistence` (2 exports, gate 23/23) | **CLOSED** D20 |
+| `@/components/history` (2 exports) | **CLOSED** D21 |
+| `@/lib/project-history` (12 exports, gate 26/26) | **CLOSED** D22 |
+
+**Siguiente fase:** **D23** — `validate:prod2d-gate` (gate umbrella PROD-2D).
+
+**Fuera de D23 (sin adelantar):** schema V2 · motores SCI · `labUsageProfile` en Config · `PersistenceCoordinator` (criterio evolución: solo si ≥2 operaciones públicas recientes).
+
+### Objetivo D21 (congelado — referencia)
+
+Reemplazar el stub sidebar «Historial» (`page.tsx` L21324–L21332) por panel funcional de **proyectos recientes IndexedDB** (top-10, `lastAccessedAt` desc), con acción **Abrir** vía `handleOpenLocalProjectWithSource` (B6), consumiendo `@/lib/project/application/persistence` sin modificar su API Freeze. Principio **Keep D21 Small**: sin `PersistenceCoordinator`, sin cambios a `persistence/`.
+
+### D21.1 — Baseline + preparación documental
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-08 |
+| **Código modificado** | **Ninguno** |
+| **Archivos nuevos** | **Ninguno** |
+| **Documento modificado** | [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) (este acta §D21.1) |
+
+#### Objetivo D21.1
+
+Inicio oficial de **UX-2B.4**. Registrar baseline técnico e inventario del estado actual **antes** de implementar `RecentProjectsPanel`, `useRecentProjects` y wiring `page.tsx` en D21.2+. Esta microfase **reemplaza** cualquier documento temporal de preparación — baseline único en acta §D21.
+
+#### Baseline técnico
+
+| Verificación | Resultado |
+|--------------|-----------|
+| **D20** | **CLOSED** (2026-07-08) — `@/lib/project/application/persistence` API Freeze 2 exports; gate `validate:persistence-unit` 23/23 |
+| **D19** | **CLOSED** (2026-07-08) — `SettingsPanel` operativo; stub Config eliminado |
+| **D18** | **CLOSED** (2026-07-08) — `@/lib/app-preferences` API Freeze 13 exports |
+| **D22 (UX-2C)** | **CLOSED** (2026-07-08) — `@/lib/project-history` API Freeze 12 exports; `HistoryPanel` operativo — **no es fase siguiente de D21** |
+| **Handoff oficial** | D20 → **D21 UX-2B.4** (acta §D20 handoff PASS) |
+| **Épica D21** | **UX-2B** — Panel Historial MVP ([`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D21) |
+| **Secuencia congelada** | `D18 ✓ → D19 ✓ → D20 ✓ → D21 ✓ → D22 ✓ → D23 → D24` |
+| **Plan D21** | **Aprobado y congelado** — Keep D21 Small; sin `PersistenceCoordinator` (1 sola operación pública) |
+
+#### Handoff D20 → D21 (confirmado en D21.1)
+
+| Verificación | Resultado |
+|--------------|-----------|
+| D20 oficialmente **CLOSED** | **PASS** |
+| `@/lib/project/application/persistence` consolidado (2 exports, gate 23/23) | **PASS** |
+| `listRecentProjects` — **0 consumidores production** | **PASS** |
+| Stub «Historial» presente (`page.tsx` L21324–L21332) | **PASS** |
+| `components/history/` **inexistente** (correcto pre-D21.2) | **PASS** |
+| `useRecentProjects.ts` **inexistente** (correcto pre-D21.3) | **PASS** |
+| Sin adelantar D21.2+ (código / UI / wiring) | **PASS** |
+| D22 **CLOSED** — `HistoryPanel` intocable en D21 | **PASS** |
+
+#### Inventario actual (sin modificar)
+
+| Capa | Artefacto | Ubicación / estado | Detalle |
+|------|-----------|-------------------|---------|
+| **UI** | Stub «Historial» | [`src/app/page.tsx`](src/app/page.tsx) L21324–L21332 | `div` con `aria-disabled`, badge «Próximamente» (~9 LOC) — **reemplazar D21.4** |
+| **UI** | `components/history/` | `src/components/history/` | **Inexistente** (correcto pre-D21.2) |
+| **UI** | `RecentProjectsPanel` | — | **Inexistente** — crear D21.2 |
+| **UI** | `SettingsPanel` | [`src/components/settings/`](src/components/settings/) | **Operativo** (D19 CLOSED) — **intocable D21** |
+| **UI** | `HistoryPanel` (actividad) | [`src/components/project-activity/`](src/components/project-activity/) | **Operativo** (D22 CLOSED) — **intocable D21** |
+| **UI** | `LocalProjectsPanel` | [`src/app/LocalProjectsPanel.tsx`](src/app/LocalProjectsPanel.tsx) | **Operativo** — referencia UX badges; **intocable**; solo patrón visual (R-D21-13) |
+| **UI** | Patrón expand sidebar | `page.tsx` L16621–16622 · L21200–21214 · L21336–21359 | `projectActivityPanelOpen` (D22) · `settingsPanelOpen` (D19) — **referencia D21.4** |
+| **Hooks** | `useRecentProjects` | — | **Inexistente** — crear D21.3 (implementación interna, **no** API Freeze) |
+| **Hooks** | `useGraphEditorProjectFile` | [`src/app/useGraphEditorProjectFile.ts`](src/app/useGraphEditorProjectFile.ts) | Expone `openLibrary`, `handleOpenLocalProject`, `activeLocalProjectId`, `repo` (vía `...localPersistence`) |
+| **Handlers** | `handleOpenLocalProjectWithSource` | [`src/app/page.tsx`](src/app/page.tsx) L20984–L20987 | `projectOpenSourceRef = "local"` → `handleOpenLocalProject(id)` — **reutilizar D21.4** |
+| **Handlers** | `openLibrary` | `page.tsx` L20700 (destructuring hook) | Abre `LocalProjectsPanel` modal — enlace opcional «Ver biblioteca completa» |
+| **Handlers** | `repo` / `localPersistence.repo` | `useLocalProjectPersistence` L51 · expuesto vía `useGraphEditorProjectFile` | `LocalProjectRepository` singleton — input `useRecentProjects` |
+| **Application** | `listRecentProjects` | [`src/lib/project/application/persistence/recent-projects.ts`](src/lib/project/application/persistence/recent-projects.ts) | Operativo D20 — **0 consumidores production** |
+| **Application** | Barrel `persistence/` | [`src/lib/project/application/persistence/index.ts`](src/lib/project/application/persistence/index.ts) | API Freeze **2 exports** — **intocable D21** |
+| **Application** | `listLocalProjects` | [`src/lib/project/application/local-project/use-cases.ts`](src/lib/project/application/local-project/use-cases.ts) | B5 — delegado por `listRecentProjects`; **sin cambios D21** |
+| **Domain** | `domain/local-project` | Certificado B5 | **Intocable D21** |
+| **Adapters** | IndexedDB | Certificado B5 (DA-3) | **Intocable D21** |
+| **Gate** | `validate:persistence-unit` | [`scripts/validate-persistence-unit.ts`](scripts/validate-persistence-unit.ts) | Registrado npm; baseline **23/23** |
+| **Gate** | `validate:prod2b-indexeddb` | [`scripts/validate-prod2b-indexeddb.ts`](scripts/validate-prod2b-indexeddb.ts) | Existe; **sin entrada npm** en `package.json` (registrar D21.5) |
+
+#### API Freeze vigente (confirmado D21.1)
+
+| Barrel | Exports | Estado D21 |
+|--------|---------|------------|
+| `@/lib/project/application/persistence` | **2** — `listRecentProjects`, `RecentProjectsQuery` | **Congelado D20** — sin amend |
+| `@/lib/app-preferences` | **13** | **Congelado D18/D19** — intocable |
+| `@/lib/project-history` | **12** | **Congelado D22** — intocable |
+
+**API Freeze draft D21.2** — barrel `@/components/history` (previsto, no implementado):
+
+| Export | Tipo |
+|--------|------|
+| `RecentProjectsPanel` | `function` (component) |
+| `RecentProjectsPanelProps` | `type` |
+
+**Total exports previstos: 2.** `useRecentProjects` — hook interno `src/app/`; **no** constituye API Freeze.
+
+#### Principio Keep D21 Small
+
+D21 introduce únicamente panel presentacional + hook interno + wiring mínimo en `page.tsx`. **Sin** `PersistenceCoordinator` (criterio evolución D20/D21: 1 sola operación pública `listRecentProjects`). **Sin** modificar barrel `persistence/`. **Sin** nuevas dependencias públicas de tipos de dominio en UI (política §8.3.1 plan D21).
+
+#### Alcance D21 (microfases D21.2–D21.6)
+
+**IN:**
+
+| Entregable | Microfase |
+|------------|-----------|
+| `src/components/history/` (`RecentProjectsPanel`, `index.ts`) | D21.2 |
+| `useRecentProjects.ts` — hook interno | D21.3 |
+| Wiring `page.tsx` — reemplazo stub L21324–L21332 | D21.4 |
+| Refresh selectivo: primera expansión + post-open + post-operación que altere lista | D21.4 |
+| Gates `tsc` · `validate:persistence-unit` · `validate:prod2b-indexeddb` | D21.5 |
+| Smoke manual S1–S11 | D21.5 |
+| Registro npm `validate:prod2b-indexeddb` (si ausente) | D21.5 |
+| Acta certificación + cierre UX-2B + handoff D23 | D21.6 |
+
+**OUT (explícito — no iniciar en D21):**
+
+| Exclusión | Motivo / fase |
+|-----------|---------------|
+| `PersistenceCoordinator` / `commands.ts` | Keep D21 Small — 1 operación pública |
+| Modificar `@/lib/project/application/persistence` | API Freeze D20 — amend explícito |
+| CRUD en Historial (eliminar, renombrar, duplicar, exportar) | `LocalProjectsPanel` — discovery §4.3 |
+| Búsqueda / filtros / favoritos | Scope creep |
+| Estado o lógica compartida con `LocalProjectsPanel` | R-D21-13 — solo patrón visual |
+| `@/lib/app-preferences` / `SettingsPanel` | D18/D19 CLOSED |
+| `@/lib/project-history` / `HistoryPanel` | D22 CLOSED |
+| Dominio / adapters IndexedDB | B5 certificado |
+| Schema V2 / motores SCI | PROD-2D congelado |
+| `validate:prod2d-gate` | D23 |
+
+#### Baseline de métricas (D21.1 — punto de partida)
+
+**Métrica arquitectónica (auditoría D23):**
+
+| Métrica | Valor baseline |
+|---------|----------------|
+| **Consumidores de `listRecentProjects`** | **0** (solo tests importan barrel) |
+
+**Métricas operativas:**
+
+| Métrica | Valor baseline |
+|---------|----------------|
+| Stub Historial (`page.tsx`) | L21324–L21332 (~9 LOC) |
+| `components/history/` | **Inexistente** |
+| `useRecentProjects.ts` | **Inexistente** |
+| Archivos UI Historial creados | **0** |
+| Exports `@/lib/project/application/persistence` | **2** |
+| Exports `@/lib/app-preferences` | **13** |
+| Exports `@/lib/project-history` | **12** |
+| Gate `validate:persistence-unit` | **23/23** |
+| Gate `validate:prod2b-indexeddb` | **25/25** (script sin entrada npm) |
+| Entradas «Próximamente» sidebar UX-2B | **1** (Historial; Config eliminado D19) |
+| Hooks nuevos Historial | **0** |
+
+#### Riesgos (plan D21 — registrados D21.1)
+
+| ID | Severidad | Riesgo | Mitigación planificada |
+|----|-----------|--------|------------------------|
+| **R-D21-1** | P2 | Confusión Historial recientes (D21) vs Actividad (D22) | `RecentProjects*` vs `ProjectHistory*`; sidebar Recursos vs Proyecto científico |
+| **R-D21-2** | P2 | Apertura sin B6 | Solo `handleOpenLocalProjectWithSource` |
+| **R-D21-3** | P2 | Scope creep — duplicar `LocalProjectsPanel` | Read-only + abrir; CRUD en biblioteca |
+| **R-D21-4** | P2 | Diff amplio `page.tsx` | Wiring acotado stub + panel |
+| **R-D21-5** | P3 | Lista desactualizada | Refresh selectivo (no cada expand/collapse) |
+| **R-D21-6** | P3 | `validate:prod2b-indexeddb` sin npm | Registrar D21.5 |
+| **R-D21-7** | P3 | Doble fetch biblioteca + recientes | Aceptado MVP |
+
+#### Restricciones (congeladas D21 — R-D21)
+
+| ID | Restricción |
+|----|-------------|
+| **R-D21-01** | No modificar API Freeze D20 (`persistence/`) |
+| **R-D21-02** | No `PersistenceCoordinator` — 1 operación pública |
+| **R-D21-03** | UI presentacional — props only en `RecentProjectsPanel` |
+| **R-D21-04** | Abrir solo vía `handleOpenLocalProjectWithSource` |
+| **R-D21-05** | Barrel `@/components/history` — 2 exports, sin `export *` |
+| **R-D21-06** | No deep imports `persistence/` ni `components/history/` |
+| **R-D21-07** | No tocar `SettingsPanel`, `HistoryPanel`, `LocalProjectsPanel` |
+| **R-D21-08** | No tocar dominio/adapters IndexedDB |
+| **R-D21-09** | No tocar `@/lib/app-preferences` ni `@/lib/project-history` |
+| **R-D21-10** | Wiring acotado — sin refactor masivo `page.tsx` |
+| **R-D21-11** | Refresh selectivo — primera expansión + post-open + post-operación; no cada toggle |
+| **R-D21-12** | «Historial» = recientes; «Actividad» = sesión |
+| **R-D21-13** | `LocalProjectsPanel` — solo patrón visual; sin estado/lógica/CRUD compartido |
+
+#### Verificaciones D21.1
+
+| Verificación | Resultado |
+|--------------|-----------|
+| Solo `PROJECT_STATUS_PROD_2D.md` modificado | **PASS** |
+| Archivos nuevos creados | **NINGUNO** |
+| Código fuente modificado | **NINGUNO** |
+| `src/components/history/` creado | **NO** (correcto D21.1) |
+| `useRecentProjects.ts` creado | **NO** (correcto D21.1) |
+| `page.tsx` / hooks / adapters / dominio / UI | **NO modificados** |
+| `package.json` / scripts | **NO modificados** |
+| Cambios funcionales / arquitectónicos runtime | **NINGUNO** |
+| Comportamiento observable | **Idéntico** |
+| Stub Historial L21324–L21332 presente | **PASS** |
+| `listRecentProjects` 0 consumidores production | **PASS** |
+| D20 CLOSED confirmado | **PASS** |
+| D22 CLOSED confirmado | **PASS** |
+
+#### Handoff D21.1 → D21.2 (histórico — cumplido en D21.2–D21.6)
+
+**D21.2–D21.6 completaron BUILD y certificación** — ver §D21 (acta certificación D21.6).
+
+### D21.6 — Acta de cierre y certificación oficial
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | **CLOSED** |
+| **Fecha** | 2026-07-08 |
+| **Código modificado** | **Ninguno** |
+| **Archivos nuevos** | **Ninguno** |
+| **Documento modificado** | [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) (este acta §D21.6) |
+
+#### Objetivo D21.6
+
+Completar acta oficial §D21: certificar CA-D21 18/18, registrar gates/smoke/métricas, cerrar **D21** y épica **UX-2B (D18–D21)**, preparar handoff **D23** — **cero código**.
+
+#### Verificaciones D21.6
+
+| Verificación | Resultado |
+|--------------|-----------|
+| Solo `PROJECT_STATUS_PROD_2D.md` modificado | **PASS** |
+| Archivos nuevos creados | **NINGUNO** |
+| Código fuente modificado | **NINGUNO** |
+| Comportamiento observable | **Idéntico** (post-D21.5) |
+| Arquitectura | **Sin cambios** |
+| CA-D21 18/18 certificados | **PASS** |
+| Gates G1/G2/G3 certificados | **PASS** |
+| Smoke S1–S11 certificado | **PASS** |
+| UX-2B (D18–D21) oficialmente cerrada | **PASS** |
+| D21 oficialmente cerrado | **PASS** |
+| Handoff D23 documentado | **PASS** |
+
+---
+
 ## Microfase D22 — UX-2C: Historial de actividad del proyecto
 
 | Campo | Valor |
 |-------|-------|
 | **Estado** | **CLOSED** — 2026-07-08 |
 | **Épica** | **UX-2C** (**≠ PROD-2C** — épica histórica CLOSED) |
-| **Prerequisito documental** | D19 **CLOSED** · D20 **CLOSED** · D21 **pendiente** (D22 implementado sin bloqueo técnico) |
+| **Prerequisito documental** | D19 **CLOSED** · D20 **CLOSED** · D21 **CLOSED** (2026-07-08) |
 | **Referencia SSOT** | [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) § D22 · [`PROJECT_DISCOVERY_PROD_2D.md`](./PROJECT_DISCOVERY_PROD_2D.md) §4.5 · §6.1b |
 
 ### Resumen D22 (certificación final D22.5)
@@ -3038,7 +3538,7 @@ Módulo **`project-history`** operativo: dominio puro (7 tipos de evento), adapt
 ### Secuencia congelada post-amend D22.1
 
 ```text
-D18 ✓ → D19 ✓ → D20 ✓ → D21 → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
+D18 ✓ → D19 ✓ → D20 ✓ → D21 ✓ → D22 (UX-2C) ✓ → D23 (gate) → D24 (cierre)
 ```
 
 ### Arquitectura final D22
@@ -3358,4 +3858,4 @@ D23 (gate umbrella) → D24 (cierre documental PROD-2D)
 
 ---
 
-*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06 · Acta D15 certificada 2026-07-06 · **ARCH-5 F5G (SCI-59 UI Panel) CLOSED** 2026-07-06 · Acta D16 certificada 2026-07-07 · **ARCH-5 F5H (infraestructura validación) CLOSED** 2026-07-07 · Acta D17 certificada 2026-07-07 · **ARCH-5 F5I (certificación modularización) CLOSED** 2026-07-07 · **ARCH-5 F5 (D9–D17) CLOSED** 2026-07-07 · Acta D18 certificada 2026-07-08 · **UX-2B.1 (UserPreferences domain) CLOSED** 2026-07-08 · **UX-2B.2 (SettingsPanel MVP) CLOSED** 2026-07-08 · **D22.1 (UX-2C baseline + SSOT amend) CLOSED** 2026-07-08 · **UX-2C (D22) CLOSED** 2026-07-08. Épica PROD-2D permanece abierta hasta D24.*
+*Acta D1 certificada 2026-07-01 · Acta D4 certificada 2026-07-01 · Acta D5 certificada 2026-07-01 · Acta D6 certificada 2026-07-02 · Acta D7 certificada 2026-07-02 · Acta D8 certificada 2026-07-03 · **ARCH-6 CLOSED** 2026-07-03 · Acta D2 certificada 2026-07-03 · **UX-2A CLOSED** 2026-07-03 · Acta D3 certificada 2026-07-06 · **UX-2B CLOSED** 2026-07-06 · Acta D9 certificada 2026-07-06 · **ARCH-5 F5A CLOSED** 2026-07-06 · Acta D10 certificada 2026-07-06 · **ARCH-5 F5B CLOSED** 2026-07-06 · Acta D11 certificada 2026-07-06 · **ARCH-5 F5C CLOSED** 2026-07-06 · Acta D12 certificada 2026-07-06 · **ARCH-5 F5D CLOSED** 2026-07-06 · Acta D13 certificada 2026-07-06 · **ARCH-5 F5E CLOSED** 2026-07-06 · Acta D14 certificada 2026-07-06 · **ARCH-5 F5F (SCI-60 UI) CLOSED** 2026-07-06 · Acta D15 certificada 2026-07-06 · **ARCH-5 F5G (SCI-59 UI Panel) CLOSED** 2026-07-06 · Acta D16 certificada 2026-07-07 · **ARCH-5 F5H (infraestructura validación) CLOSED** 2026-07-07 · Acta D17 certificada 2026-07-07 · **ARCH-5 F5I (certificación modularización) CLOSED** 2026-07-07 · **ARCH-5 F5 (D9–D17) CLOSED** 2026-07-07 · Acta D18 certificada 2026-07-08 · **UX-2B.1 (UserPreferences domain) CLOSED** 2026-07-08 · **UX-2B.2 (SettingsPanel MVP) CLOSED** 2026-07-08 · **UX-2B.3 (Application layer recientes) CLOSED** 2026-07-08 · **UX-2B.4 (Panel Historial MVP) CLOSED** 2026-07-08 · **UX-2B (D18–D21) CLOSED** 2026-07-08 · **D22.1 (UX-2C baseline + SSOT amend) CLOSED** 2026-07-08 · **UX-2C (D22) CLOSED** 2026-07-08. Épica PROD-2D permanece abierta hasta D24.*
