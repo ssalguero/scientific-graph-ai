@@ -24402,7 +24402,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             </p>
                           </div>
                         </div>
-                        <GraphPreview preview={entry.preview} />
+                        <GraphPreview
+                          preview={entry.preview}
+                          scatterStyle={
+                            entry.preview.graphType === "scatter"
+                              ? {
+                                  color: entry.graphSpec.color,
+                                  markerSize: entry.graphSpec.markerSize,
+                                  marker: entry.graphSpec.marker,
+                                }
+                              : null
+                          }
+                        />
                       </div>
                     ))}
                   </div>

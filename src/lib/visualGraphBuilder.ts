@@ -203,6 +203,33 @@ export const BUBBLE_SIZE_MIN = 0.25;
 export const BUBBLE_SIZE_MAX = 1.0;
 export const BUBBLE_SIZE_FIXED = 1.0;
 
+export const SCATTER_MARKER_MIN = 2;
+export const SCATTER_MARKER_MAX = 20;
+
+const GRAPH_TYPES_USING_GROUP_VARIABLE = new Set<VisualGraphType>([
+  "bar",
+  "boxPlot",
+  "violin",
+  "bubble",
+  "scatter",
+]);
+
+export function clampScatterMarkerSize(markerSize: number): number {
+  return Math.min(
+    SCATTER_MARKER_MAX,
+    Math.max(SCATTER_MARKER_MIN, markerSize || 6)
+  );
+}
+
+function normalizeGroupVariableForGraphType(
+  graphType: VisualGraphType,
+  groupVariable: string | null
+): string | null {
+  return GRAPH_TYPES_USING_GROUP_VARIABLE.has(graphType)
+    ? groupVariable
+    : null;
+}
+
 const HEATMAP_CORRELATION_EPSILON = 1e-12;
 
 const NUMERIC_COLUMN_TYPES = new Set<WorksheetColumnType>(["numeric", "date"]);
@@ -283,14 +310,32 @@ function readAlignedPairs(
   xVariable: string,
   yVariable: string
 ): VisualGraphPreviewPoint[] {
-  return model.rows.flatMap((row) => {
+  return buildScatterPointsFromWorksheet(model, xVariable, yVariable, null);
+}
+
+export function buildScatterPointsFromWorksheet(
+  model: WorksheetModel,
+  xVariable: string,
+  yVariable: string,
+  groupVariable: string | null = null
+): VisualGraphPreviewPoint[] {
+  const points: VisualGraphPreviewPoint[] = [];
+
+  model.rows.forEach((row, rowIndex) => {
     const x = readCellNumeric(row, xVariable);
     const y = readCellNumeric(row, yVariable);
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
-      return [];
+      return;
     }
-    return [{ x, y }];
+
+    const point: VisualGraphPreviewPoint = { x, y };
+    if (groupVariable) {
+      point.group = readGroupLabel(model, rowIndex, groupVariable);
+    }
+    points.push(point);
   });
+
+  return points;
 }
 
 function normalizeBubbleSizeValue(
@@ -607,7 +652,25 @@ export function validateVisualGraphConfiguration(
   };
 
   switch (spec.graphType) {
-    case "scatter":
+    case "scatter": {
+      const xError = requireVariable(spec.xVariable, "x");
+      if (xError) return xError;
+      const yError = requireVariable(spec.yVariable, "y");
+      if (yError) return yError;
+      if (!spec.xVariable || !spec.yVariable) {
+        return { ok: false, message: "Seleccione variables X e Y." };
+      }
+      if (spec.groupVariable) {
+        const group = findVariable(variables, spec.groupVariable);
+        if (!group) {
+          return {
+            ok: false,
+            message: `Variable "${spec.groupVariable}" no encontrada.`,
+          };
+        }
+      }
+      return { ok: true };
+    }
     case "line": {
       const xError = requireVariable(spec.xVariable, "x");
       if (xError) return xError;
@@ -732,6 +795,13 @@ export function buildGraphSpecification(
   } else {
     delete resolved.sizeVariable;
   }
+  resolved.groupVariable = normalizeGroupVariableForGraphType(
+    graphType,
+    resolved.groupVariable ?? null
+  );
+  if (graphType === "scatter") {
+    resolved.markerSize = clampScatterMarkerSize(resolved.markerSize);
+  }
 
   return {
     ...resolved,
@@ -782,7 +852,12 @@ export function buildVisualGraphPreview(
 
   switch (graphType) {
     case "scatter": {
-      const points = readAlignedPairs(model, spec.xVariable!, spec.yVariable!);
+      const points = buildScatterPointsFromWorksheet(
+        model,
+        spec.xVariable!,
+        spec.yVariable!,
+        spec.groupVariable
+      );
       return { ...emptyPreview, scatterPoints: points };
     }
     case "line": {

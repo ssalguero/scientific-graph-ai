@@ -7,23 +7,33 @@ import {
   ComposedChart,
   Line,
   ResponsiveContainer,
-  Scatter,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
-import type { VisualGraphPreview } from "@/lib/visualGraphBuilder";
+import type {
+  VisualGraphMarkerStyle,
+  VisualGraphPreview,
+} from "@/lib/visualGraphBuilder";
 
 import { HeatmapPreview } from "./HeatmapPreview";
 import { BubblePreview } from "./BubblePreview";
+import { ScatterPreview } from "./ScatterPreview";
 
 /** Width / height — ResponsiveContainer derives height from width (no parent height needed). */
 const CHART_ASPECT_RATIO = 1.8;
 
+export type ScatterPreviewStyle = {
+  color: string;
+  markerSize: number;
+  marker: VisualGraphMarkerStyle;
+};
+
 type GraphPreviewProps = {
   preview: VisualGraphPreview | null;
   errorMessage?: string | null;
+  scatterStyle?: ScatterPreviewStyle | null;
 };
 
 function BoxPlotPreview({
@@ -105,7 +115,11 @@ function ViolinPreview({
   );
 }
 
-export function GraphPreview({ preview, errorMessage }: GraphPreviewProps) {
+export function GraphPreview({
+  preview,
+  errorMessage,
+  scatterStyle,
+}: GraphPreviewProps) {
   if (errorMessage) {
     return (
       <div className="flex h-full min-h-[320px] items-center justify-center rounded-xl border border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] p-4 text-sm text-[var(--app-danger-text)]">
@@ -135,16 +149,18 @@ export function GraphPreview({ preview, errorMessage }: GraphPreviewProps) {
       </div>
 
       <div className="w-full">
-        {(preview.graphType === "scatter" || preview.graphType === "line") &&
-        (preview.scatterPoints.length > 0 || preview.lineSeries.length > 0) ? (
+        {preview.graphType === "scatter" ? (
+          <ScatterPreview
+            data={preview.scatterPoints}
+            color={scatterStyle?.color ?? "#3b82f6"}
+            markerSize={scatterStyle?.markerSize ?? 6}
+            marker={scatterStyle?.marker ?? "circle"}
+          />
+        ) : null}
+
+        {preview.graphType === "line" && preview.lineSeries.length > 0 ? (
           <ResponsiveContainer width="100%" aspect={CHART_ASPECT_RATIO}>
-            <ComposedChart
-              data={
-                preview.graphType === "line"
-                  ? preview.lineSeries[0]?.points ?? []
-                  : preview.scatterPoints
-              }
-            >
+            <ComposedChart data={preview.lineSeries[0]?.points ?? []}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" />
               <XAxis
                 dataKey="x"
@@ -154,17 +170,13 @@ export function GraphPreview({ preview, errorMessage }: GraphPreviewProps) {
               />
               <YAxis stroke="var(--app-text-muted)" fontSize={12} />
               <Tooltip />
-              {preview.graphType === "line" ? (
-                <Line
-                  type="monotone"
-                  dataKey="y"
-                  stroke={preview.lineSeries[0]?.color ?? "#3b82f6"}
-                  strokeWidth={2}
-                  dot
-                />
-              ) : (
-                <Scatter dataKey="y" fill="#3b82f6" />
-              )}
+              <Line
+                type="monotone"
+                dataKey="y"
+                stroke={preview.lineSeries[0]?.color ?? "#3b82f6"}
+                strokeWidth={2}
+                dot
+              />
             </ComposedChart>
           </ResponsiveContainer>
         ) : null}
@@ -207,13 +219,6 @@ export function GraphPreview({ preview, errorMessage }: GraphPreviewProps) {
 
         {preview.graphType === "bubble" ? (
           <BubblePreview data={preview.bubbleData} />
-        ) : null}
-
-        {preview.graphType === "scatter" &&
-        preview.scatterPoints.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-[var(--app-text-muted)]">
-            Sin puntos válidos para la combinación seleccionada.
-          </div>
         ) : null}
       </div>
     </div>

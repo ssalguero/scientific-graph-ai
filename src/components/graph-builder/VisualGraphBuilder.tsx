@@ -177,7 +177,63 @@ export function VisualGraphBuilder({
                   />
                 </>
               ) : null}
-              {spec.graphType === "scatter" || spec.graphType === "line" ? (
+              {spec.graphType === "scatter" ? (
+                <>
+                  <VariableSelector
+                    label="Variable de grupo (opcional)"
+                    value={spec.groupVariable}
+                    variables={variables}
+                    onChange={(groupVariable) => updateSpec({ groupVariable })}
+                    allowEmpty
+                    inputClassName={inputField}
+                    fieldLabelClassName={fieldLabel}
+                  />
+                  <div>
+                    <label className={fieldLabel}>Color</label>
+                    <input
+                      type="color"
+                      value={spec.color}
+                      onChange={(event) =>
+                        updateSpec({ color: event.target.value })
+                      }
+                      className="h-9 w-14 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)]"
+                    />
+                  </div>
+                  <div>
+                    <label className={fieldLabel}>Tamaño puntos</label>
+                    <input
+                      type="number"
+                      min={2}
+                      max={20}
+                      value={spec.markerSize}
+                      onChange={(event) =>
+                        updateSpec({
+                          markerSize: Number(event.target.value) || 6,
+                        })
+                      }
+                      className={inputField}
+                    />
+                  </div>
+                  <div>
+                    <label className={fieldLabel}>Marcadores</label>
+                    <select
+                      value={spec.marker}
+                      onChange={(event) =>
+                        updateSpec({
+                          marker:
+                            event.target.value as VisualGraphSpecification["marker"],
+                        })
+                      }
+                      className={inputField}
+                    >
+                      <option value="none">Ninguno</option>
+                      <option value="circle">Círculo</option>
+                      <option value="square">Cuadrado</option>
+                      <option value="diamond">Diamante</option>
+                    </select>
+                  </div>
+                </>
+              ) : spec.graphType === "line" ? (
                 <>
                   <div>
                     <label className={fieldLabel}>Color</label>
@@ -190,60 +246,43 @@ export function VisualGraphBuilder({
                       className="h-9 w-14 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)]"
                     />
                   </div>
-                  {spec.graphType === "scatter" ? (
+                  <>
                     <div>
-                      <label className={fieldLabel}>Tamaño puntos</label>
-                      <input
-                        type="number"
-                        min={2}
-                        max={20}
-                        value={spec.markerSize}
+                      <label className={fieldLabel}>Línea</label>
+                      <select
+                        value={spec.lineStyle}
                         onChange={(event) =>
                           updateSpec({
-                            markerSize: Number(event.target.value) || 6,
+                            lineStyle:
+                              event.target.value as VisualGraphSpecification["lineStyle"],
                           })
                         }
                         className={inputField}
-                      />
+                      >
+                        <option value="solid">Sólida</option>
+                        <option value="dashed">Discontinua</option>
+                        <option value="dotted">Punteada</option>
+                      </select>
                     </div>
-                  ) : (
-                    <>
-                      <div>
-                        <label className={fieldLabel}>Línea</label>
-                        <select
-                          value={spec.lineStyle}
-                          onChange={(event) =>
-                            updateSpec({
-                              lineStyle:
-                                event.target.value as VisualGraphSpecification["lineStyle"],
-                            })
-                          }
-                          className={inputField}
-                        >
-                          <option value="solid">Sólida</option>
-                          <option value="dashed">Discontinua</option>
-                          <option value="dotted">Punteada</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={fieldLabel}>Marcadores</label>
-                        <select
-                          value={spec.marker}
-                          onChange={(event) =>
-                            updateSpec({
-                              marker: event.target.value as VisualGraphSpecification["marker"],
-                            })
-                          }
-                          className={inputField}
-                        >
-                          <option value="none">Ninguno</option>
-                          <option value="circle">Círculo</option>
-                          <option value="square">Cuadrado</option>
-                          <option value="diamond">Diamante</option>
-                        </select>
-                      </div>
-                    </>
-                  )}
+                    <div>
+                      <label className={fieldLabel}>Marcadores</label>
+                      <select
+                        value={spec.marker}
+                        onChange={(event) =>
+                          updateSpec({
+                            marker:
+                              event.target.value as VisualGraphSpecification["marker"],
+                          })
+                        }
+                        className={inputField}
+                      >
+                        <option value="none">Ninguno</option>
+                        <option value="circle">Círculo</option>
+                        <option value="square">Cuadrado</option>
+                        <option value="diamond">Diamante</option>
+                      </select>
+                    </div>
+                  </>
                 </>
               ) : null}
             </>
@@ -407,7 +446,19 @@ export function VisualGraphBuilder({
         </div>
       </div>
 
-      <GraphPreview preview={preview} errorMessage={previewError} />
+      <GraphPreview
+        preview={preview}
+        errorMessage={previewError}
+        scatterStyle={
+          spec.graphType === "scatter"
+            ? {
+                color: spec.color,
+                markerSize: spec.markerSize,
+                marker: spec.marker,
+              }
+            : null
+        }
+      />
     </div>
   );
 }
