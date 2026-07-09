@@ -1,7 +1,7 @@
 # PROJECT_STATUS — PROD-2E
 
 **Épica:** PROD-2E — Motor gráfico profesional  
-**Estado épica:** **OPEN** (D27 CLOSED — Ready for D28)  
+**Estado épica:** **OPEN** (D28 CLOSED — DATA-3B CLOSED — Ready for D29)  
 **SSOT Plan:** [`PROJECT_PLAN_PROD_2E.md`](PROJECT_PLAN_PROD_2E.md)  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md)  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md)
@@ -529,6 +529,315 @@ Next BUILD: D28 — DATA-3B PCA (pcaVariables, pcaStandardize)
 
 ---
 
+## §D28 — DATA-3B PCA
+
+**Estado:** **CLOSED** (2026-07-09)  
+**Modo:** BUILD — dominio · UI · persistencia · gates · acta  
+**Próxima microfase:** **D29 — GRAPH-1a Auto-fit viewport Y**  
+**Plan congelado:** D28 v1.1 (AMEND — Estabilidad numérica y determinismo PCA)
+
+### Resumen ejecutivo
+
+PCA queda oficialmente operativo como **tercer y último tipo DATA-3B** del motor VGB PROD-2E. La microfase D28 implementa el tipo `pca` con `pcaVariables` y `pcaStandardize`, algoritmo move-only parcial desde SCI-40, preview determinista PC1/PC2, panel de configuración UI, persistencia V2 round-trip, golden fixture propio, gate umbrella `validate:prod2e-data3b-gate` y batería completa de gates — sin deuda técnica dentro del alcance.
+
+Con el cierre de D28, la épica **DATA-3B queda oficialmente CLOSED** (Heatmap · Bubble · PCA certificados).
+
+| Indicador | Estado |
+|-----------|--------|
+| **PCA implementado** | ✓ Dominio · preview · UI |
+| **Persistencia V2 certificada** | ✓ Round-trip + mapper/collect/hydrate |
+| **Golden Fixture propio** | ✓ `project-v2-dataset5-with-pca.sgproj` |
+| **API Freeze respetado** | ✓ `schemaVersion` 2 · extensión additive |
+| **VGB-R1 respetado** | ✓ Sin `preview`/`pcaData`/`pcaMeta`/`displaySeries` en persistencia |
+| **DATA-3B CLOSED** | ✓ 3/3 tipos certificados |
+| **Deuda técnica en alcance** | **Ninguna** |
+
+### Métricas D28
+
+| Campo | Valor |
+|-------|-------|
+| **Tipo nuevo operativo** | `pca` |
+| **Tipos VGB activos** | **9** (scatter, line, bar, histogram, boxPlot, violin, heatmap, bubble, pca) |
+| **schemaVersion** | **2** (sin bump) |
+| **Golden fixtures certificados** | Heatmap + Bubble + PCA (3/3) |
+| **Golden fixture PCA** | `scripts/fixtures/project-v2-dataset5-with-pca.sgproj` |
+| **Campos nuevos persistidos** | `pcaVariables: string[]`, `pcaStandardize: boolean` (solo `pca`) |
+| **Campos efímeros** | `pcaData`, `pcaMeta` (preview only — VGB-R1) |
+| **PCA unit** | **22/22 PASS** (19 escenarios Plan v1.1 + Decisión I/J explícitas) |
+| **Visual Graph Builder unit** | **79/79 PASS** |
+| **C8 fixtures** | **40/40 PASS** |
+| **DATA-3B umbrella gate** | **13/13 PASS** |
+| **Performance gate** | 100 iter · dataset `project-v2-dataset5-minimal.sgproj` |
+| **Media PCA preview** | **3.3075 ms** |
+| **Mediana PCA preview** | **1.8208 ms** |
+| **P95 PCA preview** | **11.4144 ms** |
+| **Resultado épica microfase** | **PASS** |
+
+### D28.1 — Dominio VGB
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Extender contrato VGB con tipo `pca`, `pcaVariables`, `pcaStandardize`, `buildPCAFromWorksheet()` |
+| **Archivos** | `src/lib/visualGraphBuilder.ts`, `src/lib/project/domain/visual-graph-domain.ts`, `src/lib/project/domain/validate-v2.ts` |
+| **Algoritmo** | Move-only parcial desde SCI-40: matriz worksheet, exclusión columnas constantes, estandarización condicional, covarianza, Power Iteration PC1/PC2, Decisión I (sign normalization), PC2 degenerado → scores 0 |
+| **API Freeze** | Extensión additive; 8 tipos previos intactos |
+| **Resultado** | **PASS** |
+
+### D28.2 — Preview renderer
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Renderer PCA en preview VGB (Recharts ScatterChart PC1 vs PC2) |
+| **Archivos** | `src/components/graph-builder/PCAPreview.tsx` (nuevo), `src/components/graph-builder/GraphPreview.tsx` |
+| **Restricción** | Ejes con % varianza desde `pcaMeta`; sin transformación de dominio en renderer; `isAnimationActive={false}` |
+| **Resultado** | **PASS** |
+
+### D28.3 — UI configuración
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Panel PCA en `VisualGraphBuilder` (multi-select `pcaVariables` + toggle `pcaStandardize`) |
+| **Archivos** | `src/components/graph-builder/VisualGraphBuilder.tsx` |
+| **Nota** | `pca` activo en `VISUAL_GRAPH_TYPES_V1`; controles X/Y/size/color ocultos cuando `graphType === "pca"` |
+| **Resultado** | **PASS** |
+
+### D28.4 — Persistencia + Golden Fixture
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Round-trip V2 + golden fixture independiente + casos C4/C5/C6/C8 PCA |
+| **Archivos** | `scripts/generate-prod2e-d28-pca-golden-fixture.ts`, `scripts/fixtures/project-v2-dataset5-with-pca.sgproj`, `src/lib/project/__tests__/visual-graph-fixtures.cases.ts`, `src/lib/project/__tests__/visual-graph-mapper-helpers.ts`, casos C4/C5/C6 |
+| **Gate C8 fixtures** | `validate:prod2c-c8-visual-graph-fixtures` — **40/40 PASS** (7 casos PCA golden) |
+| **VGB-R1** | JSON golden sin `preview`, `pcaData`, `pcaMeta`, `displaySeries` |
+| **Resultado** | **PASS** |
+
+### D28.5 — Gates unitarios, regresión y umbrella DATA-3B
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Certificar PCA + cerrar épica DATA-3B con gate umbrella |
+| **Archivos** | `src/lib/visualGraphBuilder/__tests__/pca.cases.ts`, `scripts/validate-prod2e-d28-pca-unit.ts`, `scripts/validate-prod2e-d28-pca-perf.ts`, `scripts/validate-prod2e-data3b-gate.ts`, ampliación `validate-visual-graph-builder-unit.ts` + corrección C6 hydrate |
+| **Casos PCA unit** | 22 (config, algoritmo, pipeline, VGB-R1, hydrate, round-trip, scope, regresión heatmap/bubble, Decisión I/J, caso 19 correlación perfecta) |
+| **Resultado** | **PASS** |
+
+### D28.6 — Acta + cierre D28 + cierre DATA-3B
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Acta oficial, métricas, gates, decisiones arquitectónicas A–J (AMEND v1.1), handoff D29, declaración DATA-3B CLOSED |
+| **Alcance** | Documentación únicamente (`PROJECT_STATUS_PROD_2E.md`) |
+| **Resultado** | **PASS** |
+
+#### Gates D28 — Certificación
+
+| Gate | Resultado | Casos / detalle |
+|------|-----------|-----------------|
+| `npx tsc --noEmit` | **PASS** | — |
+| `validate:prod2e-d28-pca-unit` | **PASS** | 22/22 |
+| `validate:visual-graph-builder-unit` | **PASS** | 79/79 |
+| `validate:prod2c-c8-regression-gate` | **PASS** | 6/6 sub-gates (C4–C8); fixtures 40/40 |
+| `validate:prod2e-data3b-gate` | **PASS** | 13/13 |
+| `validate:prod2e-d28-pca-perf` | **PASS** (informativo — **no bloqueante**) | 100 iter · media **3.3075 ms** · mediana **1.8208 ms** · p95 **11.4144 ms** · dataset `project-v2-dataset5-minimal.sgproj` |
+
+**Regresión tipos v1 + heatmap + bubble + scatter:** Scatter, Line, Bar, Histogram, BoxPlot, Violin, Heatmap, Bubble — **PASS** (C8 umbrella + suites PCA regresión).
+
+#### Decisiones arquitectónicas D28 (Plan v1.1 + AMEND)
+
+**Decisión A — Shape uniforme de `VisualGraphPreview`**
+
+`pcaData: VisualGraphPreviewPcaPoint[]` y `pcaMeta: VisualGraphPreviewPcaMeta | null` se incorporan siguiendo el patrón certificado de `heatmapData` (D26) y `bubbleData` (D27). Arrays obligatorios (vacíos fuera de `pca`); preserva comparación, tests, hydrate y VGB-R1.
+
+```typescript
+type VisualGraphPreviewPcaPoint = { pc1: number; pc2: number; label: string };
+type VisualGraphPreviewPcaMeta = {
+  component1Variance: number;
+  component2Variance: number;
+  cumulativeVariance: number;
+};
+```
+
+**Decisión B — Alcance exclusivo de campos PCA**
+
+`pcaVariables` y `pcaStandardize` solo aplican cuando `graphType === "pca"`. En otros tipos: ignorados en validate/build/hydrate/sanitize (patrón Decisión D D27). `xVariable`/`yVariable` no participan en el cálculo PCA VGB; pueden conservarse por herencia al cambiar tipo (patrón Decisión B D26).
+
+**Decisión C — Algoritmo move-only parcial**
+
+Copia a dominio VGB desde SCI-40 (`page.tsx` intacto): matriz worksheet, exclusión columnas constantes (`std ≤ PCA_EIGENVALUE_EPSILON`), estandarización condicional, covarianza, Power Iteration (PC1, PC2 ortogonalizado) con límite de iteraciones congelado, normalización de signo (Decisión I), manejo PC2 degenerado. Función exportada: `buildPCAFromWorksheet()`. Alcance estricto PC1 + PC2 (Decisión J).
+
+**Decisión D — Validación mínima**
+
+| Regla | Mensaje |
+|-------|---------|
+| `pcaVariables.length < 2` | Al menos 2 variables numéricas |
+| Variable inexistente | Variable no encontrada |
+| Columnas activas post-filtro < 2 | Datos insuficientes para PCA |
+| Observaciones < 2 filas válidas | Datos insuficientes para PCA |
+| Varianza total ≤ ε | Datos insuficientes para PCA |
+
+**Decisión E — Contrato efímero sin loadings**
+
+Prohibido incluir `loadings`, `loadingsInterpretation` ni texto interpretativo SCI en `VisualGraphPreview`. Loadings permanecen en SCI-40; VGB solo PC1/PC2 + varianza para ejes.
+
+**Decisión F — Separación PCA VGB vs PCA SCI-40**
+
+PCA VGB (DATA-3B) es independiente del dashboard multivariante SCI-40. Sin acoplamiento de toggles `showPCA` ni `buildMultivariateDashboardAnalysis`. Deduplicación completa → D34.
+
+**Decisión G — Idempotencia del round-trip**
+
+Ciclo `collect → serialize → hydrate → collect → serialize` produce persistencia estable. Certificado en `visual-graph.pca.roundtrip.idempotent`, `fixtures.vgb.golden.pca.idempotent` y `hydrate.vgb.pca.roundtrip.idempotent` (equivalencia persisted).
+
+**Decisión H — Activación en selector**
+
+`pca` retirado de `VISUAL_GRAPH_TYPES_FUTURE`; añadido a `VISUAL_GRAPH_TYPES_V1` y `VISUAL_GRAPH_TYPE_LABELS`. `GraphTypeSelector` itera `VISUAL_GRAPH_TYPES_V1` — sin cambio estructural del componente.
+
+**Decisión I — Eigenvector Sign Normalization (AMEND v1.1)**
+
+El signo de los eigenvectores es matemáticamente arbitrario. Regla congelada: si el primer elemento distinto de cero del eigenvector es negativo → multiplicar todo el eigenvector por `-1`; aplicar a PC1 y PC2 antes del preview. Garantiza golden fixtures deterministas, round-trip reproducible y CI sin falsos positivos. No modifica el espacio PCA ni la interpretación estadística.
+
+**Decisión J — Alcance funcional del motor PCA (AMEND v1.1)**
+
+El motor PCA VGB calcula únicamente **PC1** y **PC2**. Fuera de alcance DATA-3B: PC3+, N componentes configurables, selección dinámica, Scree Plot, loadings completos, eigenvectors exportables. Evolución futura → SCI-40 (D34–D35) o épica VGB post-v1.0.
+
+#### AMEND v1.1 — Estabilidad numérica y determinismo PCA
+
+**Fecha:** 2026-07-09 · **Alcance:** Decisiones I–J · caso unitario 19 · riesgo R-D28-09
+
+**No modifica:** API Freeze · `schemaVersion` · persistencia V2 · contratos públicos · formato JSON `.sgproj` · campos `pcaVariables`/`pcaStandardize`.
+
+**Fortalece:** determinismo matemático (Decisión I) · estabilidad covarianza casi singular (R-D28-09) · reproducibilidad golden/CI · delimitación motor VGB (Decisión J).
+
+#### VGB-R1 — Re-certificación D28
+
+Nunca se persisten:
+
+- `preview`
+- `pcaData`
+- `pcaMeta`
+- `displaySeries`
+
+Únicamente se persiste `GraphSpecification` (+ metadatos de entrada VGB: `id`, `sourceDatasetId`, `createdAt`). Certificado en gates PCA unit, C4/C5/C6, C8 golden y `hydrate.vgbR1.pca.noPcaDataLeak`.
+
+#### API Freeze D28
+
+Durante D28:
+
+- **No** hubo schema bump (`schemaVersion` permanece **2**)
+- **No** hubo breaking changes
+- **No** hubo cambios en los ocho tipos VGB previos
+- **Únicamente** se añadió el tipo `pca` y los campos opcionales `pcaVariables`/`pcaStandardize` (semánticos solo en `pca`)
+
+#### CA-D28 — Certificación (10/10)
+
+| ID | Criterio | Evidencia | Resultado |
+|----|----------|-----------|-----------|
+| **CA-D28-01** | D28.1 Dominio PASS | `pca` + `buildPCAFromWorksheet()` en `visualGraphBuilder.ts` | **PASS** |
+| **CA-D28-02** | D28.2 Preview PASS | `PCAPreview.tsx` + rama en `GraphPreview.tsx` | **PASS** |
+| **CA-D28-03** | D28.3 UI PASS | Panel PCA en `VisualGraphBuilder.tsx` | **PASS** |
+| **CA-D28-04** | D28.4 Persistencia PASS | Golden `project-v2-dataset5-with-pca.sgproj` + C8 40/40 | **PASS** |
+| **CA-D28-05** | D28.5 Gates PASS | 6 gates listados arriba — todos PASS | **PASS** |
+| **CA-D28-06** | VGB-R1 PASS | Sin `preview`/`pcaData`/`pcaMeta`/`displaySeries` en persistencia | **PASS** |
+| **CA-D28-07** | API Freeze PASS | Sin bump · sin breaking · 8 tipos previos intactos | **PASS** |
+| **CA-D28-08** | Regresión v1+heatmap+bubble+scatter PASS | C8 umbrella + suites regresión PCA | **PASS** |
+| **CA-D28-09** | Performance documentada | `validate:prod2e-d28-pca-perf` — no bloqueante | **PASS** |
+| **CA-D28-10** | TypeScript PASS | `npx tsc --noEmit` | **PASS** |
+
+**Total CA-D28: 10/10 PASS** · Sin deuda técnica dentro del alcance D28.
+
+#### Cierre oficial DATA-3B
+
+**Estado:** **DATA-3B CLOSED** (2026-07-09)
+
+| Tipo | Microfase | Golden fixture | Estado |
+|------|-----------|----------------|--------|
+| **Heatmap** | D26 | `project-v2-dataset5-with-heatmap.sgproj` | **CERTIFICADO** |
+| **Bubble** | D27 | `project-v2-dataset5-with-bubble.sgproj` | **CERTIFICADO** |
+| **PCA** | D28 | `project-v2-dataset5-with-pca.sgproj` | **CERTIFICADO** |
+
+- Persistencia V2 certificada (round-trip + mapper/collect/hydrate)
+- Golden fixtures certificados (3/3)
+- VGB-R1 certificado en los tres tipos
+- Gate umbrella `validate:prod2e-data3b-gate` — **13/13 PASS**
+- Criterio Master Roadmap §10 DATA-3B — **CUMPLIDO**
+
+#### Estado PROD-2E (post-D28)
+
+| Indicador | Valor |
+|-----------|--------|
+| **Épica** | **OPEN** (DATA-3B CLOSED — Ready for D29) |
+| **Checklist cierre épica** | **1/9** |
+| **DATA-3B** | **CLOSED** ✓ |
+| **Próxima fase** | D29 — GRAPH-1a Auto-fit viewport Y |
+| **Fases abiertas** | D29–D36 (GRAPH-1 · GRAPH-2 · ARCH-5 · cierre épica) |
+
+**Checklist cierre PROD-2E (avance):**
+
+- [x] ≥3 tipos VGB avanzados con round-trip persist (**DATA-3B CLOSED**)
+- [ ] Auto-fit Y + presets (GRAPH-1 D29–D30)
+- [ ] Motor curvas (GRAPH-2 D31–D32)
+- [ ] F5F-BIS + SCI-40 (ARCH-5 D33–D35)
+- [ ] API Freeze respetado (parcial → completo en D36)
+- [ ] Baseline re-medido (D36)
+- [ ] `validate:prod2e-gate` (D36)
+- [ ] DoD §2 Master (D36)
+- [ ] Docs sync PROD-3 READY (D36.5)
+
+#### Handoff D29
+
+```text
+D28 CLOSED — DATA-3B CLOSED — Ready for D29
+Prerrequisitos D29 (GRAPH-1a — Auto-fit viewport Y):
+  ✓ DATA-3B CLOSED — 3 tipos certificados (heatmap, bubble, pca)
+  ✓ validate:prod2e-data3b-gate PASS (13/13)
+  ✓ Golden fixtures certificados (heatmap + bubble + pca)
+  ✓ Tipos VGB activos: 9
+  ✓ schemaVersion: 2
+  ✓ API Freeze respetado (extensión additive)
+  ✓ Round-trip certificado (VGB-R1)
+  ✓ C8 Regression PASS (40/40 fixtures)
+  ✓ Regresión v1 + heatmap + bubble + scatter PASS
+  ✓ Decisión I — sign normalization certificada
+  ✓ Decisión J — motor limitado a PC1/PC2
+  ✓ Performance PCA documentada (100 iter — no bloqueante)
+  ✓ TypeScript PASS
+  ✓ page.tsx SCI-40 intacto — extracción PCA completa pendiente D34
+Next BUILD: D29 — GRAPH-1a Auto-fit viewport Y
+  Archivos objetivo: src/lib/graph/viewport.ts (extracción chartViewport.ts)
+  Gate objetivo: validate:chart-viewport-y (nuevo) + regresión X
+```
+
+#### Archivos D28 (acumulado microfases D28.1–D28.5)
+
+| Acción | Archivo |
+|--------|---------|
+| **Modificado** | `src/lib/visualGraphBuilder.ts` |
+| **Modificado** | `src/lib/project/domain/visual-graph-domain.ts` |
+| **Modificado** | `src/lib/project/domain/validate-v2.ts` |
+| **Creado** | `src/components/graph-builder/PCAPreview.tsx` |
+| **Modificado** | `src/components/graph-builder/GraphPreview.tsx` |
+| **Modificado** | `src/components/graph-builder/VisualGraphBuilder.tsx` |
+| **Creado** | `scripts/generate-prod2e-d28-pca-golden-fixture.ts` |
+| **Creado** | `scripts/fixtures/project-v2-dataset5-with-pca.sgproj` |
+| **Modificado** | `src/lib/project/__tests__/visual-graph-fixtures.cases.ts` |
+| **Modificado** | `src/lib/project/__tests__/visual-graph-mapper-helpers.ts` |
+| **Creado** | `src/lib/visualGraphBuilder/__tests__/pca.cases.ts` |
+| **Creado** | `scripts/validate-prod2e-d28-pca-unit.ts` |
+| **Creado** | `scripts/validate-prod2e-d28-pca-perf.ts` |
+| **Creado** | `scripts/validate-prod2e-data3b-gate.ts` |
+| **Modificado** | `scripts/validate-visual-graph-builder-unit.ts` |
+| **Modificado** | `src/lib/project/__tests__/visual-graph-mapper.cases.ts` |
+| **Modificado** | `src/lib/project/__tests__/visual-graph-collect.cases.ts` |
+| **Modificado** | `src/lib/project/__tests__/visual-graph-hydrate.cases.ts` |
+| **Modificado** | `package.json` (scripts generate + validate pca + data3b-gate) |
+| **Modificado** | `PROJECT_STATUS_PROD_2E.md` (acta D28.6) |
+
+**Total acumulado D28:** 7 creados · 12 modificados · 19 archivos producto/gates (excl. acta).
+
+**No modificado en D28.6:** `src/**`, `scripts/**`, `fixtures/**`, `package.json`, README, ROADMAP, MASTER.
+
+**No modificado en D28 (alcance congelado):** `src/app/page.tsx` — SCI-40 PCA intacto.
+
+---
+
 ## Cronología PROD-2E
 
 ```text
@@ -538,7 +847,9 @@ D26 DATA-3B Heatmap ✓ (CLOSED)
   ↓
 D27 DATA-3B Bubble ✓ (CLOSED)
   ↓
-D28 PCA → D29–D30 GRAPH-1 → D31–D32 GRAPH-2
+D28 DATA-3B PCA ✓ (CLOSED) — DATA-3B ✓ (CLOSED)
+  ↓
+D29–D30 GRAPH-1 → D31–D32 GRAPH-2
   ↓
 D33 F5F-BIS → D34–D35 SCI-40 (Escenario B) → D36 Cierre
 ```
@@ -556,4 +867,4 @@ D33 F5F-BIS → D34–D35 SCI-40 (Escenario B) → D36 Cierre
 
 ---
 
-*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Next: D28 BUILD.*
+*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Next: D29 BUILD.*

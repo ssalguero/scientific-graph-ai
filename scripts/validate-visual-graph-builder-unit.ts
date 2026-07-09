@@ -14,6 +14,7 @@ import {
 } from "../src/lib/visualGraphBuilder";
 
 import { runBubbleCaseSuite } from "../src/lib/visualGraphBuilder/__tests__/bubble.cases";
+import { runPcaCaseSuite } from "../src/lib/visualGraphBuilder/__tests__/pca.cases";
 import { runScatterCaseSuite } from "../src/lib/visualGraphBuilder/__tests__/scatter.cases";
 
 type CaseResult = { id: string; pass: boolean; detail?: string };
@@ -262,6 +263,7 @@ results.push({
 });
 
 results.push(...runBubbleCaseSuite());
+results.push(...runPcaCaseSuite());
 results.push(...runScatterCaseSuite());
 
 const summary = {
