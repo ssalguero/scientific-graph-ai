@@ -44,6 +44,12 @@ export const cloneGraphSpecification = (
   ...(spec.graphType === "bubble"
     ? { sizeVariable: spec.sizeVariable ?? null }
     : {}),
+  ...(spec.graphType === "pca"
+    ? {
+        pcaVariables: [...(spec.pcaVariables ?? [])],
+        pcaStandardize: spec.pcaStandardize ?? true,
+      }
+    : {}),
   id: spec.id,
   createdAt: spec.createdAt,
   xLabel: spec.xLabel,

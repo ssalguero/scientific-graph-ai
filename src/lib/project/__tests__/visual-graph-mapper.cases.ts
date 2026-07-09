@@ -24,6 +24,7 @@ import {
   SAMPLE_VGB_LINE_SPEC_INPUT,
   SAMPLE_VGB_HEATMAP_SPEC_INPUT,
   SAMPLE_VGB_BUBBLE_SPEC_INPUT,
+  SAMPLE_VGB_PCA_SPEC_INPUT,
   SAMPLE_VGB_PROJECT_ID,
   SAMPLE_VGB_SCATTER_SPEC_INPUT,
   cloneVisualGraphPreview,
@@ -326,6 +327,47 @@ export const runVisualGraphMapperCaseSuite = (): CaseResult[] => {
       bubbleRebuilt.preview.graphType === "bubble" &&
       bubbleRebuilt.preview.bubbleData.length > 0 &&
       bubbleRebuilt.displaySeries.length === 0
+  );
+
+  const pcaEntry = buildSampleVisualGraphEntry({
+    graphId: "vg-pca-mapper",
+    specInput: SAMPLE_VGB_PCA_SPEC_INPUT,
+  });
+  const pcaPersisted = projectVisualGraphEntryToPersistedV2(
+    pcaEntry,
+    SAMPLE_VGB_DATASET_ID
+  );
+
+  assertCase(
+    "mapper.pca.runtimeToPersisted",
+    pcaPersisted.graphSpec.graphType === "pca" &&
+      pcaPersisted.graphSpec.pcaVariables?.length === 2 &&
+      pcaPersisted.graphSpec.pcaStandardize === true &&
+      hasOnlyPersistedVisualGraphKeys(pcaPersisted as unknown as Record<string, unknown>)
+  );
+
+  assertCase(
+    "mapper.pca.vgbR1.noPcaDataInGraphSpec",
+    !("pcaData" in (pcaPersisted.graphSpec as unknown as Record<string, unknown>)) &&
+      !("pcaMeta" in (pcaPersisted.graphSpec as unknown as Record<string, unknown>)) &&
+      !("preview" in (pcaPersisted as unknown as Record<string, unknown>)) &&
+      !("displaySeries" in (pcaPersisted as unknown as Record<string, unknown>)) &&
+      PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+        (key) => !(key in (pcaPersisted.graphSpec as unknown as Record<string, unknown>))
+      )
+  );
+
+  const pcaRebuilt = projectVisualGraphPersistedV2ToRuntimeEntry(
+    pcaPersisted,
+    hydrateContext
+  );
+  assertCase(
+    "mapper.pca.runtimeRebuild",
+    pcaRebuilt !== null &&
+      pcaRebuilt.preview.graphType === "pca" &&
+      pcaRebuilt.preview.pcaData.length > 0 &&
+      pcaRebuilt.preview.pcaMeta !== null &&
+      pcaRebuilt.displaySeries.length === 0
   );
 
   return results;

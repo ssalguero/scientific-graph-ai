@@ -39,6 +39,7 @@ const FIXTURES_DIR = path.join(process.cwd(), "scripts", "fixtures");
 const MONO_GOLDEN_FIXTURE = "project-v2-dataset5-with-visual-graph.sgproj";
 const HEATMAP_GOLDEN_FIXTURE = "project-v2-dataset5-with-heatmap.sgproj";
 const BUBBLE_GOLDEN_FIXTURE = "project-v2-dataset5-with-bubble.sgproj";
+const PCA_GOLDEN_FIXTURE = "project-v2-dataset5-with-pca.sgproj";
 const SCATTER_PRO_GOLDEN_FIXTURE = "project-v2-dataset5-with-scatter-pro.sgproj";
 const MULTI_GOLDEN_FIXTURE = "project-v2-dataset5-dataset6-with-visual-graphs.sgproj";
 const B2_MINIMAL_FIXTURE = "project-v2-dataset5-minimal.sgproj";
@@ -67,6 +68,8 @@ const assertVgbR1InSerializedJson = (json: string): boolean => {
     json.includes('"displaySeries"') ||
     json.includes('"heatmapData"') ||
     json.includes('"bubbleData"') ||
+    json.includes('"pcaData"') ||
+    json.includes('"pcaMeta"') ||
     json.includes('"scatterPoints"')
   ) {
     return false;
@@ -361,6 +364,134 @@ export const runVisualGraphFixturesCaseSuite = (): CaseResult[] => {
   assertCase(
     "fixtures.vgbR1.golden.bubble.noPreviewLeakInJson",
     assertVgbR1InSerializedJson(bubbleGoldenText)
+  );
+
+  const pcaGoldenText = readFixture(PCA_GOLDEN_FIXTURE);
+  const pcaGoldenHydrated = hydrateProjectJson(pcaGoldenText);
+  assertCase(
+    "fixtures.vgb.golden.pca.fixtureLoads",
+    pcaGoldenHydrated.ok === true &&
+      (pcaGoldenHydrated.patch.project.visualGraphs?.length ?? 0) === 1 &&
+      pcaGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec.graphType === "pca" &&
+      pcaGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec.pcaVariables?.length ===
+        3 &&
+      pcaGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec.pcaStandardize === true &&
+      pcaGoldenHydrated.patch.project.visualGraphs?.[0]?.sourceDatasetId ===
+        MONO_PRIMARY_DATASET_ID
+  );
+
+  if (pcaGoldenHydrated.ok) {
+    const pcaRuntime = extractVisualGraphRuntimeState(pcaGoldenHydrated.patch);
+    const pcaPreview = pcaRuntime[0]?.preview as VisualGraphPreview | undefined;
+
+    assertCase(
+      "fixtures.vgb.golden.pca.hydrateRebuildsPreview",
+      pcaRuntime.length === 1 &&
+        pcaPreview?.graphType === "pca" &&
+        (pcaPreview?.pcaData.length ?? 0) > 0 &&
+        pcaPreview?.pcaMeta !== null
+    );
+
+    const pcaRoundTrip = runVisualGraphHydrateRoundTrip(
+      patchToCollectContextV2WithVisualGraphs(pcaGoldenHydrated.patch)
+    );
+    const pcaFirstPersisted = pcaRoundTrip.firstProject.visualGraphs ?? [];
+    const pcaSecondPersisted = pcaRoundTrip.secondProject.visualGraphs ?? [];
+
+    assertCase(
+      "fixtures.vgb.golden.pca.roundtrip",
+      visualGraphsPersistedEquivalent(pcaFirstPersisted, pcaSecondPersisted)
+    );
+
+    const pcaSpec = pcaGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec;
+    const pcaSessionDataset = pcaGoldenHydrated.patch.sessionDatasets.find(
+      (dataset) => dataset.id === MONO_PRIMARY_DATASET_ID
+    );
+    const pcaSeries = pcaSessionDataset?.datasetPayload.series ?? [];
+    const pcaColumnRegistry = pcaSessionDataset?.datasetPayload.columnRegistry ?? {};
+
+    if (pcaSpec) {
+      const pcaWorksheetModel = seriesToWorksheet(pcaSeries);
+      const pcaPreviewA = buildVisualGraphPreview(
+        pcaSpec,
+        pcaWorksheetModel,
+        pcaColumnRegistry
+      );
+      const pcaPreviewB = buildVisualGraphPreview(
+        pcaSpec,
+        pcaWorksheetModel,
+        pcaColumnRegistry
+      );
+      assertCase(
+        "fixtures.vgb.golden.pca.determinism",
+        !("error" in pcaPreviewA) &&
+          !("error" in pcaPreviewB) &&
+          JSON.stringify(pcaPreviewA.pcaData) === JSON.stringify(pcaPreviewB.pcaData) &&
+          JSON.stringify(pcaPreviewA.pcaMeta) === JSON.stringify(pcaPreviewB.pcaMeta)
+      );
+    } else {
+      assertCase("fixtures.vgb.golden.pca.determinism", false);
+    }
+
+    const pcaCollectContext = patchToCollectContextV2WithVisualGraphs(
+      pcaGoldenHydrated.patch
+    );
+    const pcaFirstProject = collectProjectSnapshotV2(pcaCollectContext);
+    const pcaFirstSerialized = serializeProjectV2({
+      project: pcaFirstProject,
+      appVersion: "0.1.0",
+      exportedAt: "2026-06-30T10:00:00.000Z",
+      options: { includeChecksum: false },
+    });
+    const pcaReloaded = pcaFirstSerialized.ok
+      ? hydrateProjectJson(pcaFirstSerialized.json)
+      : { ok: false as const, errors: [] as string[] };
+    const pcaSecondProject =
+      pcaReloaded.ok === true
+        ? collectProjectSnapshotV2(
+            patchToCollectContextV2WithVisualGraphs(pcaReloaded.patch)
+          )
+        : null;
+    const pcaSecondSerialized =
+      pcaSecondProject !== null
+        ? serializeProjectV2({
+            project: pcaSecondProject,
+            appVersion: "0.1.0",
+            exportedAt: "2026-06-30T10:00:00.000Z",
+            options: { includeChecksum: false },
+          })
+        : { ok: false as const, errors: [] as string[] };
+
+    assertCase(
+      "fixtures.vgb.golden.pca.idempotent",
+      pcaFirstSerialized.ok === true &&
+        pcaReloaded.ok === true &&
+        pcaSecondSerialized.ok === true &&
+        pcaFirstSerialized.json === pcaSecondSerialized.json
+    );
+
+    assertCase(
+      "fixtures.vgbR1.golden.pca.reCollectClean",
+      pcaSecondPersisted.every((entry) =>
+        hasOnlyPersistedVisualGraphKeys(entry as unknown as Record<string, unknown>)
+      ) &&
+        pcaSecondPersisted.every((entry) =>
+          PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+            (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
+          )
+        )
+    );
+  } else {
+    assertCase("fixtures.vgb.golden.pca.hydrateRebuildsPreview", false);
+    assertCase("fixtures.vgb.golden.pca.roundtrip", false);
+    assertCase("fixtures.vgb.golden.pca.determinism", false);
+    assertCase("fixtures.vgb.golden.pca.idempotent", false);
+    assertCase("fixtures.vgbR1.golden.pca.reCollectClean", false);
+  }
+
+  assertCase(
+    "fixtures.vgbR1.golden.pca.noPreviewLeakInJson",
+    assertVgbR1InSerializedJson(pcaGoldenText)
   );
 
   const scatterProGoldenText = readFixture(SCATTER_PRO_GOLDEN_FIXTURE);

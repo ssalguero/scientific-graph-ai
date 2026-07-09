@@ -28,6 +28,7 @@ import {
   SAMPLE_VGB_LINE_SPEC_INPUT,
   SAMPLE_VGB_HEATMAP_SPEC_INPUT,
   SAMPLE_VGB_BUBBLE_SPEC_INPUT,
+  SAMPLE_VGB_PCA_SPEC_INPUT,
   SAMPLE_VGB_REGISTRY,
   SAMPLE_VGB_SCATTER_SPEC_INPUT,
   SAMPLE_VGB_SERIES,
@@ -317,6 +318,72 @@ export const runVisualGraphHydrateCaseSuite = (): CaseResult[] => {
       !bubbleReSerialized.json.includes('"bubbleData"') &&
       !bubbleReSerialized.json.includes('"preview"') &&
       !bubbleReSerialized.json.includes('"displaySeries"')
+  );
+
+  const pcaEntry = buildSampleVisualGraphEntry({
+    graphId: "vg-pca-hydrate",
+    specInput: SAMPLE_VGB_PCA_SPEC_INPUT,
+  });
+  const pcaCollectContext = buildVisualGraphHydrateCollectContext({
+    projectVisualGraphEntries: [pcaEntry],
+  });
+  const pcaProject = collectProjectSnapshotV2(pcaCollectContext);
+  const pcaPatch = buildHydratePatchFromProject(pcaProject);
+  const pcaRuntime = extractVisualGraphRuntimeState(pcaPatch);
+
+  assertCase(
+    "hydrate.vgb.pca.rebuildsPreview",
+    pcaRuntime.length === 1 &&
+      pcaRuntime[0]?.preview.graphType === "pca" &&
+      (pcaRuntime[0]?.preview.pcaData.length ?? 0) > 0 &&
+      pcaRuntime[0]?.preview.pcaMeta !== null
+  );
+
+  const pcaReloadCollectProject = collectProjectSnapshotV2(pcaCollectContext);
+  const pcaFirstSerialized = serializeProjectV2({
+    project: pcaReloadCollectProject,
+    appVersion: "0.1.0",
+    exportedAt: "2026-06-30T10:00:00.000Z",
+    options: { includeChecksum: false },
+  });
+  const pcaReloaded =
+    pcaFirstSerialized.ok === true
+      ? hydrateProjectJson(pcaFirstSerialized.json)
+      : { ok: false as const, errors: [] as string[] };
+  const pcaSecondCollectProject =
+    pcaReloaded.ok === true
+      ? collectProjectSnapshotV2(
+          patchToCollectContextV2WithVisualGraphs(pcaReloaded.patch)
+        )
+      : null;
+  const pcaReSerialized =
+    pcaSecondCollectProject !== null
+      ? serializeProjectV2({
+          project: pcaSecondCollectProject,
+          appVersion: "0.1.0",
+          options: { includeChecksum: false, pretty: true },
+        })
+      : { ok: false as const, errors: [] as string[] };
+
+  assertCase(
+    "hydrate.vgbR1.pca.noPcaDataLeak",
+    pcaReSerialized.ok === true &&
+      !pcaReSerialized.json.includes('"pcaData"') &&
+      !pcaReSerialized.json.includes('"pcaMeta"') &&
+      !pcaReSerialized.json.includes('"preview"') &&
+      !pcaReSerialized.json.includes('"displaySeries"')
+  );
+
+  assertCase(
+    "hydrate.vgb.pca.roundtrip.idempotent",
+    pcaReloaded.ok === true &&
+      pcaSecondCollectProject !== null &&
+      (pcaReloadCollectProject.visualGraphs?.length ?? 0) === 1 &&
+      (pcaSecondCollectProject.visualGraphs?.length ?? 0) === 1 &&
+      persistedVisualGraphsEquivalent(
+        pcaReloadCollectProject.visualGraphs![0]!,
+        pcaSecondCollectProject.visualGraphs![0]!
+      )
   );
 
   const firstPersisted = withGraphRoundTrip.firstProject.visualGraphs ?? [];

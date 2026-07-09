@@ -20,6 +20,7 @@ import {
   SAMPLE_VGB_LINE_SPEC_INPUT,
   SAMPLE_VGB_HEATMAP_SPEC_INPUT,
   SAMPLE_VGB_BUBBLE_SPEC_INPUT,
+  SAMPLE_VGB_PCA_SPEC_INPUT,
   SAMPLE_VGB_SCATTER_SPEC_INPUT,
 } from "./visual-graph-mapper-helpers";
 
@@ -334,6 +335,49 @@ export const runVisualGraphCollectCaseSuite = (): CaseResult[] => {
         hasOnlyPersistedVisualGraphKeys(entry as unknown as Record<string, unknown>)
       ) &&
       (bubbleSnapshot.visualGraphs ?? []).every((entry) =>
+        PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+          (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
+        )
+      )
+  );
+
+  const pcaEntry = buildSampleVisualGraphEntry({
+    graphId: "vg-pca-collect",
+    specInput: SAMPLE_VGB_PCA_SPEC_INPUT,
+  });
+  const pcaSnapshot = collectProjectSnapshotV2(
+    buildBaseContext({
+      projectVisualGraphEntries: [pcaEntry],
+    })
+  );
+
+  assertCase(
+    "collect.vgb.pca.entry",
+    pcaSnapshot.visualGraphs?.length === 1 &&
+      pcaSnapshot.visualGraphs[0]?.graphSpec.graphType === "pca" &&
+      pcaSnapshot.visualGraphs[0]?.graphSpec.pcaVariables?.length === 2 &&
+      pcaSnapshot.visualGraphs[0]?.graphSpec.pcaStandardize === true
+  );
+
+  const pcaSerialized = serializeProjectV2({
+    project: pcaSnapshot,
+    appVersion: "0.1.0",
+    options: { includeChecksum: false, pretty: true },
+  });
+
+  assertCase(
+    "collect.vgbR1.pca.noPreviewLeakInJson",
+    pcaSerialized.ok === true &&
+      !pcaSerialized.json.includes('"preview"') &&
+      !pcaSerialized.json.includes('"displaySeries"') &&
+      !pcaSerialized.json.includes('"pcaData"') &&
+      !pcaSerialized.json.includes('"pcaMeta"') &&
+      !pcaSerialized.json.includes('"bubbleData"') &&
+      !pcaSerialized.json.includes('"heatmapData"') &&
+      (pcaSnapshot.visualGraphs ?? []).every((entry) =>
+        hasOnlyPersistedVisualGraphKeys(entry as unknown as Record<string, unknown>)
+      ) &&
+      (pcaSnapshot.visualGraphs ?? []).every((entry) =>
         PREVIEW_ONLY_EPHEMERAL_KEYS.every(
           (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
         )

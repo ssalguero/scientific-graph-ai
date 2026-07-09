@@ -19,7 +19,8 @@ export type VisualGraphType =
   | "boxPlot"
   | "violin"
   | "heatmap"
-  | "bubble";
+  | "bubble"
+  | "pca";
 
 export type VisualGraphMarkerStyle = "none" | "circle" | "square" | "diamond";
 export type VisualGraphLineStyle = "solid" | "dashed" | "dotted";
@@ -39,6 +40,8 @@ export type VisualGraphSpecification = {
   title?: string;
   colorVariable?: string | null;
   sizeVariable?: string | null;
+  pcaVariables?: string[];
+  pcaStandardize?: boolean;
 };
 
 export type GraphSpecification = VisualGraphSpecification & {
@@ -116,6 +119,23 @@ export type VisualGraphPreviewBubblePoint = {
   group?: string;
 };
 
+export type VisualGraphPreviewPcaPoint = {
+  pc1: number;
+  pc2: number;
+  label: string;
+};
+
+export type VisualGraphPreviewPcaMeta = {
+  component1Variance: number;
+  component2Variance: number;
+  cumulativeVariance: number;
+};
+
+export type PCAWorksheetAnalysis = {
+  pcaData: VisualGraphPreviewPcaPoint[];
+  pcaMeta: VisualGraphPreviewPcaMeta;
+};
+
 export type VisualGraphPreview = {
   graphType: VisualGraphType;
   title: string;
@@ -129,6 +149,8 @@ export type VisualGraphPreview = {
   violinData: VisualGraphPreviewViolinItem[];
   heatmapData: VisualGraphPreviewHeatmapCell[];
   bubbleData: VisualGraphPreviewBubblePoint[];
+  pcaData: VisualGraphPreviewPcaPoint[];
+  pcaMeta: VisualGraphPreviewPcaMeta | null;
 };
 
 export const VISUAL_GRAPH_TYPES_V1: VisualGraphType[] = [
@@ -140,6 +162,7 @@ export const VISUAL_GRAPH_TYPES_V1: VisualGraphType[] = [
   "violin",
   "heatmap",
   "bubble",
+  "pca",
 ];
 
 export const VISUAL_GRAPH_TYPE_LABELS: Record<VisualGraphType, string> = {
@@ -151,10 +174,10 @@ export const VISUAL_GRAPH_TYPE_LABELS: Record<VisualGraphType, string> = {
   violin: "Violin Plot",
   heatmap: "Heatmap",
   bubble: "Bubble",
+  pca: "PCA",
 };
 
 export const VISUAL_GRAPH_TYPES_FUTURE: Array<{ id: string; label: string }> = [
-  { id: "pca", label: "PCA" },
   { id: "clustering", label: "Clustering" },
   { id: "parallel", label: "Parallel Coordinates" },
   { id: "radar", label: "Radar" },
@@ -181,6 +204,8 @@ export const DEFAULT_VISUAL_GRAPH_SPECIFICATION: VisualGraphSpecification = {
   bins: 10,
   colorVariable: null,
   sizeVariable: null,
+  pcaVariables: [],
+  pcaStandardize: true,
 };
 
 /** Estado inicial del Constructor Visual: sin tipo preseleccionado. */
@@ -197,6 +222,8 @@ export const INITIAL_VISUAL_GRAPH_BUILDER_DRAFT: VisualGraphBuilderDraft = {
   bins: 10,
   colorVariable: null,
   sizeVariable: null,
+  pcaVariables: [],
+  pcaStandardize: true,
 };
 
 export const BUBBLE_SIZE_MIN = 0.25;
@@ -617,6 +644,428 @@ export function buildHeatmapMatrixFromWorksheet(
   return { rows, columns, cells };
 }
 
+const PCA_EIGENVALUE_EPSILON = 1e-9;
+const PCA_POWER_ITERATION_MAX = 200;
+
+const pcaDotProduct = (left: number[], right: number[]) =>
+  left.reduce((sum, value, index) => sum + value * right[index], 0);
+
+const pcaVectorNorm = (values: number[]) =>
+  Math.sqrt(pcaDotProduct(values, values));
+
+const pcaNormalizeVector = (values: number[]) => {
+  const norm = pcaVectorNorm(values);
+  if (norm === 0) return values.map(() => 0);
+  return values.map((value) => value / norm);
+};
+
+const normalizePCAEigenvectorSign = (eigenvector: number[]): number[] => {
+  const firstNonZeroIndex = eigenvector.findIndex(
+    (value) => Math.abs(value) > PCA_EIGENVALUE_EPSILON
+  );
+  if (firstNonZeroIndex === -1) {
+    return eigenvector;
+  }
+  if ((eigenvector[firstNonZeroIndex] ?? 0) < 0) {
+    return eigenvector.map((value) => -value);
+  }
+  return eigenvector;
+};
+
+const isDegeneratePCAComponent = (
+  eigenvalue: number,
+  eigenvector: number[]
+) =>
+  eigenvalue <= PCA_EIGENVALUE_EPSILON ||
+  pcaVectorNorm(eigenvector) <= PCA_EIGENVALUE_EPSILON;
+
+const getPCAVariableStandardDeviations = (matrix: number[][]) => {
+  const observationCount = matrix.length;
+  const variableCount = matrix[0]?.length ?? 0;
+  const standardDeviations = Array.from({ length: variableCount }, () => 0);
+
+  for (let columnIndex = 0; columnIndex < variableCount; columnIndex += 1) {
+    const mean =
+      matrix.reduce((sum, row) => sum + row[columnIndex], 0) / observationCount;
+
+    if (observationCount <= 1) {
+      standardDeviations[columnIndex] = 0;
+      continue;
+    }
+
+    const variance =
+      matrix.reduce(
+        (sum, row) => sum + (row[columnIndex] - mean) ** 2,
+        0
+      ) / (observationCount - 1);
+    standardDeviations[columnIndex] = Math.sqrt(variance);
+  }
+
+  return standardDeviations;
+};
+
+const filterPCADataMatrixByActiveColumns = (
+  matrix: number[][],
+  activeColumnIndices: number[]
+) =>
+  matrix.map((row) => activeColumnIndices.map((columnIndex) => row[columnIndex]));
+
+function buildPCADataMatrixFromWorksheet(
+  model: WorksheetModel,
+  variableIds: readonly string[]
+): number[][] | null {
+  const matrix: number[][] = [];
+
+  for (const row of model.rows) {
+    const values: number[] = [];
+    let rowValid = true;
+
+    for (const variableId of variableIds) {
+      const value = readCellNumeric(row, variableId);
+      if (!Number.isFinite(value)) {
+        rowValid = false;
+        break;
+      }
+      values.push(value);
+    }
+
+    if (rowValid) {
+      matrix.push(values);
+    }
+  }
+
+  if (matrix.length < 2) {
+    return null;
+  }
+
+  return matrix;
+}
+
+const centerPCADataMatrix = (matrix: number[][]) => {
+  const observationCount = matrix.length;
+  const variableCount = matrix[0]?.length ?? 0;
+
+  if (observationCount === 0 || variableCount === 0) {
+    return matrix;
+  }
+
+  const means = Array.from({ length: variableCount }, () => 0);
+
+  for (let columnIndex = 0; columnIndex < variableCount; columnIndex += 1) {
+    means[columnIndex] =
+      matrix.reduce((sum, row) => sum + row[columnIndex], 0) / observationCount;
+  }
+
+  return matrix.map((row) =>
+    row.map((value, columnIndex) => value - means[columnIndex])
+  );
+};
+
+const standardizePCADataMatrix = (matrix: number[][]) => {
+  const observationCount = matrix.length;
+  const variableCount = matrix[0]?.length ?? 0;
+
+  if (observationCount === 0 || variableCount === 0) {
+    return matrix;
+  }
+
+  const means = Array.from({ length: variableCount }, () => 0);
+  const standardDeviations = Array.from({ length: variableCount }, () => 0);
+
+  for (let columnIndex = 0; columnIndex < variableCount; columnIndex += 1) {
+    means[columnIndex] =
+      matrix.reduce((sum, row) => sum + row[columnIndex], 0) / observationCount;
+
+    if (observationCount <= 1) {
+      standardDeviations[columnIndex] = 0;
+      continue;
+    }
+
+    const variance =
+      matrix.reduce(
+        (sum, row) => sum + (row[columnIndex] - means[columnIndex]) ** 2,
+        0
+      ) / (observationCount - 1);
+    standardDeviations[columnIndex] = Math.sqrt(variance);
+  }
+
+  return matrix.map((row) =>
+    row.map((value, columnIndex) => {
+      const standardDeviation = standardDeviations[columnIndex];
+      if (standardDeviation === 0) return 0;
+      return (value - means[columnIndex]) / standardDeviation;
+    })
+  );
+};
+
+const computePCACovarianceMatrix = (matrix: number[][]) => {
+  const observationCount = matrix.length;
+  const variableCount = matrix[0]?.length ?? 0;
+  const covariance = Array.from({ length: variableCount }, () =>
+    Array.from({ length: variableCount }, () => 0)
+  );
+
+  if (observationCount <= 1) {
+    return covariance;
+  }
+
+  for (let rowIndex = 0; rowIndex < variableCount; rowIndex += 1) {
+    for (let columnIndex = rowIndex; columnIndex < variableCount; columnIndex += 1) {
+      let sum = 0;
+
+      for (
+        let observationIndex = 0;
+        observationIndex < observationCount;
+        observationIndex += 1
+      ) {
+        sum +=
+          matrix[observationIndex][rowIndex] *
+          matrix[observationIndex][columnIndex];
+      }
+
+      const value = sum / (observationCount - 1);
+      covariance[rowIndex][columnIndex] = value;
+      covariance[columnIndex][rowIndex] = value;
+    }
+  }
+
+  return covariance;
+};
+
+const multiplySymmetricMatrixVector = (matrix: number[][], vector: number[]) => {
+  const size = vector.length;
+  const result = Array.from({ length: size }, () => 0);
+
+  for (let rowIndex = 0; rowIndex < size; rowIndex += 1) {
+    for (let columnIndex = 0; columnIndex < size; columnIndex += 1) {
+      result[rowIndex] += matrix[rowIndex][columnIndex] * vector[columnIndex];
+    }
+  }
+
+  return result;
+};
+
+const powerIterationEigen = (
+  matrix: number[][],
+  orthogonalTo: number[] | null = null,
+  iterations = PCA_POWER_ITERATION_MAX
+) => {
+  const size = matrix.length;
+  let vector = pcaNormalizeVector(
+    Array.from({ length: size }, (_, index) => (index === 0 ? 1 : 0.1))
+  );
+
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    let nextVector = multiplySymmetricMatrixVector(matrix, vector);
+
+    if (orthogonalTo) {
+      const projection = pcaDotProduct(nextVector, orthogonalTo);
+      nextVector = nextVector.map(
+        (value, index) => value - projection * orthogonalTo[index]
+      );
+    }
+
+    const normalized = pcaNormalizeVector(nextVector);
+    if (normalized.every((value) => value === 0)) break;
+    vector = normalized;
+  }
+
+  const transformed = multiplySymmetricMatrixVector(matrix, vector);
+  const eigenvalue = Math.max(0, pcaDotProduct(vector, transformed));
+
+  if (isDegeneratePCAComponent(eigenvalue, vector)) {
+    return {
+      eigenvalue: 0,
+      eigenvector: Array.from({ length: size }, () => 0),
+    };
+  }
+
+  return { eigenvalue, eigenvector: vector };
+};
+
+const normalizePCAExplainedVariance = (
+  eigenvalue1: number,
+  eigenvalue2: number,
+  totalVariance: number
+): VisualGraphPreviewPcaMeta => {
+  if (totalVariance <= PCA_EIGENVALUE_EPSILON) {
+    return {
+      component1Variance: 0,
+      component2Variance: 0,
+      cumulativeVariance: 0,
+    };
+  }
+
+  const cappedEigenvalue1 = Math.min(Math.max(0, eigenvalue1), totalVariance);
+  const remainingVariance = Math.max(0, totalVariance - cappedEigenvalue1);
+  const cappedEigenvalue2 = Math.min(Math.max(0, eigenvalue2), remainingVariance);
+
+  const component1Variance = Math.min(
+    100,
+    (cappedEigenvalue1 / totalVariance) * 100
+  );
+  const component2Variance = Math.min(
+    Math.max(0, 100 - component1Variance),
+    (cappedEigenvalue2 / totalVariance) * 100
+  );
+  const cumulativeVariance = component1Variance + component2Variance;
+
+  return {
+    component1Variance,
+    component2Variance,
+    cumulativeVariance,
+  };
+};
+
+const projectOntoPrincipalComponent = (
+  matrix: number[][],
+  eigenvector: number[]
+) => matrix.map((row) => pcaDotProduct(row, eigenvector));
+
+function assessPCAWorksheetAvailability(
+  model: WorksheetModel,
+  pcaVariables: readonly string[],
+  pcaStandardize: boolean
+): { ok: true } | { ok: false; message: string } {
+  const rawMatrix = buildPCADataMatrixFromWorksheet(model, pcaVariables);
+  if (!rawMatrix) {
+    return { ok: false, message: "Datos insuficientes para PCA." };
+  }
+
+  const standardDeviations = getPCAVariableStandardDeviations(rawMatrix);
+  const activeColumnIndices = standardDeviations
+    .map((standardDeviation, index) =>
+      standardDeviation > PCA_EIGENVALUE_EPSILON ? index : -1
+    )
+    .filter((index) => index >= 0);
+
+  if (activeColumnIndices.length < 2) {
+    return { ok: false, message: "Datos insuficientes para PCA." };
+  }
+
+  const activeMatrix = filterPCADataMatrixByActiveColumns(
+    rawMatrix,
+    activeColumnIndices
+  );
+  const analysisMatrix = pcaStandardize
+    ? standardizePCADataMatrix(activeMatrix)
+    : centerPCADataMatrix(activeMatrix);
+  const covarianceMatrix = computePCACovarianceMatrix(analysisMatrix);
+  const totalVariance = covarianceMatrix.reduce(
+    (sum, row, index) => sum + row[index],
+    0
+  );
+
+  if (totalVariance <= PCA_EIGENVALUE_EPSILON) {
+    return { ok: false, message: "Datos insuficientes para PCA." };
+  }
+
+  return { ok: true };
+}
+
+export function buildPCAFromWorksheet(
+  model: WorksheetModel,
+  pcaVariables: readonly string[],
+  pcaStandardize = true
+): PCAWorksheetAnalysis | null {
+  const rawMatrix = buildPCADataMatrixFromWorksheet(model, pcaVariables);
+  if (!rawMatrix) {
+    return null;
+  }
+
+  const standardDeviations = getPCAVariableStandardDeviations(rawMatrix);
+  const activeColumnIndices = standardDeviations
+    .map((standardDeviation, index) =>
+      standardDeviation > PCA_EIGENVALUE_EPSILON ? index : -1
+    )
+    .filter((index) => index >= 0);
+
+  if (activeColumnIndices.length < 2) {
+    return null;
+  }
+
+  const activeMatrix = filterPCADataMatrixByActiveColumns(
+    rawMatrix,
+    activeColumnIndices
+  );
+  const analysisMatrix = pcaStandardize
+    ? standardizePCADataMatrix(activeMatrix)
+    : centerPCADataMatrix(activeMatrix);
+  const covarianceMatrix = computePCACovarianceMatrix(analysisMatrix);
+  const totalVariance = covarianceMatrix.reduce(
+    (sum, row, index) => sum + row[index],
+    0
+  );
+
+  if (totalVariance <= PCA_EIGENVALUE_EPSILON) {
+    return null;
+  }
+
+  const firstComponent = powerIterationEigen(covarianceMatrix);
+  const normalizedPc1Eigenvector = normalizePCAEigenvectorSign(
+    firstComponent.eigenvector
+  );
+  let secondComponent = powerIterationEigen(
+    covarianceMatrix,
+    normalizedPc1Eigenvector
+  );
+
+  const remainingVariance = Math.max(
+    0,
+    totalVariance - firstComponent.eigenvalue
+  );
+
+  if (
+    isDegeneratePCAComponent(
+      secondComponent.eigenvalue,
+      secondComponent.eigenvector
+    ) ||
+    Math.abs(
+      pcaDotProduct(normalizedPc1Eigenvector, secondComponent.eigenvector)
+    ) > 0.99 ||
+    secondComponent.eigenvalue > remainingVariance + PCA_EIGENVALUE_EPSILON
+  ) {
+    secondComponent = {
+      eigenvalue: 0,
+      eigenvector: Array.from({ length: activeColumnIndices.length }, () => 0),
+    };
+  } else {
+    secondComponent = {
+      eigenvalue: Math.min(secondComponent.eigenvalue, remainingVariance),
+      eigenvector: secondComponent.eigenvector,
+    };
+  }
+
+  const normalizedPc2Eigenvector = normalizePCAEigenvectorSign(
+    secondComponent.eigenvector
+  );
+
+  const pc1Scores = projectOntoPrincipalComponent(
+    analysisMatrix,
+    normalizedPc1Eigenvector
+  );
+  const pc2Scores = isDegeneratePCAComponent(
+    secondComponent.eigenvalue,
+    normalizedPc2Eigenvector
+  )
+    ? analysisMatrix.map(() => 0)
+    : projectOntoPrincipalComponent(analysisMatrix, normalizedPc2Eigenvector);
+
+  const pcaMeta = normalizePCAExplainedVariance(
+    firstComponent.eigenvalue,
+    secondComponent.eigenvalue,
+    totalVariance
+  );
+
+  const pcaData: VisualGraphPreviewPcaPoint[] = pc1Scores.map((pc1, index) => ({
+    label: `Obs ${index + 1}`,
+    pc1,
+    pc2: pc2Scores[index] ?? 0,
+  }));
+
+  return { pcaData, pcaMeta };
+}
+
 export function validateVisualGraphConfiguration(
   spec: VisualGraphSpecification | VisualGraphBuilderDraft,
   model: WorksheetModel,
@@ -758,6 +1207,33 @@ export function validateVisualGraphConfiguration(
 
       return { ok: true };
     }
+    case "pca": {
+      const pcaVariables = spec.pcaVariables ?? [];
+      if (pcaVariables.length < 2) {
+        return {
+          ok: false,
+          message: "Se requieren al menos 2 variables numéricas.",
+        };
+      }
+
+      for (const variableId of pcaVariables) {
+        const variableError = requireVariable(variableId, "variable");
+        if (variableError) {
+          return variableError;
+        }
+      }
+
+      const availability = assessPCAWorksheetAvailability(
+        model,
+        pcaVariables,
+        spec.pcaStandardize ?? true
+      );
+      if (!availability.ok) {
+        return availability;
+      }
+
+      return { ok: true };
+    }
     default:
       return { ok: false, message: "Tipo de gráfico no soportado." };
   }
@@ -794,6 +1270,13 @@ export function buildGraphSpecification(
     resolved.sizeVariable = spec.sizeVariable ?? null;
   } else {
     delete resolved.sizeVariable;
+  }
+  if (graphType === "pca") {
+    resolved.pcaVariables = [...(spec.pcaVariables ?? [])];
+    resolved.pcaStandardize = spec.pcaStandardize ?? true;
+  } else {
+    delete resolved.pcaVariables;
+    delete resolved.pcaStandardize;
   }
   resolved.groupVariable = normalizeGroupVariableForGraphType(
     graphType,
@@ -833,7 +1316,9 @@ export function buildVisualGraphPreview(
     spec.title?.trim() ||
     (graphType === "heatmap"
       ? `${VISUAL_GRAPH_TYPE_LABELS[graphType]} · ${resolveHeatmapColumnIds(model, registry, spec.xVariable, spec.yVariable).length} columnas`
-      : `${VISUAL_GRAPH_TYPE_LABELS[graphType]} · ${resolveLabel(variables, spec.yVariable) || resolveLabel(variables, spec.xVariable)}`);
+      : graphType === "pca"
+        ? `${VISUAL_GRAPH_TYPE_LABELS[graphType]} · ${spec.pcaVariables?.length ?? 0} variables`
+        : `${VISUAL_GRAPH_TYPE_LABELS[graphType]} · ${resolveLabel(variables, spec.yVariable) || resolveLabel(variables, spec.xVariable)}`);
 
   const emptyPreview: VisualGraphPreview = {
     graphType,
@@ -848,6 +1333,8 @@ export function buildVisualGraphPreview(
     violinData: [],
     heatmapData: [],
     bubbleData: [],
+    pcaData: [],
+    pcaMeta: null,
   };
 
   switch (graphType) {
@@ -981,6 +1468,25 @@ export function buildVisualGraphPreview(
       return {
         ...emptyPreview,
         bubbleData,
+      };
+    }
+    case "pca": {
+      const analysis = buildPCAFromWorksheet(
+        model,
+        spec.pcaVariables ?? [],
+        spec.pcaStandardize ?? true
+      );
+
+      if (!analysis) {
+        return { error: "Datos insuficientes para PCA." };
+      }
+
+      return {
+        ...emptyPreview,
+        xLabel: "PC1",
+        yLabel: "PC2",
+        pcaData: analysis.pcaData,
+        pcaMeta: analysis.pcaMeta,
       };
     }
     default:

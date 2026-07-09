@@ -63,7 +63,13 @@ export function VisualGraphBuilder({
   const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (spec.graphType === null || spec.graphType === "heatmap") return;
+    if (
+      spec.graphType === null ||
+      spec.graphType === "heatmap" ||
+      spec.graphType === "pca"
+    ) {
+      return;
+    }
     const defaultY = suggestDefaultYVariable(variables);
     if (!defaultY) return;
     setSpec((previous) =>
@@ -402,6 +408,64 @@ export function VisualGraphBuilder({
                     : null
                 }
               />
+            </>
+          )}
+
+          {spec.graphType === "pca" && (
+            <>
+              <div>
+                <p className={fieldLabel}>Variables PCA</p>
+                <p className="mb-2 text-xs text-[var(--app-text-muted)]">
+                  Seleccione al menos 2 columnas numéricas para el análisis.
+                </p>
+                <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3">
+                  {variables
+                    .filter((variable) => variable.numericCompatible)
+                    .map((variable) => {
+                      const selected = (spec.pcaVariables ?? []).includes(
+                        variable.seriesId
+                      );
+
+                      return (
+                        <label
+                          key={`${variable.kind}-${variable.seriesId}`}
+                          className="flex cursor-pointer items-center gap-2 text-sm text-[var(--app-text)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => {
+                              const current = spec.pcaVariables ?? [];
+                              const next = selected
+                                ? current.filter(
+                                    (seriesId) => seriesId !== variable.seriesId
+                                  )
+                                : [...current, variable.seriesId];
+                              updateSpec({ pcaVariables: next });
+                            }}
+                            className="rounded border-[var(--app-border)]"
+                          />
+                          <span>
+                            {variable.label}
+                            {variable.badges.includes("fx") ? "  ƒx" : ""}
+                            {variable.badges.includes("transform") ? "  ⇄" : ""}
+                          </span>
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={spec.pcaStandardize ?? true}
+                  onChange={(event) =>
+                    updateSpec({ pcaStandardize: event.target.checked })
+                  }
+                  className="rounded border-[var(--app-border)]"
+                />
+                <span className={fieldLabel}>Estandarizar variables</span>
+              </label>
             </>
           )}
 

@@ -98,6 +98,13 @@ export const SAMPLE_VGB_BUBBLE_SPEC_INPUT = {
   groupVariable: "grupo",
 };
 
+export const SAMPLE_VGB_PCA_SPEC_INPUT = {
+  ...DEFAULT_VISUAL_GRAPH_SPECIFICATION,
+  graphType: "pca" as const,
+  pcaVariables: ["control1", "tratamiento1"],
+  pcaStandardize: true,
+};
+
 const buildGraphSpecFromInput = (
   input: VisualGraphSpecification,
   graphId: string,

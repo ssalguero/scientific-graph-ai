@@ -20,6 +20,7 @@ import type {
 import { HeatmapPreview } from "./HeatmapPreview";
 import { BubblePreview } from "./BubblePreview";
 import { ScatterPreview } from "./ScatterPreview";
+import { PCAPreview } from "./PCAPreview";
 
 /** Width / height — ResponsiveContainer derives height from width (no parent height needed). */
 const CHART_ASPECT_RATIO = 1.8;
@@ -219,6 +220,13 @@ export function GraphPreview({
 
         {preview.graphType === "bubble" ? (
           <BubblePreview data={preview.bubbleData} />
+        ) : null}
+
+        {preview.graphType === "pca" ? (
+          <PCAPreview
+            pcaData={preview.pcaData}
+            pcaMeta={preview.pcaMeta}
+          />
         ) : null}
       </div>
     </div>
