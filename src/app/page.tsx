@@ -78,6 +78,8 @@ import { useProjectHistory } from "./useProjectHistory";
 import { buildProjectHistoryEntry } from "@/lib/project-history";
 import { HistoryPanel } from "@/components/project-activity";
 import { SettingsPanel } from "@/components/settings";
+import { RecentProjectsPanel } from "@/components/history";
+import { useRecentProjects } from "./useRecentProjects";
 import {
   APP_DISPLAY_VERSION,
   readUserPreferences,
@@ -16620,6 +16622,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [sidebarGraphLibraryOpen, setSidebarGraphLibraryOpen] = useState(false);
   const [projectActivityPanelOpen, setProjectActivityPanelOpen] = useState(false);
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
+  const [recentProjectsPanelOpen, setRecentProjectsPanelOpen] = useState(false);
+  const recentProjectsFetchedRef = useRef(false);
   const [importReportExpanded, setImportReportExpanded] = useState(true);
   const [worksheetModified, setWorksheetModified] = useState(false);
   const [projectVisualGraphs, setProjectVisualGraphs] = useState<
@@ -20713,6 +20717,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     pendingFileOpenConflict,
     dismissPendingFileOpenConflict,
     resolvePendingFileOpenConflict,
+    repo,
   } = useGraphEditorProjectFile({
     projectMetadata,
     setProjectMetadata,
@@ -20985,6 +20990,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     projectOpenSourceRef.current = "local";
     await handleOpenLocalProject(id);
   };
+
+  const {
+    projects: recentProjects,
+    isLoading: recentProjectsLoading,
+    loadError: recentProjectsLoadError,
+    refresh: refreshRecentProjects,
+  } = useRecentProjects(repo);
 
   const graphSidebarLabels = useMemo(() => {
     const titleCounts = new Map<string, number>();
@@ -21321,15 +21333,45 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             >
               Biblioteca de funciones
             </button>
-            <div
-              className={`${sidebarNavItem} opacity-60 cursor-not-allowed`}
-              aria-disabled
+            <button
+              type="button"
+              onClick={() => {
+                setRecentProjectsPanelOpen((open) => {
+                  const next = !open;
+                  if (next && !recentProjectsFetchedRef.current) {
+                    recentProjectsFetchedRef.current = true;
+                    void refreshRecentProjects();
+                  }
+                  return next;
+                });
+              }}
+              className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left`}
+              aria-expanded={recentProjectsPanelOpen}
             >
               <span>🕘 Historial</span>
-              <span className="text-xs text-[var(--app-text-muted)]">
-                Próximamente
+              <span
+                className="text-[10px] text-[var(--app-text-muted)]"
+                aria-hidden
+              >
+                {recentProjectsPanelOpen ? "▼" : "▶"}
               </span>
-            </div>
+            </button>
+            {recentProjectsPanelOpen ? (
+              <RecentProjectsPanel
+                projects={recentProjects}
+                isLoading={recentProjectsLoading}
+                loadError={recentProjectsLoadError}
+                activeProjectId={activeLocalProjectId}
+                onOpen={(id) => {
+                  void (async () => {
+                    await handleOpenLocalProjectWithSource(id);
+                    void refreshRecentProjects();
+                  })();
+                }}
+                onOpenLibrary={() => void openLibrary()}
+                className="mt-1"
+              />
+            ) : null}
           </DashboardSection>
 
           <DashboardSection title="Sistema" icon="⚙" defaultOpen>
