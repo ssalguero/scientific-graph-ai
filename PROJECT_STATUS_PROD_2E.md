@@ -1,7 +1,7 @@
 # PROJECT_STATUS — PROD-2E
 
 **Épica:** PROD-2E — Motor gráfico profesional  
-**Estado épica:** **OPEN** (D28 CLOSED — DATA-3B CLOSED — Ready for D29)  
+**Estado épica:** **OPEN** (D29 CLOSED — GRAPH-1a CLOSED — Ready for D30)  
 **SSOT Plan:** [`PROJECT_PLAN_PROD_2E.md`](PROJECT_PLAN_PROD_2E.md)  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md)  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md)
@@ -838,6 +838,296 @@ Next BUILD: D29 — GRAPH-1a Auto-fit viewport Y
 
 ---
 
+## §D29 — GRAPH-1a Auto-fit Viewport Y
+
+**Estado:** **CLOSED** (2026-07-10)  
+**Modo:** BUILD — dominio · wiring chart · wiring VGB preview · gates · smoke tests · correctivo · acta  
+**Próxima microfase:** **D30 — GRAPH-1b Publication Presets**  
+**Plan congelado:** D29 v1.0 (GRAPH-1a — sin presets; D30)
+
+### Resumen ejecutivo
+
+GRAPH-1a queda oficialmente operativo como **auto-fit del eje Y** en el chart principal y en los previews VGB, con dominio de viewport desacoplado en `src/lib/graph/viewport.ts`, extracción move-only del eje X desde `chartViewport.ts`, gates dedicados, smoke tests S1–S6 certificados y correctivo D29.5A para respeto de `graphContext` en reapertura de proyectos — sin cambios en persistencia, `schemaVersion` ni API Freeze VGB.
+
+| Indicador | Estado |
+|-----------|--------|
+| **Auto-fit Y implementado** | ✓ Chart principal + VGB previews |
+| **Dominio viewport extraído** | ✓ `src/lib/graph/viewport.ts` |
+| **Extracción X move-only** | ✓ Shim `chartViewport.ts` operativo |
+| **Wiring chart principal** | ✓ `page.tsx` + `localProjectActions` + `projectFileActions` |
+| **Wiring VGB previews** | ✓ Scatter · Bubble · PCA · Line/Bar/Histogram |
+| **Gates certificados** | ✓ Umbrella D29 + regresión transversal |
+| **Smoke tests certificados** | ✓ S1–S6 PASS (S3 tras D29.5A) |
+| **API Freeze respetado** | ✓ `schemaVersion` 2 · sin bump · sin breaking |
+| **Persistencia sin cambios** | ✓ `ProjectGraphContextV1` intacto |
+| **Deuda técnica en alcance** | **Ninguna** |
+
+### Métricas D29
+
+| Campo | Valor |
+|-------|-------|
+| **Épica parcial** | GRAPH-1a (auto-fit Y) — **CLOSED** |
+| **schemaVersion** | **2** (sin bump) |
+| **Archivos creados** | **4** (`viewport.ts`, `viewport.cases.ts`, `validate-chart-viewport-y.ts`, `validate-prod2e-d29-viewport-gate.ts`) |
+| **Archivos modificados (producto)** | **8** (`chartViewport.ts`, `page.tsx`, `localProjectActions.ts`, `projectFileActions.ts`, `ScatterPreview.tsx`, `BubblePreview.tsx`, `PCAPreview.tsx`, `GraphPreview.tsx`) |
+| **Archivos modificados (gates)** | **2** (`package.json`, `PROJECT_STATUS_PROD_2E.md`) |
+| **Nuevos scripts npm** | **2** (`validate:chart-viewport-y`, `validate:prod2e-d29-viewport-gate`) |
+| **Nuevos tests / casos** | **19** viewport suite (`runViewportCaseSuite`) — 9 X + 10 Y |
+| **LOC dominio** | ~**166** (`viewport.ts`) + ~**170** (`viewport.cases.ts`) |
+| **LOC wiring neto (estimado)** | ~**+35** previews + chart (D29.2–D29.3) + ~**+10** (D29.5A) |
+| **Viewport X unit** | **9/9 PASS** (`validate:chart-viewport`) |
+| **Viewport Y unit** | **10/10 PASS** (`validate:chart-viewport-y`) |
+| **Visual Graph Builder unit** | **79/79 PASS** |
+| **DATA-3B umbrella gate** | **13/13 PASS** |
+| **D29 viewport umbrella gate** | **8/8 PASS** |
+| **Smoke tests manuales** | **6/6 PASS** (S3 corregido en D29.5A) |
+| **Resultado microfase épica** | **PASS** |
+
+### D29.1 — Dominio viewport
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Extraer dominio viewport a `src/lib/graph/viewport.ts` (X move-only + API Y) |
+| **Archivos** | `src/lib/graph/viewport.ts` (nuevo), `src/lib/graph/__tests__/viewport.cases.ts` (nuevo), `src/app/chartViewport.ts` (shim) |
+| **API Y** | `collectExperimentalYExtent`, `computeYViewportWithPadding`, `fitYViewportToExperimentalSeries`, `computeYAxisDomainFromValues`, `computePaddedDomain` |
+| **Padding** | `VIEWPORT_PADDING_RATIO = 0.1` (span-based, unificado X/Y) |
+| **Resultado** | **PASS** — 19/19 casos `runViewportCaseSuite()` |
+
+### D29.2 — Wiring chart principal
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Conectar auto-fit Y en chart principal; eliminar `computeYAxisDomain` inline |
+| **Archivos** | `src/app/page.tsx`, `src/app/localProjectActions.ts`, `src/app/projectFileActions.ts` |
+| **Disparadores** | Import CSV · carga sesión · hidratación `graphContext == null` · cambio worksheet |
+| **Comportamiento** | `setAutoScaleY(true)` + auto-fit X en mismos disparadores que HOTFIX X |
+| **Resultado** | **PASS** |
+
+### D29.3 — VGB Preview auto-fit Y
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Dominio Y explícito con padding en previews VGB (independiente de `graphContext` editor) |
+| **Archivos** | `ScatterPreview.tsx`, `BubblePreview.tsx`, `PCAPreview.tsx`, `GraphPreview.tsx` (line/bar/histogram) |
+| **Sin cambio** | HeatmapPreview, BoxPlot, Violin |
+| **Resultado** | **PASS** — `validate:visual-graph-builder-unit` 79/79 |
+
+### D29.4 — Gates unitarios y regresión
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Certificar dominio Y + gate umbrella D29 |
+| **Archivos** | `scripts/validate-chart-viewport-y.ts`, `scripts/validate-prod2e-d29-viewport-gate.ts`, `package.json` |
+| **Regresión X** | `validate:chart-viewport` 9/9 PASS vía shim |
+| **Resultado** | **PASS** — umbrella 8/8 |
+
+### D29.5 — Smoke tests manuales
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Validación funcional S1–S6 en editor (`npm run dev`) |
+| **Alcance** | Sin cambios de código |
+| **Resultado inicial** | **5/6 PASS** — **S3 FAIL** (regresión reapertura `graphContext.autoScaleY`) |
+| **Evidencia S1–S2, S4–S6** | PASS en chart principal y VGB previews |
+
+### D29.5A — Correctivo wiring reapertura
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Respetar `graphContext` persistido al abrir `.sgproj` |
+| **Archivos** | `src/app/page.tsx` (~+10 LOC) |
+| **Corrección** | `loadSessionDatasetIntoEditor(..., { applyExperimentalViewportAutoFit: graphContext == null })` en `onProjectOpened` |
+| **Re-smoke** | **S3 PASS** · **S6 PASS** |
+| **Resultado** | **PASS** |
+
+### D29.6 — Acta + cierre D29 + handoff D30
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Acta oficial §D29, métricas, gates, smoke tests, decisiones A–F, CA-D29, handoff D30 |
+| **Alcance** | Documentación únicamente (`PROJECT_STATUS_PROD_2E.md`) |
+| **Resultado** | **PASS** |
+
+#### Gates D29 — Certificación
+
+| Gate | Resultado | Casos / detalle |
+|------|-----------|-----------------|
+| `npx tsc --noEmit` | **PASS** | — |
+| `validate:chart-viewport` | **PASS** | 9/9 (regresión X / HOTFIX) |
+| `validate:chart-viewport-y` | **PASS** | 10/10 |
+| `validate:visual-graph-builder-unit` | **PASS** | 79/79 |
+| `validate:prod2e-data3b-gate` | **PASS** | 13/13 |
+| `validate:prod2c-c8-regression-gate` | **PASS** | 5/5 sub-gates |
+| `validate:prod2d-gate` | **PASS** | — |
+| `validate:prod2e-d29-viewport-gate` | **PASS** | 8/8 |
+
+**Regresión tipos VGB + DATA-3B:** Heatmap · Bubble · PCA · Scatter–Violin — **PASS** (umbrella DATA-3B + VGB unit).
+
+#### Smoke Tests D29 — Certificación
+
+| ID | Escenario | Resultado | Notas |
+|----|-----------|-----------|-------|
+| **S1** | Import Y fuera del viewport inicial | **PASS** | Serie visible; padding Y/X; sin clipping |
+| **S2** | Nuevo proyecto + importación | **PASS** | Auto-fit X + Y automático |
+| **S3** | Reapertura `graphContext.autoScaleY == false` | **PASS** | Tras **D29.5A** — preferencia persistida respetada |
+| **S4** | Scatter Preview VGB | **PASS** | Dominio Y explícito; sin clipping |
+| **S5** | PCA Preview VGB | **PASS** | PC2 con dominio explícito; padding visible |
+| **S6** | Regresión HOTFIX X | **PASS** | Auto-fit X idéntico; Y no afecta X |
+
+**Nota S3:** La regresión detectada en D29.5 fue corregida en **D29.5A** antes del cierre oficial D29.
+
+#### Decisiones arquitectónicas D29
+
+**Decisión A — Dominio viewport desacoplado**
+
+El dominio de viewport vive en `src/lib/graph/viewport.ts`. `src/app/chartViewport.ts` permanece como shim de compatibilidad re-exportando X (y consumidores legacy). Punto único de verdad para padding, extent y dominio Y.
+
+**Decisión B — Extracción X move-only**
+
+La semántica X de HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 se movió sin alteración algorítmica. `validate:chart-viewport` 9/9 certifica no-regresión. Smoke **S6** confirma comportamiento en producto.
+
+**Decisión C — Algoritmo Y unificado con padding por span**
+
+`computePaddedDomain` / `computeYAxisDomainFromValues` aplican padding **10% del span** (`VIEWPORT_PADDING_RATIO`), alineado con X. Sustituye la fórmula inline previa en `page.tsx` (eliminada en D29.2).
+
+**Decisión D — Preview VGB independiente del `graphContext`**
+
+Los previews VGB calculan dominio Y explícito desde datos de preview (`point.y`, `pc2`, etc.) sin leer `graphContext` del editor. Auto-fit Y en preview es siempre local al renderer.
+
+**Decisión E — Respeto del `graphContext` persistido en reapertura (D29.5A)**
+
+Si `patch.project.graphContext != null`, la hidratación define `minX`/`maxX`/`visibleMinX`/`visibleMaxX`/`autoScaleY`. `onProjectOpened` **no** ejecuta `applyExperimentalXViewportFit` ni `setAutoScaleY(true)`. Si `graphContext == null`, el comportamiento HOTFIX (auto-fit X + activar Y) se mantiene.
+
+**Decisión F — API Freeze y persistencia preservados**
+
+- **Sin** bump de `schemaVersion` (permanece **2**)
+- **Sin** cambios en `ProjectGraphContextV1` (no se añaden `minY`/`maxY` persistidos)
+- **Sin** breaking changes en contratos VGB ni `.sgproj`
+- Flag existente `autoScaleY: boolean` — único mecanismo de preferencia Y
+
+#### API Freeze D29
+
+Durante D29:
+
+- **No** hubo schema bump
+- **No** hubo breaking changes en tipos VGB ni persistencia V2
+- **No** hubo cambios en golden fixtures DATA-3B
+- **Únicamente** wiring runtime + dominio gráfico nuevo en `src/lib/graph/`
+
+#### CA-D29 — Certificación (10/10)
+
+| ID | Criterio | Evidencia | Resultado |
+|----|----------|-----------|-----------|
+| **CA-D29-01** | D29.1 Dominio PASS | `viewport.ts` + `viewport.cases.ts` 19/19 | **PASS** |
+| **CA-D29-02** | D29.2 Chart principal PASS | Wiring `page.tsx` + acciones proyecto; `computeYAxisDomainFromValues` | **PASS** |
+| **CA-D29-03** | D29.3 VGB Preview PASS | 4 previews + `GraphPreview` ramas line/bar/histogram | **PASS** |
+| **CA-D29-04** | D29.4 Gates PASS | 8 gates listados — todos PASS | **PASS** |
+| **CA-D29-05** | D29.5 Smoke tests PASS | S1–S6 PASS (S3 tras D29.5A) | **PASS** |
+| **CA-D29-06** | Regresión HOTFIX X PASS | `validate:chart-viewport` 9/9 + smoke **S6** | **PASS** |
+| **CA-D29-07** | `graphContext` reapertura PASS | D29.5A — S3 certificado | **PASS** |
+| **CA-D29-08** | API Freeze PASS | Sin bump · sin breaking · VGB intacto | **PASS** |
+| **CA-D29-09** | Persistencia sin cambios PASS | `ProjectGraphContextV1` · `schemaVersion` 2 | **PASS** |
+| **CA-D29-10** | TypeScript PASS | `npx tsc --noEmit` | **PASS** |
+
+**Total CA-D29: 10/10 PASS** · Sin deuda técnica dentro del alcance D29.
+
+#### Cierre oficial GRAPH-1a
+
+**Estado:** **GRAPH-1a CLOSED** (2026-07-10)
+
+| Entregable | Microfase | Estado |
+|------------|-----------|--------|
+| **Dominio viewport Y** | D29.1 | **CERTIFICADO** |
+| **Wiring chart principal** | D29.2 | **CERTIFICADO** |
+| **Wiring VGB previews** | D29.3 | **CERTIFICADO** |
+| **Gates + umbrella** | D29.4 | **CERTIFICADO** |
+| **Smoke tests** | D29.5 + D29.5A | **CERTIFICADO** |
+
+- Auto-fit Y operativo en chart principal y previews VGB
+- Auto-fit X HOTFIX preservado (sin regresión)
+- `graphContext` respetado en reapertura
+- Gate umbrella `validate:prod2e-d29-viewport-gate` — **8/8 PASS**
+
+#### Estado PROD-2E (post-D29)
+
+| Indicador | Valor |
+|-----------|--------|
+| **Épica** | **OPEN** (GRAPH-1a CLOSED — Ready for D30) |
+| **Checklist cierre épica** | **2/9** |
+| **DATA-3B** | **CLOSED** ✓ |
+| **GRAPH-1a** | **CLOSED** ✓ |
+| **Próxima fase** | D30 — GRAPH-1b Publication Presets |
+| **Fases abiertas** | D30–D36 (GRAPH-1b · GRAPH-2 · ARCH-5 · cierre épica) |
+
+**Checklist cierre PROD-2E (avance):**
+
+- [x] ≥3 tipos VGB avanzados con round-trip persist (**DATA-3B CLOSED**)
+- [x] Auto-fit Y (**GRAPH-1a D29 CLOSED**)
+- [ ] Presets publicación (GRAPH-1b D30)
+- [ ] Motor curvas (GRAPH-2 D31–D32)
+- [ ] F5F-BIS + SCI-40 (ARCH-5 D33–D35)
+- [ ] API Freeze respetado (parcial → completo en D36)
+- [ ] Baseline re-medido (D36)
+- [ ] `validate:prod2e-gate` (D36)
+- [ ] DoD §2 Master (D36)
+- [ ] Docs sync PROD-3 READY (D36.5)
+
+#### Handoff D30
+
+```text
+Current Epic:
+  PROD-2E — OPEN
+
+Completed:
+  GRAPH-1a — CLOSED
+
+D29 CLOSED — GRAPH-1a CLOSED — Ready for D30
+
+Prerrequisitos D30 (GRAPH-1b — Publication Presets):
+  ✓ GRAPH-1a CLOSED — auto-fit Y certificado
+  ✓ validate:prod2e-d29-viewport-gate PASS (8/8)
+  ✓ validate:chart-viewport PASS (9/9)
+  ✓ validate:chart-viewport-y PASS (10/10)
+  ✓ Smoke tests S1–S6 PASS
+  ✓ graphContext reapertura certificado (D29.5A)
+  ✓ DATA-3B CLOSED — 9 tipos VGB activos
+  ✓ schemaVersion: 2
+  ✓ API Freeze respetado
+  ✓ Persistencia V2 sin cambios D29
+
+Next Build:
+  D30 — GRAPH-1b — Publication Presets
+  Objetivo: presets default, journal, presentation
+  Gate objetivo: validate:graph-publication-presets-unit + golden regression scaffold
+```
+
+#### Archivos D29 (acumulado microfases D29.1–D29.5A)
+
+| Acción | Archivo |
+|--------|---------|
+| **Creado** | `src/lib/graph/viewport.ts` |
+| **Creado** | `src/lib/graph/__tests__/viewport.cases.ts` |
+| **Modificado** | `src/app/chartViewport.ts` (shim) |
+| **Modificado** | `src/app/page.tsx` |
+| **Modificado** | `src/app/localProjectActions.ts` |
+| **Modificado** | `src/app/projectFileActions.ts` |
+| **Modificado** | `src/components/graph-builder/ScatterPreview.tsx` |
+| **Modificado** | `src/components/graph-builder/BubblePreview.tsx` |
+| **Modificado** | `src/components/graph-builder/PCAPreview.tsx` |
+| **Modificado** | `src/components/graph-builder/GraphPreview.tsx` |
+| **Creado** | `scripts/validate-chart-viewport-y.ts` |
+| **Creado** | `scripts/validate-prod2e-d29-viewport-gate.ts` |
+| **Modificado** | `package.json` (scripts validate chart-viewport-y + d29-viewport-gate) |
+| **Modificado** | `PROJECT_STATUS_PROD_2E.md` (acta D29.6) |
+
+**Total acumulado D29:** 4 creados · 10 modificados · 14 archivos producto/gates (excl. acta D29.6).
+
+**No modificado en D29.6:** `src/**`, `scripts/**`, `fixtures/**`, `package.json`, README, ROADMAP, MASTER.
+
+**No modificado en D29 (alcance congelado):** persistencia V2 · `ProjectGraphContextV1` · golden fixtures DATA-3B · `schemaVersion`.
+
+---
+
 ## Cronología PROD-2E
 
 ```text
@@ -849,7 +1139,9 @@ D27 DATA-3B Bubble ✓ (CLOSED)
   ↓
 D28 DATA-3B PCA ✓ (CLOSED) — DATA-3B ✓ (CLOSED)
   ↓
-D29–D30 GRAPH-1 → D31–D32 GRAPH-2
+D29 GRAPH-1a Auto-fit Y ✓ (CLOSED) — GRAPH-1a ✓ (CLOSED)
+  ↓
+D30 GRAPH-1b Presets → D31–D32 GRAPH-2
   ↓
 D33 F5F-BIS → D34–D35 SCI-40 (Escenario B) → D36 Cierre
 ```
@@ -867,4 +1159,4 @@ D33 F5F-BIS → D34–D35 SCI-40 (Escenario B) → D36 Cierre
 
 ---
 
-*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Next: D29 BUILD.*
+*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Next: D30 BUILD.*
