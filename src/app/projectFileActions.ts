@@ -162,6 +162,7 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
             activeSession.datasetPayload.series,
             applyContext
           );
+          applyContext.setAutoScaleY(true);
         }
       }
       deps.setProjectMetadata(hydrated.patch.project.metadata);

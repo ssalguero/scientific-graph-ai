@@ -66,6 +66,7 @@ import { WorkbookImportWizard } from "@/components/import/WorkbookImportWizard";
 import type { ProjectMetadataV1 } from "@/lib/project";
 import { DEFAULT_PROJECT_NAME } from "@/lib/project";
 import { VISIBILITY_KEYS_V1 } from "@/lib/project/keys";
+import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import { applyExperimentalXViewportFit } from "./chartViewport";
 import { createInitialProjectMetadata } from "./projectPersistence";
 import {
@@ -16257,24 +16258,14 @@ const mergeYMetricsWithExperimental = (
   };
 };
 
-const computeYAxisDomain = (
+const resolveYAxisDomainFromMetrics = (
   yMetrics: YMetrics
 ): [number, number] | undefined => {
   const { minObservedY, maxObservedY } = yMetrics;
-
   if (minObservedY == null || maxObservedY == null) {
     return undefined;
   }
-
-  if (minObservedY === maxObservedY) {
-    const margin = Math.abs(minObservedY) * 0.1 || 1;
-    return [minObservedY - margin, maxObservedY + margin];
-  }
-
-  return [
-    minObservedY - Math.abs(minObservedY) * 0.1,
-    maxObservedY + Math.abs(maxObservedY) * 0.1,
-  ];
+  return computeYAxisDomainFromValues([minObservedY, maxObservedY]);
 };
 
 type AxisScaleMode = "linear" | "logX" | "logY" | "logLog";
@@ -16927,7 +16918,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     );
   };
 
-  const loadSessionDatasetIntoEditor = (dataset: SessionDataset) => {
+  const loadSessionDatasetIntoEditor = (
+    dataset: SessionDataset,
+    options?: { applyExperimentalViewportAutoFit?: boolean }
+  ) => {
     const series = cloneExperimentalSeries(dataset.datasetPayload.series);
     setExperimentalSeries(series);
     setCurrentDatasetInfo(createSessionDatasetInfo(dataset));
@@ -16942,12 +16936,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     );
     setWorksheetModified(dataset.worksheetModified);
     setImportReportExpanded(true);
-    applyExperimentalXViewportFit(series, {
-      setMinX,
-      setMaxX,
-      setVisibleMinX,
-      setVisibleMaxX,
-    });
+    if (options?.applyExperimentalViewportAutoFit !== false) {
+      applyExperimentalXViewportFit(series, {
+        setMinX,
+        setMaxX,
+        setVisibleMinX,
+        setVisibleMaxX,
+      });
+      setAutoScaleY(true);
+    }
   };
 
   const persistActiveSessionDataset = (
@@ -17040,6 +17037,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setVisibleMinX,
       setVisibleMaxX,
     });
+    setAutoScaleY(true);
     recordProjectHistory(
       buildProjectHistoryEntry("dataset.added", {
         datasetName: newDataset.name,
@@ -17131,6 +17129,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setVisibleMinX,
       setVisibleMaxX,
     });
+    setAutoScaleY(true);
   };
 
   const handleWorksheetPayloadChange = (payload: {
@@ -20332,13 +20331,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     visibleActiveCurves.length > 0 &&
     visibleExperimentalSeries.length > 0;
   const mathYAxisDomain = autoScaleY
-    ? computeYAxisDomain(mathYMetrics)
+    ? resolveYAxisDomainFromMetrics(mathYMetrics)
     : undefined;
   const experimentalYAxisDomain = autoScaleY
-    ? computeYAxisDomain(experimentalYMetrics)
+    ? resolveYAxisDomainFromMetrics(experimentalYMetrics)
     : undefined;
   const yAxisDomain = autoScaleY
-    ? computeYAxisDomain(displayYMetrics)
+    ? resolveYAxisDomainFromMetrics(displayYMetrics)
     : undefined;
   const usesLogX = usesLogXScale(axisScaleMode);
   const usesLogY = usesLogYScale(axisScaleMode);
@@ -20826,7 +20825,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         return;
       }
       setProjectVisualGraphs(readVisualGraphEntriesFromDataset(activeSession));
-      loadSessionDatasetIntoEditor(activeSession);
+      loadSessionDatasetIntoEditor(activeSession, {
+        applyExperimentalViewportAutoFit: patch.project.graphContext == null,
+      });
       recordProjectHistory(
         buildProjectHistoryEntry("project.opened", {
           source: projectOpenSourceRef.current,

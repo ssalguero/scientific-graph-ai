@@ -59,6 +59,7 @@ const applyOpenedProject = (
         activeSession.datasetPayload.series,
         applyContext
       );
+      applyContext.setAutoScaleY(true);
     }
   }
   deps.suppressProjectDirtyRef.current = true;
