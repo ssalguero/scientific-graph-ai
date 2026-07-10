@@ -16,6 +16,8 @@
     "validate:worksheet-import-unit": "npx tsx scripts/validate-worksheet-import-unit.ts",
     "validate:full": "node scripts/validate-full-gate.mjs",
     "validate:chart-viewport": "npx tsx scripts/validate-chart-viewport.ts",
+    "validate:chart-viewport-y": "npx tsx scripts/validate-chart-viewport-y.ts",
+    "validate:prod2e-d29-viewport-gate": "npx tsx scripts/validate-prod2e-d29-viewport-gate.ts",
     "validate:comparison-unit": "npx tsx scripts/validate-comparison-unit.ts",
     "validate:app-preferences-unit": "npx tsx scripts/validate-app-preferences-unit.ts",
     "validate:project-history-unit": "npx tsx scripts/validate-project-history-unit.ts",
