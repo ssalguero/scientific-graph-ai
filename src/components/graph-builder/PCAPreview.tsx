@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import type {
   VisualGraphPreviewPcaMeta,
   VisualGraphPreviewPcaPoint,
@@ -62,6 +63,9 @@ export function PCAPreview({ pcaData, pcaMeta }: PCAPreviewProps) {
 
   const xAxisLabel = `PC1 (${formatVariancePercent(pcaMeta.component1Variance)})`;
   const yAxisLabel = `PC2 (${formatVariancePercent(pcaMeta.component2Variance)})`;
+  const yAxisDomain = computeYAxisDomainFromValues(
+    pcaData.map((point) => point.pc2)
+  );
 
   return (
     <ResponsiveContainer width="100%" aspect={CHART_ASPECT_RATIO}>
@@ -85,6 +89,7 @@ export function PCAPreview({ pcaData, pcaMeta }: PCAPreviewProps) {
           type="number"
           dataKey="pc2"
           name="PC2"
+          domain={yAxisDomain}
           label={{
             value: yAxisLabel,
             angle: -90,

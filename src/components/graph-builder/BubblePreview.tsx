@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import type { VisualGraphPreviewBubblePoint } from "@/lib/visualGraphBuilder";
 
 /** Width / height — matches GraphPreview chart aspect. */
@@ -59,6 +60,8 @@ export function BubblePreview({ data }: BubblePreviewProps) {
     );
   }
 
+  const yAxisDomain = computeYAxisDomainFromValues(data.map((point) => point.y));
+
   return (
     <ResponsiveContainer width="100%" aspect={CHART_ASPECT_RATIO}>
       <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
@@ -72,6 +75,7 @@ export function BubblePreview({ data }: BubblePreviewProps) {
         <YAxis
           type="number"
           dataKey="y"
+          domain={yAxisDomain}
           stroke="var(--app-text-muted)"
           fontSize={12}
         />

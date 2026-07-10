@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import {
   clampScatterMarkerSize,
   type VisualGraphMarkerStyle,
@@ -134,6 +135,7 @@ export function ScatterPreview({
   const radius = clampScatterMarkerSize(markerSize);
   const series = resolveGroupSeries(data);
   const showLegend = series.length > 1;
+  const yAxisDomain = computeYAxisDomainFromValues(data.map((point) => point.y));
 
   return (
     <ResponsiveContainer width="100%" aspect={CHART_ASPECT_RATIO}>
@@ -148,6 +150,7 @@ export function ScatterPreview({
         <YAxis
           type="number"
           dataKey="y"
+          domain={yAxisDomain}
           stroke="var(--app-text-muted)"
           fontSize={12}
         />

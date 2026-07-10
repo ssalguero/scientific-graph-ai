@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import type {
   VisualGraphMarkerStyle,
   VisualGraphPreview,
@@ -169,7 +170,13 @@ export function GraphPreview({
                 stroke="var(--app-text-muted)"
                 fontSize={12}
               />
-              <YAxis stroke="var(--app-text-muted)" fontSize={12} />
+              <YAxis
+                domain={computeYAxisDomainFromValues(
+                  (preview.lineSeries[0]?.points ?? []).map((point) => point.y)
+                )}
+                stroke="var(--app-text-muted)"
+                fontSize={12}
+              />
               <Tooltip />
               <Line
                 type="monotone"
@@ -187,7 +194,13 @@ export function GraphPreview({
             <BarChart data={preview.histogramBins}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" />
               <XAxis dataKey="label" stroke="var(--app-text-muted)" fontSize={10} />
-              <YAxis stroke="var(--app-text-muted)" fontSize={12} />
+              <YAxis
+                domain={computeYAxisDomainFromValues(
+                  preview.histogramBins.map((bin) => bin.count)
+                )}
+                stroke="var(--app-text-muted)"
+                fontSize={12}
+              />
               <Tooltip />
               <Bar dataKey="count" fill="#3b82f6" />
             </BarChart>
@@ -199,7 +212,13 @@ export function GraphPreview({
             <BarChart data={preview.barData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" />
               <XAxis dataKey="category" stroke="var(--app-text-muted)" fontSize={12} />
-              <YAxis stroke="var(--app-text-muted)" fontSize={12} />
+              <YAxis
+                domain={computeYAxisDomainFromValues(
+                  preview.barData.map((item) => item.value)
+                )}
+                stroke="var(--app-text-muted)"
+                fontSize={12}
+              />
               <Tooltip />
               <Bar dataKey="value" fill="#3b82f6" />
             </BarChart>
