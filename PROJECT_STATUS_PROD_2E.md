@@ -1,7 +1,7 @@
 # PROJECT_STATUS — PROD-2E
 
 **Épica:** PROD-2E — Motor gráfico profesional  
-**Estado épica:** **OPEN** (D31 CLOSED — GRAPH-2a CLOSED — Ready for D32)  
+**Estado épica:** **OPEN** (D32 CLOSED — GRAPH-2b CLOSED — GRAPH-2 CLOSED — Ready for D33)  
 **SSOT Plan:** [`PROJECT_PLAN_PROD_2E.md`](PROJECT_PLAN_PROD_2E.md)  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md)  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md)
@@ -1692,6 +1692,387 @@ Next Build:
 
 ---
 
+## §D32 — GRAPH-2b Extracción dominio Series/Datasets
+
+**Estado:** **CLOSED** (2026-07-11)  
+**Modo:** BUILD STRICT — D32.1–D32.5 implementación · D32.6 documentación únicamente  
+**Próxima microfase:** **D33 — ARCH-5 F5F-BIS**  
+**Plan congelado:** D32 v1.0 (GRAPH-2b — amenda alcance D32: Series/Datasets; calidad vectorial → GRAPH-2c)
+
+### Resumen ejecutivo D32
+
+**GRAPH-2b CLOSED** (2026-07-11). El dominio Series/Datasets quedó consolidado en `src/lib/graph/series/`: extracción move-only desde `experimentalData.ts`, `sessionDatasetRegistry.ts`, módulos auxiliares y dominio inline residual en `page.tsx`; wiring de boundary en D32.3; shims legacy 100% re-export; gates dedicados (unit 44/44 + umbrella 15/15); smoke tests S1–S6 certificados (D32.5). Con D31 (GRAPH-2a) previamente certificado, **GRAPH-2 queda oficialmente CLOSED**. Sin regresiones funcionales. API Freeze respetado. Move-Only certificado.
+
+| Indicador | Estado |
+|-----------|--------|
+| **Épica parcial** | GRAPH-2b (extracción dominio series) — **CLOSED** |
+| **Épica GRAPH-2** | **CLOSED** (GRAPH-2a D31 + GRAPH-2b D32) |
+| **Microfases** | D32.1–D32.6 — **CLOSED** |
+| **Dominio canónico** | `src/lib/graph/series/` (barrel congelado) |
+| **Shims legacy** | 4 archivos operativos |
+| **schemaVersion** | **2** (sin cambio) |
+| **Deuda técnica en alcance** | **Ninguna** |
+
+### D32.1 — Discovery (inventario)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Inventario símbolo → destino; alcance IN/OUT/STAY/SHIM congelado |
+| **Entregable** | [`docs/D32.1-discovery-inventory.md`](docs/D32.1-discovery-inventory.md) |
+| **Hallazgos** | ~700–850 LOC dominio puro a consolidar; ~136 LOC inline en `page.tsx`; ~40 consumidores legacy vía `@/lib/experimentalData` |
+| **Decisión crítica** | `seriesToWorksheet()` permanece en dominio Worksheet (STAY) |
+| **Resultado** | **PASS** — CA-D32.1 10/10 |
+
+### D32.2 — Domain Extraction
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Move-only → `src/lib/graph/series/` + shims legacy |
+| **Archivos creados** | `types.ts`, `builders.ts`, `transforms.ts`, `validation.ts`, `index.ts`, `__tests__/series.cases.ts` |
+| **Archivos shim** | `experimentalData.ts`, `sessionDatasetRegistry.ts`, `dataset-series-utils.ts`, `scientific/shared/series.ts`, `import/build/index.ts` |
+| **Restricción** | Cero React · cero Recharts · barrel `FROZEN_SERIES_BARREL_API` (8 types + 22 funciones) |
+| **Casos dominio** | 12/12 PASS (`series.cases.ts`) |
+| **Verificación** | `npx tsc --noEmit` **PASS** |
+| **Resultado** | **PASS** |
+
+### D32.3 — Wiring page.tsx → dominio canónico
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Eliminar dominio inline residual; imports `@/lib/graph/series` |
+| **Archivos** | `src/app/page.tsx` (principal), `src/lib/graph/curves/metrics.ts` (type path) |
+| **Eliminado** | ~**143 LOC** dominio inline (`calculateExperimentalStatistics`, `buildErrorBarSeries`, tipos error bar, helpers SE/CI95) |
+| **Conservado** | Handlers React · hooks · JSX · Recharts · orquestación · ~10.600 LOC SCI-40 fuera de alcance |
+| **Verificación** | `npx tsc --noEmit` **PASS** |
+| **Resultado** | **PASS** |
+
+### D32.4 — Unit Gate
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | `validate:graph-series-unit` + extension/governance cases |
+| **Archivos** | `scripts/validate-graph-series-unit.ts`, `scripts/lib/graph-series-gate.cases.ts`, `package.json` (script) |
+| **Casos** | **44/44 PASS** (12 dominio + 32 extension/governance) |
+| **Resultado** | **PASS** |
+
+### D32.5 — Validation (umbrella + smoke)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Umbrella gate integral + smoke tests S1–S6 |
+| **Archivos** | `scripts/validate-prod2e-d32-series-gate.ts`, `package.json` (script) |
+| **Umbrella** | **15/15 PASS** (~25 min cadena D26–D31 + worksheet + tsc) |
+| **Smoke tests** | **6/6 PASS** (`npm run dev`) |
+| **Resultado** | **PASS** |
+
+### D32.6 — Acta + cierre GRAPH-2b + cierre GRAPH-2
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Acta §D32, métricas, gates, decisiones arquitectónicas, handoff D33, declarar GRAPH-2b CLOSED y GRAPH-2 CLOSED |
+| **Alcance** | Documentación únicamente (`PROJECT_STATUS_PROD_2E.md`, amend plan) |
+| **Resultado** | **PASS** |
+
+#### Gates D32 — Certificación completa
+
+| Gate | Resultado | Casos / detalle |
+|------|-----------|-----------------|
+| `npx tsc --noEmit` | **PASS** | — (incluido en umbrella) |
+| `validate:graph-series-unit` | **PASS** | **44/44** |
+| `validate:prod2e-d32-series-gate` | **PASS** | **15/15** |
+| `validate:visual-graph-builder-unit` | **PASS** | 79/79 (regresión umbrella) |
+| `validate:prod2e-data3b-gate` | **PASS** | 13/13 (regresión umbrella) |
+| `validate:prod2c-c8-regression-gate` | **PASS** | 5/5 sub-gates (regresión umbrella) |
+| `validate:chart-viewport` | **PASS** | 9/9 (regresión umbrella) |
+| `validate:chart-viewport-y` | **PASS** | 10/10 (regresión umbrella) |
+| `validate:prod2e-d29-viewport-gate` | **PASS** | 8/8 (regresión umbrella) |
+| `validate:prod2e-d30-publication-presets-gate` | **PASS** | 10/10 (regresión umbrella) |
+| `validate:prod2e-d31-curves-gate` | **PASS** | 11/11 (regresión umbrella) |
+| `validate:worksheet-import-unit` | **PASS** | (regresión umbrella) |
+| `validate:worksheet-transforms-unit` | **PASS** | (regresión umbrella) |
+
+**Regresión D26–D31:** DATA-3B · C8 · viewport X/Y · publication-presets · curves · worksheet — **PASS** (umbrella D32).
+
+#### Umbrella gate D32 — desglose (15/15)
+
+| # | Step ID | Resultado |
+|---|---------|-----------|
+| 1 | `governance.seriesDomain` | **PASS** |
+| 2 | `governance.projectStatusD31Closed` | **PASS** |
+| 3 | `typescript` | **PASS** |
+| 4 | `validate.graph-series-unit` | **PASS** (44/44) |
+| 5 | `validate.visual-graph-builder-unit` | **PASS** |
+| 6 | `validate.prod2e-data3b-gate` | **PASS** |
+| 7 | `validate.prod2c-c8-regression-gate` | **PASS** |
+| 8 | `validate.chart-viewport` | **PASS** |
+| 9 | `validate.chart-viewport-y` | **PASS** |
+| 10 | `validate.prod2e-d29-viewport-gate` | **PASS** |
+| 11 | `validate.prod2e-d30-publication-presets-gate` | **PASS** |
+| 12 | `validate.prod2e-d31-curves-gate` | **PASS** |
+| 13 | `validate.worksheet-import-unit` | **PASS** |
+| 14 | `validate.worksheet-transforms-unit` | **PASS** |
+| 15 | `governance.projectStatusD32Ready` | **PASS** |
+
+#### Smoke Tests D32 — Certificación
+
+**Protocolo:** `npm run dev` → workspace **Datos → Experimental** / **Curvas y=f(x)**. **Criterio PASS: 6/6.**
+
+| ID | Escenario | Resultado | Evidencia / notas |
+|----|-----------|-----------|-------------------|
+| **S1** | Import CSV single-series | **PASS** | UI import operativa; `worksheet-import-unit` + caso `builders.buildCollection` |
+| **S2** | Import multi-series | **PASS** | Casos `builders.parseMultiSeriesCsv` + `detectLayout.multi`; panel multi-dataset |
+| **S3** | Edición Worksheet | **PASS** | `validate:worksheet-transforms-unit` PASS; panel Worksheet científica operativo |
+| **S4** | Cambio dataset activo | **PASS** | Panel `Datasets en sesión`; session registry + wiring D32.3 intactos |
+| **S5** | Persistencia V2 round-trip | **PASS** | `validate:prod2c-c8-regression-gate` PASS (`datasets[].series` intacto) |
+| **S6** | Series + Curves overlay | **PASS** | `compat.curves.mergeYMetricsWithExperimental` PASS; pestaña Curvas accesible; D31 gate 11/11 |
+
+#### Métricas arquitectónicas D32 (GRAPH-2b — referencia D36)
+
+| Métrica | Valor |
+|---------|-------|
+| **LOC dominio `graph/series/` (puro)** | **~819** (`types` 50 + `builders` 564 + `transforms` 123 + `validation` 42 + `index` 40) |
+| **LOC tests dominio** | **~114** (`series.cases.ts`) |
+| **LOC total módulo series** | **~933** |
+| **LOC eliminadas de `page.tsx` (inline)** | **~143** (D32.3) |
+| **LOC consolidadas desde legacy** | **~700–850** (`experimentalData` ~538 + session registry parcial + utils + inline) |
+| **Dominio `graph/series/` creado** | **Sí** — 5 módulos + barrel + tests |
+| **Shims implementados** | **4** — `experimentalData.ts` · `dataset-series-utils.ts` · `scientific/shared/series.ts` · `sessionDatasetRegistry.ts` (híbrido: tipos sesión STAY + re-export) |
+| **Barrel congelado** | 8 types + 22 funciones = **30 exports** |
+| **Duplicados eliminados** | `cloneExperimentalSeries` · `computeDatasetMetrics` — implementación única en `transforms.ts` |
+| **Casos unit gate** | 44/44 |
+| **Umbrella D32** | 15/15 |
+| **Smoke tests** | 6/6 |
+| **Archivos producto/gates (acumulado D32.1–D32.5)** | ~6 creados dominio · ~6 shims/wiring · ~3 scripts gates · `package.json` (2 scripts) |
+
+*Estas métricas documentan la modularización alcanzada por GRAPH-2b y complementan las de GRAPH-2a (D31) para la re-medición global de D36.*
+
+#### Decisiones arquitectónicas D32
+
+**Decisión A — `graph/series` como dominio canónico**
+
+Toda la lógica Series/Datasets vive en `src/lib/graph/series/`. Consumidores nuevos importan `@/lib/graph/series`. Los módulos legacy permanecen como shims de compatibilidad hasta migración gradual de consumidores.
+
+**Decisión B — Shims legacy obligatorios**
+
+| Shim | Rol |
+|------|-----|
+| `src/lib/experimentalData.ts` | Re-export 100% desde `@/lib/graph/series` |
+| `src/lib/project/domain/dataset-series-utils.ts` | Re-export `cloneExperimentalSeries`, `computeDatasetMetrics` |
+| `src/lib/scientific/shared/series.ts` | Re-export `getSeriesYValues` |
+| `src/lib/sessionDatasetRegistry.ts` | Re-export builders session + tipos `SessionDataset`/`SessionDatasetPayload` **STAY** |
+
+Certificado en gates `governance.shim.*.reexportOnly` (44/44).
+
+**Decisión C — Move Policy estricta (certificada)**
+
+Extracción move-only sin optimizaciones, sin cambios algorítmicos, sin refactors colaterales. Parsers xlsx/ods/csv preservan semántica byte-a-byte.
+
+**Decisión D — `SessionDataset` permanece fuera del dominio series**
+
+Tipos y registro de sesión (`SessionDataset`, `SessionDatasetPayload`, `slotReferencesSessionDataset`) permanecen en `sessionDatasetRegistry.ts`. Solo funciones de construcción/actualización de sesión se re-exportan desde el barrel series donde aplica.
+
+**Decisión E — `seriesToWorksheet` permanece en Worksheet**
+
+`seriesToWorksheet()` vive en `src/lib/experimentalWorksheet.ts`. No forma parte del barrel `graph/series`. VGB consume vía worksheet — certificado en `compat.vgb.seriesToWorksheetStay`.
+
+**Decisión F — `buildSeriesFromPreview` fuera del barrel**
+
+`buildSeriesFromPreview` no se exporta desde `index.ts`. Permanece en dominio import/worksheet. Gate `structure.barrel.series.noBuildSeriesFromPreview` PASS.
+
+**Decisión G — `cloneExperimentalSeries` implementación única**
+
+Una sola implementación en `transforms.ts`. Shims y `dataset-series-utils` delegan. Gate `governance.cloneExperimentalSeries.singleImplementation` PASS.
+
+**Decisión H — `computeDatasetMetrics` implementación canónica**
+
+Una sola implementación en `transforms.ts`. Alias `computeSessionDatasetMetrics` eliminado en favor del nombre canónico. Gate `governance.computeDatasetMetrics.singleImplementation` PASS.
+
+**Decisión I — Compatibilidad cross-module**
+
+| Módulo | Compatibilidad | Gate |
+|--------|----------------|------|
+| **V2 persistencia** | `ExperimentalSeries` vía shim `@/lib/experimentalData` en `types-v2.ts` | `compat.persistenceV2.experimentalSeriesTypeImport` |
+| **Curves (D31)** | `mergeYMetricsWithExperimental` + type path `@/lib/graph/series` | `compat.curves.*` |
+| **VGB** | `seriesToWorksheet` sin cambio | `compat.vgb.seriesToWorksheetStay` |
+
+**Decisión J — Viewport / persistencia / VGB intocables**
+
+Sin modificaciones a `viewport.ts`, `GraphSpecification`, `VisualGraphBuilder`, `publicationPresetId`, `schemaVersion`, golden fixtures DATA-3B.
+
+#### Move Policy D32
+
+| Verificación | Estado |
+|--------------|--------|
+| Move-only respetado (D32.2–D32.3) | **CERTIFICADO** |
+| Sin optimizaciones colaterales | **CERTIFICADO** |
+| Sin cambios algorítmicos | **CERTIFICADO** |
+| Shims 100% re-export | **CERTIFICADO** |
+| Dominio desacoplado (no React/Recharts/app) | **CERTIFICADO** |
+
+#### API Freeze D32
+
+Durante D32:
+
+- **`schemaVersion = 2`** — sin bump
+- **Persistencia V2** — intacta (`datasets[].series` round-trip certificado S5 + C8)
+- **`GraphSpecification`** — intacto
+- **`VisualGraphBuilder`** — intacto
+- **`publicationPresetId`** — intacto
+- **Barrel `series/`** — congelado (gate `structure.barrel.series.exact-api` PASS)
+- **`ProjectGraphContextV1`** — intocable
+
+#### CA-D32 — Certificación (10/10)
+
+| ID | Criterio | Evidencia | Resultado |
+|----|----------|-----------|-----------|
+| **CA-D32-01** | D32.1 Discovery PASS | `docs/D32.1-discovery-inventory.md` · CA-D32.1 10/10 | **PASS** |
+| **CA-D32-02** | D32.2 Domain PASS | `src/lib/graph/series/` + shims · 12 casos dominio | **PASS** |
+| **CA-D32-03** | D32.3 Wiring PASS | `page.tsx` −~143 LOC inline; imports barrel; `tsc` PASS | **PASS** |
+| **CA-D32-04** | D32.4 Unit gate PASS | `validate:graph-series-unit` 44/44 | **PASS** |
+| **CA-D32-05** | D32.5 Validation PASS | Umbrella 15/15 · smoke S1–S6 | **PASS** |
+| **CA-D32-06** | Move Policy PASS | Move-only certificado; gates governance | **PASS** |
+| **CA-D32-07** | API Freeze PASS | Barrel congelado; `schemaVersion` 2; contratos V2/VGB intactos | **PASS** |
+| **CA-D32-08** | Regresión D26–D31 PASS | Umbrella: data3b · c8 · viewport · d29 · d30 · d31 · worksheet | **PASS** |
+| **CA-D32-09** | Compat V2/Curves/VGB PASS | Casos `compat.*` en unit gate 44/44 | **PASS** |
+| **CA-D32-10** | TypeScript PASS | `npx tsc --noEmit` | **PASS** |
+
+**Total CA-D32: 10/10 PASS** · Sin deuda técnica dentro del alcance D32.
+
+#### Cierre oficial GRAPH-2b
+
+**Estado:** **GRAPH-2b CLOSED** (2026-07-11)
+
+| Entregable | Microfase | Estado |
+|------------|-----------|--------|
+| **Discovery + inventario** | D32.1 | **CERTIFICADO** |
+| **Dominio series puro** | D32.2 | **CERTIFICADO** |
+| **Wiring boundary page.tsx** | D32.3 | **CERTIFICADO** |
+| **Unit gate + extension** | D32.4 | **CERTIFICADO** |
+| **Umbrella + smoke tests** | D32.5 | **CERTIFICADO** |
+
+- Dominio `src/lib/graph/series/` operativo y desacoplado de React/Recharts
+- Shims legacy 100% re-export — ~40 consumidores legacy sin ruptura
+- Gate umbrella `validate:prod2e-d32-series-gate` — **15/15 PASS**
+- Sin regresiones funcionales (S1–S6 + regresión D26–D31)
+
+#### Cierre oficial GRAPH-2
+
+**Estado:** **GRAPH-2 CLOSED** (2026-07-11)
+
+| Entregable | Microfase | Estado |
+|------------|-----------|--------|
+| **Motor curvas (dominio puro)** | D31 (GRAPH-2a) | **CERTIFICADO** |
+| **Dominio Series/Datasets** | D32 (GRAPH-2b) | **CERTIFICADO** |
+
+- `src/lib/graph/curves/` + `src/lib/graph/series/` — dominios gráficos canónicos operativos
+- `page.tsx` reducido a boundary (estado · hooks · JSX · Recharts · orquestación)
+- API Freeze respetado en ambos dominios
+- Deuda **CURVES-INLINE** cerrada (D31)
+
+#### Deuda diferida — GRAPH-2c (no bloqueante D33)
+
+| ID | Item | Target | Estado |
+|----|------|--------|--------|
+| **GRAPH-2c-01** | `sampleStep` configurable (curves) | Post-GRAPH-2 / prep EXPORT-1 | **OPEN** — diferido |
+| **GRAPH-2c-02** | Calidad vectorial SVG | Post-GRAPH-2 / prep EXPORT-1 | **OPEN** — diferido |
+| **GRAPH-2c-03** | Revisión `SHIM-NL-CURVES` (`translateNaturalLanguageToMath` en `page.tsx`) | GRAPH-2c | **OPEN** — diferido |
+
+*GRAPH-2c no bloquea el inicio de D33 (ARCH-5 F5F-BIS).*
+
+#### Estado PROD-2E (post-D32)
+
+| Indicador | Valor |
+|-----------|--------|
+| **Épica** | **OPEN** (GRAPH-2 CLOSED — Ready for D33) |
+| **Checklist cierre épica** | **5/9** |
+| **DATA-3B** | **CLOSED** ✓ |
+| **GRAPH-1** | **CLOSED** ✓ |
+| **GRAPH-2** | **CLOSED** ✓ |
+| **GRAPH-2a** | **CLOSED** ✓ (sub-entrega D31) |
+| **GRAPH-2b** | **CLOSED** ✓ (sub-entrega D32) |
+| **Próxima fase** | **D33 — ARCH-5 F5F-BIS** |
+| **Fases abiertas** | D33–D36 (ARCH-5 · cierre épica) |
+
+**Checklist cierre PROD-2E (avance):**
+
+- [x] ≥3 tipos VGB avanzados con round-trip persist (**DATA-3B CLOSED**)
+- [x] Auto-fit Y (**GRAPH-1a D29 CLOSED**)
+- [x] Presets publicación (**GRAPH-1b D30 CLOSED**)
+- [x] Motor curvas + dominio series (**GRAPH-2 D31–D32 CLOSED**)
+- [ ] F5F-BIS + SCI-40 (ARCH-5 D33–D35)
+- [ ] API Freeze respetado (parcial → completo en D36)
+- [ ] Baseline re-medido (D36)
+- [ ] `validate:prod2e-gate` (D36)
+- [ ] DoD §2 Master (D36)
+- [ ] Docs sync PROD-3 READY (D36.5)
+
+#### Handoff D33
+
+```text
+D32 CLOSED — GRAPH-2b CLOSED — GRAPH-2 CLOSED — Ready for D33
+
+Prerrequisitos D33 (ARCH-5 — F5F-BIS):
+  ✓ GRAPH-2 CLOSED — curves (D31) + series (D32) certificados
+  ✓ src/lib/graph/curves/ operativo (barrel congelado)
+  ✓ src/lib/graph/series/ operativo (barrel congelado, 30 exports)
+  ✓ Shims legacy operativos (experimentalData, sessionRegistry, utils)
+  ✓ validate:graph-series-unit 44/44 PASS
+  ✓ validate:prod2e-d32-series-gate 15/15 PASS
+  ✓ Smoke tests S1–S6 PASS
+  ✓ Regresión D26–D31 PASS (umbrella D32)
+  ✓ Compat V2 / Curves / VGB certificada
+  ✓ API Freeze respetado · schemaVersion = 2
+  ✓ Move Policy certificado
+  ✓ page.tsx SCI-40 intacto (~8.532 LOC) — extracción pendiente D34–D35
+  ✓ F5F-BIS inline ~718 LOC — objetivo D33
+  ✓ Sin bloqueantes conocidos
+
+Módulos graph/ disponibles:
+  · viewport.ts (D29)
+  · publication-presets/ (D30)
+  · curves/ (D31)
+  · series/ (D32)
+
+Deuda diferida (no bloqueante):
+  · GRAPH-2c: sampleStep · calidad vectorial · SHIM-NL-CURVES
+
+Next BUILD: D33 — ARCH-5 F5F-BIS
+  Objetivo: UI SCI-50–56 → src/components/methodology/
+  Gate objetivo: validate:arch5-f5-modularization-gate
+```
+
+#### Archivos D32 (acumulado microfases D32.1–D32.5)
+
+| Acción | Archivo |
+|--------|---------|
+| **Creado** | `docs/D32.1-discovery-inventory.md` |
+| **Creado** | `src/lib/graph/series/types.ts` |
+| **Creado** | `src/lib/graph/series/builders.ts` |
+| **Creado** | `src/lib/graph/series/transforms.ts` |
+| **Creado** | `src/lib/graph/series/validation.ts` |
+| **Creado** | `src/lib/graph/series/index.ts` |
+| **Creado** | `src/lib/graph/series/__tests__/series.cases.ts` |
+| **Modificado** | `src/lib/experimentalData.ts` (shim) |
+| **Modificado** | `src/lib/sessionDatasetRegistry.ts` (shim híbrido) |
+| **Modificado** | `src/lib/project/domain/dataset-series-utils.ts` (shim) |
+| **Modificado** | `src/lib/scientific/shared/series.ts` (shim) |
+| **Modificado** | `src/lib/import/build/index.ts` (imports) |
+| **Modificado** | `src/app/page.tsx` (wiring D32.3) |
+| **Modificado** | `src/lib/graph/curves/metrics.ts` (type path D32.3) |
+| **Creado** | `scripts/validate-graph-series-unit.ts` |
+| **Creado** | `scripts/lib/graph-series-gate.cases.ts` |
+| **Creado** | `scripts/validate-prod2e-d32-series-gate.ts` |
+| **Modificado** | `package.json` (2 scripts D32.4–D32.5) |
+| **Modificado** | `PROJECT_STATUS_PROD_2E.md` (acta D32.6) |
+
+**Total acumulado D32:** 10 creados · 8 modificados producto/shims · 3 scripts gates · 21 archivos (excl. acta D32.6).
+
+**No modificado en D32.6:** `src/**`, `scripts/**`, `package.json`, tests, README, ROADMAP, MASTER.
+
+**No modificado en D32 (alcance congelado post-certificación):** persistencia V2 · `ProjectGraphContextV1` · `GraphSpecification` · `VisualGraphBuilder` · `publicationPresetId` · `viewport.ts` · `schemaVersion` · golden fixtures DATA-3B.
+
+---
+
 ## Cronología PROD-2E
 
 ```text
@@ -1729,22 +2110,37 @@ D31.5 Smoke tests Curvas ✓ (CLOSED)
   ↓
 D31.6 Acta + GRAPH-2a CLOSED ✓ (CLOSED) — GRAPH-2a ✓ (CLOSED)
   ↓
-D32 GRAPH-2b Calidad vectorial → D33 F5F-BIS → D34–D35 SCI-40 → D36 Cierre
+D32.1 Discovery Series/Datasets ✓ (CLOSED)
+  ↓
+D32.2 Domain Extraction ✓ (CLOSED)
+  ↓
+D32.3 Wiring page.tsx ✓ (CLOSED)
+  ↓
+D32.4 Unit gate ✓ (CLOSED)
+  ↓
+D32.5 Umbrella + smoke ✓ (CLOSED)
+  ↓
+D32.6 Acta + GRAPH-2b CLOSED ✓ (CLOSED) — GRAPH-2b ✓ (CLOSED) — GRAPH-2 ✓ (CLOSED)
+  ↓
+D33 F5F-BIS → D34–D35 SCI-40 → D36 Cierre
 ```
 
 ---
 
-## Deuda carry-in (actualizada post-D31)
+## Deuda carry-in (actualizada post-D32)
 
 | ID | Item | Target | Estado |
 |----|------|--------|--------|
 | ~~NO-PUB-PRESETS~~ | Publication presets VGB | D30 | **CLOSED** (2026-07-10) |
 | ~~CURVES-INLINE~~ | Motor curvas inline en `page.tsx` | D31 | **CLOSED** (2026-07-11) |
-| SHIM-NL-CURVES | Shim temporal `translateNaturalLanguageToMath` en `page.tsx` | D32 | OPEN — *Se mantiene únicamente por compatibilidad histórica durante GRAPH-2. Su eliminación deberá evaluarse en D32 tras verificar la inexistencia de consumidores externos.* |
-| F5F-BIS | UI SCI-50–56 ~718 LOC | D33 | OPEN |
-| SCI-40 | Multivariante ~8.532 LOC | D34–D35 | OPEN |
-| L-D23-2 | E2E flakiness | QA-2 | OPEN |
+| ~~SERIES-INLINE~~ | Dominio series inline / legacy fragmentado | D32 | **CLOSED** (2026-07-11) |
+| SHIM-NL-CURVES | Shim temporal `translateNaturalLanguageToMath` en `page.tsx` | GRAPH-2c | **OPEN** — diferido; no bloquea D33 |
+| GRAPH-2c-01 | `sampleStep` configurable (curves) | GRAPH-2c | **OPEN** — diferido; prep EXPORT-1 |
+| GRAPH-2c-02 | Calidad vectorial SVG | GRAPH-2c | **OPEN** — diferido; prep EXPORT-1 |
+| F5F-BIS | UI SCI-50–56 ~718 LOC | D33 | **OPEN** |
+| SCI-40 | Multivariante ~8.532 LOC | D34–D35 | **OPEN** |
+| L-D23-2 | E2E flakiness | QA-2 | **OPEN** |
 
 ---
 
-*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Next: D32 BUILD.*
+*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Acta D32 certificada 2026-07-11 · D32 CLOSED · GRAPH-2b CLOSED · GRAPH-2 CLOSED · SERIES-INLINE CLOSED · Next: D33 BUILD.*

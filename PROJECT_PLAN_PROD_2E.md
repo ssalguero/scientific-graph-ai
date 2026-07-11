@@ -3,7 +3,7 @@
 **Estado:** **PLAN APROBADO (congelado en D25.3)**  
 **Fecha de aprobación:** 2026-07-09  
 **Identificador:** PROD-2E (continúa PROD-2D CLOSED)  
-**Próxima microfase:** **D26 — DATA-3B Heatmap**  
+**Próxima microfase:** **D33 — ARCH-5 F5F-BIS**  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md) — D25.2 COMPLETED  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md) — D25.1 COMPLETED  
 **API Freeze:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md) §6 — D25.4 COMPLETED
@@ -29,6 +29,7 @@ PROD-2E **extiende** el contrato VGB según [`PROJECT_DISCOVERY_PROD_2E.md`](PRO
 | **Dominio VGB** | `src/lib/visualGraphBuilder.ts` (+ submódulos D28+) | Preview builders puros |
 | **Dominio viewport** | `src/lib/graph/viewport.ts` (D29) | Auto-fit X+Y |
 | **Dominio curvas** | `src/lib/graph/curves/` (D31) | Sampling mathjs |
+| **Dominio series** | `src/lib/graph/series/` (D32) | Series/Datasets parsers + transforms |
 | **Dominio presets** | `src/lib/graph/publication-presets/` (D30) | Estilos publicación |
 | **UI VGB** | `src/components/graph-builder/` | Constructor + preview |
 | **Persistencia VGB** | `src/lib/project/domain/visual-graph-*` | Round-trip V2 |
@@ -56,7 +57,8 @@ Si BUILD de microfase D{N} falla Gate → revertir **solo** D{N}. Microfases cer
 | **Discovery** | D25.1–D25.5 | Bloqueo alcance + baseline + API Freeze + plan |
 | **DATA-3B** | D26, D27, D28 | ≥3 tipos VGB avanzados + golden fixtures |
 | **GRAPH-1** | D29, D30 | Auto-fit Y + presets publicación |
-| **GRAPH-2** | D31, D32 | Motor curvas dominio puro |
+| **GRAPH-2** | D31, D32 | Motor curvas + dominio series |
+| **GRAPH-2c** | Post-D32 | Calidad vectorial · sampleStep · SHIM-NL (diferido, no bloquea D33) |
 | **ARCH-5 gráfico** | D33, D34, D35 | F5F-BIS + SCI-40 (Escenario B) |
 | **Cierre** | D36 (D37 amend) | Gate umbrella + acta |
 
@@ -147,13 +149,24 @@ Ver [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md) §6.
 
 ---
 
-### D32 — GRAPH-2b: Calidad vectorial (prep EXPORT-1)
+### D32 — GRAPH-2b: Extracción dominio Series/Datasets
 
 | Campo | Contenido |
 |-------|-----------|
-| **Objetivo** | Densidad muestreo configurable; prep SVG |
-| **Fuera alcance** | PNG 300dpi → PROD-3 |
-| **Gate** | unit sampling + prod2d-gate sanity |
+| **Estado** | **COMPLETED** (2026-07-11) |
+| **Objetivo** | Move-only → `src/lib/graph/series/` + shims legacy |
+| **Gate** | `validate:graph-series-unit` (44/44) + `validate:prod2e-d32-series-gate` (15/15) |
+| **Amend** | Alcance original *Calidad vectorial* → diferido a **GRAPH-2c** (post-D32) |
+
+---
+
+### D32c — GRAPH-2c: Calidad vectorial (prep EXPORT-1) — DIFERIDO
+
+| Campo | Contenido |
+|-------|-----------|
+| **Estado** | **OPEN** — no bloquea D33 |
+| **Objetivo** | Densidad muestreo configurable; prep SVG; revisión SHIM-NL-CURVES |
+| **Fuera alcance PROD-2E** | PNG 300dpi → PROD-3 |
 
 ---
 
@@ -211,9 +224,9 @@ D29 Auto-fit Y
   ↓
 D30 Presets publicación
   ↓
-D31 Curvas extracción
+D31 Curvas extracción ✓
   ↓
-D32 Curvas calidad vectorial
+D32 Series/Datasets extracción ✓
   ↓
 D33 F5F-BIS UI
   ↓
@@ -262,9 +275,9 @@ Ver [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md) §3 y Master 
 
 ## Criterio de cierre PROD-2E (Master Roadmap §13)
 
-- [ ] ≥3 tipos VGB avanzados con round-trip persist (DATA-3B)
-- [ ] Auto-fit Y + presets publicación (GRAPH-1)
-- [ ] Motor curvas extraído (GRAPH-2)
+- [x] ≥3 tipos VGB avanzados con round-trip persist (DATA-3B)
+- [x] Auto-fit Y + presets publicación (GRAPH-1)
+- [x] Motor curvas + dominio series extraídos (GRAPH-2)
 - [ ] F5F-BIS + SCI-40 extraídos (ARCH-5)
 - [ ] API Freeze respetado
 - [ ] Baseline rendimiento re-medido vs D25
@@ -272,8 +285,8 @@ Ver [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md) §3 y Master 
 - [ ] Definition of Done §2 completa (D36)
 - [ ] Documentación sincronizada → PROD-3 READY
 
-**Checklist cierre PROD-2E: 0/9** — épica **OPEN**.
+**Checklist cierre PROD-2E: 5/9** — épica **OPEN** (Ready for D33).
 
 ---
 
-*Plan operativo PROD-2E — aprobado y congelado en D25.3 (2026-07-09). Amend SCI-40 Escenario B activo. Próximo: D26 BUILD.*
+*Plan operativo PROD-2E — aprobado y congelado en D25.3 (2026-07-09). Amend SCI-40 Escenario B activo. Amend D32: Series/Datasets (GRAPH-2b). Calidad vectorial → GRAPH-2c diferido. Próximo: D33 BUILD.*
