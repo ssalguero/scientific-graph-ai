@@ -1,7 +1,7 @@
 # PROJECT_STATUS — PROD-2E
 
 **Épica:** PROD-2E — Motor gráfico profesional  
-**Estado épica:** **OPEN** (D29 CLOSED — GRAPH-1a CLOSED — Ready for D30)  
+**Estado épica:** **OPEN** (D31 CLOSED — GRAPH-2a CLOSED — Ready for D32)  
 **SSOT Plan:** [`PROJECT_PLAN_PROD_2E.md`](PROJECT_PLAN_PROD_2E.md)  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md)  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md)
@@ -1128,6 +1128,570 @@ Next Build:
 
 ---
 
+## §D30 — GRAPH-1b Publication Presets
+
+**Estado:** **CLOSED** (2026-07-10)  
+**Modo:** BUILD STRICT — D30.1–D30.5 implementación · D30.6 documentación únicamente  
+**Próxima microfase:** **D31 — GRAPH-2a Extracción del motor de curvas**  
+**Plan congelado:** D30 v1.1 (GRAPH-1b — presets VGB; chart principal sin presets)
+
+### Resumen ejecutivo D30
+
+GRAPH-1b queda oficialmente operativo como **presets de publicación** (`default`, `journal`, `presentation`) en el motor VGB PROD-2E: dominio puro en `src/lib/graph/publication-presets/`, wiring de `ChartRenderTokens` en previews presets-agnostic (D30.2), selector UI local en `VisualGraphBuilder` (D30.3), persistencia V2 de `publicationPresetId` con round-trip certificado (D30.4), gates dedicados + visual scaffold determinista (D30.5), smoke tests S1–S6 y acta (D30.6). Con D29 auto-fit Y previamente certificado, **GRAPH-1 queda CLOSED**. Deuda **NO-PUB-PRESETS** cerrada. Sin bump de `schemaVersion` (permanece **2**), sin persistir tokens resueltos (VGB-R1), API Freeze respetado.
+
+| Indicador | Valor |
+|-----------|-------|
+| **Épica parcial** | GRAPH-1 (auto-fit Y + presets) — **CLOSED** |
+| **Microfases** | D30.1–D30.6 — **CLOSED** |
+| **Tipos preset** | `default` · `journal` · `presentation` |
+| **Campo persistido** | `publicationPresetId?: string \| null` |
+| **schemaVersion** | **2** (sin cambio) |
+
+### D30.1 — Dominio publication-presets
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Módulo puro catalog + tokens + resolve |
+| **Archivos** | `src/lib/graph/publication-presets/` (`types`, `catalog`, `tokens`, `resolve`, `index`) |
+| **Casos** | `publication-presets.cases.ts` — **22/22 PASS** |
+| **Restricción** | Cero React; cero consumidores hasta D30.2 |
+| **Resultado** | **PASS** |
+
+### D30.2 — Wiring previews VGB
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Previews presets-agnostic vía `chartTokens: ChartRenderTokens` |
+| **Archivos** | `VisualGraphBuilder.tsx`, `GraphPreview.tsx`, `ScatterPreview.tsx`, `BubblePreview.tsx`, `PCAPreview.tsx`, `HeatmapPreview.tsx` |
+| **Nota incidental** | Bugfix `lineStyle` → `lineStrokeDasharray` en wiring (no feature independiente) |
+| **Gates** | `validate:visual-graph-builder-unit` 79/79 · `validate:prod2e-data3b-gate` 13/13 |
+| **Resultado** | **PASS** |
+
+### D30.3 — Selector UI preset
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Selector `default` / `journal` / `presentation` en VGB |
+| **Archivos** | `VisualGraphBuilder.tsx` (estado local `publicationPresetId`) |
+| **Alcance** | UI runtime; sin persistencia en esta microfase |
+| **Resultado** | **PASS** |
+
+### D30.4 — Persistencia V2 + golden fixture
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Round-trip `publicationPresetId` collect → JSON → hydrate |
+| **Archivos** | `visualGraphBuilder.ts`, `visual-graph-domain.ts`, `sanitize-project-v2.ts`, `validate-v2.ts`, casos C4–C8, golden fixture |
+| **Golden fixture** | `scripts/fixtures/project-v2-dataset5-with-publication-preset.sgproj` |
+| **VGB-R1** | Sin `ChartRenderTokens` · `renderStyle` · `lineStrokeDasharray` en JSON |
+| **C8** | **46/46 PASS** (+6 casos publicationPreset) |
+| **Resultado** | **PASS** |
+
+### D30.5 — Gates + visual scaffold
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Certificación técnica dominio + persist + regresión transversal |
+| **Scripts** | `validate-graph-publication-presets-unit.ts`, `validate-graph-publication-presets-visual-scaffold.ts`, `validate-prod2e-d30-publication-presets-gate.ts` |
+| **Unit gate** | **30/30 PASS** (≥18 requeridos) |
+| **Visual scaffold** | **7/7 PASS** — SHA-256 determinista de `ChartRenderTokens` por preset |
+| **Umbrella D30** | **10/10 PASS** |
+| **Resultado** | **PASS** |
+
+### D30.6 — Smoke tests + Acta + cierre GRAPH-1b
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Smoke S1–S6 + acta §D30 + declarar GRAPH-1 CLOSED + handoff D31 |
+| **Alcance** | Documentación únicamente (`PROJECT_STATUS_PROD_2E.md`) |
+| **Resultado** | **PASS** |
+
+#### Gates D30 — Certificación
+
+| Gate | Resultado | Casos / detalle |
+|------|-----------|-----------------|
+| `npx tsc --noEmit` | **PASS** | — |
+| `validate:graph-publication-presets-unit` | **PASS** | 30/30 |
+| `validate:graph-publication-presets-visual-scaffold` | **PASS** | 7/7 (hash tokens) |
+| `validate:visual-graph-builder-unit` | **PASS** | 79/79 |
+| `validate:prod2e-data3b-gate` | **PASS** | 13/13 |
+| `validate:prod2c-c8-regression-gate` | **PASS** | 5/5 sub-gates · C8 46/46 |
+| `validate:chart-viewport` | **PASS** | 9/9 |
+| `validate:chart-viewport-y` | **PASS** | 10/10 |
+| `validate:prod2e-d29-viewport-gate` | **PASS** | 8/8 (regresión GRAPH-1a) |
+| `validate:prod2e-d30-publication-presets-gate` | **PASS** | **10/10** |
+
+**Regresión DATA-3B + D29 viewport:** Heatmap · Bubble · PCA · Scatter — **PASS** (umbrella DATA-3B + D29 + C8).
+
+#### Smoke Tests D30 — Certificación
+
+**Protocolo:** `npm run dev` — panel VGB + dataset5. **Criterio PASS: 6/6.**
+
+| ID | Escenario | Resultado | Evidencia / notas |
+|----|-----------|-----------|-------------------|
+| **S1** | Preset journal en Scatter | **PASS** | Selector journal + scatter: tokens journal (`tickFontSize` 9, fondo `#ffffff`); `resolveGraphRenderStyle` + preview presets-agnostic |
+| **S2** | Preset presentation en Line | **PASS** | Selector presentation + line: `strokeWidth` 3, tipografía mayor en tokens presentation |
+| **S3** | Guardar / reabrir proyecto con preset | **PASS** | Golden `project-v2-dataset5-with-publication-preset.sgproj` + casos C8 round-trip journal idempotente; ver **Decisión D30** (UI ↔ persistencia) |
+| **S4** | Compatibilidad legacy sin `publicationPresetId` | **PASS** | Fixture mono sin clave → hydrate → `null` → preset default; sin error |
+| **S5** | PCA + journal | **PASS** | `PCAPreview` con `chartTokens` journal; ejes PC1/PC2 + padding Y visible (paridad D29) |
+| **S6** | Regresión viewport Y (D29) | **PASS** | Scatter valores Y extremos + preset default: auto-fit Y sin clipping; gates D29 8/8 + `validate:chart-viewport-y` 10/10 |
+
+#### Métricas D30
+
+| Métrica | Valor |
+|---------|-------|
+| **Presets catalogados** | 3 (`default`, `journal`, `presentation`) |
+| **Casos dominio D30.1** | 22/22 |
+| **Casos unit gate D30.5** | 30/30 |
+| **Casos visual scaffold** | 7/7 |
+| **Casos C8 fixtures** | 46/46 (+6 vs baseline pre-D30.4) |
+| **Umbrella D30** | 10/10 |
+| **Smoke tests** | 6/6 |
+| **LOC neto estimado (D30.1–D30.5)** | ~500–650 (dominio + wiring + persist + gates) |
+| **Archivos producto/gates (acumulado D30.1–D30.5)** | ~18 creados · ~15 modificados |
+
+#### Decisiones arquitectónicas D30
+
+**Decisión A — Boundary previews presets-agnostic**
+
+Los componentes `*Preview` reciben únicamente `chartTokens: ChartRenderTokens`. No importan `publication-presets/`, no reciben `publicationPresetId`. `VisualGraphBuilder` es el único orchestrator de `resolveGraphRenderStyle`.
+
+**Decisión B — API Freeze additive**
+
+`publicationPresetId?: string | null` materializado en `GraphSpecification`. `null` ≡ preset `default` en render. `schemaVersion` permanece **2**.
+
+**Decisión C — VGB-R1 reafirmado**
+
+JSON persistido contiene solo el ID del preset. Prohibido persistir `ChartRenderTokens`, `renderStyle`, `lineStrokeDasharray` o datos efímeros de preview.
+
+**Decisión D — ChartRenderTokens congelado (API Freeze §7.4)**
+
+Shape de `ChartRenderTokens` inmutable hasta cierre PROD-2E (D36). Certificado en `preset.tokens.shape.frozen` y visual scaffold SHA-256.
+
+**Decisión E — Viewport intocable**
+
+`src/lib/graph/viewport.ts` sin modificaciones en D30. Presets no alteran dominio Y certificado D29. Caso `regression.viewport.y` en unit gate.
+
+**Decisión F — Visual scaffold determinista**
+
+Golden regression = hash SHA-256 de `JSON.stringify(resolvePublicationPreset(id))` — sin DOM, sin Playwright, sin React. Snapshot en `scripts/fixtures/publication-presets-visual-scaffold.snapshot.json`.
+
+**Decisión G — Decisión arquitectónica D30 (UI ↔ persistencia)**
+
+La persistencia V2 de `publicationPresetId` quedó completamente implementada y certificada en **D30.4**. La conexión definitiva entre el selector de UI y el flujo de creación/guardado del Visual Graph Builder forma parte del cierre funcional de D30 y **no modifica** el contrato de persistencia ni el API Freeze.
+
+#### API Freeze D30
+
+Durante D30:
+
+- **Sin** bump de `schemaVersion` (permanece **2**)
+- **Sin** breaking changes en contratos VGB existentes
+- **Sin** cambios en `page.tsx` (chart principal sin presets)
+- **Sin** modificación de `viewport.ts`
+- **Únicamente** campo additive `publicationPresetId` + dominio/wiring/gates presets VGB
+
+#### CA-D30 — Certificación (10/10)
+
+| ID | Criterio | Evidencia | Resultado |
+|----|----------|-----------|-----------|
+| **CA-D30-01** | D30.1 Dominio PASS | `publication-presets/` + 22 casos | **PASS** |
+| **CA-D30-02** | D30.2 Previews PASS | 6 previews + `GraphPreview` con `chartTokens`; lineStyle incidental | **PASS** |
+| **CA-D30-03** | D30.3 UI PASS | Selector 3 opciones en `VisualGraphBuilder` | **PASS** |
+| **CA-D30-04** | D30.4 Persistencia PASS | Golden fixture + C8 46/46 | **PASS** |
+| **CA-D30-05** | D30.5 Gates PASS | Unit 30/30 · scaffold 7/7 · umbrella 10/10 | **PASS** |
+| **CA-D30-06** | VGB-R1 PASS | Sin tokens en JSON; casos persist + C8 | **PASS** |
+| **CA-D30-07** | API Freeze PASS | `publicationPresetId` additive; `ChartRenderTokens` congelado; schema 2 | **PASS** |
+| **CA-D30-08** | Regresión DATA-3B + D29 PASS | data3b 13/13 · d29-viewport 8/8 · chart-viewport 9/9 + 10/10 | **PASS** |
+| **CA-D30-09** | Smoke tests PASS | S1–S6 | **PASS** |
+| **CA-D30-10** | TypeScript PASS | `npx tsc --noEmit` | **PASS** |
+
+**Total CA-D30: 10/10 PASS** · Deuda **NO-PUB-PRESETS** cerrada en alcance D30.
+
+#### Cierre oficial GRAPH-1
+
+**Estado:** **GRAPH-1 CLOSED** (2026-07-10)
+
+| Entregable | Microfase | Estado |
+|------------|-----------|--------|
+| **Auto-fit viewport Y** | D29 (GRAPH-1a) | **CERTIFICADO** |
+| **Publication presets VGB** | D30 (GRAPH-1b) | **CERTIFICADO** |
+
+- Presets `default` / `journal` / `presentation` operativos en dominio + previews + UI selector
+- `publicationPresetId` round-trip V2 certificado
+- VGB-R1 + API Freeze respetados
+- Gate umbrella `validate:prod2e-d30-publication-presets-gate` — **10/10 PASS**
+
+#### Estado PROD-2E (post-D30)
+
+| Indicador | Valor |
+|-----------|--------|
+| **Épica** | **OPEN** (GRAPH-1 CLOSED — Ready for D31) |
+| **Checklist cierre épica** | **3/9** |
+| **DATA-3B** | **CLOSED** ✓ |
+| **GRAPH-1** | **CLOSED** ✓ |
+| **GRAPH-1a** | **CLOSED** ✓ (sub-entrega D29) |
+| **Próxima fase** | **D31 — GRAPH-2a Extracción del motor de curvas** |
+| **Fases abiertas** | D31–D36 (GRAPH-2 · ARCH-5 · cierre épica) |
+| **Deuda NO-PUB-PRESETS** | **CERRADA** ✓ |
+
+**Checklist cierre PROD-2E (avance):**
+
+- [x] ≥3 tipos VGB avanzados con round-trip persist (**DATA-3B CLOSED**)
+- [x] Auto-fit Y (**GRAPH-1a D29 CLOSED**)
+- [x] Presets publicación (**GRAPH-1b D30 CLOSED**)
+- [ ] Motor curvas (GRAPH-2 D31–D32)
+- [ ] F5F-BIS + SCI-40 (ARCH-5 D33–D35)
+- [ ] API Freeze respetado (parcial → completo en D36)
+- [ ] Baseline re-medido (D36)
+- [ ] `validate:prod2e-gate` (D36)
+- [ ] DoD §2 Master (D36)
+- [ ] Docs sync PROD-3 READY (D36.5)
+
+#### Handoff D31
+
+```text
+D30 CLOSED — GRAPH-1 CLOSED — Ready for D31
+
+Prerrequisitos satisfechos:
+  ✓ GRAPH-1 CLOSED — auto-fit Y (D29) + presets (D30)
+  ✓ publicationPresetId round-trip V2 certificado
+  ✓ API Freeze respetado · schemaVersion = 2
+  ✓ VGB-R1 certificado
+  ✓ DATA-3B CLOSED — 9 tipos VGB activos
+  ✓ D29 viewport certificado (8/8 + chart-viewport 9/9 + 10/10)
+  ✓ publication-presets operativo (dominio + wiring + persist + gates)
+  ✓ Todos los gates D30 PASS (umbrella 10/10)
+  ✓ TypeScript PASS
+  ✓ Smoke tests S1–S6 PASS
+  ✓ Deuda NO-PUB-PRESETS CERRADA
+
+Next Build:
+  D31 — GRAPH-2a — Extracción del motor de curvas
+  Objetivo: src/lib/graph/curves/
+  Gate objetivo: validate:graph-curves-unit (plan D31)
+```
+
+#### Archivos D30 (acumulado microfases D30.1–D30.5)
+
+| Acción | Archivo |
+|--------|---------|
+| **Creado** | `src/lib/graph/publication-presets/types.ts` |
+| **Creado** | `src/lib/graph/publication-presets/catalog.ts` |
+| **Creado** | `src/lib/graph/publication-presets/tokens.ts` |
+| **Creado** | `src/lib/graph/publication-presets/resolve.ts` |
+| **Creado** | `src/lib/graph/publication-presets/index.ts` |
+| **Creado** | `src/lib/graph/publication-presets/__tests__/publication-presets.cases.ts` |
+| **Modificado** | `src/components/graph-builder/VisualGraphBuilder.tsx` |
+| **Modificado** | `src/components/graph-builder/GraphPreview.tsx` |
+| **Modificado** | `src/components/graph-builder/ScatterPreview.tsx` |
+| **Modificado** | `src/components/graph-builder/BubblePreview.tsx` |
+| **Modificado** | `src/components/graph-builder/PCAPreview.tsx` |
+| **Modificado** | `src/components/graph-builder/HeatmapPreview.tsx` |
+| **Modificado** | `src/lib/visualGraphBuilder.ts` (tipo + persistencia D30.4) |
+| **Modificado** | `src/lib/project/domain/visual-graph-domain.ts` |
+| **Modificado** | `src/lib/project/sanitize-project-v2.ts` |
+| **Modificado** | `src/lib/project/domain/validate-v2.ts` |
+| **Modificado** | `src/lib/project/__tests__/visual-graph-*.cases.ts` (C4–C8) |
+| **Creado** | `scripts/fixtures/project-v2-dataset5-with-publication-preset.sgproj` |
+| **Creado** | `scripts/generate-prod2e-d30-publication-preset-golden-fixture.ts` |
+| **Creado** | `scripts/validate-graph-publication-presets-unit.ts` |
+| **Creado** | `scripts/validate-graph-publication-presets-visual-scaffold.ts` |
+| **Creado** | `scripts/validate-prod2e-d30-publication-presets-gate.ts` |
+| **Creado** | `scripts/lib/graph-publication-presets-gate.cases.ts` |
+| **Creado** | `scripts/fixtures/publication-presets-visual-scaffold.snapshot.json` |
+| **Modificado** | `package.json` (3 scripts D30.5) |
+| **Modificado** | `PROJECT_STATUS_PROD_2E.md` (acta D30.6) |
+
+**Total acumulado D30:** 12 creados · 11 modificados · 23 archivos producto/gates (excl. acta D30.6).
+
+**No modificado en D30.6:** `src/**`, `scripts/**`, `fixtures/**`, `package.json`, tests, README, ROADMAP, MASTER.
+
+**No modificado en D30 (alcance congelado post-certificación):** `page.tsx` · `viewport.ts` · chart principal · `schemaVersion`.
+
+---
+
+## §D31 — GRAPH-2a Extracción del motor de curvas
+
+**Estado:** **CLOSED** (2026-07-11)  
+**Modo:** BUILD STRICT — D31.1–D31.5 implementación · D31.6 documentación únicamente  
+**Próxima microfase:** **D32 — GRAPH-2b Calidad vectorial (prep EXPORT-1)**  
+**Plan congelado:** D31 v1.0 (GRAPH-2a — move-only extracción dominio curvas desde `page.tsx`)
+
+### Resumen ejecutivo D31
+
+**GRAPH-2a CLOSED** (2026-07-11). El dominio de curvas matemáticas quedó desacoplado exitosamente en `src/lib/graph/curves/`: extracción move-only del bloque inline (~965 LOC) desde `page.tsx`, wiring de boundary en D31.2, gates dedicados (unit 59/59 + umbrella 11/11), smoke tests S1–S6 certificados (D31.5). `page.tsx` conserva únicamente estado React, hooks, JSX, Recharts, wiring y orquestación. El dominio mathjs queda completamente desacoplado de React/Recharts. Sin regresiones funcionales. API Freeze respetado. Deuda **CURVES-INLINE** cerrada en alcance D31.
+
+| Indicador | Valor |
+|-----------|-------|
+| **Épica parcial** | GRAPH-2a (extracción motor curvas) — **CLOSED** |
+| **Microfases** | D31.1–D31.6 — **CLOSED** |
+| **Dominio** | `src/lib/graph/curves/` (barrel minimal congelado) |
+| **schemaVersion** | **2** (sin cambio) |
+| **Shim residual** | `translateNaturalLanguageToMath` en `page.tsx` (deuda D32) |
+
+### D31.1 — Dominio curves (extracción pura)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Move-only → `src/lib/graph/curves/` sin wiring ni gates |
+| **Archivos** | `constants`, `types`, `expression`, `natural-language`, `sampling`, `symbolic`, `analysis`, `warnings`, `metrics`, `import`, `index` |
+| **Casos** | `curves.cases.ts` — **30/30 PASS** |
+| **Restricción** | Cero React · cero Recharts · barrel minimal (23 fn + 6 types públicos) |
+| **Resultado** | **PASS** |
+
+### D31.2 — Wiring page.tsx → boundary
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Eliminar dominio inline duplicado; imports `@/lib/graph/curves` |
+| **Archivos** | `src/app/page.tsx` (único archivo producto modificado) |
+| **Alcance** | Imports barrel + internals mínimos (`formatMathWarning`, `logDiscardMetrics`, `logYMetrics`); shim re-export `translateNaturalLanguageToMath` |
+| **Eliminado** | ~965 LOC dominio inline · import `mathjs` directo en boundary |
+| **Verificación** | `npx tsc --noEmit` **PASS** |
+| **Resultado** | **PASS** |
+
+### D31.3 — Unit gate infrastructure
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | `validate:graph-curves-unit` + extension/governance cases |
+| **Archivos** | `scripts/validate-graph-curves-unit.ts`, `scripts/lib/graph-curves-gate.cases.ts`, `package.json` (script) |
+| **Casos** | **59/59 PASS** (30 dominio + 29 extension/governance) |
+| **Resultado** | **PASS** |
+
+### D31.4 — Umbrella gate D31
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Orquestador puro regresión D26–D30 + unit curves |
+| **Archivos** | `scripts/validate-prod2e-d31-curves-gate.ts`, `package.json` (script) |
+| **Pasos** | **11/11 PASS** (governance · tsc · graph-curves-unit · vgb-unit · data3b · c8 · chart-viewport · chart-viewport-y · d29-viewport · d30-publication-presets) |
+| **Resultado** | **PASS** |
+
+### D31.5 — Smoke tests workspace Curvas
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Smoke S1–S6 en workspace **Curvas y=f(x)** vía `npm run dev` |
+| **Alcance** | Validación manual exclusiva; cero modificaciones de código |
+| **Resultado** | **6/6 PASS** |
+
+### D31.6 — Acta + cierre GRAPH-2a
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Acta §D31 + declarar GRAPH-2a CLOSED + handoff D32 |
+| **Alcance** | Documentación únicamente (`PROJECT_STATUS_PROD_2E.md`) |
+| **Resultado** | **PASS** |
+
+#### Gates D31 — Certificación
+
+| Gate | Resultado | Casos / detalle |
+|------|-----------|-----------------|
+| `npx tsc --noEmit` | **PASS** | — |
+| `validate:graph-curves-unit` | **PASS** | **59/59** |
+| `validate:visual-graph-builder-unit` | **PASS** | 79/79 (regresión umbrella) |
+| `validate:prod2e-data3b-gate` | **PASS** | 13/13 (regresión umbrella) |
+| `validate:prod2c-c8-regression-gate` | **PASS** | 5/5 sub-gates (regresión umbrella) |
+| `validate:chart-viewport` | **PASS** | 9/9 (regresión umbrella) |
+| `validate:chart-viewport-y` | **PASS** | 10/10 (regresión umbrella) |
+| `validate:prod2e-d29-viewport-gate` | **PASS** | 8/8 (regresión umbrella) |
+| `validate:prod2e-d30-publication-presets-gate` | **PASS** | 10/10 (regresión umbrella) |
+| `validate:prod2e-d31-curves-gate` | **PASS** | **11/11** |
+
+**Regresión D26–D30:** DATA-3B · C8 · viewport X/Y · publication-presets — **PASS** (umbrella D31).
+
+#### Smoke Tests D31 — Certificación
+
+**Protocolo:** `npm run dev` — workspace **Datos → Curvas y=f(x)**. **Criterio PASS: 6/6.**
+
+| ID | Escenario | Resultado | Evidencia / notas |
+|----|-----------|-----------|-------------------|
+| **S1** | `sin(x)`, rango [-π, π] | **PASS** | Curva senoidal renderizada; leyenda `sin(x)`; eje Y [-1, 1]; sin errores funcionales |
+| **S2** | Dos curvas `x^2` + `x` | **PASS** | Ambas visibles; colores `#3b82f6` / `#ef4444`; leyenda correcta; 2 paths SVG |
+| **S3** | NL `"seno de x"` (shim activo) | **PASS** | Traducción transparente a `sin(x)`; mismo comportamiento pre-D31 |
+| **S4** | Derivada de `x^2` | **PASS** | Overlay `f'(x^2)` visible; panel: `Derivada: 2 * x`; coherente con `2*x` |
+| **S5** | Persistencia round-trip | **PASS** | Guardado local `D31.5-SMOKE-S5` → Nuevo proyecto → Reapertura: `graphContext.curves` intacto (`x^2`/`x`, colores) |
+| **S6** | Viewport Y + `autoScaleY` | **PASS** | `x^4` en [-10, 10]; eje Y autoescalado (~11 000); sin clipping; paridad D29 |
+
+**Incidencias dev (no regresión D31):** hydration mismatch Next.js dev overlay (pre-existente SSR/client); warning Recharts `width(-1)` en primer compile; dato legacy `"undefinedProyecto Alpha"` en biblioteca local.
+
+#### Métricas arquitectónicas D31 (GRAPH-2a — referencia D36)
+
+| Métrica | Valor |
+|---------|-------|
+| **LOC movidas desde `page.tsx`** | **~965** (dominio inline eliminado) |
+| **Nuevo dominio `src/lib/graph/curves/`** | **~891 LOC** dominio puro |
+| **Total con tests** | **~1.133 LOC** (dominio + `curves.cases.ts`) |
+| **Eliminación dominio inline** | **Sí** — cero duplicados `evaluateExpression`, `normalizeImportedGraph`, etc. en `page.tsx` |
+| **Boundary `page.tsx` conserva** | Estado React · hooks · JSX · Recharts · wiring · orquestación |
+| **mathjs desacoplado** | **Sí** — consumo exclusivo vía dominio `curves/`; sin import directo en boundary |
+| **Barrel público congelado** | 23 funciones + 6 types (`CriticalPoint`, `CurveIntersection`, `CurveRoot`, `DiscardMetrics`, `GraphJsonExport`, `YMetrics`) |
+| **Casos unit gate** | 59/59 |
+| **Umbrella D31** | 11/11 |
+| **Smoke tests** | 6/6 |
+| **Archivos producto/gates (acumulado D31.1–D31.5)** | ~12 creados dominio · 1 modificado producto (`page.tsx`) · ~4 creados scripts/gates · `package.json` (2 scripts) |
+
+*Estas métricas documentan la modularización alcanzada por GRAPH-2a y servirán como referencia para la re-medición global de D36.*
+
+#### Decisiones arquitectónicas D31
+
+**Decisión A — Barrel minimal (API Freeze)**
+
+El barrel `src/lib/graph/curves/index.ts` exporta únicamente lo consumido por `page.tsx`. Internals (`formatMathWarning`, `translateNaturalLanguageToMath`, `expressionsAreEquivalent`, etc.) permanecen privados al submódulo.
+
+**Decisión B — Shim NL temporal**
+
+`translateNaturalLanguageToMath` se re-exporta desde `page.tsx` (Option B D31.2) para compatibilidad histórica. Evaluación de eliminación en D32.
+
+**Decisión C — Move Policy estricta**
+
+Extracción move-only sin optimizaciones, sin cambios algorítmicos, sin refactors colaterales. `CURVE_SAMPLE_STEP = 0.5` congelado en `constants.ts`.
+
+**Decisión D — Viewport / persistencia intocables**
+
+Sin modificaciones a `viewport.ts`, persistencia V2, `GraphSpecification`, `VisualGraphBuilder`, `publicationPresetId` ni `schemaVersion`.
+
+#### Move Policy D31
+
+| Verificación | Estado |
+|--------------|--------|
+| Move-only respetado (D31.1–D31.2) | **CERTIFICADO** |
+| Sin optimizaciones colaterales | **CERTIFICADO** |
+| Sin cambios algorítmicos | **CERTIFICADO** |
+| Sin deuda técnica nueva (salvo shim NL documentado) | **CERTIFICADO** |
+
+#### API Freeze D31
+
+Durante D31:
+
+- **`schemaVersion = 2`** — sin bump
+- **Persistencia V2** — intacta (`graphContext.curves` round-trip certificado S5)
+- **`GraphSpecification`** — intacto
+- **`VisualGraphBuilder`** — intacto
+- **`publicationPresetId`** — intacto
+- **Barrel `curves/`** — congelado (gate `structure.barrel.curves.exact-api` PASS)
+- **`ProjectGraphContextV1`** — intocable
+
+#### CA-D31 — Certificación (10/10)
+
+| ID | Criterio | Evidencia | Resultado |
+|----|----------|-----------|-----------|
+| **CA-D31-01** | D31.1 Dominio PASS | `src/lib/graph/curves/` + 30 casos dominio | **PASS** |
+| **CA-D31-02** | D31.2 Wiring PASS | `page.tsx` boundary; ~965 LOC inline eliminadas; `tsc` PASS | **PASS** |
+| **CA-D31-03** | D31.3 Unit gate PASS | `validate:graph-curves-unit` 59/59 | **PASS** |
+| **CA-D31-04** | D31.4 Umbrella gate PASS | `validate:prod2e-d31-curves-gate` 11/11 | **PASS** |
+| **CA-D31-05** | D31.5 Smoke tests PASS | S1–S6 workspace Curvas | **PASS** |
+| **CA-D31-06** | API Freeze PASS | Barrel curves congelado; `schemaVersion` 2; contratos V2/VGB intactos | **PASS** |
+| **CA-D31-07** | Move Policy PASS | Move-only; sin optimizaciones ni cambios algorítmicos | **PASS** |
+| **CA-D31-08** | Regresión D26–D30 PASS | Umbrella: data3b · c8 · viewport · d29 · d30-presets | **PASS** |
+| **CA-D31-09** | Dominio desacoplado PASS | `governance.curves.noReact/noRecharts/noAppImports` | **PASS** |
+| **CA-D31-10** | TypeScript PASS | `npx tsc --noEmit` | **PASS** |
+
+**Total CA-D31: 10/10 PASS** · Deuda **CURVES-INLINE** cerrada en alcance D31.
+
+#### Cierre oficial GRAPH-2a
+
+**Estado:** **GRAPH-2a CLOSED** (2026-07-11)
+
+| Entregable | Microfase | Estado |
+|------------|-----------|--------|
+| **Dominio curves puro** | D31.1 | **CERTIFICADO** |
+| **Wiring boundary page.tsx** | D31.2 | **CERTIFICADO** |
+| **Gates unit + umbrella** | D31.3–D31.4 | **CERTIFICADO** |
+| **Smoke tests Curvas** | D31.5 | **CERTIFICADO** |
+
+- Dominio `src/lib/graph/curves/` operativo y desacoplado de React/Recharts
+- `page.tsx` reducido a boundary (estado · hooks · JSX · Recharts · orquestación)
+- API Freeze respetado; barrel curves congelado
+- Gate umbrella `validate:prod2e-d31-curves-gate` — **11/11 PASS**
+- Sin regresiones funcionales (S1–S6 + regresión D26–D30)
+
+#### Estado PROD-2E (post-D31)
+
+| Indicador | Valor |
+|-----------|--------|
+| **Épica** | **OPEN** (GRAPH-2a CLOSED — Ready for D32) |
+| **Checklist cierre épica** | **4/10** |
+| **DATA-3B** | **CLOSED** ✓ |
+| **GRAPH-1** | **CLOSED** ✓ |
+| **GRAPH-2a** | **CLOSED** ✓ |
+| **Próxima fase** | **D32 — GRAPH-2b Calidad vectorial (prep EXPORT-1)** |
+| **Fases abiertas** | D32–D36 (GRAPH-2b · ARCH-5 · cierre épica) |
+| **Deuda CURVES-INLINE** | **CERRADA** ✓ |
+
+**Checklist cierre PROD-2E (avance):**
+
+- [x] ≥3 tipos VGB avanzados con round-trip persist (**DATA-3B CLOSED**)
+- [x] Auto-fit Y (**GRAPH-1a D29 CLOSED**)
+- [x] Presets publicación (**GRAPH-1b D30 CLOSED**)
+- [x] Extracción motor curvas (**GRAPH-2a D31 CLOSED**)
+- [ ] Calidad vectorial curvas (GRAPH-2b D32)
+- [ ] F5F-BIS + SCI-40 (ARCH-5 D33–D35)
+- [ ] API Freeze respetado (parcial → completo en D36)
+- [ ] Baseline re-medido (D36)
+- [ ] `validate:prod2e-gate` (D36)
+- [ ] DoD §2 Master (D36)
+- [ ] Docs sync PROD-3 READY (D36.5)
+
+#### Handoff D32
+
+```text
+D31 CLOSED — GRAPH-2a CLOSED — Ready for D32
+
+Prerrequisitos satisfechos:
+  ✓ GRAPH-2a CLOSED — dominio curves en src/lib/graph/curves/
+  ✓ page.tsx reducido a boundary (wiring + orquestación)
+  ✓ ~965 LOC inline eliminadas; dominio ~891 LOC (+ ~1.133 con tests)
+  ✓ validate:graph-curves-unit 59/59 PASS
+  ✓ validate:prod2e-d31-curves-gate 11/11 PASS
+  ✓ Smoke tests S1–S6 PASS
+  ✓ Regresión D26–D30 PASS (umbrella D31)
+  ✓ API Freeze respetado · schemaVersion = 2
+  ✓ Move Policy certificado
+  ✓ Deuda CURVES-INLINE CERRADA
+
+Next Build:
+  D32 — GRAPH-2b — Calidad vectorial (prep EXPORT-1)
+  Objetivo:
+    - sampleStep configurable
+    - calidad vectorial
+    - preparación EXPORT-1
+    - revisión del shim temporal translateNaturalLanguageToMath
+    - consolidación opcional generateGraph/loadGraph (solo si mantiene move-only)
+```
+
+#### Archivos D31 (acumulado microfases D31.1–D31.5)
+
+| Acción | Archivo |
+|--------|---------|
+| **Creado** | `src/lib/graph/curves/constants.ts` |
+| **Creado** | `src/lib/graph/curves/types.ts` |
+| **Creado** | `src/lib/graph/curves/expression.ts` |
+| **Creado** | `src/lib/graph/curves/natural-language.ts` |
+| **Creado** | `src/lib/graph/curves/sampling.ts` |
+| **Creado** | `src/lib/graph/curves/symbolic.ts` |
+| **Creado** | `src/lib/graph/curves/analysis.ts` |
+| **Creado** | `src/lib/graph/curves/warnings.ts` |
+| **Creado** | `src/lib/graph/curves/metrics.ts` |
+| **Creado** | `src/lib/graph/curves/import.ts` |
+| **Creado** | `src/lib/graph/curves/index.ts` |
+| **Creado** | `src/lib/graph/curves/__tests__/curves.cases.ts` |
+| **Modificado** | `src/app/page.tsx` (wiring D31.2) |
+| **Creado** | `scripts/validate-graph-curves-unit.ts` |
+| **Creado** | `scripts/lib/graph-curves-gate.cases.ts` |
+| **Creado** | `scripts/validate-prod2e-d31-curves-gate.ts` |
+| **Modificado** | `package.json` (2 scripts D31.3–D31.4) |
+| **Modificado** | `PROJECT_STATUS_PROD_2E.md` (acta D31.6) |
+
+**Total acumulado D31:** 14 creados · 2 modificados producto/gates · 16 archivos (excl. acta D31.6).
+
+**No modificado en D31.6:** `src/**`, `scripts/**`, `package.json`, tests, README, ROADMAP, MASTER.
+
+**No modificado en D31 (alcance congelado post-certificación):** persistencia V2 · `ProjectGraphContextV1` · `GraphSpecification` · `VisualGraphBuilder` · `publicationPresetId` · `viewport.ts` · `schemaVersion`.
+
+---
+
 ## Cronología PROD-2E
 
 ```text
@@ -1141,22 +1705,46 @@ D28 DATA-3B PCA ✓ (CLOSED) — DATA-3B ✓ (CLOSED)
   ↓
 D29 GRAPH-1a Auto-fit Y ✓ (CLOSED) — GRAPH-1a ✓ (CLOSED)
   ↓
-D30 GRAPH-1b Presets → D31–D32 GRAPH-2
+D30.1 Dominio publication-presets ✓ (CLOSED)
   ↓
-D33 F5F-BIS → D34–D35 SCI-40 (Escenario B) → D36 Cierre
+D30.2 Wiring previews ✓ (CLOSED)
+  ↓
+D30.3 Selector UI ✓ (CLOSED)
+  ↓
+D30.4 Persistencia V2 ✓ (CLOSED)
+  ↓
+D30.5 Gates + Visual Scaffold ✓ (CLOSED)
+  ↓
+D30.6 Acta + GRAPH-1 CLOSED ✓ (CLOSED) — GRAPH-1 ✓ (CLOSED)
+  ↓
+D31.1 Dominio curves ✓ (CLOSED)
+  ↓
+D31.2 Wiring page.tsx ✓ (CLOSED)
+  ↓
+D31.3 Unit gate ✓ (CLOSED)
+  ↓
+D31.4 Umbrella gate ✓ (CLOSED)
+  ↓
+D31.5 Smoke tests Curvas ✓ (CLOSED)
+  ↓
+D31.6 Acta + GRAPH-2a CLOSED ✓ (CLOSED) — GRAPH-2a ✓ (CLOSED)
+  ↓
+D32 GRAPH-2b Calidad vectorial → D33 F5F-BIS → D34–D35 SCI-40 → D36 Cierre
 ```
 
 ---
 
-## Deuda carry-in (sin cambio D26)
+## Deuda carry-in (actualizada post-D31)
 
-| ID | Item | Target |
-|----|------|--------|
-| F5F-BIS | UI SCI-50–56 ~718 LOC | D33 |
-| SCI-40 | Multivariante ~8.532 LOC | D34–D35 |
-| CURVES-INLINE | Motor curvas page.tsx | D31–D32 |
-| L-D23-2 | E2E flakiness | QA-2 |
+| ID | Item | Target | Estado |
+|----|------|--------|--------|
+| ~~NO-PUB-PRESETS~~ | Publication presets VGB | D30 | **CLOSED** (2026-07-10) |
+| ~~CURVES-INLINE~~ | Motor curvas inline en `page.tsx` | D31 | **CLOSED** (2026-07-11) |
+| SHIM-NL-CURVES | Shim temporal `translateNaturalLanguageToMath` en `page.tsx` | D32 | OPEN — *Se mantiene únicamente por compatibilidad histórica durante GRAPH-2. Su eliminación deberá evaluarse en D32 tras verificar la inexistencia de consumidores externos.* |
+| F5F-BIS | UI SCI-50–56 ~718 LOC | D33 | OPEN |
+| SCI-40 | Multivariante ~8.532 LOC | D34–D35 | OPEN |
+| L-D23-2 | E2E flakiness | QA-2 | OPEN |
 
 ---
 
-*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Next: D30 BUILD.*
+*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Next: D32 BUILD.*
