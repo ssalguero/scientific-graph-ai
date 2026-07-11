@@ -24,7 +24,9 @@ import {
 } from "@/lib/visualGraphBuilder";
 import { seriesToWorksheet } from "@/lib/experimentalWorksheet";
 import {
+  assertNoPublicationPresetRenderLeakInJson,
   hasOnlyPersistedVisualGraphKeys,
+  PUBLICATION_PRESET_RENDER_LEAK_KEYS,
   PREVIEW_ONLY_EPHEMERAL_KEYS,
 } from "./visual-graph-mapper-helpers";
 import {
@@ -39,6 +41,8 @@ const FIXTURES_DIR = path.join(process.cwd(), "scripts", "fixtures");
 const MONO_GOLDEN_FIXTURE = "project-v2-dataset5-with-visual-graph.sgproj";
 const HEATMAP_GOLDEN_FIXTURE = "project-v2-dataset5-with-heatmap.sgproj";
 const BUBBLE_GOLDEN_FIXTURE = "project-v2-dataset5-with-bubble.sgproj";
+const PUBLICATION_PRESET_GOLDEN_FIXTURE =
+  "project-v2-dataset5-with-publication-preset.sgproj";
 const PCA_GOLDEN_FIXTURE = "project-v2-dataset5-with-pca.sgproj";
 const SCATTER_PRO_GOLDEN_FIXTURE = "project-v2-dataset5-with-scatter-pro.sgproj";
 const MULTI_GOLDEN_FIXTURE = "project-v2-dataset5-dataset6-with-visual-graphs.sgproj";
@@ -70,7 +74,8 @@ const assertVgbR1InSerializedJson = (json: string): boolean => {
     json.includes('"bubbleData"') ||
     json.includes('"pcaData"') ||
     json.includes('"pcaMeta"') ||
-    json.includes('"scatterPoints"')
+    json.includes('"scatterPoints"') ||
+    !assertNoPublicationPresetRenderLeakInJson(json)
   ) {
     return false;
   }
@@ -364,6 +369,101 @@ export const runVisualGraphFixturesCaseSuite = (): CaseResult[] => {
   assertCase(
     "fixtures.vgbR1.golden.bubble.noPreviewLeakInJson",
     assertVgbR1InSerializedJson(bubbleGoldenText)
+  );
+
+  const publicationPresetGoldenText = readFixture(PUBLICATION_PRESET_GOLDEN_FIXTURE);
+  const publicationPresetGoldenHydrated = hydrateProjectJson(publicationPresetGoldenText);
+  assertCase(
+    "fixtures.publicationPreset.golden.fixtureLoads",
+    publicationPresetGoldenHydrated.ok === true &&
+      (publicationPresetGoldenHydrated.patch.project.visualGraphs?.length ?? 0) === 1 &&
+      publicationPresetGoldenHydrated.patch.project.visualGraphs?.[0]?.graphSpec
+        .publicationPresetId === "journal" &&
+      publicationPresetGoldenHydrated.patch.project.visualGraphs?.[0]?.sourceDatasetId ===
+        MONO_PRIMARY_DATASET_ID
+  );
+
+  if (publicationPresetGoldenHydrated.ok) {
+    const presetRuntime = extractVisualGraphRuntimeState(publicationPresetGoldenHydrated.patch);
+    assertCase(
+      "fixtures.publicationPreset.golden.hydrateRebuildsSpec",
+      presetRuntime.length === 1 &&
+        presetRuntime[0]?.graphSpec.publicationPresetId === "journal"
+    );
+
+    const presetRoundTrip = runVisualGraphHydrateRoundTrip(
+      patchToCollectContextV2WithVisualGraphs(publicationPresetGoldenHydrated.patch)
+    );
+    const presetFirstPersisted = presetRoundTrip.firstProject.visualGraphs ?? [];
+    const presetSecondPersisted = presetRoundTrip.secondProject.visualGraphs ?? [];
+
+    assertCase(
+      "fixtures.publicationPreset.golden.roundtripJournal",
+      visualGraphsPersistedEquivalent(presetFirstPersisted, presetSecondPersisted) &&
+        presetSecondPersisted[0]?.graphSpec.publicationPresetId === "journal"
+    );
+
+    const presetCollectContext = patchToCollectContextV2WithVisualGraphs(
+      publicationPresetGoldenHydrated.patch
+    );
+    const presetFirstProject = collectProjectSnapshotV2(presetCollectContext);
+    const presetFirstSerialized = serializeProjectV2({
+      project: presetFirstProject,
+      appVersion: "0.1.0",
+      exportedAt: "2026-07-10T12:00:00.000Z",
+      options: { includeChecksum: false },
+    });
+    const presetReloaded = presetFirstSerialized.ok
+      ? hydrateProjectJson(presetFirstSerialized.json)
+      : { ok: false as const, errors: [] as string[] };
+    const presetSecondProject =
+      presetReloaded.ok === true
+        ? collectProjectSnapshotV2(
+            patchToCollectContextV2WithVisualGraphs(presetReloaded.patch)
+          )
+        : null;
+    const presetSecondSerialized =
+      presetSecondProject !== null
+        ? serializeProjectV2({
+            project: presetSecondProject,
+            appVersion: "0.1.0",
+            exportedAt: "2026-07-10T12:00:00.000Z",
+            options: { includeChecksum: false },
+          })
+        : { ok: false as const, errors: [] as string[] };
+
+    assertCase(
+      "fixtures.publicationPreset.golden.idempotent",
+      presetFirstSerialized.ok === true &&
+        presetReloaded.ok === true &&
+        presetSecondSerialized.ok === true &&
+        presetFirstSerialized.json === presetSecondSerialized.json
+    );
+
+    assertCase(
+      "fixtures.vgbR1.publicationPreset.golden.reCollectClean",
+      presetSecondPersisted.every((entry) =>
+        hasOnlyPersistedVisualGraphKeys(entry as unknown as Record<string, unknown>)
+      ) &&
+        presetSecondPersisted.every((entry) =>
+          PREVIEW_ONLY_EPHEMERAL_KEYS.every(
+            (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
+          ) &&
+            PUBLICATION_PRESET_RENDER_LEAK_KEYS.every(
+              (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
+            )
+        )
+    );
+  } else {
+    assertCase("fixtures.publicationPreset.golden.hydrateRebuildsSpec", false);
+    assertCase("fixtures.publicationPreset.golden.roundtripJournal", false);
+    assertCase("fixtures.publicationPreset.golden.idempotent", false);
+    assertCase("fixtures.vgbR1.publicationPreset.golden.reCollectClean", false);
+  }
+
+  assertCase(
+    "fixtures.vgbR1.publicationPreset.golden.noTokenLeakInJson",
+    assertVgbR1InSerializedJson(publicationPresetGoldenText)
   );
 
   const pcaGoldenText = readFixture(PCA_GOLDEN_FIXTURE);

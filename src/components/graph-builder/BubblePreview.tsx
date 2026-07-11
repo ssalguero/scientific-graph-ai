@@ -10,17 +10,16 @@ import {
   YAxis,
 } from "recharts";
 
+import type { ChartRenderTokens } from "@/lib/graph/publication-presets/types";
 import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import type { VisualGraphPreviewBubblePoint } from "@/lib/visualGraphBuilder";
-
-/** Width / height — matches GraphPreview chart aspect. */
-const CHART_ASPECT_RATIO = 1.8;
 
 /** Visual scale: maps domain `size` units to SVG radius (not data normalization). */
 const BUBBLE_PIXEL_RADIUS_BASE = 12;
 
 type BubblePreviewProps = {
   data: VisualGraphPreviewBubblePoint[];
+  chartTokens: ChartRenderTokens;
 };
 
 type BubbleScatterShapeProps = {
@@ -28,30 +27,32 @@ type BubbleScatterShapeProps = {
   cy?: number;
   payload?: VisualGraphPreviewBubblePoint;
   fill?: string;
+  fillOpacity: number;
 };
 
 function renderBubbleShape(props: BubbleScatterShapeProps) {
-  const { cx, cy, payload, fill } = props;
+  const { cx, cy, payload, fill, fillOpacity } = props;
   if (cx == null || cy == null || payload == null) {
     return null;
   }
 
   const radius = payload.size * BUBBLE_PIXEL_RADIUS_BASE;
+  const stroke = fill ?? "var(--app-accent)";
 
   return (
     <circle
       cx={cx}
       cy={cy}
       r={radius}
-      fill={fill ?? "var(--app-accent)"}
-      fillOpacity={0.7}
-      stroke={fill ?? "var(--app-accent)"}
+      fill={stroke}
+      fillOpacity={fillOpacity}
+      stroke={stroke}
       strokeWidth={1}
     />
   );
 }
 
-export function BubblePreview({ data }: BubblePreviewProps) {
+export function BubblePreview({ data, chartTokens }: BubblePreviewProps) {
   if (data.length === 0) {
     return (
       <div className="flex h-full min-h-[12rem] items-center justify-center text-sm text-[var(--app-text-muted)]">
@@ -61,29 +62,46 @@ export function BubblePreview({ data }: BubblePreviewProps) {
   }
 
   const yAxisDomain = computeYAxisDomainFromValues(data.map((point) => point.y));
+  const seriesColor = chartTokens.series.defaultColor;
 
   return (
-    <ResponsiveContainer width="100%" aspect={CHART_ASPECT_RATIO}>
-      <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" />
+    <ResponsiveContainer width="100%" aspect={chartTokens.aspectRatio}>
+      <ScatterChart margin={chartTokens.margin}>
+        <CartesianGrid
+          strokeDasharray={chartTokens.grid.strokeDasharray}
+          stroke={chartTokens.grid.stroke}
+        />
         <XAxis
           type="number"
           dataKey="x"
-          stroke="var(--app-text-muted)"
-          fontSize={12}
+          stroke={chartTokens.axis.stroke}
+          fontSize={chartTokens.axis.tickFontSize}
         />
         <YAxis
           type="number"
           dataKey="y"
           domain={yAxisDomain}
-          stroke="var(--app-text-muted)"
-          fontSize={12}
+          stroke={chartTokens.axis.stroke}
+          fontSize={chartTokens.axis.tickFontSize}
         />
-        <Tooltip />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: chartTokens.tooltip.background,
+            border: `1px solid ${chartTokens.tooltip.border}`,
+            color: chartTokens.tooltip.color,
+            fontSize: chartTokens.tooltip.fontSize,
+          }}
+        />
         <Scatter
           data={data}
-          fill="var(--app-accent)"
-          shape={renderBubbleShape}
+          fill={seriesColor}
+          shape={(props) =>
+            renderBubbleShape({
+              ...props,
+              fill: seriesColor,
+              fillOpacity: chartTokens.series.fillOpacity,
+            })
+          }
           line={false}
           isAnimationActive={false}
         />

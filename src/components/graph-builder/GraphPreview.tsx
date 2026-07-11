@@ -12,6 +12,8 @@ import {
   YAxis,
 } from "recharts";
 
+import type { ChartRenderTokens } from "@/lib/graph/publication-presets/types";
+import { DEFAULT_CHART_RENDER_TOKENS } from "@/lib/graph/publication-presets/tokens";
 import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import type {
   VisualGraphMarkerStyle,
@@ -23,9 +25,6 @@ import { BubblePreview } from "./BubblePreview";
 import { ScatterPreview } from "./ScatterPreview";
 import { PCAPreview } from "./PCAPreview";
 
-/** Width / height — ResponsiveContainer derives height from width (no parent height needed). */
-const CHART_ASPECT_RATIO = 1.8;
-
 export type ScatterPreviewStyle = {
   color: string;
   markerSize: number;
@@ -35,8 +34,18 @@ export type ScatterPreviewStyle = {
 type GraphPreviewProps = {
   preview: VisualGraphPreview | null;
   errorMessage?: string | null;
+  /** Resolved in VisualGraphBuilder; legacy callers omit for default tokens. */
+  chartTokens?: ChartRenderTokens;
+  lineStrokeDasharray?: string;
   scatterStyle?: ScatterPreviewStyle | null;
 };
+
+const rechartsTooltipStyle = (chartTokens: ChartRenderTokens) => ({
+  backgroundColor: chartTokens.tooltip.background,
+  border: `1px solid ${chartTokens.tooltip.border}`,
+  color: chartTokens.tooltip.color,
+  fontSize: chartTokens.tooltip.fontSize,
+});
 
 function BoxPlotPreview({
   data,
@@ -120,6 +129,8 @@ function ViolinPreview({
 export function GraphPreview({
   preview,
   errorMessage,
+  chartTokens,
+  lineStrokeDasharray,
   scatterStyle,
 }: GraphPreviewProps) {
   if (errorMessage) {
@@ -138,6 +149,13 @@ export function GraphPreview({
     );
   }
 
+  const effectiveChartTokens = chartTokens ?? DEFAULT_CHART_RENDER_TOKENS;
+
+  const chartSurfaceStyle =
+    effectiveChartTokens.background !== "transparent"
+      ? { backgroundColor: effectiveChartTokens.background }
+      : undefined;
+
   return (
     <div className="flex h-full min-h-[320px] flex-col rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-3">
       <div className="mb-2">
@@ -150,77 +168,111 @@ export function GraphPreview({
         </p>
       </div>
 
-      <div className="w-full">
+      <div className="w-full" style={chartSurfaceStyle}>
         {preview.graphType === "scatter" ? (
           <ScatterPreview
             data={preview.scatterPoints}
-            color={scatterStyle?.color ?? "#3b82f6"}
+            chartTokens={effectiveChartTokens}
+            color={scatterStyle?.color ?? effectiveChartTokens.series.defaultColor}
             markerSize={scatterStyle?.markerSize ?? 6}
             marker={scatterStyle?.marker ?? "circle"}
           />
         ) : null}
 
         {preview.graphType === "line" && preview.lineSeries.length > 0 ? (
-          <ResponsiveContainer width="100%" aspect={CHART_ASPECT_RATIO}>
-            <ComposedChart data={preview.lineSeries[0]?.points ?? []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" />
+          <ResponsiveContainer width="100%" aspect={effectiveChartTokens.aspectRatio}>
+            <ComposedChart
+              data={preview.lineSeries[0]?.points ?? []}
+              margin={effectiveChartTokens.margin}
+            >
+              <CartesianGrid
+                strokeDasharray={effectiveChartTokens.grid.strokeDasharray}
+                stroke={effectiveChartTokens.grid.stroke}
+              />
               <XAxis
                 dataKey="x"
                 type="number"
-                stroke="var(--app-text-muted)"
-                fontSize={12}
+                stroke={effectiveChartTokens.axis.stroke}
+                fontSize={effectiveChartTokens.axis.tickFontSize}
               />
               <YAxis
                 domain={computeYAxisDomainFromValues(
                   (preview.lineSeries[0]?.points ?? []).map((point) => point.y)
                 )}
-                stroke="var(--app-text-muted)"
-                fontSize={12}
+                stroke={effectiveChartTokens.axis.stroke}
+                fontSize={effectiveChartTokens.axis.tickFontSize}
               />
-              <Tooltip />
+              <Tooltip contentStyle={rechartsTooltipStyle(effectiveChartTokens)} />
               <Line
                 type="monotone"
                 dataKey="y"
-                stroke={preview.lineSeries[0]?.color ?? "#3b82f6"}
-                strokeWidth={2}
+                stroke={
+                  preview.lineSeries[0]?.color ??
+                  effectiveChartTokens.series.defaultColor
+                }
+                strokeWidth={effectiveChartTokens.series.strokeWidth}
+                strokeDasharray={lineStrokeDasharray}
                 dot
+                isAnimationActive={false}
               />
             </ComposedChart>
           </ResponsiveContainer>
         ) : null}
 
         {preview.graphType === "histogram" && preview.histogramBins.length > 0 ? (
-          <ResponsiveContainer width="100%" aspect={CHART_ASPECT_RATIO}>
-            <BarChart data={preview.histogramBins}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" />
-              <XAxis dataKey="label" stroke="var(--app-text-muted)" fontSize={10} />
+          <ResponsiveContainer width="100%" aspect={effectiveChartTokens.aspectRatio}>
+            <BarChart data={preview.histogramBins} margin={effectiveChartTokens.margin}>
+              <CartesianGrid
+                strokeDasharray={effectiveChartTokens.grid.strokeDasharray}
+                stroke={effectiveChartTokens.grid.stroke}
+              />
+              <XAxis
+                dataKey="label"
+                stroke={effectiveChartTokens.axis.stroke}
+                fontSize={effectiveChartTokens.axis.tickFontSize}
+              />
               <YAxis
                 domain={computeYAxisDomainFromValues(
                   preview.histogramBins.map((bin) => bin.count)
                 )}
-                stroke="var(--app-text-muted)"
-                fontSize={12}
+                stroke={effectiveChartTokens.axis.stroke}
+                fontSize={effectiveChartTokens.axis.tickFontSize}
               />
-              <Tooltip />
-              <Bar dataKey="count" fill="#3b82f6" />
+              <Tooltip contentStyle={rechartsTooltipStyle(effectiveChartTokens)} />
+              <Bar
+                dataKey="count"
+                fill={effectiveChartTokens.series.defaultColor}
+                fillOpacity={effectiveChartTokens.series.fillOpacity}
+              />
             </BarChart>
           </ResponsiveContainer>
         ) : null}
 
         {preview.graphType === "bar" && preview.barData.length > 0 ? (
-          <ResponsiveContainer width="100%" aspect={CHART_ASPECT_RATIO}>
-            <BarChart data={preview.barData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" />
-              <XAxis dataKey="category" stroke="var(--app-text-muted)" fontSize={12} />
+          <ResponsiveContainer width="100%" aspect={effectiveChartTokens.aspectRatio}>
+            <BarChart data={preview.barData} margin={effectiveChartTokens.margin}>
+              <CartesianGrid
+                strokeDasharray={effectiveChartTokens.grid.strokeDasharray}
+                stroke={effectiveChartTokens.grid.stroke}
+              />
+              <XAxis
+                dataKey="category"
+                stroke={effectiveChartTokens.axis.stroke}
+                fontSize={effectiveChartTokens.axis.tickFontSize}
+              />
               <YAxis
                 domain={computeYAxisDomainFromValues(
                   preview.barData.map((item) => item.value)
                 )}
-                stroke="var(--app-text-muted)"
-                fontSize={12}
+                stroke={effectiveChartTokens.axis.stroke}
+                fontSize={effectiveChartTokens.axis.tickFontSize}
               />
-              <Tooltip />
-              <Bar dataKey="value" fill="#3b82f6" />
+              <Tooltip contentStyle={rechartsTooltipStyle(effectiveChartTokens)} />
+              <Bar
+                dataKey="value"
+                fill={effectiveChartTokens.series.defaultColor}
+                fillOpacity={effectiveChartTokens.series.fillOpacity}
+              />
             </BarChart>
           </ResponsiveContainer>
         ) : null}
@@ -234,17 +286,24 @@ export function GraphPreview({
         ) : null}
 
         {preview.graphType === "heatmap" ? (
-          <HeatmapPreview data={preview.heatmapData} />
+          <HeatmapPreview
+            data={preview.heatmapData}
+            chartTokens={effectiveChartTokens}
+          />
         ) : null}
 
         {preview.graphType === "bubble" ? (
-          <BubblePreview data={preview.bubbleData} />
+          <BubblePreview
+            data={preview.bubbleData}
+            chartTokens={effectiveChartTokens}
+          />
         ) : null}
 
         {preview.graphType === "pca" ? (
           <PCAPreview
             pcaData={preview.pcaData}
             pcaMeta={preview.pcaMeta}
+            chartTokens={effectiveChartTokens}
           />
         ) : null}
       </div>

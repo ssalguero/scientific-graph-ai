@@ -21,6 +21,9 @@ import {
   SAMPLE_VGB_HEATMAP_SPEC_INPUT,
   SAMPLE_VGB_BUBBLE_SPEC_INPUT,
   SAMPLE_VGB_PCA_SPEC_INPUT,
+  SAMPLE_VGB_JOURNAL_PRESET_SPEC_INPUT,
+  assertNoPublicationPresetRenderLeakInJson,
+  PUBLICATION_PRESET_RENDER_LEAK_KEYS,
   SAMPLE_VGB_SCATTER_SPEC_INPUT,
 } from "./visual-graph-mapper-helpers";
 
@@ -381,6 +384,40 @@ export const runVisualGraphCollectCaseSuite = (): CaseResult[] => {
         PREVIEW_ONLY_EPHEMERAL_KEYS.every(
           (key) => !(key in (entry.graphSpec as unknown as Record<string, unknown>))
         )
+      )
+  );
+
+  const journalEntry = buildSampleVisualGraphEntry({
+    graphId: "vg-journal-collect",
+    specInput: SAMPLE_VGB_JOURNAL_PRESET_SPEC_INPUT,
+  });
+  const journalSnapshot = collectProjectSnapshotV2(
+    buildBaseContext({
+      projectVisualGraphEntries: [journalEntry],
+    })
+  );
+
+  assertCase(
+    "collect.publicationPreset.roundtrip",
+    journalSnapshot.visualGraphs?.length === 1 &&
+      journalSnapshot.visualGraphs[0]?.graphSpec.publicationPresetId === "journal"
+  );
+
+  const journalSerialized = serializeProjectV2({
+    project: journalSnapshot,
+    appVersion: "0.1.0",
+    options: { includeChecksum: false, pretty: true },
+  });
+
+  assertCase(
+    "collect.publicationPreset.vgbR1.noTokenLeak",
+    journalSerialized.ok === true &&
+      assertNoPublicationPresetRenderLeakInJson(journalSerialized.json) &&
+      !journalSerialized.json.includes('"preview"') &&
+      !journalSerialized.json.includes('"displaySeries"') &&
+      PUBLICATION_PRESET_RENDER_LEAK_KEYS.every(
+        (key) =>
+          !(key in (journalSnapshot.visualGraphs?.[0]?.graphSpec as unknown as Record<string, unknown>))
       )
   );
 

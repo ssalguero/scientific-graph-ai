@@ -701,6 +701,22 @@ const validateGraphSpec = (
       domainIssue("V2-VGB-CREATED", `${path}.createdAt`, "createdAt required")
     );
   }
+
+  if (
+    "publicationPresetId" in graphSpec &&
+    graphSpec.publicationPresetId !== null &&
+    graphSpec.publicationPresetId !== undefined &&
+    typeof graphSpec.publicationPresetId !== "string"
+  ) {
+    pushDomainIssue(
+      errors,
+      domainIssue(
+        "V2-VGB-PRESET",
+        `${path}.publicationPresetId`,
+        "publicationPresetId must be a string or null when present"
+      )
+    );
+  }
 };
 
 const validateDatasetRefs = (

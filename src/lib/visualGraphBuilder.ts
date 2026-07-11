@@ -42,6 +42,7 @@ export type VisualGraphSpecification = {
   sizeVariable?: string | null;
   pcaVariables?: string[];
   pcaStandardize?: boolean;
+  publicationPresetId?: string | null;
 };
 
 export type GraphSpecification = VisualGraphSpecification & {
@@ -206,6 +207,7 @@ export const DEFAULT_VISUAL_GRAPH_SPECIFICATION: VisualGraphSpecification = {
   sizeVariable: null,
   pcaVariables: [],
   pcaStandardize: true,
+  publicationPresetId: null,
 };
 
 /** Estado inicial del Constructor Visual: sin tipo preseleccionado. */
@@ -224,6 +226,7 @@ export const INITIAL_VISUAL_GRAPH_BUILDER_DRAFT: VisualGraphBuilderDraft = {
   sizeVariable: null,
   pcaVariables: [],
   pcaStandardize: true,
+  publicationPresetId: null,
 };
 
 export const BUBBLE_SIZE_MIN = 0.25;
@@ -232,6 +235,23 @@ export const BUBBLE_SIZE_FIXED = 1.0;
 
 export const SCATTER_MARKER_MIN = 2;
 export const SCATTER_MARKER_MAX = 20;
+
+const PUBLICATION_PRESET_IDS_FOR_PERSIST = new Set([
+  "default",
+  "journal",
+  "presentation",
+]);
+
+/** Sanitize persisted preset id — unknown values become null (API Freeze D30). */
+export function sanitizePublicationPresetId(value: unknown): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value !== "string") {
+    return null;
+  }
+  return PUBLICATION_PRESET_IDS_FOR_PERSIST.has(value) ? value : null;
+}
 
 const GRAPH_TYPES_USING_GROUP_VARIABLE = new Set<VisualGraphType>([
   "bar",
@@ -1285,6 +1305,9 @@ export function buildGraphSpecification(
   if (graphType === "scatter") {
     resolved.markerSize = clampScatterMarkerSize(resolved.markerSize);
   }
+  resolved.publicationPresetId = sanitizePublicationPresetId(
+    spec.publicationPresetId
+  );
 
   return {
     ...resolved,

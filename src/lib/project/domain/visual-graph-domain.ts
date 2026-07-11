@@ -1,4 +1,5 @@
 import type { GraphSpecification } from "@/lib/visualGraphBuilder";
+import { sanitizePublicationPresetId } from "@/lib/visualGraphBuilder";
 
 import {
   isSessionRuntimeDatasetId,
@@ -50,6 +51,7 @@ export const cloneGraphSpecification = (
         pcaStandardize: spec.pcaStandardize ?? true,
       }
     : {}),
+  publicationPresetId: sanitizePublicationPresetId(spec.publicationPresetId),
   id: spec.id,
   createdAt: spec.createdAt,
   xLabel: spec.xLabel,

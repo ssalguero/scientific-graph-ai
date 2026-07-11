@@ -1,7 +1,9 @@
+import type { ChartRenderTokens } from "@/lib/graph/publication-presets/types";
 import type { VisualGraphPreviewHeatmapCell } from "@/lib/visualGraphBuilder";
 
 type HeatmapPreviewProps = {
   data: VisualGraphPreviewHeatmapCell[];
+  chartTokens: ChartRenderTokens;
 };
 
 const NEUTRAL_RGB: [number, number, number] = [148, 163, 184];
@@ -90,7 +92,7 @@ function formatCellValue(value: number): string {
   return value.toFixed(2);
 }
 
-export function HeatmapPreview({ data }: HeatmapPreviewProps) {
+export function HeatmapPreview({ data, chartTokens }: HeatmapPreviewProps) {
   if (data.length === 0) {
     return (
       <div className="flex h-full min-h-[12rem] items-center justify-center text-sm text-[var(--app-text-muted)]">
@@ -102,21 +104,26 @@ export function HeatmapPreview({ data }: HeatmapPreviewProps) {
   const rows = extractOrderedLabels(data, "row");
   const columns = extractOrderedLabels(data, "column");
   const showCellValues = columns.length <= 14 && rows.length <= 10;
+  const labelStyle = {
+    fontSize: chartTokens.heatmap.labelFontSize,
+  };
 
   return (
     <div className="overflow-x-auto">
       <div
-        className="min-w-max gap-0.5"
+        className="min-w-max"
         style={{
           display: "grid",
           gridTemplateColumns: `minmax(6.5rem, auto) repeat(${columns.length}, minmax(3rem, 1fr))`,
+          gap: chartTokens.heatmap.cellGapPx,
         }}
       >
         <div className="px-2 py-1" />
         {columns.map((column) => (
           <div
             key={`heatmap-col-${column}`}
-            className="truncate px-1 py-1 text-center text-xs font-semibold text-[var(--app-heading)]"
+            className="truncate px-1 py-1 text-center font-semibold text-[var(--app-heading)]"
+            style={labelStyle}
             title={column}
           >
             {column}
@@ -126,7 +133,8 @@ export function HeatmapPreview({ data }: HeatmapPreviewProps) {
         {rows.map((row) => (
           <div key={`heatmap-row-${row}`} className="contents">
             <div
-              className="truncate px-2 py-1 text-xs font-semibold text-[var(--app-heading)]"
+              className="truncate px-2 py-1 font-semibold text-[var(--app-heading)]"
+              style={labelStyle}
               title={row}
             >
               {row}
@@ -138,10 +146,11 @@ export function HeatmapPreview({ data }: HeatmapPreviewProps) {
               return (
                 <div
                   key={`heatmap-cell-${row}-${column}`}
-                  className="flex min-h-[2.25rem] items-center justify-center rounded-sm px-1 py-1 text-xs tabular-nums"
+                  className="flex min-h-[2.25rem] items-center justify-center rounded-sm px-1 py-1 tabular-nums"
                   style={{
                     backgroundColor: colors.backgroundColor,
                     color: colors.color,
+                    fontSize: chartTokens.heatmap.labelFontSize,
                   }}
                   title={`${row} × ${column}: ${formatCellValue(value)}`}
                 >

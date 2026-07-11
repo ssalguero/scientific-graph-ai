@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "algorithm": "sha256",
+  "source": "resolvePublicationPreset(id) → JSON.stringify(ChartRenderTokens)",
+  "presets": {
+    "default": {
+      "sha256": "46de95cfd2d6e48ba75c71b620ecec1b6a9b1a43a39e3f8cee96679b1f5fcad0"
+    },
+    "journal": {
+      "sha256": "f635c2057283079a5eea276d96f68a27cfac80c5e739e68da0988d7bc148f530"
+    },
+    "presentation": {
+      "sha256": "4c6f4ecb9cbaef0b7b0dcff72798a831d1192525cc62045f40d22af5603ca7bf"
+    }
+  }
+}

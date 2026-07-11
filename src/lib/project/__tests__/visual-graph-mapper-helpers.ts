@@ -105,6 +105,25 @@ export const SAMPLE_VGB_PCA_SPEC_INPUT = {
   pcaStandardize: true,
 };
 
+export const SAMPLE_VGB_JOURNAL_PRESET_SPEC_INPUT = {
+  ...DEFAULT_VISUAL_GRAPH_SPECIFICATION,
+  graphType: "scatter" as const,
+  xVariable: "x",
+  yVariable: "control1",
+  publicationPresetId: "journal" as const,
+};
+
+/** Keys that must never appear in persisted VGB JSON (VGB-R1 + D30). */
+export const PUBLICATION_PRESET_RENDER_LEAK_KEYS = [
+  "chartTokens",
+  "ChartRenderTokens",
+  "lineStrokeDasharray",
+  "renderStyle",
+] as const;
+
+export const assertNoPublicationPresetRenderLeakInJson = (json: string): boolean =>
+  PUBLICATION_PRESET_RENDER_LEAK_KEYS.every((key) => !json.includes(`"${key}"`));
+
 const buildGraphSpecFromInput = (
   input: VisualGraphSpecification,
   graphId: string,

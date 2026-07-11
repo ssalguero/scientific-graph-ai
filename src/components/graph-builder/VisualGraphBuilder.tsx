@@ -8,6 +8,12 @@ import {
   type WorksheetColumnRegistry,
 } from "@/lib/experimentalWorksheet";
 import {
+  mapLineStyleToStrokeDasharray,
+  PUBLICATION_PRESET_CATALOG,
+  resolveGraphRenderStyle,
+  type PublicationPresetId,
+} from "@/lib/graph/publication-presets";
+import {
   applyVisualGraphSpecification,
   buildVisualGraphPreview,
   buildVisualGraphVariables,
@@ -60,6 +66,8 @@ export function VisualGraphBuilder({
   const [spec, setSpec] = useState<VisualGraphBuilderDraft>(
     INITIAL_VISUAL_GRAPH_BUILDER_DRAFT
   );
+  const [publicationPresetId, setPublicationPresetId] =
+    useState<PublicationPresetId>("default");
   const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,6 +100,23 @@ export function VisualGraphBuilder({
 
   const previewError = validation.ok ? null : validation.message;
   const canCreateGraph = validation.ok && preview !== null;
+
+  const chartTokens = useMemo(
+    () =>
+      resolveGraphRenderStyle({
+        publicationPresetId,
+        color: spec.color,
+      }),
+    [publicationPresetId, spec.color]
+  );
+
+  const lineStrokeDasharray = useMemo(
+    () =>
+      spec.graphType === "line"
+        ? mapLineStyleToStrokeDasharray(spec.lineStyle)
+        : undefined,
+    [spec.graphType, spec.lineStyle]
+  );
 
   const updateSpec = (patch: Partial<VisualGraphBuilderDraft>) => {
     setSpec((previous) => ({ ...previous, ...patch }));
@@ -130,6 +155,28 @@ export function VisualGraphBuilder({
             onChange={(graphType) => updateSpec({ graphType })}
             soonBadgeClassName={soonBadgeClassName}
           />
+
+          {spec.graphType !== null ? (
+            <div>
+              <label className={fieldLabel} htmlFor="vgb-publication-preset">
+                Preset de publicación
+              </label>
+              <select
+                id="vgb-publication-preset"
+                value={publicationPresetId}
+                onChange={(event) =>
+                  setPublicationPresetId(event.target.value as PublicationPresetId)
+                }
+                className={inputField}
+              >
+                {PUBLICATION_PRESET_CATALOG.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
           {(spec.graphType === "scatter" ||
             spec.graphType === "line" ||
@@ -513,6 +560,8 @@ export function VisualGraphBuilder({
       <GraphPreview
         preview={preview}
         errorMessage={previewError}
+        chartTokens={chartTokens}
+        lineStrokeDasharray={lineStrokeDasharray}
         scatterStyle={
           spec.graphType === "scatter"
             ? {

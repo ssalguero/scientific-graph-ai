@@ -10,6 +10,7 @@ import type { EditorProjectApplyContextV2 } from "@/lib/project/editor-hydrate-c
 import { persistedVisualGraphsEquivalent } from "@/lib/project/domain/mappers/visual-graph";
 import { serializeProjectV2 } from "@/lib/project/serialize-project-v2";
 import { hydrateProjectJson } from "@/lib/project";
+import { sanitizeScientificProjectV2 } from "@/lib/project/sanitize-project-v2";
 import { VISIBILITY_KEYS_V1 } from "@/lib/project/keys";
 import type { ProjectVisualGraphEntry } from "@/lib/visualGraphBuilder";
 import {
@@ -29,6 +30,9 @@ import {
   SAMPLE_VGB_HEATMAP_SPEC_INPUT,
   SAMPLE_VGB_BUBBLE_SPEC_INPUT,
   SAMPLE_VGB_PCA_SPEC_INPUT,
+  SAMPLE_VGB_JOURNAL_PRESET_SPEC_INPUT,
+  assertNoPublicationPresetRenderLeakInJson,
+  PUBLICATION_PRESET_RENDER_LEAK_KEYS,
   SAMPLE_VGB_REGISTRY,
   SAMPLE_VGB_SCATTER_SPEC_INPUT,
   SAMPLE_VGB_SERIES,
@@ -405,6 +409,76 @@ export const runVisualGraphHydrateCaseSuite = (): CaseResult[] => {
   assertCase(
     "hydrate.vgb.immutabilityPatchUntouched",
     JSON.stringify(patchBeforeExtract.project.visualGraphs) === persistedBefore
+  );
+
+  const journalPersisted = buildSampleVisualGraphPersisted({
+    graphId: "vg-journal-hydrate",
+    sourceDatasetId: HYDRATE_VGB_PRIMARY_ID,
+    specInput: SAMPLE_VGB_JOURNAL_PRESET_SPEC_INPUT,
+  });
+  const journalProject = collectProjectSnapshotV2(buildVisualGraphHydrateCollectContext());
+  journalProject.visualGraphs = [journalPersisted];
+  const journalPatch = buildHydratePatchFromProject(journalProject);
+  const journalRuntime = extractVisualGraphRuntimeState(journalPatch);
+
+  assertCase(
+    "hydrate.publicationPreset.journal.rebuildsPreview",
+    journalRuntime.length === 1 &&
+      journalRuntime[0]?.graphSpec.publicationPresetId === "journal"
+  );
+
+  const journalRoundTrip = runVisualGraphHydrateRoundTrip(
+    patchToCollectContextV2WithVisualGraphs(journalPatch)
+  );
+  const journalReSerialized = serializeProjectV2({
+    project: journalRoundTrip.secondProject,
+    appVersion: "0.1.0",
+    options: { includeChecksum: false, pretty: true },
+  });
+
+  assertCase(
+    "hydrate.publicationPreset.journal.roundtrip",
+    journalRoundTrip.firstProject.visualGraphs?.[0]?.graphSpec.publicationPresetId ===
+      "journal" &&
+      journalRoundTrip.secondProject.visualGraphs?.[0]?.graphSpec.publicationPresetId ===
+        "journal" &&
+      persistedVisualGraphsEquivalent(
+        journalRoundTrip.firstProject.visualGraphs![0]!,
+        journalRoundTrip.secondProject.visualGraphs![0]!
+      )
+  );
+
+  assertCase(
+    "hydrate.publicationPreset.vgbR1.noTokenLeak",
+    journalReSerialized.ok === true &&
+      assertNoPublicationPresetRenderLeakInJson(journalReSerialized.json) &&
+      !journalReSerialized.json.includes('"lineStrokeDasharray"')
+  );
+
+  const legacyMonoText = readFixture("project-v2-dataset5-with-visual-graph.sgproj");
+  const legacyMonoHydrated = hydrateProjectJson(legacyMonoText);
+  assertCase(
+    "hydrate.publicationPreset.legacyNoField",
+    legacyMonoHydrated.ok === true &&
+      !legacyMonoText.includes('"publicationPresetId"') &&
+      extractVisualGraphRuntimeState(legacyMonoHydrated.patch)[0]?.graphSpec
+        .publicationPresetId === null
+  );
+
+  const invalidPresetProject = collectProjectSnapshotV2(buildVisualGraphHydrateCollectContext());
+  invalidPresetProject.visualGraphs = [
+    {
+      ...journalPersisted,
+      graphSpec: {
+        ...journalPersisted.graphSpec,
+        publicationPresetId: "unknown-preset-id",
+      },
+    },
+  ];
+  const invalidSanitized = sanitizeScientificProjectV2(invalidPresetProject);
+  assertCase(
+    "hydrate.publicationPreset.sanitizeInvalidId",
+    invalidSanitized.project.visualGraphs?.[0]?.graphSpec.publicationPresetId === null
   );
 
   const b2Hydrated = hydrateProjectJson(readFixture("project-v2-dataset5-minimal.sgproj"));

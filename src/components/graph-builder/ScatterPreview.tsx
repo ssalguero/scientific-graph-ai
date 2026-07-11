@@ -11,15 +11,13 @@ import {
   YAxis,
 } from "recharts";
 
+import type { ChartRenderTokens } from "@/lib/graph/publication-presets/types";
 import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import {
   clampScatterMarkerSize,
   type VisualGraphMarkerStyle,
   type VisualGraphPreviewPoint,
 } from "@/lib/visualGraphBuilder";
-
-/** Width / height — matches GraphPreview / BubblePreview (local duplicate). */
-const CHART_ASPECT_RATIO = 1.8;
 
 const GROUP_PALETTE = [
   "#3b82f6",
@@ -34,6 +32,7 @@ const GROUP_PALETTE = [
 
 type ScatterPreviewProps = {
   data: VisualGraphPreviewPoint[];
+  chartTokens: ChartRenderTokens;
   color: string;
   markerSize: number;
   marker: VisualGraphMarkerStyle;
@@ -45,10 +44,11 @@ type ScatterShapeProps = {
   fill?: string;
   marker: VisualGraphMarkerStyle;
   radius: number;
+  fillOpacity: number;
 };
 
 function renderScatterShape(props: ScatterShapeProps) {
-  const { cx, cy, fill, marker, radius } = props;
+  const { cx, cy, fill, marker, radius, fillOpacity } = props;
   if (cx == null || cy == null || marker === "none") {
     return null;
   }
@@ -63,7 +63,7 @@ function renderScatterShape(props: ScatterShapeProps) {
         width={radius * 2}
         height={radius * 2}
         fill={stroke}
-        fillOpacity={0.85}
+        fillOpacity={fillOpacity}
       />
     );
   }
@@ -73,7 +73,7 @@ function renderScatterShape(props: ScatterShapeProps) {
       <polygon
         points={`${cx},${cy - radius} ${cx + radius},${cy} ${cx},${cy + radius} ${cx - radius},${cy}`}
         fill={stroke}
-        fillOpacity={0.85}
+        fillOpacity={fillOpacity}
       />
     );
   }
@@ -84,7 +84,7 @@ function renderScatterShape(props: ScatterShapeProps) {
       cy={cy}
       r={radius}
       fill={stroke}
-      fillOpacity={0.85}
+      fillOpacity={fillOpacity}
       stroke={stroke}
       strokeWidth={1}
     />
@@ -120,6 +120,7 @@ function resolveGroupSeries(
 
 export function ScatterPreview({
   data,
+  chartTokens,
   color,
   markerSize,
   marker,
@@ -138,23 +139,34 @@ export function ScatterPreview({
   const yAxisDomain = computeYAxisDomainFromValues(data.map((point) => point.y));
 
   return (
-    <ResponsiveContainer width="100%" aspect={CHART_ASPECT_RATIO}>
-      <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" />
+    <ResponsiveContainer width="100%" aspect={chartTokens.aspectRatio}>
+      <ScatterChart margin={chartTokens.margin}>
+        <CartesianGrid
+          strokeDasharray={chartTokens.grid.strokeDasharray}
+          stroke={chartTokens.grid.stroke}
+        />
         <XAxis
           type="number"
           dataKey="x"
-          stroke="var(--app-text-muted)"
-          fontSize={12}
+          stroke={chartTokens.axis.stroke}
+          fontSize={chartTokens.axis.tickFontSize}
         />
         <YAxis
           type="number"
           dataKey="y"
           domain={yAxisDomain}
-          stroke="var(--app-text-muted)"
-          fontSize={12}
+          stroke={chartTokens.axis.stroke}
+          fontSize={chartTokens.axis.tickFontSize}
         />
-        <Tooltip labelFormatter={(label) => `X: ${label}`} />
+        <Tooltip
+          labelFormatter={(label) => `X: ${label}`}
+          contentStyle={{
+            backgroundColor: chartTokens.tooltip.background,
+            border: `1px solid ${chartTokens.tooltip.border}`,
+            color: chartTokens.tooltip.color,
+            fontSize: chartTokens.tooltip.fontSize,
+          }}
+        />
         {showLegend ? <Legend /> : null}
         {series.map((item) => (
           <Scatter
@@ -170,6 +182,7 @@ export function ScatterPreview({
                 marker,
                 radius,
                 fill: item.color || color,
+                fillOpacity: chartTokens.series.fillOpacity,
               })
             }
           />

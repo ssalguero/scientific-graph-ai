@@ -18,6 +18,7 @@ import {
   sanitizeWorkspace,
 } from "./sanitize";
 import { cloneScientificProjectV2 } from "./apply-hydrate-project-v2-patch";
+import { cloneGraphSpecification } from "./domain/visual-graph-domain";
 
 export type SanitizeScientificProjectV2Result = {
   project: ScientificProjectV2;
@@ -160,7 +161,7 @@ const sanitizeVisualGraphsV2 = (
     if (datasetIds.has(entry.sourceDatasetId)) {
       kept.push({
         ...entry,
-        graphSpec: { ...entry.graphSpec },
+        graphSpec: cloneGraphSpecification(entry.graphSpec),
       });
       return;
     }

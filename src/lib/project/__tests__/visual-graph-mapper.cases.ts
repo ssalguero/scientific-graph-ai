@@ -25,6 +25,9 @@ import {
   SAMPLE_VGB_HEATMAP_SPEC_INPUT,
   SAMPLE_VGB_BUBBLE_SPEC_INPUT,
   SAMPLE_VGB_PCA_SPEC_INPUT,
+  SAMPLE_VGB_JOURNAL_PRESET_SPEC_INPUT,
+  PUBLICATION_PRESET_RENDER_LEAK_KEYS,
+  assertNoPublicationPresetRenderLeakInJson,
   SAMPLE_VGB_PROJECT_ID,
   SAMPLE_VGB_SCATTER_SPEC_INPUT,
   cloneVisualGraphPreview,
@@ -368,6 +371,58 @@ export const runVisualGraphMapperCaseSuite = (): CaseResult[] => {
       pcaRebuilt.preview.pcaData.length > 0 &&
       pcaRebuilt.preview.pcaMeta !== null &&
       pcaRebuilt.displaySeries.length === 0
+  );
+
+  const journalEntry = buildSampleVisualGraphEntry({
+    graphId: "vg-journal-mapper",
+    specInput: SAMPLE_VGB_JOURNAL_PRESET_SPEC_INPUT,
+  });
+  const journalPersisted = projectVisualGraphEntryToPersistedV2(
+    journalEntry,
+    SAMPLE_VGB_DATASET_ID
+  );
+
+  assertCase(
+    "mapper.publicationPreset.runtimeToPersisted",
+    journalPersisted.graphSpec.publicationPresetId === "journal" &&
+      hasOnlyPersistedVisualGraphKeys(journalPersisted as unknown as Record<string, unknown>)
+  );
+
+  assertCase(
+    "mapper.publicationPreset.vgbR1.noTokenLeak",
+    PUBLICATION_PRESET_RENDER_LEAK_KEYS.every(
+      (key) => !(key in (journalPersisted.graphSpec as unknown as Record<string, unknown>))
+    ) &&
+      !("preview" in (journalPersisted as unknown as Record<string, unknown>)) &&
+      !("displaySeries" in (journalPersisted as unknown as Record<string, unknown>))
+  );
+
+  const journalRebuilt = projectVisualGraphPersistedV2ToRuntimeEntry(
+    journalPersisted,
+    hydrateContext
+  );
+  assertCase(
+    "mapper.publicationPreset.runtimeRebuild",
+    journalRebuilt !== null &&
+      journalRebuilt.graphSpec.publicationPresetId === "journal"
+  );
+
+  const legacyPersisted = buildSampleVisualGraphPersisted({
+    graphId: "vg-legacy-mapper",
+    specInput: {
+      ...SAMPLE_VGB_SCATTER_SPEC_INPUT,
+      publicationPresetId: undefined,
+    },
+  });
+  delete (legacyPersisted.graphSpec as { publicationPresetId?: string | null })
+    .publicationPresetId;
+  const legacyRebuilt = projectVisualGraphPersistedV2ToRuntimeEntry(
+    legacyPersisted,
+    hydrateContext
+  );
+  assertCase(
+    "mapper.publicationPreset.legacyHydrateNull",
+    legacyRebuilt !== null && legacyRebuilt.graphSpec.publicationPresetId === null
   );
 
   return results;

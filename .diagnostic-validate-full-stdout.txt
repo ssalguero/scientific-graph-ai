@@ -1,0 +1,79 @@
+
+> scientific-graph-ai@0.1.0 validate:full
+> node scripts/validate-full-gate.mjs
+
+{
+  "gate": "validate-full",
+  "profile": "full",
+  "phase": "A",
+  "pass": false,
+  "steps": [
+    {
+      "id": "t-quantile",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 2393
+    },
+    {
+      "id": "chart-viewport-unit",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 8776
+    },
+    {
+      "id": "comparison-unit",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 5638
+    },
+    {
+      "id": "f0",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 1017
+    },
+    {
+      "id": "unit",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 9290
+    },
+    {
+      "id": "f6",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 10707
+    },
+    {
+      "id": "typescript",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 16826
+    },
+    {
+      "id": "build",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 118485
+    },
+    {
+      "id": "baseline",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 53471
+    },
+    {
+      "id": "prod1-gate",
+      "pass": true,
+      "exitCode": 0,
+      "durationMs": 22715
+    },
+    {
+      "id": "e2e",
+      "pass": false,
+      "exitCode": 1,
+      "durationMs": 243804,
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n{\n  \"phase\": \"F5\",\n  \"pass\": false,\n  \"fatal\": \"locator.waitFor: Timeout 10000ms exceeded.\\nCall log:\\n  - waiting for getByText(/Nuevo proyecto científico creado/i) to be visible\\n\",\n  \"cases\": [\n    {\n      \"id\": \"dataset5.save\",\n      \"pass\": true,\n      \"file\": \"C:\\\\Users\\\\SANTIA~1\\\\AppData\\\\Local\\\\Temp\\\\prod2a-f5-fTbHef\\\\dataset5.sgproj\",\n      \"g"
+    }
+  ]
+}
