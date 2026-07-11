@@ -20,6 +20,7 @@
     "validate:prod2e-d29-viewport-gate": "npx tsx scripts/validate-prod2e-d29-viewport-gate.ts",
     "validate:graph-publication-presets-unit": "npx tsx scripts/validate-graph-publication-presets-unit.ts",
     "validate:graph-curves-unit": "npx tsx scripts/validate-graph-curves-unit.ts",
+    "validate:graph-series-unit": "npx tsx scripts/validate-graph-series-unit.ts",
     "validate:prod2e-d31-curves-gate": "npx tsx scripts/validate-prod2e-d31-curves-gate.ts",
     "validate:graph-publication-presets-visual-scaffold": "npx tsx scripts/validate-graph-publication-presets-visual-scaffold.ts",
     "validate:prod2e-d30-publication-presets-gate": "npx tsx scripts/validate-prod2e-d30-publication-presets-gate.ts",
