@@ -1,4 +1,4 @@
-import type { ExperimentalSeries } from "@/lib/experimentalData";
+import type { ExperimentalSeries } from "@/lib/graph/series";
 import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import type { ChartScaleSample, DiscardMetrics, YMetrics } from "./types";
 
