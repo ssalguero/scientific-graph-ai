@@ -1,9 +1,9 @@
 # PROD-2E — Discovery: Motor gráfico profesional
 
-**Estado:** **DISCOVERY CERRADO (D25.1 COMPLETED)**  
-**Fecha de cierre:** 2026-07-09  
+**Estado:** **DISCOVERY CERRADO (D25.1 COMPLETED)** · **Addendum D33.1 COMPLETE (GRAPH-2c)**  
+**Fecha de cierre:** 2026-07-09 (D25.1) · 2026-07-13 (D33.1 addendum)  
 **Identificador:** PROD-2E (continúa PROD-2D CLOSED)  
-**Próxima microfase:** **D26 — DATA-3B tipo #1 Heatmap** (post-revisión D25.5)  
+**Próxima microfase:** **D33.2 — GRAPH-2c dominio Axes** (post-D32 CLOSED)  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md) — **D25.2 COMPLETED**  
 **Plan:** [`PROJECT_PLAN_PROD_2E.md`](PROJECT_PLAN_PROD_2E.md) — congelado D25.3  
 **API Freeze:** §6 de este documento + [`PROJECT_PLAN_PROD_2E.md`](PROJECT_PLAN_PROD_2E.md) § D25.4
@@ -136,11 +136,24 @@ flowchart TB
 | C2 | Calidad vectorial | Densidad muestreo configurable (prep EXPORT-1) | D32 |
 | C3 | Contrato ProjectGraphContextV1 | **Intocable** | — |
 
+### 2.3b GRAPH-2c — Axes & Viewport (D33 — amend 2026-07-13)
+
+| # | Requisito | Resolución | Microfases |
+|---|-----------|------------|------------|
+| A1 | Extracción move-only ejes/escalas/rangos | `page.tsx` inline → `src/lib/graph/axes/` | D33.2–D33.4 |
+| A2 | SSOT viewport D29 | `viewport.ts` intocable; barrel `export *` | D33.3 |
+| A3 | Import único page.tsx | `@/lib/graph/axes` | D33.4 |
+| A4 | Interaction React | STAY → D34 GRAPH-2d | D34 |
+
+**Inventario D33.1:** [`docs/D33.1-discovery-inventory.md`](docs/D33.1-discovery-inventory.md) — **~169 LOC** extraíbles; **14 símbolos MOVE** certificados (React=0, Recharts=0).
+
+**Amend numeración:** D33 original (F5F-BIS ~718 LOC) → diferido post-GRAPH-3; D33 = GRAPH-2c.
+
 ### 2.4 ARCH-5 F5 — Módulos gráficos (continuación)
 
 | Subfase | Contenido | Microfase | LOC baseline |
 |---------|-----------|-----------|--------------|
-| **F5F-BIS** | UI SCI-50–56 inline → `components/methodology/` | **D33** | ~718 |
+| **F5F-BIS** | UI SCI-50–56 inline → `components/methodology/` | **Diferido** post-GRAPH-3 | ~718 |
 | **SCI-40** | Multivariante inline → `scientific/multivariate/` + UI | **D34–D35** (amend B) | ~8.532 |
 
 **Amend calendario (D25.3):** SCI-40 **> ~1.000 LOC** y acoplamiento elevado → **Escenario B**: D34 dominio, D35 UI/wiring. Ver baseline §3.
@@ -255,4 +268,51 @@ Los campos nuevos son opcionales dentro de `graphSpec` (objeto JSON existente). 
 
 ---
 
-*Discovery PROD-2E — cerrado D25.1 (2026-07-09). Próximo: D26 BUILD heatmap sobre contrato §6.*
+## 8. Addendum D33.1 — GRAPH-2c Axes & Viewport (2026-07-13)
+
+**Estado:** **D33.1 COMPLETE** — documentación únicamente; cero cambios en `src/**`.  
+**Inventario completo:** [`docs/D33.1-discovery-inventory.md`](docs/D33.1-discovery-inventory.md)
+
+### 8.1 Resumen
+
+| Métrica | Valor |
+|---------|-------|
+| `page.tsx` baseline | 27.744 LOC |
+| Inline extraíble axes/viewport | ~169 LOC |
+| Reducción objetivo post-D33.4 | −120 a −180 LOC |
+| `viewport.ts` SSOT D29 | 166 LOC (intocable) |
+| Símbolos MOVE certificados | 14/14 (React=0, Recharts=0) |
+
+### 8.2 Arquitectura SSOT
+
+- `src/lib/graph/viewport.ts` — SSOT D29, sin modificaciones.
+- `src/lib/graph/axes/` — 6 módulos (`index`, `types`, `scales`, `ranges`, `grid`, `synchronization`); **sin** `axes/viewport.ts`.
+- Barrel: `export * from "../viewport"` + módulos axes.
+- `page.tsx` → import único `@/lib/graph/axes`.
+
+### 8.3 CA-D33.1
+
+| ID | Resultado |
+|----|-----------|
+| CA-D33.1-01 Inventario completo | **PASS** |
+| CA-D33.1-02 Arquitectura SSOT | **PASS** |
+| CA-D33.1-03 MOVE certificados React=0 Recharts=0 | **PASS** |
+| CA-D33.1-04 Política imports | **PASS** |
+| CA-D33.1-05 Decisión ThemeMode | **PASS** — `import type` desde `@/lib/app-preferences/domain/types` |
+
+### 8.4 Cronología D33
+
+| Microfase | Estado |
+|-----------|--------|
+| D33.1 Discovery | **COMPLETE** |
+| D33.2 Dominio axes | Pendiente |
+| D33.3 Barrel API Freeze | Pendiente |
+| D33.4 Wiring page.tsx | Pendiente |
+| D33.5 Gates + smoke | Pendiente |
+| D33.6 Acta | Pendiente |
+
+**Próximo BUILD:** D33.2 — crear dominio `src/lib/graph/axes/`.
+
+---
+
+*Discovery PROD-2E — cerrado D25.1 (2026-07-09). Addendum D33.1 GRAPH-2c (2026-07-13). Próximo: D33.2 BUILD.*
