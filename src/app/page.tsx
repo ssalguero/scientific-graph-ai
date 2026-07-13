@@ -109,7 +109,19 @@ import { translateNaturalLanguageToMath } from "@/lib/graph/curves/natural-langu
 import { formatMathWarning } from "@/lib/graph/curves/warnings";
 
 export { translateNaturalLanguageToMath };
-import { applyExperimentalXViewportFit } from "./chartViewport";
+import {
+  adaptYDomainForLogScale,
+  applyExperimentalXViewportFit,
+  clampVisibleXRange,
+  computeXAxisDomainForChart,
+  getAxisScaleModeLabel,
+  getAxisScaleViolations,
+  getAxisScaleWarnings,
+  getChartTheme,
+  usesLogXScale,
+  usesLogYScale,
+  type AxisScaleMode,
+} from "@/lib/graph/axes";
 import { createInitialProjectMetadata } from "./projectPersistence";
 import {
   ProjectScientificFilePanel,
@@ -355,23 +367,6 @@ const appShellDark =
 
 const getAppShell = (mode: ThemeMode) =>
   mode === "dark" ? appShellDark : appShellLight;
-
-const getChartTheme = (mode: ThemeMode) =>
-  mode === "dark"
-    ? {
-        grid: "#334155",
-        axis: "#94a3b8",
-        tooltipBg: "#111827",
-        tooltipBorder: "#334155",
-        tooltipColor: "#e5e7eb",
-      }
-    : {
-        grid: "#e2e8f0",
-        axis: "#64748b",
-        tooltipBg: "#ffffff",
-        tooltipBorder: "#e2e8f0",
-        tooltipColor: "#334155",
-      };
 
 const card =
   "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-3 sm:p-4 transition-colors duration-200";
@@ -1181,33 +1176,6 @@ const getDuplicateTitle = (currentTitle: string) => {
   if (!trimmed) return "(copia)";
   if (trimmed.endsWith(DUPLICATE_TITLE_SUFFIX)) return trimmed;
   return `${trimmed}${DUPLICATE_TITLE_SUFFIX}`;
-};
-
-const clampVisibleXRange = (
-  vMin: number,
-  vMax: number,
-  dataMin: number,
-  dataMax: number
-): [number, number] => {
-  const dataSpan = dataMax - dataMin;
-  if (dataSpan <= 0) return [dataMin, dataMax];
-
-  const span = Math.max(0.5, Math.min(dataSpan, vMax - vMin));
-  if (span >= dataSpan) return [dataMin, dataMax];
-
-  let min = vMin;
-  let max = vMin + span;
-
-  if (min < dataMin) {
-    min = dataMin;
-    max = dataMin + span;
-  }
-  if (max > dataMax) {
-    max = dataMax;
-    min = dataMax - span;
-  }
-
-  return [min, max];
 };
 
 type Curve = { id: number; expression: string; color: string };
@@ -15302,85 +15270,6 @@ const mapExperimentalScatterData = (
 const DERIVATIVE_STROKE_OPACITY = 0.55;
 const INTEGRAL_STROKE_OPACITY = 0.5;
 
-type AxisScaleMode = "linear" | "logX" | "logY" | "logLog";
-
-type ChartScaleSample = { x: number; y: number };
-
-const getAxisScaleModeLabel = (mode: AxisScaleMode): string => {
-  if (mode === "logX") return "Semilog X";
-  if (mode === "logY") return "Semilog Y";
-  if (mode === "logLog") return "Log-Log";
-  return "Lineal";
-};
-
-const usesLogXScale = (mode: AxisScaleMode) =>
-  mode === "logX" || mode === "logLog";
-
-const usesLogYScale = (mode: AxisScaleMode) =>
-  mode === "logY" || mode === "logLog";
-
-const getAxisScaleViolations = (
-  samples: ChartScaleSample[],
-  mode: AxisScaleMode
-) => {
-  const checkLogX = usesLogXScale(mode);
-  const checkLogY = usesLogYScale(mode);
-
-  return {
-    hasNonPositiveX: checkLogX && samples.some((sample) => sample.x <= 0),
-    hasNonPositiveY: checkLogY && samples.some((sample) => sample.y <= 0),
-  };
-};
-
-const getAxisScaleWarnings = (
-  mode: AxisScaleMode,
-  violations: { hasNonPositiveX: boolean; hasNonPositiveY: boolean }
-): string[] => {
-  const warnings: string[] = [];
-
-  if (violations.hasNonPositiveX && violations.hasNonPositiveY) {
-    warnings.push(
-      "Existen valores X o Y ≤ 0 incompatibles con escala logarítmica."
-    );
-    return warnings;
-  }
-
-  if (violations.hasNonPositiveX) {
-    warnings.push(
-      "Existen valores X ≤ 0 que no pueden mostrarse en escala logarítmica."
-    );
-  }
-
-  if (violations.hasNonPositiveY) {
-    warnings.push(
-      "Existen valores Y ≤ 0 que no pueden mostrarse en escala logarítmica."
-    );
-  }
-
-  return warnings;
-};
-
-const clampPositiveLogDomain = (
-  min: number,
-  max: number,
-  fallbackMin = 1e-6
-): [number, number] | undefined => {
-  if (!Number.isFinite(min) || !Number.isFinite(max) || max <= 0) {
-    return undefined;
-  }
-
-  const safeMin = min > 0 ? min : fallbackMin;
-  const safeMax = max > safeMin ? max : safeMin * 10;
-  return [safeMin, safeMax];
-};
-
-const adaptYDomainForLogScale = (
-  domain: [number, number] | undefined
-): [number, number] | undefined => {
-  if (!domain) return undefined;
-  return clampPositiveLogDomain(domain[0], domain[1]);
-};
-
 type GraphEditorProps = {
   shareGraphId?: string;
 };
@@ -19317,23 +19206,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => getAxisScaleWarnings(axisScaleMode, axisScaleViolations),
     [axisScaleMode, axisScaleViolations]
   );
-  const xAxisDomain = useMemo((): [number, number] => {
-    if (!usesLogX) {
-      return [visibleMinX, visibleMaxX];
-    }
-
-    const clamped = clampPositiveLogDomain(visibleMinX, visibleMaxX);
-    if (clamped) return clamped;
-
-    const positiveX = chartScaleSamples
-      .filter((sample) => sample.x > 0)
-      .map((sample) => sample.x);
-    if (positiveX.length === 0) {
-      return [1e-6, 1];
-    }
-
-    return [Math.min(...positiveX), Math.max(...positiveX)];
-  }, [usesLogX, visibleMinX, visibleMaxX, chartScaleSamples]);
+  const xAxisDomain = useMemo(
+    () =>
+      computeXAxisDomainForChart(
+        usesLogX,
+        visibleMinX,
+        visibleMaxX,
+        chartScaleSamples
+      ),
+    [usesLogX, visibleMinX, visibleMaxX, chartScaleSamples]
+  );
   const mathYAxisDomainForChart = useMemo(
     () =>
       usesLogY ? adaptYDomainForLogScale(mathYAxisDomain) : mathYAxisDomain,
