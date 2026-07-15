@@ -112,7 +112,6 @@ export { translateNaturalLanguageToMath };
 import {
   adaptYDomainForLogScale,
   applyExperimentalXViewportFit,
-  clampVisibleXRange,
   computeXAxisDomainForChart,
   getAxisScaleModeLabel,
   getAxisScaleViolations,
@@ -122,6 +121,10 @@ import {
   usesLogYScale,
   type AxisScaleMode,
 } from "@/lib/graph/axes";
+import {
+  ChartInteractionSurface,
+  useChartViewportInteraction,
+} from "@/components/graph/chart-interaction";
 import { createInitialProjectMetadata } from "./projectPersistence";
 import {
   ProjectScientificFilePanel,
@@ -15655,28 +15658,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const nextCurveIdRef = useRef(2);
   const generateGraphRef = useRef<(curveSource?: Curve[]) => void>(() => {});
   const chartExportRef = useRef<HTMLDivElement>(null);
-  const chartInteractionRef = useRef<HTMLDivElement>(null);
   const jsonImportInputRef = useRef<HTMLInputElement>(null);
   const experimentalFileInputRef = useRef<HTMLInputElement>(null);
   const guidedWorkflowTabSyncedRef = useRef<string | null>(null);
-  const visibleRangeRef = useRef({
-    visibleMinX,
-    visibleMaxX,
-    minX,
-    maxX,
-  });
-  const panStateRef = useRef({
-    isPanning: false,
-    startX: 0,
-    startMin: 0,
-    startMax: 0,
-  });
   const expression = curves[0]?.expression ?? "";
-
-  const resetVisibleRange = () => {
-    setVisibleMinX(minX);
-    setVisibleMaxX(maxX);
-  };
 
   const duplicateGraph = () => {
     if (!selectedGraphId) return;
@@ -19417,90 +19402,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     };
   }, [shareGraphId]);
 
-  useEffect(() => {
-    visibleRangeRef.current = { visibleMinX, visibleMaxX, minX, maxX };
-  }, [visibleMinX, visibleMaxX, minX, maxX]);
-
-  useEffect(() => {
-    const el = chartInteractionRef.current;
-    if (!el) return;
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const { visibleMinX, visibleMaxX, minX, maxX } = visibleRangeRef.current;
-      const span = visibleMaxX - visibleMinX;
-      if (span <= 0) return;
-
-      const rect = el.getBoundingClientRect();
-      const ratio = Math.min(
-        1,
-        Math.max(0, (e.clientX - rect.left) / rect.width)
-      );
-      const focusX = visibleMinX + ratio * span;
-      const zoomFactor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
-      const dataSpan = maxX - minX;
-      const newSpan = Math.max(0.5, Math.min(dataSpan, span * zoomFactor));
-      const newMin = focusX - ratio * newSpan;
-      const newMax = focusX + (1 - ratio) * newSpan;
-      const [clampedMin, clampedMax] = clampVisibleXRange(
-        newMin,
-        newMax,
-        minX,
-        maxX
-      );
-
-      setVisibleMinX(clampedMin);
-      setVisibleMaxX(clampedMax);
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [chartData.length, experimentalSeries.length]);
-
-  useEffect(() => {
-    const endPan = () => {
-      panStateRef.current.isPanning = false;
-    };
-
-    window.addEventListener("mouseup", endPan);
-    return () => window.removeEventListener("mouseup", endPan);
-  }, []);
-
-  const handleChartMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
-
-    panStateRef.current = {
-      isPanning: true,
-      startX: e.clientX,
-      startMin: visibleMinX,
-      startMax: visibleMaxX,
-    };
-  };
-
-  const handleChartMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!panStateRef.current.isPanning) return;
-
-    const el = chartInteractionRef.current;
-    if (!el) return;
-
-    const rect = el.getBoundingClientRect();
-    const { startX, startMin, startMax } = panStateRef.current;
-    const span = startMax - startMin;
-    const deltaData = (-(e.clientX - startX) / rect.width) * span;
-    const [clampedMin, clampedMax] = clampVisibleXRange(
-      startMin + deltaData,
-      startMax + deltaData,
-      minX,
-      maxX
-    );
-
-    setVisibleMinX(clampedMin);
-    setVisibleMaxX(clampedMax);
-  };
-
-  const handleChartMouseUp = () => {
-    panStateRef.current.isPanning = false;
-  };
+  const interaction = useChartViewportInteraction({
+    visibleMinX,
+    visibleMaxX,
+    minX,
+    maxX,
+    setVisibleMinX,
+    setVisibleMaxX,
+    wheelEffectKey: [chartData.length, experimentalSeries.length],
+  });
 
   const {
     suppressProjectDirtyRef,
@@ -23290,7 +23200,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             <div className="flex flex-wrap items-center justify-end gap-2 mb-2">
               <button
                 type="button"
-                onClick={resetVisibleRange}
+                onClick={interaction.resetVisibleRange}
                 disabled={!hasChartContent}
                 className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
               >
@@ -23471,14 +23381,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </div>
               )}
 
-              <div
-                ref={chartInteractionRef}
-                className="w-full min-h-[360px] h-[min(42vh,480px)] sm:min-h-[400px] sm:h-[min(48vh,520px)] max-h-[520px] select-none cursor-grab active:cursor-grabbing"
-                onMouseDown={handleChartMouseDown}
-                onMouseMove={handleChartMouseMove}
-                onMouseUp={handleChartMouseUp}
-                onMouseLeave={handleChartMouseUp}
-              >
+              <ChartInteractionSurface surfaceProps={interaction.surfaceProps}>
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={composedChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
@@ -23835,7 +23738,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     )}
                   </ComposedChart>
                 </ResponsiveContainer>
-              </div>
+              </ChartInteractionSurface>
 
               {showPCA && (
                 <div className={`${contentPanel} mt-4`}>
