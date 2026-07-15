@@ -1,7 +1,7 @@
 # PROJECT_STATUS — PROD-2E
 
 **Épica:** PROD-2E — Motor gráfico profesional  
-**Estado épica:** **OPEN** (D33 CLOSED — GRAPH-2c CLOSED — GRAPH-2 CLOSED — Ready for D34)  
+**Estado épica:** **OPEN** (D34 CLOSED — GRAPH-2d CLOSED — Ready for D35)  
 **SSOT Plan:** [`PROJECT_PLAN_PROD_2E.md`](PROJECT_PLAN_PROD_2E.md)  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md)  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md)
@@ -2428,6 +2428,311 @@ Next BUILD: D34 — GRAPH-2d — Interaction
 
 ---
 
+## §D34 — GRAPH-2d Interaction
+
+**Estado:** **CLOSED** (2026-07-15)  
+**Modo:** BUILD STRICT — D34.1–D34.5 implementación · D34.6 documentación únicamente  
+**Próxima microfase:** **D35 — GRAPH-2e Rendering**  
+**Plan congelado:** D34 v1.0 (GRAPH-2d — move-only extracción React boundary de interacción viewport desde `page.tsx`; dominio axes D33 intocable)
+
+### Resumen ejecutivo D34
+
+**GRAPH-2d CLOSED** (2026-07-15). La capa React de interacción del gráfico principal (wheel zoom, pan horizontal, refs, listeners DOM, superficie interactiva) quedó extraída a `src/components/graph/chart-interaction/`: **4 módulos**, barrel mínimo (**2 exports**), hook `useChartViewportInteraction` como **React boundary** (sin matemática nueva) que delega exclusivamente a `@/lib/graph/axes` (`computeWheelZoomVisibleRange`, `computePanVisibleRange`). Wiring en `page.tsx` (D34.3), gates dedicados (unit **35/35** + umbrella D34), smoke tests **S1–S8** certificados (D34.5). Dominio axes / `viewport.ts` SSOT D29 **intocables**. Sin regresiones funcionales D29–D33 ni C8. API Freeze D33 + D34. Move-Only certificado.
+
+| Indicador | Estado |
+|-----------|--------|
+| **Épica parcial** | GRAPH-2d (Interaction React boundary) — **CLOSED** |
+| **Épica GRAPH-2** | **CLOSED** (ampliado: 2a–2d) |
+| **Microfases** | D34.1–D34.6 — **CLOSED** |
+| **Reducción neta `page.tsx`** | **≈ −96 LOC** (baseline post-D33 ≈27.626 → ≈27.530) |
+| **Dominio axes D33** | **PRESERVADO** (intocable) |
+
+### Objetivo D34
+
+Extraer la **React boundary de interacción viewport** del gráfico principal fuera de `page.tsx`, manteniendo el dominio exclusivamente en `@/lib/graph/axes`, sin cambios funcionales de wheel/pan/reset respecto a D33.
+
+### D34.1 — Discovery (inventario)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Inventario move-only interaction (refs · handlers · effects · surface) |
+| **Entregable** | [`docs/D34.1-discovery-inventory.md`](docs/D34.1-discovery-inventory.md) |
+| **Baseline `page.tsx` (post-D33)** | ≈27.626 LOC (acta) · inventario ≈25.504 (líneas no vacías) |
+| **LOC interaction extraíbles** | ~104 (11 símbolos MOVE) |
+| **Principio** | `useChartViewportInteraction` = React boundary, **no** dominio |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D34.2 — React Boundary Build
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Crear `src/components/graph/chart-interaction/` move-only (sin wiring `page.tsx`) |
+| **Módulos** | `types.ts` · `useChartViewportInteraction.ts` · `ChartInteractionSurface.tsx` · `index.ts` |
+| **Restricción** | Sin matemática viewport nueva · delegación inmediata a `@/lib/graph/axes` |
+| **`"use client"`** | Hook + surface |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D34.3 — API Freeze + Wiring
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Barrel congelado (2 exports) + rewire `page.tsx` → boundary |
+| **Archivo producto modificado** | `src/app/page.tsx` (estado viewport STAY; handlers/effects/surface MOVE) |
+| **API Freeze D34** | `useChartViewportInteraction` · `ChartInteractionSurface` únicamente |
+| **API Freeze D33** | Barrel `@/lib/graph/axes` intocable |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D34.4 — Gates + Governance
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Unit gate + umbrella gate + gobernanza interaction |
+| **Scripts** | `validate:graph-interaction-unit` · `validate:prod2e-d34-interaction-gate` |
+| **Unit gate** | **35/35 PASS** |
+| **Umbrella gate** | **PASS** (gobernanza D34 4/4 · D33 · tsc · interaction/axes/viewport · D29–D32 · C8) |
+| **Gobernanza** | Dominio solo en axes · barrel axes frozen · no inline interaction en `page.tsx` · imports barrel-only · anti-math inline · imports permitidos |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D34.5 — Smoke Tests + Regresión
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Certificación funcional S1–S8 + regresión D29–D33/C8 · sin cambios de código |
+| **Smoke Tests** | **8/8 PASS** (browser + CDP; 2026-07-15) |
+| **Regresiones** | **0** |
+| **Wheel / Pan / Reset** | Idénticos a D33 (boundary transparente) |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D34.6 — Acta + cierre GRAPH-2d
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Acta §D34 + declarar GRAPH-2d CLOSED + handoff D35 |
+| **Alcance** | Documentación únicamente (`PROJECT_STATUS_PROD_2E.md`) |
+| **Fecha de cierre** | **2026-07-15** |
+| **Resultado** | **PASS** |
+
+#### Arquitectura final D34
+
+```text
+src/lib/graph/
+  viewport.ts                 ← SSOT D29 (intocable)
+  axes/                       ← Dominio D33 (intocable en D34)
+    index.ts                  ← computeWheelZoomVisibleRange · computePanVisibleRange · …
+
+src/components/graph/
+  chart-interaction/          ← React boundary GRAPH-2d
+    types.ts                  ← tipos internos (no barrel)
+    useChartViewportInteraction.ts
+    ChartInteractionSurface.tsx
+    index.ts                  ← 2 exports públicos congelados
+
+src/app/
+  page.tsx                    ← useState viewport STAY · import barrel interaction
+                              ← JSX Recharts STAY (objetivo D35 Rendering)
+```
+
+#### Archivos creados (D34.1–D34.4)
+
+| Acción | Archivo |
+|--------|---------|
+| **Creado** | `docs/D34.1-discovery-inventory.md` |
+| **Creado** | `src/components/graph/chart-interaction/types.ts` |
+| **Creado** | `src/components/graph/chart-interaction/useChartViewportInteraction.ts` |
+| **Creado** | `src/components/graph/chart-interaction/ChartInteractionSurface.tsx` |
+| **Creado** | `src/components/graph/chart-interaction/index.ts` |
+| **Creado** | `scripts/lib/graph-interaction-gate.cases.ts` |
+| **Creado** | `scripts/validate-graph-interaction-unit.ts` |
+| **Creado** | `scripts/validate-prod2e-d34-interaction-gate.ts` |
+
+#### Archivos modificados (D34.1–D34.4)
+
+| Acción | Archivo |
+|--------|---------|
+| **Modificado** | `src/app/page.tsx` (wiring D34.3 — extracción interaction) |
+| **Modificado** | `package.json` (scripts `validate:graph-interaction-unit` · `validate:prod2e-d34-interaction-gate`) |
+| **Modificado** | `PROJECT_STATUS_PROD_2E.md` (acta D34.6 — este documento) |
+
+**No modificado en D34.6:** `src/**`, `scripts/**`, `package.json`, tests, fixtures, README, ROADMAP, MASTER.
+
+**No modificado en D34 (alcance congelado post-certificación):** `src/lib/graph/axes/**` · `viewport.ts` · persistencia V2 · VGB · `publicationPresetId` · `schemaVersion` · golden fixtures.
+
+#### Métricas finales D34 (GRAPH-2d)
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha de cierre** | **2026-07-15** |
+| **Baseline `page.tsx` (post-D33)** | ≈**27.626** LOC |
+| **LOC trasladadas (inline → boundary)** | **~104** LOC |
+| **LOC módulo `chart-interaction/`** | **~223** LOC (4 archivos) |
+| **Reducción neta `page.tsx`** | **≈ −96** LOC |
+| **`page.tsx` actual (aprox.)** | **≈27.530** LOC |
+| **Símbolos MOVE certificados** | **11/11** |
+| **Exports públicos del barrel** | **2** (`useChartViewportInteraction` · `ChartInteractionSurface`) |
+| **Cantidad módulos** | **4** |
+| **Unit gate** | **35/35 PASS** |
+| **Umbrella D34** | **PASS** (exit 0) |
+| **Smoke Tests** | **8/8 PASS** |
+| **Regresiones funcionales** | **0** |
+
+#### Gates D34 — Certificación completa
+
+| Gate | Resultado | Detalle |
+|------|-----------|---------|
+| `npx tsc --noEmit` | **PASS** | TSC_PASS |
+| `validate:graph-interaction-unit` | **PASS** | **35/35** |
+| `validate:prod2e-d34-interaction-gate` | **PASS** | Gobernanza **4/4** + cadena |
+| `validate:prod2e-d33-axes-gate` | **PASS** | **15/15** |
+| `validate:graph-axes-unit` | **PASS** | 89/89 |
+| `validate:chart-viewport` / `-y` | **PASS** | Viewport D29 |
+| `validate:prod2e-d29-viewport-gate` | **PASS** | |
+| `validate:prod2e-d30-publication-presets-gate` | **PASS** | 10/10 |
+| `validate:prod2e-d31-curves-gate` | **PASS** | 11/11 |
+| `validate:prod2e-d32-series-gate` | **PASS** | 15/15 |
+| `validate:prod2c-c8-regression-gate` | **PASS** | C4–C8 |
+
+#### Smoke Tests D34 — Certificación (S1–S8)
+
+| ID | Escenario | Resultado | Evidencia |
+|----|-----------|-----------|-----------|
+| **S1** | Render principal (`x^2` · ejes · ticks) | **PASS** | SVG + ticks −10…10 · superficie interaction montada |
+| **S2** | Wheel Zoom (centrado · clamp · sin jitter) | **PASS** | Dominio visible se estrecha; idéntico a D33 |
+| **S3** | Pan horizontal (LMB · drag · mouseup / leave) | **PASS** | Desplazamiento de ticks; fin de pan en leave/mouseup |
+| **S4** | Restablecer vista | **PASS** | Restaura rango completo (−10…10) |
+| **S5** | Escalas Linear · LogX · LogY · LogLog | **PASS** | Selector Análisis → título Resultados |
+| **S6** | Dataset (import · auto-fit · interacción) | **PASS** | `smoke-d34.csv` 10 pts · zoom/pan posteriores |
+| **S7** | Publication Presets (VGB · D30) | **PASS** | Predeterminado · journal · presentation · preview estable |
+| **S8** | Curves + Series + viewport | **PASS** | `x^2` + `sin(x)` + serie experimental · interacción OK |
+
+#### CA-D34 — Certificación
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D34-01** | React boundary creada en `chart-interaction/` | **PASS** |
+| **CA-D34-02** | Move-Only respetado (11 MOVE · sin matemática nueva) | **PASS** |
+| **CA-D34-03** | API Freeze D34 (2 exports) | **PASS** |
+| **CA-D34-04** | API Freeze D33 (axes) preservado | **PASS** |
+| **CA-D34-05** | Dominio exclusivo en `@/lib/graph/axes` | **PASS** |
+| **CA-D34-06** | Unit gate PASS | **PASS** (35/35) |
+| **CA-D34-07** | Umbrella PASS | **PASS** |
+| **CA-D34-08** | Smoke S1–S8 PASS | **PASS** (8/8) |
+| **CA-D34-09** | Zero regresiones D29–D33 · C8 | **PASS** |
+| **CA-D34-10** | React boundary transparente (wheel/pan/reset ≡ D33) | **PASS** |
+| **CA-D34-11** | `useState` viewport permanece en `page.tsx` | **PASS** |
+| **CA-D34-12** | Acta documental D34.6 | **PASS** |
+
+**Total CA-D34: 12/12 PASS** · Deuda **INTERACTION-INLINE** cerrada.
+
+#### Verificaciones de política
+
+| Verificación | Estado |
+|--------------|--------|
+| **Move-only Policy** | **CERTIFICADO** |
+| **API Freeze D33** (`@/lib/graph/axes`) | **CERTIFICADO** — intocable |
+| **API Freeze D34** (barrel interaction 2 exports) | **CERTIFICADO** |
+| **Zero regresiones** | **CERTIFICADO** |
+| **Dominio único en `@/lib/graph/axes`** | **CERTIFICADO** |
+| **React boundary transparente** | **CERTIFICADO** |
+
+#### Riesgos mitigados
+
+| ID | Riesgo | Mitigación aplicada |
+|----|--------|---------------------|
+| R-D34-01 | Regresión wheel zoom | Delegación `computeWheelZoomVisibleRange` · smoke S2 · unit/axes |
+| R-D34-02 | Pan interrumpido fuera del chart | `window.mouseup` + `onMouseLeave` · smoke S3 |
+| R-D34-03 | Stale closure `visibleRangeRef` | Effect sync conservado en hook |
+| R-D34-05 | Math inline en boundary | Gate `noMathInline` + delegación axes |
+| R-D34-06 | Romper API Freeze axes | Barrel axes frozen en umbrella |
+| R-D34-08 | Scope creep Recharts | JSX chart STAY → D35 |
+
+#### Cierre oficial GRAPH-2d
+
+**Estado:** **GRAPH-2d CLOSED** (2026-07-15)
+
+| Entregable | Microfase | Estado |
+|------------|-----------|--------|
+| **Discovery + inventario** | D34.1 | **CERTIFICADO** |
+| **React boundary build** | D34.2 | **CERTIFICADO** |
+| **API Freeze + wiring** | D34.3 | **CERTIFICADO** |
+| **Gates + governance** | D34.4 | **CERTIFICADO** |
+| **Smoke + regresión** | D34.5 | **CERTIFICADO** |
+| **Acta oficial** | D34.6 | **CERTIFICADO** |
+
+- Boundary `src/components/graph/chart-interaction/` operativa
+- Dominio viewport/interaction math permanece en `@/lib/graph/axes`
+- Gate umbrella `validate:prod2e-d34-interaction-gate` — **PASS**
+- Sin regresiones funcionales (S1–S8 + D29–D33 + C8)
+
+#### Estado PROD-2E (post-D34)
+
+| Indicador | Valor |
+|-----------|--------|
+| **Épica** | **OPEN** (GRAPH-2d CLOSED — Ready for D35) |
+| **Checklist cierre épica** | **5/9** (sin cambio de umbral; avance GRAPH-2d cerrado) |
+| **DATA-3B** | **CLOSED** ✓ |
+| **GRAPH-1** | **CLOSED** ✓ |
+| **GRAPH-2** | **CLOSED** ✓ (2a–2d) |
+| **GRAPH-2a** | **CLOSED** ✓ |
+| **GRAPH-2b** | **CLOSED** ✓ |
+| **GRAPH-2c** | **CLOSED** ✓ |
+| **GRAPH-2d** | **CLOSED** ✓ |
+| **Próxima fase** | **D35 — GRAPH-2e Rendering** |
+| **Fases abiertas** | D35–D36 (GRAPH-2e · ARCH-5 / consolidación · cierre épica) |
+
+**Checklist cierre PROD-2E (avance):**
+
+- [x] ≥3 tipos VGB avanzados con round-trip persist (**DATA-3B CLOSED**)
+- [x] Auto-fit Y (**GRAPH-1a D29 CLOSED**)
+- [x] Presets publicación (**GRAPH-1b D30 CLOSED**)
+- [x] Motor curvas + series + ejes + interaction (**GRAPH-2 D31–D34 CLOSED**)
+- [ ] F5F-BIS + SCI-40 (ARCH-5 — F5F-BIS diferido post-GRAPH-3; SCI-40 pendiente)
+- [ ] API Freeze respetado (parcial → completo en D36)
+- [ ] Baseline re-medido (D36)
+- [ ] `validate:prod2e-gate` (D36)
+- [ ] DoD §2 Master (D36)
+- [ ] Docs sync PROD-3 READY (D36.5)
+
+#### Handoff D35 — GRAPH-2e Rendering
+
+```text
+D34 CLOSED — GRAPH-2d CLOSED — Ready for D35
+
+Prerrequisitos D35 (GRAPH-2e — Rendering):
+  ✓ GRAPH-2d CLOSED — React boundary interaction en chart-interaction/
+  ✓ Dominio @/lib/graph/axes intocable (API Freeze D33)
+  ✓ API Freeze D34 (2 exports interaction) vigente
+  ✓ validate:graph-interaction-unit 35/35 PASS
+  ✓ validate:prod2e-d34-interaction-gate PASS
+  ✓ Smoke S1–S8 PASS · Zero regresiones D29–D33 · C8
+  ✓ JSX Recharts del gráfico principal permanece en page.tsx — objetivo extracción D35
+
+Módulos graph/ disponibles:
+  · viewport.ts (D29 SSOT)
+  · publication-presets/ (D30)
+  · curves/ (D31)
+  · series/ (D32)
+  · axes/ (D33)
+  · components/graph/chart-interaction/ (D34)
+
+Alcance previsto D35 — GRAPH-2e Rendering:
+  · Extracción del boundary de rendering (JSX Recharts / composición chart)
+  · Separación definitiva entre:
+      - dominio (@/lib/graph/axes + curves/series/viewport)
+      - interacción (chart-interaction/)
+      - rendering (nuevo boundary rendering)
+  · Mantener: API Freeze vigente · Move-only Policy · Zero regresiones
+  · Sin iniciar hasta autorización BUILD D35
+
+Deuda diferida (no bloqueante D35):
+  · Calidad vectorial SVG · sampleStep · SHIM-NL-CURVES → prep EXPORT-1
+  · F5F-BIS ~718 LOC → post-GRAPH-3
+  · SCI-40 multivariante → post-GRAPH-2e / ARCH-5
+
+Next BUILD: D35 — GRAPH-2e — Rendering
+```
+
+---
+
 ## Cronología PROD-2E
 
 ```text
@@ -2489,12 +2794,24 @@ D33.5 Smoke Tests ✓ (CLOSED)
   ↓
 D33.6 Acta + GRAPH-2c CLOSED ✓ (CLOSED) — GRAPH-2c ✓ (CLOSED) — GRAPH-2 ✓ (CLOSED)
   ↓
-D34 GRAPH-2d Interaction → D35 GRAPH-2e Rendering → D36 Consolidación
+D34.1 Discovery Interaction ✓ (CLOSED)
+  ↓
+D34.2 React Boundary Build ✓ (CLOSED)
+  ↓
+D34.3 API Freeze + Wiring ✓ (CLOSED)
+  ↓
+D34.4 Gates + Governance ✓ (CLOSED)
+  ↓
+D34.5 Smoke Tests + Regression ✓ (CLOSED)
+  ↓
+D34.6 Acta + GRAPH-2d CLOSED ✓ (CLOSED) — GRAPH-2d ✓ (CLOSED)
+  ↓
+D35 GRAPH-2e Rendering → D36 Consolidación
 ```
 
 ---
 
-## Deuda carry-in (actualizada post-D33)
+## Deuda carry-in (actualizada post-D34)
 
 | ID | Item | Target | Estado |
 |----|------|--------|--------|
@@ -2502,15 +2819,17 @@ D34 GRAPH-2d Interaction → D35 GRAPH-2e Rendering → D36 Consolidación
 | ~~CURVES-INLINE~~ | Motor curvas inline en `page.tsx` | D31 | **CLOSED** (2026-07-11) |
 | ~~SERIES-INLINE~~ | Dominio series inline / legacy fragmentado | D32 | **CLOSED** (2026-07-11) |
 | ~~AXES-INLINE~~ | Ejes, escalas y rangos inline en `page.tsx` | D33 | **CLOSED** (2026-07-13) |
-| SHIM-NL-CURVES | Shim temporal `translateNaturalLanguageToMath` en `page.tsx` | prep EXPORT-1 | **OPEN** — diferido; no bloquea D34 |
+| ~~INTERACTION-INLINE~~ | Handlers/refs/effects interaction inline en `page.tsx` | D34 | **CLOSED** (2026-07-15) |
+| SHIM-NL-CURVES | Shim temporal `translateNaturalLanguageToMath` en `page.tsx` | prep EXPORT-1 | **OPEN** — diferido; no bloquea D35 |
 | EXPORT-1-01 | `sampleStep` configurable (curves) | prep EXPORT-1 | **OPEN** — diferido |
 | EXPORT-1-02 | Calidad vectorial SVG | prep EXPORT-1 | **OPEN** — diferido |
 | F5F-BIS | UI SCI-50–56 ~718 LOC | post-GRAPH-3 | **OPEN** — diferido (amend D33.1) |
-| SCI-40 | Multivariante ~8.532 LOC | D34–D35 | **OPEN** |
+| SCI-40 | Multivariante ~8.532 LOC | post-GRAPH-2e / ARCH-5 | **OPEN** |
 | L-D23-2 | E2E flakiness | QA-2 | **OPEN** |
+| RENDERING-INLINE | JSX Recharts / composición chart principal en `page.tsx` | D35 | **OPEN** — handoff GRAPH-2e |
 
 *Nota amend D33: el identificador GRAPH-2c pasó de «calidad vectorial» (plan original) a «Axes & Viewport» (D33 certificado). Items calidad vectorial / sampleStep / SHIM-NL quedan diferidos a prep EXPORT-1.*
 
 ---
 
-*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Acta D32 certificada 2026-07-11 · D32 CLOSED · GRAPH-2b CLOSED · SERIES-INLINE CLOSED · Acta D33 certificada 2026-07-13 · D33 CLOSED · GRAPH-2c CLOSED · AXES-INLINE CLOSED · GRAPH-2 CLOSED · Next: D34 BUILD.*
+*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Acta D32 certificada 2026-07-11 · D32 CLOSED · GRAPH-2b CLOSED · SERIES-INLINE CLOSED · Acta D33 certificada 2026-07-13 · D33 CLOSED · GRAPH-2c CLOSED · AXES-INLINE CLOSED · GRAPH-2 CLOSED · Acta D34 certificada 2026-07-15 · D34 CLOSED · GRAPH-2d CLOSED · INTERACTION-INLINE CLOSED · Next: D35 BUILD.*
