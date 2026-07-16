@@ -125,6 +125,15 @@ import {
   ChartInteractionSurface,
   useChartViewportInteraction,
 } from "@/components/graph/chart-interaction";
+import {
+  curveLegendKey,
+  derivativeLegendKey,
+  experimentalLegendKey,
+  integralLegendKey,
+  MainChartLegend,
+  MainComposedChart,
+  regressionLegendKey,
+} from "@/components/graph/chart-rendering";
 import { createInitialProjectMetadata } from "./projectPersistence";
 import {
   ProjectScientificFilePanel,
@@ -338,7 +347,6 @@ import { prepareScientificReportPdfLine } from "@/lib/scientific/report/pdf-text
 import {
   Bar,
   BarChart,
-  ComposedChart,
   Line,
   LineChart,
   Scatter,
@@ -14853,28 +14861,6 @@ type ScatterMarkerProps = {
   cy?: number;
 };
 
-const renderMaximumMarker = ({ cx, cy }: ScatterMarkerProps) => {
-  if (cx == null || cy == null) return null;
-
-  return (
-    <polygon
-      points={`${cx},${cy - 6} ${cx - 5},${cy + 4} ${cx + 5},${cy + 4}`}
-      fill="var(--app-success)"
-    />
-  );
-};
-
-const renderMinimumMarker = ({ cx, cy }: ScatterMarkerProps) => {
-  if (cx == null || cy == null) return null;
-
-  return (
-    <polygon
-      points={`${cx},${cy + 6} ${cx - 5},${cy - 4} ${cx + 5},${cy - 4}`}
-      fill="var(--app-danger)"
-    />
-  );
-};
-
 type LinearRegressionResult = {
   slope: number;
   intercept: number;
@@ -15248,30 +15234,6 @@ const getRegressionUnavailableReason = (
   }
   return "La regresión lineal requiere al menos 2 puntos válidos.";
 };
-
-const curveLegendKey = (idx: number) => `curve:${idx}`;
-const derivativeLegendKey = (idx: number) => `derivative:${idx}`;
-const integralLegendKey = (idx: number) => `integral:${idx}`;
-const experimentalLegendKey = (id: string) => `exp:${id}`;
-const regressionLegendKey = (id: string) => `regression:${id}`;
-
-const getExperimentalPointReactKey = (
-  seriesName: string,
-  point: { x: number; y: number },
-  index: number
-) => `${seriesName}-${point.x}-${point.y}-${index}`;
-
-const mapExperimentalScatterData = (
-  seriesName: string,
-  points: { x: number; y: number }[]
-) =>
-  points.map((point, index) => ({
-    ...point,
-    pointKey: getExperimentalPointReactKey(seriesName, point, index),
-  }));
-
-const DERIVATIVE_STROKE_OPACITY = 0.55;
-const INTEGRAL_STROKE_OPACITY = 0.5;
 
 type GraphEditorProps = {
   shareGraphId?: string;
@@ -23211,533 +23173,50 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               ref={chartExportRef}
               className={`${card} w-full`}
             >
-              {hasLegendItems && (
-                <div className="flex flex-wrap gap-2 mb-2 pb-2 border-b border-[var(--app-border)]">
-                  {activeCurves.map((curve) => {
-                    const legendKey = curveLegendKey(curve.idx);
-                    const isHidden = hiddenLegendKeys.includes(legendKey);
-
-                    return (
-                      <button
-                        key={legendKey}
-                        type="button"
-                        onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
-                          isHidden ? "opacity-50" : "opacity-100"
-                        }`}
-                        title={isHidden ? "Mostrar curva" : "Ocultar curva"}
-                      >
-                        <span
-                          className="inline-block w-5 h-1.5 rounded-full shrink-0"
-                          style={{ backgroundColor: curve.color }}
-                        />
-                        <span
-                          className={`text-sm font-mono ${
-                            isHidden
-                              ? "text-[var(--app-text-muted)] opacity-60"
-                              : "text-[var(--app-text)]"
-                          }`}
-                        >
-                          {curve.expression}
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {derivativeCurves.map((curve) => {
-                    const legendKey = derivativeLegendKey(curve.id);
-                    const isHidden = hiddenLegendKeys.includes(legendKey);
-
-                    return (
-                      <button
-                        key={legendKey}
-                        type="button"
-                        onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
-                          isHidden ? "opacity-50" : "opacity-100"
-                        }`}
-                        title={
-                          isHidden ? "Mostrar derivada" : "Ocultar derivada"
-                        }
-                      >
-                        <span
-                          className="inline-block w-5 h-0.5 rounded-full shrink-0 border-t-2 border-dashed"
-                          style={{
-                            borderColor: curve.color,
-                            opacity: DERIVATIVE_STROKE_OPACITY,
-                          }}
-                        />
-                        <span
-                          className={`text-sm font-mono ${
-                            isHidden
-                              ? "text-[var(--app-text-muted)] opacity-60"
-                              : "text-[var(--app-text)]"
-                          }`}
-                        >
-                          f&apos;({curve.sourceExpression})
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {integralCurves.map((curve) => {
-                    const curveIndex = Number(curve.id);
-                    const legendKey = integralLegendKey(curveIndex);
-                    const isHidden = hiddenLegendKeys.includes(legendKey);
-
-                    return (
-                      <button
-                        key={legendKey}
-                        type="button"
-                        onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
-                          isHidden ? "opacity-50" : "opacity-100"
-                        }`}
-                        title={
-                          isHidden ? "Mostrar integral" : "Ocultar integral"
-                        }
-                      >
-                        <span
-                          className="inline-block w-5 h-0.5 rounded-full shrink-0 border-t-2 border-dashed"
-                          style={{
-                            borderColor: curve.color,
-                            opacity: INTEGRAL_STROKE_OPACITY,
-                          }}
-                        />
-                        <span
-                          className={`text-sm font-mono ${
-                            isHidden
-                              ? "text-[var(--app-text-muted)] opacity-60"
-                              : "text-[var(--app-text)]"
-                          }`}
-                        >
-                          ∫({curve.sourceExpression})
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {experimentalSeries.map((series) => {
-                    const legendKey = experimentalLegendKey(series.id);
-                    const isHidden = hiddenLegendKeys.includes(legendKey);
-
-                    return (
-                      <button
-                        key={legendKey}
-                        type="button"
-                        onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
-                          isHidden ? "opacity-50" : "opacity-100"
-                        }`}
-                        title={isHidden ? "Mostrar serie" : "Ocultar serie"}
-                      >
-                        <span
-                          className="inline-block w-3 h-3 rounded-full shrink-0"
-                          style={{ backgroundColor: series.color }}
-                        />
-                        <span
-                          className={`text-sm ${
-                            isHidden
-                              ? "text-[var(--app-text-muted)] opacity-60"
-                              : "text-[var(--app-text)]"
-                          }`}
-                        >
-                          {series.name}
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {regressionCurves.map((regression) => {
-                    const legendKey = regressionLegendKey(regression.id);
-                    const isHidden = hiddenLegendKeys.includes(legendKey);
-
-                    return (
-                      <button
-                        key={legendKey}
-                        type="button"
-                        onClick={() => toggleLegendVisibility(legendKey)}
-                        className={`flex items-center gap-2 transition-opacity cursor-pointer ${
-                          isHidden ? "opacity-50" : "opacity-100"
-                        }`}
-                        title={
-                          isHidden
-                            ? "Mostrar regresión"
-                            : "Ocultar regresión"
-                        }
-                      >
-                        <span
-                          className="inline-block w-5 h-0.5 rounded-full shrink-0 border-t-2 border-dashed"
-                          style={{ borderColor: regression.color }}
-                        />
-                        <span
-                          className={`text-sm ${
-                            isHidden
-                              ? "text-[var(--app-text-muted)] opacity-60"
-                              : "text-[var(--app-text)]"
-                          }`}
-                        >
-                          📈 Regresión - {regression.name}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              <MainChartLegend
+                hasLegendItems={hasLegendItems}
+                activeCurves={activeCurves}
+                derivativeCurves={derivativeCurves}
+                integralCurves={integralCurves}
+                experimentalSeries={experimentalSeries}
+                regressionCurves={regressionCurves}
+                hiddenLegendKeys={hiddenLegendKeys}
+                onToggleLegend={toggleLegendVisibility}
+              />
 
               <ChartInteractionSurface surfaceProps={interaction.surfaceProps}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={composedChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
-                    <XAxis
-                      dataKey="x"
-                      type="number"
-                      scale={usesLogX ? "log" : "linear"}
-                      domain={xAxisDomain}
-                      allowDataOverflow
-                      stroke={chartTheme.axis}
-                      tick={{ fill: chartTheme.axis }}
-                      fontSize={14}
-                    />
-                    {useDualYAxis ? (
-                      <>
-                        <YAxis
-                          yAxisId="left"
-                          orientation="left"
-                          scale={usesLogY ? "log" : "linear"}
-                          stroke={chartTheme.axis}
-                          tick={{ fill: chartTheme.axis }}
-                          fontSize={14}
-                          domain={mathYAxisDomainForChart}
-                        />
-                        <YAxis
-                          yAxisId="right"
-                          orientation="right"
-                          scale={usesLogY ? "log" : "linear"}
-                          stroke={chartTheme.axis}
-                          tick={{ fill: chartTheme.axis }}
-                          fontSize={14}
-                          domain={experimentalYAxisDomainForChart}
-                        />
-                      </>
-                    ) : (
-                      <YAxis
-                        scale={usesLogY ? "log" : "linear"}
-                        stroke={chartTheme.axis}
-                        tick={{ fill: chartTheme.axis }}
-                        fontSize={14}
-                        domain={yAxisDomainForChart}
-                      />
-                    )}
-                    <Tooltip
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null;
-
-                        const pointPayload = payload[0]?.payload as
-                          | {
-                              __errorBar?: boolean;
-                              __outlier?: boolean;
-                              seriesName?: string;
-                              meanY?: number;
-                              stdDevY?: number;
-                              semY?: number;
-                              ci95Y?: number;
-                              method?: OutlierMethod;
-                              score?: number;
-                            }
-                          | undefined;
-
-                        if (pointPayload?.__errorBar) {
-                          return (
-                            <div
-                              className="rounded-lg border px-3 py-2 text-sm shadow-sm"
-                              style={{
-                                borderColor: chartTheme.tooltipBorder,
-                                backgroundColor: chartTheme.tooltipBg,
-                                color: chartTheme.tooltipColor,
-                              }}
-                            >
-                              <p className="font-semibold">
-                                Serie: {pointPayload.seriesName}
-                              </p>
-                              <p>
-                                Media:{" "}
-                                {formatExperimentalStat(pointPayload.meanY ?? 0)}
-                              </p>
-                              <p>
-                                SD:{" "}
-                                {formatExperimentalStat(
-                                  pointPayload.stdDevY ?? 0
-                                )}
-                              </p>
-                              <p>
-                                SEM:{" "}
-                                {formatExperimentalStat(pointPayload.semY ?? 0)}
-                              </p>
-                              <p>
-                                IC95:{" "}
-                                {formatExperimentalStat(
-                                  pointPayload.ci95Y ?? 0
-                                )}
-                              </p>
-                            </div>
-                          );
-                        }
-
-                        if (pointPayload?.__outlier) {
-                          return (
-                            <div
-                              className="rounded-lg border px-3 py-2 text-sm shadow-sm"
-                              style={{
-                                borderColor: chartTheme.tooltipBorder,
-                                backgroundColor: chartTheme.tooltipBg,
-                                color: chartTheme.tooltipColor,
-                              }}
-                            >
-                              <p className="font-semibold">Outlier</p>
-                              <p>
-                                Serie: {pointPayload.seriesName}
-                              </p>
-                              <p>X: {formatExperimentalStat(label as number)}</p>
-                              <p>
-                                Y:{" "}
-                                {formatExperimentalStat(
-                                  Number(payload[0]?.value ?? 0)
-                                )}
-                              </p>
-                              <p>
-                                Método:{" "}
-                                {getOutlierMethodLabel(
-                                  pointPayload.method ?? outlierMethod
-                                )}
-                              </p>
-                              <p>
-                                Score:{" "}
-                                {formatOutlierScore(pointPayload.score ?? 0)}
-                              </p>
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <div
-                            className="rounded-lg border px-3 py-2 text-sm shadow-sm"
-                            style={{
-                              borderColor: chartTheme.tooltipBorder,
-                              backgroundColor: chartTheme.tooltipBg,
-                              color: chartTheme.tooltipColor,
-                            }}
-                          >
-                            {label != null && (
-                              <p className="font-semibold mb-1">{label}</p>
-                            )}
-                            {payload.map((entry, entryIndex) => (
-                              <p
-                                key={`${entry.name}-${entry.dataKey}-${entry.value}-${entryIndex}`}
-                              >
-                                {entry.name}: {entry.value}
-                              </p>
-                            ))}
-                          </div>
-                        );
-                      }}
-                    />
-                    {activeCurves.map((curve) =>
-                      hiddenLegendKeys.includes(curveLegendKey(curve.idx)) ? null : (
-                        <Line
-                          key={curveLegendKey(curve.idx)}
-                          type="monotone"
-                          dataKey={`y${curve.idx + 1}`}
-                          yAxisId={useDualYAxis ? "left" : undefined}
-                          stroke={curve.color}
-                          strokeWidth={2}
-                          dot={false}
-                          connectNulls
-                        />
-                      )
-                    )}
-                    {derivativeCurves.map((curve) =>
-                      hiddenLegendKeys.includes(
-                        derivativeLegendKey(curve.id)
-                      ) ? null : (
-                        <Line
-                          key={derivativeLegendKey(curve.id)}
-                          type="monotone"
-                          data={curve.points}
-                          dataKey="y"
-                          yAxisId={useDualYAxis ? "left" : undefined}
-                          stroke={curve.color}
-                          strokeOpacity={DERIVATIVE_STROKE_OPACITY}
-                          strokeDasharray="8 4"
-                          strokeWidth={2}
-                          dot={false}
-                          isAnimationActive={false}
-                        />
-                      )
-                    )}
-                    {integralCurves.map((curve) =>
-                      hiddenLegendKeys.includes(
-                        integralLegendKey(Number(curve.id))
-                      ) ? null : (
-                        <Line
-                          key={integralLegendKey(Number(curve.id))}
-                          type="monotone"
-                          data={curve.points}
-                          dataKey="y"
-                          yAxisId={useDualYAxis ? "left" : undefined}
-                          stroke={curve.color}
-                          strokeOpacity={INTEGRAL_STROKE_OPACITY}
-                          strokeDasharray="4 4"
-                          strokeWidth={2}
-                          dot={false}
-                          isAnimationActive={false}
-                        />
-                      )
-                    )}
-                    {visibleExperimentalSeries.map((series) =>
-                      hiddenLegendKeys.includes(
-                        experimentalLegendKey(series.id)
-                      ) ? null : (
-                        <Scatter
-                          key={experimentalLegendKey(series.id)}
-                          name={series.name}
-                          data={mapExperimentalScatterData(
-                            series.name,
-                            series.points
-                          )}
-                          dataKey="y"
-                          yAxisId={useDualYAxis ? "right" : undefined}
-                          fill={series.color}
-                          line={false}
-                          isAnimationActive={false}
-                        />
-                      )
-                    )}
-                    {showErrorBars &&
-                      errorBarSeries.map((bar) => (
-                        <Line
-                          key={`error-bar-line-${bar.seriesId}`}
-                          data={[
-                            { x: bar.meanX, y: bar.lower },
-                            { x: bar.meanX, y: bar.upper },
-                          ]}
-                          type="linear"
-                          dataKey="y"
-                          stroke={bar.color}
-                          strokeWidth={2}
-                          dot={false}
-                          activeDot={false}
-                          isAnimationActive={false}
-                          legendType="none"
-                          yAxisId={useDualYAxis ? "right" : undefined}
-                        />
-                      ))}
-                    {showErrorBars &&
-                      errorBarSeries.map((bar) => (
-                        <Scatter
-                          key={`error-bar-mean-${bar.seriesId}`}
-                          name={bar.seriesName}
-                          data={[
-                            {
-                              x: bar.meanX,
-                              y: bar.meanY,
-                              __errorBar: true,
-                              seriesName: bar.seriesName,
-                              meanY: bar.meanY,
-                              stdDevY: bar.stdDevY,
-                              semY: bar.semY,
-                              ci95Y: bar.ci95Y,
-                            },
-                          ]}
-                          dataKey="y"
-                          yAxisId={useDualYAxis ? "right" : undefined}
-                          fill={bar.color}
-                          line={false}
-                          isAnimationActive={false}
-                          r={5}
-                        />
-                      ))}
-                    {regressionCurves.map((regression) =>
-                      hiddenLegendKeys.includes(
-                        regressionLegendKey(regression.id)
-                      ) ? null : (
-                        <Line
-                          key={regressionLegendKey(regression.id)}
-                          type={
-                            regression.model === "quadratic" ||
-                            regression.model === "exponential" ||
-                            regression.model === "logarithmic" ||
-                            regression.model === "power"
-                              ? "monotone"
-                              : "linear"
-                          }
-                          data={regression.points}
-                          dataKey="y"
-                          yAxisId={useDualYAxis ? "right" : undefined}
-                          stroke={regression.color}
-                          strokeDasharray="6 4"
-                          strokeWidth={2}
-                          dot={false}
-                          isAnimationActive={false}
-                        />
-                      )
-                    )}
-                    {showIntersections && intersectionChartPoints.length > 0 && (
-                      <Scatter
-                        name="Intersección"
-                        data={intersectionChartPoints}
-                        dataKey="y"
-                        fill="var(--app-accent)"
-                        line={false}
-                        isAnimationActive={false}
-                        r={6}
-                      />
-                    )}
-                    {showCriticalPoints && criticalMaxChartPoints.length > 0 && (
-                      <Scatter
-                        name="Máximo local"
-                        data={criticalMaxChartPoints}
-                        dataKey="y"
-                        fill="var(--app-success)"
-                        line={false}
-                        isAnimationActive={false}
-                        shape={renderMaximumMarker}
-                      />
-                    )}
-                    {showCriticalPoints && criticalMinChartPoints.length > 0 && (
-                      <Scatter
-                        name="Mínimo local"
-                        data={criticalMinChartPoints}
-                        dataKey="y"
-                        fill="var(--app-danger)"
-                        line={false}
-                        isAnimationActive={false}
-                        shape={renderMinimumMarker}
-                      />
-                    )}
-                    {showRoots && rootChartPoints.length > 0 && (
-                      <Scatter
-                        name="Raíz"
-                        data={rootChartPoints}
-                        dataKey="y"
-                        fill="var(--app-warning)"
-                        line={false}
-                        isAnimationActive={false}
-                        r={6}
-                      />
-                    )}
-                    {showOutliers && outlierChartPoints.length > 0 && (
-                      <Scatter
-                        name="Outlier"
-                        data={outlierChartPoints}
-                        dataKey="y"
-                        yAxisId={useDualYAxis ? "right" : undefined}
-                        fill="#dc2626"
-                        stroke="#ffffff"
-                        strokeWidth={2}
-                        line={false}
-                        isAnimationActive={false}
-                        r={7}
-                      />
-                    )}
-                  </ComposedChart>
-                </ResponsiveContainer>
+                <MainComposedChart
+                  data={composedChartData}
+                  chartTheme={chartTheme}
+                  usesLogX={usesLogX}
+                  usesLogY={usesLogY}
+                  useDualYAxis={useDualYAxis}
+                  xAxisDomain={xAxisDomain}
+                  mathYAxisDomainForChart={mathYAxisDomainForChart}
+                  experimentalYAxisDomainForChart={experimentalYAxisDomainForChart}
+                  yAxisDomainForChart={yAxisDomainForChart}
+                  activeCurves={activeCurves}
+                  derivativeCurves={derivativeCurves}
+                  integralCurves={integralCurves}
+                  visibleExperimentalSeries={visibleExperimentalSeries}
+                  errorBarSeries={errorBarSeries}
+                  regressionCurves={regressionCurves}
+                  hiddenLegendKeys={hiddenLegendKeys}
+                  showErrorBars={showErrorBars}
+                  showIntersections={showIntersections}
+                  showCriticalPoints={showCriticalPoints}
+                  showRoots={showRoots}
+                  showOutliers={showOutliers}
+                  intersectionChartPoints={intersectionChartPoints}
+                  criticalMaxChartPoints={criticalMaxChartPoints}
+                  criticalMinChartPoints={criticalMinChartPoints}
+                  rootChartPoints={rootChartPoints}
+                  outlierChartPoints={outlierChartPoints}
+                  outlierMethod={outlierMethod}
+                  formatStat={formatExperimentalStat}
+                  formatOutlierScore={formatOutlierScore}
+                  getOutlierMethodLabel={getOutlierMethodLabel}
+                />
               </ChartInteractionSurface>
 
               {showPCA && (
