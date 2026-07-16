@@ -1,0 +1,2 @@
+export const DERIVATIVE_STROKE_OPACITY = 0.55;
+export const INTEGRAL_STROKE_OPACITY = 0.5;
