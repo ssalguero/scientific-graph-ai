@@ -1,7 +1,7 @@
 # PROJECT_STATUS — PROD-2E
 
 **Épica:** PROD-2E — Motor gráfico profesional  
-**Estado épica:** **OPEN** (D34 CLOSED — GRAPH-2d CLOSED — Ready for D35)  
+**Estado épica:** **OPEN** (D35 CLOSED — GRAPH-2e CLOSED — Ready for D36)  
 **SSOT Plan:** [`PROJECT_PLAN_PROD_2E.md`](PROJECT_PLAN_PROD_2E.md)  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md)  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md)
@@ -2733,6 +2733,328 @@ Next BUILD: D35 — GRAPH-2e — Rendering
 
 ---
 
+## §D35 — GRAPH-2e Rendering
+
+**Estado:** **CLOSED** (2026-07-16)  
+**Modo:** BUILD STRICT — D35.1–D35.5 implementación · D35.6 documentación únicamente  
+**Próxima microfase:** **D36 — Consolidación / ARCH-5 prep**  
+**Plan congelado:** D35 (GRAPH-2e — move-only extracción React/Recharts boundary de rendering del gráfico principal desde `page.tsx`; dominio axes D33 + interaction D34 intocables)
+
+### Resumen ejecutivo D35
+
+**GRAPH-2e CLOSED** (2026-07-16). La capa React/Recharts de rendering del gráfico principal (leyenda interactiva, `ComposedChart`, capas Line/Scatter, tooltips, markers, adapters de scatter/error bars/outliers) quedó extraída a `src/components/graph/chart-rendering/`: **8 módulos**, barrel congelado (**7 exports**), `MainComposedChart` + `MainChartLegend` como **React/Recharts boundary** (sin math de dominio nueva; props ya calculadas desde `page.tsx`). Wiring en `page.tsx` (D35.3), gates dedicados (unit **59/59** + umbrella D35), smoke tests **S1–S8** certificados (D35.5) con semántica D34 (**S7 = Publication Presets VGB**). Separación definitiva **dominio / interaction / rendering**. Sin regresiones funcionales D29–D34 ni C8. API Freeze D29–D35. Move-Only certificado. Deuda **RENDERING-INLINE** cerrada.
+
+| Indicador | Estado |
+|-----------|--------|
+| **Épica parcial** | GRAPH-2e (Rendering React/Recharts boundary) — **CLOSED** |
+| **Épica GRAPH-2** | **CLOSED** (ampliado: 2a–2e) |
+| **Microfases** | D35.1–D35.6 — **CLOSED** |
+| **Reducción neta `page.tsx`** | **≈ −519 LOC** (diff wiring ≈ −572 / +53) |
+| **Dominio axes D33 · interaction D34** | **PRESERVADOS** (intocables) |
+
+### Objetivo D35
+
+Extraer el **boundary de Graph Rendering** del gráfico principal fuera de `page.tsx` hacia `src/components/graph/chart-rendering/`, preservando el estado certificado D34 y la separación dominio (`@/lib/graph/**`) / interaction (`chart-interaction/`) / rendering, sin cambios funcionales de render, escalas, dataset, VGB presets ni leyenda.
+
+### D35.1 — Discovery (inventario)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Inventario MOVE/STAY/SHARED/OUT del rendering inline del gráfico principal |
+| **Entregable** | [`docs/D35.1-discovery-inventory.md`](docs/D35.1-discovery-inventory.md) |
+| **Baseline `page.tsx` (post-D34)** | ≈27.530 LOC (acta) · inventario ≈25.422 (líneas no vacías) |
+| **LOC rendering extraíbles** | ~520–600 |
+| **Principio** | `MainComposedChart` / `MainChartLegend` = React/Recharts boundary, **no** dominio |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D35.2 — Extract modules (sin wiring)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Crear `src/components/graph/chart-rendering/` move-only (sin cablear `page.tsx`) |
+| **Módulos** | `types.ts` · `legendKeys.ts` · `scatterAdapters.ts` · `markers.tsx` · `tokens.ts` · `MainChartLegend.tsx` · `MainComposedChart.tsx` · `index.ts` |
+| **Restricción** | Sin math de ejes/viewport/series nueva · sin import `@/lib/graph/chart-interaction` |
+| **`"use client"`** | Legend + MainComposedChart |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D35.3 — Barrel + Wiring
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Barrel congelado (7 exports) + rewire `page.tsx` → boundary |
+| **Archivo producto modificado** | `src/app/page.tsx` (estado/domains/overlays STAY; JSX main chart + legend MOVE) |
+| **Arquitectura wiring** | `chartExportRef` → `MainChartLegend` → `ChartInteractionSurface` → `MainComposedChart` |
+| **API Freeze D35** | 5× `*LegendKey` · `MainChartLegend` · `MainComposedChart` |
+| **Asserts** | `MainComposedChart` presente · **0** `<ComposedChart` en `page.tsx` |
+| **API Freeze D33/D34** | axes + interaction intocables |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D35.4 — Gates + Governance
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Unit gate + umbrella gate + gobernanza rendering |
+| **Scripts** | `validate:graph-rendering-unit` · `validate:prod2e-d35-rendering-gate` |
+| **Unit gate** | **59/59 PASS** |
+| **Umbrella gate** | **PASS** (gobernanza D35 **9/9** · cadena sibling D29–D34 · tsc · C8; anti-nest parity con D34) |
+| **Gobernanza** | Barrel 7 exports · denylist MOVE · allowlist imports · no `ComposedChart` en page · freeze axes/interaction |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D35.5 — Smoke Tests + Regresión
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Certificación funcional S1–S8 (semántica D34) + regresión · sin cambios de código |
+| **Smoke Tests** | **8/8 PASS** (browser + CDP; 2026-07-16) |
+| **Regresiones** | **0** |
+| **Boundary transparente** | Render / zoom / pan / reset / escalas / dataset / VGB / leyenda ≡ D34 |
+| **Resultado** | **PASS** (CLOSED) |
+
+### D35.6 — Acta + cierre GRAPH-2e
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Acta §D35 + declarar GRAPH-2e CLOSED + handoff D36 |
+| **Alcance** | Documentación únicamente (`PROJECT_STATUS_PROD_2E.md`) |
+| **Fecha de cierre** | **2026-07-16** |
+| **Resultado** | **PASS** |
+
+#### Arquitectura final D35
+
+```text
+src/lib/graph/
+  viewport.ts                 ← SSOT D29 (intocable)
+  publication-presets/        ← D30 (intocable)
+  curves/                     ← D31 (intocable)
+  series/                     ← D32 (intocable)
+  axes/                       ← D33 (intocable)
+
+src/components/graph/
+  chart-interaction/          ← React boundary GRAPH-2d (intocable en D35)
+    useChartViewportInteraction.ts
+    ChartInteractionSurface.tsx
+    index.ts                  ← 2 exports congelados
+
+  chart-rendering/            ← React/Recharts boundary GRAPH-2e
+    types.ts · legendKeys.ts · scatterAdapters.ts
+    markers.tsx · tokens.ts
+    MainChartLegend.tsx
+    MainComposedChart.tsx
+    index.ts                  ← 7 exports públicos congelados
+
+src/app/
+  page.tsx                    ← state · domain memos · overlays · export ref STAY
+                              ← import barrels interaction + rendering
+                              ← 0 <ComposedChart inline (main chart)
+```
+
+#### Archivos creados (D35.1–D35.4)
+
+| Acción | Archivo |
+|--------|---------|
+| **Creado** | `docs/D35.1-discovery-inventory.md` |
+| **Creado** | `src/components/graph/chart-rendering/types.ts` |
+| **Creado** | `src/components/graph/chart-rendering/legendKeys.ts` |
+| **Creado** | `src/components/graph/chart-rendering/scatterAdapters.ts` |
+| **Creado** | `src/components/graph/chart-rendering/markers.tsx` |
+| **Creado** | `src/components/graph/chart-rendering/tokens.ts` |
+| **Creado** | `src/components/graph/chart-rendering/MainChartLegend.tsx` |
+| **Creado** | `src/components/graph/chart-rendering/MainComposedChart.tsx` |
+| **Creado** | `src/components/graph/chart-rendering/index.ts` |
+| **Creado** | `scripts/lib/graph-rendering-gate.cases.ts` |
+| **Creado** | `scripts/validate-graph-rendering-unit.ts` |
+| **Creado** | `scripts/validate-prod2e-d35-rendering-gate.ts` |
+
+#### Archivos modificados (D35.1–D35.4)
+
+| Acción | Archivo |
+|--------|---------|
+| **Modificado** | `src/app/page.tsx` (wiring D35.3 — extracción rendering) |
+| **Modificado** | `package.json` (scripts `validate:graph-rendering-unit` · `validate:prod2e-d35-rendering-gate`) |
+| **Modificado** | `PROJECT_STATUS_PROD_2E.md` (acta D35.6 — este documento) |
+
+**No modificado en D35.6:** `src/**`, `scripts/**`, `package.json`, `docs/**`, tests, fixtures, README, ROADMAP, MASTER.
+
+**No modificado en D35 (alcance congelado post-certificación):** `src/lib/graph/**` · `chart-interaction/**` · persistencia V2 · VGB · `publicationPresetId` · `schemaVersion` · SCI-40 · F5F-BIS · golden fixtures.
+
+#### Métricas finales D35 (GRAPH-2e)
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha de cierre** | **2026-07-16** |
+| **Baseline `page.tsx` (post-D34)** | ≈**27.530** LOC |
+| **LOC trasladadas (inline → boundary)** | **~520–600** LOC (inventario) |
+| **LOC módulo `chart-rendering/`** | **8 archivos** (boundary completa) |
+| **Reducción neta `page.tsx`** | **≈ −519** LOC (≈ −572 / +53 wiring) |
+| **`page.tsx` actual (aprox.)** | **≈27.011** LOC |
+| **Exports públicos del barrel** | **7** (5× `*LegendKey` · `MainChartLegend` · `MainComposedChart`) |
+| **Cantidad módulos** | **8** |
+| **Unit gate** | **59/59 PASS** |
+| **Umbrella D35** | **PASS** (exit 0 · gobernanza 9/9) |
+| **TypeScript** | **`npx tsc --noEmit` PASS** |
+| **Smoke Tests** | **8/8 PASS** |
+| **Regresiones funcionales** | **0** |
+
+#### Gates D35 — Certificación completa
+
+| Gate | Resultado | Detalle |
+|------|-----------|---------|
+| `npx tsc --noEmit` | **PASS** | TSC_PASS |
+| `validate:graph-rendering-unit` | **PASS** | **59/59** |
+| `validate:prod2e-d35-rendering-gate` | **PASS** | Gobernanza **9/9** + cadena D29–D34 |
+| Cadena regresión D29–D34 | **PASS** | Sibling expansion anti-nest (paridad D34) |
+| `validate:graph-interaction-unit` | **PASS** | 35/35 (preservado) |
+| `validate:graph-axes-unit` | **PASS** | axes freeze |
+| `validate:chart-viewport` / D29–D32 gates | **PASS** | Cadena preservada |
+| `validate:prod2c-c8-regression-gate` | **PASS** | C4–C8 |
+
+#### Smoke Tests D35 — Certificación (S1–S8)
+
+| ID | Escenario | Resultado | Evidencia |
+|----|-----------|-----------|-----------|
+| **S1** | Render principal (curvas · ejes · grid · labels) | **PASS** | SVG + `MainComposedChart` · `chartTheme` |
+| **S2** | Wheel Zoom | **PASS** | Zoom continuo · re-render estable (interaction + domains) |
+| **S3** | Pan horizontal | **PASS** | Desplazamiento · estabilidad render |
+| **S4** | Restablecer vista | **PASS** | Reset viewport · render correcto |
+| **S5** | Escalas Linear · LogX · LogY · LogLog | **PASS** | Selector Análisis → título Resultados |
+| **S6** | Dataset experimental | **PASS** | Scatter · error bars · outliers · tooltips · markers (`smoke-d35.csv`) |
+| **S7** | Publication Presets (VGB · D30) | **PASS** | Predeterminado · journal · presentation · preview estable |
+| **S8** | Leyenda + series | **PASS** | Curvas · derivadas · integrales · regresiones · experimental · toggle/opacidad/keys |
+
+**Resultado global Smoke:** **8/8 PASS**
+
+#### CA-D35 — Certificación
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D35-01** | Boundary creada en `src/components/graph/chart-rendering/` | **PASS** |
+| **CA-D35-02** | Move-Only respetado (sin math de dominio nueva) | **PASS** |
+| **CA-D35-03** | API Freeze D35 (7 exports barrel; sin deep imports) | **PASS** |
+| **CA-D35-04** | API Freeze D33 (axes) y D34 (interaction) preservados | **PASS** |
+| **CA-D35-05** | Separación dominio / interaction / rendering respetada | **PASS** |
+| **CA-D35-06** | Unit gate PASS | **PASS** (59/59) |
+| **CA-D35-07** | Umbrella D35 PASS (cadena D29–D34 + tsc + C8) | **PASS** |
+| **CA-D35-08** | Smoke S1–S8 PASS (semántica D34) | **PASS** (8/8) |
+| **CA-D35-09** | Zero regresiones vs D34 certificado | **PASS** |
+| **CA-D35-10** | Estado viewport + domain memos + export ref en `page.tsx` | **PASS** |
+| **CA-D35-11** | SCI-40 / F5F-BIS / VGB / export capture no modificados | **PASS** |
+| **CA-D35-12** | Acta D35.6 + deuda `RENDERING-INLINE` CLOSED + handoff D36 | **PASS** |
+
+**Total CA-D35: 12/12 PASS** · Deuda **RENDERING-INLINE** cerrada.
+
+#### Verificaciones de política
+
+| Verificación | Estado |
+|--------------|--------|
+| **Move-only Policy** | **CERTIFICADO** |
+| **API Freeze D29–D34** | **CERTIFICADO** — intocable |
+| **API Freeze D35** (barrel rendering 7 exports) | **CERTIFICADO** |
+| **Separación dominio / interaction / rendering** | **CERTIFICADO** |
+| **Zero regresiones** | **CERTIFICADO** |
+| **React/Recharts boundary transparente** | **CERTIFICADO** |
+
+#### Riesgos mitigados
+
+| ID | Riesgo | Mitigación aplicada |
+|----|--------|---------------------|
+| R-D35-01 | Omisión de layer Recharts al cablear | Checklist MOVE · smoke S6/S8 |
+| R-D35-02 | Deep import / barrel leak | Gate barrel freeze 7 exports |
+| R-D35-03 | Import interaction desde rendering | Allowlist · denylist gobernanza |
+| R-D35-04 | Regresión zoom/pan tras extracción | Smoke S2–S4 · cadena D34 |
+| R-D35-05 | Reinterpretar S7 como chartTheme editor | Smoke S7 = VGB presets (semántica D34) |
+| R-D35-07 | Scope creep charts secundarios SCI-40 | OUT superseded · CA-D35-11 |
+
+#### Cierre oficial GRAPH-2e
+
+**Estado:** **GRAPH-2e CLOSED** (2026-07-16)
+
+| Entregable | Microfase | Estado |
+|------------|-----------|--------|
+| **Discovery + inventario** | D35.1 | **CERTIFICADO** |
+| **Extract modules** | D35.2 | **CERTIFICADO** |
+| **Barrel + wiring** | D35.3 | **CERTIFICADO** |
+| **Gates + governance** | D35.4 | **CERTIFICADO** |
+| **Smoke + regresión** | D35.5 | **CERTIFICADO** |
+| **Acta oficial** | D35.6 | **CERTIFICADO** |
+
+- Boundary `src/components/graph/chart-rendering/` operativa
+- Dominio permanece en `@/lib/graph/**`; interaction en `chart-interaction/`
+- Gate umbrella `validate:prod2e-d35-rendering-gate` — **PASS**
+- Sin regresiones funcionales (S1–S8 + D29–D34 + C8)
+
+#### Estado PROD-2E (post-D35)
+
+| Indicador | Valor |
+|-----------|--------|
+| **Épica** | **OPEN** (GRAPH-2e CLOSED — Ready for D36) |
+| **Checklist cierre épica** | **5/9** (sin cambio de umbral; avance GRAPH-2e cerrado) |
+| **DATA-3B** | **CLOSED** ✓ |
+| **GRAPH-1** | **CLOSED** ✓ |
+| **GRAPH-2** | **CLOSED** ✓ (2a–2e) |
+| **GRAPH-2a** | **CLOSED** ✓ |
+| **GRAPH-2b** | **CLOSED** ✓ |
+| **GRAPH-2c** | **CLOSED** ✓ |
+| **GRAPH-2d** | **CLOSED** ✓ |
+| **GRAPH-2e** | **CLOSED** ✓ |
+| **Próxima fase** | **D36 — Consolidación / ARCH-5 prep** |
+| **Fases abiertas** | D36 (consolidación · baseline · `validate:prod2e-gate` · cierre épica) |
+
+**Checklist cierre PROD-2E (avance):**
+
+- [x] ≥3 tipos VGB avanzados con round-trip persist (**DATA-3B CLOSED**)
+- [x] Auto-fit Y (**GRAPH-1a D29 CLOSED**)
+- [x] Presets publicación (**GRAPH-1b D30 CLOSED**)
+- [x] Motor curvas + series + ejes + interaction + rendering (**GRAPH-2 D31–D35 CLOSED**)
+- [ ] F5F-BIS + SCI-40 (ARCH-5 — F5F-BIS diferido post-GRAPH-3; SCI-40 pendiente)
+- [ ] API Freeze respetado (parcial → completo en D36)
+- [ ] Baseline re-medido (D36)
+- [ ] `validate:prod2e-gate` (D36)
+- [ ] DoD §2 Master (D36)
+- [ ] Docs sync PROD-3 READY (D36.5)
+
+#### Handoff D36 — Consolidación / ARCH-5 prep
+
+```text
+D35 CLOSED — GRAPH-2e CLOSED — Ready for D36
+
+Prerrequisitos D36 (Consolidación):
+  ✓ GRAPH-2e CLOSED — React/Recharts boundary en chart-rendering/
+  ✓ Separación dominio / interaction / rendering certificada
+  ✓ API Freeze D29–D35 vigente (viewport · presets · curves · series · axes · interaction · rendering)
+  ✓ validate:graph-rendering-unit 59/59 PASS
+  ✓ validate:prod2e-d35-rendering-gate PASS
+  ✓ Smoke S1–S8 PASS · Zero regresiones D29–D34 · C8
+  ✓ Deuda RENDERING-INLINE CLOSED
+
+Componentes certificados reutilizables:
+  · viewport.ts (D29 SSOT)
+  · publication-presets/ (D30)
+  · curves/ (D31)
+  · series/ (D32)
+  · axes/ (D33)
+  · components/graph/chart-interaction/ (D34)
+  · components/graph/chart-rendering/ (D35)
+
+Restricciones heredadas (API Freeze D29–D35):
+  · No modificar barrels congelados ni deep-import
+  · Move-only / zero regresiones respecto de D35 certificado
+  · SCI-40 / F5F-BIS / export capture fuera de alcance hasta autorización ARCH-5
+
+Alcance previsto D36:
+  · Consolidación épica · baseline re-medido · validate:prod2e-gate
+  · Cierre checklist PROD-2E · docs sync PROD-3 READY
+  · Sin iniciar hasta autorización BUILD D36
+
+Deuda diferida (no bloqueante D36 de consolidación):
+  · Calidad vectorial SVG · sampleStep · SHIM-NL-CURVES → prep EXPORT-1
+  · F5F-BIS ~718 LOC → post-GRAPH-3
+  · SCI-40 multivariante → ARCH-5
+
+Next BUILD: D36 — Consolidación / ARCH-5 prep
+```
+
+---
+
 ## Cronología PROD-2E
 
 ```text
@@ -2806,12 +3128,24 @@ D34.5 Smoke Tests + Regression ✓ (CLOSED)
   ↓
 D34.6 Acta + GRAPH-2d CLOSED ✓ (CLOSED) — GRAPH-2d ✓ (CLOSED)
   ↓
-D35 GRAPH-2e Rendering → D36 Consolidación
+D35.1 Discovery Rendering ✓ (CLOSED)
+  ↓
+D35.2 Extract modules ✓ (CLOSED)
+  ↓
+D35.3 Barrel + Wiring ✓ (CLOSED)
+  ↓
+D35.4 Gates + Governance ✓ (CLOSED)
+  ↓
+D35.5 Smoke Tests + Regression ✓ (CLOSED)
+  ↓
+D35.6 Acta + GRAPH-2e CLOSED ✓ (CLOSED) — GRAPH-2e ✓ (CLOSED) — GRAPH-2 ✓ (CLOSED 2a–2e)
+  ↓
+D36 Consolidación / ARCH-5 prep
 ```
 
 ---
 
-## Deuda carry-in (actualizada post-D34)
+## Deuda carry-in (actualizada post-D35)
 
 | ID | Item | Target | Estado |
 |----|------|--------|--------|
@@ -2820,16 +3154,16 @@ D35 GRAPH-2e Rendering → D36 Consolidación
 | ~~SERIES-INLINE~~ | Dominio series inline / legacy fragmentado | D32 | **CLOSED** (2026-07-11) |
 | ~~AXES-INLINE~~ | Ejes, escalas y rangos inline en `page.tsx` | D33 | **CLOSED** (2026-07-13) |
 | ~~INTERACTION-INLINE~~ | Handlers/refs/effects interaction inline en `page.tsx` | D34 | **CLOSED** (2026-07-15) |
-| SHIM-NL-CURVES | Shim temporal `translateNaturalLanguageToMath` en `page.tsx` | prep EXPORT-1 | **OPEN** — diferido; no bloquea D35 |
+| ~~RENDERING-INLINE~~ | JSX Recharts / composición chart principal en `page.tsx` | D35 | **CLOSED** (2026-07-16) |
+| SHIM-NL-CURVES | Shim temporal `translateNaturalLanguageToMath` en `page.tsx` | prep EXPORT-1 | **OPEN** — diferido; no bloquea D36 |
 | EXPORT-1-01 | `sampleStep` configurable (curves) | prep EXPORT-1 | **OPEN** — diferido |
 | EXPORT-1-02 | Calidad vectorial SVG | prep EXPORT-1 | **OPEN** — diferido |
 | F5F-BIS | UI SCI-50–56 ~718 LOC | post-GRAPH-3 | **OPEN** — diferido (amend D33.1) |
-| SCI-40 | Multivariante ~8.532 LOC | post-GRAPH-2e / ARCH-5 | **OPEN** |
+| SCI-40 | Multivariante ~8.532 LOC | ARCH-5 | **OPEN** |
 | L-D23-2 | E2E flakiness | QA-2 | **OPEN** |
-| RENDERING-INLINE | JSX Recharts / composición chart principal en `page.tsx` | D35 | **OPEN** — handoff GRAPH-2e |
 
 *Nota amend D33: el identificador GRAPH-2c pasó de «calidad vectorial» (plan original) a «Axes & Viewport» (D33 certificado). Items calidad vectorial / sampleStep / SHIM-NL quedan diferidos a prep EXPORT-1.*
 
 ---
 
-*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Acta D32 certificada 2026-07-11 · D32 CLOSED · GRAPH-2b CLOSED · SERIES-INLINE CLOSED · Acta D33 certificada 2026-07-13 · D33 CLOSED · GRAPH-2c CLOSED · AXES-INLINE CLOSED · GRAPH-2 CLOSED · Acta D34 certificada 2026-07-15 · D34 CLOSED · GRAPH-2d CLOSED · INTERACTION-INLINE CLOSED · Next: D35 BUILD.*
+*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Acta D32 certificada 2026-07-11 · D32 CLOSED · GRAPH-2b CLOSED · SERIES-INLINE CLOSED · Acta D33 certificada 2026-07-13 · D33 CLOSED · GRAPH-2c CLOSED · AXES-INLINE CLOSED · GRAPH-2 CLOSED · Acta D34 certificada 2026-07-15 · D34 CLOSED · GRAPH-2d CLOSED · INTERACTION-INLINE CLOSED · Acta D35 certificada 2026-07-16 · D35 CLOSED · GRAPH-2e CLOSED · RENDERING-INLINE CLOSED · Next: D36 BUILD.*
