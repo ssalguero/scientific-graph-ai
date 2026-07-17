@@ -416,3 +416,114 @@ NO BUILD AUTHORIZED BY D40.
 ---
 
 *§D40 APPEND-ONLY 2026-07-17 · RN-D40 · CA-D40 15/15 PASS · CA-D40.6 10/10 PASS · FREEZE_PLANNING_TRACK = CERTIFIED · D40 CERTIFIED · PROD-3 = OPEN · Next: EXPORT-1 Discovery · No BUILD authorized by D40.*
+
+---
+
+## §D41 — EXPORT-1 Discovery (PROD-3)
+
+**Fecha:** 2026-07-17  
+**Serie:** D41.0–D41.7  
+**Estado:** **D41 = CERTIFIED** · **EXPORT-1 DISCOVERY = COMPLETE** · **GO BUILD AUTHORIZED** · **PROD-3 = OPEN** · **READY FOR EXPORT-1 BUILD**
+
+### 1. Declaración
+
+```text
+FREEZE_PLANNING_TRACK = CERTIFIED (D40)
+D41 = CERTIFIED
+EXPORT-1 DISCOVERY = COMPLETE
+DEFINITION OF SUCCESS = PASS
+GO BUILD AUTHORIZED BY D41.7
+PROD-3 = OPEN
+ROADMAP = OFFICIAL (inalterado)
+ARCHITECTURE FREEZE = COMPLETE (inalterado)
+READY FOR EXPORT-1 BUILD
+NEXT = D42.1 — EXPORT-1 BUILD Implementation
+NO FREEZE / ROADMAP / API ALTERED BY D41
+```
+
+### 2. Microfases D41
+
+| Microfase | Resultado |
+|-----------|-----------|
+| D41.0 Series Plan | OFFICIAL |
+| D41.1 Scope & Export Inventory | OFFICIAL · Scope confirmado |
+| D41.2 Architecture Review | OFFICIAL · PASS |
+| D41.3 API Freeze Preview | OFFICIAL · PASS |
+| D41.4 Performance Thresholds & Validation | OFFICIAL · PASS · PT-* |
+| D41.5 Risk & Carry-in Resolution | OFFICIAL · PASS · 01/02=IN · SHIM-NL=DEFER |
+| D41.6 Governance & Documentation Review | OFFICIAL · PASS |
+| D41.7 BUILD Plan Freeze + Discovery Acta | OFFICIAL · **GO BUILD** · D41 CERTIFIED |
+
+### 3. BUILD Plan Freeze (épica)
+
+```text
+Numeración BUILD = D42.1 … D42.4 (≠ D39)
+D42.1 BUILD Implementation
+D42.2 Testing (Performance · Regression)
+D42.3 Certification
+D42.4 Release / M1 Acta
+```
+
+### 4. Decisión
+
+```text
+GO BUILD
+Authorized exclusively by D41.7 Discovery Acta.
+BUILD not executed in D41.
+First implementation microphase = D42.1.
+```
+
+### 5. Carry-ins (resumen)
+
+| Carry-in | Disposición |
+|----------|-------------|
+| EXPORT-1-01 sampleStep | IN |
+| EXPORT-1-02 SVG calidad | IN |
+| SHIM-NL | DEFER (si aplica / reapertura documentada) |
+
+### 6. Certificación
+
+| Ítem | Resultado |
+|------|-----------|
+| CA-D41.7 | 10/10 PASS |
+| CA-D41 rollup | 13/13 PASS |
+| Definition of Success | PASS |
+| Amendment | NOT REQUIRED |
+
+### 7. Handoff
+
+```text
+NEXT: D42.1 — EXPORT-1 BUILD Implementation
+Inputs: D38.* · D39.* · D40.* · D41.*
+Do not reuse D39 numbering for BUILD.
+```
+
+### 8. Archivos (D41)
+
+**Creados:** `docs/D41.0-export1-discovery-plan.md` · `docs/D41.1-scope-confirmation-export-inventory.md` · `docs/D41.2-architecture-review.md` · `docs/D41.3-api-freeze-preview.md` · `docs/D41.4-performance-thresholds-validation.md` · `docs/D41.5-risk-carryin-resolution.md` · `docs/D41.6-governance-documentation-review.md` · `docs/D41.7-build-plan-freeze-discovery-acta.md`
+
+**No modificado en D41:** `src/**` · `scripts/**` · `package.json` · tests · D37.* · D38.* · D39.* · D40.* · Freeze · Roadmap · Governance · QG · APIs · contenido histórico de este archivo (§D39 · Cronología · §D38 · §D40)
+
+**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este §D41)
+
+### 9. Append Integrity Rules
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Actualización únicamente al final del documento | **Sí** |
+| Sin modificar secciones previas (§D39 · Cronología · §D38 · §D40) | **Sí** |
+| Sin alterar contenido histórico | **Sí** |
+| Sin cambiar numeración existente | **Sí** |
+
+### 10. STATUS Integrity Declaration
+
+```text
+Este registro histórico mantiene íntegramente su contenido previo.
+La sección §D41 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
+No se ha modificado ninguna sección histórica (§D39 · Cronología · §D38 · §D40).
+D41 autoriza GO BUILD sin alterar Freeze, Roadmap, Governance, QG ni API Freeze.
+```
+
+---
+
+*§D41 APPEND-ONLY 2026-07-17 · D41 CERTIFIED · CA-D41 13/13 PASS · CA-D41.7 10/10 PASS · EXPORT-1 DISCOVERY = COMPLETE · DEFINITION OF SUCCESS = PASS · GO BUILD AUTHORIZED · PROD-3 = OPEN · Next: D42.1 EXPORT-1 BUILD · BUILD not executed in D41.*
