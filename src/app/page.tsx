@@ -10,8 +10,21 @@ import {
   type RefObject,
   type ReactNode,
 } from "react";
-import { toPng, toSvg } from "html-to-image";
+import { flushSync } from "react-dom";
 import { supabase } from "../lib/supabase";
+import {
+  buildChartExportSeriesPoints,
+  captureChartAsPngDataUrl,
+  captureChartAsSvgDataUrl,
+  CHART_EXPORT_PIXEL_RATIO_PRESETS,
+  CHART_EXPORT_SAMPLE_STEP_PRESETS,
+  DEFAULT_CHART_EXPORT_PIXEL_RATIO,
+  DEFAULT_EXPORT_SAMPLE_STEP,
+  DEFAULT_LIVE_CHART_SAMPLE_STEP,
+  getChartExportFileName,
+  resolveChartExportPixelRatio,
+  resolveChartExportSampleStep,
+} from "./chartExport";
 import {
   buildErrorBarSeries,
   calculateExperimentalStatistics,
@@ -1039,146 +1052,6 @@ const getAnalysisInspectorPanelClass = (
   panel: AnalysisInspectorSection,
   active: AnalysisInspectorSection
 ) => (panel === active ? "space-y-3" : "hidden");
-
-const getChartExportFileName = (
-  title: string,
-  extension: "png" | "svg" | "json"
-) => {
-  const trimmed = title.trim();
-  if (!trimmed) return `grafico.${extension}`;
-
-  const safe = trimmed
-    .replace(/[<>:"/\\|?*]/g, "")
-    .replace(/\s+/g, "-")
-    .slice(0, 80);
-
-  return safe ? `grafico-${safe}.${extension}` : `grafico.${extension}`;
-};
-
-const CHART_CAPTURE_PNG_OPTIONS = {
-  cacheBust: true,
-  pixelRatio: 2,
-  backgroundColor: "#ffffff",
-} as const;
-
-const waitForChartPaint = () =>
-  new Promise<void>((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => resolve());
-    });
-  });
-
-type ChartCaptureVisibilityRestore = {
-  section: HTMLElement;
-  hadHiddenClass: boolean;
-  ariaHidden: string | null;
-  notebookPanel: HTMLElement | null;
-  notebookHadCollapsedGrid: boolean;
-};
-
-const prepareChartExportVisibility = (
-  chartNode: HTMLElement
-): ChartCaptureVisibilityRestore | null => {
-  const section = chartNode.closest<HTMLElement>("section");
-  if (!section) return null;
-
-  const restore: ChartCaptureVisibilityRestore = {
-    section,
-    hadHiddenClass: section.classList.contains("hidden"),
-    ariaHidden: section.getAttribute("aria-hidden"),
-    notebookPanel: null,
-    notebookHadCollapsedGrid: false,
-  };
-
-  if (restore.hadHiddenClass) {
-    section.classList.remove("hidden");
-    section.setAttribute("aria-hidden", "false");
-  }
-
-  const notebookGrid = chartNode.closest<HTMLElement>(".grid.transition-all");
-  if (notebookGrid?.classList.contains("grid-rows-[0fr]")) {
-    restore.notebookPanel = notebookGrid;
-    restore.notebookHadCollapsedGrid = true;
-    notebookGrid.classList.remove("grid-rows-[0fr]", "opacity-0", "mt-0");
-    notebookGrid.classList.add("grid-rows-[1fr]", "opacity-100", "mt-3");
-  }
-
-  return restore;
-};
-
-const restoreChartExportVisibility = (
-  restore: ChartCaptureVisibilityRestore | null
-) => {
-  if (!restore) return;
-
-  if (restore.notebookHadCollapsedGrid && restore.notebookPanel) {
-    restore.notebookPanel.classList.remove(
-      "grid-rows-[1fr]",
-      "opacity-100",
-      "mt-3"
-    );
-    restore.notebookPanel.classList.add("grid-rows-[0fr]", "opacity-0", "mt-0");
-  }
-
-  if (restore.hadHiddenClass) {
-    restore.section.classList.add("hidden");
-    if (restore.ariaHidden !== null) {
-      restore.section.setAttribute("aria-hidden", restore.ariaHidden);
-    } else {
-      restore.section.removeAttribute("aria-hidden");
-    }
-  }
-};
-
-const captureChartAsPngDataUrl = async (
-  chartNode: HTMLElement,
-  logContext: "png-export" | "pdf-export"
-): Promise<string | null> => {
-  const visibilityRestore = prepareChartExportVisibility(chartNode);
-
-  console.log(`[chart-capture:${logContext}] chartExportRef exists: true`);
-  console.log(
-    `[chart-capture:${logContext}] DOM node:`,
-    chartNode.tagName,
-    chartNode.className
-  );
-  console.log(
-    `[chart-capture:${logContext}] size before paint:`,
-    chartNode.offsetWidth,
-    chartNode.offsetHeight
-  );
-
-  try {
-    await waitForChartPaint();
-
-    const width = chartNode.offsetWidth;
-    const height = chartNode.offsetHeight;
-    console.log(`[chart-capture:${logContext}] size after paint:`, width, height);
-
-    if (width <= 0 || height <= 0) {
-      console.warn(
-        `[chart-capture:${logContext}] toPng skipped: zero-size container`
-      );
-      return null;
-    }
-
-    const dataUrl = await toPng(chartNode, CHART_CAPTURE_PNG_OPTIONS);
-    const captureOk =
-      dataUrl.startsWith("data:image/png") && dataUrl.length > 100;
-    console.log(
-      `[chart-capture:${logContext}] toPng success:`,
-      captureOk,
-      "length:",
-      dataUrl.length
-    );
-    return captureOk ? dataUrl : null;
-  } catch (error) {
-    console.error(`[chart-capture:${logContext}] toPng failed:`, error);
-    return null;
-  } finally {
-    restoreChartExportVisibility(visibilityRestore);
-  }
-};
 
 const DUPLICATE_TITLE_SUFFIX = " (copia)";
 
@@ -15262,6 +15135,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [maxX, setMaxX] = useState(10);
   const [visibleMinX, setVisibleMinX] = useState(-10);
   const [visibleMaxX, setVisibleMaxX] = useState(10);
+  const [chartExportPixelRatio, setChartExportPixelRatio] = useState(
+    DEFAULT_CHART_EXPORT_PIXEL_RATIO
+  );
+  const [chartExportSampleStep, setChartExportSampleStep] = useState(
+    DEFAULT_EXPORT_SAMPLE_STEP
+  );
   const [autoScaleY, setAutoScaleY] = useState(false);
   const [useSecondaryYAxis, setUseSecondaryYAxis] = useState(false);
   const [regressionModel, setRegressionModel] = useState<RegressionModel>("none");
@@ -15926,18 +15805,74 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
   };
 
-  const exportChartPng = async () => {
+  const runChartExportCapture = async (
+    capture: (node: HTMLElement) => Promise<string | null>
+  ): Promise<string | null> => {
+    const chartNode = chartExportRef.current;
     if (
-      !chartExportRef.current ||
+      !chartNode ||
       (chartData.length === 0 && experimentalSeries.length === 0)
     ) {
-      return;
+      return null;
+    }
+
+    const sampleStep = resolveChartExportSampleStep(chartExportSampleStep);
+    const previousChartData = chartData;
+    let didResample = false;
+
+    // EXPORT-1-01: resample curve series on export surface when step ≠ live 0.5
+    if (
+      chartData.length > 0 &&
+      sampleStep !== DEFAULT_LIVE_CHART_SAMPLE_STEP
+    ) {
+      const sourceCurves = naturalLanguageEnabled
+        ? curves.map((curve) => ({
+            ...curve,
+            expression: resolveNaturalLanguageExpression(
+              curve.expression,
+              naturalLanguageEnabled
+            ),
+          }))
+        : curves;
+      const activeCurves = sourceCurves
+        .map((c, idx) => ({
+          idx,
+          expression: c.expression.trim(),
+        }))
+        .filter((c) => c.expression.length > 0);
+
+      if (activeCurves.length > 0) {
+        const resampled = buildChartExportSeriesPoints(
+          activeCurves,
+          minX,
+          maxX,
+          sampleStep,
+          (expression, x) => toPlottableY(evaluateExpression(expression, { x }))
+        );
+        flushSync(() => {
+          setChartData(resampled);
+        });
+        didResample = true;
+      }
     }
 
     try {
-      const dataUrl = await captureChartAsPngDataUrl(
-        chartExportRef.current,
-        "png-export"
+      return await capture(chartNode);
+    } finally {
+      if (didResample) {
+        flushSync(() => {
+          setChartData(previousChartData);
+        });
+      }
+    }
+  };
+
+  const exportChartPng = async () => {
+    try {
+      const dataUrl = await runChartExportCapture((node) =>
+        captureChartAsPngDataUrl(node, "png-export", {
+          pixelRatio: resolveChartExportPixelRatio(chartExportPixelRatio),
+        })
       );
       if (!dataUrl) return;
 
@@ -15951,18 +15886,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   };
 
   const exportChartSvg = async () => {
-    if (
-      !chartExportRef.current ||
-      (chartData.length === 0 && experimentalSeries.length === 0)
-    ) {
-      return;
-    }
-
     try {
-      const dataUrl = await toSvg(chartExportRef.current, {
-        cacheBust: true,
-        backgroundColor: "#ffffff",
-      });
+      const dataUrl = await runChartExportCapture((node) =>
+        captureChartAsSvgDataUrl(node, "svg-export")
+      );
+      if (!dataUrl) return;
 
       const link = document.createElement("a");
       link.download = getChartExportFileName(title, "svg");
@@ -16292,7 +16220,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       const validYValues: number[] = [];
       const validYPerCurve = activeCurves.map(() => [] as number[]);
 
-      for (let x = minX; x <= maxX; x += 0.5) {
+      for (let x = minX; x <= maxX; x += DEFAULT_LIVE_CHART_SAMPLE_STEP) {
         const point: Record<string, number> = { x };
         for (let ci = 0; ci < activeCurves.length; ci++) {
           const curve = activeCurves[ci];
@@ -16519,7 +16447,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       const validYValues: number[] = [];
       const validYPerCurve = activeCurves.map(() => [] as number[]);
 
-      for (let x = loadMinX; x <= loadMaxX; x += 0.5) {
+      for (let x = loadMinX; x <= loadMaxX; x += DEFAULT_LIVE_CHART_SAMPLE_STEP) {
         const point: Record<string, number> = { x };
         for (let ci = 0; ci < activeCurves.length; ci++) {
           const curve = activeCurves[ci];
@@ -26835,6 +26763,48 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     className="mb-2"
                   />
                 ) : null}
+                <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--app-text-muted)]">
+                  <label className="inline-flex items-center gap-1.5">
+                    <span>PNG DPI</span>
+                    <select
+                      value={chartExportPixelRatio}
+                      disabled={!hasChartContent}
+                      onChange={(event) =>
+                        setChartExportPixelRatio(
+                          resolveChartExportPixelRatio(Number(event.target.value))
+                        )
+                      }
+                      className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[var(--app-text)]"
+                      title="pixelRatio de captura PNG (≥ 2)"
+                    >
+                      {CHART_EXPORT_PIXEL_RATIO_PRESETS.map((ratio) => (
+                        <option key={ratio} value={ratio}>
+                          {ratio}x
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="inline-flex items-center gap-1.5">
+                    <span>sampleStep</span>
+                    <select
+                      value={chartExportSampleStep}
+                      disabled={!hasChartContent}
+                      onChange={(event) =>
+                        setChartExportSampleStep(
+                          resolveChartExportSampleStep(Number(event.target.value))
+                        )
+                      }
+                      className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[var(--app-text)]"
+                      title="Muestreo de curvas al exportar PNG/SVG (superficie export; no altera GRAPH)"
+                    >
+                      {CHART_EXPORT_SAMPLE_STEP_PRESETS.map((step) => (
+                        <option key={step} value={step}>
+                          {step}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
                   <div className={actionBarGroup}>
                     <button

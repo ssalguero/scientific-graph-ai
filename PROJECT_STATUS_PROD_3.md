@@ -646,3 +646,84 @@ D42.0 prepara la ejecución de D42.1 sin alterar Freeze, Roadmap, Governance, QG
 ---
 
 *§D42.0 APPEND-ONLY 2026-07-17 · D42.0 COMPLETE · CA-D42.0 10/10 PASS · Technical Execution Planning COMPLETE · BUILD NOT EXECUTED · GO BUILD IN FORCE · EXPORT-1 READY FOR BUILD · Numeración D42.1→D42.4 intacta · Next: D42.1 EXPORT-1 BUILD Implementation.*
+
+---
+
+## §D42.1 — EXPORT-1 BUILD Implementation
+
+**Fecha:** 2026-07-17  
+**Serie:** D42.1  
+**Estado:** **D42.1 = COMPLETE** · **CA-D42.1 = 10/10 PASS** · **IN IMPLEMENTED** · **OUT INTACT** · **READY FOR D42.2** · **PROD-3 = OPEN**
+
+### 1. Declaración
+
+```text
+GO BUILD AUTHORIZED BY D41.7 = CONSUMED BY D42.1
+D42.1 BUILD Implementation = COMPLETE
+EXPORT-1 IN = PNG · SVG · sampleStep · wiring · R-A1 move-only
+EXPORT-1 OUT = PDF · JSON nucleus · persistence · GRAPH · schema · SHIM-NL DEFER
+GRAPH BARRELS UNTOUCHED
+API FREEZE RESPECTED
+NO RELEASE / NO M1 CLOSE
+NEXT = D42.2 — EXPORT-1 Testing
+```
+
+### 2. Artefactos código
+
+| Path | Acción |
+|------|--------|
+| `src/app/chartExport.ts` | Creado (R-A1 + captura PNG/SVG + sampleStep export-surface) |
+| `src/app/page.tsx` | Modificado (handlers · UI DPI/sampleStep · wiring) |
+| `scripts/validate-export1-chart-export-unit.ts` | Creado |
+| `package.json` | Script `validate:export1-chart-export-unit` |
+
+### 3. Documentación
+
+| Path | Acción |
+|------|--------|
+| `docs/D42.1-export1-build-implementation.md` | Creado (acta) |
+| Este archivo §D42.1 | Append-only |
+
+### 4. Validaciones
+
+| Check | Resultado |
+|-------|-----------|
+| `npx tsc --noEmit` | PASS |
+| `validate:export1-chart-export-unit` | PASS |
+| `validate:graph-curves-unit` (freeze sampleStep) | PASS |
+
+### 5. Certificación
+
+| Ítem | Resultado |
+|------|-----------|
+| CA-D42.1 | 10/10 PASS |
+| Architecture Freeze | Respected |
+| API Freeze | Respected |
+| Governance | Respected |
+
+### 6. Handoff
+
+```text
+NEXT: D42.2 — EXPORT-1 Testing
+Execute: Performance (PT-*) · Regression (prod2e-gate · smokes)
+```
+
+### 7. Append Integrity Rules
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append al EOF | **Sí** |
+| Sin modificar §D39 · §D38 · §D40 · §D41 · §D42.0 | **Sí** |
+| Numeración D42.2–D42.4 reservada | **Sí** |
+
+### 8. STATUS Integrity Declaration
+
+```text
+§D42.1 es APPEND-ONLY.
+No se reescribió documentación histórica.
+D42.1 implementa BUILD sin cerrar EXPORT-1 ni ejecutar Release.
+```
+
+---
+
+*§D42.1 APPEND-ONLY 2026-07-17 · D42.1 COMPLETE · CA-D42.1 10/10 PASS · BUILD Implementation COMPLETE · READY FOR D42.2 Testing · OUT intact · GRAPH untouched.*
