@@ -3259,6 +3259,75 @@ Next BUILD: PROD-3 — D39 DATA-3D Scatter VGB (pendiente autorización)
 
 ---
 
+## §D37 — Plan Freeze oficial PROD-3
+
+**Estado:** **CLOSED** (2026-07-17 — **PLAN FREEZE COMPLETE** · **PROD-3 READY FOR BUILD** · **READY FOR D38**)  
+**Resolución:** [`docs/D37.6-plan-freeze-resolution.md`](docs/D37.6-plan-freeze-resolution.md)  
+**Serie:** [`docs/D37.1-discovery-inventory.md`](docs/D37.1-discovery-inventory.md) · [`docs/D37.2-architectural-baseline.md`](docs/D37.2-architectural-baseline.md) · [`docs/D37.3-architectural-analysis.md`](docs/D37.3-architectural-analysis.md) · [`docs/D37.4-prod3-roadmap.md`](docs/D37.4-prod3-roadmap.md) · [`docs/D37.5-risk-analysis.md`](docs/D37.5-risk-analysis.md) · [`docs/D37.6-plan-freeze-resolution.md`](docs/D37.6-plan-freeze-resolution.md)
+
+### Acta Oficial D37
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha de cierre** | 2026-07-17 |
+| **Documentos utilizados** | D37.1 · D37.2 · D37.3 · D37.4 · D37.5 · D37.6 |
+| **Freeze Candidate aprobado** | **EXPORT-1 — Exportación VGB PNG/SVG alta resolución** |
+| **Roadmap** | **FROZEN** (contenido D37.4; cambios futuros = Amendment) |
+| **Riesgos aceptados** | D37.5 §§6–8 (incl. DOC-P3-* como divergencia histórica aceptada) |
+| **SSOT de gobernanza** | Serie documental **D37** (Plan Freeze) |
+| **Docs históricas PROD-3** | **Inalteradas** (trazabilidad) — `PROJECT_STATUS_PROD_3.md` / PLAN / DISCOVERY no modificados |
+| **Estado PROD-3** | **READY FOR BUILD** · **READY FOR D38** |
+
+### Checklist D37 (6/6)
+
+- [x] D37.1 Discovery Inventory — CA PASS
+- [x] D37.2 Architectural Baseline — CA PASS
+- [x] D37.3 Architectural Analysis — CA PASS (Freeze Candidate propuesto)
+- [x] D37.4 PROD-3 Roadmap preliminar — CA PASS
+- [x] D37.5 Risk Analysis — CA PASS (compatible con Plan Freeze)
+- [x] D37.6 Plan Freeze Resolution — CA PASS (Freeze Candidate aprobado · Roadmap FROZEN)
+
+### Declaraciones
+
+```text
+PROD-3 PLAN FREEZE COMPLETE
+PROD-3 READY FOR BUILD
+READY FOR D38
+Freeze Candidate aprobado: EXPORT-1 — Exportación VGB PNG/SVG alta resolución
+API Freeze D25–D35 preservado · GRAPH certificado intacto · PROD-2E CLOSED
+```
+
+### Handoff D38
+
+```text
+D37 CLOSED — PLAN FREEZE COMPLETE — PROD-3 READY FOR D38
+
+Primera épica BUILD oficialmente autorizada:
+  EXPORT-1 — Exportación VGB PNG/SVG alta resolución
+
+SSOT gobernanza = serie D37
+Documentación histórica PROJECT_*_PROD_3.md = referencia inalterada
+
+Next: D38 — Discovery de EXPORT-1
+(sin iniciar hasta autorización explícita)
+```
+
+### Archivos D37
+
+| Acción | Archivo |
+|--------|---------|
+| **Creado** | `docs/D37.1-discovery-inventory.md` |
+| **Creado** | `docs/D37.2-architectural-baseline.md` |
+| **Creado** | `docs/D37.3-architectural-analysis.md` |
+| **Creado** | `docs/D37.4-prod3-roadmap.md` |
+| **Creado** | `docs/D37.5-risk-analysis.md` |
+| **Creado** | `docs/D37.6-plan-freeze-resolution.md` |
+| **Modificado** | `PROJECT_STATUS_PROD_2E.md` (acta §D37 — este documento) |
+
+**No modificado en D37:** `src/**` · `scripts/**` · `package.json` · tests · `PROJECT_STATUS_PROD_3.md` · `PROJECT_PLAN_PROD_3.md` · `PROJECT_DISCOVERY_PROD_3.md` · MASTER · ROADMAP · README · actas D25–D36 (texto previo intacto)
+
+---
+
 ## Cronología PROD-2E
 
 ```text
@@ -3355,6 +3424,18 @@ D36.4 Certificación integral + CA-D36 ✓ (CLOSED)
 D36.5 Smoke Tests S1–S8 ✓ (CLOSED)
   ↓
 D36.6 Acta + sync docs + PROD-2E CLOSED ✓ (CLOSED) — PROD-3 READY
+  ↓
+D37.1 Discovery Inventory ✓ (CLOSED)
+  ↓
+D37.2 Architectural Baseline ✓ (CLOSED)
+  ↓
+D37.3 Architectural Analysis ✓ (CLOSED)
+  ↓
+D37.4 PROD-3 Roadmap preliminar ✓ (CLOSED)
+  ↓
+D37.5 Risk Analysis ✓ (CLOSED)
+  ↓
+D37.6 Plan Freeze Resolution ✓ (CLOSED) — PLAN FREEZE COMPLETE — READY FOR D38
 ```
 
 ---
@@ -3380,4 +3461,4 @@ D36.6 Acta + sync docs + PROD-2E CLOSED ✓ (CLOSED) — PROD-3 READY
 
 ---
 
-*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Acta D32 certificada 2026-07-11 · D32 CLOSED · GRAPH-2b CLOSED · SERIES-INLINE CLOSED · Acta D33 certificada 2026-07-13 · D33 CLOSED · GRAPH-2c CLOSED · AXES-INLINE CLOSED · GRAPH-2 CLOSED · Acta D34 certificada 2026-07-15 · D34 CLOSED · GRAPH-2d CLOSED · INTERACTION-INLINE CLOSED · Acta D35 certificada 2026-07-16 · D35 CLOSED · GRAPH-2e CLOSED · RENDERING-INLINE CLOSED · Acta D36 certificada 2026-07-16 · D36 CLOSED · **PROD-2E CLOSED** · **PROD-3 READY**.*
+*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Acta D32 certificada 2026-07-11 · D32 CLOSED · GRAPH-2b CLOSED · SERIES-INLINE CLOSED · Acta D33 certificada 2026-07-13 · D33 CLOSED · GRAPH-2c CLOSED · AXES-INLINE CLOSED · GRAPH-2 CLOSED · Acta D34 certificada 2026-07-15 · D34 CLOSED · GRAPH-2d CLOSED · INTERACTION-INLINE CLOSED · Acta D35 certificada 2026-07-16 · D35 CLOSED · GRAPH-2e CLOSED · RENDERING-INLINE CLOSED · Acta D36 certificada 2026-07-16 · D36 CLOSED · **PROD-2E CLOSED** · **PROD-3 READY** · Acta D37 certificada 2026-07-17 · D37 CLOSED · **PLAN FREEZE COMPLETE** · Freeze Candidate **EXPORT-1** · **PROD-3 READY FOR D38**.*
