@@ -24,10 +24,11 @@ Variables opcionales para gates E2E y baselines (valores por defecto apuntan a r
 
 | Documento | Contenido |
 |-----------|-----------|
-| [`ROADMAP.md`](./ROADMAP.md) | Hitos del proyecto; PROD-2D CLOSED → siguiente **PROD-2E** |
+| [`ROADMAP.md`](./ROADMAP.md) | Hitos del proyecto; PROD-2E CLOSED → siguiente **PROD-3** |
 | [`MASTER_ROADMAP_V1.md`](./MASTER_ROADMAP_V1.md) | SSOT estratégico (fases PROD-2D → Version 1.0) |
 | [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) | Acta cierre PROD-2D (D0–D24) — **CLOSED** |
-| [`PROJECT_PLAN_PROD_2D.md`](./PROJECT_PLAN_PROD_2D.md) | Plan operativo PROD-2D (congelado) |
+| [`PROJECT_STATUS_PROD_2E.md`](./PROJECT_STATUS_PROD_2E.md) | Acta cierre PROD-2E (D25–D36) — **CLOSED** |
+| [`PROJECT_PLAN_PROD_2E.md`](./PROJECT_PLAN_PROD_2E.md) | Plan operativo PROD-2E (congelado · cierre D36) |
 | [`PROJECT_BASELINE_PROD_2D.md`](./PROJECT_BASELINE_PROD_2D.md) | Baseline D0.5 (histórico inmutable) |
 | [`PROJECT_STATUS_PROD_2B.md`](./PROJECT_STATUS_PROD_2B.md) | Estado persistencia `.sgproj` — B1–B6 |
 | [`PROJECT_STATUS_PROD_2B_B5.md`](./PROJECT_STATUS_PROD_2B_B5.md) | Cierre PROD-2B B5 — IndexedDB biblioteca local + autosave |
@@ -49,9 +50,10 @@ Variables opcionales para gates E2E y baselines (valores por defecto apuntan a r
 | PROD-2B — Persistencia científica V2 | **COMPLETED** |
 | PROD-2C — Worksheet + Visual Graph persistence | **COMPLETED** |
 | **PROD-2D** — UX profesional + arquitectura transversal | **CLOSED** (2026-07-09) |
-| **Siguiente épica** | **PROD-2E** — Motor gráfico profesional |
+| **PROD-2E** — Motor gráfico profesional | **CLOSED** (2026-07-16) |
+| **Siguiente épica** | **PROD-3** — Exportación, importación y cierre funcional |
 
-Acta de cierre: [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md).
+Actas de cierre: [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) · [`PROJECT_STATUS_PROD_2E.md`](./PROJECT_STATUS_PROD_2E.md).
 
 ---
 
@@ -66,6 +68,7 @@ Ejecutar desde la raíz del repositorio.
 | `npm run validate:prod2b-b2-gate` | Umbrella PROD-2B B1+B2: multi-dataset, migración, invariantes A/B | Certificar persistencia multi-dataset |
 | `npm run validate:prod2b-indexeddb` | Umbrella PROD-2B B5: biblioteca local IndexedDB, CRUD, borrador, integridad | Certificar persistencia local B5 |
 | `npm run validate:prod2c-c8-regression-gate` | Umbrella PROD-2C C4–C8: Visual Graph Builder persistido (5 sub-gates) | Certificar regresión VGB post-PROD-2C |
+| `npm run validate:prod2e-gate` | Umbrella PROD-2E: governor épica + D35 + DATA-3B + VGB + tsc | Certificar cierre épica motor gráfico |
 | `npm run validate:arch5-f5-modularization-gate` | ARCH-5 F5: methodology + workflow + C8 + métricas LOC | Certificar modularización metodología |
 | `npm run validate:methodology-unit` | SCI-50→60 domain (F5A–F5E) | Unit methodology |
 | `npm run validate:workflow-unit` | SCI-59 workflow visibility snapshot | Unit workflow |
@@ -81,4 +84,4 @@ Gates adicionales por microetapa: [`src/lib/project/README.md`](./src/lib/projec
 
 Ver [`ROADMAP.md`](./ROADMAP.md) y [`MASTER_ROADMAP_V1.md`](./MASTER_ROADMAP_V1.md) §3.1.
 
-**Próxima acción recomendada:** iniciar **PROD-2E — Motor gráfico profesional** (dependencia: PROD-2D CLOSED).
+**Próxima acción recomendada:** iniciar **PROD-3** — ver [`PROJECT_PLAN_PROD_3.md`](./PROJECT_PLAN_PROD_3.md) (dependencia: PROD-2E CLOSED).

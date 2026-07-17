@@ -169,19 +169,23 @@ flowchart TD
 
 ## 7. Comparación objetivo cierre PROD-2E (D36)
 
-Métricas a re-medir vs este baseline:
+Métricas re-medidas vs baseline D25.2 (D36.1/D36.3 — 2026-07-16):
 
-| Dimensión | Baseline D25 | Target D36 |
-|-----------|-------------|------------|
-| Tipos VGB activos | 6 | **9** (+heatmap, bubble, pca) |
-| Auto-fit Y | No | Sí |
-| Presets publicación | No | ≥3 |
-| Motor curvas en dominio | No | Sí (`lib/graph/curves/`) |
-| F5F-BIS en page.tsx | ~718 LOC | **0** |
-| SCI-40 en page.tsx | ~8.532 LOC | **0** (Escenario B) |
-| Preview median scatter (ms) | 0.0474 | Documentar delta |
-| Hydrate mono (ms) | 0.5591 | Documentar delta |
+| Dimensión | Baseline D25 | Resultado D36 | Estado |
+|-----------|-------------|---------------|--------|
+| Tipos VGB activos | 6 | **9** (+heatmap, bubble, pca) | **ALCANZADO** |
+| Auto-fit Y | No | **Sí** (D29) | **ALCANZADO** |
+| Presets publicación | No | **≥3** (D30) | **ALCANZADO** |
+| Motor curvas en dominio | No | **Sí** (`lib/graph/curves/`) | **ALCANZADO** |
+| GRAPH modular (axes · interaction · rendering) | No | **Sí** (D33–D35) | **ALCANZADO** |
+| F5F-BIS en page.tsx | ~718 LOC | **~718 LOC** (inline) | **DEFERRED** (amend D33.1 → ARCH-5) |
+| SCI-40 en page.tsx | ~8.532 LOC | **~8.532 LOC** (inline) | **DEFERRED** (amend D33.1 → ARCH-5) |
+| Preview median scatter (ms) | 0.0474 | **0.0278** (−41,4%) | **DOCUMENTADO** |
+| Hydrate mono (ms) | 0.5591 | **0.3643** (−34,8%) | **DOCUMENTADO** |
+| `page.tsx` LOC (no vacías) | 26.476 | **24.918** (−1.558) | **DOCUMENTADO** |
+
+> **Amend D33.1:** Los targets originales F5F-BIS=0 y SCI-40=0 (Escenario B) no aplican al cierre PROD-2E certificado. La extracción F5F-BIS/SCI-40 quedó **diferida** a ARCH-5/post-GRAPH-3; el checklist ítem #5 se certifica **PASS (deferred)**. Ver [`PROJECT_STATUS_PROD_2E.md`](PROJECT_STATUS_PROD_2E.md) §D36 Resolution Note.
 
 ---
 
-*Baseline PROD-2E — congelado D25.2 (2026-07-09). Script medición: `scripts/measure-prod2e-baseline-perf.ts`.*
+*Baseline PROD-2E — congelado D25.2 (2026-07-09) · Amend §7 D36.6 (2026-07-16) · Script medición: `scripts/measure-prod2e-baseline-perf.ts`.*

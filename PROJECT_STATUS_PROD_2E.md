@@ -1,7 +1,7 @@
 # PROJECT_STATUS — PROD-2E
 
 **Épica:** PROD-2E — Motor gráfico profesional  
-**Estado épica:** **OPEN** (D35 CLOSED — GRAPH-2e CLOSED — Ready for D36)  
+**Estado épica:** **CLOSED** (2026-07-16 — D36 CLOSED — **PROD-3 READY**)  
 **SSOT Plan:** [`PROJECT_PLAN_PROD_2E.md`](PROJECT_PLAN_PROD_2E.md)  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md)  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md)
@@ -3055,6 +3055,210 @@ Next BUILD: D36 — Consolidación / ARCH-5 prep
 
 ---
 
+## §D36 — Consolidación épica + Cierre PROD-2E (CONSOLIDATION-2E)
+
+**Estado:** **CLOSED** (2026-07-16)  
+**Modo:** BUILD — D36.1–D36.5 certificación · **D36.6 documentación únicamente**  
+**Próxima fase:** **PROD-3** — ver [`PROJECT_PLAN_PROD_3.md`](PROJECT_PLAN_PROD_3.md)
+
+### D36.1 — Discovery + Baseline Re-measure
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Inventario final post-D35 + re-medición baseline vs D25.2 |
+| **Entregable** | [`docs/D36.1-discovery-inventory.md`](docs/D36.1-discovery-inventory.md) |
+| **Resultado** | **PASS** (CLOSED) — CA-D36.1 **4/4** |
+
+### D36.2 — Umbrella Gate PROD-2E
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | `validate:prod2e-gate` + governor épica + registry API Freeze |
+| **Governor** | **54/54 PASS** |
+| **Cadena sibling** | D35 → DATA-3B → VGB → tsc |
+| **Resultado** | **PASS** (CLOSED) — CA-D36.2 **6/6** |
+
+### D36.3 — Métricas arquitectónicas + Comparación D25 ↔ D36
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Consolidar métricas LOC/perf vs baseline D25.2 |
+| **Entregable** | [`docs/D36.3-architectural-metrics.md`](docs/D36.3-architectural-metrics.md) |
+| **Resultado** | **PASS** (CLOSED) — CA-D36.3 **6/6** |
+
+### D36.4 — Certificación integral + CA-D36 (gates)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Re-certificación end-to-end `validate:prod2e-gate` |
+| **Entregable** | [`docs/D36.4-certification-evidence.md`](docs/D36.4-certification-evidence.md) |
+| **Umbrella** | **exit 0** (~36,3 min) |
+| **Resultado** | **PASS** (CLOSED) — CA-D36.4 **4/4** |
+
+### D36.5 — Smoke Tests regresión integral
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | S1–S8 semántica D35 (paridad D34/D35) |
+| **Entregable** | [`docs/D36.5-smoke-tests-evidence.md`](docs/D36.5-smoke-tests-evidence.md) |
+| **Smoke Tests** | **8/8 PASS** |
+| **Regresiones** | **0** |
+| **Resultado** | **PASS** (CLOSED) — CA-D36-05 **PASS** |
+
+### D36.6 — Acta + sync docs + cierre épica
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Acta §D36 · Resolution Note · sync documental · checklist 9/9 · PROD-2E CLOSED |
+| **Alcance** | Documentación únicamente |
+| **Resultado** | **PASS** (CLOSED) |
+
+#### Métricas finales D36 (consolidadas)
+
+| Campo | Valor |
+|-------|-------|
+| **`page.tsx` LOC (no vacías)** | **24.918** (D25: 26.476 · Δ −1.558) |
+| **Módulos graph certificados** | **4.012 LOC** (D29–D35) |
+| **Tipos VGB activos** | **9** (D25: 6) |
+| **Preview scatter median** | **0.0278 ms** (D25: 0.0474 · −41,4%) |
+| **Hydrate mono median** | **0.3643 ms** (D25: 0.5591 · −34,8%) |
+| **Governor épica** | **54/54 PASS** |
+| **Umbrella `validate:prod2e-gate`** | **PASS** |
+| **Smoke S1–S8** | **8/8 PASS** |
+
+#### Gates D36 — Certificación
+
+| Gate | Resultado |
+|------|-----------|
+| `validate:prod2e-gate` | **PASS** (governor 54/54 + cadena D35 + DATA-3B + VGB + tsc) |
+| `validate:prod2e-d35-rendering-gate` | **PASS** (cadena D29–D34 embebida) |
+| `validate:prod2e-data3b-gate` | **PASS** (13/13) |
+| `validate:visual-graph-builder-unit` | **PASS** (79/79) |
+| `npx tsc --noEmit` | **PASS** |
+| Smoke S1–S8 | **PASS** (8/8) |
+
+#### Resolution Note — Amendment D33.1
+
+Durante **D33** se aprobó oficialmente un **Amendment metodológico (D33.1)** que sustituyó la secuencia originalmente prevista en el roadmap congelado D25 para las microfases D33–D35:
+
+| Plan original D25 (Escenario B) | Trayectoria ejecutada (Amend D33.1) |
+|----------------------------------|-------------------------------------|
+| **D33** — ARCH-5 F5F-BIS (~718 LOC UI SCI-50–56) | **D33** — **GRAPH-2c** Axes & Viewport (`src/lib/graph/axes/`) |
+| **D34** — SCI-40 dominio (~8.532 LOC) | **D34** — **GRAPH-2d** Chart Interaction (`chart-interaction/`) |
+| **D35** — SCI-40 UI/wiring | **D35** — **GRAPH-2e** Chart Rendering (`chart-rendering/`) |
+
+**D36 consolida formalmente este Amendment en el SSOT.** Las actas históricas **D25–D35 permanecen inalteradas**; los snapshots históricos (checklist **4/9** en § post-D32–D35, snapshot **4/10** post-D31, footer PLAN «Ready for D33») **no se reescriben** — reflejan el plan congelado vigente en cada cierre.
+
+**Deuda transferida — permanece OPEN y documentada:**
+
+| ID | Item | Target | Estado |
+|----|------|--------|--------|
+| **F5F-BIS** | UI SCI-50–56 ~718 LOC | post-GRAPH-3 / ARCH-5 | **OPEN** |
+| **SCI-40** | Multivariante ~8.532 LOC | ARCH-5 | **OPEN** |
+| **EXPORT-1** | Calidad vectorial · sampleStep | prep EXPORT-1 / PROD-3 | **OPEN** |
+| **SHIM-NL-CURVES** | Shim NL curvas en `page.tsx` | prep EXPORT-1 | **OPEN** |
+| **L-D23-2** | E2E flakiness | QA-2 | **OPEN** |
+
+El Amendment modifica **exclusivamente la planificación y el checklist de cierre**, preservando íntegramente la trazabilidad histórica. El checklist final **9/9** certifica el ítem #5 como **PASS (deferred)** — extracción F5F-BIS/SCI-40 **fuera de alcance PROD-2E** por decisión metodológica D33.1, no por incumplimiento técnico de GRAPH-2.
+
+**Motivo de divergencia checklist vs roadmap D25:** el roadmap original incluía F5F-BIS/SCI-40 como criterio de cierre **dentro** de PROD-2E (Escenario B). El amend D33.1 **priorizó la modularización GRAPH-2** (Axes → Interaction → Rendering) como cierre de valor del motor gráfico, **diferiendo** F5F-BIS/SCI-40 a ARCH-5/post-GRAPH-3. D36 cierra PROD-2E con **GRAPH completo certificado** y deuda ARCH-5 **explícitamente carry-in**.
+
+#### CA-D36 — Certificación integral (12/12)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| **CA-D36-01** | D36.1 inventario + baseline re-medido PASS | **PASS** |
+| **CA-D36-02** | D36.2 `validate:prod2e-gate` creado y registrado | **PASS** |
+| **CA-D36-03** | D36.3 métricas rendimiento documentadas vs D25 | **PASS** |
+| **CA-D36-04** | D36.4 umbrella gate PASS end-to-end | **PASS** |
+| **CA-D36-05** | D36.5 Smoke S1–S8 PASS (8/8) | **PASS** |
+| **CA-D36-06** | API Freeze registro maestro D25–D35 verificado | **PASS** |
+| **CA-D36-07** | Barrels D29–D35 preservados | **PASS** |
+| **CA-D36-08** | Checklist PROD-2E **9/9** (ítem #5 amend D33.1) | **PASS** |
+| **CA-D36-09** | DoD §2 Master cumplida | **PASS** |
+| **CA-D36-10** | Amend PLAN + BASELINE §7 sincronizados | **PASS** |
+| **CA-D36-11** | Docs sync README/ROADMAP/MASTER → PROD-3 READY | **PASS** |
+| **CA-D36-12** | Acta D36.6 + handoff D37 + épica PROD-2E CLOSED | **PASS** |
+
+**Total CA-D36: 12/12 PASS**
+
+#### Auditoría documental transversal (D36.6-A)
+
+| ID | Hallazgo (D36.1) | Resolución D36.6 | Estado |
+|----|------------------|------------------|--------|
+| DOC-01 | Checklist 5/9 vs 4 [x] | Checklist final **9/9**; snapshots históricos **4/9** preservados | **CORREGIDO** |
+| DOC-02 | Snapshot 4/10 post-D31 | Nota amend D32 en Resolution Note; acta D31 inmutable | **DOCUMENTADO** |
+| DOC-03 | PLAN footer «Ready for D33» | PLAN §cierre → CLOSED / PROD-3 | **CORREGIDO** |
+| DOC-04 | BASELINE §7 targets F5F/SCI=0 | Amend §7 targets alcanzados/deferred | **CORREGIDO** |
+| DOC-05 | PLAN secuencia D33–D35 obsoleta | Amend secuencia GRAPH-2c/2d/2e | **CORREGIDO** |
+| DOC-06 | MASTER «Siguiente: PROD-2E» | PROD-2E CLOSED → PROD-3 | **CORREGIDO** |
+| DOC-07 | MASTER `page.tsx ~31k LOC` | ~27k físicas / ~25k no vacías | **CORREGIDO** |
+| DOC-08 | README/ROADMAP obsoletos | Sync post-cierre D36.6 | **CORREGIDO** |
+| DOC-09 | Handoffs históricos superseded | Footnote Resolution Note | **DOCUMENTADO** |
+| DOC-10 | `validate:prod2e-gate` ausente | D36.2/D36.4 certificado | **CORREGIDO** |
+
+#### Cierre oficial PROD-2E
+
+| Épica / bloque | Estado |
+|----------------|--------|
+| **PROD-2E** | **CLOSED** (2026-07-16) |
+| **DATA-3B** | **CLOSED** |
+| **GRAPH-1** | **CLOSED** |
+| **GRAPH-2** | **CLOSED** (2a–2e) |
+| **Checklist cierre épica** | **9/9** |
+| **Gate épica** | `validate:prod2e-gate` **PASS** |
+| **PROD-3** | **READY** |
+
+**Checklist cierre PROD-2E (final — 9/9):**
+
+- [x] ≥3 tipos VGB avanzados con round-trip persist (**DATA-3B CLOSED**)
+- [x] Auto-fit Y + presets publicación (**GRAPH-1 CLOSED**)
+- [x] Motor curvas + series + ejes + interaction + rendering (**GRAPH-2 D31–D35 CLOSED**)
+- [x] F5F-BIS + SCI-40 — **PASS (deferred certificado)** — extracción fuera de alcance PROD-2E; carry-in ARCH-5/post-GRAPH-3 (**amend D33.1**)
+- [x] API Freeze D25–D35 respetado (**D36.4**)
+- [x] Baseline re-medido vs D25.2 (**D36.1/D36.3**)
+- [x] `validate:prod2e-gate` PASS (**D36.2/D36.4**)
+- [x] Definition of Done §2 Master (**D36.6**)
+- [x] Documentación sincronizada → **PROD-3 READY** (**D36.6**)
+
+#### Handoff D37 / PROD-3
+
+```text
+D36 CLOSED — PROD-2E CLOSED — PROD-3 READY
+
+Prerrequisitos PROD-3 (D39 DATA-3D según PROJECT_PLAN_PROD_3.md):
+  ✓ PROD-2E CLOSED — validate:prod2e-gate PASS
+  ✓ API Freeze VGB D25–D35 intacto (schemaVersion 2)
+  ✓ GRAPH modular certificado (viewport → rendering)
+  ✓ Baseline D36 documentado (docs/D36.1 · D36.3)
+  ✓ Smoke S1–S8 PASS · Zero regresiones
+  ✓ Docs sync README/ROADMAP/MASTER/PLAN/BASELINE/STATUS
+
+Deuda carry-in (OPEN — no bloqueante PROD-3 arranque):
+  · F5F-BIS ~718 LOC → ARCH-5 / post-GRAPH-3
+  · SCI-40 ~8.532 LOC → ARCH-5
+  · EXPORT-1 (sampleStep · calidad vectorial SVG)
+  · SHIM-NL-CURVES
+  · L-D23-2 (E2E flakiness → QA-2)
+
+Next BUILD: PROD-3 — D39 DATA-3D Scatter VGB (pendiente autorización)
+```
+
+#### Archivos modificados (D36.6)
+
+| Acción | Archivo |
+|--------|---------|
+| **Modificado** | `PROJECT_STATUS_PROD_2E.md` (acta §D36 — este documento) |
+| **Modificado** | `PROJECT_PLAN_PROD_2E.md` |
+| **Modificado** | `PROJECT_BASELINE_PROD_2E.md` |
+| **Modificado** | `MASTER_ROADMAP_V1.md` |
+| **Modificado** | `README.md` |
+| **Modificado** | `ROADMAP.md` |
+
+**No modificado en D36.6:** `src/**` · `scripts/**` · `package.json` · gates · barrels D29–D35
+
+---
+
 ## Cronología PROD-2E
 
 ```text
@@ -3140,7 +3344,17 @@ D35.5 Smoke Tests + Regression ✓ (CLOSED)
   ↓
 D35.6 Acta + GRAPH-2e CLOSED ✓ (CLOSED) — GRAPH-2e ✓ (CLOSED) — GRAPH-2 ✓ (CLOSED 2a–2e)
   ↓
-D36 Consolidación / ARCH-5 prep
+D36.1 Discovery + Baseline Re-measure ✓ (CLOSED)
+  ↓
+D36.2 Umbrella Gate PROD-2E ✓ (CLOSED)
+  ↓
+D36.3 Métricas arquitectónicas ✓ (CLOSED)
+  ↓
+D36.4 Certificación integral + CA-D36 ✓ (CLOSED)
+  ↓
+D36.5 Smoke Tests S1–S8 ✓ (CLOSED)
+  ↓
+D36.6 Acta + sync docs + PROD-2E CLOSED ✓ (CLOSED) — PROD-3 READY
 ```
 
 ---
@@ -3166,4 +3380,4 @@ D36 Consolidación / ARCH-5 prep
 
 ---
 
-*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Acta D32 certificada 2026-07-11 · D32 CLOSED · GRAPH-2b CLOSED · SERIES-INLINE CLOSED · Acta D33 certificada 2026-07-13 · D33 CLOSED · GRAPH-2c CLOSED · AXES-INLINE CLOSED · GRAPH-2 CLOSED · Acta D34 certificada 2026-07-15 · D34 CLOSED · GRAPH-2d CLOSED · INTERACTION-INLINE CLOSED · Acta D35 certificada 2026-07-16 · D35 CLOSED · GRAPH-2e CLOSED · RENDERING-INLINE CLOSED · Next: D36 BUILD.*
+*Acta D25 certificada 2026-07-09 · D25 CLOSED · Acta D26 certificada 2026-07-09 · D26 CLOSED · Acta D27 certificada 2026-07-09 · D27 CLOSED · Acta D28 certificada 2026-07-09 · D28 CLOSED · DATA-3B CLOSED · Acta D29 certificada 2026-07-10 · D29 CLOSED · GRAPH-1a CLOSED · Acta D30 certificada 2026-07-10 · D30 CLOSED · GRAPH-1 CLOSED · NO-PUB-PRESETS CLOSED · Acta D31 certificada 2026-07-11 · D31 CLOSED · GRAPH-2a CLOSED · CURVES-INLINE CLOSED · Acta D32 certificada 2026-07-11 · D32 CLOSED · GRAPH-2b CLOSED · SERIES-INLINE CLOSED · Acta D33 certificada 2026-07-13 · D33 CLOSED · GRAPH-2c CLOSED · AXES-INLINE CLOSED · GRAPH-2 CLOSED · Acta D34 certificada 2026-07-15 · D34 CLOSED · GRAPH-2d CLOSED · INTERACTION-INLINE CLOSED · Acta D35 certificada 2026-07-16 · D35 CLOSED · GRAPH-2e CLOSED · RENDERING-INLINE CLOSED · Acta D36 certificada 2026-07-16 · D36 CLOSED · **PROD-2E CLOSED** · **PROD-3 READY**.*

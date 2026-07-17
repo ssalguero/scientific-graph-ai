@@ -89,17 +89,18 @@ Scientific Graph AI es un editor científico web (Next.js 16, React 19) para imp
 | ARCH-6 (visibility; PROD-2D D4–D8) | **CLOSED** |
 | Sprint QA-1 | **CLOSED** |
 | Versión del producto | `0.1.0` — **pre-v1.0** |
+| **PROD-2E** — Motor gráfico profesional | **CLOSED** (2026-07-16) |
 | Backlog de épicas cerradas | Vacío |
-| **Siguiente fase de implementación** | **PROD-2E** |
+| **Siguiente fase de implementación** | **PROD-3** |
 
-> **Nomenclatura:** la épica **PROD-2C (histórico)** — worksheet + Visual Graph Builder persistence, C1–C9 — está **CLOSED** y congelada en [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md). El identificador PROD-2C **no se reutiliza** para trabajo futuro. **PROD-2D** está **CLOSED** ([`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md)). La siguiente fase es **PROD-2E**.
+> **Nomenclatura:** la épica **PROD-2C (histórico)** — worksheet + Visual Graph Builder persistence, C1–C9 — está **CLOSED** y congelada en [`PROJECT_STATUS_PROD_2C.md`](./PROJECT_STATUS_PROD_2C.md). El identificador PROD-2C **no se reutiliza** para trabajo futuro. **PROD-2D** y **PROD-2E** están **CLOSED** ([`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) · [`PROJECT_STATUS_PROD_2E.md`](./PROJECT_STATUS_PROD_2E.md)). La siguiente fase es **PROD-3**.
 
 ### 3.2 Arquitectura existente
 
 ```mermaid
 flowchart TB
   subgraph ui [UI Layer]
-    GE["GraphEditor page.tsx ~31k LOC"]
+    GE["GraphEditor page.tsx ~27k LOC físicas / ~25k no vacías"]
     Tabs["Workspace: home data analysis results reports"]
   end
   subgraph domain [Domain Layer]
@@ -147,7 +148,7 @@ La arquitectura **no es una épica aislada**. Es una actividad transversal que a
 
 | Actividad | Alcance transversal |
 |-----------|---------------------|
-| **ARCH-5 Fase 5+** | Extracción incremental del monolito `page.tsx` (~31 kLOC): metodología SCI-50→SCI-56, reporting UI, handlers React. |
+| **ARCH-5 Fase 5+** | Extracción incremental del monolito `page.tsx` (~27 kLOC físicas / ~25 k no vacías, 2026-07-16): metodología SCI-50→SCI-56, reporting UI, handlers React. |
 | **ARCH-6** | Mejoras UX post-QA-1 integradas en cada fase que modifique interfaz. |
 | **Reducción del monolito** | Criterio de cada microfase: extraer antes de extender; extracción move-only con gates. |
 | **Modularización DDD** | Nuevos dominios en `src/lib/`; la UI actúa como adaptador. |
@@ -445,10 +446,13 @@ flowchart LR
 
 | Campo | Contenido |
 |-------|-----------|
+| **Estado** | **CLOSED** (2026-07-16) — acta [`PROJECT_STATUS_PROD_2E.md`](./PROJECT_STATUS_PROD_2E.md) §D36 |
 | **Objetivo** | Elevar Visual Graph Builder y motor de curvas a calidad de publicación |
-| **Épicas** | DATA-3B, GRAPH-1, GRAPH-2, ARCH-5 F5 (módulos gráficos según aplique) |
+| **Épicas** | DATA-3B, GRAPH-1, GRAPH-2 (2a–2e), CONSOLIDATION-2E (D36) |
 | **Dependencias** | PROD-2D CLOSED |
-| **Criterios de cierre** | ≥3 tipos VGB avanzados con round-trip persist; auto-fit Y; presets de publicación; gates VGB PASS; Definition of Done completa |
+| **Criterios de cierre** | ≥3 tipos VGB · auto-fit Y · presets · GRAPH modular · `validate:prod2e-gate` PASS · DoD §2 — **cumplidos** |
+| **Gate épica** | `validate:prod2e-gate` **PASS** |
+| **Deuda carry-in** | F5F-BIS · SCI-40 · EXPORT-1 · SHIM-NL · L-D23-2 — OPEN → ARCH-5/PROD-3/QA-2 |
 
 ### PROD-3 — Exportación, importación y cierre funcional
 
@@ -498,7 +502,7 @@ flowchart LR
 1. **El Master Roadmap define la estrategia.** Ninguna épica nueva entra en implementación sin incorporarse primero a este documento mediante amend explícito.
 2. **Los `PROJECT_STATUS_*` documentan la ejecución.** Cada fase CLOSED genera o actualiza su acta de cierre conforme a la Definition of Done.
 3. **Las fases cerradas son inmutables.** Ninguna fase posterior modifica retrospectivamente la documentación de fases ya declaradas CLOSED.
-4. **La secuencialidad es obligatoria.** PROD-2E es la siguiente fase; PROD-2D y PROD-2C (histórico) están CLOSED y no se reabren ni se reutilizan como identificadores de fase futura.
+4. **La secuencialidad es obligatoria.** PROD-3 es la siguiente fase; PROD-2D, PROD-2E y PROD-2C (histórico) están CLOSED y no se reabren ni se reutilizan como identificadores de fase futura.
 
 ### Documentos de referencia verificados
 

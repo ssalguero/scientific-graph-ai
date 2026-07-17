@@ -1,9 +1,9 @@
 # Plan PROD-2E — Motor gráfico profesional
 
-**Estado:** **PLAN APROBADO (congelado en D25.3)**  
-**Fecha de aprobación:** 2026-07-09  
+**Estado:** **CLOSED** (2026-07-16 — acta [`PROJECT_STATUS_PROD_2E.md`](PROJECT_STATUS_PROD_2E.md) §D36)  
+**Fecha de cierre:** 2026-07-16  
 **Identificador:** PROD-2E (continúa PROD-2D CLOSED)  
-**Próxima microfase:** **D33 — ARCH-5 F5F-BIS**  
+**Próxima fase:** **PROD-3** — [`PROJECT_PLAN_PROD_3.md`](PROJECT_PLAN_PROD_3.md)  
 **Baseline:** [`PROJECT_BASELINE_PROD_2E.md`](PROJECT_BASELINE_PROD_2E.md) — D25.2 COMPLETED  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md) — D25.1 COMPLETED  
 **API Freeze:** [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md) §6 — D25.4 COMPLETED
@@ -33,7 +33,7 @@ PROD-2E **extiende** el contrato VGB según [`PROJECT_DISCOVERY_PROD_2E.md`](PRO
 | **Dominio presets** | `src/lib/graph/publication-presets/` (D30) | Estilos publicación |
 | **UI VGB** | `src/components/graph-builder/` | Constructor + preview |
 | **Persistencia VGB** | `src/lib/project/domain/visual-graph-*` | Round-trip V2 |
-| **Multivariante** | `src/lib/scientific/multivariate/` (D34) | SCI-40 move-only |
+| **Multivariante** | `src/lib/scientific/multivariate/` | SCI-40 — **DEFERRED** (amend D33.1 → ARCH-5) |
 | **Boundary** | `src/app/page.tsx` | Wiring mínimo |
 
 ### 3. Extracción move-only (ARCH-5 gráfico)
@@ -57,10 +57,10 @@ Si BUILD de microfase D{N} falla Gate → revertir **solo** D{N}. Microfases cer
 | **Discovery** | D25.1–D25.5 | Bloqueo alcance + baseline + API Freeze + plan |
 | **DATA-3B** | D26, D27, D28 | ≥3 tipos VGB avanzados + golden fixtures |
 | **GRAPH-1** | D29, D30 | Auto-fit Y + presets publicación |
-| **GRAPH-2** | D31, D32 | Motor curvas + dominio series |
-| **GRAPH-2c** | Post-D32 | Calidad vectorial · sampleStep · SHIM-NL (diferido, no bloquea D33) |
-| **ARCH-5 gráfico** | D33, D34, D35 | F5F-BIS + SCI-40 (Escenario B) |
-| **Cierre** | D36 (D37 amend) | Gate umbrella + acta |
+| **GRAPH-2** | D31, D32, D33, D34, D35 | Motor curvas + series + axes + interaction + rendering |
+| **GRAPH-2c (prep EXPORT-1)** | Post-D32 (diferido) | Calidad vectorial · sampleStep · SHIM-NL — no bloquea cierre |
+| **ARCH-5 gráfico (deferred)** | post-GRAPH-3 | F5F-BIS + SCI-40 (amend D33.1 — fuera alcance PROD-2E) |
+| **Cierre** | D36 | Gate umbrella + acta + sync docs |
 
 ---
 
@@ -170,42 +170,78 @@ Ver [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md) §6.
 
 ---
 
-### D33 — ARCH-5: F5F-BIS (~718 LOC)
+### D33 — GRAPH-2c: Axes & Viewport (Amend D33.1)
 
 | Campo | Contenido |
 |-------|-----------|
-| **Objetivo** | UI SCI-50–56 → `src/components/methodology/` |
-| **Gate** | `validate:arch5-f5-modularization-gate` sin F5F-BIS en deuda |
+| **Estado** | **COMPLETED** (2026-07-13) |
+| **Objetivo** | Move-only → `src/lib/graph/axes/` + SSOT D29 |
+| **Gate** | `validate:graph-axes-unit` (89/89) + `validate:prod2e-d33-axes-gate` (15/15) |
+| **Amend D33.1** | Sustituye plan original D33=F5F-BIS — ver STATUS §D36 Resolution Note |
 
 ---
 
-### D34 — ARCH-5: SCI-40 dominio (Escenario B)
+### D34 — GRAPH-2d: Chart Interaction (Amend D33.1)
 
 | Campo | Contenido |
 |-------|-----------|
-| **Trigger** | SCI-40 **8.532 LOC** > 1.000 → Escenario B activo |
-| **Objetivo** | Dominio → `src/lib/scientific/multivariate/` |
-| **Gate** | unit multivariate |
+| **Estado** | **COMPLETED** (2026-07-15) |
+| **Objetivo** | React boundary → `src/components/graph/chart-interaction/` |
+| **Gate** | `validate:graph-interaction-unit` (35/35) + `validate:prod2e-d34-interaction-gate` |
 
 ---
 
-### D35 — ARCH-5: SCI-40 UI/wiring (Escenario B)
+### D35 — GRAPH-2e: Chart Rendering (Amend D33.1)
 
 | Campo | Contenido |
 |-------|-----------|
-| **Objetivo** | UI → `src/components/analysis/` + wiring |
-| **Gate** | arch5 + prod2d sanity |
+| **Estado** | **COMPLETED** (2026-07-16) |
+| **Objetivo** | React/Recharts boundary → `src/components/graph/chart-rendering/` |
+| **Gate** | `validate:graph-rendering-unit` (59/59) + `validate:prod2e-d35-rendering-gate` |
+
+---
+
+### D33-orig — ARCH-5: F5F-BIS (~718 LOC) — DEFERRED (Amend D33.1)
+
+| Campo | Contenido |
+|-------|-----------|
+| **Estado** | **DEFERRED** — post-GRAPH-3 / ARCH-5 |
+| **Objetivo original D25** | UI SCI-50–56 → `src/components/methodology/` |
+| **Nota** | Ítem checklist #5 certificado PASS (deferred) en cierre D36 |
+
+---
+
+### D34-orig — ARCH-5: SCI-40 dominio (Escenario B) — DEFERRED (Amend D33.1)
+
+| Campo | Contenido |
+|-------|-----------|
+| **Estado** | **DEFERRED** — ARCH-5 |
+| **Objetivo original D25** | Dominio → `src/lib/scientific/multivariate/` |
+
+---
+
+### D35-orig — ARCH-5: SCI-40 UI/wiring — DEFERRED (Amend D33.1)
+
+| Campo | Contenido |
+|-------|-----------|
+| **Estado** | **DEFERRED** — ARCH-5 |
+| **Objetivo original D25** | UI → `src/components/analysis/` + wiring |
 
 ---
 
 ### D36 — Gate umbrella + cierre PROD-2E
 
 | Campo | Contenido |
-|-------|-----------|
+|-------|-------|
+| **Estado** | **COMPLETED** (2026-07-16) |
 | **Objetivo** | `validate:prod2e-gate` + acta + sync roadmaps → PROD-3 READY |
-| **Subfases** | D36.1 baseline final · D36.2 gates · D36.3 métricas rendimiento · D36.4 CA · D36.5 sync docs |
+| **Subfases** | D36.1 baseline · D36.2 gate · D36.3 métricas · D36.4 CA · D36.5 smoke · D36.6 acta |
+| **Gate épica** | `validate:prod2e-gate` **PASS** |
+| **Checklist** | **9/9** |
 
-**Amend Escenario A (no activo):** si SCI-40 ≤1.000 LOC → D34 completo en 1 jornada, D35 gate, D36 cierre.
+**Amend Escenario A (no activo):** si SCI-40 ≤1.000 LOC → secuencia original D33–D35 ARCH-5.
+
+**Amend D33.1 (activo):** D33–D35 ejecutados como GRAPH-2c/2d/2e — ver STATUS §D36 Resolution Note.
 
 ---
 
@@ -228,17 +264,20 @@ D31 Curvas extracción ✓
   ↓
 D32 Series/Datasets extracción ✓
   ↓
-D33 F5F-BIS UI
+D33 GRAPH-2c Axes ✓ (Amend D33.1 — sustituye F5F-BIS planificado)
   ↓
-D34 SCI-40 dominio (Escenario B)
+D34 GRAPH-2d Interaction ✓ (Amend D33.1 — sustituye SCI-40 dominio planificado)
   ↓
-D35 SCI-40 UI/wiring
+D35 GRAPH-2e Rendering ✓ (Amend D33.1 — sustituye SCI-40 UI planificado)
   ↓
-D36 Gate umbrella + cierre documental
+D36 Gate umbrella + cierre documental ✓
 ```
 
-**Secuencia lineal (Escenario B — activa):**  
-`D25 → D26 → D27 → D28 → D29 → D30 → D31 → D32 → D33 → D34 → D35 → D36`
+**Secuencia ejecutada (Amend D33.1 — certificada):**  
+`D25 → D26 → D27 → D28 → D29 → D30 → D31 → D32 → D33(GRAPH-2c) → D34(GRAPH-2d) → D35(GRAPH-2e) → D36`
+
+**Secuencia original D25 (Escenario B — no ejecutada para D33–D35):**  
+`D33(F5F-BIS) → D34(SCI-40 dominio) → D35(SCI-40 UI)` — **deferred** a ARCH-5/post-GRAPH-3.
 
 ---
 
@@ -249,7 +288,7 @@ D36 Gate umbrella + cierre documental
 | `validate:prod2c-c8-regression-gate` | Tras cualquier cambio VGB persist |
 | `validate:visual-graph-builder-unit` | Tras cambios dominio VGB |
 | `validate:prod2d-gate` | Sanity semanal / pre-GATE |
-| Baselines rendimiento D25.2 | Re-medición cierre D36 |
+| `validate:prod2e-gate` | Cierre épica D36 |
 | Golden fixtures per-type | Desde D26 (no acumular en D28) |
 
 ---
@@ -262,7 +301,7 @@ D36 Gate umbrella + cierre documental
 | DATA-3B | D26–D28 | 28% |
 | GRAPH-1 | D29–D30 | 18% |
 | GRAPH-2 | D31–D32 | 14% |
-| ARCH-5 gráfico | D33–D35 | 24% |
+| ARCH-5 gráfico (deferred) | D33–D35 orig | 0% (amend D33.1) |
 | Cierre | D36 | 8% |
 
 ---
@@ -277,16 +316,16 @@ Ver [`PROJECT_DISCOVERY_PROD_2E.md`](PROJECT_DISCOVERY_PROD_2E.md) §3 y Master 
 
 - [x] ≥3 tipos VGB avanzados con round-trip persist (DATA-3B)
 - [x] Auto-fit Y + presets publicación (GRAPH-1)
-- [x] Motor curvas + dominio series extraídos (GRAPH-2)
-- [ ] F5F-BIS + SCI-40 extraídos (ARCH-5)
-- [ ] API Freeze respetado
-- [ ] Baseline rendimiento re-medido vs D25
-- [ ] `validate:prod2e-gate` PASS
-- [ ] Definition of Done §2 completa (D36)
-- [ ] Documentación sincronizada → PROD-3 READY
+- [x] Motor curvas + series + ejes + interaction + rendering (GRAPH-2 D31–D35)
+- [x] F5F-BIS + SCI-40 — **PASS (deferred certificado)** — amend D33.1; carry-in ARCH-5
+- [x] API Freeze D25–D35 respetado
+- [x] Baseline rendimiento re-medido vs D25 (D36.1/D36.3)
+- [x] `validate:prod2e-gate` PASS
+- [x] Definition of Done §2 completa (D36.6)
+- [x] Documentación sincronizada → PROD-3 READY
 
-**Checklist cierre PROD-2E: 5/9** — épica **OPEN** (Ready for D33).
+**Checklist cierre PROD-2E: 9/9** — épica **CLOSED** (2026-07-16).
 
 ---
 
-*Plan operativo PROD-2E — aprobado y congelado en D25.3 (2026-07-09). Amend SCI-40 Escenario B activo. Amend D32: Series/Datasets (GRAPH-2b). Calidad vectorial → GRAPH-2c diferido. Próximo: D33 BUILD.*
+*Plan operativo PROD-2E — aprobado D25.3 (2026-07-09) · Amend SCI-40 Escenario B · Amend D32 Series · Amend D33.1 GRAPH-2c/2d/2e · Cierre D36.6 (2026-07-16) · **PROD-2E CLOSED** · **PROD-3 READY**.*
