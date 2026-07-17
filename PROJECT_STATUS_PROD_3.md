@@ -253,3 +253,166 @@ La implementación comenzará únicamente en D39 conforme al Roadmap OFFICIAL.
 ---
 
 *§D38 APPEND-ONLY 2026-07-17 · CA-D38 7/7 PASS · Next: D39 — EXPORT-1 Discovery & BUILD · No implementation has started.*
+
+---
+
+## §D40 — Certificación Final de la pista Freeze/Planning (PROD-3)
+
+**Fecha:** 2026-07-17  
+**Microfase:** D40 — Certificación Final de la pista Freeze/Planning (documental)  
+**Modo:** BUILD DOCUMENTAL — APPEND-ONLY · Resolution Note RN-D40 · cero código · cero BUILD de producto  
+**Estado:** **FREEZE_PLANNING_TRACK = CERTIFIED** · **D40 CERTIFIED** · **PROD-3 = OPEN** · **NO BUILD AUTHORIZED BY D40** · **READY FOR EXPORT-1 DISCOVERY**
+
+### 1. Resumen ejecutivo
+
+| Entregable | Estado |
+|------------|--------|
+| D40.1 Discovery Final | **OFFICIAL** · CA-D40.1 10/10 PASS |
+| D40.2 Validación Global | **OFFICIAL** · CA-D40.2 10/10 PASS |
+| D40.3 Consolidación Documental | **OFFICIAL** · CA-D40.3 10/10 PASS |
+| D40.4 Arquitectura Final | **OFFICIAL** · CA-D40.4 10/10 PASS |
+| D40.5 Certificación Final (CA-D40) | **OFFICIAL** · FINAL CERTIFICATION READY |
+| D40.6 Resolution Note + Acta | **OFFICIAL** · CA-D40.6 10/10 PASS |
+| **RN-D40** (AMD-CAND-01) | **Emitida · RESUELTO** |
+| BUILD de producto | **No iniciado · no autorizado por D40** |
+
+### 2. Estado — declaraciones
+
+```text
+FREEZE_PLANNING_TRACK = CERTIFIED
+D37–D40 CERTIFIED
+D40 CERTIFIED
+PROD-3 = OPEN
+ROADMAP = OFFICIAL
+ARCHITECTURE FREEZE = COMPLETE
+EXECUTION BASELINE = READY
+AMD-CAND-01 RESOLVED via RN-D40
+READY FOR EXPORT-1 DISCOVERY
+NO BUILD AUTHORIZED BY D40
+```
+
+### 3. Resolution Note — RN-D40 (resumen)
+
+| Campo | Contenido |
+|-------|-----------|
+| **ID** | **RN-D40** |
+| **Ambigüedad** | Colisión «D39»: (a) STATUS §D39 DATA-3D histórico · (b) `docs/D39.*` Execution Planning · (c) handoffs «Next: D39 EXPORT-1 BUILD» |
+| **Resolución** | (a) histórico inmutable · (b) Execution Planning certificado · (c) next normativo = **EXPORT-1 Discovery**; no reutilizar numeración D39 para BUILD |
+| **Límite** | Sin Amendment · sin cambio Roadmap/Freeze/Governance/APIs · sin autorizar BUILD · sin declarar PROD-3 CLOSED |
+| **Documento** | [`docs/D40.6-resolution-note.md`](docs/D40.6-resolution-note.md) |
+
+### 4. Referencias D40
+
+| Microfase | Documento |
+|-----------|-----------|
+| D40.1 | [`docs/D40.1-discovery-final.md`](docs/D40.1-discovery-final.md) |
+| D40.2 | [`docs/D40.2-global-validation.md`](docs/D40.2-global-validation.md) |
+| D40.3 | [`docs/D40.3-document-consolidation.md`](docs/D40.3-document-consolidation.md) |
+| D40.4 | [`docs/D40.4-architecture-final.md`](docs/D40.4-architecture-final.md) |
+| D40.5 | [`docs/D40.5-final-certification.md`](docs/D40.5-final-certification.md) |
+| D40.6 | [`docs/D40.6-resolution-note.md`](docs/D40.6-resolution-note.md) — RN-D40 + Acta |
+
+### 5. Checklist D40
+
+- [x] D40.1 Discovery Final — CA PASS
+- [x] D40.2 Validación Global — CA PASS
+- [x] D40.3 Consolidación Documental — CA PASS
+- [x] D40.4 Arquitectura Final — CA PASS
+- [x] D40.5 Certificación Final (CA-D40) — rollup READY → cerrado con RN
+- [x] D40.6 RN-D40 + Acta — CA PASS
+- [x] AMD-CAND-01 resuelto
+- [x] Append-only §D40
+
+### 6. CA-D40 — Certificación (rollup 15/15)
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D40-01…11 | Series D37–D39 · Freeze · Roadmap · Gov/QG · API · docs · arch · PROD-3 OPEN · sin código | **PASS** (D40.5) |
+| CA-D40-12 | AMD-CAND-01 vía RN | **PASS** (RN-D40) |
+| CA-D40-13…15 | Pendientes · handoff EXPORT-1 Discovery · integridad | **PASS** (D40.5) |
+
+**Total CA-D40: 15/15 PASS** · **CA-D40.6: 10/10 PASS**
+
+### 7. Handoff
+
+```text
+NEXT
+EXPORT-1 Discovery
+
+Prerequisites
+✓ Architecture Freeze COMPLETE (D38.2)
+✓ Governance OFFICIAL (D38.3)
+✓ Roadmap OFFICIAL (D38.4) — orden inalterado
+✓ Quality Gates OFFICIAL (QG-PROD3 v1.0)
+✓ Execution Baseline READY (D39)
+✓ Freeze/Planning Track CERTIFIED (D40)
+✓ AMD-CAND-01 RESOLVED (RN-D40)
+✓ PROD-3 = OPEN
+
+NO BUILD AUTHORIZED BY D40.
+EXPORT-1 Discovery is the sole authorization path to start BUILD.
+```
+
+### 8. Aclaración de numeración (RN-D40)
+
+```text
+§D39 en este STATUS = histórico DATA-3D (DOC-P3-01) — inmutable.
+docs/D39.* = Execution Planning certificado — no es BUILD.
+«Next: D39 EXPORT-1…» en §D38 queda aclarado por RN-D40:
+  next normativo post-D40 = EXPORT-1 Discovery.
+No reutilizar numeración D39 para BUILD.
+```
+
+### 9. Archivos (D40)
+
+**Creados:** `docs/D40.1-discovery-final.md` · `docs/D40.2-global-validation.md` · `docs/D40.3-document-consolidation.md` · `docs/D40.4-architecture-final.md` · `docs/D40.5-final-certification.md` · `docs/D40.6-resolution-note.md`
+
+**No modificado en D40:** `src/**` · `scripts/**` · `package.json` · tests · D37.* · D38.* · D39.* · Freeze · Roadmap · Governance · QG · APIs · contenido histórico de este archivo (§D39 · Cronología · §D38)
+
+**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este §D40)
+
+### 10. Append Integrity Rules
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Actualización únicamente al final del documento | **Sí** |
+| Sin modificar secciones previas (§D39 · Cronología · §D38) | **Sí** |
+| Sin alterar contenido histórico | **Sí** |
+| Sin cambiar numeración existente | **Sí** |
+
+### 11. Append Verification Record
+
+| Verificación | Resultado |
+|--------------|-----------|
+| Append realizado al EOF | **PASS** |
+| Secciones previas sin cambios | **PASS** |
+| §D39 histórico intacto | **PASS** |
+| §D38 intacto | **PASS** |
+| Numeración preservada | **PASS** |
+| Diff STATUS = solo líneas añadidas (§D40) | **PASS** |
+
+### 12. STATUS Integrity Declaration
+
+```text
+Este registro histórico mantiene íntegramente su contenido previo.
+La sección §D40 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
+No se ha modificado ninguna sección histórica (§D39 · Cronología · §D38).
+RN-D40 aclara AMD-CAND-01 sin Amendment y sin cerrar PROD-3.
+```
+
+### 13. D40 Completion Declaration
+
+```text
+D40 Completion Declaration
+La serie D40 queda OFFICIAL / CERTIFIED.
+La pista Freeze/Planning queda formalmente CERTIFIED.
+PROD-3 permanece OPEN.
+Architecture Freeze COMPLETE · Roadmap OFFICIAL · Execution Baseline READY.
+AMD-CAND-01 RESUELTO vía RN-D40.
+El siguiente trabajo autorizado por el Roadmap es EXPORT-1 Discovery.
+NO BUILD AUTHORIZED BY D40.
+```
+
+---
+
+*§D40 APPEND-ONLY 2026-07-17 · RN-D40 · CA-D40 15/15 PASS · CA-D40.6 10/10 PASS · FREEZE_PLANNING_TRACK = CERTIFIED · D40 CERTIFIED · PROD-3 = OPEN · Next: EXPORT-1 Discovery · No BUILD authorized by D40.*
