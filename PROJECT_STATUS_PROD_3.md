@@ -527,3 +527,122 @@ D41 autoriza GO BUILD sin alterar Freeze, Roadmap, Governance, QG ni API Freeze.
 ---
 
 *§D41 APPEND-ONLY 2026-07-17 · D41 CERTIFIED · CA-D41 13/13 PASS · CA-D41.7 10/10 PASS · EXPORT-1 DISCOVERY = COMPLETE · DEFINITION OF SUCCESS = PASS · GO BUILD AUTHORIZED · PROD-3 = OPEN · Next: D42.1 EXPORT-1 BUILD · BUILD not executed in D41.*
+
+---
+
+## §D42.0 — EXPORT-1 Technical Execution Planning (PRE-BUILD)
+
+**Fecha:** 2026-07-17  
+**Serie:** D42.0 · D42.0.1–D42.0.5  
+**Estado:** **D42.0 = COMPLETE** · **CA-D42.0 = 10/10 PASS** · **BUILD NOT EXECUTED** · **GO BUILD IN FORCE** · **EXPORT-1 = READY FOR BUILD** · **PROD-3 = OPEN**
+
+### 1. Authority Statement (eco)
+
+```text
+This document section records a preparatory planning artifact only.
+It does not authorize, replace, renumber, delay, or supersede
+the BUILD sequence approved in D41.7.
+
+The authoritative implementation sequence remains:
+D42.1 — BUILD Implementation
+D42.2 — Testing
+D42.3 — Certification
+D42.4 — Release
+
+The GO BUILD authorization issued in D41.7 remains in force.
+No architectural, API, scope, or governance changes.
+Not a Plan Freeze amendment.
+```
+
+### 2. Declaración
+
+```text
+D42.0 TECHNICAL EXECUTION PLANNING = COMPLETE
+CA-D42.0 = 10/10 PASS
+BUILD NUMBERING UNCHANGED = D42.1 … D42.4
+GO BUILD AUTHORIZED BY D41.7 = IN FORCE
+EXPORT-1 = READY FOR BUILD
+BUILD NOT EXECUTED
+NO SRC / SCRIPTS / TESTS / PACKAGE.JSON CHANGES
+NO HISTORICAL DOC REWRITES (§D39 · §D38 · §D40 · §D41 intact)
+NEXT = D42.1 — EXPORT-1 BUILD Implementation
+```
+
+### 3. Microfases D42.0
+
+| Microfase | Resultado |
+|-----------|-----------|
+| D42.0 Series Plan + Authority Statement | OFFICIAL |
+| D42.0.1 Technical Inventory | OFFICIAL · CA 10/10 |
+| D42.0.2 Implementation Blueprint | OFFICIAL · CA 10/10 |
+| D42.0.3 Risk Matrix | OFFICIAL · CA 10/10 |
+| D42.0.4 Validation Blueprint | OFFICIAL · CA 10/10 |
+| D42.0.5 Certification Plan | OFFICIAL · CA-D42.0 10/10 |
+
+### 4. Numeración preservada (D41.7)
+
+```text
+D42.1  BUILD Implementation   (RESERVED — not executed)
+D42.2  Testing                (RESERVED)
+D42.3  Certification          (RESERVED)
+D42.4  Release / M1 Acta      (RESERVED)
+D42.0.* = preparatory documentation ONLY
+```
+
+### 5. Certificación
+
+| Ítem | Resultado |
+|------|-----------|
+| CA-D42.0 | 10/10 PASS |
+| CA-D42.0.1 … CA-D42.0.4 | 10/10 PASS cada uno |
+| Contradiction vs D41.7 | **None** |
+| Amendment | **NOT REQUIRED** |
+
+### 6. Archivos (D42.0)
+
+**Creados:** `docs/D42.0-export1-technical-execution-plan.md` · `docs/D42.0.1-technical-inventory.md` · `docs/D42.0.2-implementation-blueprint.md` · `docs/D42.0.3-risk-matrix.md` · `docs/D42.0.4-validation-blueprint.md` · `docs/D42.0.5-certification-plan.md`
+
+**No modificado:** `src/**` · `scripts/**` · tests · `package.json` · D37.* · D38.* · D39.* · D40.* · D41.* · Freeze · Roadmap · Governance · QG · APIs · contenido histórico de este archivo (§D39 · Cronología · §D38 · §D40 · §D41)
+
+**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este §D42.0)
+
+### 7. Handoff
+
+```text
+NEXT: D42.1 — EXPORT-1 BUILD Implementation
+AUTHORIZED BY: D41.7 GO BUILD
+PREPARED BY: D42.0 Technical Execution Planning
+Inputs: D38.* · D39.* · D40.* · D41.* · D42.0.*
+```
+
+### 8. Append Integrity Rules
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Actualización únicamente al final del documento | **Sí** |
+| Sin modificar secciones previas (§D39 · Cronología · §D38 · §D40 · §D41) | **Sí** |
+| Sin alterar contenido histórico | **Sí** |
+| Sin cambiar numeración BUILD D41.7 | **Sí** |
+
+### 9. Append Verification Record
+
+| Verificación | Resultado |
+|--------------|-----------|
+| Append realizado al EOF | **PASS** |
+| Secciones previas sin cambios | **PASS** |
+| §D41 intacto | **PASS** |
+| Numeración D42.1–D42.4 preservada | **PASS** |
+| Diff STATUS = solo líneas añadidas (§D42.0) | **PASS** |
+
+### 10. STATUS Integrity Declaration
+
+```text
+Este registro histórico mantiene íntegramente su contenido previo.
+La sección §D42.0 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
+No se ha modificado ninguna sección histórica (§D39 · Cronología · §D38 · §D40 · §D41).
+D42.0 prepara la ejecución de D42.1 sin alterar Freeze, Roadmap, Governance, QG, API Freeze ni el Plan Freeze de épica D41.7.
+```
+
+---
+
+*§D42.0 APPEND-ONLY 2026-07-17 · D42.0 COMPLETE · CA-D42.0 10/10 PASS · Technical Execution Planning COMPLETE · BUILD NOT EXECUTED · GO BUILD IN FORCE · EXPORT-1 READY FOR BUILD · Numeración D42.1→D42.4 intacta · Next: D42.1 EXPORT-1 BUILD Implementation.*
