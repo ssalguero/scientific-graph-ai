@@ -727,3 +727,64 @@ D42.1 implementa BUILD sin cerrar EXPORT-1 ni ejecutar Release.
 ---
 
 *§D42.1 APPEND-ONLY 2026-07-17 · D42.1 COMPLETE · CA-D42.1 10/10 PASS · BUILD Implementation COMPLETE · READY FOR D42.2 Testing · OUT intact · GRAPH untouched.*
+
+---
+
+## §D42.2 — EXPORT-1 Testing
+
+**Fecha:** 2026-07-17  
+**Serie:** D42.2  
+**Estado:** **D42.2 = COMPLETE** · **CA-D42.2 = 10/10 PASS** · **PT-* PASS** · **SMOKES S1–S8 PASS** · **READY FOR D42.3** · **PROD-3 = OPEN**
+
+### 1. Declaración
+
+```text
+D42.2 TESTING = COMPLETE
+CA-D42.2 = 10/10 PASS
+PNG/SVG/sampleStep/pixelRatio VALIDATED
+PT-* PASS (D41.4)
+SMOKE S1–S8 PASS
+GRAPH INTACT · PDF COMPATIBLE · PROD-2E REGRESSION PASS
+NO CODE FIXES REQUIRED
+NO SCOPE EXPANSION
+NEXT = D42.3 — EXPORT-1 Certification
+```
+
+### 2. Evidencia clave
+
+| Área | Resultado |
+|------|-----------|
+| `tsc --noEmit` | PASS |
+| `validate:export1-chart-export-unit` | PASS |
+| `validate:export1-d42-2-testing` (harness) | PASS |
+| `validate:graph-curves-unit` | PASS |
+| VGB / rendering / PDF unit | PASS |
+| `validate-prod2e-gate.ts` + siblings GRAPH | PASS |
+| Browser smokes S1–S8 | PASS (CDP timed) |
+| PT-PNG-T / PT-SVG-T | ~2.5 s típico PASS |
+| Lint | Ejecutado; errores preexistentes ajenos a EXPORT-1 |
+
+### 3. Archivos (D42.2)
+
+**Creados:** `docs/D42.2-export1-testing.md` · `scripts/validate-export1-d42-2-testing.ts`  
+
+**Actualizados:** `package.json` (`validate:export1-d42-2-testing`) · este STATUS §D42.2 (append)
+
+**No modificado:** `src/**` (sin fixes) · GRAPH · persistence · docs D37–D41 · §D42.0 · §D42.1
+
+### 4. Handoff
+
+```text
+NEXT: D42.3 — EXPORT-1 Certification
+```
+
+### 5. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append al EOF | **Sí** |
+| Sin reescribir § previos | **Sí** |
+
+---
+
+*§D42.2 APPEND-ONLY 2026-07-17 · D42.2 COMPLETE · CA-D42.2 10/10 PASS · Testing COMPLETE · READY FOR D42.3 Certification.*
