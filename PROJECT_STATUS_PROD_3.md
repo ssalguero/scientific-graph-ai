@@ -1387,3 +1387,99 @@ PROD-3 permanece OPEN.
 ---
 
 *## D44.4 APPEND-ONLY 2026-07-18 · D44.4 COMPLETE · CA-D44.4 10/10 PASS · EXPORT-2 CERTIFIED · READY FOR RELEASE · Ready for D44.5 — RELEASE.*
+
+## D44.5
+
+**Fecha:** 2026-07-18  
+**Microfase:** D44.5 — RELEASE  
+**Estado:** **D44.5 = COMPLETE** · **CA-D44.5 = 10/10 PASS** · **EXPORT-2 = RELEASED** · **M2 = EXPORT-2 READY** · **D44 = CLOSED** · **PROD-3 = OPEN**
+
+### 1. Executive Summary
+
+Release Gate PASS. EXPORT-2 RELEASED. Product Milestone M2 = EXPORT-2 READY. Serie D44 CLOSED. Sin código tocado. PROD-3 continúa hacia PROD-1B (D38.4).
+
+### 2. Previous State
+
+`	ext
+Previous state:
+D44.4 COMPLETE
+EXPORT-2 = CERTIFIED
+READY FOR RELEASE
+`
+
+### 3. Current State
+
+`	ext
+Current state:
+EXPORT-2 = RELEASED
+M2 = EXPORT-2 READY
+D44 = CLOSED
+PROD-3 = OPEN
+NEXT EPIC = PROD-1B
+`
+
+### 4. Document Created
+
+| Documento | Path |
+|-----------|------|
+| D44.5 | docs/D44.5-export2-release.md |
+
+### 5. Series Rollup
+
+| Microfase | Resultado |
+|-----------|-----------|
+| D44.1 Authorization | **PASS** |
+| D44.2 BUILD | **PASS** |
+| D44.3 TESTING | **PASS** |
+| D44.4 CERTIFICATION | **PASS** |
+| D44.5 RELEASE | **PASS** |
+
+### 6. Checklist
+
+| Ítem | Resultado |
+|------|-----------|
+| Release Gate PASS | **PASS** |
+| EXPORT-2 RELEASED | **PASS** |
+| M2 READY | **PASS** |
+| DoD completa | **PASS** |
+| Freezes preservados | **PASS** |
+| No Breaking Changes | **PASS** |
+| Sin cambios src/scripts/tests/package.json | **PASS** |
+
+### 7. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D44.5 | **10 / 10 PASS** |
+
+### 8. Resolution
+
+`	ext
+EXPORT-2 = RELEASED
+M2 = EXPORT-2 READY
+D44 = CLOSED
+No blocking risks remaining.
+PROD-3 = OPEN
+NEXT EPIC (D38.4) = PROD-1B
+`
+
+### 9. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Sí** |
+| Previous sections preserved | **Sí** |
+| D44.4 / D44.3 unchanged | **Sí** |
+
+### 10. STATUS Integrity Declaration
+
+`	ext
+## D44.5 es APPEND-ONLY.
+RELEASE COMPLETE sin alterar Freeze ni reescribir historia.
+EXPORT-2 RELEASED · M2 READY · D44 CLOSED.
+PROD-3 permanece OPEN hacia PROD-1B.
+`
+
+---
+
+*## D44.5 APPEND-ONLY 2026-07-18 · D44.5 COMPLETE · CA-D44.5 10/10 PASS · EXPORT-2 RELEASED · M2 EXPORT-2 READY · D44 CLOSED · PROD-3 OPEN → PROD-1B.*
