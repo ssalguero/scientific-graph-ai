@@ -1302,3 +1302,88 @@ PROD-3 permanece OPEN.
 ---
 
 *## D44.3 APPEND-ONLY 2026-07-18 · D44.3 COMPLETE · CA-D44.3 10/10 PASS · TESTING COMPLETE · Ready for D44.4 — CERTIFICATION.*
+
+## D44.4
+
+**Fecha:** 2026-07-18  
+**Microfase:** D44.4 — CERTIFICATION  
+**Estado:** **D44.4 = COMPLETE** · **CA-D44.4 = 10/10 PASS** · **EXPORT-2 = CERTIFIED** · **READY FOR RELEASE** · **PROD-3 = OPEN** · **READY FOR D44.5**
+
+### 1. Executive Summary
+
+Certificación documental EXPORT-2. Evidencias D44.2/D44.3 consolidadas. Architecture/Governance/Regression/Performance PASS. Sin código tocado. READY FOR RELEASE.
+
+### 2. Previous State
+
+`	ext
+Previous state:
+D44.3 COMPLETE
+TESTING COMPLETE
+CERTIFICATION NOT STARTED
+`
+
+### 3. Current State
+
+`	ext
+Current state:
+D44.4 COMPLETE
+EXPORT-2 = CERTIFIED
+READY FOR RELEASE
+READY FOR D44.5 — RELEASE
+`
+
+### 4. Document Created
+
+| Documento | Path |
+|-----------|------|
+| D44.4 | docs/D44.4-export2-certification.md |
+
+### 5. Checklist
+
+| Ítem | Resultado |
+|------|-----------|
+| BUILD certificado | **PASS** |
+| TESTING certificado | **PASS** |
+| Unit / Integration / Smoke | **PASS** |
+| Regression | **PASS** |
+| Architecture | **PASS** |
+| Governance | **PASS** |
+| Release Readiness | **PASS** |
+| Sin cambios src/scripts/tests/package.json | **PASS** |
+
+### 6. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D44.4 | **10 / 10 PASS** |
+
+### 7. Resolution
+
+`	ext
+EXPORT-2 = CERTIFIED
+READY FOR RELEASE
+NO CODE CHANGES IN D44.4
+No blocking risks identified.
+NEXT = D44.5 — RELEASE
+`
+
+### 8. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Sí** |
+| Previous sections preserved | **Sí** |
+| D44.3 / D44.2 unchanged | **Sí** |
+
+### 9. STATUS Integrity Declaration
+
+`	ext
+## D44.4 es APPEND-ONLY.
+CERTIFICATION COMPLETE sin alterar Freeze ni reescribir historia.
+EXPORT-2 CERTIFIED · READY FOR RELEASE hacia D44.5.
+PROD-3 permanece OPEN.
+`
+
+---
+
+*## D44.4 APPEND-ONLY 2026-07-18 · D44.4 COMPLETE · CA-D44.4 10/10 PASS · EXPORT-2 CERTIFIED · READY FOR RELEASE · Ready for D44.5 — RELEASE.*
