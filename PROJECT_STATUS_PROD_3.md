@@ -788,3 +788,60 @@ NEXT: D42.3 — EXPORT-1 Certification
 ---
 
 *§D42.2 APPEND-ONLY 2026-07-17 · D42.2 COMPLETE · CA-D42.2 10/10 PASS · Testing COMPLETE · READY FOR D42.3 Certification.*
+
+---
+
+## §D42.3 — EXPORT-1 Certification
+
+**Fecha:** 2026-07-17  
+**Serie:** D42.3  
+**Estado:** **D42.3 = COMPLETE** · **CA-D42.3 = 10/10 PASS** · **EXPORT-1 = CERTIFIED** · **READY FOR D42.4** · **PROD-3 = OPEN**
+
+### 1. Declaración
+
+```text
+EXPORT-1 = CERTIFIED
+CA-D42.3 = PASS
+EVIDENCE = D42.1 BUILD + D42.2 TESTING CONSOLIDATED
+ARCHITECTURE / API / OWNERSHIP / SCOPE FREEZE = RESPECTED
+GRAPH UNTOUCHED · PDF COMPATIBLE · PROD-2E PASS
+NO SRC CHANGES IN D42.3
+NO RELEASE EXECUTED HERE
+NEXT = D42.4 — EXPORT-1 Release
+```
+
+### 2. Certificación
+
+| Ítem | Resultado |
+|------|-----------|
+| CA-D42.3 | 10/10 PASS |
+| PNG / SVG / pixelRatio / sampleStep | CERTIFIED |
+| Helpers / handlers / wiring / chartExportRef | CERTIFIED |
+| PDF compatibility · GRAPH · PROD-2E | CERTIFIED |
+| Acta | `docs/D42.3-export1-certification.md` |
+
+### 3. Archivos (D42.3)
+
+**Creado:** `docs/D42.3-export1-certification.md`  
+
+**Append-only:** este §D42.3  
+
+**No modificado:** `src/**` · scripts · package.json · GRAPH · Persistence · D37–D42.2 · Freeze · API
+
+### 4. Handoff
+
+```text
+NEXT: D42.4 — EXPORT-1 Release
+EXPORT-1 CERTIFIED · READY FOR RELEASE
+```
+
+### 5. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append al EOF | **Sí** |
+| Sin reescribir § previos | **Sí** |
+
+---
+
+*§D42.3 APPEND-ONLY 2026-07-17 · D42.3 COMPLETE · CA-D42.3 10/10 PASS · EXPORT-1 CERTIFIED · READY FOR D42.4 Release.*
