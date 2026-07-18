@@ -379,6 +379,56 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
+import {
+  actionBarBtn,
+  actionBarBtnExport,
+  actionBarBtnNeutral,
+  actionBarBtnPrimary,
+  actionBarBtnSave,
+  actionBarDivider,
+  actionBarGroup,
+  alertBase,
+  alertError,
+  alertWarning,
+  btnOutline,
+  btnOutlineSm,
+  btnPrimary,
+  card,
+  contentPanel,
+  dataAdvancedPanel,
+  dataDatasetCard,
+  dataEmptyState,
+  dataImportPanel,
+  dataSemanticHint,
+  emptyState,
+  fieldLabel,
+  getAppShell,
+  inputField,
+  panelHeading,
+  panelHeadingSubtext,
+  persistenceBadge,
+  resultsCompactGrid,
+  resultsEmptyState,
+  resultsGrid,
+  resultsPanelCompact,
+  resultsPanelFull,
+  resultsSubsectionCard,
+  resultsTextCard,
+  sectionLabel,
+  sidebarBtnPrimary,
+  sidebarBtnSecondary,
+  sidebarDivider,
+  sidebarNavItem,
+  sidebarSectionLabel,
+  sidebarSoonBadge,
+  subsectionCard,
+  subsectionHeading,
+  toggleInput,
+  toggleLabel,
+  toggleShell,
+  toggleThumb,
+  toggleTrackBg,
+} from "@/lib/ui/theme";
 
 let cachedInitialUserPreferences: ReturnType<typeof readUserPreferences> | null =
   null;
@@ -392,102 +442,8 @@ const getCachedInitialUserPreferences = (): ReturnType<
   return cachedInitialUserPreferences;
 };
 
-const appShellLight =
-  "bg-slate-50 text-[var(--app-text)] transition-colors duration-200 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-text-muted:#64748b] [--app-heading:#0f172a] [--app-accent:#2563eb] [--app-success:#16a34a] [--app-warning:#d97706] [--app-danger:#dc2626] [--app-success-bg:#dcfce7] [--app-success-text:#166534] [--app-info-bg:#fef3c7] [--app-info-text:#92400e] [--app-danger-bg:#fef2f2] [--app-danger-border:#fecaca] [--app-danger-text:#b91c1c] [--app-warning-bg:#fffbeb] [--app-warning-border:#fde68a] [--app-warning-text:#92400e] [--app-toggle-track:#e2e8f0] [--app-toggle-thumb:#ffffff]";
-const appShellDark =
-  "bg-[#0f172a] text-[var(--app-text)] transition-colors duration-200 [--app-surface:#111827] [--app-surface-muted:#1f2937] [--app-border:#334155] [--app-text:#e5e7eb] [--app-text-muted:#94a3b8] [--app-heading:#e5e7eb] [--app-accent:#3b82f6] [--app-success:#22c55e] [--app-warning:#f59e0b] [--app-danger:#ef4444] [--app-success-bg:#052e16] [--app-success-text:#86efac] [--app-info-bg:#451a03] [--app-info-text:#fcd34d] [--app-danger-bg:#450a0a] [--app-danger-border:#7f1d1d] [--app-danger-text:#fca5a5] [--app-warning-bg:#422006] [--app-warning-border:#78350f] [--app-warning-text:#fcd34d] [--app-toggle-track:#334155] [--app-toggle-thumb:#e5e7eb]";
-
-const getAppShell = (mode: ThemeMode) =>
-  mode === "dark" ? appShellDark : appShellLight;
-
-const card =
-  "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-3 sm:p-4 transition-colors duration-200";
-const panelHeading =
-  "text-sm sm:text-base font-semibold text-[var(--app-heading)] tracking-tight";
-const panelHeadingSubtext = "text-xs sm:text-sm text-[var(--app-text-muted)] mt-0.5";
-const sectionLabel =
-  "text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)] mb-1.5";
-const subsectionCard =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-2 space-y-2 transition-colors duration-200";
-const subsectionHeading =
-  "text-xs sm:text-sm font-semibold text-[var(--app-heading)]";
-const contentPanel =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text)] transition-colors duration-200";
-const emptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2.5 py-2.5 text-xs sm:text-sm text-[var(--app-text-muted)] text-center transition-colors duration-200";
-const resultsEmptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text-muted)] text-center transition-colors duration-200";
-const resultsTextCard =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text)] leading-snug";
-const resultsGrid =
-  "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-2";
-const resultsSubsectionCard =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-2 space-y-1.5 transition-colors duration-200";
-const resultsPanelFull = "lg:col-span-2 xl:col-span-2";
-const resultsPanelCompact = "min-w-0";
-const resultsCompactGrid =
-  "grid grid-cols-1 lg:grid-cols-2 gap-2 lg:col-span-2 xl:col-span-2";
-const persistenceBadge =
-  "inline-flex shrink-0 items-center rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]";
-const dataEmptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text-muted)]";
-const dataDatasetCard =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-2 space-y-1.5 transition-colors duration-200";
-const dataImportPanel =
-  "rounded-lg border-2 border-[var(--app-accent)]/35 bg-[var(--app-accent)]/5 shadow-sm";
-const dataAdvancedPanel = "border-dashed opacity-95";
-const dataSemanticHint =
-  "text-[11px] sm:text-xs text-[var(--app-text-muted)] leading-snug";
-const fieldLabel =
-  "block text-xs font-medium text-[var(--app-heading)] mb-1";
-const inputField =
-  "w-full h-9 border border-[var(--app-border)] rounded-lg px-2.5 text-sm text-[var(--app-heading)] bg-[var(--app-surface)] placeholder:text-[var(--app-text-muted)] shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 focus:border-[var(--app-accent)]";
-const btnPrimary =
-  "inline-flex h-9 items-center justify-center font-semibold text-white text-sm px-4 rounded-lg shadow-sm transition-colors duration-200 hover:shadow-md active:scale-[0.98]";
-const btnOutline =
-  "inline-flex h-9 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-3 rounded-lg text-sm text-[var(--app-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)] hover:shadow disabled:opacity-50 disabled:cursor-not-allowed";
-const btnOutlineSm =
-  "inline-flex h-7 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-2 rounded-md text-xs text-[var(--app-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]";
-const alertBase =
-  "rounded-lg border px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200";
-const alertError = `${alertBase} border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] text-[var(--app-danger-text)]`;
-const alertWarning = `${alertBase} border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] text-[var(--app-warning-text)]`;
-const toggleInput = "peer sr-only";
-const toggleShell =
-  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full";
-const toggleTrackBg =
-  "pointer-events-none absolute inset-0 rounded-full border border-[var(--app-border)] bg-[var(--app-toggle-track)] transition-colors duration-200 peer-checked:border-[var(--app-accent)] peer-checked:bg-[var(--app-accent)] peer-disabled:opacity-50";
-const toggleThumb =
-  "pointer-events-none absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[var(--app-toggle-thumb)] shadow-sm transition-transform duration-200 peer-checked:translate-x-4 peer-disabled:opacity-50";
 const METHODOLOGY_PUBLICATION_VISIBILITY_CALLOUT_MESSAGE = `Los motores SCI-50→55: ${resolveToggleVisibilityShortHint("showConsistencyEngine")}.`;
 const PDF_EXPORT_DISCLAIMER = resolvePdfExportDisclaimer();
-
-const toggleLabel =
-  "flex items-center justify-between gap-2 cursor-pointer text-xs sm:text-sm text-[var(--app-text)] leading-tight py-0.5";
-const actionBarBtn =
-  "inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-semibold shadow-sm transition-colors duration-200 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm";
-const actionBarBtnPrimary =
-  `${actionBarBtn} bg-emerald-600 text-white hover:bg-emerald-700 min-w-[7.5rem]`;
-const actionBarBtnSave =
-  `${actionBarBtn} border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 min-w-[7.5rem]`;
-const actionBarBtnNeutral = `${actionBarBtn} ${btnOutline} hover:shadow-sm`;
-const actionBarBtnExport =
-  `${actionBarBtn} ${btnOutline} min-w-[3.25rem] px-3 font-medium hover:shadow-sm`;
-const actionBarGroup =
-  "flex flex-wrap items-center gap-2";
-const actionBarDivider =
-  "hidden sm:block h-7 w-px shrink-0 bg-[var(--app-border)]";
-const sidebarDivider = "border-t border-[var(--app-border)] my-1.5";
-const sidebarSectionLabel =
-  "text-[11px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
-const sidebarBtnPrimary =
-  `w-full h-8 ${actionBarBtnPrimary} text-xs sm:text-sm font-semibold min-w-0`;
-const sidebarBtnSecondary =
-  `w-full h-8 ${btnOutline} text-xs sm:text-sm font-medium min-w-0`;
-const sidebarNavItem =
-  "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs sm:text-sm text-[var(--app-text)] transition-all duration-200";
-const sidebarSoonBadge =
-  "inline-flex shrink-0 items-center rounded-full border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]";
 
 type DataWorkspaceView = "experimental" | "curves" | "advanced" | "visual-builder";
 
