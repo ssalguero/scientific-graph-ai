@@ -207,7 +207,6 @@ export function getButtonVariant(variant: ButtonVariant): string {
     case "ghost":
       return sidebarNavItem;
     case "danger":
-      // Future DangerButton (D45.3); unused in UI surfaces during D45.2.
       return `${actionBarBtn} bg-[var(--app-danger)] text-white`;
     case "actionPrimary":
       return actionBarBtnPrimary;
