@@ -1483,3 +1483,112 @@ PROD-3 permanece OPEN hacia PROD-1B.
 ---
 
 *## D44.5 APPEND-ONLY 2026-07-18 · D44.5 COMPLETE · CA-D44.5 10/10 PASS · EXPORT-2 RELEASED · M2 EXPORT-2 READY · D44 CLOSED · PROD-3 OPEN → PROD-1B.*
+
+## D45.1
+
+**Fecha:** 2026-07-18  
+**Microfase:** D45.1 — Discovery + Baseline + Inventory  
+**Estado:** **D45.1 = COMPLETE** · **CA-D45.1 = 10/10 PASS** · **UI BASELINE = RECORDED** · **D45 = OPEN** · **PROD-3 = OPEN**
+
+### 1. Executive Summary
+
+Discovery documental del track v1.1 UX Foundation. Baseline UI inventariado y medido. Sin cambios de codigo, estilos, exports ni comportamiento. Capa `src/lib/ui/` y `src/components/ui/` confirmadas inexistentes. Listo para D45.2 (Tokens · Theme · Icon Registry).
+
+### 2. Previous State
+
+```text
+Previous state:
+EXPORT-2 = RELEASED
+M2 = EXPORT-2 READY
+D44 = CLOSED
+PROD-3 = OPEN
+NEXT EPIC (D38.4) = PROD-1B
+```
+
+### 3. Current State
+
+```text
+Current state:
+EXPORT-2 = RELEASED
+M2 = EXPORT-2 READY
+D44 = CLOSED
+D45 = OPEN
+D45.1 = COMPLETE
+UI BASELINE = RECORDED
+PROD-3 = OPEN
+NEXT (D45) = D45.2
+NEXT EPIC (D38.4) = PROD-1B (no redefinido)
+```
+
+### 4. Document Created
+
+| Documento | Path |
+|-----------|------|
+| D45.1 | docs/D45.1-ui-foundation.md |
+
+### 5. Baseline Metrics (record)
+
+| Metrica | Valor |
+|---------|-------|
+| LOC page.tsx | 27017 |
+| Rango constantes UI | L395-L490 |
+| Constantes visuales reutilizables | 50 |
+| Rango Sidebar aside | L19737-L20056 (320 LOC) |
+| src/lib/ui | NO EXISTE |
+| src/components/ui | NO EXISTE |
+| Sistemas estilo canonicos | page.tsx + projectFileUiStyles.ts |
+
+### 6. Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Documento baseline creado | **PASS** |
+| Inventario UI completo | **PASS** |
+| Baseline arquitectonico medido | **PASS** |
+| API Freeze D45 documentado | **PASS** |
+| Alcance D45 fijado (opcion 1) | **PASS** |
+| Roadmap D45.2-D45.5 documentado | **PASS** |
+| Sin cambios de codigo | **PASS** |
+| Sin cambios visuales | **PASS** |
+| Sin regresiones | **PASS** |
+| Freezes EXPORT/GRAPH preservados | **PASS** |
+
+### 7. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D45.1 | **10 / 10 PASS** |
+
+### 8. Resolution
+
+```text
+D45.1 = COMPLETE
+UI BASELINE = RECORDED
+D45 = OPEN
+NO BUILD AUTHORIZED BY D45.1
+NEXT = D45.2 — UI Tokens · Theme · Icon Registry
+EXPORT-2 / GRAPH FREEZES = PRESERVED
+PROD-3 = OPEN
+NEXT EPIC (D38.4) = PROD-1B
+```
+
+### 9. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Si** |
+| Previous sections preserved | **Si** |
+| D44.5 / D44.* unchanged | **Si** |
+
+### 10. STATUS Integrity Declaration
+
+```text
+## D45.1 es APPEND-ONLY.
+Discovery + Baseline + Inventory COMPLETE sin codigo ni reescritura de historia.
+UI BASELINE RECORDED · D45 OPEN · Ready for D45.2.
+PROD-3 permanece OPEN · PROD-1B (D38.4) no redefinido.
+```
+
+---
+
+*## D45.1 APPEND-ONLY 2026-07-18 · D45.1 COMPLETE · CA-D45.1 10/10 PASS · UI BASELINE RECORDED · D45 OPEN · Ready for D45.2 — Tokens · Theme · Icons.*
