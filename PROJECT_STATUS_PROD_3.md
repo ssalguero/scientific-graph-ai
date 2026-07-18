@@ -845,3 +845,88 @@ EXPORT-1 CERTIFIED · READY FOR RELEASE
 ---
 
 *§D42.3 APPEND-ONLY 2026-07-17 · D42.3 COMPLETE · CA-D42.3 10/10 PASS · EXPORT-1 CERTIFIED · READY FOR D42.4 Release.*
+
+---
+
+## §D42.4 — EXPORT-1 Release
+
+**Fecha:** 2026-07-17  
+**Serie:** D42.0–D42.4  
+**Estado:** **D42.4 = COMPLETE** · **CA-D42.4 = 10/10 PASS** · **EXPORT-1 = RELEASED** · **M1 = EXPORT-1 READY** · **D42 = CLOSED** · **PROD-3 = OPEN**
+
+### 1. Declaración
+
+```text
+EXPORT-1 = RELEASED
+M1 = EXPORT-1 READY
+CA-D42.4 = PASS
+D42 SERIES = CLOSED
+BASELINE UPDATED (PNG/SVG high-res export surface)
+ARCHITECTURE / API / OWNERSHIP / SCOPE FREEZE = RESPECTED
+NO SRC / TESTS / SCRIPTS / PACKAGE.JSON CHANGES IN D42.4
+PROD-3 CONTINUES → NEXT EPIC = EXPORT-2 (D38.4 Roadmap)
+```
+
+### 2. Cronología D42 (cierre)
+
+| Microfase | Estado |
+|-----------|--------|
+| D42.0 Technical Execution Planning | COMPLETE |
+| D42.1 BUILD Implementation | COMPLETE · CA PASS |
+| D42.2 Testing | COMPLETE · CA PASS |
+| D42.3 Certification | COMPLETE · CERTIFIED |
+| D42.4 Release | COMPLETE · **RELEASED** |
+
+### 3. Baseline actualizado
+
+| Campo | Valor post-Release |
+|-------|-------------------|
+| Épica #1 EXPORT-1 | **RELEASED / M1 READY** |
+| Capacidad | VGB PNG/SVG alta res · pixelRatio · sampleStep (export surface) |
+| GRAPH barrels | Intactos |
+| schemaVersion | 2 (inalterado) |
+| Siguiente épica Roadmap | **EXPORT-2** |
+
+### 4. Archivos (D42.4)
+
+**Creado:** `docs/D42.4-export1-release.md`  
+
+**Append-only:** este §D42.4  
+
+**No modificado:** `src/**` · tests · scripts · `package.json` · D37–D42.3 · Freeze · API · Governance · QG
+
+### 5. Certificación
+
+| Ítem | Resultado |
+|------|-----------|
+| CA-D42.4 | 10/10 PASS |
+| Release Gate | PASS |
+| Cierre oficial épica | **Sí** |
+
+### 6. Handoff Roadmap
+
+```text
+EXPORT-1 RELEASED
+PROD-3 = OPEN
+NEXT EPIC: EXPORT-2 — PDF toggle-aware (per D38.4)
+Do not reuse D39 numbering for EXPORT-2 BUILD (RN-D40).
+```
+
+### 7. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append al EOF | **Sí** |
+| Sin reescribir § previos (§D39…§D42.3) | **Sí** |
+
+### 8. STATUS Integrity Declaration
+
+```text
+§D42.4 es APPEND-ONLY.
+EXPORT-1 queda RELEASED sin alterar Freeze ni reescribir historia.
+PROD-3 permanece OPEN hacia EXPORT-2.
+```
+
+---
+
+*§D42.4 APPEND-ONLY 2026-07-17 · D42.4 COMPLETE · CA-D42.4 10/10 PASS · EXPORT-1 RELEASED · M1 EXPORT-1 READY · D42 CLOSED · PROD-3 OPEN → EXPORT-2.*
