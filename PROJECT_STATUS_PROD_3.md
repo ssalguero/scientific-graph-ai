@@ -1029,3 +1029,98 @@ PROD-3 permanece OPEN.
 ---
 
 *## D43 APPEND-ONLY 2026-07-18 · D43 CLOSED · CA-D43 6/6 PASS · EXPORT-2 OPEN · Discovery COMPLETE · Baseline FROZEN · Roadmap APPROVED · Ready for D44 — EXPORT-2 BUILD.*
+
+
+## D44.1
+
+**Fecha:** 2026-07-18  
+**Microfase:** D44.1 — BUILD AUTHORIZATION  
+**Estado:** **D44.1 = COMPLETE** · **BUILD AUTHORIZED** · **CA-D44.1 = 10/10 PASS** · **EXPORT-2 = OPEN** · **PROD-3 = OPEN** · **NO IMPLEMENTATION IN D44.1**
+
+### 1. Executive Summary
+
+Gobernanza pre-BUILD de EXPORT-2. Acta de autorización emitida. Discovery D43 referenciada sin recrear Inventory / Blueprint / Risk / Validation docs. Código no tocado. Handoff a D44.2 BUILD.
+
+### 2. Previous State
+
+```text
+Previous state:
+EXPORT-2 OPEN
+D43 CLOSED
+Discovery COMPLETE
+Baseline FROZEN
+Roadmap APPROVED
+BUILD NOT STARTED
+```
+
+### 3. Current State
+
+```text
+Current state:
+EXPORT-2 OPEN
+D44.1 COMPLETE
+BUILD AUTHORIZED BY D44.1
+NO IMPLEMENTATION IN D44.1
+READY FOR D44.2 — BUILD
+```
+
+### 4. Document Created
+
+| Documento | Path |
+|-----------|------|
+| D44.1 | `docs/D44.1-build-authorization.md` |
+
+### 5. Checks
+
+| Ítem | Resultado |
+|------|-----------|
+| D43 CLOSED | **PASS** |
+| Architecture Freeze ACTIVE | **PASS** |
+| API Freeze ACTIVE | **PASS** |
+| Scope Verified | **PASS** |
+| Dependency Graph Approved | **PASS** |
+| Ownership Approved | **PASS** |
+| Definition of Done Approved | **PASS** |
+| No New Risks | **PASS** |
+| BUILD AUTHORIZED | **PASS** |
+| Sin cambios `src/**` · `scripts/**` · tests | **PASS** |
+
+### 6. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D44.1 | **10 / 10 PASS** |
+
+### 7. Resolution
+
+```text
+BUILD AUTHORIZED BY D44.1
+IMPLEMENTATION STARTS AT D44.2
+D44.1 = GOVERNANCE ONLY
+NO SRC / SCRIPTS / TESTS CHANGED
+No new risks identified.
+D43 artifacts referenced only (not recreated).
+NEXT = D44.2 — BUILD
+```
+
+### 8. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Sí** |
+| Previous sections preserved | **Sí** |
+| D43 / D42 unchanged | **Sí** |
+| Sin reescribir §D39…## D43 | **Sí** |
+
+### 9. STATUS Integrity Declaration
+
+```text
+## D44.1 es APPEND-ONLY.
+BUILD AUTHORIZED sin alterar Freeze ni reescribir historia.
+EXPORT-2 permanece OPEN hacia D44.2 BUILD.
+PROD-3 permanece OPEN.
+```
+
+---
+
+*## D44.1 APPEND-ONLY 2026-07-18 · D44.1 COMPLETE · CA-D44.1 10/10 PASS · BUILD AUTHORIZED · Ready for D44.2 — BUILD.*
