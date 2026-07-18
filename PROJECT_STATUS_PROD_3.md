@@ -930,3 +930,102 @@ PROD-3 permanece OPEN hacia EXPORT-2.
 ---
 
 *§D42.4 APPEND-ONLY 2026-07-17 · D42.4 COMPLETE · CA-D42.4 10/10 PASS · EXPORT-1 RELEASED · M1 EXPORT-1 READY · D42 CLOSED · PROD-3 OPEN → EXPORT-2.*
+
+---
+
+## D43
+
+**Fecha:** 2026-07-18  
+**Serie:** D43.1–D43.7  
+**Estado:** **D43 = CLOSED** · **CA-D43 = 6/6 PASS** · **EXPORT-2 = OPEN** · **Discovery = COMPLETE** · **Baseline = FROZEN** · **Roadmap = APPROVED** · **PROD-3 = OPEN**
+
+### 1. Executive Summary
+
+Discovery EXPORT-2 completada. Serie D43 certificada. BUILD no iniciado en D43. Handoff a D44 (primer BUILD EXPORT-2).
+
+### 2. Previous State
+
+```text
+Previous state:
+EXPORT-1 RELEASED (D42)
+```
+
+### 3. Current State
+
+```text
+Current state:
+EXPORT-2 OPEN
+Discovery COMPLETE
+Baseline FROZEN
+Roadmap APPROVED
+```
+
+### 4. Documents Created
+
+| Documento | Path |
+|-----------|------|
+| D43.1 | `docs/D43.1-export2-kickoff.md` |
+| D43.2 | `docs/D43.2-baseline-freeze.md` |
+| D43.3 | `docs/D43.3-backlog-discovery.md` |
+| D43.4 | `docs/D43.4-roadmap-export2.md` |
+| D43.5 | `docs/D43.5-architecture-opportunities.md` |
+| D43.6 | `docs/D43.6-risk-register.md` |
+| D43.7 | `docs/D43.7-export2-discovery-acta.md` |
+
+### 5. Checklist
+
+| Ítem | Resultado |
+|------|-----------|
+| Discovery | **PASS** |
+| Baseline congelada | **PASS** |
+| Roadmap aprobado | **PASS** |
+| Riesgos registrados | **PASS** |
+| Gobernanza preservada | **PASS** |
+| Sin Amendment | **PASS** |
+| Sin BUILD | **PASS** |
+
+### 6. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D43 (D43.1–D43.6) | **6 / 6 PASS** |
+
+### 7. Resolution
+
+```text
+EXPORT-2 = OPEN
+Discovery = COMPLETE
+Baseline = APPROVED
+Baseline = FROZEN
+Roadmap = APPROVED
+D43 = CLOSED
+NO BUILD IN D43
+NEXT = D44
+No unresolved Amendments.
+No pending Discovery actions.
+All BUILD activities transferred to D44.
+D43 CLOSED
+Ready for D44
+```
+
+### 8. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Sí** |
+| Previous sections preserved | **Sí** |
+| D42 unchanged | **Sí** |
+| Sin reescribir §D39…§D42.4 | **Sí** |
+
+### 9. STATUS Integrity Declaration
+
+```text
+## D43 es APPEND-ONLY.
+D43 queda CLOSED sin alterar Freeze ni reescribir historia.
+EXPORT-2 permanece OPEN hacia D44 BUILD.
+PROD-3 permanece OPEN.
+```
+
+---
+
+*## D43 APPEND-ONLY 2026-07-18 · D43 CLOSED · CA-D43 6/6 PASS · EXPORT-2 OPEN · Discovery COMPLETE · Baseline FROZEN · Roadmap APPROVED · Ready for D44 — EXPORT-2 BUILD.*
