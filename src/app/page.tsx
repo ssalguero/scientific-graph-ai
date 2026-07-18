@@ -356,7 +356,15 @@ import {
   drawPdfWrappedText,
   formatPdfSectionContentLine,
 } from "@/lib/scientific/report/pdf-export";
+import {
+  PDF_BLOCK_ADVISOR_ID,
+  PDF_BLOCK_COMPARISON_ID,
+  filterScientificReportSectionsForPdf,
+  shouldIncludePdfExportBlock,
+} from "@/lib/scientific/report/pdf-section-filter";
 import { prepareScientificReportPdfLine } from "@/lib/scientific/report/pdf-text";
+import { resolvePdfSectionsForState } from "@/lib/scientific/visibility";
+import type { VisibilityState } from "@/lib/scientific/visibility";
 import {
   Bar,
   BarChart,
@@ -11411,6 +11419,8 @@ type ScientificReportPdfInput = {
   statisticalRecommendation: StatisticalRecommendation | null;
   datasetInfo?: ImportedDatasetInfo | null;
   comparisonAnalysis?: MultiDatasetComparisonAnalysis | null;
+  /** When set, PDF body respects ARCH-6 / EXPORT-2 toggle policy. Omit = historical all-sections. */
+  allowedPdfSectionIds?: readonly string[];
 };
 
 const buildAdvisorPdfSectionLines = (
@@ -11578,11 +11588,27 @@ const exportScientificReportPdf = async (
   doc.addPage();
   cursorY = PDF_MARGIN_MM;
 
-  input.report.sections.forEach((section) => {
+  const reportSectionsForPdf =
+    input.allowedPdfSectionIds === undefined
+      ? input.report.sections
+      : filterScientificReportSectionsForPdf(
+          input.report.sections,
+          input.allowedPdfSectionIds
+        );
+
+  reportSectionsForPdf.forEach((section) => {
     drawReportSection(section);
   });
 
-  if (canIncludeMultiDatasetComparisonInReport(input.comparisonAnalysis ?? null)) {
+  if (
+    canIncludeMultiDatasetComparisonInReport(
+      input.comparisonAnalysis ?? null
+    ) &&
+    shouldIncludePdfExportBlock(
+      PDF_BLOCK_COMPARISON_ID,
+      input.allowedPdfSectionIds
+    )
+  ) {
     const comparisonSection = buildMultiDatasetComparisonPdfReportSection(
       input.comparisonAnalysis!
     );
@@ -11594,13 +11620,20 @@ const exportScientificReportPdf = async (
     cursorY += 3;
   }
 
-  drawSectionHeading("Advisor Estadístico");
-  buildAdvisorPdfSectionLines(input.statisticalRecommendation).forEach(
-    (line) => {
-      drawWrappedParagraph(line, 11, "normal");
-      cursorY += 1;
-    }
-  );
+  if (
+    shouldIncludePdfExportBlock(
+      PDF_BLOCK_ADVISOR_ID,
+      input.allowedPdfSectionIds
+    )
+  ) {
+    drawSectionHeading("Advisor Estadístico");
+    buildAdvisorPdfSectionLines(input.statisticalRecommendation).forEach(
+      (line) => {
+        drawWrappedParagraph(line, 11, "normal");
+        cursorY += 1;
+      }
+    );
+  }
 
   const pageCount = doc.getNumberOfPages();
   for (let pageIndex = 1; pageIndex <= pageCount; pageIndex += 1) {
@@ -15961,12 +15994,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
 
     try {
+      const allowedPdfSectionIds = resolvePdfSectionsForState(visibilityState);
       await exportScientificReportPdf({
         report: scientificReport,
         chartImageDataUrl,
         statisticalRecommendation,
         datasetInfo: currentDatasetInfo,
         comparisonAnalysis,
+        allowedPdfSectionIds,
       });
       setScientificReportPdfMessage("PDF descargado correctamente.");
     } catch (error) {
@@ -17560,8 +17595,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     (guidedWorkflowSession.status === "active" ||
       guidedWorkflowSession.status === "completed") &&
     activeWorkspaceSection !== "home";
-  const activeVisibilityToggleCount = useMemo(() => {
-    const visibilityState = {
+  const visibilityState = useMemo<VisibilityState>(
+    () => ({
       showDerivative,
       showIntegral,
       showIntersections,
@@ -17620,9 +17655,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       showScientificReport,
       showScientificInterpretation,
       showScientificAssistant,
-    };
-    return VISIBILITY_KEYS_V1.filter((key) => visibilityState[key]).length;
-  }, [
+    }),
+    [
     showDerivative,
     showIntegral,
     showIntersections,
@@ -17682,6 +17716,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showScientificInterpretation,
     showScientificAssistant,
   ]);
+  const activeVisibilityToggleCount = useMemo(
+    () => VISIBILITY_KEYS_V1.filter((key) => visibilityState[key]).length,
+    [visibilityState]
+  );
   const startGuidedWorkflow = (templateId: GuidedWorkflowTemplateId) => {
     const plan = buildGuidedWorkflowPlan(templateId, guidedWorkflowContext);
     if (!plan) {

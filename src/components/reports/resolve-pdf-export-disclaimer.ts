@@ -4,13 +4,13 @@ export type PdfExportDisclaimerMessages = {
 };
 
 const PDF_EXPORT_DISCLAIMER_SHORT_MESSAGE =
-  "Los toggles controlan la visualización en Resultados; el PDF puede incluir secciones metodológicas aunque los paneles estén ocultos.";
+  "El PDF incluye únicamente las secciones alineadas con los toggles de visibilidad activos.";
 
 const PDF_EXPORT_DISCLAIMER_LONG_MESSAGE =
-  "Los toggles del Inspector de Análisis controlan únicamente la visualización de los paneles en Resultados y Análisis. " +
-  "La exportación del reporte científico en PDF puede incluir secciones metodológicas (SCI-50→60) aunque esos paneles estén ocultos. " +
-  "Este comportamiento responde a la decisión arquitectónica DA-4 (wont-fix funcional en PROD-2D). " +
-  "La alineación completa entre visibilidad y exportación PDF está prevista para PROD-3 / EXPORT-2.";
+  "La exportación del reporte científico en PDF respeta la política de progressive disclosure (ARCH-6 / EXPORT-2): " +
+  "las secciones con política when-visible se incluyen solo si el toggle correspondiente está activo; " +
+  "always-include se conservan; never no se exportan. " +
+  "Los controles del Inspector de Análisis definen tanto la visualización en Resultados como el contenido del PDF.";
 
 export const resolvePdfExportDisclaimer = (): PdfExportDisclaimerMessages => ({
   shortMessage: PDF_EXPORT_DISCLAIMER_SHORT_MESSAGE,

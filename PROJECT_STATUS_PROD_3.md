@@ -1124,3 +1124,90 @@ PROD-3 permanece OPEN.
 ---
 
 *## D44.1 APPEND-ONLY 2026-07-18 · D44.1 COMPLETE · CA-D44.1 10/10 PASS · BUILD AUTHORIZED · Ready for D44.2 — BUILD.*
+
+## D44.2
+
+**Fecha:** 2026-07-18  
+**Microfase:** D44.2 — BUILD  
+**Estado:** **D44.2 = COMPLETE** · **CA-D44.2 = 10/10 PASS** · **BUILD = COMPLETE** · **EXPORT-2 = OPEN** · **PROD-3 = OPEN** · **READY FOR D44.3**
+
+### 1. Executive Summary
+
+Implementación EXPORT-2 PDF toggle-aware. Filtro en scientific/report, orquestación en page.tsx, reuso de captureChartAsPngDataUrl, disclaimer UX mínima. chartExport.ts y GRAPH intactos. Units + tsc PASS.
+
+### 2. Previous State
+
+`	ext
+Previous state:
+D44.1 COMPLETE
+BUILD AUTHORIZED
+BUILD NOT STARTED
+`
+
+### 3. Current State
+
+`	ext
+Current state:
+D44.2 COMPLETE
+EXPORT-2 BUILD COMPLETE
+PDF TOGGLE-AWARE WIRED
+READY FOR D44.3 — TESTING
+`
+
+### 4. Documents / Code
+
+| Ítem | Path |
+|------|------|
+| Acta | docs/D44.2-export2-build.md |
+| Filter | src/lib/scientific/report/pdf-section-filter.ts |
+| Unit | scripts/validate-export2-pdf-toggle-unit.ts |
+| Orchestration | src/app/page.tsx |
+| UX disclaimer | src/components/reports/resolve-pdf-export-disclaimer.ts |
+
+### 5. Validations
+
+| Gate | Resultado |
+|------|-----------|
+| tsc --noEmit | **PASS** |
+| validate:export2-pdf-toggle-unit | **PASS** (7/7) |
+| validate:visibility-unit | **PASS** (30/30) |
+| validate:export1-chart-export-unit | **PASS** (11/11) |
+| validate-pdf-export-unit | **PASS** (14/14) |
+
+### 6. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D44.2 | **10 / 10 PASS** |
+
+### 7. Resolution
+
+`	ext
+PDF TOGGLE-AWARE = IMPLEMENTED
+EXPORT-1 FLOOR = PRESERVED
+chartExport.ts = UNTOUCHED
+GRAPH = UNTOUCHED
+schemaVersion = 2
+NEXT = D44.3 — TESTING
+`
+
+### 8. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Sí** |
+| Previous sections preserved | **Sí** |
+| D44.1 / D43 unchanged | **Sí** |
+
+### 9. STATUS Integrity Declaration
+
+`	ext
+## D44.2 es APPEND-ONLY.
+BUILD COMPLETE sin alterar Freeze ni reescribir historia.
+EXPORT-2 permanece OPEN hacia D44.3 TESTING.
+PROD-3 permanece OPEN.
+`
+
+---
+
+*## D44.2 APPEND-ONLY 2026-07-18 · D44.2 COMPLETE · CA-D44.2 10/10 PASS · BUILD COMPLETE · Ready for D44.3 — TESTING.*
