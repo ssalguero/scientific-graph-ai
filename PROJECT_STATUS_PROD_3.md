@@ -1211,3 +1211,94 @@ PROD-3 permanece OPEN.
 ---
 
 *## D44.2 APPEND-ONLY 2026-07-18 · D44.2 COMPLETE · CA-D44.2 10/10 PASS · BUILD COMPLETE · Ready for D44.3 — TESTING.*
+
+## D44.3
+
+**Fecha:** 2026-07-18  
+**Microfase:** D44.3 — TESTING  
+**Estado:** **D44.3 = COMPLETE** · **CA-D44.3 = 10/10 PASS** · **TESTING = COMPLETE** · **EXPORT-2 = OPEN** · **PROD-3 = OPEN** · **READY FOR D44.4**
+
+### 1. Executive Summary
+
+Testing EXPORT-2 completado. Unit gates, harness Integration/S-E2 (27/27), compatibilidad EXPORT-1, performance de filtrado aceptable, regression PROD-2E siblings PASS. Sin hotfix.
+
+### 2. Previous State
+
+`	ext
+Previous state:
+D44.2 COMPLETE
+BUILD COMPLETE
+TESTING NOT STARTED
+`
+
+### 3. Current State
+
+`	ext
+Current state:
+D44.3 COMPLETE
+TESTING COMPLETE
+S-E2 8/8 PASS
+READY FOR D44.4 — CERTIFICATION
+`
+
+### 4. Documents / Artifacts
+
+| Ítem | Path |
+|------|------|
+| Acta | docs/D44.3-export2-testing.md |
+| Harness | scripts/validate-export2-d44-3-testing.ts |
+| npm script | alidate:export2-d44-3-testing |
+
+### 5. Validations
+
+| Gate | Resultado |
+|------|-----------|
+| tsc --noEmit | **PASS** |
+| export2-pdf-toggle-unit | **PASS** (7/7) |
+| visibility-unit | **PASS** (30/30) |
+| export1-chart-export-unit | **PASS** (11/11) |
+| pdf-export-unit | **PASS** (14/14) |
+| export1-d42-2-testing | **PASS** (20/20) |
+| export2-d44-3-testing | **PASS** (27/27) |
+| prod2e-gate governor | **PASS** (54/54) |
+| prod2e-data3b-gate | **PASS** (13/13) |
+| visual-graph-builder-unit | **PASS** (79/79) |
+| graph-curves-unit | **PASS** |
+| graph-rendering-unit | **PASS** (59/59) |
+
+### 6. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D44.3 | **10 / 10 PASS** |
+
+### 7. Resolution
+
+`	ext
+TESTING COMPLETE
+NO HOTFIX REQUIRED
+EXPORT-1 FLOOR PRESERVED
+PDF DETERMINISTIC
+NEXT = D44.4 — CERTIFICATION
+`
+
+### 8. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Sí** |
+| Previous sections preserved | **Sí** |
+| D44.2 / D44.1 unchanged | **Sí** |
+
+### 9. STATUS Integrity Declaration
+
+`	ext
+## D44.3 es APPEND-ONLY.
+TESTING COMPLETE sin alterar Freeze ni reescribir historia.
+EXPORT-2 permanece OPEN hacia D44.4 CERTIFICATION.
+PROD-3 permanece OPEN.
+`
+
+---
+
+*## D44.3 APPEND-ONLY 2026-07-18 · D44.3 COMPLETE · CA-D44.3 10/10 PASS · TESTING COMPLETE · Ready for D44.4 — CERTIFICATION.*
