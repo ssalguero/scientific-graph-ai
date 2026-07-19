@@ -1777,3 +1777,95 @@ Ready for D45.4 — Sidebar Extraction.
 ---
 
 *## D45.3 APPEND-ONLY 2026-07-18 · D45.3 COMPLETE · CA-D45.3 10/10 PASS · BUTTON+PANEL READY · Next D45.4.*
+
+## D45.4
+
+**Fecha:** 2026-07-18  
+**Microfase:** D45.4 — Sidebar Extraction  
+**Estado:** **D45.4 = COMPLETE** · **CA-D45.4 = 10/10 PASS** · **SIDEBAR EXTRACTED** · **D45 = OPEN** · **PROD-3 = OPEN**
+
+### 1. Executive Summary
+
+Sidebar extraido de `page.tsx` a `src/components/ui/sidebar`. Handlers/estado permanecen en page. `getIcon` en SidebarItem. Sin rediseño visual. Architecture + smoke + tsc PASS.
+
+### 2. Previous State
+
+```text
+Previous state:
+D45.3 = COMPLETE
+BUTTON+PANEL SYSTEM = READY
+D45 = OPEN
+```
+
+### 3. Current State
+
+```text
+Current state:
+D45.3 = COMPLETE
+D45.4 = COMPLETE
+src/components/ui/sidebar = CREATED
+page.tsx aside = EXTRACTED
+SIDEBAR EXTRACTION = READY
+D45 = OPEN
+NEXT = D45.5
+```
+
+### 4. Artifacts
+
+| Artifact | Path |
+|----------|------|
+| Sidebar module | src/components/ui/sidebar/ |
+| Architecture gate | scripts/validate-ui-sidebar-architecture.ts |
+| Smoke | scripts/validate-ui-sidebar-smoke.tsx |
+| npm scripts | validate:ui-sidebar-architecture, validate:ui-sidebar-smoke |
+| Doc | docs/D45.4-sidebar-extraction.md |
+
+### 5. Checklist
+
+| Item | Resultado |
+|------|-----------|
+| components/ui/sidebar | **PASS** |
+| Sidebar/Section/Group/Item/Footer | **PASS** |
+| page sin aside monolitico | **PASS** |
+| getIcon en SidebarItem | **PASS** |
+| Sin cambios visuales | **PASS** |
+| Sin cambios funcionales | **PASS** |
+| tsc PASS | **PASS** |
+| validate:ui-sidebar-architecture PASS | **PASS** |
+| Smoke S1 PASS | **PASS** |
+| Documentacion PASS | **PASS** |
+
+### 6. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D45.4 | **10 / 10 PASS** |
+
+### 7. Resolution
+
+```text
+D45.4 = COMPLETE
+SIDEBAR EXTRACTION = READY
+NEXT = D45.5 — Validation · Certification
+EXPORT / GRAPH FREEZES = PRESERVED
+```
+
+### 8. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Si** |
+| Previous sections preserved | **Si** |
+| D45.3 / D45.2 unchanged | **Si** |
+
+### 9. STATUS Integrity Declaration
+
+```text
+## D45.4 es APPEND-ONLY.
+Sidebar Extraction COMPLETE.
+Ready for D45.5 — Validation · Certification.
+```
+
+---
+
+*## D45.4 APPEND-ONLY 2026-07-18 · D45.4 COMPLETE · CA-D45.4 10/10 PASS · SIDEBAR EXTRACTED · Next D45.5.*

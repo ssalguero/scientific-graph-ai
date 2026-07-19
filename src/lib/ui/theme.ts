@@ -128,8 +128,21 @@ export const actionBarDivider =
 
 export const sidebarDivider = "border-t border-[var(--app-border)] my-1.5";
 
+/** Exact aside shell classes from D45.1 baseline (page.tsx). */
+export const sidebarShell =
+  "w-full lg:w-[260px] lg:max-w-[280px] xl:w-[280px] xl:max-w-[280px] lg:min-h-screen shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col transition-colors duration-200";
+
 export const sidebarSectionLabel =
   "text-[11px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
+
+export const sidebarNavItemHover =
+  "hover:bg-[var(--app-surface-muted)] text-left";
+
+export const sidebarGraphItemActive =
+  "bg-[var(--app-accent)]/10 border-[var(--app-accent)] text-[var(--app-heading)] shadow-sm ring-1 ring-[var(--app-accent)]/25 font-medium";
+
+export const sidebarGraphItemIdle =
+  "border-[var(--app-border)] text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]";
 
 export const sidebarBtnPrimary = `w-full h-8 ${actionBarBtnPrimary} text-xs sm:text-sm font-semibold min-w-0`;
 

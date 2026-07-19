@@ -148,17 +148,11 @@ import {
   regressionLegendKey,
 } from "@/components/graph/chart-rendering";
 import { createInitialProjectMetadata } from "./projectPersistence";
-import {
-  ProjectScientificFilePanel,
-  type ProjectFileFeedback,
-} from "./ProjectScientificFilePanel";
-import { LocalProjectsPanel } from "./LocalProjectsPanel";
+import { type ProjectFileFeedback } from "./ProjectScientificFilePanel";
 import { useGraphEditorProjectFile, type UseGraphEditorProjectFileParams } from "./useGraphEditorProjectFile";
 import { useProjectHistory } from "./useProjectHistory";
 import { buildProjectHistoryEntry } from "@/lib/project-history";
-import { HistoryPanel } from "@/components/project-activity";
-import { SettingsPanel } from "@/components/settings";
-import { RecentProjectsPanel } from "@/components/history";
+import { Sidebar } from "@/components/ui/sidebar";
 import { useRecentProjects } from "./useRecentProjects";
 import {
   APP_DISPLAY_VERSION,
@@ -404,7 +398,6 @@ import {
   fieldLabel,
   getAppShell,
   inputField,
-  panelHeading,
   panelHeadingSubtext,
   persistenceBadge,
   resultsCompactGrid,
@@ -415,11 +408,6 @@ import {
   resultsSubsectionCard,
   resultsTextCard,
   sectionLabel,
-  sidebarBtnPrimary,
-  sidebarBtnSecondary,
-  sidebarDivider,
-  sidebarNavItem,
-  sidebarSectionLabel,
   sidebarSoonBadge,
   subsectionCard,
   subsectionHeading,
@@ -456,51 +444,6 @@ const DATA_WORKSPACE_VIEWS: {
   { id: "advanced", label: "Avanzado" },
   { id: "visual-builder", label: "📊 Constructor Visual" },
 ];
-
-type DashboardSectionProps = {
-  title: string;
-  icon: string;
-  defaultOpen?: boolean;
-  children: ReactNode;
-};
-
-function DashboardSection({
-  title,
-  icon,
-  defaultOpen = false,
-  children,
-}: DashboardSectionProps) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <div className={sidebarDivider}>
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center gap-2 py-1 text-left text-xs font-semibold text-[var(--app-heading)] transition-all duration-200"
-        aria-expanded={open}
-      >
-        <span
-          className="w-3 text-xs text-[var(--app-text-muted)]"
-          aria-hidden
-        >
-          {open ? "▼" : "▶"}
-        </span>
-        <span aria-hidden>{icon}</span>
-        <span>{title}</span>
-      </button>
-      <div
-        className={`grid transition-all duration-200 ${
-          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
-      >
-        <div className="overflow-hidden">
-          <div className="space-y-0.5 pb-0.5 pt-0.5">{children}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 type ScientificReportSectionCollapsibleProps = {
   title: string;
@@ -925,55 +868,6 @@ const WORKSPACE_SECTION_MODULE_GATE: Partial<
 > = {
   reports: "reports",
 };
-
-type ScientificModuleCardProps = {
-  module: Omit<ScientificModule, "enabled">;
-  enabled: boolean;
-  onToggle: () => void;
-};
-
-function ScientificModuleCard({
-  module,
-  enabled,
-  onToggle,
-}: ScientificModuleCardProps) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={enabled}
-      title={module.description}
-      className={`${contentPanel} flex w-full items-center justify-between gap-2 py-1 px-2 text-left border ${
-        enabled
-          ? "border-[var(--app-accent)]/30 bg-[var(--app-accent)]/5"
-          : "border-[var(--app-border)] opacity-85 hover:opacity-100"
-      }`}
-    >
-      <span className="flex items-center gap-1.5 min-w-0">
-        <span className="text-sm leading-none shrink-0" aria-hidden>
-          {module.icon}
-        </span>
-        <span className="text-xs font-semibold text-[var(--app-heading)] truncate">
-          {module.name}
-        </span>
-        {module.badge ? (
-          <span className={sidebarSoonBadge}>
-            {getScientificModuleBadgeLabel(module.badge)}
-          </span>
-        ) : null}
-      </span>
-      <span
-        className={`shrink-0 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
-          enabled
-            ? "border border-[var(--app-accent)]/40 text-[var(--app-accent)] bg-[var(--app-accent)]/10"
-            : "border border-[var(--app-border)] text-[var(--app-text-muted)]"
-        }`}
-      >
-        {enabled ? "Activo" : "Inactivo"}
-      </span>
-    </button>
-  );
-}
 
 const getAnalysisInspectorCategory = (section: AnalysisInspectorSection) =>
   ANALYSIS_INSPECTOR_CATEGORIES.find((category) => category.id === section) ??
@@ -19690,326 +19584,132 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
   return (
     <main className={`flex min-h-screen flex-col lg:flex-row ${getAppShell(themeMode)}`}>
-      <aside className="w-full lg:w-[260px] lg:max-w-[280px] xl:w-[280px] xl:max-w-[280px] lg:min-h-screen shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col transition-colors duration-200">
-        <div className="px-3 py-2 border-b border-[var(--app-border)]">
-          <h2 className={`${panelHeading} text-sm`}>📊 Dashboard Científico</h2>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
-          <div className="space-y-1.5">
-            <p className={sidebarSectionLabel}>
-              Curvas matemáticas{" "}
-              <span className={persistenceBadge} title="Biblioteca en nube">
-                NUBE
-              </span>
-            </p>
-            <p className={dataSemanticHint}>
-              Gráfico y=f(x) en biblioteca en nube. No incluye dataset ni
-              proyecto .sgproj.
-            </p>
-            <button
-              type="button"
-              onClick={newGraph}
-              className={sidebarBtnPrimary}
-              title="Vacía el constructor de curvas. No borra datos experimentales ni proyecto."
-            >
-              + Nueva curva
-            </button>
-            <button
-              type="button"
-              onClick={clearGraph}
-              className={sidebarBtnSecondary}
-              title="Vacía las expresiones del constructor. No borra datos experimentales ni proyecto."
-            >
-              Vaciar curvas
-            </button>
-            <button
-              type="button"
-              onClick={() => setSidebarGraphLibraryOpen((open) => !open)}
-              className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left font-semibold`}
-              aria-expanded={sidebarGraphLibraryOpen}
-            >
-              <span>
-                Biblioteca ({graphs.length})
-              </span>
-              <span className="text-[10px] text-[var(--app-text-muted)]" aria-hidden>
-                {sidebarGraphLibraryOpen ? "▼" : "▶"}
-              </span>
-            </button>
-            {sidebarGraphLibraryOpen ? (
-            <div className="space-y-1 max-h-36 overflow-y-auto pr-0.5">
-              {graphs.length === 0 ? (
-                <p className="text-[11px] text-[var(--app-text-muted)] px-1">
-                  Sin gráficos guardados en nube.
-                </p>
-              ) : (
-              graphs.map((graph, index) => (
-                <button
-                  key={graph.id}
-                  onClick={() => loadGraph(graph)}
-                  className={`w-full text-left border rounded-md px-2 py-1.5 text-xs sm:text-sm transition-all duration-200 ${
-                    selectedGraphId === graph.id
-                      ? "bg-[var(--app-accent)]/10 border-[var(--app-accent)] text-[var(--app-heading)] shadow-sm ring-1 ring-[var(--app-accent)]/25 font-medium"
-                      : "border-[var(--app-border)] text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]"
-                  }`}
-                >
-                  <span className="line-clamp-2">
-                    {graphSidebarLabels[index]}
-                  </span>
-                </button>
-              ))
-              )}
-            </div>
-            ) : null}
-          </div>
-
-          <div className={sidebarDivider} />
-
-          <div className="space-y-1.5">
-            <p className={sidebarSectionLabel}>
-              Proyecto científico{" "}
-              <span className={persistenceBadge} title="Archivo de proyecto">
-                .SGPROJ
-              </span>
-            </p>
-            <p className={dataSemanticHint}>
-              Archivo .sgproj con dataset, análisis y curvas. Distinto de la
-              biblioteca de gráficos en nube.
-            </p>
-            <div
-              ref={projectPanelRef}
-              className={
-                highlightProjectPanel
-                  ? "rounded-lg ring-2 ring-[var(--app-accent)]/50 bg-[var(--app-accent)]/5 p-2 -mx-0.5 transition-all duration-300"
-                  : undefined
-              }
-            >
-              <ProjectScientificFilePanel
-                projectMetadata={projectMetadata}
-                feedback={projectFileFeedback}
-                onDismissFeedback={() => setProjectFileFeedback(null)}
-                onNewProject={handleNewProject}
-                onSaveProject={handleSaveProject}
-                onOpenProjectFile={handleOpenProjectFile}
-                onSaveLocalProject={handleSaveLocalProject}
-                onOpenLocalLibrary={openLibrary}
-                autosaveIndicator={persistenceUi.autosaveIndicator}
-                sessionConflict={persistenceUi.sessionConflict}
-                projectSizeMessage={persistenceUi.projectSize.message}
-                recoveryPrompt={
-                  recoveryPrompt
-                    ? { projectName: recoveryPrompt.projectName }
-                    : null
-                }
-                recoveryPromptMessage={persistenceUi.recoveryPromptMessage}
-                onRestoreRecovery={() => {
-                  void restoreRecoveryDraft();
-                }}
-                onDismissRecovery={dismissRecovery}
-                pendingFileOpenConflict={pendingFileOpenConflict}
-                onDismissPendingFileOpenConflict={dismissPendingFileOpenConflict}
-                onResolvePendingFileOpenConflict={(resolution) => {
-                  void resolvePendingFileOpenConflict(resolution);
-                }}
-                openProjectButtonRef={openProjectButtonRef}
-              />
-              <button
-                type="button"
-                onClick={() => setProjectActivityPanelOpen((open) => !open)}
-                className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left mt-1.5`}
-                aria-expanded={projectActivityPanelOpen}
-              >
-                <span>📋 Actividad del proyecto</span>
-                <span
-                  className="text-[10px] text-[var(--app-text-muted)]"
-                  aria-hidden
-                >
-                  {projectActivityPanelOpen ? "▼" : "▶"}
-                </span>
-              </button>
-              {projectActivityPanelOpen ? (
-                <HistoryPanel
-                  entries={projectHistoryEntries}
-                  className="mt-1"
-                />
-              ) : null}
-              <LocalProjectsPanel
-                isOpen={isLibraryOpen}
-                projects={localProjects}
-                isLoading={localProjectsLoading}
-                loadError={localProjectsLoadError}
-                activeProjectId={activeLocalProjectId}
-                onClose={closeLibrary}
-                onRefresh={() => void refreshProjects()}
-                onOpen={(id) => void handleOpenLocalProjectWithSource(id)}
-                onDelete={async (id) => {
-                  await handleDeleteLocalProject(id);
-                  await refreshProjects();
-                }}
-                onDuplicate={async (id, name) => {
-                  await handleDuplicateLocalProject(id, name);
-                  await refreshProjects();
-                }}
-                onRename={async (id, name) => {
-                  await handleRenameLocalProject(id, name);
-                  await refreshProjects();
-                }}
-                onExport={(id) => void handleExportLocalProjectSgproj(id)}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={requestResetProject}
-              className={sidebarBtnSecondary}
-              title="Reinicia la sesión completa (igual que Nuevo proyecto): datos, análisis y curvas."
-            >
-              Restablecer proyecto
-            </button>
-          </div>
-
-          <div className={sidebarDivider} />
-
-          <DashboardSection title="Módulos" icon="🧩" defaultOpen={false}>
-            <p className="text-[11px] text-[var(--app-text-muted)] mb-1">
-              Módulos activos: {activeModuleCount} de {SCIENTIFIC_MODULES.length}
-            </p>
-            <div className="space-y-1">
-              {SCIENTIFIC_MODULES.map((module) => (
-                <ScientificModuleCard
-                  key={module.id}
-                  module={module}
-                  enabled={isScientificModuleEnabled(enabledModules, module.id)}
-                  onToggle={() => toggleScientificModule(module.id)}
-                />
-              ))}
-            </div>
-          </DashboardSection>
-
-          <DashboardSection title="Herramientas" icon="🧠" defaultOpen={false}>
-            {isAssistantModuleEnabled ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveWorkspaceSection("analysis");
-                  setAnalysisInspectorSection("advisor");
-                }}
-                className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left`}
-              >
-                <span>🧠 Asistente científico</span>
-                <span className={sidebarSoonBadge}>Beta</span>
-              </button>
-            ) : (
-              <div
-                className={`${sidebarNavItem} opacity-60 cursor-not-allowed`}
-                aria-disabled
-              >
-                <span>🧠 Asistente científico</span>
-                <span className="text-xs text-[var(--app-text-muted)]">
-                  Inactivo
-                </span>
-              </div>
-            )}
-            {isReportsModuleEnabled ? (
-              <button
-                type="button"
-                onClick={() => setActiveWorkspaceSection("reports")}
-                className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left`}
-              >
-                📄 Reportes
-              </button>
-            ) : (
-              <div
-                className={`${sidebarNavItem} opacity-60 cursor-not-allowed`}
-                aria-disabled
-              >
-                <span>📄 Reportes</span>
-                <span className="text-xs text-[var(--app-text-muted)]">
-                  Inactivo
-                </span>
-              </div>
-            )}
-          </DashboardSection>
-
-          <DashboardSection title="Recursos" icon="📚" defaultOpen={false}>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveWorkspaceSection("data");
-                setControlPanelTab("library");
-              }}
-              className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left`}
-            >
-              Biblioteca de funciones
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setRecentProjectsPanelOpen((open) => {
-                  const next = !open;
-                  if (next && !recentProjectsFetchedRef.current) {
-                    recentProjectsFetchedRef.current = true;
-                    void refreshRecentProjects();
-                  }
-                  return next;
-                });
-              }}
-              className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left`}
-              aria-expanded={recentProjectsPanelOpen}
-            >
-              <span>🕘 Historial</span>
-              <span
-                className="text-[10px] text-[var(--app-text-muted)]"
-                aria-hidden
-              >
-                {recentProjectsPanelOpen ? "▼" : "▶"}
-              </span>
-            </button>
-            {recentProjectsPanelOpen ? (
-              <RecentProjectsPanel
-                projects={recentProjects}
-                isLoading={recentProjectsLoading}
-                loadError={recentProjectsLoadError}
-                activeProjectId={activeLocalProjectId}
-                onOpen={(id) => {
-                  void (async () => {
-                    await handleOpenLocalProjectWithSource(id);
-                    void refreshRecentProjects();
-                  })();
-                }}
-                onOpenLibrary={() => void openLibrary()}
-                className="mt-1"
-              />
-            ) : null}
-          </DashboardSection>
-
-          <DashboardSection title="Sistema" icon="⚙" defaultOpen>
-            <button
-              type="button"
-              onClick={() => setSettingsPanelOpen((open) => !open)}
-              className={`${sidebarNavItem} hover:bg-[var(--app-surface-muted)] text-left`}
-              aria-expanded={settingsPanelOpen}
-            >
-              <span>Configuración</span>
-              <span
-                className="text-[10px] text-[var(--app-text-muted)]"
-                aria-hidden
-              >
-                {settingsPanelOpen ? "▼" : "▶"}
-              </span>
-            </button>
-            {settingsPanelOpen ? (
-              <SettingsPanel
-                theme={themeMode}
-                showContextualHints={showContextualHints}
-                appVersion={APP_DISPLAY_VERSION}
-                onThemeChange={setThemeMode}
-                onShowContextualHintsChange={setShowContextualHints}
-                className="mt-1"
-              />
-            ) : null}
-          </DashboardSection>
-        </div>
-      </aside>
+      <Sidebar
+        onNewCurve={newGraph}
+        onClearCurves={clearGraph}
+        graphLibraryOpen={sidebarGraphLibraryOpen}
+        onToggleGraphLibrary={() =>
+          setSidebarGraphLibraryOpen((open) => !open)
+        }
+        graphs={graphs}
+        graphLabels={graphSidebarLabels}
+        selectedGraphId={selectedGraphId}
+        onLoadGraph={(graph) => loadGraph(graph)}
+        projectPanelRef={projectPanelRef}
+        highlightProjectPanel={highlightProjectPanel}
+        projectFilePanelProps={{
+          projectMetadata,
+          feedback: projectFileFeedback,
+          onDismissFeedback: () => setProjectFileFeedback(null),
+          onNewProject: handleNewProject,
+          onSaveProject: handleSaveProject,
+          onOpenProjectFile: handleOpenProjectFile,
+          onSaveLocalProject: handleSaveLocalProject,
+          onOpenLocalLibrary: openLibrary,
+          autosaveIndicator: persistenceUi.autosaveIndicator,
+          sessionConflict: persistenceUi.sessionConflict,
+          projectSizeMessage: persistenceUi.projectSize.message,
+          recoveryPrompt: recoveryPrompt
+            ? { projectName: recoveryPrompt.projectName }
+            : null,
+          recoveryPromptMessage: persistenceUi.recoveryPromptMessage,
+          onRestoreRecovery: () => {
+            void restoreRecoveryDraft();
+          },
+          onDismissRecovery: dismissRecovery,
+          pendingFileOpenConflict,
+          onDismissPendingFileOpenConflict: dismissPendingFileOpenConflict,
+          onResolvePendingFileOpenConflict: (resolution) => {
+            void resolvePendingFileOpenConflict(resolution);
+          },
+          openProjectButtonRef,
+        }}
+        projectActivityOpen={projectActivityPanelOpen}
+        onToggleProjectActivity={() =>
+          setProjectActivityPanelOpen((open) => !open)
+        }
+        projectHistoryEntries={projectHistoryEntries}
+        localProjectsPanelProps={{
+          isOpen: isLibraryOpen,
+          projects: localProjects,
+          isLoading: localProjectsLoading,
+          loadError: localProjectsLoadError,
+          activeProjectId: activeLocalProjectId,
+          onClose: closeLibrary,
+          onRefresh: () => void refreshProjects(),
+          onOpen: (id) => void handleOpenLocalProjectWithSource(id),
+          onDelete: async (id) => {
+            await handleDeleteLocalProject(id);
+            await refreshProjects();
+          },
+          onDuplicate: async (id, name) => {
+            await handleDuplicateLocalProject(id, name);
+            await refreshProjects();
+          },
+          onRename: async (id, name) => {
+            await handleRenameLocalProject(id, name);
+            await refreshProjects();
+          },
+          onExport: (id) => void handleExportLocalProjectSgproj(id),
+        }}
+        onResetProject={requestResetProject}
+        modules={SCIENTIFIC_MODULES.map((module) => ({
+          id: module.id,
+          name: module.name,
+          description: module.description,
+          enabled: isScientificModuleEnabled(enabledModules, module.id),
+          badgeLabel: module.badge
+            ? getScientificModuleBadgeLabel(module.badge)
+            : undefined,
+          onToggle: () => toggleScientificModule(module.id),
+        }))}
+        activeModuleCount={activeModuleCount}
+        modulesTotal={SCIENTIFIC_MODULES.length}
+        isAssistantEnabled={isAssistantModuleEnabled}
+        isReportsEnabled={isReportsModuleEnabled}
+        onOpenAssistant={() => {
+          setActiveWorkspaceSection("analysis");
+          setAnalysisInspectorSection("advisor");
+        }}
+        onOpenReports={() => setActiveWorkspaceSection("reports")}
+        onOpenFunctionLibrary={() => {
+          setActiveWorkspaceSection("data");
+          setControlPanelTab("library");
+        }}
+        recentProjectsOpen={recentProjectsPanelOpen}
+        onToggleRecentProjects={() => {
+          setRecentProjectsPanelOpen((open) => {
+            const next = !open;
+            if (next && !recentProjectsFetchedRef.current) {
+              recentProjectsFetchedRef.current = true;
+              void refreshRecentProjects();
+            }
+            return next;
+          });
+        }}
+        recentProjectsPanelProps={{
+          projects: recentProjects,
+          isLoading: recentProjectsLoading,
+          loadError: recentProjectsLoadError,
+          activeProjectId: activeLocalProjectId,
+          onOpen: (id) => {
+            void (async () => {
+              await handleOpenLocalProjectWithSource(id);
+              void refreshRecentProjects();
+            })();
+          },
+          onOpenLibrary: () => void openLibrary(),
+        }}
+        settingsOpen={settingsPanelOpen}
+        onToggleSettings={() => setSettingsPanelOpen((open) => !open)}
+        settingsPanelProps={{
+          theme: themeMode,
+          showContextualHints,
+          appVersion: APP_DISPLAY_VERSION,
+          onThemeChange: setThemeMode,
+          onShowContextualHintsChange: setShowContextualHints,
+        }}
+      />
 
       <div className="flex-1 min-w-0 overflow-auto">
         <div className="w-full px-3 sm:px-4 lg:px-5 xl:px-6 py-2.5 sm:py-3 space-y-3">

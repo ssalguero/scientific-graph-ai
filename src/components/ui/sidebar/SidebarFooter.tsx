@@ -1,0 +1,6 @@
+import { mergeClassNames } from "../classNames";
+import type { SidebarFooterProps } from "./types";
+
+export function SidebarFooter({ children, className }: SidebarFooterProps) {
+  return <div className={mergeClassNames(className)}>{children}</div>;
+}
