@@ -2098,3 +2098,62 @@ D46 CLOSED · Sidebar v2 CERTIFIED · Next D47.
 ---
 
 *## D46.5 APPEND-ONLY 2026-07-19 · D46.5 COMPLETE · CA-D46 6/6 PASS · D46 CLOSED · Sidebar v2 CERTIFIED · Next D47 — Design Tokens v2.*
+
+---
+
+## D47.1
+
+**Microfase:** D47.1 — Workspace & Layout Foundation · Discovery  
+**Fecha:** 2026-07-19  
+**Estado:** **DISCOVERY COMPLETE** · **LAYOUT BASELINE = FROZEN** · **Workspace API Freeze = RECORDED**  
+**Modo:** Documental only — create `docs/D47.1-layout-discovery.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se congela la arquitectura actual del shell (`page.tsx` LOC **26672**) antes de la extracción move-only del Workspace. Se registra la **resecuenciación oficial**: D47 = Workspace & Layout Foundation; Design Tokens v2 pasa a **D48**. Workspace API Freeze, Slot API, move-only contract, governance preview y roadmap D48–D52 quedan documentados sin implementación.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D47.1-layout-discovery.md`](docs/D47.1-layout-discovery.md) |
+| `page.tsx` LOC baseline | **26672** |
+| `src/components/workspace/` | No existe (esperado) |
+| API Freeze | `WorkspaceLayoutProps` · `WorkspaceContentProps` · `WorkspacePanelsProps` · `WORKSPACE_TOKENS` |
+| Breaking changes en D47 | **No permitted** |
+| CA-D47.1 | **10/10 PASS** |
+
+### Resecuenciación
+
+```text
+D46.5 NEXT (historico) = D47 Design Tokens v2
+D47.1 SUPERSEDES -> D47 = Workspace & Layout Foundation
+D48 = Design Tokens v2
+```
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Discovery doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| API Freeze documentado | **PASS** |
+| Move-only contract documentado | **PASS** |
+| Slot API documentada | **PASS** |
+| Governance preview documentado | **PASS** |
+| Baseline congelada | **PASS** |
+| Roadmap D48–D52 documentado | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+
+### Resolucion
+
+```text
+D47.1 = COMPLETE
+DISCOVERY COMPLETE
+LAYOUT BASELINE = FROZEN
+Workspace API Freeze = RECORDED
+NO SRC CHANGES
+NEXT = D47.2 — Workspace Domain Extraction
+```
+
+---
+
+*## D47.1 APPEND-ONLY 2026-07-19 · D47.1 COMPLETE · CA-D47.1 10/10 PASS · LAYOUT BASELINE FROZEN · Next D47.2 Workspace Domain Extraction.*
