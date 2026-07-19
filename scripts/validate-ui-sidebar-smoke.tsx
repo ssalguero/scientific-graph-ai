@@ -1,5 +1,6 @@
 /**
- * D45.4 smoke — S1 Sidebar renders with stub props (SSR markup).
+ * D45.4 / D46.1 smoke — S1 Sidebar renders with stub props (SSR markup).
+ * D46.1: expects rename 1:1 section labels (Visualización, Proyecto, …).
  */
 import { createRef } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -100,8 +101,19 @@ const checks = {
   rendersAside: markup.includes("<aside"),
   dashboardTitle: markup.includes("Dashboard Científico"),
   newCurve: markup.includes("Nueva curva"),
-  modules: markup.includes("Módulos"),
-  settings: markup.includes("Sistema"),
+  labelVisualization: markup.includes("Visualización"),
+  labelProject: markup.includes("Proyecto"),
+  labelScientific: markup.includes("Científico"),
+  labelAnalysis: markup.includes("Análisis"),
+  labelResources: markup.includes("Recursos"),
+  labelSettings: markup.includes("Ajustes"),
+  noLegacyCurvas: !markup.includes("Curvas matemáticas"),
+  noLegacyProyectoCientifico: !markup.includes("Proyecto científico"),
+  // Section title "Módulos" removed; copy "Módulos activos:" may remain.
+  noLegacyModulosTitle:
+    !markup.includes(">Módulos</") && !markup.includes(">Módulos<"),
+  noLegacyHerramientas: !markup.includes("Herramientas"),
+  noLegacySistema: !markup.includes("Sistema"),
   noIconLib: !markup.includes("lucide"),
 };
 

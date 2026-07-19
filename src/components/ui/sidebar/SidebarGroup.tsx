@@ -2,6 +2,7 @@ import {
   dataSemanticHint,
   persistenceBadge,
   sidebarSectionLabel,
+  sidebarSectionSpacing,
 } from "@/lib/ui/theme";
 import { mergeClassNames } from "../classNames";
 import type { SidebarGroupProps } from "./types";
@@ -47,7 +48,7 @@ export function SidebarGroup({
   hint,
 }: SidebarGroupProps) {
   return (
-    <div className={mergeClassNames("space-y-1.5", className)}>
+    <div className={mergeClassNames(sidebarSectionSpacing, className)}>
       {label}
       {hint}
       {children}

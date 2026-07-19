@@ -126,11 +126,33 @@ export const actionBarGroup = "flex flex-wrap items-center gap-2";
 export const actionBarDivider =
   "hidden sm:block h-7 w-px shrink-0 bg-[var(--app-border)]";
 
-export const sidebarDivider = "border-t border-[var(--app-border)] my-1.5";
+/** Divider between major sidebar blocks — border via --app-border only. */
+export const sidebarDivider = "border-t border-[var(--app-border)] my-2";
 
 /** Exact aside shell classes from D45.1 baseline (page.tsx). */
 export const sidebarShell =
   "w-full lg:w-[260px] lg:max-w-[280px] xl:w-[280px] xl:max-w-[280px] lg:min-h-screen shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col transition-colors duration-200";
+
+/** Sidebar chrome header (title row). */
+export const sidebarHeader =
+  "px-3 py-2.5 border-b border-[var(--app-border)]";
+
+/**
+ * Scroll body: consistent padding + gap between major sections/groups.
+ * D46.1 hierarchy — components must use this instead of ad-hoc space-y.
+ */
+export const sidebarSectionGap =
+  "flex-1 overflow-y-auto px-3 py-2.5 space-y-2.5";
+
+/** Inner vertical rhythm inside a group or section content stack. */
+export const sidebarSectionSpacing = "space-y-1.5";
+
+/** Accordion / section title button — uppercase + tracking via theme. */
+export const sidebarSectionHeader =
+  "flex w-full items-center gap-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider text-[var(--app-heading)] transition-all duration-200";
+
+/** Content pad under an open section header. */
+export const sidebarSectionBody = "space-y-0.5 pb-1 pt-0.5";
 
 export const sidebarSectionLabel =
   "text-[11px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";

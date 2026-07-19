@@ -3,13 +3,18 @@
 import { useState } from "react";
 
 import { getIcon } from "@/lib/ui/icons";
-import { sidebarDivider } from "@/lib/ui/theme";
+import {
+  sidebarDivider,
+  sidebarSectionBody,
+  sidebarSectionHeader,
+} from "@/lib/ui/theme";
 import { mergeClassNames } from "../classNames";
 import type { SidebarSectionProps } from "./types";
 
 /**
  * Collapsible sidebar section — visual/behavior parity with former DashboardSection.
  * SectionTitle (D45.3) is not used here: it would change heading level/look.
+ * D46.1: title chrome via theme helpers (spacing / uppercase / tracking).
  */
 export function SidebarSection({
   title,
@@ -32,7 +37,7 @@ export function SidebarSection({
             setUncontrolledOpen((current) => !current);
           }
         }}
-        className="flex w-full items-center gap-2 py-1 text-left text-xs font-semibold text-[var(--app-heading)] transition-all duration-200"
+        className={sidebarSectionHeader}
         aria-expanded={open}
       >
         <span
@@ -50,7 +55,7 @@ export function SidebarSection({
         }`}
       >
         <div className="overflow-hidden">
-          <div className="space-y-0.5 pb-0.5 pt-0.5">{children}</div>
+          <div className={sidebarSectionBody}>{children}</div>
         </div>
       </div>
     </div>

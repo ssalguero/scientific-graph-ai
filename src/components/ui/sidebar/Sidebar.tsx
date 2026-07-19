@@ -14,6 +14,8 @@ import {
   sidebarDivider,
   sidebarGraphItemActive,
   sidebarGraphItemIdle,
+  sidebarHeader,
+  sidebarSectionGap,
   sidebarShell,
   sidebarSoonBadge,
 } from "@/lib/ui/theme";
@@ -111,17 +113,17 @@ export function Sidebar({
 }: SidebarProps) {
   return (
     <aside className={mergeClassNames(sidebarShell, className)}>
-      <div className="px-3 py-2 border-b border-[var(--app-border)]">
+      <div className={sidebarHeader}>
         <h2 className={`${panelHeading} text-sm`}>
           {getIcon("dashboard")} Dashboard Científico
         </h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+      <div className={sidebarSectionGap}>
         <SidebarGroup
           label={
             <SidebarGroupLabel badge="NUBE" badgeTitle="Biblioteca en nube">
-              Curvas matemáticas
+              Visualización
             </SidebarGroupLabel>
           }
           hint={
@@ -185,7 +187,7 @@ export function Sidebar({
         <SidebarGroup
           label={
             <SidebarGroupLabel badge=".SGPROJ" badgeTitle="Archivo de proyecto">
-              Proyecto científico
+              Proyecto
             </SidebarGroupLabel>
           }
           hint={
@@ -232,7 +234,7 @@ export function Sidebar({
 
         <div className={sidebarDivider} />
 
-        <SidebarSection title="Módulos" icon="modules" defaultOpen={false}>
+        <SidebarSection title="Científico" icon="modules" defaultOpen={false}>
           <p className="text-[11px] text-[var(--app-text-muted)] mb-1">
             Módulos activos: {activeModuleCount} de {modulesTotal}
           </p>
@@ -243,7 +245,7 @@ export function Sidebar({
           </div>
         </SidebarSection>
 
-        <SidebarSection title="Herramientas" icon="advisor" defaultOpen={false}>
+        <SidebarSection title="Análisis" icon="advisor" defaultOpen={false}>
           {isAssistantEnabled ? (
             <SidebarItem
               icon="advisor"
@@ -283,7 +285,7 @@ export function Sidebar({
         </SidebarSection>
 
         <SidebarFooter>
-          <SidebarSection title="Sistema" icon="settings" defaultOpen>
+          <SidebarSection title="Ajustes" icon="settings" defaultOpen>
             <SidebarItem
               label="Configuración"
               onClick={onToggleSettings}
