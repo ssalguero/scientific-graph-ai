@@ -1869,3 +1869,113 @@ Ready for D45.5 — Validation · Certification.
 ---
 
 *## D45.4 APPEND-ONLY 2026-07-18 · D45.4 COMPLETE · CA-D45.4 10/10 PASS · SIDEBAR EXTRACTED · Next D45.5.*
+
+## D45.5
+
+**Fecha:** 2026-07-19  
+**Microfase:** D45.5 — Validation · Certification · Release Gate  
+**Estado:** **D45.5 = COMPLETE** · **CA-D45.5 = 10/10 PASS** · **D45 = CLOSED** · **v1.1 UI Foundation = READY** · **PROD-3 = OPEN**
+
+### 1. Executive Summary
+
+Serie D45 certificada. Umbrella `validate:v11-d45-gate` PASS (architecture, smokes, tsc, next build). Infraestructura UI modular READY. Sin cambios de producto en D45.5. NEXT = D46 Sidebar Visual Refresh.
+
+### 2. Previous State
+
+```text
+Previous state:
+D45.4 = COMPLETE
+SIDEBAR EXTRACTION = READY
+D45 = OPEN
+```
+
+### 3. Current State
+
+```text
+Current state:
+D45.1..D45.5 = COMPLETE
+D45 = CLOSED
+v1.1 UI Foundation = READY
+validate:v11-d45-gate = PASS
+PROD-3 = OPEN
+NEXT = D46 — Sidebar Visual Refresh
+```
+
+### 4. Artifacts
+
+| Artifact | Path |
+|----------|------|
+| Umbrella gate | scripts/validate-v11-d45-gate.ts |
+| UI architecture gate | scripts/validate-ui-architecture.ts |
+| npm scripts | validate:ui-architecture, validate:v11-d45-gate |
+| Certification | docs/D45.5-ui-foundation-certification.md |
+
+### 5. Gate Rollup
+
+| Gate | Resultado |
+|------|-----------|
+| validate:ui-architecture | **PASS** |
+| validate:ui-button-panel-smoke | **PASS** |
+| validate:ui-sidebar-architecture | **PASS** |
+| validate:ui-sidebar-smoke | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| validate:v11-d45-gate | **PASS** |
+
+### 6. Metrics (record)
+
+| Metric | Baseline D45.1 | Final D45.5 |
+|--------|----------------|-------------|
+| LOC page.tsx | 27017 | 26673 (approx -344) |
+| inline aside | 320 LOC | removed |
+| src/lib/ui | absent | 4 modules |
+| ui buttons/layout/sidebar | absent | present |
+
+### 7. Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Umbrella gate implementado | **PASS** |
+| Todas las validaciones PASS | **PASS** |
+| Documentacion certificacion | **PASS** |
+| Metricas consolidadas | **PASS** |
+| Evidencias no regresion | **PASS** |
+| STATUS append-only | **PASS** |
+| D45 CLOSED | **PASS** |
+| v1.1 UI Foundation READY | **PASS** |
+
+### 8. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D45.5 | **10 / 10 PASS** |
+
+### 9. Resolution
+
+```text
+D45 = CLOSED
+v1.1 UI Foundation = READY
+NEXT = D46 — Sidebar Visual Refresh
+EXPORT / GRAPH FREEZES = PRESERVED
+PROD-3 = OPEN
+```
+
+### 10. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Si** |
+| Previous sections preserved | **Si** |
+| D45.4 / D45.* unchanged | **Si** |
+
+### 11. STATUS Integrity Declaration
+
+```text
+## D45.5 es APPEND-ONLY.
+Validation · Certification COMPLETE.
+D45 CLOSED · v1.1 UI Foundation READY · Next D46.
+```
+
+---
+
+*## D45.5 APPEND-ONLY 2026-07-19 · D45.5 COMPLETE · CA-D45.5 10/10 PASS · D45 CLOSED · v1.1 UI Foundation READY · Next D46 — Sidebar Visual Refresh.*
