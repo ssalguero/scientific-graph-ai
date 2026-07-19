@@ -154,7 +154,7 @@ export function Sidebar({
             onClick={onToggleGraphLibrary}
             showCaret
             expanded={graphLibraryOpen}
-            className="font-semibold"
+            active={graphLibraryOpen}
           />
           {graphLibraryOpen ? (
             <div className="space-y-1 max-h-36 overflow-y-auto pr-0.5">
@@ -212,6 +212,7 @@ export function Sidebar({
               onClick={onToggleProjectActivity}
               showCaret
               expanded={projectActivityOpen}
+              active={projectActivityOpen}
               className="mt-1.5"
             />
             {projectActivityOpen ? (
@@ -278,6 +279,7 @@ export function Sidebar({
             onClick={onToggleRecentProjects}
             showCaret
             expanded={recentProjectsOpen}
+            active={recentProjectsOpen}
           />
           {recentProjectsOpen ? (
             <RecentProjectsPanel {...recentProjectsPanelProps} className="mt-1" />
@@ -291,6 +293,7 @@ export function Sidebar({
               onClick={onToggleSettings}
               showCaret
               expanded={settingsOpen}
+              active={settingsOpen}
             />
             {settingsOpen ? (
               <SettingsPanel {...settingsPanelProps} className="mt-1" />

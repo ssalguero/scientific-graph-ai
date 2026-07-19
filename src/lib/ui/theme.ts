@@ -1,9 +1,12 @@
 /**
  * D45 Theme — single source of truth for reusable visual class strings.
  * Strings are copied verbatim from page.tsx / projectFileUiStyles.ts (D45.1 baseline).
+ * D46.2: sidebar nav state helpers (active/hover/pressed/disabled) via --app-* only.
  */
 
 import type { ThemeMode } from "@/lib/app-preferences";
+
+import { animation } from "./tokens";
 
 export const appShellLight =
   "bg-slate-50 text-[var(--app-text)] transition-colors duration-200 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-text-muted:#64748b] [--app-heading:#0f172a] [--app-accent:#2563eb] [--app-success:#16a34a] [--app-warning:#d97706] [--app-danger:#dc2626] [--app-success-bg:#dcfce7] [--app-success-text:#166534] [--app-info-bg:#fef3c7] [--app-info-text:#92400e] [--app-danger-bg:#fef2f2] [--app-danger-border:#fecaca] [--app-danger-text:#b91c1c] [--app-warning-bg:#fffbeb] [--app-warning-border:#fde68a] [--app-warning-text:#92400e] [--app-toggle-track:#e2e8f0] [--app-toggle-thumb:#ffffff]";
@@ -157,8 +160,24 @@ export const sidebarSectionBody = "space-y-0.5 pb-1 pt-0.5";
 export const sidebarSectionLabel =
   "text-[11px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
 
+/** Idle nav row — focus ring via --app-accent. */
+export const sidebarNavItem =
+  "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs sm:text-sm text-[var(--app-text)] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30";
+
+/** Hover — surface muted only (--app-*). */
 export const sidebarNavItemHover =
-  "hover:bg-[var(--app-surface-muted)] text-left";
+  "hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-heading)]";
+
+/** Active — open panel / selected nav signal (visual only). */
+export const sidebarNavItemActive =
+  "bg-[var(--app-accent)]/10 text-[var(--app-heading)] font-semibold ring-1 ring-inset ring-[var(--app-accent)]/25";
+
+/** Pressed — existing animation token (no new motion). */
+export const sidebarNavItemPressed = animation.activeScale;
+
+/** Disabled — centralized; keep interactive affordance off. */
+export const sidebarNavItemDisabled =
+  "opacity-60 cursor-not-allowed text-[var(--app-text-muted)] hover:bg-transparent hover:text-[var(--app-text-muted)]";
 
 export const sidebarGraphItemActive =
   "bg-[var(--app-accent)]/10 border-[var(--app-accent)] text-[var(--app-heading)] shadow-sm ring-1 ring-[var(--app-accent)]/25 font-medium";
@@ -169,9 +188,6 @@ export const sidebarGraphItemIdle =
 export const sidebarBtnPrimary = `w-full h-8 ${actionBarBtnPrimary} text-xs sm:text-sm font-semibold min-w-0`;
 
 export const sidebarBtnSecondary = `w-full h-8 ${btnOutline} text-xs sm:text-sm font-medium min-w-0`;
-
-export const sidebarNavItem =
-  "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs sm:text-sm text-[var(--app-text)] transition-all duration-200";
 
 export const sidebarSoonBadge =
   "inline-flex shrink-0 items-center rounded-full border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]";

@@ -3,7 +3,10 @@
 import { getIcon } from "@/lib/ui/icons";
 import {
   sidebarNavItem,
+  sidebarNavItemActive,
+  sidebarNavItemDisabled,
   sidebarNavItemHover,
+  sidebarNavItemPressed,
 } from "@/lib/ui/theme";
 import { mergeClassNames } from "../classNames";
 import type { SidebarItemProps } from "./types";
@@ -28,8 +31,9 @@ export function SidebarItem({
   const classNames = mergeClassNames(
     sidebarNavItem,
     !disabled && sidebarNavItemHover,
-    disabled && "opacity-60 cursor-not-allowed",
-    active && "font-semibold",
+    !disabled && sidebarNavItemPressed,
+    disabled && sidebarNavItemDisabled,
+    active && sidebarNavItemActive,
     className
   );
 
@@ -60,7 +64,7 @@ export function SidebarItem({
 
   if (disabled) {
     return (
-      <div className={classNames} aria-disabled title={title}>
+      <div className={classNames} aria-disabled={true} title={title}>
         {content}
       </div>
     );
@@ -73,6 +77,7 @@ export function SidebarItem({
       className={classNames}
       title={title}
       aria-expanded={showCaret ? expanded : undefined}
+      aria-current={active ? "true" : undefined}
     >
       {content}
     </button>
