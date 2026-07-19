@@ -1979,3 +1979,122 @@ D45 CLOSED · v1.1 UI Foundation READY · Next D46.
 ---
 
 *## D45.5 APPEND-ONLY 2026-07-19 · D45.5 COMPLETE · CA-D45.5 10/10 PASS · D45 CLOSED · v1.1 UI Foundation READY · Next D46 — Sidebar Visual Refresh.*
+
+## D46.5
+
+**Fecha:** 2026-07-19  
+**Microfase:** D46.5 — Validation · Certification · Release Gate  
+**Estado:** **D46.5 = COMPLETE** · **CA-D46 = 6/6 PASS** · **D46 = CLOSED** · **Sidebar v2 = CERTIFIED** · **PROD-3 = OPEN**
+
+### 1. Executive Summary
+
+Serie D46 certificada. Umbrella `validate:v11-d46-gate` PASS (architecture, sidebar-v2, smokes, tsc, next build). Sidebar v2 CERTIFIED. Sin nuevas features de producto en D46.5. NEXT = D47 Design Tokens v2.
+
+### 2. Previous State
+
+```text
+Previous state:
+D46.0..D46.4 = COMPLETE
+D46 = OPEN
+D45 = CLOSED
+```
+
+### 3. Current State
+
+```text
+Current state:
+D46.0..D46.5 = COMPLETE
+D46 = CLOSED
+Sidebar v2 = CERTIFIED
+validate:v11-d46-gate = PASS
+CA-D46 = 6/6 PASS
+PROD-3 = OPEN
+NEXT = D47 — Design Tokens v2
+```
+
+### 4. Artifacts
+
+| Artifact | Path |
+|----------|------|
+| Plan freeze | docs/D46.0-sidebar-v2-plan.md |
+| Sidebar v2 gate | scripts/validate-sidebar-v2.ts |
+| Umbrella gate | scripts/validate-v11-d46-gate.ts |
+| npm scripts | validate:sidebar-v2, validate:v11-d46-gate |
+| Certification | docs/D46.5-certification.md |
+
+### 5. Gate Rollup
+
+| Gate | Resultado |
+|------|-----------|
+| validate:ui-architecture | **PASS** |
+| validate:ui-sidebar-architecture | **PASS** |
+| validate:ui-sidebar-smoke | **PASS** |
+| validate:sidebar-v2 | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| validate:v11-d46-gate | **PASS** |
+
+### 6. Smoke Tests
+
+| ID | Resultado |
+|----|-----------|
+| S1 Expand | **PASS** |
+| S2 Collapse | **PASS** |
+| S3 Navigation | **PASS** |
+| S4 Hover | **PASS** |
+| S5 Keyboard | **PASS** |
+| S6 Desktop | **PASS** |
+| S7 Tablet | **PASS** |
+| S8 Mobile Overlay | **PASS** |
+| S9 Build | **PASS** |
+| S10 Regression | **PASS** |
+
+### 7. Checklist
+
+| Item | Resultado |
+|------|-----------|
+| validate-sidebar-v2 PASS | **PASS** |
+| Umbrella gate PASS | **PASS** |
+| Build + tsc PASS | **PASS** |
+| Documentacion certificacion | **PASS** |
+| STATUS append-only | **PASS** |
+| D46 CLOSED / Sidebar v2 CERTIFIED | **PASS** |
+
+### 8. CA
+
+| Rollup | Resultado |
+|--------|-----------|
+| CA-D46 | **6 / 6 PASS** |
+
+### 9. Resolution
+
+```text
+D46 = CLOSED
+Sidebar v2 = CERTIFIED
+CA-D46 = PASS
+Checklist = 6/6
+NEXT = D47 — Design Tokens v2
+EXPORT / GRAPH FREEZES = PRESERVED
+PROD-3 = OPEN
+UI Foundation v1.1 continues toward D47
+```
+
+### 10. Append Integrity
+
+| Regla | Cumplimiento |
+|-------|--------------|
+| Append-only al EOF | **Si** |
+| Previous sections preserved | **Si** |
+| D45.* / D46.0 unchanged | **Si** |
+
+### 11. STATUS Integrity Declaration
+
+```text
+## D46.5 es APPEND-ONLY.
+Validation · Certification COMPLETE.
+D46 CLOSED · Sidebar v2 CERTIFIED · Next D47.
+```
+
+---
+
+*## D46.5 APPEND-ONLY 2026-07-19 · D46.5 COMPLETE · CA-D46 6/6 PASS · D46 CLOSED · Sidebar v2 CERTIFIED · Next D47 — Design Tokens v2.*
