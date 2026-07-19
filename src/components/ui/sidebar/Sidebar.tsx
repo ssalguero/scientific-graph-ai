@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import { HistoryPanel } from "@/components/project-activity";
 import { RecentProjectsPanel } from "@/components/history";
@@ -18,6 +23,10 @@ import {
   sidebarGraphItemActive,
   sidebarGraphItemIdle,
   sidebarHeader,
+  sidebarMobileTrigger,
+  sidebarOverlayBackdrop,
+  sidebarOverlayClosed,
+  sidebarOverlayOpen,
   sidebarRailHide,
   sidebarRailSectionWrap,
   sidebarSectionGap,
@@ -25,6 +34,7 @@ import {
   sidebarShellCollapsed,
   sidebarShellExpanded,
   sidebarSoonBadge,
+  sidebarWidthDesktop,
 } from "@/lib/ui/theme";
 import { mergeClassNames } from "../classNames";
 import { SidebarFooter } from "./SidebarFooter";
@@ -46,6 +56,9 @@ type SidebarChromeProps = {
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
 };
+
+/** Below `lg` — mobile drawer viewport (matches theme shells). */
+const SIDEBAR_MOBILE_MQ = "(max-width: 1023px)";
 
 const MODULE_ICON_BY_ID: Record<string, UiIconName> = {
   basic: "visualization",
@@ -152,6 +165,12 @@ export function Sidebar({
   onCollapsedChange,
 }: SidebarProps & SidebarChromeProps) {
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const asideRef = useRef<HTMLElement>(null);
+  const overlayWasOpenRef = useRef(false);
+
   const railCollapsed = collapsedProp ?? uncontrolledCollapsed;
 
   const setRailCollapsed = (next: boolean) => {
@@ -161,24 +180,106 @@ export function Sidebar({
     }
   };
 
-  const shell = railCollapsed ? sidebarShellCollapsed : sidebarShellExpanded;
-  const bodyGap = railCollapsed
+  const closeOverlay = () => setOverlayOpen(false);
+  const openOverlay = () => setOverlayOpen(true);
+
+  useEffect(() => {
+    const media = window.matchMedia(SIDEBAR_MOBILE_MQ);
+    const sync = () => {
+      const mobile = media.matches;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setOverlayOpen(false);
+      }
+    };
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile || !overlayOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeOverlay();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isMobile, overlayOpen]);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    if (overlayOpen) {
+      overlayWasOpenRef.current = true;
+      const focusTarget =
+        asideRef.current?.querySelector<HTMLElement>(
+          "[data-sidebar-focus-target]"
+        ) ?? asideRef.current?.querySelector<HTMLElement>("button");
+      focusTarget?.focus();
+      return;
+    }
+    if (overlayWasOpenRef.current) {
+      overlayWasOpenRef.current = false;
+      triggerRef.current?.focus();
+    }
+  }, [overlayOpen, isMobile]);
+
+  /** Mobile drawer always expanded; rail only on lg+. */
+  const effectiveRailCollapsed = isMobile ? false : railCollapsed;
+
+  const shell = isMobile
+    ? overlayOpen
+      ? mergeClassNames(sidebarOverlayOpen, sidebarWidthDesktop)
+      : sidebarOverlayClosed
+    : effectiveRailCollapsed
+      ? sidebarShellCollapsed
+      : sidebarShellExpanded;
+
+  const bodyGap = effectiveRailCollapsed
     ? sidebarSectionGapCollapsed
     : sidebarSectionGap;
 
   return (
-    <SidebarRailCollapsedContext.Provider value={railCollapsed}>
+    <SidebarRailCollapsedContext.Provider value={effectiveRailCollapsed}>
+      {isMobile && !overlayOpen ? (
+        <button
+          ref={triggerRef}
+          type="button"
+          className={sidebarMobileTrigger}
+          aria-label="Abrir barra lateral"
+          aria-expanded={false}
+          aria-controls="app-sidebar"
+          onClick={openOverlay}
+        >
+          <span aria-hidden>{getIcon("dashboard")}</span>
+        </button>
+      ) : null}
+
+      {isMobile && overlayOpen ? (
+        <div
+          className={sidebarOverlayBackdrop}
+          aria-hidden
+          onClick={closeOverlay}
+        />
+      ) : null}
+
       <aside
+        ref={asideRef}
+        id="app-sidebar"
         className={mergeClassNames(shell, className)}
-        data-rail={railCollapsed ? "collapsed" : "expanded"}
+        data-rail={effectiveRailCollapsed ? "collapsed" : "expanded"}
+        data-mobile-overlay={isMobile && overlayOpen ? "open" : undefined}
+        aria-hidden={isMobile && !overlayOpen ? true : undefined}
       >
         <div
           className={mergeClassNames(
             sidebarHeader,
-            railCollapsed && "flex-col px-1.5 justify-center"
+            effectiveRailCollapsed && "flex-col px-1.5 justify-center"
           )}
         >
-          {railCollapsed ? (
+          {effectiveRailCollapsed ? (
             <span
               className="text-sm leading-none"
               aria-hidden
@@ -191,21 +292,35 @@ export function Sidebar({
               {getIcon("dashboard")} Dashboard Científico
             </h2>
           )}
-          <button
-            type="button"
-            className={sidebarCollapseToggle}
-            aria-label={
-              railCollapsed
-                ? "Expandir barra lateral"
-                : "Colapsar barra lateral"
-            }
-            aria-pressed={railCollapsed}
-            onClick={() => setRailCollapsed(!railCollapsed)}
-          >
-            <span aria-hidden>
-              {railCollapsed ? getIcon("expand") : getIcon("collapse")}
-            </span>
-          </button>
+          {isMobile ? (
+            <button
+              type="button"
+              data-sidebar-focus-target
+              className={sidebarCollapseToggle}
+              aria-label="Cerrar barra lateral"
+              onClick={closeOverlay}
+            >
+              <span aria-hidden>{getIcon("collapse")}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={sidebarCollapseToggle}
+              aria-label={
+                effectiveRailCollapsed
+                  ? "Expandir barra lateral"
+                  : "Colapsar barra lateral"
+              }
+              aria-pressed={effectiveRailCollapsed}
+              onClick={() => setRailCollapsed(!effectiveRailCollapsed)}
+            >
+              <span aria-hidden>
+                {effectiveRailCollapsed
+                  ? getIcon("expand")
+                  : getIcon("collapse")}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className={bodyGap}>
@@ -233,7 +348,7 @@ export function Sidebar({
               title="Vacía el constructor de curvas. No borra datos experimentales ni proyecto."
               aria-label="Nueva curva"
             >
-              {railCollapsed ? getIcon("add") : "+ Nueva curva"}
+              {effectiveRailCollapsed ? getIcon("add") : "+ Nueva curva"}
             </button>
             <button
               type="button"
@@ -242,7 +357,7 @@ export function Sidebar({
               title="Vacía las expresiones del constructor. No borra datos experimentales ni proyecto."
               aria-label="Vaciar curvas"
             >
-              {railCollapsed ? getIcon("remove") : "Vaciar curvas"}
+              {effectiveRailCollapsed ? getIcon("remove") : "Vaciar curvas"}
             </button>
             <SidebarItem
               icon="library"
@@ -252,7 +367,7 @@ export function Sidebar({
               expanded={graphLibraryOpen}
               active={graphLibraryOpen}
             />
-            {graphLibraryOpen && !railCollapsed ? (
+            {graphLibraryOpen && !effectiveRailCollapsed ? (
               <div className="space-y-1 max-h-36 overflow-y-auto pr-0.5">
                 {graphs.length === 0 ? (
                   <p className="text-[11px] text-[var(--app-text-muted)] px-1">
@@ -303,12 +418,12 @@ export function Sidebar({
             <div
               ref={projectPanelRef}
               className={
-                highlightProjectPanel && !railCollapsed
+                highlightProjectPanel && !effectiveRailCollapsed
                   ? "rounded-lg ring-2 ring-[var(--app-accent)]/50 bg-[var(--app-accent)]/5 p-2 -mx-0.5 transition-all duration-300"
                   : undefined
               }
             >
-              {!railCollapsed ? (
+              {!effectiveRailCollapsed ? (
                 <ProjectScientificFilePanel {...projectFilePanelProps} />
               ) : null}
               <SidebarItem
@@ -318,15 +433,15 @@ export function Sidebar({
                 showCaret
                 expanded={projectActivityOpen}
                 active={projectActivityOpen}
-                className={railCollapsed ? undefined : "mt-1.5"}
+                className={effectiveRailCollapsed ? undefined : "mt-1.5"}
               />
-              {projectActivityOpen && !railCollapsed ? (
+              {projectActivityOpen && !effectiveRailCollapsed ? (
                 <HistoryPanel
                   entries={projectHistoryEntries}
                   className="mt-1"
                 />
               ) : null}
-              {!railCollapsed ? (
+              {!effectiveRailCollapsed ? (
                 <LocalProjectsPanel {...localProjectsPanelProps} />
               ) : null}
             </div>
@@ -337,15 +452,21 @@ export function Sidebar({
               title="Reinicia la sesión completa (igual que Nuevo proyecto): datos, análisis y curvas."
               aria-label="Restablecer proyecto"
             >
-              {railCollapsed ? getIcon("remove") : "Restablecer proyecto"}
+              {effectiveRailCollapsed
+                ? getIcon("remove")
+                : "Restablecer proyecto"}
             </button>
           </SidebarGroup>
 
           <div className={sidebarDivider} />
 
-          <div className={railCollapsed ? sidebarRailSectionWrap : undefined}>
+          <div
+            className={
+              effectiveRailCollapsed ? sidebarRailSectionWrap : undefined
+            }
+          >
             <SidebarSection title="Científico" icon="modules" defaultOpen={false}>
-              {!railCollapsed ? (
+              {!effectiveRailCollapsed ? (
                 <p className="text-[11px] text-[var(--app-text-muted)] mb-1">
                   Módulos activos: {activeModuleCount} de {modulesTotal}
                 </p>
@@ -358,7 +479,11 @@ export function Sidebar({
             </SidebarSection>
           </div>
 
-          <div className={railCollapsed ? sidebarRailSectionWrap : undefined}>
+          <div
+            className={
+              effectiveRailCollapsed ? sidebarRailSectionWrap : undefined
+            }
+          >
             <SidebarSection title="Análisis" icon="advisor" defaultOpen={false}>
               {isAssistantEnabled ? (
                 <SidebarItem
@@ -366,7 +491,7 @@ export function Sidebar({
                   label="Asistente científico"
                   onClick={onOpenAssistant}
                   badge={
-                    railCollapsed ? undefined : (
+                    effectiveRailCollapsed ? undefined : (
                       <span className={sidebarSoonBadge}>Beta</span>
                     )
                   }
@@ -390,7 +515,11 @@ export function Sidebar({
             </SidebarSection>
           </div>
 
-          <div className={railCollapsed ? sidebarRailSectionWrap : undefined}>
+          <div
+            className={
+              effectiveRailCollapsed ? sidebarRailSectionWrap : undefined
+            }
+          >
             <SidebarSection title="Recursos" icon="library" defaultOpen={false}>
               <SidebarItem
                 icon="library"
@@ -405,7 +534,7 @@ export function Sidebar({
                 expanded={recentProjectsOpen}
                 active={recentProjectsOpen}
               />
-              {recentProjectsOpen && !railCollapsed ? (
+              {recentProjectsOpen && !effectiveRailCollapsed ? (
                 <RecentProjectsPanel
                   {...recentProjectsPanelProps}
                   className="mt-1"
@@ -415,7 +544,11 @@ export function Sidebar({
           </div>
 
           <SidebarFooter>
-            <div className={railCollapsed ? sidebarRailSectionWrap : undefined}>
+            <div
+              className={
+                effectiveRailCollapsed ? sidebarRailSectionWrap : undefined
+              }
+            >
               <SidebarSection title="Ajustes" icon="settings" defaultOpen>
                 <SidebarItem
                   icon="settings"
@@ -425,7 +558,7 @@ export function Sidebar({
                   expanded={settingsOpen}
                   active={settingsOpen}
                 />
-                {settingsOpen && !railCollapsed ? (
+                {settingsOpen && !effectiveRailCollapsed ? (
                   <SettingsPanel {...settingsPanelProps} className="mt-1" />
                 ) : null}
               </SidebarSection>

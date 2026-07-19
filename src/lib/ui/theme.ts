@@ -6,7 +6,7 @@
 
 import type { ThemeMode } from "@/lib/app-preferences";
 
-import { animation, transitions } from "./tokens";
+import { animation, elevation, transitions, zIndex } from "./tokens";
 
 export const appShellLight =
   "bg-slate-50 text-[var(--app-text)] transition-colors duration-200 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-text-muted:#64748b] [--app-heading:#0f172a] [--app-accent:#2563eb] [--app-success:#16a34a] [--app-warning:#d97706] [--app-danger:#dc2626] [--app-success-bg:#dcfce7] [--app-success-text:#166534] [--app-info-bg:#fef3c7] [--app-info-text:#92400e] [--app-danger-bg:#fef2f2] [--app-danger-border:#fecaca] [--app-danger-text:#b91c1c] [--app-warning-bg:#fffbeb] [--app-warning-border:#fde68a] [--app-warning-text:#92400e] [--app-toggle-track:#e2e8f0] [--app-toggle-thumb:#ffffff]";
@@ -133,26 +133,45 @@ export const actionBarDivider =
 export const sidebarDivider = "border-t border-[var(--app-border)] my-2";
 
 /**
- * Width tokens (D46.3) — sole numeric source for sidebar chrome.
+ * Width tokens (D46.3 / D46.4) — sole numeric source for sidebar chrome.
  * Components must reference these exports; never literal widths.
  */
-export const sidebarWidthDesktop = "xl:w-[280px] xl:max-w-[280px]";
-export const sidebarWidthTablet = "lg:w-[240px] lg:max-w-[240px]";
+export const sidebarWidthDesktop = "w-[280px] max-w-[280px]";
+export const sidebarWidthTablet = "w-[240px] max-w-[240px]";
 export const sidebarWidthCollapsed = "w-16 max-w-[4rem]";
 
-const sidebarShellChrome = `shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col lg:min-h-screen ${transitions.all200}`;
+const sidebarShellChrome = `shrink-0 bg-[var(--app-surface)] border-r border-[var(--app-border)] flex-col min-h-screen ${transitions.all200}`;
 
-/** Expanded shell — tablet/desktop widths via tokens. */
-export const sidebarShellExpanded = `w-full ${sidebarWidthTablet} ${sidebarWidthDesktop} ${sidebarShellChrome}`;
+/**
+ * Expanded shell — in-flow from lg up (tablet width), desktop width from xl.
+ * Hidden below lg so mobile never pushes main layout (drawer owns mobile).
+ */
+export const sidebarShellExpanded = `hidden lg:flex ${sidebarWidthTablet} xl:w-[280px] xl:max-w-[280px] ${sidebarShellChrome}`;
 
-/** Collapsed rail shell — width via sidebarWidthCollapsed. */
-export const sidebarShellCollapsed = `${sidebarWidthCollapsed} ${sidebarShellChrome} overflow-hidden`;
+/** Collapsed rail shell — desktop/tablet only; width via sidebarWidthCollapsed. */
+export const sidebarShellCollapsed = `hidden lg:flex ${sidebarWidthCollapsed} ${sidebarShellChrome} overflow-hidden`;
 
 /**
  * Default shell export (D45 gate / expanded baseline).
  * Prefer sidebarShellExpanded / sidebarShellCollapsed in D46 chrome.
  */
 export const sidebarShell = sidebarShellExpanded;
+
+/**
+ * Mobile drawer open — centralizes fixed / inset / z-index / opacity / pointer-events.
+ * Width via sidebarWidthDesktop (composed by Sidebar).
+ */
+export const sidebarOverlayOpen = `fixed inset-y-0 left-0 ${zIndex.modal} flex flex-col bg-[var(--app-surface)] border-r border-[var(--app-border)] ${elevation.medium} opacity-100 pointer-events-auto ${transitions.all200}`;
+
+/** Mobile drawer closed — out of flow, non-interactive. */
+export const sidebarOverlayClosed =
+  "hidden pointer-events-none opacity-0 fixed inset-y-0 left-0";
+
+/** Backdrop behind mobile drawer — click closes; --app-* only. */
+export const sidebarOverlayBackdrop = `fixed inset-0 ${zIndex.sticky} bg-[var(--app-heading)]/40 opacity-100 pointer-events-auto ${transitions.colors200}`;
+
+/** Fixed trigger to open mobile drawer (lg:hidden). */
+export const sidebarMobileTrigger = `fixed top-3 left-3 ${zIndex.dropdown} lg:hidden inline-flex items-center justify-center rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-2 text-[var(--app-text)] shadow-sm hover:bg-[var(--app-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${transitions.all200} ${animation.activeScale}`;
 
 /** Sidebar chrome header (title row). */
 export const sidebarHeader =
