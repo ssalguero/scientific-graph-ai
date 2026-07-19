@@ -1,5 +1,7 @@
 "use client";
 
+import { createContext, useContext } from "react";
+
 import { getIcon } from "@/lib/ui/icons";
 import {
   sidebarNavItem,
@@ -10,6 +12,13 @@ import {
 } from "@/lib/ui/theme";
 import { mergeClassNames } from "../classNames";
 import type { SidebarItemProps } from "./types";
+
+/** D46.3 — rail collapse signal for SidebarItem tooltips / label visibility. */
+export const SidebarRailCollapsedContext = createContext(false);
+
+export function useSidebarRailCollapsed(): boolean {
+  return useContext(SidebarRailCollapsedContext);
+}
 
 export function SidebarItem({
   icon,
@@ -23,8 +32,11 @@ export function SidebarItem({
   showCaret = false,
   title,
 }: SidebarItemProps) {
+  const railCollapsed = useSidebarRailCollapsed();
+  const tooltip = title ?? label;
+
   const caret =
-    showCaret && expanded !== undefined
+    showCaret && expanded !== undefined && !railCollapsed
       ? getIcon(expanded ? "collapse" : "expand")
       : null;
 
@@ -34,18 +46,38 @@ export function SidebarItem({
     !disabled && sidebarNavItemPressed,
     disabled && sidebarNavItemDisabled,
     active && sidebarNavItemActive,
+    railCollapsed && "justify-center px-1.5",
     className
   );
 
   const content = (
     <>
-      <span className="flex min-w-0 items-center gap-1.5">
+      <span
+        className={mergeClassNames(
+          "flex min-w-0 items-center gap-1.5",
+          railCollapsed && "min-w-0 justify-center"
+        )}
+      >
         {icon ? (
           <span aria-hidden>{getIcon(icon)}</span>
+        ) : railCollapsed ? (
+          <span aria-hidden>{getIcon("library")}</span>
         ) : null}
-        <span className="truncate">{label}</span>
+        <span
+          className={mergeClassNames(
+            "truncate",
+            railCollapsed && "sr-only"
+          )}
+        >
+          {label}
+        </span>
       </span>
-      <span className="flex shrink-0 items-center gap-1">
+      <span
+        className={mergeClassNames(
+          "flex shrink-0 items-center gap-1",
+          railCollapsed && "hidden"
+        )}
+      >
         {badge}
         {caret != null ? (
           <span
@@ -64,7 +96,11 @@ export function SidebarItem({
 
   if (disabled) {
     return (
-      <div className={classNames} aria-disabled={true} title={title}>
+      <div
+        className={classNames}
+        aria-disabled={true}
+        title={tooltip}
+      >
         {content}
       </div>
     );
@@ -75,7 +111,8 @@ export function SidebarItem({
       type="button"
       onClick={onClick}
       className={classNames}
-      title={title}
+      title={tooltip}
+      aria-label={railCollapsed ? label : undefined}
       aria-expanded={showCaret ? expanded : undefined}
       aria-current={active ? "true" : undefined}
     >

@@ -6,7 +6,7 @@
 
 import type { ThemeMode } from "@/lib/app-preferences";
 
-import { animation } from "./tokens";
+import { animation, transitions } from "./tokens";
 
 export const appShellLight =
   "bg-slate-50 text-[var(--app-text)] transition-colors duration-200 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-text-muted:#64748b] [--app-heading:#0f172a] [--app-accent:#2563eb] [--app-success:#16a34a] [--app-warning:#d97706] [--app-danger:#dc2626] [--app-success-bg:#dcfce7] [--app-success-text:#166534] [--app-info-bg:#fef3c7] [--app-info-text:#92400e] [--app-danger-bg:#fef2f2] [--app-danger-border:#fecaca] [--app-danger-text:#b91c1c] [--app-warning-bg:#fffbeb] [--app-warning-border:#fde68a] [--app-warning-text:#92400e] [--app-toggle-track:#e2e8f0] [--app-toggle-thumb:#ffffff]";
@@ -132,13 +132,34 @@ export const actionBarDivider =
 /** Divider between major sidebar blocks — border via --app-border only. */
 export const sidebarDivider = "border-t border-[var(--app-border)] my-2";
 
-/** Exact aside shell classes from D45.1 baseline (page.tsx). */
-export const sidebarShell =
-  "w-full lg:w-[260px] lg:max-w-[280px] xl:w-[280px] xl:max-w-[280px] lg:min-h-screen shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col transition-colors duration-200";
+/**
+ * Width tokens (D46.3) — sole numeric source for sidebar chrome.
+ * Components must reference these exports; never literal widths.
+ */
+export const sidebarWidthDesktop = "xl:w-[280px] xl:max-w-[280px]";
+export const sidebarWidthTablet = "lg:w-[240px] lg:max-w-[240px]";
+export const sidebarWidthCollapsed = "w-16 max-w-[4rem]";
+
+const sidebarShellChrome = `shrink-0 bg-[var(--app-surface)] border-b lg:border-b-0 lg:border-r border-[var(--app-border)] flex flex-col lg:min-h-screen ${transitions.all200}`;
+
+/** Expanded shell — tablet/desktop widths via tokens. */
+export const sidebarShellExpanded = `w-full ${sidebarWidthTablet} ${sidebarWidthDesktop} ${sidebarShellChrome}`;
+
+/** Collapsed rail shell — width via sidebarWidthCollapsed. */
+export const sidebarShellCollapsed = `${sidebarWidthCollapsed} ${sidebarShellChrome} overflow-hidden`;
+
+/**
+ * Default shell export (D45 gate / expanded baseline).
+ * Prefer sidebarShellExpanded / sidebarShellCollapsed in D46 chrome.
+ */
+export const sidebarShell = sidebarShellExpanded;
 
 /** Sidebar chrome header (title row). */
 export const sidebarHeader =
-  "px-3 py-2.5 border-b border-[var(--app-border)]";
+  "px-3 py-2.5 border-b border-[var(--app-border)] flex items-center gap-2";
+
+/** Collapse / expand rail toggle — native button; focus via --app-accent. */
+export const sidebarCollapseToggle = `inline-flex shrink-0 items-center justify-center rounded-lg p-1.5 text-[var(--app-text-muted)] hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${transitions.all200} ${animation.activeScale}`;
 
 /**
  * Scroll body: consistent padding + gap between major sections/groups.
@@ -146,6 +167,17 @@ export const sidebarHeader =
  */
 export const sidebarSectionGap =
   "flex-1 overflow-y-auto px-3 py-2.5 space-y-2.5";
+
+/** Scroll body when rail collapsed — tighter padding. */
+export const sidebarSectionGapCollapsed =
+  "flex-1 overflow-y-auto overflow-x-hidden px-1.5 py-2 space-y-2";
+
+/** Hide chrome labels/hints marked for rail compact mode. */
+export const sidebarRailHide = "hidden";
+
+/** Section wrapper in rail: keep icons, hide title text (last span). */
+export const sidebarRailSectionWrap =
+  "[&>div>button>span:last-child]:sr-only [&>div>button]:justify-center [&>div>button]:px-0";
 
 /** Inner vertical rhythm inside a group or section content stack. */
 export const sidebarSectionSpacing = "space-y-1.5";
