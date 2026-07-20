@@ -26,6 +26,7 @@ export const spacing = {
   spaceY05: "space-y-0.5",
   spaceY15: "space-y-1.5",
   spaceY2: "space-y-2",
+  spaceY3: "space-y-3",
   my15: "my-1.5",
   mb1: "mb-1",
   mb15: "mb-1.5",
@@ -242,6 +243,32 @@ export const sidebar = {
 } as const;
 
 /* -------------------------------------------------------------------------- */
+/* Toolbar compositions (D49.2 — Adaptive Toolbar; primitives only)           */
+/* -------------------------------------------------------------------------- */
+
+/** Shell chrome for Adaptive Toolbar — values from existing primitives only. */
+export const toolbar = {
+  root: "w-full",
+  section: `w-full ${spacing.spaceY3}`,
+  sectionLeft: `w-full ${spacing.spaceY3}`,
+  sectionCenter: `w-full ${spacing.spaceY3}`,
+  sectionRight: `w-full ${spacing.spaceY3}`,
+  group: `flex flex-wrap items-center ${spacing.gap2}`,
+  groupCompact: `flex flex-wrap items-center ${spacing.px1} ${spacing.gap2}`,
+  action: button.outlineSm,
+  actionActive: `${button.outlineSm} ${border.accentSoft} bg-[var(--app-accent)]/10`,
+  actionDisabled: "opacity-50 cursor-not-allowed",
+  overflow: "",
+  height: "h-9",
+  gap: spacing.gap2,
+  padding: spacing.px25,
+  border: border.bottom,
+  background: "bg-[var(--app-surface)]",
+  radius: radius.lg,
+  shadow: shadows.sm,
+} as const;
+
+/* -------------------------------------------------------------------------- */
 /* UI_TOKENS — public consolidated surface                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -263,6 +290,7 @@ export const UI_TOKENS = {
     ...buttonComposed,
   },
   sidebar,
+  toolbar,
 } as const;
 
 export type SpacingToken = keyof typeof spacing;
