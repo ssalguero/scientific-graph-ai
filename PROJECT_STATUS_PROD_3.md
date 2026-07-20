@@ -2256,3 +2256,54 @@ NEXT = D48 â€” Design Tokens v2
 ---
 
 *## D47.5 APPEND-ONLY 2026-07-20 Â· D47.5 COMPLETE Â· CA-D47 PASS Â· D47 CLOSED Â· Workspace Foundation CERTIFIED Â· Next D48 â€” Design Tokens v2.*
+
+---
+
+## D48.5
+
+**Microfase:** D48.5 ? Design Tokens v2 · Certification  
+**Fecha:** 2026-07-20  
+**Estado:** **D48 CLOSED** · **Design Tokens v2 CERTIFIED** · **CA-D48.5 = 9/9 PASS**  
+**Modo:** Documental only ? create `docs/D48.5-design-tokens-v2-certification.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se certifica y cierra oficialmente **D48 ? Design Tokens v2**. Umbrella `validate:v11-d48-gate` PASS (Design Tokens 34/34, Workspace, UI, Sidebar, tsc, build). Governance 6/6 PASS. API Freeze confirmado. SSOT = `UI_TOKENS`; theme = facade; `WORKSPACE_TOKENS` contrato intacto.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D48.5-design-tokens-v2-certification.md`](docs/D48.5-design-tokens-v2-certification.md) |
+| Serie | **D48 CLOSED** |
+| Producto | **Design Tokens v2 CERTIFIED** |
+| `validate:design-tokens-v2` | **34/34 PASS** |
+| `validate:v11-d48-gate` | **PASS** |
+| Governance | **6/6 PASS** |
+| Next | **D49 ? Adaptive Toolbar** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Certification doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Gates registrados | **PASS** |
+| Governance confirmada | **PASS** |
+| API Freeze confirmado | **PASS** |
+| Métricas documentadas | **PASS** |
+| SSOT documentado | **PASS** |
+| D48 oficialmente cerrado | **PASS** |
+
+### Resolucion
+
+```text
+D48.5 = COMPLETE
+D48 = CLOSED
+Design Tokens v2 = CERTIFIED
+DISCOVERY?CONSOLIDATION?WIRING?VALIDATION = PASS
+NO SRC CHANGES
+NEXT = D49 ? Adaptive Toolbar
+```
+
+---
+
+*## D48.5 APPEND-ONLY 2026-07-20 · D48.5 COMPLETE · CA-D48.5 9/9 PASS · D48 CLOSED · Design Tokens v2 CERTIFIED · Next D49 Adaptive Toolbar.*
