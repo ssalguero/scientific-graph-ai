@@ -2361,3 +2361,63 @@ READY FOR D49.2
 ---
 
 *## D49.1 APPEND-ONLY 2026-07-20 · D49.1 COMPLETE · CA-D49.1 11/11 PASS · TOOLBAR BASELINE FROZEN · API Freeze ACTIVE · Next D49.2 Toolbar Domain Extraction.*
+
+---
+
+## D49.5
+
+**Microfase:** D49.5 — Adaptive Toolbar Foundation · Certification  
+**Fecha:** 2026-07-20  
+**Estado:** **D49 CLOSED** · **Adaptive Toolbar CERTIFIED** · **CA-D49.5 = 9/9 PASS**  
+**Modo:** Documental only — create `docs/D49.5-certification.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se certifica y cierra oficialmente **D49 — Adaptive Toolbar**. Umbrella `validate:v11-d49-gate` PASS (toolbar architecture 24/24, move-only 21/21, Design Tokens, Workspace, UI, Sidebar, tsc, build). Toolbar Domain FROZEN. API Freeze ACTIVE. Move-only PASS. UI Platform Progress = **5/8**.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D49.5-certification.md`](docs/D49.5-certification.md) |
+| Serie | **D49 CLOSED** |
+| Producto | **Adaptive Toolbar CERTIFIED** |
+| Toolbar Domain | **FROZEN** |
+| Move-only | **PASS** |
+| API Freeze | **ACTIVE** |
+| `validate:toolbar-architecture` | **24/24 PASS** |
+| `validate:toolbar-move-only` | **21/21 PASS** |
+| `validate:v11-d49-gate` | **PASS** |
+| UI Platform Progress | **5/8** |
+| Next | **D50 — Inspector Foundation** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Certification doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Gates registrados | **PASS** |
+| Governance confirmada | **PASS** |
+| API Freeze confirmado | **PASS** |
+| Move-only certificado | **PASS** |
+| UI Platform 5/8 documentado | **PASS** |
+| D49 oficialmente cerrado | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+
+### Resolucion
+
+```text
+D49.5 = COMPLETE
+D49 = CLOSED
+Adaptive Toolbar = CERTIFIED
+Toolbar Domain = FROZEN
+Move-only = PASS
+API Freeze = ACTIVE
+UI Platform Progress = 5/8
+DISCOVERY→EXTRACTION→WIRING→VALIDATION = PASS
+NO SRC CHANGES
+NEXT = D50 — Inspector Foundation
+```
+
+---
+
+*## D49.5 APPEND-ONLY 2026-07-20 · D49.5 COMPLETE · CA-D49.5 9/9 PASS · D49 CLOSED · Adaptive Toolbar CERTIFIED · Next D50 Inspector Foundation.*
