@@ -164,6 +164,12 @@ import {
   InspectorPanel,
   INSPECTOR_TOKENS,
 } from "@/components/inspector";
+import {
+  DockRoot,
+  DockZone,
+  DockPanel,
+  DOCK_PANEL_IDS,
+} from "@/components/docking";
 import { useRecentProjects } from "./useRecentProjects";
 import {
   APP_DISPLAY_VERSION,
@@ -26677,12 +26683,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       }
       panels={
         <WorkspacePanels>
-          <Inspector
-            visible={false}
-            width={INSPECTOR_TOKENS.defaultWidth}
-          >
-            <InspectorPanel />
-          </Inspector>
+          <DockRoot>
+            <DockZone side="right">
+              <DockPanel id={DOCK_PANEL_IDS.inspector}>
+                <Inspector
+                  visible={false}
+                  width={INSPECTOR_TOKENS.defaultWidth}
+                >
+                  <InspectorPanel />
+                </Inspector>
+              </DockPanel>
+            </DockZone>
+          </DockRoot>
 
           {graphSaveToast ? (
             <GraphSaveToast
