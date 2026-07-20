@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from "react";
 
-import { spacing } from "@/lib/ui/tokens";
+import { UI_TOKENS } from "@/lib/ui/tokens";
 import { mergeClassNames } from "../classNames";
 
 export type PanelHeaderProps = {
@@ -14,7 +14,11 @@ export function PanelHeader({
 }: PanelHeaderProps) {
   return (
     <div
-      className={mergeClassNames(spacing.spaceY05, spacing.mb15, className)}
+      className={mergeClassNames(
+        UI_TOKENS.spacing.spaceY05,
+        UI_TOKENS.spacing.mb15,
+        className
+      )}
       {...rest}
     >
       {children}

@@ -1,7 +1,6 @@
 import type { HTMLAttributes, ReactNode } from "react";
 
-import { actionBarGroup } from "@/lib/ui/theme";
-import { spacing } from "@/lib/ui/tokens";
+import { UI_TOKENS } from "@/lib/ui/tokens";
 import { mergeClassNames } from "../classNames";
 
 export type PanelFooterProps = {
@@ -15,7 +14,11 @@ export function PanelFooter({
 }: PanelFooterProps) {
   return (
     <div
-      className={mergeClassNames(spacing.mt1, actionBarGroup, className)}
+      className={mergeClassNames(
+        UI_TOKENS.spacing.mt1,
+        UI_TOKENS.button.actionBarGroup,
+        className
+      )}
       {...rest}
     >
       {children}

@@ -13,29 +13,7 @@ import { SettingsPanel } from "@/components/settings";
 import { LocalProjectsPanel } from "@/app/LocalProjectsPanel";
 import { ProjectScientificFilePanel } from "@/app/ProjectScientificFilePanel";
 import { getIcon, type UiIconName } from "@/lib/ui/icons";
-import {
-  contentPanel,
-  panelHeading,
-  sidebarBtnPrimary,
-  sidebarBtnSecondary,
-  sidebarCollapseToggle,
-  sidebarDivider,
-  sidebarGraphItemActive,
-  sidebarGraphItemIdle,
-  sidebarHeader,
-  sidebarMobileTrigger,
-  sidebarOverlayBackdrop,
-  sidebarOverlayClosed,
-  sidebarOverlayOpen,
-  sidebarRailHide,
-  sidebarRailSectionWrap,
-  sidebarSectionGap,
-  sidebarSectionGapCollapsed,
-  sidebarShellCollapsed,
-  sidebarShellExpanded,
-  sidebarSoonBadge,
-  sidebarWidthDesktop,
-} from "@/lib/ui/theme";
+import { UI_TOKENS } from "@/lib/ui/tokens";
 import { mergeClassNames } from "../classNames";
 import { SidebarFooter } from "./SidebarFooter";
 import {
@@ -51,6 +29,30 @@ import {
 import { SidebarSection } from "./SidebarSection";
 import type { SidebarModuleEntry, SidebarProps } from "./types";
 
+/** D48.3 — wired from UI_TOKENS (aliases preserve local names; no visual change). */
+const { content: contentPanel } = UI_TOKENS.panel;
+const { panelHeading } = UI_TOKENS.typography;
+const {
+  btnPrimary: sidebarBtnPrimary,
+  btnSecondary: sidebarBtnSecondary,
+  collapseToggle: sidebarCollapseToggle,
+  divider: sidebarDivider,
+  graphItemActive: sidebarGraphItemActive,
+  graphItemIdle: sidebarGraphItemIdle,
+  header: sidebarHeader,
+  mobileTrigger: sidebarMobileTrigger,
+  overlayBackdrop: sidebarOverlayBackdrop,
+  overlayClosed: sidebarOverlayClosed,
+  overlayOpen: sidebarOverlayOpen,
+  railHide: sidebarRailHide,
+  railSectionWrap: sidebarRailSectionWrap,
+  sectionGap: sidebarSectionGap,
+  sectionGapCollapsed: sidebarSectionGapCollapsed,
+  shellCollapsed: sidebarShellCollapsed,
+  shellExpanded: sidebarShellExpanded,
+  soonBadge: sidebarSoonBadge,
+  widthDesktop: sidebarWidthDesktop,
+} = UI_TOKENS.sidebar;
 /** Additive chrome props (D46.3) — optional; do not break SidebarProps callers. */
 type SidebarChromeProps = {
   collapsed?: boolean;

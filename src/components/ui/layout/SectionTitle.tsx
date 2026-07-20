@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from "react";
 
-import { panelHeading, panelHeadingSubtext } from "@/lib/ui/theme";
+import { UI_TOKENS } from "@/lib/ui/tokens";
 import { mergeClassNames } from "../classNames";
 
 export type SectionTitleProps = {
@@ -16,9 +16,9 @@ export function SectionTitle({
 }: SectionTitleProps) {
   return (
     <div className={mergeClassNames(className)} {...rest}>
-      <h3 className={panelHeading}>{children}</h3>
+      <h3 className={UI_TOKENS.typography.panelHeading}>{children}</h3>
       {subtitle != null && subtitle !== false ? (
-        <p className={panelHeadingSubtext}>{subtitle}</p>
+        <p className={UI_TOKENS.typography.panelHeadingSubtext}>{subtitle}</p>
       ) : null}
     </div>
   );

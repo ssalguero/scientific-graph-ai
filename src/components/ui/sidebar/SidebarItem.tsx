@@ -3,15 +3,18 @@
 import { createContext, useContext } from "react";
 
 import { getIcon } from "@/lib/ui/icons";
-import {
-  sidebarNavItem,
-  sidebarNavItemActive,
-  sidebarNavItemDisabled,
-  sidebarNavItemHover,
-  sidebarNavItemPressed,
-} from "@/lib/ui/theme";
+import { UI_TOKENS } from "@/lib/ui/tokens";
 import { mergeClassNames } from "../classNames";
 import type { SidebarItemProps } from "./types";
+
+/** D48.3 — wired from UI_TOKENS.sidebar. */
+const {
+  navItem: sidebarNavItem,
+  navItemActive: sidebarNavItemActive,
+  navItemDisabled: sidebarNavItemDisabled,
+  navItemHover: sidebarNavItemHover,
+  navItemPressed: sidebarNavItemPressed,
+} = UI_TOKENS.sidebar;
 
 /** D46.3 — rail collapse signal for SidebarItem tooltips / label visibility. */
 export const SidebarRailCollapsedContext = createContext(false);

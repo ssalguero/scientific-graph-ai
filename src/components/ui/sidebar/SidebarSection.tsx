@@ -3,13 +3,16 @@
 import { useState } from "react";
 
 import { getIcon } from "@/lib/ui/icons";
-import {
-  sidebarDivider,
-  sidebarSectionBody,
-  sidebarSectionHeader,
-} from "@/lib/ui/theme";
+import { UI_TOKENS } from "@/lib/ui/tokens";
 import { mergeClassNames } from "../classNames";
 import type { SidebarSectionProps } from "./types";
+
+/** D48.3 — wired from UI_TOKENS.sidebar / transition / animation. */
+const {
+  divider: sidebarDivider,
+  sectionBody: sidebarSectionBody,
+  sectionHeader: sidebarSectionHeader,
+} = UI_TOKENS.sidebar;
 
 /**
  * Collapsible sidebar section — visual/behavior parity with former DashboardSection.
@@ -50,8 +53,10 @@ export function SidebarSection({
         <span>{title}</span>
       </button>
       <div
-        className={`grid transition-all duration-200 ${
-          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        className={`grid ${UI_TOKENS.transition.all200} ${
+          open
+            ? UI_TOKENS.animation.gridCollapseOpen
+            : UI_TOKENS.animation.gridCollapseClosed
         }`}
       >
         <div className="overflow-hidden">

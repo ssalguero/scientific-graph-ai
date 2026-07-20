@@ -1,11 +1,14 @@
-import {
-  dataSemanticHint,
-  persistenceBadge,
-  sidebarSectionLabel,
-  sidebarSectionSpacing,
-} from "@/lib/ui/theme";
+import { UI_TOKENS } from "@/lib/ui/tokens";
 import { mergeClassNames } from "../classNames";
 import type { SidebarGroupProps } from "./types";
+
+/** D48.3 — wired from UI_TOKENS. */
+const { dataSemanticHint } = UI_TOKENS.typography;
+const { persistenceBadge } = UI_TOKENS.panel;
+const {
+  sectionLabel: sidebarSectionLabel,
+  sectionSpacing: sidebarSectionSpacing,
+} = UI_TOKENS.sidebar;
 
 export type SidebarGroupLabelProps = {
   children: React.ReactNode;

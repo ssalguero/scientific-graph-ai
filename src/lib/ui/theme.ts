@@ -1,6 +1,7 @@
 /**
  * D45 Theme — public class-string API + helpers.
- * D48.2: values delegated to UI_TOKENS (move-only); no visual / API changes.
+ * D48.2/D48.3: values from UI_TOKENS; theme remains the public facade.
+ * UI consumers (Sidebar / layout) wire to UI_TOKENS directly; helpers stay here.
  */
 
 import type { ThemeMode } from "@/lib/app-preferences";
