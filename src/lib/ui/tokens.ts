@@ -269,6 +269,29 @@ export const toolbar = {
 } as const;
 
 /* -------------------------------------------------------------------------- */
+/* Inspector compositions (D50.2 — Dock Shell; primitives only)               */
+/* -------------------------------------------------------------------------- */
+
+/** Empty dock chrome — values from existing primitives only. No new colors. */
+export const inspector = {
+  defaultWidth: 320,
+  width: "w-80",
+  padding: spacing.p3,
+  gap: spacing.gap2,
+  headerHeight: "h-9",
+  sectionSpacing: spacing.spaceY2,
+  borderRadius: radius.lg,
+  background: "bg-[var(--app-surface)]",
+  panel: `${radius.lg} ${border.default} bg-[var(--app-surface)] ${shadows.sm}`,
+  root: `fixed inset-y-0 right-0 flex shrink-0 flex-col border-l ${border.color} bg-[var(--app-surface)] ${elevation.low} ${zIndex.raised}`,
+  header: `flex shrink-0 items-center ${spacing.px3} ${spacing.py2} ${border.bottom}`,
+  title: typography.subsectionHeading,
+  body: `flex-1 min-h-0 overflow-y-auto ${spacing.p3} ${spacing.spaceY2}`,
+  section: spacing.spaceY15,
+  sectionHeader: typography.sectionLabel,
+} as const;
+
+/* -------------------------------------------------------------------------- */
 /* UI_TOKENS — public consolidated surface                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -291,6 +314,7 @@ export const UI_TOKENS = {
   },
   sidebar,
   toolbar,
+  inspector,
 } as const;
 
 export type SpacingToken = keyof typeof spacing;
