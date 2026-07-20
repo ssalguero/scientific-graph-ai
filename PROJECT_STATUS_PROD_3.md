@@ -2484,3 +2484,56 @@ NEXT = D50.2 — Implementation
 ---
 
 *## D50.1 APPEND-ONLY 2026-07-20 · D50.1 COMPLETE · CA-D50.1 11/11 PASS · Architecture FROZEN · API FROZEN · Ready for D50.2 Implementation.*
+
+---
+
+## D50.5
+
+**Microfase:** D50.5 ? Inspector Foundation · Release  
+**Fecha:** 2026-07-20  
+**Estado:** **D50 CLOSED** · **Inspector Foundation = RELEASED** · **CA-D50 = 8/8 PASS** · **UI Platform Progress = 6/8**  
+**Modo:** Documental only ? create `docs/D50.5-release.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se cierra oficialmente **D50 ? Inspector Foundation (Dock Shell)**. Infraestructura del dock vacio liberada (`visible={false}`, cero impacto visual). Analysis Inspector permanece en `page.tsx`. Umbrella `validate:v11-d50-gate` PASS. UI Platform Progress = **6/8**.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D50.5-release.md`](docs/D50.5-release.md) |
+| Serie | **D50 CLOSED** |
+| Producto | **Inspector Foundation RELEASED** |
+| Certification | [`docs/D50.4-certification.md`](docs/D50.4-certification.md) |
+| Testing | [`docs/D50.3-testing.md`](docs/D50.3-testing.md) |
+| CA-D50 | **8/8 PASS** |
+| `validate:inspector-foundation` | **PASS** |
+| `validate:v11-d50-gate` | **PASS** |
+| UI Platform Progress | **6/8** |
+| Next | **D51 ? Docking Foundation** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Release Gates documentados | **PASS** |
+| UI Platform 6/8 | **PASS** |
+| D50 oficialmente cerrado | **PASS** |
+| NEXT = D51 Docking Foundation | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+
+### Resolucion
+
+```text
+D50.5 COMPLETE
+Inspector Foundation = RELEASED
+CA-D50 = 8/8 PASS
+UI Platform Progress = 6/8
+D50 = CLOSED
+NEXT = D51 Docking Foundation
+```
+
+---
+
+*## D50.5 APPEND-ONLY 2026-07-20 · D50.5 COMPLETE · CA-D50 8/8 PASS · D50 CLOSED · Inspector Foundation RELEASED · UI Platform 6/8 · Next D51 Docking Foundation.*
