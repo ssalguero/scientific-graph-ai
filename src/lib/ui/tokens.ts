@@ -292,6 +292,22 @@ export const inspector = {
 } as const;
 
 /* -------------------------------------------------------------------------- */
+/* Dock compositions (D51.2 — Docking Foundation; numeric only)               */
+/* -------------------------------------------------------------------------- */
+
+/** Dock geometry / timing — numbers only. No Tailwind. No class strings. */
+export const dock = {
+  leftWidth: 280,
+  rightWidth: 320,
+  bottomHeight: 240,
+  minPanelWidth: 240,
+  minPanelHeight: 160,
+  splitterSize: 4,
+  animationDuration: 200,
+  zIndex: 10,
+} as const;
+
+/* -------------------------------------------------------------------------- */
 /* UI_TOKENS — public consolidated surface                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -315,6 +331,7 @@ export const UI_TOKENS = {
   sidebar,
   toolbar,
   inspector,
+  dock,
 } as const;
 
 export type SpacingToken = keyof typeof spacing;
