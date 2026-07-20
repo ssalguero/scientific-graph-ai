@@ -159,6 +159,11 @@ import {
   WorkspacePanels,
 } from "@/components/workspace";
 import { AdaptiveToolbar } from "@/components/toolbar";
+import {
+  Inspector,
+  InspectorPanel,
+  INSPECTOR_TOKENS,
+} from "@/components/inspector";
 import { useRecentProjects } from "./useRecentProjects";
 import {
   APP_DISPLAY_VERSION,
@@ -26672,6 +26677,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       }
       panels={
         <WorkspacePanels>
+          <Inspector
+            visible={false}
+            width={INSPECTOR_TOKENS.defaultWidth}
+          >
+            <InspectorPanel />
+          </Inspector>
+
           {graphSaveToast ? (
             <GraphSaveToast
               title={graphSaveToast}
