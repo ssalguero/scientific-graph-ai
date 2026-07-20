@@ -2205,3 +2205,54 @@ NEXT = D48.2 — Token Consolidation
 ---
 
 *## D48.1 APPEND-ONLY 2026-07-20 · D48.1 COMPLETE · CA-D48.1 8/8 PASS · TOKEN BASELINE FROZEN · Next D48.2 Token Consolidation.*
+
+---
+
+## D47.5
+
+**Microfase:** D47.5 — Workspace Foundation · Certification · Release Gate  
+**Fecha:** 2026-07-20  
+**Estado:** **D47 CLOSED** · **Workspace Foundation CERTIFIED** · **CA-D47 = PASS**  
+**Modo:** Documental only — create `docs/D47.5-workspace-foundation-certification.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se certifica y cierra oficialmente **D47 — UX-1 Workspace & Layout Foundation**. Umbrella `validate:v11-d47-gate` PASS (workspace architecture 26/26, UI architecture, sidebar-v2, tsc, build). Smoke S1–S9 PASS. API Freeze y governance confirmados. Métricas: `page.tsx` 26672 → 26686 (Δ +14 slot boilerplate); workspace module **111 LOC**.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D47.5-workspace-foundation-certification.md`](docs/D47.5-workspace-foundation-certification.md) |
+| Serie | **D47 CLOSED** |
+| Producto | **Workspace Foundation CERTIFIED** |
+| `validate:workspace-architecture` | **26/26 PASS** |
+| `validate:v11-d47-gate` | **PASS** |
+| Smoke S1–S9 | **9/9 PASS** |
+| Next | **D48 — Design Tokens v2** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Certification doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Gates registrados | **PASS** |
+| Smoke tests registrados | **PASS** |
+| Métricas registradas | **PASS** |
+| API Freeze confirmado | **PASS** |
+| Governance confirmada | **PASS** |
+| D47 oficialmente cerrado | **PASS** |
+
+### Resolucion
+
+```text
+D47.5 = COMPLETE
+D47 = CLOSED
+Workspace Foundation = CERTIFIED
+CA-D47 = PASS
+NO SRC CHANGES
+NEXT = D48 — Design Tokens v2
+```
+
+---
+
+*## D47.5 APPEND-ONLY 2026-07-20 · D47.5 COMPLETE · CA-D47 PASS · D47 CLOSED · Workspace Foundation CERTIFIED · Next D48 — Design Tokens v2.*
