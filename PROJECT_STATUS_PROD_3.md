@@ -2157,3 +2157,51 @@ NEXT = D47.2 — Workspace Domain Extraction
 ---
 
 *## D47.1 APPEND-ONLY 2026-07-19 · D47.1 COMPLETE · CA-D47.1 10/10 PASS · LAYOUT BASELINE FROZEN · Next D47.2 Workspace Domain Extraction.*
+
+---
+
+## D48.1
+
+**Microfase:** D48.1 — Design Tokens v2 · Discovery  
+**Fecha:** 2026-07-20  
+**Estado:** **DISCOVERY COMPLETE** · **TOKEN BASELINE = FROZEN** · **Design Tokens v2 API Freeze = RECORDED**  
+**Modo:** Documental only — create `docs/D48.1-design-tokens-v2-discovery.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se congela el baseline visual/token **post-D47 Workspace Foundation** y se abre oficialmente **D48 — Design Tokens v2**. Inventario de `tokens.ts` / `theme.ts` / `icons.ts` / `WORKSPACE_TOKENS` / Sidebar / Buttons / Panels. API Freeze (`UI_TOKENS`, `WORKSPACE_TOKENS`, theme helpers, icon registry). Sin tokens nuevos ni cambios de código.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D48.1-design-tokens-v2-discovery.md`](docs/D48.1-design-tokens-v2-discovery.md) |
+| Serie | D48 OPEN |
+| Breaking changes en D48 | **No permitted** |
+| CA-D48.1 | **8/8 PASS** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Discovery doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Inventario completo | **PASS** |
+| API Freeze documentado | **PASS** |
+| Governance preview documentado | **PASS** |
+| Baseline congelada | **PASS** |
+| Alcance D48 definido | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+
+### Resolucion
+
+```text
+D48.1 = COMPLETE
+DISCOVERY COMPLETE
+TOKEN BASELINE = FROZEN
+Design Tokens v2 API Freeze = RECORDED
+NO SRC CHANGES
+NEXT = D48.2 — Token Consolidation
+```
+
+---
+
+*## D48.1 APPEND-ONLY 2026-07-20 · D48.1 COMPLETE · CA-D48.1 8/8 PASS · TOKEN BASELINE FROZEN · Next D48.2 Token Consolidation.*
