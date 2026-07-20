@@ -2261,10 +2261,10 @@ NEXT = D48 — Design Tokens v2
 
 ## D48.5
 
-**Microfase:** D48.5 ? Design Tokens v2 � Certification  
+**Microfase:** D48.5 ? Design Tokens v2 � Certification  
 **Fecha:** 2026-07-20  
-**Estado:** **D48 CLOSED** � **Design Tokens v2 CERTIFIED** � **CA-D48.5 = 9/9 PASS**  
-**Modo:** Documental only ? create `docs/D48.5-design-tokens-v2-certification.md` � append-only este bloque � **cero cambios** `src/**` � `scripts/**` � `package.json`
+**Estado:** **D48 CLOSED** � **Design Tokens v2 CERTIFIED** � **CA-D48.5 = 9/9 PASS**  
+**Modo:** Documental only ? create `docs/D48.5-design-tokens-v2-certification.md` � append-only este bloque � **cero cambios** `src/**` � `scripts/**` � `package.json`
 
 ### Resumen
 
@@ -2289,7 +2289,7 @@ Se certifica y cierra oficialmente **D48 ? Design Tokens v2**. Umbrella `validat
 | Gates registrados | **PASS** |
 | Governance confirmada | **PASS** |
 | API Freeze confirmado | **PASS** |
-| M�tricas documentadas | **PASS** |
+| M�tricas documentadas | **PASS** |
 | SSOT documentado | **PASS** |
 | D48 oficialmente cerrado | **PASS** |
 
@@ -2306,4 +2306,58 @@ NEXT = D49 ? Adaptive Toolbar
 
 ---
 
-*## D48.5 APPEND-ONLY 2026-07-20 � D48.5 COMPLETE � CA-D48.5 9/9 PASS � D48 CLOSED � Design Tokens v2 CERTIFIED � Next D49 Adaptive Toolbar.*
+*## D48.5 APPEND-ONLY 2026-07-20 � D48.5 COMPLETE � CA-D48.5 9/9 PASS � D48 CLOSED � Design Tokens v2 CERTIFIED � Next D49 Adaptive Toolbar.*
+
+---
+
+## D49.1
+
+**Microfase:** D49.1 — Adaptive Toolbar Foundation · Discovery  
+**Fecha:** 2026-07-20  
+**Estado:** **D49 OPEN** · **D49.1 COMPLETE** · **TOOLBAR BASELINE = FROZEN** · **API Freeze ACTIVE** · **CA-D49.1 = 11/11 PASS**  
+**Modo:** Documental only — create `docs/D49.1-toolbar-discovery.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json` · tokens · UI
+
+### Resumen
+
+Se inicia oficialmente **D49 — Adaptive Toolbar**. Baseline del chrome toolbar (inline en `page.tsx` → slot `WorkspaceContent.toolbar`) congelado. API Freeze registrado. Move-only = same visual + interactive tree (wrappers permitidos; no same HTML). Governance `toolbar.*` aprobada (preview). Roadmap UI Platform definitivo (D50 Inspector → D51 Overlay & Dialog → D52 UI Shell Certification → v1.1 Complete) reemplaza el preliminar D47.1.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D49.1-toolbar-discovery.md`](docs/D49.1-toolbar-discovery.md) |
+| Serie | **D49 OPEN** |
+| Baseline | **FROZEN** |
+| API Freeze | **ACTIVE** |
+| Governance | **APROBADA** (preview; validators en D49.4) |
+| Roadmap | **DEFINITIVO** (supersede D47.1 D50–D52) |
+| Next | **D49.2 — Toolbar Domain Extraction** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Discovery doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Baseline congelado | **PASS** |
+| API Freeze activo | **PASS** |
+| Move-only contract documentado | **PASS** |
+| Governance aprobada (preview) | **PASS** |
+| Roadmap actualizado | **PASS** |
+| Acceptance Criteria documentados | **PASS** |
+| Cero cambios src / scripts / tokens | **PASS** |
+
+### Resolucion
+
+```text
+D49.1 = COMPLETE
+D49 = OPEN
+TOOLBAR BASELINE = FROZEN
+API FREEZE = ACTIVE
+GOVERNANCE = APROBADA
+ROADMAP = DEFINITIVO
+NO SRC CHANGES
+READY FOR D49.2
+```
+
+---
+
+*## D49.1 APPEND-ONLY 2026-07-20 · D49.1 COMPLETE · CA-D49.1 11/11 PASS · TOOLBAR BASELINE FROZEN · API Freeze ACTIVE · Next D49.2 Toolbar Domain Extraction.*
