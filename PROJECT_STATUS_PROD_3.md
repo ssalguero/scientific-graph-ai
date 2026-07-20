@@ -2537,3 +2537,66 @@ NEXT = D51 Docking Foundation
 ---
 
 *## D50.5 APPEND-ONLY 2026-07-20 · D50.5 COMPLETE · CA-D50 8/8 PASS · D50 CLOSED · Inspector Foundation RELEASED · UI Platform 6/8 · Next D51 Docking Foundation.*
+
+---
+
+## D51.1
+
+**Microfase:** D51.1 - Docking Foundation · Discovery  
+**Fecha:** 2026-07-20  
+**Estado:** **D51 OPEN** · **D51.1 = COMPLETE** · **Current Shell = FROZEN** · **Docking API Freeze = RECORDED** · **CA-D51.1 = 16/16 PASS** · **READY FOR D51.2**  
+**Modo:** Documental only - create `docs/D51.1-docking-discovery.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se abre **D51 - Docking Foundation**. Discovery congela el shell actual (WorkspaceLayout -> Sidebar | WorkspaceContent | WorkspacePanels), ownership, render order, z-index, Future Dock Tree, API Freeze (tipos + `DOCK_PANEL_IDS`), File Freeze, Tokens Bridge, Registry immutable (inspector-only), Context read-only, Host Architecture transparente, Wiring documental y Validators preview (12 checks). Sin implementacion de codigo.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D51.1-docking-discovery.md`](docs/D51.1-docking-discovery.md) |
+| Serie | **D51 OPEN** |
+| Status | **OPEN** - Docking Foundation Discovery started · Current shell frozen · API Freeze pending implementation |
+| CA-D51.1 | **16/16 PASS** |
+| UI Platform Progress | **6/8** (sin cambio hasta D51.5) |
+| Next | **D51.2 - Infrastructure** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Current shell frozen | **PASS** |
+| Ownership documented | **PASS** |
+| Render order frozen | **PASS** |
+| Z-index stack frozen | **PASS** |
+| Future dock tree defined | **PASS** |
+| Scope / out-of-scope documented | **PASS** |
+| API Freeze completed | **PASS** |
+| File set frozen | **PASS** |
+| Tokens bridge frozen | **PASS** |
+| Registry frozen | **PASS** |
+| Context frozen | **PASS** |
+| Wiring documented | **PASS** |
+| Governance frozen | **PASS** |
+| Validators preview documented | **PASS** |
+| STATUS append-only | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+
+### Resolucion
+
+```text
+D51.1 = COMPLETE
+D51 = OPEN
+Docking Foundation Discovery COMPLETE
+Architecture = FROZEN
+API = FROZEN
+FILE FREEZE = ACTIVE
+GOVERNANCE = FROZEN
+CURRENT SHELL = FROZEN
+NO SRC CHANGES
+Ready for D51.2
+NEXT = D51.2 — Infrastructure
+```
+
+---
+
+*## D51.1 APPEND-ONLY 2026-07-20 · D51.1 COMPLETE · CA-D51.1 16/16 PASS · Current Shell FROZEN · API FROZEN · Ready for D51.2 Infrastructure.*
