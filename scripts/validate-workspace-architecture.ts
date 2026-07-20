@@ -204,14 +204,26 @@ assertCase(
   `layout=${mainInLayout} content=${mainInContent} panels=${mainInPanels} page=${mainInPage}`
 );
 
-// --- Tokens frozen + tokensOnly ---
+// --- Tokens frozen + tokensOnly (D48.2: literals live in UI_TOKENS.workspace) ---
+const uiTokensSource = existsSync(
+  join(repoRoot, "src/lib/ui/tokens.ts")
+)
+  ? readFileSync(join(repoRoot, "src/lib/ui/tokens.ts"), "utf8")
+  : "";
+
+const workspaceFreezeInUiTokens =
+  uiTokensSource.includes(`shell: "${FROZEN_TOKENS.shell}"`) &&
+  uiTokensSource.includes(`mainColumn: "${FROZEN_TOKENS.mainColumn}"`) &&
+  uiTokensSource.includes(`inner: "${FROZEN_TOKENS.inner}"`);
+
+const workspaceTokensDelegates =
+  /UI_TOKENS\.workspace\.(shell|mainColumn|inner)/.test(tokensSource) &&
+  /export const WORKSPACE_TOKENS/.test(tokensSource);
+
 assertCase(
   "workspace.tokens.frozen.shape",
-  tokensSource.includes(`shell: "${FROZEN_TOKENS.shell}"`) &&
-    tokensSource.includes(`mainColumn: "${FROZEN_TOKENS.mainColumn}"`) &&
-    tokensSource.includes(`inner: "${FROZEN_TOKENS.inner}"`) &&
-    /export const WORKSPACE_TOKENS/.test(tokensSource),
-  "WORKSPACE_TOKENS shell/mainColumn/inner exact"
+  workspaceFreezeInUiTokens && workspaceTokensDelegates,
+  "WORKSPACE_TOKENS → UI_TOKENS.workspace; freeze literals in tokens.ts"
 );
 
 const layoutHardcodesShell =

@@ -37,6 +37,8 @@
     "validate:v11-d46-gate": "npx tsx scripts/validate-v11-d46-gate.ts",
     "validate:workspace-architecture": "npx tsx scripts/validate-workspace-architecture.ts",
     "validate:v11-d47-gate": "npx tsx scripts/validate-v11-d47-gate.ts",
+    "validate:design-tokens-v2": "npx tsx scripts/validate-design-tokens-v2.ts",
+    "validate:v11-d48-gate": "npx tsx scripts/validate-v11-d48-gate.ts",
     "validate:prod2e-d33-axes-gate": "npx tsx scripts/validate-prod2e-d33-axes-gate.ts",
     "validate:prod2e-d34-interaction-gate": "npx tsx scripts/validate-prod2e-d34-interaction-gate.ts && npx tsx scripts/validate-prod2e-d33-axes-gate.ts && npx tsc --noEmit && npm run validate:graph-interaction-unit && npm run validate:graph-axes-unit && npm run validate:chart-viewport && npm run validate:chart-viewport-y && npx tsx scripts/validate-prod2e-d29-viewport-gate.ts && npx tsx scripts/validate-prod2e-d30-publication-presets-gate.ts && npx tsx scripts/validate-prod2e-d31-curves-gate.ts && npx tsx scripts/validate-prod2e-d32-series-gate.ts && npx tsx scripts/validate-prod2c-c8-regression-gate.ts",
     "validate:prod2e-gate": "npx tsx scripts/validate-prod2e-gate.ts && npm run validate:prod2e-d35-rendering-gate && npm run validate:prod2e-data3b-gate && npm run validate:visual-graph-builder-unit && npx tsc --noEmit",
