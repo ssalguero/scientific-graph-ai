@@ -1,263 +1,166 @@
 /**
- * D45 Theme — single source of truth for reusable visual class strings.
- * Strings are copied verbatim from page.tsx / projectFileUiStyles.ts (D45.1 baseline).
- * D46.2: sidebar nav state helpers (active/hover/pressed/disabled) via --app-* only.
+ * D45 Theme — public class-string API + helpers.
+ * D48.2: values delegated to UI_TOKENS (move-only); no visual / API changes.
  */
 
 import type { ThemeMode } from "@/lib/app-preferences";
 
-import { animation, elevation, transitions, zIndex } from "./tokens";
+import { UI_TOKENS } from "./tokens";
 
-export const appShellLight =
-  "bg-slate-50 text-[var(--app-text)] transition-colors duration-200 [--app-surface:#ffffff] [--app-surface-muted:#f8fafc] [--app-border:#e2e8f0] [--app-text:#334155] [--app-text-muted:#64748b] [--app-heading:#0f172a] [--app-accent:#2563eb] [--app-success:#16a34a] [--app-warning:#d97706] [--app-danger:#dc2626] [--app-success-bg:#dcfce7] [--app-success-text:#166534] [--app-info-bg:#fef3c7] [--app-info-text:#92400e] [--app-danger-bg:#fef2f2] [--app-danger-border:#fecaca] [--app-danger-text:#b91c1c] [--app-warning-bg:#fffbeb] [--app-warning-border:#fde68a] [--app-warning-text:#92400e] [--app-toggle-track:#e2e8f0] [--app-toggle-thumb:#ffffff]";
-
-export const appShellDark =
-  "bg-[#0f172a] text-[var(--app-text)] transition-colors duration-200 [--app-surface:#111827] [--app-surface-muted:#1f2937] [--app-border:#334155] [--app-text:#e5e7eb] [--app-text-muted:#94a3b8] [--app-heading:#e5e7eb] [--app-accent:#3b82f6] [--app-success:#22c55e] [--app-warning:#f59e0b] [--app-danger:#ef4444] [--app-success-bg:#052e16] [--app-success-text:#86efac] [--app-info-bg:#451a03] [--app-info-text:#fcd34d] [--app-danger-bg:#450a0a] [--app-danger-border:#7f1d1d] [--app-danger-text:#fca5a5] [--app-warning-bg:#422006] [--app-warning-border:#78350f] [--app-warning-text:#fcd34d] [--app-toggle-track:#334155] [--app-toggle-thumb:#e5e7eb]";
+export const appShellLight = UI_TOKENS.layout.appShellLight;
+export const appShellDark = UI_TOKENS.layout.appShellDark;
 
 export const getAppShell = (mode: ThemeMode) =>
   mode === "dark" ? appShellDark : appShellLight;
 
-export const card =
-  "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-3 sm:p-4 transition-colors duration-200";
+export const card = UI_TOKENS.panel.card;
+export const panelHeading = UI_TOKENS.typography.panelHeading;
+export const panelHeadingSubtext = UI_TOKENS.typography.panelHeadingSubtext;
+export const sectionLabel = UI_TOKENS.typography.sectionLabel;
+export const subsectionCard = UI_TOKENS.panel.subsection;
+export const subsectionHeading = UI_TOKENS.typography.subsectionHeading;
+export const contentPanel = UI_TOKENS.panel.content;
+export const emptyState = UI_TOKENS.panel.empty;
+export const resultsEmptyState = UI_TOKENS.panel.resultsEmpty;
+export const resultsTextCard = UI_TOKENS.panel.resultsText;
+export const resultsGrid = UI_TOKENS.panel.resultsGrid;
+export const resultsSubsectionCard = UI_TOKENS.panel.resultsSubsection;
+export const resultsPanelFull = UI_TOKENS.panel.resultsPanelFull;
+export const resultsPanelCompact = UI_TOKENS.panel.resultsPanelCompact;
+export const resultsCompactGrid = UI_TOKENS.panel.resultsCompactGrid;
+export const persistenceBadge = UI_TOKENS.panel.persistenceBadge;
+export const dataEmptyState = UI_TOKENS.panel.dataEmpty;
+export const dataDatasetCard = UI_TOKENS.panel.dataDataset;
+export const dataImportPanel = UI_TOKENS.panel.dataImport;
+export const dataAdvancedPanel = UI_TOKENS.panel.dataAdvanced;
+export const dataSemanticHint = UI_TOKENS.typography.dataSemanticHint;
+export const fieldLabel = UI_TOKENS.typography.fieldLabel;
+export const inputField = UI_TOKENS.panel.inputField;
 
-export const panelHeading =
-  "text-sm sm:text-base font-semibold text-[var(--app-heading)] tracking-tight";
+export const btnPrimary = UI_TOKENS.button.primary;
+export const btnOutline = UI_TOKENS.button.outline;
+export const btnOutlineSm = UI_TOKENS.button.outlineSm;
 
-export const panelHeadingSubtext =
-  "text-xs sm:text-sm text-[var(--app-text-muted)] mt-0.5";
-
-export const sectionLabel =
-  "text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)] mb-1.5";
-
-export const subsectionCard =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-2 space-y-2 transition-colors duration-200";
-
-export const subsectionHeading =
-  "text-xs sm:text-sm font-semibold text-[var(--app-heading)]";
-
-export const contentPanel =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text)] transition-colors duration-200";
-
-export const emptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2.5 py-2.5 text-xs sm:text-sm text-[var(--app-text-muted)] text-center transition-colors duration-200";
-
-export const resultsEmptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text-muted)] text-center transition-colors duration-200";
-
-export const resultsTextCard =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text)] leading-snug";
-
-export const resultsGrid =
-  "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-2";
-
-export const resultsSubsectionCard =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-2 space-y-1.5 transition-colors duration-200";
-
-export const resultsPanelFull = "lg:col-span-2 xl:col-span-2";
-
-export const resultsPanelCompact = "min-w-0";
-
-export const resultsCompactGrid =
-  "grid grid-cols-1 lg:grid-cols-2 gap-2 lg:col-span-2 xl:col-span-2";
-
-export const persistenceBadge =
-  "inline-flex shrink-0 items-center rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]";
-
-export const dataEmptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text-muted)]";
-
-export const dataDatasetCard =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-2 space-y-1.5 transition-colors duration-200";
-
-export const dataImportPanel =
-  "rounded-lg border-2 border-[var(--app-accent)]/35 bg-[var(--app-accent)]/5 shadow-sm";
-
-export const dataAdvancedPanel = "border-dashed opacity-95";
-
-export const dataSemanticHint =
-  "text-[11px] sm:text-xs text-[var(--app-text-muted)] leading-snug";
-
-export const fieldLabel =
-  "block text-xs font-medium text-[var(--app-heading)] mb-1";
-
-export const inputField =
-  "w-full h-9 border border-[var(--app-border)] rounded-lg px-2.5 text-sm text-[var(--app-heading)] bg-[var(--app-surface)] placeholder:text-[var(--app-text-muted)] shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 focus:border-[var(--app-accent)]";
-
-export const btnPrimary =
-  "inline-flex h-9 items-center justify-center font-semibold text-white text-sm px-4 rounded-lg shadow-sm transition-colors duration-200 hover:shadow-md active:scale-[0.98]";
-
-export const btnOutline =
-  "inline-flex h-9 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-3 rounded-lg text-sm text-[var(--app-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)] hover:shadow disabled:opacity-50 disabled:cursor-not-allowed";
-
-export const btnOutlineSm =
-  "inline-flex h-7 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-2 rounded-md text-xs text-[var(--app-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]";
-
-export const alertBase =
-  "rounded-lg border px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200";
-
+export const alertBase = UI_TOKENS.panel.alertBase;
 export const alertError = `${alertBase} border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] text-[var(--app-danger-text)]`;
-
 export const alertWarning = `${alertBase} border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] text-[var(--app-warning-text)]`;
 
-export const toggleInput = "peer sr-only";
+export const toggleInput = UI_TOKENS.button.toggleInput;
+export const toggleShell = UI_TOKENS.button.toggleShell;
+export const toggleTrackBg = UI_TOKENS.button.toggleTrackBg;
+export const toggleThumb = UI_TOKENS.button.toggleThumb;
+export const toggleLabel = UI_TOKENS.button.toggleLabel;
 
-export const toggleShell =
-  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full";
-
-export const toggleTrackBg =
-  "pointer-events-none absolute inset-0 rounded-full border border-[var(--app-border)] bg-[var(--app-toggle-track)] transition-colors duration-200 peer-checked:border-[var(--app-accent)] peer-checked:bg-[var(--app-accent)] peer-disabled:opacity-50";
-
-export const toggleThumb =
-  "pointer-events-none absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[var(--app-toggle-thumb)] shadow-sm transition-transform duration-200 peer-checked:translate-x-4 peer-disabled:opacity-50";
-
-export const toggleLabel =
-  "flex items-center justify-between gap-2 cursor-pointer text-xs sm:text-sm text-[var(--app-text)] leading-tight py-0.5";
-
-export const actionBarBtn =
-  "inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-semibold shadow-sm transition-colors duration-200 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm";
-
-export const actionBarBtnPrimary = `${actionBarBtn} bg-emerald-600 text-white hover:bg-emerald-700 min-w-[7.5rem]`;
-
-export const actionBarBtnSave = `${actionBarBtn} border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 min-w-[7.5rem]`;
-
-export const actionBarBtnNeutral = `${actionBarBtn} ${btnOutline} hover:shadow-sm`;
-
-export const actionBarBtnExport = `${actionBarBtn} ${btnOutline} min-w-[3.25rem] px-3 font-medium hover:shadow-sm`;
-
-export const actionBarGroup = "flex flex-wrap items-center gap-2";
-
-export const actionBarDivider =
-  "hidden sm:block h-7 w-px shrink-0 bg-[var(--app-border)]";
+export const actionBarBtn = UI_TOKENS.button.actionBar;
+export const actionBarBtnPrimary = UI_TOKENS.button.actionBarPrimary;
+export const actionBarBtnSave = UI_TOKENS.button.actionBarSave;
+export const actionBarBtnNeutral = UI_TOKENS.button.actionBarNeutral;
+export const actionBarBtnExport = UI_TOKENS.button.actionBarExport;
+export const actionBarGroup = UI_TOKENS.button.actionBarGroup;
+export const actionBarDivider = UI_TOKENS.button.actionBarDivider;
 
 /** Divider between major sidebar blocks — border via --app-border only. */
-export const sidebarDivider = "border-t border-[var(--app-border)] my-2";
+export const sidebarDivider = UI_TOKENS.sidebar.divider;
 
 /**
  * Width tokens (D46.3 / D46.4) — sole numeric source for sidebar chrome.
  * Components must reference these exports; never literal widths.
  */
-export const sidebarWidthDesktop = "w-[280px] max-w-[280px]";
-export const sidebarWidthTablet = "w-[240px] max-w-[240px]";
-export const sidebarWidthCollapsed = "w-16 max-w-[4rem]";
-
-const sidebarShellChrome = `shrink-0 bg-[var(--app-surface)] border-r border-[var(--app-border)] flex-col min-h-screen ${transitions.all200}`;
+export const sidebarWidthDesktop = UI_TOKENS.sidebar.widthDesktop;
+export const sidebarWidthTablet = UI_TOKENS.sidebar.widthTablet;
+export const sidebarWidthCollapsed = UI_TOKENS.sidebar.widthCollapsed;
 
 /**
  * Expanded shell — in-flow from lg up (tablet width), desktop width from xl.
  * Hidden below lg so mobile never pushes main layout (drawer owns mobile).
  */
-export const sidebarShellExpanded = `hidden lg:flex ${sidebarWidthTablet} xl:w-[280px] xl:max-w-[280px] ${sidebarShellChrome}`;
+export const sidebarShellExpanded = UI_TOKENS.sidebar.shellExpanded;
 
 /** Collapsed rail shell — desktop/tablet only; width via sidebarWidthCollapsed. */
-export const sidebarShellCollapsed = `hidden lg:flex ${sidebarWidthCollapsed} ${sidebarShellChrome} overflow-hidden`;
+export const sidebarShellCollapsed = UI_TOKENS.sidebar.shellCollapsed;
 
 /**
  * Default shell export (D45 gate / expanded baseline).
  * Prefer sidebarShellExpanded / sidebarShellCollapsed in D46 chrome.
  */
-export const sidebarShell = sidebarShellExpanded;
+export const sidebarShell = UI_TOKENS.sidebar.shell;
 
 /**
  * Mobile drawer open — centralizes fixed / inset / z-index / opacity / pointer-events.
  * Width via sidebarWidthDesktop (composed by Sidebar).
  */
-export const sidebarOverlayOpen = `fixed inset-y-0 left-0 ${zIndex.modal} flex flex-col bg-[var(--app-surface)] border-r border-[var(--app-border)] ${elevation.medium} opacity-100 pointer-events-auto ${transitions.all200}`;
+export const sidebarOverlayOpen = UI_TOKENS.sidebar.overlayOpen;
 
 /** Mobile drawer closed — out of flow, non-interactive. */
-export const sidebarOverlayClosed =
-  "hidden pointer-events-none opacity-0 fixed inset-y-0 left-0";
+export const sidebarOverlayClosed = UI_TOKENS.sidebar.overlayClosed;
 
 /** Backdrop behind mobile drawer — click closes; --app-* only. */
-export const sidebarOverlayBackdrop = `fixed inset-0 ${zIndex.sticky} bg-[var(--app-heading)]/40 opacity-100 pointer-events-auto ${transitions.colors200}`;
+export const sidebarOverlayBackdrop = UI_TOKENS.sidebar.overlayBackdrop;
 
 /** Fixed trigger to open mobile drawer (lg:hidden). */
-export const sidebarMobileTrigger = `fixed top-3 left-3 ${zIndex.dropdown} lg:hidden inline-flex items-center justify-center rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-2 text-[var(--app-text)] shadow-sm hover:bg-[var(--app-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${transitions.all200} ${animation.activeScale}`;
+export const sidebarMobileTrigger = UI_TOKENS.sidebar.mobileTrigger;
 
 /** Sidebar chrome header (title row). */
-export const sidebarHeader =
-  "px-3 py-2.5 border-b border-[var(--app-border)] flex items-center gap-2";
+export const sidebarHeader = UI_TOKENS.sidebar.header;
 
 /** Collapse / expand rail toggle — native button; focus via --app-accent. */
-export const sidebarCollapseToggle = `inline-flex shrink-0 items-center justify-center rounded-lg p-1.5 text-[var(--app-text-muted)] hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${transitions.all200} ${animation.activeScale}`;
+export const sidebarCollapseToggle = UI_TOKENS.sidebar.collapseToggle;
 
 /**
  * Scroll body: consistent padding + gap between major sections/groups.
  * D46.1 hierarchy — components must use this instead of ad-hoc space-y.
  */
-export const sidebarSectionGap =
-  "flex-1 overflow-y-auto px-3 py-2.5 space-y-2.5";
+export const sidebarSectionGap = UI_TOKENS.sidebar.sectionGap;
 
 /** Scroll body when rail collapsed — tighter padding. */
-export const sidebarSectionGapCollapsed =
-  "flex-1 overflow-y-auto overflow-x-hidden px-1.5 py-2 space-y-2";
+export const sidebarSectionGapCollapsed = UI_TOKENS.sidebar.sectionGapCollapsed;
 
 /** Hide chrome labels/hints marked for rail compact mode. */
-export const sidebarRailHide = "hidden";
+export const sidebarRailHide = UI_TOKENS.sidebar.railHide;
 
 /** Section wrapper in rail: keep icons, hide title text (last span). */
-export const sidebarRailSectionWrap =
-  "[&>div>button>span:last-child]:sr-only [&>div>button]:justify-center [&>div>button]:px-0";
+export const sidebarRailSectionWrap = UI_TOKENS.sidebar.railSectionWrap;
 
 /** Inner vertical rhythm inside a group or section content stack. */
-export const sidebarSectionSpacing = "space-y-1.5";
+export const sidebarSectionSpacing = UI_TOKENS.sidebar.sectionSpacing;
 
 /** Accordion / section title button — uppercase + tracking via theme. */
-export const sidebarSectionHeader =
-  "flex w-full items-center gap-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider text-[var(--app-heading)] transition-all duration-200";
+export const sidebarSectionHeader = UI_TOKENS.sidebar.sectionHeader;
 
 /** Content pad under an open section header. */
-export const sidebarSectionBody = "space-y-0.5 pb-1 pt-0.5";
+export const sidebarSectionBody = UI_TOKENS.sidebar.sectionBody;
 
-export const sidebarSectionLabel =
-  "text-[11px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
+export const sidebarSectionLabel = UI_TOKENS.sidebar.sectionLabel;
 
 /** Idle nav row — focus ring via --app-accent. */
-export const sidebarNavItem =
-  "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs sm:text-sm text-[var(--app-text)] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30";
+export const sidebarNavItem = UI_TOKENS.sidebar.navItem;
 
 /** Hover — surface muted only (--app-*). */
-export const sidebarNavItemHover =
-  "hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-heading)]";
+export const sidebarNavItemHover = UI_TOKENS.sidebar.navItemHover;
 
 /** Active — open panel / selected nav signal (visual only). */
-export const sidebarNavItemActive =
-  "bg-[var(--app-accent)]/10 text-[var(--app-heading)] font-semibold ring-1 ring-inset ring-[var(--app-accent)]/25";
+export const sidebarNavItemActive = UI_TOKENS.sidebar.navItemActive;
 
 /** Pressed — existing animation token (no new motion). */
-export const sidebarNavItemPressed = animation.activeScale;
+export const sidebarNavItemPressed = UI_TOKENS.sidebar.navItemPressed;
 
 /** Disabled — centralized; keep interactive affordance off. */
-export const sidebarNavItemDisabled =
-  "opacity-60 cursor-not-allowed text-[var(--app-text-muted)] hover:bg-transparent hover:text-[var(--app-text-muted)]";
+export const sidebarNavItemDisabled = UI_TOKENS.sidebar.navItemDisabled;
 
-export const sidebarGraphItemActive =
-  "bg-[var(--app-accent)]/10 border-[var(--app-accent)] text-[var(--app-heading)] shadow-sm ring-1 ring-[var(--app-accent)]/25 font-medium";
+export const sidebarGraphItemActive = UI_TOKENS.sidebar.graphItemActive;
+export const sidebarGraphItemIdle = UI_TOKENS.sidebar.graphItemIdle;
 
-export const sidebarGraphItemIdle =
-  "border-[var(--app-border)] text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]";
+export const sidebarBtnPrimary = UI_TOKENS.sidebar.btnPrimary;
+export const sidebarBtnSecondary = UI_TOKENS.sidebar.btnSecondary;
 
-export const sidebarBtnPrimary = `w-full h-8 ${actionBarBtnPrimary} text-xs sm:text-sm font-semibold min-w-0`;
-
-export const sidebarBtnSecondary = `w-full h-8 ${btnOutline} text-xs sm:text-sm font-medium min-w-0`;
-
-export const sidebarSoonBadge =
-  "inline-flex shrink-0 items-center rounded-full border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]";
+export const sidebarSoonBadge = UI_TOKENS.sidebar.soonBadge;
 
 /** Project-file UI variants (exact strings from former projectFileUiStyles.ts). */
-export const projectFileFieldLabel =
-  "block text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
-
-export const projectFileInputField =
-  "w-full h-8 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1.5 text-sm text-[var(--app-text)] placeholder:text-[var(--app-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/25";
-
-export const projectFileBtnPrimary =
-  "rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 transition-colors";
-
-export const projectFileBtnSave =
-  "rounded-lg border border-emerald-600 bg-emerald-600 px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 transition-colors";
-
-export const projectFileBtnSecondary =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1.5 text-xs sm:text-sm font-medium text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] transition-colors";
+export const projectFileFieldLabel = UI_TOKENS.typography.projectFileFieldLabel;
+export const projectFileInputField = UI_TOKENS.panel.projectFileInputField;
+export const projectFileBtnPrimary = UI_TOKENS.button.projectPrimary;
+export const projectFileBtnSave = UI_TOKENS.button.projectSave;
+export const projectFileBtnSecondary = UI_TOKENS.button.projectSecondary;
 
 export type ButtonVariant =
   | "primary"
