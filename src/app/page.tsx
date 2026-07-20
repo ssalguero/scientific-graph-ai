@@ -153,6 +153,11 @@ import { useGraphEditorProjectFile, type UseGraphEditorProjectFileParams } from 
 import { useProjectHistory } from "./useProjectHistory";
 import { buildProjectHistoryEntry } from "@/lib/project-history";
 import { Sidebar } from "@/components/ui/sidebar";
+import {
+  WorkspaceContent,
+  WorkspaceLayout,
+  WorkspacePanels,
+} from "@/components/workspace";
 import { useRecentProjects } from "./useRecentProjects";
 import {
   APP_DISPLAY_VERSION,
@@ -396,7 +401,6 @@ import {
   dataSemanticHint,
   emptyState,
   fieldLabel,
-  getAppShell,
   inputField,
   panelHeadingSubtext,
   persistenceBadge,
@@ -19583,7 +19587,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     !currentDatasetInfo;
 
   return (
-    <main className={`flex min-h-screen flex-col lg:flex-row ${getAppShell(themeMode)}`}>
+    <WorkspaceLayout
+      themeMode={themeMode}
+      sidebar={
       <Sidebar
         onNewCurve={newGraph}
         onClearCurves={clearGraph}
@@ -19710,9 +19716,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           onShowContextualHintsChange: setShowContextualHints,
         }}
       />
-
-      <div className="flex-1 min-w-0 overflow-auto">
-        <div className="w-full px-3 sm:px-4 lg:px-5 xl:px-6 py-2.5 sm:py-3 space-y-3">
+      }
+      workspace={
+      <WorkspaceContent
+        toolbar={
+          <>
           <header className="pb-0.5">
             <h1 className="text-xl sm:text-2xl font-bold text-[var(--app-heading)] tracking-tight">
               Scientific Graph AI
@@ -19776,7 +19784,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             onChange={setLabUsageProfile}
             persistenceBadgeClassName={persistenceBadge}
           />
-
+          </>
+        }
+        workspace={
+          <>
           <section
             className={activeWorkspaceSection === "home" ? "" : "hidden"}
             aria-hidden={activeWorkspaceSection !== "home"}
@@ -26646,24 +26657,27 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               {scaleWarning}
             </div>
           )}
+          </>
+        }
+      />
+      }
+      panels={
+        <WorkspacePanels>
+          {graphSaveToast ? (
+            <GraphSaveToast
+              title={graphSaveToast}
+              onDismiss={() => setGraphSaveToast(null)}
+            />
+          ) : null}
 
-
-        </div>
-      </div>
-
-      {graphSaveToast ? (
-        <GraphSaveToast
-          title={graphSaveToast}
-          onDismiss={() => setGraphSaveToast(null)}
-        />
-      ) : null}
-
-      {expertModeToastVisible ? (
-        <LabExpertModeToast
-          onDismiss={() => setExpertModeToastVisible(false)}
-        />
-      ) : null}
-    </main>
+          {expertModeToastVisible ? (
+            <LabExpertModeToast
+              onDismiss={() => setExpertModeToastVisible(false)}
+            />
+          ) : null}
+        </WorkspacePanels>
+      }
+    />
   );
 }
 
