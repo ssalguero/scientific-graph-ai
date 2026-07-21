@@ -5,6 +5,8 @@ export { DockProvider, useDockContext } from "./DockContext";
 export { DockInteractionProvider } from "./DockInteractionProvider";
 export { DockInteractionContext } from "./DockInteractionContext";
 export { useDockInteraction } from "./useDockInteraction";
+export { useDockDrag } from "./useDockDrag";
+export { useDockResize } from "./useDockResize";
 export { DOCK_TOKENS } from "./DockTokens";
 export { DOCK_REGISTRY } from "./DockRegistry";
 export { DOCK_PANEL_IDS } from "./types";
@@ -30,4 +32,12 @@ export type {
   DockInteractionState,
   DockInteractionApi,
   DockInteractionContextValue,
+  DockDragSession,
+  DockResizeSession,
+  ResizeEdge,
+  DockPointerPoint,
+  BeginDragInput,
+  UpdateDragInput,
+  BeginResizeInput,
+  UpdateResizeInput,
 } from "./DockInteractionContext";
