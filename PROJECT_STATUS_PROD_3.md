@@ -3196,3 +3196,68 @@ NEXT = D59 Snap Foundation
 ---
 
 *## D58.5 APPEND-ONLY 2026-07-21 ? D58.5 COMPLETE ? CA-D58 PASS ? D58 CLOSED ? Window Resize Foundation RELEASED ? Next D59 Snap Foundation.*
+
+---
+
+## D59.0
+
+**Microfase:** D59.0 - Snap Foundation - Discovery - Architecture Freeze  
+**Fecha:** 2026-07-21  
+**Estado:** **D59 OPEN** - **D59.0 = COMPLETE** - **Snap Architecture = FROZEN** - **API Freeze = APPROVED** - **Governance = FROZEN** - **READY FOR D59.1**  
+**Modo:** Documental create-only discovery + append-only este bloque (sin implementacion)
+
+### Resumen
+
+Se abre **D59 - Snap Foundation**. Discovery congela arquitectura definitiva: WindowSnapEngine puro `(geometry, targets, config) -> geometry`, edges-only (left|right|top|bottom), SnapTargetProvider + WorkspaceTargetProvider + WindowTargetProvider (DockTargetProvider reservado D61), SnapConfig (threshold + axisThresholdX + axisThresholdY), prioridad Workspace > Window > Dock, empates nearest -> priority -> stable lexicographic order, determinismo y pureza estricta. WindowAPI D55 / Floating APIs D56 / triads D57-D58 intactas. Sin codigo, validators, scripts ni wiring.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D59.0-snap-discovery.md`](docs/D59.0-snap-discovery.md) |
+| Serie | **D59 OPEN** |
+| Microfase | **D59.0 COMPLETE** |
+| Architecture | **FROZEN** |
+| API Freeze | **APPROVED** |
+| Governance | **FROZEN** |
+| Blueprint / Lifecycle / CA-D59 | **FROZEN** |
+| Roadmap D59.1-D59.5 | **FROZEN** |
+| `src/**` / `scripts/**` / `package.json` | **UNCHANGED** |
+| Next | **D59.1 Snap Engine Foundation** |
+
+### Freeze confirmado
+
+- Snap Engine desacoplado de Drag / Resize / Manager / pointer / React / stores / providers
+- Edge Model: left | right | top | bottom only
+- Target Providers: Workspace + Window; Dock = D61
+- Prioridad: Workspace > Window > Dock (reserved)
+- Empates: nearest -> priority -> stable lexicographic order
+- Determinismo: same input -> same output
+- Pureza: sin React, hooks, stores, DOM, pointer, providers, refs, singleton, closures con estado
+- Threshold: threshold + axisThresholdX + axisThresholdY
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Discovery doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Architecture / API / Governance Freeze | **PASS** |
+| CA-D59 congelado | **PASS** |
+| Roadmap D59.1-D59.5 congelado | **PASS** |
+| Sin cambios funcionales | **PASS** |
+| Ready for D59.1 - Snap Engine Foundation | **PASS** |
+
+### Resolucion
+
+```text
+D59.0 COMPLETE
+Snap Architecture = FROZEN
+API Freeze = APPROVED
+Governance = FROZEN
+CA-D59 = FROZEN
+NO FUNCTIONAL CHANGES
+READY FOR D59.1 ? Snap Engine Foundation
+```
+
+---
+
+*## D59.0 APPEND-ONLY 2026-07-21 - D59.0 COMPLETE - Snap Architecture FROZEN - API Freeze APPROVED - Governance FROZEN - Ready D59.1 Snap Engine Foundation.*
