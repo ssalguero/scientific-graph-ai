@@ -1,6 +1,6 @@
 /**
  * D57.5 — Window Drag System · Bridge Mapping / pipeline gate.
- * Authority: D57.0 Discovery · D57.4 Bridge Mapping pipeline freeze.
+ * D58.1 — GeometryState mapping supersession.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -27,7 +27,7 @@ const bridge = stripComments(read("FloatingWindowBridge.tsx"));
 const manager = stripComments(read("WindowManager.tsx"));
 const floatingWindow = stripComments(read("FloatingWindow.tsx"));
 const dragBridge = stripComments(read("WindowDragBridge.ts"));
-const positionCtx = stripComments(read("WindowPositionContext.tsx"));
+const geometryCtx = stripComments(read("WindowGeometryContext.tsx"));
 const dragCtx = stripComments(read("WindowDragContext.tsx"));
 
 assertCase(
@@ -37,9 +37,9 @@ assertCase(
 );
 
 assertCase(
-  "d57.bridge.readsPositionStore",
-  /\buseWindowPosition\s*\(/.test(bridge) && /store\.getAll/.test(bridge),
-  "Bridge reads Position Store reactively"
+  "d57.bridge.readsGeometryState",
+  /\buseWindowGeometry\s*\(/.test(bridge) && /geometryState\.getAll/.test(bridge),
+  "Bridge reads GeometryState reactively"
 );
 
 assertCase(
@@ -56,18 +56,23 @@ assertCase(
 );
 
 assertCase(
-  "d57.bridge.managerProviders",
-  /WindowPositionProvider/.test(manager) &&
-    /WindowDragProvider/.test(manager) &&
-    /WindowProvider/.test(manager),
-  "Manager wires Window / Position / Drag providers"
+  "d57.bridge.noHardcodedSizes",
+  !/DEFAULT_WIDTH/.test(bridge) && !/DEFAULT_HEIGHT/.test(bridge),
+  "Bridge does not use hardcoded DEFAULT_WIDTH/HEIGHT constants"
 );
 
 assertCase(
-  "d57.bridge.positionRevision",
-  /positionRevision|revision/.test(manager) &&
-    /subscribe/.test(manager),
-  "Reactive revision tick subscribed to Position Store"
+  "d57.bridge.managerProviders",
+  /WindowGeometryProvider/.test(manager) &&
+    /WindowDragProvider/.test(manager) &&
+    /WindowProvider/.test(manager),
+  "Manager wires Window / Geometry / Drag providers"
+);
+
+assertCase(
+  "d57.bridge.geometryRevision",
+  /geometryRevision|revision/.test(manager) && /subscribe/.test(manager),
+  "Reactive revision tick subscribed to GeometryState"
 );
 
 assertCase(
@@ -81,28 +86,27 @@ assertCase(
 );
 
 assertCase(
-  "d57.bridge.dragMutatesStore",
-  /positionStore\.set/.test(dragBridge) &&
-    /updateDrag/.test(dragBridge),
-  "updateDrag writes Position Store"
+  "d57.bridge.dragMutatesGeometry",
+  /geometryState\.set/.test(dragBridge) && /updateDrag/.test(dragBridge),
+  "updateDrag writes GeometryState"
 );
 
 assertCase(
   "d57.bridge.contextsInternal",
-  /useWindowPosition/.test(positionCtx) &&
+  /useWindowGeometry/.test(geometryCtx) &&
     /useWindowDrag/.test(dragCtx) &&
-    existsSync(join(windowsDir, "WindowPositionContext.tsx")) &&
+    existsSync(join(windowsDir, "WindowGeometryContext.tsx")) &&
     existsSync(join(windowsDir, "WindowDragContext.tsx")),
-  "Position + Drag context shells present"
+  "Geometry + Drag context shells present"
 );
 
 assertCase(
   "d57.bridge.pipelineCertified",
   /\bbeginDrag\b/.test(floatingWindow) &&
-    /positionStore\.set/.test(dragBridge) &&
+    /geometryState\.set/.test(dragBridge) &&
     /mapToFloatingWindowModels/.test(bridge) &&
     /FloatingWindowLayer/.test(bridge),
-  "Full pipeline: Pointer → DragBridge → Store → Bridge → Model[] → Layer"
+  "Full pipeline: Pointer → DragBridge → GeometryState → Bridge → Model[] → Layer"
 );
 
 const failed = results.filter((r) => !r.pass);

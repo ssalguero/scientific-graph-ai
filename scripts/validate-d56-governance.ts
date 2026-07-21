@@ -115,9 +115,9 @@ assertCase(
 );
 
 assertCase(
-  "d56.gov.bridge.usesWindowPosition",
-  /\buseWindowPosition\s*\(/.test(floatingBridgeCode),
-  "Bridge reads Position Store via useWindowPosition()"
+  "d56.gov.bridge.usesWindowGeometry",
+  /\buseWindowGeometry\s*\(/.test(floatingBridgeCode),
+  "Bridge reads GeometryState via useWindowGeometry()"
 );
 
 assertCase(
@@ -127,7 +127,7 @@ assertCase(
       floatingBridgeCode
     ) &&
     !/windows=\{\[\]\}/.test(floatingBridgeCode),
-  "Bridge maps Position Store → FloatingWindowModel[] (no windows={[]})"
+  "Bridge maps GeometryState → FloatingWindowModel[] (no windows={[]})"
 );
 
 assertCase(
@@ -158,15 +158,16 @@ assertCase(
 );
 
 const illicitPosition = floatingSources.filter(({ source }) =>
-  /\buseWindowPosition\s*\(/.test(stripComments(source))
+  /\buseWindowPosition\s*\(/.test(stripComments(source)) ||
+  /\buseWindowGeometry\s*\(/.test(stripComments(source))
 );
 
 assertCase(
   "d56.gov.bridgeSolePositionConsumer",
   illicitPosition.length === 0,
   illicitPosition.length
-    ? `useWindowPosition in: ${illicitPosition.map((f) => f.file).join(",")}`
-    : "Bridge is sole Floating* useWindowPosition consumer"
+    ? `geometry hooks in: ${illicitPosition.map((f) => f.file).join(",")}`
+    : "Bridge is sole Floating* geometry context consumer"
 );
 
 const joinedFloating = floatingFiles.map((f) => read(f)).join("\n");
@@ -246,9 +247,9 @@ assertCase(
 
 assertCase(
   "d56.gov.bridgeMappingActive",
-  /\buseWindowPosition\b/.test(floatingBridgeCode) &&
+  /\buseWindowGeometry\b/.test(floatingBridgeCode) &&
     !/windows=\{\[\]\}/.test(floatingBridgeCode),
-  "D57.4: Bridge Mapping active (Position Store → models)"
+  "D58.1: Bridge Mapping active (GeometryState → models)"
 );
 
 const failed = results.filter((r) => !r.pass);

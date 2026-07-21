@@ -1,6 +1,6 @@
 /**
  * D57.5 — Window Drag System · Drag API Freeze gate.
- * Authority: D57.0 Discovery · D55/D56 public API Freeze intact.
+ * D58.1 — GeometryState supersession (x/y/width/height); D55/D56 public APIs intact.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -23,14 +23,14 @@ const stripComments = (source: string): string =>
     .replace(/\/\*[\s\S]*?\*\//g, " ")
     .replace(/\/\/.*$/gm, " ");
 
-const REQUIRED_D57_FILES = [
-  "WindowPositionStore.ts",
+const REQUIRED_FILES = [
+  "WindowGeometryState.ts",
   "WindowDragBridge.ts",
   "WindowDragContext.tsx",
-  "WindowPositionContext.tsx",
+  "WindowGeometryContext.tsx",
 ] as const;
 
-for (const file of REQUIRED_D57_FILES) {
+for (const file of REQUIRED_FILES) {
   assertCase(
     `d57.api.file.${file}`,
     existsSync(join(windowsDir, file)),
@@ -38,40 +38,34 @@ for (const file of REQUIRED_D57_FILES) {
   );
 }
 
-const positionSource = read("WindowPositionStore.ts");
+const geometrySource = read("WindowGeometryState.ts");
 const dragSource = read("WindowDragBridge.ts");
 const windowApiSource = read("WindowTypes.ts");
 const floatingTypes = read("FloatingWindowTypes.ts");
 const barrelSource = read("index.ts");
 
 assertCase(
-  "d57.api.windowPosition",
-  /export type WindowPosition\s*=/.test(positionSource) &&
-    /x:\s*number/.test(positionSource) &&
-    /y:\s*number/.test(positionSource) &&
-    !/\bwidth\s*:/.test(
-      positionSource.match(/export type WindowPosition\s*=\s*\{([^}]+)\}/)?.[1] ??
-        ""
-    ) &&
-    !/\bheight\s*:/.test(
-      positionSource.match(/export type WindowPosition\s*=\s*\{([^}]+)\}/)?.[1] ??
-        ""
-    ),
-  "WindowPosition is { x, y } only"
+  "d57.api.windowGeometry",
+  /export type WindowGeometry\s*=/.test(geometrySource) &&
+    /x:\s*number/.test(geometrySource) &&
+    /y:\s*number/.test(geometrySource) &&
+    /width:\s*number/.test(geometrySource) &&
+    /height:\s*number/.test(geometrySource),
+  "WindowGeometry is { x, y, width, height }"
 );
 
 assertCase(
-  "d57.api.positionStoreSurface",
-  /export type WindowPositionStore\s*=/.test(positionSource) &&
-    /set\(/.test(positionSource) &&
-    /get\(/.test(positionSource) &&
-    /\bhas\(/.test(positionSource) &&
-    /delete\(/.test(positionSource) &&
-    /clear\(/.test(positionSource) &&
-    /getAll\(/.test(positionSource) &&
-    /subscribe\(/.test(positionSource) &&
-    /createWindowPositionStore/.test(positionSource),
-  "WindowPositionStore surface"
+  "d57.api.geometryStateSurface",
+  /export type WindowGeometryState\s*=/.test(geometrySource) &&
+    /set\(/.test(geometrySource) &&
+    /get\(/.test(geometrySource) &&
+    /\bhas\(/.test(geometrySource) &&
+    /delete\(/.test(geometrySource) &&
+    /clear\(/.test(geometrySource) &&
+    /getAll\(/.test(geometrySource) &&
+    /subscribe\(/.test(geometrySource) &&
+    /createWindowGeometryState/.test(geometrySource),
+  "WindowGeometryState surface"
 );
 
 assertCase(
@@ -144,21 +138,19 @@ assertCase(
 );
 
 const INTERNAL_LEAKS = [
-  "createWindowPositionStore",
+  "createWindowGeometryState",
   "createWindowDragBridge",
+  "createWindowResizeBridge",
   "useWindowDrag",
-  "useWindowPosition",
-  "WindowPositionStore",
+  "useWindowGeometry",
+  "WindowGeometryState",
   "WindowDragAPI",
   "WindowDragProvider",
-  "WindowPositionProvider",
+  "WindowGeometryProvider",
 ] as const;
 
 const leaked = INTERNAL_LEAKS.filter((name) => {
-  const re = new RegExp(
-    `export\\s+(?:type\\s+)?(?:\\{[^}]*\\b${name}\\b|${name}\\b)`
-  );
-  return re.test(barrelSource) || new RegExp(`\\b${name}\\b`).test(
+  return new RegExp(`\\b${name}\\b`).test(
     barrelSource
       .split("\n")
       .filter((l) => /^\s*export\s/.test(l))
@@ -169,14 +161,14 @@ const leaked = INTERNAL_LEAKS.filter((name) => {
 assertCase(
   "d57.api.noInternalBarrelLeak",
   leaked.length === 0,
-  leaked.length ? `leaked: ${leaked.join(",")}` : "D57 internals not barrel-exported"
+  leaked.length ? `leaked: ${leaked.join(",")}` : "D57/D58 internals not barrel-exported"
 );
 
 assertCase(
-  "d57.api.dragBridgeUsesStore",
-  /positionStore\.set/.test(stripComments(dragSource)) &&
-    /from\s+["']\.\/WindowPositionStore["']/.test(dragSource),
-  "WindowDragBridge mutates via Position Store only"
+  "d57.api.dragBridgeUsesGeometry",
+  /geometryState\.set/.test(stripComments(dragSource)) &&
+    /from\s+["']\.\/WindowGeometryState["']/.test(dragSource),
+  "WindowDragBridge mutates via GeometryState only"
 );
 
 const failed = results.filter((r) => !r.pass);

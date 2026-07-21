@@ -1,6 +1,6 @@
 /**
  * D57.5 — Window Drag System · governance gate.
- * Authority: D57.0 Discovery governance · D55/D56 freezes · TitleBar → Drag Bridge path.
+ * D58.1 — GeometryState supersession; D57 TitleBar path retained.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -28,21 +28,21 @@ const floatingWindow = stripComments(read("FloatingWindow.tsx"));
 const floatingLayer = stripComments(read("FloatingWindowLayer.tsx"));
 const floatingBridge = stripComments(read("FloatingWindowBridge.tsx"));
 const dragBridge = stripComments(read("WindowDragBridge.ts"));
-const positionStore = stripComments(read("WindowPositionStore.ts"));
+const geometryState = stripComments(read("WindowGeometryState.ts"));
 const floatingRaw = read("FloatingWindow.tsx");
 
 assertCase(
-  "d57.gov.managerOwnsPosition",
-  /createWindowPositionStore/.test(manager) &&
-    /WindowPositionProvider/.test(manager) &&
+  "d57.gov.managerOwnsGeometry",
+  /createWindowGeometryState/.test(manager) &&
+    /WindowGeometryProvider/.test(manager) &&
     /createWindowDragBridge/.test(manager),
-  "manager-owns-position: Manager hosts Position Store + Drag Bridge"
+  "manager-owns-position/geometry: Manager hosts GeometryState + Drag Bridge"
 );
 
 assertCase(
   "d57.gov.noLocalPosition",
   !/\buseState\s*\(/.test(floatingWindow) &&
-    !/positionStore\.set/.test(floatingWindow) &&
+    !/geometryState\.set/.test(floatingWindow) &&
     !/\.style\.(left|top)\s*=/.test(floatingWindow),
   "no-local-position: FloatingWindow has no local position state"
 );
@@ -52,9 +52,9 @@ assertCase(
   /\bbeginDrag\b/.test(floatingWindow) &&
     /\bupdateDrag\b/.test(floatingWindow) &&
     /\bendDrag\b/.test(floatingWindow) &&
-    !/createWindowPositionStore/.test(floatingWindow) &&
-    /positionStore\.set/.test(dragBridge),
-  "bridge-required: mutations only via WindowDragBridge → Store"
+    !/createWindowGeometryState/.test(floatingWindow) &&
+    /geometryState\.set/.test(dragBridge),
+  "bridge-required / drag-bridge-required: mutations via DragBridge → GeometryState"
 );
 
 assertCase(
@@ -94,20 +94,24 @@ assertCase(
 
 assertCase(
   "d57.gov.renderWithoutLogic",
-  !/\b(useState|useEffect|useWindowDrag|useWindowPosition|useWindowContext)\s*\(/.test(
+  !/\b(useState|useEffect|useWindowDrag|useWindowPosition|useWindowGeometry|useWindowContext)\s*\(/.test(
     floatingLayer
   ) && /FloatingWindowLayerProps/.test(read("FloatingWindowLayer.tsx")),
   "render-without-logic: Layer is presentational only"
 );
 
 assertCase(
-  "d57.gov.positionStoreXYonly",
-  /export type WindowPosition\s*=/.test(positionStore) &&
-    !/width:\s*number/.test(
-      positionStore.match(/export type WindowPosition\s*=\s*\{([^}]+)\}/)?.[1] ??
-        "width: number"
+  "d57.gov.geometryAuthority",
+  /export type WindowGeometry\s*=/.test(geometryState) &&
+    /width:\s*number/.test(
+      geometryState.match(/export type WindowGeometry\s*=\s*\{([^}]+)\}/)?.[1] ??
+        ""
+    ) &&
+    /height:\s*number/.test(
+      geometryState.match(/export type WindowGeometry\s*=\s*\{([^}]+)\}/)?.[1] ??
+        ""
     ),
-  "Position Store owns x/y only"
+  "single-geometry-authority: WindowGeometry owns x/y/width/height"
 );
 
 assertCase(
