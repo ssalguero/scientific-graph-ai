@@ -2,21 +2,34 @@
 
 /**
  * D56.2 — Floating Windows Foundation · FloatingWindow.
- * D57.3 — Title bar Pointer Events → WindowDragBridge (certified path only).
- * Props surface unchanged (FloatingWindowProps). No local position state.
+ * D57.3 — Title bar Pointer Events → WindowDragBridge.
+ * D58.2 — Eight-edge ResizeHandles → WindowResizeBridge.
+ * Props surface unchanged (FloatingWindowProps). No local geometry state.
  * No useWindowContext / WindowManager imports.
- * Authority: FloatingWindowProps (D56.1 API Freeze) · D57.0 Discovery.
+ * Authority: FloatingWindowProps (D56.1 API Freeze) · D58.0 Discovery.
  */
 
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { FloatingWindowProps } from "./FloatingWindowTypes";
 import { useWindowDrag } from "./WindowDragContext";
+import { useWindowResize } from "./WindowResizeContext";
+import type { WindowResizeEdge } from "./WindowResizeBridge";
+import {
+  FLOATING_WINDOW_RESIZE_EDGES,
+  FloatingWindowResizeHandle,
+} from "./FloatingWindowResizeHandle";
 
 export function FloatingWindow({ window: model }: FloatingWindowProps) {
   const { beginDrag, updateDrag, endDrag } = useWindowDrag();
+  const { beginResize, updateResize, endResize } = useWindowResize();
 
   const onTitlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest("button")) {
+      return;
+    }
+    if (
+      (event.target as HTMLElement).closest("[data-floating-window-edge-handle]")
+    ) {
       return;
     }
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -35,6 +48,28 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
       return;
     }
     endDrag();
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
+  const onHandlePointerDown =
+    (edge: WindowResizeEdge) => (event: ReactPointerEvent<HTMLElement>) => {
+      event.stopPropagation();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      beginResize(model.id, edge, event.clientX, event.clientY);
+    };
+
+  const onHandlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+    updateResize(event.clientX, event.clientY);
+  };
+
+  const onHandlePointerUp = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+    endResize();
     event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
@@ -62,6 +97,15 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
         </button>
       </header>
       <section>{model.content}</section>
+      {FLOATING_WINDOW_RESIZE_EDGES.map((edge) => (
+        <FloatingWindowResizeHandle
+          key={edge}
+          edge={edge}
+          onPointerDown={onHandlePointerDown(edge)}
+          onPointerMove={onHandlePointerMove}
+          onPointerUp={onHandlePointerUp}
+        />
+      ))}
     </div>
   );
 }

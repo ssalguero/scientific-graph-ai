@@ -3,7 +3,8 @@
 /**
  * D55.3 — Multi-Window Foundation · Window Manager.
  * D57 — Hosts DragBridge + geometry providers (not on WindowAPI).
- * D58.1 — Hosts WindowGeometryState + WindowResizeBridge (session infra; no visual resize).
+ * D58.1 — Hosts WindowGeometryState + WindowResizeBridge.
+ * D58.2 — Provides WindowResizeAPI + drag XOR resize session exclusivity.
  * Lifecycle: create → register → activate → focus → minimize → restore → close.
  * Renders providers only — zero visual chrome.
  * Authority: D55.1 · D57.5 · D58.0 Discovery · D55/D56 public API Freeze intact.
@@ -21,7 +22,8 @@ import {
   createWindowGeometryState,
   ensureDefaultGeometry,
 } from "./WindowGeometryState";
-import { createWindowResizeBridge } from "./WindowResizeBridge";
+import { createWindowResizeBridge, type WindowResizeEdge } from "./WindowResizeBridge";
+import { WindowResizeProvider } from "./WindowResizeContext";
 import { createWindowRegistry } from "./WindowRegistry";
 import {
   createEmptyWindowState,
@@ -246,11 +248,31 @@ export function WindowManager({ children }: WindowManagerProps) {
 
   const windowDragApi = useMemo(
     () => ({
-      beginDrag: windowDragBridge.beginDrag,
+      beginDrag(id: string, x: number, y: number) {
+        windowResizeBridge.endResize();
+        windowDragBridge.beginDrag(id, x, y);
+      },
       updateDrag: windowDragBridge.updateDrag,
       endDrag: windowDragBridge.endDrag,
     }),
-    [windowDragBridge]
+    [windowDragBridge, windowResizeBridge]
+  );
+
+  const windowResizeApi = useMemo(
+    () => ({
+      beginResize(
+        id: string,
+        edge: WindowResizeEdge,
+        pointerX: number,
+        pointerY: number
+      ) {
+        windowDragBridge.endDrag();
+        windowResizeBridge.beginResize(id, edge, pointerX, pointerY);
+      },
+      updateResize: windowResizeBridge.updateResize,
+      endResize: windowResizeBridge.endResize,
+    }),
+    [windowDragBridge, windowResizeBridge]
   );
 
   const geometryValue = useMemo(
@@ -264,7 +286,11 @@ export function WindowManager({ children }: WindowManagerProps) {
   return (
     <WindowProvider value={value}>
       <WindowGeometryProvider value={geometryValue}>
-        <WindowDragProvider value={windowDragApi}>{children}</WindowDragProvider>
+        <WindowDragProvider value={windowDragApi}>
+          <WindowResizeProvider value={windowResizeApi}>
+            {children}
+          </WindowResizeProvider>
+        </WindowDragProvider>
       </WindowGeometryProvider>
     </WindowProvider>
   );

@@ -1,10 +1,10 @@
 /**
  * D58.1 — Window Resize System · WindowResizeBridge.
- * Internal contract: resize session ops → GeometryState (D58.2 will apply edge math).
+ * D58.2 — Edge math for eight directions → immutable GeometryState writes.
  * Sole authorized path for size mutations (resize-bridge-required).
- * No Pointer Events. No edge math. No constraints. No UI.
+ * No Pointer Events. No constraints / min-max / workspace clamp.
  * Not part of WindowAPI / public barrel.
- * Authority: D58.0 Discovery · D58.1 Resize Architecture.
+ * Authority: D58.0 Discovery · D58.2 Resize Handles.
  */
 
 import {
@@ -14,7 +14,7 @@ import {
   type WindowGeometryState,
 } from "./WindowGeometryState";
 
-/** Eight-edge resize identity (handles arrive in D58.2). */
+/** Eight-edge resize identity. */
 export type WindowResizeEdge =
   | "n"
   | "s"
@@ -26,7 +26,7 @@ export type WindowResizeEdge =
   | "sw";
 
 /**
- * Frozen Resize Origin — beginResize snapshot for D58.2 math.
+ * Frozen Resize Origin — beginResize snapshot for edge math.
  * geometry is an immutable clone at session start.
  */
 export type WindowResizeOrigin = {
@@ -54,7 +54,6 @@ export type WindowResizeState =
 
 /**
  * Frozen triad — beginResize / updateResize / endResize.
- * D58.1: session tracking only; no geometry mutation from edge math yet.
  */
 export type WindowResizeAPI = {
   beginResize(
@@ -93,8 +92,45 @@ function cloneResizeState(state: WindowResizeState): WindowResizeState {
 }
 
 /**
+ * Pure edge math from frozen origin + current pointer.
+ * Returns a new WindowGeometry (geometry-immutable-input).
+ * No min/max / workspace clamp (D58.3).
+ */
+export function computeResizedGeometry(
+  edge: WindowResizeEdge,
+  origin: WindowResizeOrigin,
+  pointerX: number,
+  pointerY: number
+): WindowGeometry {
+  const g = origin.geometry;
+  const dx = pointerX - origin.pointerX;
+  const dy = pointerY - origin.pointerY;
+
+  let x = g.x;
+  let y = g.y;
+  let width = g.width;
+  let height = g.height;
+
+  if (edge.includes("e")) {
+    width = g.width + dx;
+  }
+  if (edge.includes("w")) {
+    width = g.width - dx;
+    x = g.x + dx;
+  }
+  if (edge.includes("s")) {
+    height = g.height + dy;
+  }
+  if (edge.includes("n")) {
+    height = g.height - dy;
+    y = g.y + dy;
+  }
+
+  return { x, y, width, height };
+}
+
+/**
  * Creates a WindowResizeBridge bound to GeometryState.
- * D58.1 stubs: opens/tracks/closes session; does not apply resize deltas.
  */
 export function createWindowResizeBridge(
   geometryState: WindowGeometryState
@@ -102,10 +138,6 @@ export function createWindowResizeBridge(
   let state: WindowResizeState = { status: "idle" };
 
   return {
-    /**
-     * beginResize — opens a session with frozen WindowResizeOrigin.
-     * Replaces any prior resize session. Seeds default geometry if missing.
-     */
     beginResize(
       id: string,
       edge: WindowResizeEdge,
@@ -130,23 +162,23 @@ export function createWindowResizeBridge(
       };
     },
 
-    /**
-     * updateResize — records pointer sample for active session.
-     * D58.1: no edge math / no GeometryState writes (reserved for D58.2).
-     */
     updateResize(pointerX: number, pointerY: number): void {
       if (state.status !== "resizing") {
         return;
       }
+      const nextGeometry = computeResizedGeometry(
+        state.edge,
+        state.origin,
+        pointerX,
+        pointerY
+      );
+      geometryState.set(state.id, nextGeometry);
       state = {
         ...state,
         pointer: { x: pointerX, y: pointerY },
       };
     },
 
-    /**
-     * endResize — closes the active session. No-op when idle.
-     */
     endResize(): void {
       if (state.status !== "resizing") {
         return;
