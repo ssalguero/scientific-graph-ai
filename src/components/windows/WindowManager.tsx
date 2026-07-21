@@ -4,6 +4,7 @@
  * D55.3 — Multi-Window Foundation · Window Manager.
  * D57.1 — Hosts parallel WindowPositionStore (geometry SSOT; not on WindowAPI).
  * D57.2 — Hosts WindowDragBridge (internal session → Position Store; not on WindowAPI).
+ * D57.3 — Provides WindowDragAPI to title-bar capture via WindowDragProvider.
  * Single WindowRegistry · single WindowState source of truth · full WindowAPI.
  * Lifecycle: create (registers) → register → activate → focus → minimize → restore → close.
  * Renders only WindowProvider around children — zero visual chrome.
@@ -16,6 +17,7 @@ import {
   type WindowContextValue,
 } from "./WindowContext";
 import { createWindowDragBridge } from "./WindowDragBridge";
+import { WindowDragProvider } from "./WindowDragContext";
 import {
   createWindowPositionStore,
   ensureDefaultPosition,
@@ -235,5 +237,18 @@ export function WindowManager({ children }: WindowManagerProps) {
     [state, api]
   );
 
-  return <WindowProvider value={value}>{children}</WindowProvider>;
+  const windowDragApi = useMemo(
+    () => ({
+      beginDrag: windowDragBridge.beginDrag,
+      updateDrag: windowDragBridge.updateDrag,
+      endDrag: windowDragBridge.endDrag,
+    }),
+    [windowDragBridge]
+  );
+
+  return (
+    <WindowProvider value={value}>
+      <WindowDragProvider value={windowDragApi}>{children}</WindowDragProvider>
+    </WindowProvider>
+  );
 }

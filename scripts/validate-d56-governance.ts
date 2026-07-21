@@ -1,6 +1,7 @@
 /**
  * D56.5 — Floating Windows Foundation governance gate.
- * Authority: D56 presentational + bridge architecture · Zero UX.
+ * D57.3 — Title-bar Pointer Capture supersession (certified path only).
+ * Authority: D56 presentational + bridge architecture · D57 TitleBar → WindowDragBridge.
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -31,6 +32,10 @@ const floatingLayer = read("FloatingWindowLayer.tsx");
 const floatingBridge = read("FloatingWindowBridge.tsx");
 const floatingTypes = read("FloatingWindowTypes.ts");
 
+const floatingWindowCode = stripComments(floatingWindow);
+const floatingLayerCode = stripComments(floatingLayer);
+const floatingBridgeCode = stripComments(floatingBridge);
+
 const floatingFiles = [
   "FloatingWindow.tsx",
   "FloatingWindowLayer.tsx",
@@ -38,15 +43,50 @@ const floatingFiles = [
   "FloatingWindowTypes.ts",
 ] as const;
 
+/** D57.3: FloatingWindow may only use useWindowDrag — no other hooks. */
 assertCase(
-  "d56.gov.floatingWindow.noHooks",
-  !HOOK_PATTERN.test(stripComments(floatingWindow)),
-  "FloatingWindow has no hooks"
+  "d56.gov.floatingWindow.certifiedHooksOnly",
+  /\buseWindowDrag\s*\(/.test(floatingWindowCode) &&
+    !HOOK_PATTERN.test(floatingWindowCode),
+  "FloatingWindow uses only useWindowDrag (D57 Title Bar path)"
+);
+
+assertCase(
+  "d56.gov.floatingWindow.noWindowManager",
+  !/from\s+["']\.\/WindowManager["']/.test(floatingWindowCode) &&
+    !/\bWindowManager\b/.test(floatingWindowCode),
+  "FloatingWindow does not import WindowManager"
+);
+
+assertCase(
+  "d56.gov.floatingWindow.noWindowContext",
+  !/\buseWindowContext\s*\(/.test(floatingWindowCode),
+  "FloatingWindow does not call useWindowContext"
+);
+
+assertCase(
+  "d56.gov.floatingWindow.titleBarPointerCapture",
+  /onPointerDown/.test(floatingWindowCode) &&
+    /setPointerCapture/.test(floatingWindowCode) &&
+    /releasePointerCapture/.test(floatingWindowCode) &&
+    /\bbeginDrag\b/.test(floatingWindowCode) &&
+    /\bupdateDrag\b/.test(floatingWindowCode) &&
+    /\bendDrag\b/.test(floatingWindowCode) &&
+    /data-floating-window-title/.test(floatingWindowCode),
+  "Title bar wires Pointer Events → begin/update/endDrag"
+);
+
+assertCase(
+  "d56.gov.floatingWindow.titleBarOnly",
+  /<header[\s\S]*onPointerDown[\s\S]*<\/header>/.test(floatingWindow) &&
+    !/<section[^>]*\sonPointer/i.test(floatingWindowCode),
+  "Pointer handlers only on title bar header, not content"
 );
 
 assertCase(
   "d56.gov.floatingLayer.noHooks",
-  !HOOK_PATTERN.test(stripComments(floatingLayer)),
+  !HOOK_PATTERN.test(floatingLayerCode) &&
+    !/\buseWindowDrag\s*\(/.test(floatingLayerCode),
   "FloatingWindowLayer has no hooks"
 );
 
@@ -55,7 +95,7 @@ assertCase(
   !(
     floatingLayer.match(/^\s*import\s+.+from\s+["'][^"']+["']/gm) ?? []
   ).some((line) => /WindowManager/.test(line)) &&
-    !/from\s+["']\.\/WindowManager["']/.test(stripComments(floatingLayer)),
+    !/from\s+["']\.\/WindowManager["']/.test(floatingLayerCode),
   "Layer does not import WindowManager"
 );
 
@@ -69,22 +109,20 @@ assertCase(
 
 assertCase(
   "d56.gov.bridge.usesWindowContext",
-  /\buseWindowContext\s*\(/.test(stripComments(floatingBridge)),
+  /\buseWindowContext\s*\(/.test(floatingBridgeCode),
   "Bridge calls useWindowContext()"
 );
 
 assertCase(
   "d56.gov.bridge.emptyWindows",
-  /<FloatingWindowLayer\s+windows=\{\[\]\}\s*\/>/.test(
-    stripComments(floatingBridge)
-  ),
+  /<FloatingWindowLayer\s+windows=\{\[\]\}\s*\/>/.test(floatingBridgeCode),
   "Bridge returns FloatingWindowLayer windows={[]}"
 );
 
 assertCase(
   "d56.gov.bridge.onlyExtraHookIsContext",
   !/\b(useState|useReducer|useEffect|useMemo|useCallback)\s*\(/.test(
-    stripComments(floatingBridge)
+    floatingBridgeCode
   ),
   "Bridge has no state/effect/memo hooks"
 );
@@ -139,6 +177,10 @@ assertCase(
     : "no scientific/graph/analysis/page imports"
 );
 
+/**
+ * Capability keywords: resize/snap/persist still banned everywhere Floating*.
+ * "drag" banned except FloatingWindow.tsx (D57.3 Title Bar supersession).
+ */
 const FORBIDDEN_CAPABILITY_KEYWORDS = [
   "drag",
   "resize",
@@ -150,11 +192,16 @@ const FORBIDDEN_CAPABILITY_KEYWORDS = [
   "IndexedDB",
 ] as const;
 
+const DRAG_ALLOWED_FILES = new Set(["FloatingWindow.tsx"]);
+
 const capabilityHits = FORBIDDEN_CAPABILITY_KEYWORDS.filter((kw) => {
   const pattern = new RegExp(`\\b${kw}\\b`, "i");
-  return floatingFiles.some((file) =>
-    pattern.test(stripComments(read(file)))
-  );
+  return floatingFiles.some((file) => {
+    if (kw === "drag" && DRAG_ALLOWED_FILES.has(file)) {
+      return false;
+    }
+    return pattern.test(stripComments(read(file)));
+  });
 });
 
 assertCase(
@@ -162,7 +209,7 @@ assertCase(
   capabilityHits.length === 0,
   capabilityHits.length
     ? `keywords: ${capabilityHits.join(",")}`
-    : "no drag/resize/snap/persist capabilities"
+    : "no forbidden capabilities (drag only in FloatingWindow)"
 );
 
 assertCase(
@@ -172,6 +219,12 @@ assertCase(
       /^FloatingWindowLayer\./.test(n)
     ).length === 1,
   "single FloatingWindowLayer file"
+);
+
+assertCase(
+  "d56.gov.bridgeMappingStillEmpty",
+  /windows=\{\[\]\}/.test(floatingBridgeCode),
+  "D57.3: Bridge mapping not introduced (still windows={[]})"
 );
 
 const failed = results.filter((r) => !r.pass);
