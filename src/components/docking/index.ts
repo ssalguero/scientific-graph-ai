@@ -5,6 +5,8 @@ export { DockProvider, useDockContext } from "./DockContext";
 export { DOCK_TOKENS } from "./DockTokens";
 export { DOCK_REGISTRY } from "./DockRegistry";
 export { DOCK_PANEL_IDS } from "./types";
+export { DOCK_FEATURES } from "./dockFeatures";
+export { DEFAULT_DOCK_LAYOUT } from "./dockLayout";
 export type {
   DockSide,
   DockLocation,
@@ -15,4 +17,9 @@ export type {
   DockPanelProps,
   DockRegistryEntry,
   DockContextValue,
+  DockRegistryQuery,
+  DockRegistrationApi,
+  DockVisibilityApi,
+  DockLayoutDefinition,
+  DockSlotDefinition,
 } from "./types";
