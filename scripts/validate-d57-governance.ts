@@ -74,14 +74,23 @@ assertCase(
 );
 
 assertCase(
-  "d57.gov.titleBarOnly",
+  "d57.gov.titleBarAndHandles",
   /data-floating-window-title/.test(floatingWindow) &&
     /onPointerDown/.test(floatingWindow) &&
     /setPointerCapture/.test(floatingWindow) &&
     /releasePointerCapture/.test(floatingWindow) &&
     /<header[\s\S]*onPointerDown[\s\S]*<\/header>/.test(floatingRaw) &&
-    !/<section[^>]*\sonPointer/i.test(floatingWindow),
-  "title-bar-only: Pointer Events exclusively on header"
+    !/<section[^>]*\sonPointer/i.test(floatingWindow) &&
+    /\bbeginResize\b/.test(floatingWindow),
+  "title-bar drag + handles-only resize; content section has no pointers"
+);
+
+assertCase(
+  "d57.gov.dragXorResize",
+  /endResize\(\)/.test(manager) &&
+    /endDrag\(\)/.test(manager) &&
+    /WindowResizeProvider/.test(manager),
+  "Manager enforces drag XOR resize via begin wrappers + ResizeProvider"
 );
 
 assertCase(
@@ -94,7 +103,7 @@ assertCase(
 
 assertCase(
   "d57.gov.renderWithoutLogic",
-  !/\b(useState|useEffect|useWindowDrag|useWindowPosition|useWindowGeometry|useWindowContext)\s*\(/.test(
+  !/\b(useState|useEffect|useWindowDrag|useWindowResize|useWindowPosition|useWindowGeometry|useWindowContext)\s*\(/.test(
     floatingLayer
   ) && /FloatingWindowLayerProps/.test(read("FloatingWindowLayer.tsx")),
   "render-without-logic: Layer is presentational only"

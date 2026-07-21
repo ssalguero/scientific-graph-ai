@@ -65,8 +65,9 @@ assertCase(
   "d57.bridge.managerProviders",
   /WindowGeometryProvider/.test(manager) &&
     /WindowDragProvider/.test(manager) &&
+    /WindowResizeProvider/.test(manager) &&
     /WindowProvider/.test(manager),
-  "Manager wires Window / Geometry / Drag providers"
+  "Manager wires Window / Geometry / Drag / Resize providers"
 );
 
 assertCase(

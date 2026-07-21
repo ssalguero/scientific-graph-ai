@@ -143,10 +143,12 @@ const INTERNAL_LEAKS = [
   "createWindowResizeBridge",
   "useWindowDrag",
   "useWindowGeometry",
+  "useWindowResize",
   "WindowGeometryState",
   "WindowDragAPI",
   "WindowDragProvider",
   "WindowGeometryProvider",
+  "WindowResizeProvider",
 ] as const;
 
 const leaked = INTERNAL_LEAKS.filter((name) => {

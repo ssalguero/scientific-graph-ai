@@ -42,14 +42,16 @@ const floatingFiles = [
   "FloatingWindowLayer.tsx",
   "FloatingWindowBridge.tsx",
   "FloatingWindowTypes.ts",
+  "FloatingWindowResizeHandle.tsx",
 ] as const;
 
-/** D57.3: FloatingWindow may only use useWindowDrag — no other hooks. */
+/** D57.3 + D58.2: FloatingWindow may use useWindowDrag + useWindowResize only. */
 assertCase(
   "d56.gov.floatingWindow.certifiedHooksOnly",
   /\buseWindowDrag\s*\(/.test(floatingWindowCode) &&
+    /\buseWindowResize\s*\(/.test(floatingWindowCode) &&
     !HOOK_PATTERN.test(floatingWindowCode),
-  "FloatingWindow uses only useWindowDrag (D57 Title Bar path)"
+  "FloatingWindow uses only useWindowDrag + useWindowResize"
 );
 
 assertCase(
@@ -78,16 +80,29 @@ assertCase(
 );
 
 assertCase(
-  "d56.gov.floatingWindow.titleBarOnly",
+  "d56.gov.floatingWindow.resizeHandles",
+  /\bbeginResize\b/.test(floatingWindowCode) &&
+    /\bupdateResize\b/.test(floatingWindowCode) &&
+    /\bendResize\b/.test(floatingWindowCode) &&
+    /FloatingWindowResizeHandle/.test(floatingWindowCode) &&
+    /data-floating-window-edge-handle/.test(
+      stripComments(read("FloatingWindowResizeHandle.tsx"))
+    ),
+  "Eight-edge handles wire Pointer Events → begin/update/endResize"
+);
+
+assertCase(
+  "d56.gov.floatingWindow.handlesOnlyNotContent",
   /<header[\s\S]*onPointerDown[\s\S]*<\/header>/.test(floatingWindow) &&
     !/<section[^>]*\sonPointer/i.test(floatingWindowCode),
-  "Pointer handlers only on title bar header, not content"
+  "Pointer handlers on title bar + handles only — not content section"
 );
 
 assertCase(
   "d56.gov.floatingLayer.noHooks",
   !HOOK_PATTERN.test(floatingLayerCode) &&
-    !/\buseWindowDrag\s*\(/.test(floatingLayerCode),
+    !/\buseWindowDrag\s*\(/.test(floatingLayerCode) &&
+    !/\buseWindowResize\s*\(/.test(floatingLayerCode),
   "FloatingWindowLayer has no hooks"
 );
 
@@ -202,8 +217,8 @@ assertCase(
 );
 
 /**
- * Capability keywords: resize/snap/persist still banned everywhere Floating*.
- * "drag" banned except FloatingWindow.tsx (D57.3 Title Bar supersession).
+ * Capability keywords: snap/persist banned everywhere Floating*.
+ * "drag" / "resize" allowed only on certified handle/title paths.
  */
 const FORBIDDEN_CAPABILITY_KEYWORDS = [
   "drag",
@@ -216,12 +231,18 @@ const FORBIDDEN_CAPABILITY_KEYWORDS = [
   "IndexedDB",
 ] as const;
 
-const DRAG_ALLOWED_FILES = new Set(["FloatingWindow.tsx"]);
+const DRAG_RESIZE_ALLOWED_FILES = new Set([
+  "FloatingWindow.tsx",
+  "FloatingWindowResizeHandle.tsx",
+]);
 
 const capabilityHits = FORBIDDEN_CAPABILITY_KEYWORDS.filter((kw) => {
   const pattern = new RegExp(`\\b${kw}\\b`, "i");
   return floatingFiles.some((file) => {
-    if (kw === "drag" && DRAG_ALLOWED_FILES.has(file)) {
+    if (
+      (kw === "drag" || kw === "resize") &&
+      DRAG_RESIZE_ALLOWED_FILES.has(file)
+    ) {
       return false;
     }
     return pattern.test(stripComments(read(file)));
@@ -233,7 +254,7 @@ assertCase(
   capabilityHits.length === 0,
   capabilityHits.length
     ? `keywords: ${capabilityHits.join(",")}`
-    : "no forbidden capabilities (drag only in FloatingWindow)"
+    : "no forbidden capabilities (drag/resize only on certified Floating paths)"
 );
 
 assertCase(
