@@ -1,6 +1,7 @@
 /**
- * D51.4 — Docking Foundation static gate.
+ * D51.4 / D52.3 — Docking Foundation static gate.
  * Verifies frozen Docking Foundation contracts (no product changes).
+ * D52 additions are allowed only via explicit allowlist below.
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -10,7 +11,8 @@ const dockingDir = join(repoRoot, "src/components/docking");
 const pagePath = join(repoRoot, "src/app/page.tsx");
 const uiTokensPath = join(repoRoot, "src/lib/ui/tokens.ts");
 
-const REQUIRED_FILES = [
+/** D51 foundation file set (required). */
+const D51_REQUIRED_FILES = [
   "types.ts",
   "DockTokens.ts",
   "DockRegistry.ts",
@@ -19,6 +21,28 @@ const REQUIRED_FILES = [
   "DockZone.tsx",
   "DockPanel.tsx",
   "index.ts",
+] as const;
+
+/** D52.3 explicit allowlist — nothing else may be added. */
+const D52_ALLOWED_ADDITIONS = [
+  "dockRegistration.ts",
+  "dockVisibility.ts",
+  "dockLayout.ts",
+  "dockSlots.ts",
+  "dockFeatures.ts",
+] as const;
+
+const REQUIRED_FILES = [
+  ...D51_REQUIRED_FILES,
+  ...D52_ALLOWED_ADDITIONS,
+] as const;
+
+/** D52 additive DockContextValue keys (allowlist). */
+const D52_CONTEXT_KEYS = [
+  "registration",
+  "visibility",
+  "layout",
+  "features",
 ] as const;
 
 const FORBIDDEN_IMPORT_PATHS = [
@@ -75,6 +99,8 @@ const uiTokensSource = existsSync(uiTokensPath)
   ? readFileSync(uiTokensPath, "utf8")
   : "";
 
+const d52Sources = D52_ALLOWED_ADDITIONS.map((file) => readDockingFile(file));
+
 const allDockingSources = [
   typesSource,
   tokensBridgeSource,
@@ -84,6 +110,7 @@ const allDockingSources = [
   zoneSource,
   panelSource,
   barrelSource,
+  ...d52Sources,
 ].join("\n");
 
 const hostSources = [rootSource, zoneSource, panelSource].join("\n");
@@ -248,8 +275,11 @@ assertCase(
   "gate3.apiFreeze.DockContextValue",
   /export\s+type\s+DockContextValue\s*=/.test(typesSource) &&
     /state:\s*DockState/.test(typesSource) &&
-    /registry:/.test(typesSource),
-  "DockContextValue = { state, registry }"
+    /registry:/.test(typesSource) &&
+    D52_CONTEXT_KEYS.every((key) =>
+      new RegExp(`\\b${key}\\s*:`).test(typesSource)
+    ),
+  "DockContextValue = { state, registry } + D52 additive keys"
 );
 
 // ============================================================================
@@ -445,15 +475,18 @@ assertCase(
 );
 
 // ============================================================================
-// Gate 10 — contextStable
+// Gate 10 — contextStable (D52 allowlist: additive keys; still no dispatch/drag/persist)
 // ============================================================================
 assertCase(
   "gate10.context.readOnlyShape",
   /state:\s*DockState/.test(typesSource) &&
     /registry:/.test(typesSource) &&
+    D52_CONTEXT_KEYS.every((key) =>
+      new RegExp(`\\b${key}\\s*:`).test(typesSource)
+    ) &&
     /DockProvider/.test(contextSource) &&
     /useDockContext/.test(contextSource),
-  "read-only context exposes state + registry"
+  "context exposes state + registry + D52 additive keys"
 );
 
 const contextWithoutComments = contextSource
@@ -464,18 +497,23 @@ assertCase(
   "gate10.context.noMutationApis",
   !/\bdispatch\s*[:(=]/.test(contextWithoutComments) &&
     !/\buseReducer\b/.test(contextWithoutComments) &&
-    !/\bsetState\b/.test(contextWithoutComments) &&
-    !/\bregister\s*\(/.test(contextWithoutComments) &&
-    !/\bunregister\s*\(/.test(contextWithoutComments) &&
-    !/\bpersist(ence)?\s*[({=]/.test(contextWithoutComments),
-  "no dispatch / reducer / register / persistence APIs"
+    !/\bpersist(ence)?\s*[({=]/.test(contextWithoutComments) &&
+    !/\bactiveDrag\b/.test(contextWithoutComments) &&
+    !/\bresize(State)?\b/.test(contextWithoutComments) &&
+    !/\bdrag\b/.test(contextWithoutComments),
+  "no dispatch / reducer / persistence / drag / resize APIs"
 );
 
 assertCase(
-  "gate10.context.staticValue",
-  /value=\{DEFAULT_DOCK_CONTEXT\}/.test(contextSource) ||
-    /value=\{[\s\S]*registry:\s*DOCK_REGISTRY/.test(contextSource),
-  "provider uses static read-only value"
+  "gate10.context.layoutReference",
+  /layout:\s*DEFAULT_DOCK_LAYOUT/.test(contextWithoutComments),
+  "provider layout references DEFAULT_DOCK_LAYOUT"
+);
+
+assertCase(
+  "gate10.context.seedExportIntact",
+  /export const DOCK_REGISTRY\s*=\s*Object\.freeze\s*\(/.test(registrySource),
+  "DOCK_REGISTRY seed freeze intact"
 );
 
 // ============================================================================
