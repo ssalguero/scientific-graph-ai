@@ -19598,6 +19598,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     !hasChartContent &&
     !currentDatasetInfo;
 
+  // D54.3 — Orchestration only: assemble domain/chrome slots.
+  // Shell layout authority lives in WorkspaceLayout → LayoutEngine (not page).
+  // page does not resolve LayoutTree, regions, or shell geometry.
   return (
     <WorkspaceLayout
       themeMode={themeMode}
