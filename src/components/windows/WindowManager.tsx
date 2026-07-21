@@ -3,6 +3,7 @@
 /**
  * D55.3 — Multi-Window Foundation · Window Manager.
  * D57.1 — Hosts parallel WindowPositionStore (geometry SSOT; not on WindowAPI).
+ * D57.2 — Hosts WindowDragBridge (internal session → Position Store; not on WindowAPI).
  * Single WindowRegistry · single WindowState source of truth · full WindowAPI.
  * Lifecycle: create (registers) → register → activate → focus → minimize → restore → close.
  * Renders only WindowProvider around children — zero visual chrome.
@@ -14,6 +15,7 @@ import {
   WindowProvider,
   type WindowContextValue,
 } from "./WindowContext";
+import { createWindowDragBridge } from "./WindowDragBridge";
 import {
   createWindowPositionStore,
   ensureDefaultPosition,
@@ -70,8 +72,8 @@ function snapshotState(state: WindowState): WindowState {
 }
 
 /**
- * Autocontained manager: one registry, one state, one position store, full WindowAPI → Provider.
- * Position store is internal SSOT for x/y — never exposed on WindowAPI / WindowState.
+ * Autocontained manager: registry + state + position store + WindowDragBridge → Provider.
+ * Geometry / session infra are internal — never exposed on WindowAPI / WindowState.
  */
 export function WindowManager({ children }: WindowManagerProps) {
   const registryRef = useRef(createWindowRegistry());
@@ -79,6 +81,9 @@ export function WindowManager({ children }: WindowManagerProps) {
 
   const positionStoreRef = useRef(createWindowPositionStore());
   const positionStore = positionStoreRef.current;
+
+  const windowDragBridgeRef = useRef(createWindowDragBridge(positionStore));
+  const windowDragBridge = windowDragBridgeRef.current;
 
   const [state, setState] = useState<WindowState>(createEmptyWindowState);
 
@@ -122,6 +127,10 @@ export function WindowManager({ children }: WindowManagerProps) {
       },
 
       unregister(id: string) {
+        const session = windowDragBridge.getState();
+        if (session.status === "dragging" && session.id === id) {
+          windowDragBridge.endDrag();
+        }
         registry.unregister(id);
         positionStore.delete(id);
         setState((prev) => {
@@ -191,6 +200,10 @@ export function WindowManager({ children }: WindowManagerProps) {
        * close — removes from registry and clears activeId / focusedId / minimizedIds.
        */
       close(id: string) {
+        const session = windowDragBridge.getState();
+        if (session.status === "dragging" && session.id === id) {
+          windowDragBridge.endDrag();
+        }
         registry.unregister(id);
         positionStore.delete(id);
         setState((prev) => {
@@ -211,7 +224,7 @@ export function WindowManager({ children }: WindowManagerProps) {
         return registry.getAll();
       },
     }),
-    [registry, positionStore]
+    [registry, positionStore, windowDragBridge]
   );
 
   const value = useMemo<WindowContextValue>(
