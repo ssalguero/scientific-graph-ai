@@ -6,9 +6,10 @@
  * D58.1 — Hosts WindowGeometryState + WindowResizeBridge.
  * D58.2 — Provides WindowResizeAPI + drag XOR resize session exclusivity.
  * D58.3 — ResizeBridge uses GeometryConstraints + WorkspaceConstraints defaults.
+ * D59.2 — Injects SnapConfig + SnapTargetProviders into DragBridge only (no Resize snap).
  * Lifecycle: create → register → activate → focus → minimize → restore → close.
  * Renders providers only — zero visual chrome.
- * Authority: D55.1 · D57.5 · D58.0 Discovery · D55/D56 public API Freeze intact.
+ * Authority: D55.1 · D57.5 · D58.0 · D59.0 Discovery · D59.2 Drag Snap Wiring.
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -26,10 +27,16 @@ import { WindowGeometryProvider } from "./WindowGeometryContext";
 import {
   createWindowGeometryState,
   ensureDefaultGeometry,
+  type WindowGeometry,
 } from "./WindowGeometryState";
 import { createWindowResizeBridge, type WindowResizeEdge } from "./WindowResizeBridge";
 import { WindowResizeProvider } from "./WindowResizeContext";
 import { createWindowRegistry } from "./WindowRegistry";
+import {
+  createWorkspaceSnapTargetProvider,
+  createWindowSnapTargetProvider,
+} from "./WindowSnapTargetProviders";
+import { createDefaultSnapConfig } from "./WindowSnapTypes";
 import {
   createEmptyWindowState,
   type WindowAPI,
@@ -91,7 +98,38 @@ export function WindowManager({ children }: WindowManagerProps) {
   const geometryStateRef = useRef(createWindowGeometryState());
   const geometryState = geometryStateRef.current;
 
-  const windowDragBridgeRef = useRef(createWindowDragBridge(geometryState));
+  /** Live minimized set for snap source filtering (composer — not Engine). */
+  const minimizedIdsRef = useRef<ReadonlySet<string>>(new Set());
+
+  const snapConfigRef = useRef(createDefaultSnapConfig());
+  const snapProvidersRef = useRef([
+    createWorkspaceSnapTargetProvider(),
+    createWindowSnapTargetProvider(),
+  ]);
+
+  const windowDragBridgeRef = useRef(
+    createWindowDragBridge(geometryState, {
+      snap: {
+        config: snapConfigRef.current,
+        providers: snapProvidersRef.current,
+        workspace: DEFAULT_WORKSPACE_CONSTRAINTS,
+        getGeometries(): ReadonlyMap<string, WindowGeometry> {
+          const all = geometryState.getAll();
+          const minimized = minimizedIdsRef.current;
+          if (minimized.size === 0) {
+            return all;
+          }
+          const filtered = new Map<string, WindowGeometry>();
+          for (const [id, geometry] of all) {
+            if (!minimized.has(id)) {
+              filtered.set(id, geometry);
+            }
+          }
+          return filtered;
+        },
+      },
+    })
+  );
   const windowDragBridge = windowDragBridgeRef.current;
 
   const windowResizeBridgeRef = useRef(
@@ -104,6 +142,8 @@ export function WindowManager({ children }: WindowManagerProps) {
 
   const [state, setState] = useState<WindowState>(createEmptyWindowState);
   const [geometryRevision, setGeometryRevision] = useState(0);
+
+  minimizedIdsRef.current = state.minimizedIds;
 
   useEffect(() => {
     return geometryState.subscribe(() => {
