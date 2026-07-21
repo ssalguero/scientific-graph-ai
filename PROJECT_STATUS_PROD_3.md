@@ -2926,3 +2926,61 @@ NEXT = D55 Layout Persistence Foundation
 ---
 
 *## D54.5 APPEND-ONLY 2026-07-21 · D54.5 COMPLETE · CA-D54 10/10 PASS · D54 CLOSED · Layout Engine Foundation RELEASED · Next D55.*
+
+---
+
+## D55.5
+
+**Microfase:** D55.5 - Multi-Window Foundation · Release · CLOSE  
+**Fecha:** 2026-07-21  
+**Estado:** **D55 CLOSED** · **Multi-Window Foundation = RELEASED** · **CA-D55 = PASS** · **NEXT = D56 Floating Windows**  
+**Modo:** Documental only - create `docs/D55.5-release.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se libera y cierra oficialmente **D55 - Multi-Window Foundation**. Infraestructura aislada de ventanas (Registry · Context · Manager · API Freeze) liberada como base para Floating Windows. Sin wiring. Zero UX. Umbrella `validate:d55-gate` PASS. Sin cambios de producto en esta microfase.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D55.5-release.md`](docs/D55.5-release.md) |
+| Serie | **D55 CLOSED** |
+| Producto | **Multi-Window Foundation RELEASED** |
+| CA-D55 | **PASS** |
+| Status | **COMPLETE** |
+| `validate:d55-window-api` | **PASS** |
+| `validate:d55-governance` | **PASS** |
+| `validate:d55-gate` | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| Next | **D56 Floating Windows** |
+
+### Certification
+
+- validate:d55-window-api PASS
+- validate:d55-governance PASS
+- validate:d55-gate PASS
+- tsc --noEmit PASS
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Multi-Window Foundation = RELEASED | **PASS** |
+| D55 = CLOSED | **PASS** |
+| CA-D55 = PASS | **PASS** |
+| NEXT = D56 Floating Windows | **PASS** |
+
+### Resolucion
+
+```text
+D55.5 COMPLETE
+Multi-Window Foundation = RELEASED
+D55 = CLOSED
+CA-D55 = PASS
+NEXT = D56 Floating Windows
+```
+
+---
+
+*## D55.5 APPEND-ONLY 2026-07-21 · D55.5 COMPLETE · CA-D55 PASS · D55 CLOSED · Multi-Window Foundation RELEASED · Next D56 Floating Windows.*
