@@ -3261,3 +3261,78 @@ READY FOR D59.1 ? Snap Engine Foundation
 ---
 
 *## D59.0 APPEND-ONLY 2026-07-21 - D59.0 COMPLETE - Snap Architecture FROZEN - API Freeze APPROVED - Governance FROZEN - Ready D59.1 Snap Engine Foundation.*
+
+---
+
+## D59.5
+
+**Microfase:** D59.5 - Snap Foundation - Certification - Release - CLOSE  
+**Fecha:** 2026-07-21  
+**Estado:** **D59 CLOSED** - **Snap Foundation = RELEASED** - **CA-D59 = PASS** - **NEXT = D60 (series alignment)**  
+**Modo:** Certification + release doc + append-only este bloque (sin implementacion)
+
+### Resumen
+
+Se libera y cierra oficialmente **D59 - Snap Foundation**. WindowSnapEngine puro edges-only; TargetProviders Workspace + Window (Dock = D61); composition en Drag y Resize; prioridad Workspace > Window; empates nearest -> priority -> stable order; determinismo certificado. WindowAPI D55 y Floating APIs D56 intactas. GeometryState unico SSOT. Zero UX Change. Umbrella `validate:d59-gate` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D59.5-release.md`](docs/D59.5-release.md) |
+| Serie | **D59 CLOSED** |
+| Producto | **Snap Foundation RELEASED** |
+| CA-D59 | **PASS** |
+| Status | **COMPLETE** |
+| `validate:d55-gate` (compat) | **PASS** |
+| `validate:d56-gate` (compat) | **PASS** |
+| `validate:d57-gate` (compat) | **PASS** |
+| `validate:d58-gate` (compat) | **PASS** |
+| `validate:d59-gate` | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D60 (series alignment)** |
+
+### Componentes certificados
+
+- WindowSnapTypes
+- WindowSnapEngine
+- WorkspaceSnapTargetProvider / WindowSnapTargetProvider
+- Drag Snap composition
+- Resize Snap composition (post-constraints + acceptSnapAxes)
+- validate-d59-* + umbrella gate
+
+### Certification
+
+- validate:d55-gate PASS
+- validate:d56-gate PASS
+- validate:d57-gate PASS
+- validate:d58-gate PASS
+- validate:d59-gate PASS
+- tsc --noEmit PASS
+- next build PASS
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Snap Foundation = RELEASED | **PASS** |
+| D59 = CLOSED | **PASS** |
+| CA-D59 = PASS | **PASS** |
+| Compatibilidad D55-D58 | **PASS** |
+| Ready for D60 - series alignment | **PASS** |
+
+### Resolucion
+
+```text
+D59.5 COMPLETE
+Snap Foundation = RELEASED
+D59 = CLOSED
+CA-D59 = PASS
+NEXT = D60 (series alignment)
+READY FOR D60
+```
+
+---
+
+*## D59.5 APPEND-ONLY 2026-07-21 - D59.5 COMPLETE - CA-D59 PASS - D59 CLOSED - Snap Foundation RELEASED - Next D60 series alignment.*
