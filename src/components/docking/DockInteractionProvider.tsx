@@ -11,9 +11,10 @@ import {
 } from "./DockInteractionContext";
 
 /**
- * D53.2 — Interaction state provider.
+ * D53.2 / D53.3 — Interaction state provider.
  * Owns DockInteractionState only. Does not import DockProvider (one-way nesting).
- * Zero UX: no listeners, DOM, effects, pointer, keyboard, drag, or resize behavior.
+ * Focus & Activation (D53.3): single activeDock; activate implies focus.
+ * Zero UX: no listeners, DOM, effects, pointer, keyboard handlers, drag, or resize behavior.
  */
 
 const noop = (..._args: unknown[]): void => {
@@ -29,12 +30,18 @@ export function DockInteractionProvider({
 
   const api = useMemo<DockInteractionApi>(
     () => ({
+      /** Sets focusedDock only. Does not change activeDock or hoverDock. */
       focus(id: string) {
         setState((prev) => ({ ...prev, focusedDock: id }));
       },
+      /** Clears focusedDock only. Does not change activeDock. */
       blur() {
         setState((prev) => ({ ...prev, focusedDock: null }));
       },
+      /**
+       * Unique activeDock invariant: replaces any previous active.
+       * Activation implies focus (activeDock + focusedDock = id).
+       */
       activate(id: string) {
         setState((prev) => ({
           ...prev,
@@ -42,6 +49,7 @@ export function DockInteractionProvider({
           focusedDock: id,
         }));
       },
+      /** Clears activeDock only. Does not change focusedDock. */
       deactivate() {
         setState((prev) => ({ ...prev, activeDock: null }));
       },
