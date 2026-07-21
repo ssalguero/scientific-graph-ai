@@ -2654,3 +2654,58 @@ NEXT = D52 Dock Features
 ---
 
 *## D51.5 APPEND-ONLY 2026-07-20 · D51.5 COMPLETE · CA-D51 12/12 PASS · D51 CLOSED · Docking Foundation RELEASED · UI Platform 7/8 · Next D52 Dock Features.*
+
+---
+
+## D52.1
+
+**Microfase:** D52.1 - Dock Features · Discovery  
+**Fecha:** 2026-07-20  
+**Estado:** **D52 OPEN** · **D52.1 = COMPLETE** · **Dock Features Discovery = COMPLETE** · **API Freeze = APPROVED** · **Governance = FROZEN** · **CA-D52.1 = 6/6 PASS** · **READY FOR D52.2**  
+**Modo:** Documental only - create `docs/D52.1-dock-features-discovery.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se abre **D52 - Dock Features**. Discovery congela capacidades de modelo (RegistrationApi, Registry query, VisibilityApi, Layout/Slots, DOCK_FEATURES), DockState v1 Freeze (additive-only), separacion estricta Registry vs Registration, Governance `dock.*` (incl. `dock.state.modelOnly`), Validators preview y frontera D53+ (interactions). Supersede documental unicamente el roadmap prospectivo D51.1 §18. Sin implementacion de codigo. Zero UX.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D52.1-dock-features-discovery.md`](docs/D52.1-dock-features-discovery.md) |
+| Serie | **D52 OPEN** |
+| Status | **OPEN** - Dock Features Discovery complete · API Freeze approved · Governance frozen |
+| CA-D52.1 | **6/6 PASS** |
+| UI Platform Progress | **7/8** (sin cambio hasta D52.5) |
+| Next | **D52.2 - Implementation** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Discovery Document | **PASS** |
+| Scope Frozen | **PASS** |
+| API Freeze | **PASS** |
+| Governance Frozen | **PASS** |
+| Roadmap Approved | **PASS** |
+| D53 Boundary Defined | **PASS** |
+| STATUS append-only | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+
+### Resolucion
+
+```text
+D52.1 = COMPLETE
+D52 = OPEN
+Dock Features Discovery = COMPLETE
+API Freeze = APPROVED
+Governance = FROZEN
+DockState v1 = FROZEN
+Registry != Registration = FROZEN
+D53 Boundary = DEFINED
+NO SRC CHANGES
+Ready for D52.2
+NEXT = D52.2 ? Implementation
+```
+
+---
+
+*## D52.1 APPEND-ONLY 2026-07-20 · D52.1 COMPLETE · CA-D52.1 6/6 PASS · API Freeze APPROVED · Governance FROZEN · Ready for D52.2 Implementation.*
