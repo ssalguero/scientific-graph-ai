@@ -1,12 +1,20 @@
 /**
  * D58.1 — Window Resize System · WindowResizeBridge.
- * D58.2 — Edge math for eight directions → immutable GeometryState writes.
+ * D58.2 — Edge math for eight directions → GeometryState.
+ * D58.3 — Constraint pipeline: Math → GeometryConstraints → WorkspaceConstraints → State.
  * Sole authorized path for size mutations (resize-bridge-required).
- * No Pointer Events. No constraints / min-max / workspace clamp.
+ * No Pointer Events. No snap / dock / viewport transforms.
  * Not part of WindowAPI / public barrel.
- * Authority: D58.0 Discovery · D58.2 Resize Handles.
+ * Authority: D58.0 Discovery · D58.3 Geometry Constraints.
  */
 
+import {
+  applyConstraintPipeline,
+  DEFAULT_GEOMETRY_CONSTRAINTS,
+  DEFAULT_WORKSPACE_CONSTRAINTS,
+  type GeometryConstraints,
+  type WorkspaceConstraints,
+} from "./WindowGeometryConstraints";
 import {
   cloneGeometry,
   ensureDefaultGeometry,
@@ -66,6 +74,11 @@ export type WindowResizeAPI = {
   endResize(): void;
 };
 
+export type WindowResizeBridgeOptions = {
+  geometryConstraints?: GeometryConstraints;
+  workspaceConstraints?: WorkspaceConstraints;
+};
+
 function clonePointer(pointer: WindowResizePointer): WindowResizePointer {
   return { x: pointer.x, y: pointer.y };
 }
@@ -94,7 +107,6 @@ function cloneResizeState(state: WindowResizeState): WindowResizeState {
 /**
  * Pure edge math from frozen origin + current pointer.
  * Returns a new WindowGeometry (geometry-immutable-input).
- * No min/max / workspace clamp (D58.3).
  */
 export function computeResizedGeometry(
   edge: WindowResizeEdge,
@@ -130,11 +142,17 @@ export function computeResizedGeometry(
 }
 
 /**
- * Creates a WindowResizeBridge bound to GeometryState.
+ * Creates a WindowResizeBridge bound to GeometryState + constraints.
  */
 export function createWindowResizeBridge(
-  geometryState: WindowGeometryState
+  geometryState: WindowGeometryState,
+  options: WindowResizeBridgeOptions = {}
 ): WindowResizeAPI & { getState(): WindowResizeState } {
+  const geometryConstraints =
+    options.geometryConstraints ?? DEFAULT_GEOMETRY_CONSTRAINTS;
+  const workspaceConstraints =
+    options.workspaceConstraints ?? DEFAULT_WORKSPACE_CONSTRAINTS;
+
   let state: WindowResizeState = { status: "idle" };
 
   return {
@@ -166,13 +184,20 @@ export function createWindowResizeBridge(
       if (state.status !== "resizing") {
         return;
       }
-      const nextGeometry = computeResizedGeometry(
+      const raw = computeResizedGeometry(
         state.edge,
         state.origin,
         pointerX,
         pointerY
       );
-      geometryState.set(state.id, nextGeometry);
+      const constrained = applyConstraintPipeline(
+        raw,
+        state.edge,
+        state.origin.geometry,
+        geometryConstraints,
+        workspaceConstraints
+      );
+      geometryState.set(state.id, constrained);
       state = {
         ...state,
         pointer: { x: pointerX, y: pointerY },

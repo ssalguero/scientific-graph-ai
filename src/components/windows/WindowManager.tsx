@@ -5,6 +5,7 @@
  * D57 — Hosts DragBridge + geometry providers (not on WindowAPI).
  * D58.1 — Hosts WindowGeometryState + WindowResizeBridge.
  * D58.2 — Provides WindowResizeAPI + drag XOR resize session exclusivity.
+ * D58.3 — ResizeBridge uses GeometryConstraints + WorkspaceConstraints defaults.
  * Lifecycle: create → register → activate → focus → minimize → restore → close.
  * Renders providers only — zero visual chrome.
  * Authority: D55.1 · D57.5 · D58.0 Discovery · D55/D56 public API Freeze intact.
@@ -17,6 +18,10 @@ import {
 } from "./WindowContext";
 import { createWindowDragBridge } from "./WindowDragBridge";
 import { WindowDragProvider } from "./WindowDragContext";
+import {
+  DEFAULT_GEOMETRY_CONSTRAINTS,
+  DEFAULT_WORKSPACE_CONSTRAINTS,
+} from "./WindowGeometryConstraints";
 import { WindowGeometryProvider } from "./WindowGeometryContext";
 import {
   createWindowGeometryState,
@@ -89,7 +94,12 @@ export function WindowManager({ children }: WindowManagerProps) {
   const windowDragBridgeRef = useRef(createWindowDragBridge(geometryState));
   const windowDragBridge = windowDragBridgeRef.current;
 
-  const windowResizeBridgeRef = useRef(createWindowResizeBridge(geometryState));
+  const windowResizeBridgeRef = useRef(
+    createWindowResizeBridge(geometryState, {
+      geometryConstraints: DEFAULT_GEOMETRY_CONSTRAINTS,
+      workspaceConstraints: DEFAULT_WORKSPACE_CONSTRAINTS,
+    })
+  );
   const windowResizeBridge = windowResizeBridgeRef.current;
 
   const [state, setState] = useState<WindowState>(createEmptyWindowState);
