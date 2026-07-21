@@ -2824,3 +2824,55 @@ READY FOR D53.2
 ---
 
 *## D53.1 APPEND-ONLY 2026-07-21 · D53.1 COMPLETE · CA-D53.1 8/8 PASS · Interaction Architecture FROZEN · API Freeze APPROVED · Sessions FROZEN · Validation Plan APPROVED · Ready for D53.2 Interaction State.*
+
+---
+
+## D53.5
+
+**Microfase:** D53.5 - Dock Interactions · Certification · CLOSE  
+**Fecha:** 2026-07-21  
+**Estado:** **D53 CLOSED** · **Dock Interactions = CERTIFIED** · **CA-D53 = 10/10 PASS** · **NEXT = D54**  
+**Modo:** Certification - create `docs/D53.5-certification.md` · create validators · package.json scripts · append-only este bloque
+
+### Resumen
+
+Se certifica y cierra oficialmente **D53 - Dock Interactions**. Capa de interaccion (focus/activation, sesiones drag/resize, keyboard-ready, nesting one-way) certificada. Umbrella `validate:d53-gate` PASS. API Freeze vigente D53?D60. Sin cambios funcionales respecto a D53.4 (solo tipos de vista del freeze + validators/docs/STATUS).
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D53.5-certification.md`](docs/D53.5-certification.md) |
+| Serie | **D53 CLOSED** |
+| Producto | **Dock Interactions CERTIFIED** |
+| CA-D53 | **10/10 PASS** |
+| `validate:d53-api-freeze` | **PASS** |
+| `validate:d53-interactions` | **PASS** |
+| `validate:d53-governance` | **PASS** |
+| `validate:d53-gate` | **PASS** |
+| Next | **D54** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Certification doc creado | **PASS** |
+| Validators creados | **PASS** |
+| package.json scripts | **PASS** |
+| STATUS append-only | **PASS** |
+| Dock Interactions = CERTIFIED | **PASS** |
+| D53 = CLOSED | **PASS** |
+| CA-D53 = 10/10 PASS | **PASS** |
+| NEXT = D54 | **PASS** |
+
+### Resolucion
+
+```text
+D53.5 COMPLETE
+Dock Interactions = CERTIFIED
+D53 = CLOSED
+CA-D53 = 10/10 PASS
+NEXT = D54
+```
+
+---
+
+*## D53.5 APPEND-ONLY 2026-07-21 · D53.5 COMPLETE · CA-D53 10/10 PASS · D53 CLOSED · Dock Interactions CERTIFIED · Next D54.*

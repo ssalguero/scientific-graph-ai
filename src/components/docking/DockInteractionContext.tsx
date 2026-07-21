@@ -68,6 +68,23 @@ export type DockInteractionState = {
   resizeSession: DockResizeSession | null;
 };
 
+/** Frozen focus slice — D53.1 API Freeze. */
+export type DockFocusState = {
+  focusedDock: string | null;
+};
+
+/** Frozen drag slice — D53.1 API Freeze. */
+export type DockDragState = {
+  draggingDock: string | null;
+  dragSession: DockDragSession | null;
+};
+
+/** Frozen resize slice — D53.1 API Freeze. */
+export type DockResizeState = {
+  resizingDock: string | null;
+  resizeSession: DockResizeSession | null;
+};
+
 /** Public interaction API — D53.1 freeze; bodies completed in D53.3/D53.4. */
 export type DockInteractionApi = {
   focus(id: string): void;
