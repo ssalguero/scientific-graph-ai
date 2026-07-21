@@ -2876,3 +2876,53 @@ NEXT = D54
 ---
 
 *## D53.5 APPEND-ONLY 2026-07-21 · D53.5 COMPLETE · CA-D53 10/10 PASS · D53 CLOSED · Dock Interactions CERTIFIED · Next D54.*
+
+---
+
+## D54.5
+
+**Microfase:** D54.5 - Layout Engine Foundation · Release · CLOSE  
+**Fecha:** 2026-07-21  
+**Estado:** **D54 CLOSED** · **Layout Engine Foundation = RELEASED** · **CA-D54 = 10/10 PASS** · **NEXT = D55 Layout Persistence Foundation**  
+**Modo:** Documental only - create `docs/D54.5-release.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se libera y cierra oficialmente **D54 - Layout Engine Foundation**. Motor de layout puro (árbol · regiones · constraints · visibilidad) liberado como autoridad arquitectónica del shell. Wiring mínimo 1C (`WorkspaceLayout` único consumidor). `DockLayoutDefinition` coexiste. API Freeze vigente D54?D56. Umbrella `validate:d54-gate` PASS. Zero UX. Sin cambios de producto en esta microfase.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D54.5-release.md`](docs/D54.5-release.md) |
+| Serie | **D54 CLOSED** |
+| Producto | **Layout Engine Foundation RELEASED** |
+| CA-D54 | **10/10 PASS** |
+| `validate:d54-layout-engine` | **PASS** |
+| `validate:d54-api-freeze` | **PASS** |
+| `validate:d54-governance` | **PASS** |
+| `validate:d54-gate` | **PASS** |
+| Next | **D55 Layout Persistence Foundation** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Layout Engine Foundation = RELEASED | **PASS** |
+| D54 = CLOSED | **PASS** |
+| CA-D54 = 10/10 PASS | **PASS** |
+| NEXT = D55 Layout Persistence Foundation | **PASS** |
+
+### Resolucion
+
+```text
+D54.5 COMPLETE
+Layout Engine Foundation = RELEASED
+D54 = CLOSED
+CA-D54 = 10/10 PASS
+NEXT = D55 Layout Persistence Foundation
+```
+
+---
+
+*## D54.5 APPEND-ONLY 2026-07-21 · D54.5 COMPLETE · CA-D54 10/10 PASS · D54 CLOSED · Layout Engine Foundation RELEASED · Next D55.*
