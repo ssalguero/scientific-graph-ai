@@ -2984,3 +2984,63 @@ NEXT = D56 Floating Windows
 ---
 
 *## D55.5 APPEND-ONLY 2026-07-21 · D55.5 COMPLETE · CA-D55 PASS · D55 CLOSED · Multi-Window Foundation RELEASED · Next D56 Floating Windows.*
+
+---
+
+## D56.5
+
+**Microfase:** D56.5 - Floating Windows Foundation · Certification · Release · CLOSE  
+**Fecha:** 2026-07-21  
+**Estado:** **D56 CLOSED** · **Floating Windows Foundation = RELEASED** · **CA-D56 = PASS** · **NEXT = D57 Window Drag System**  
+**Modo:** Certification + validators + create `docs/D56.5-release.md` · append-only este bloque · Zero UX preserved
+
+### Resumen
+
+Se libera y cierra oficialmente **D56 - Floating Windows Foundation**. Infraestructura presentacional (Model · FloatingWindow · Layer · Bridge) sobre Window Manager D55, montada en raíz de `page.tsx` y `WorkspacePanels`. Bridge oficial `windows={[]}`. WindowAPI D55 intacta. Umbrella `validate:d56-gate` PASS. Sin cambios funcionales de producto.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D56.5-release.md`](docs/D56.5-release.md) |
+| Serie | **D56 CLOSED** |
+| Producto | **Floating Windows Foundation RELEASED** |
+| CA-D56 | **PASS** |
+| Status | **COMPLETE** |
+| `validate:d56-floating-api` | **PASS** |
+| `validate:d56-governance` | **PASS** |
+| `validate:d56-gate` | **PASS** |
+| `validate:d55-gate` (compat) | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| Next | **D57 Window Drag System** |
+
+### Certification
+
+- validate:d56-floating-api PASS
+- validate:d56-governance PASS
+- validate:d56-gate PASS
+- validate:d55-gate PASS (D56 carve-outs)
+- tsc --noEmit PASS
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Floating Windows Foundation = RELEASED | **PASS** |
+| D56 = CLOSED | **PASS** |
+| CA-D56 = PASS | **PASS** |
+| Ready for D57 ? Window Drag System | **PASS** |
+
+### Resolucion
+
+```text
+D56.5 COMPLETE
+Floating Windows Foundation = RELEASED
+D56 = CLOSED
+CA-D56 = PASS
+Ready for D57 ? Window Drag System
+```
+
+---
+
+*## D56.5 APPEND-ONLY 2026-07-21 · D56.5 COMPLETE · CA-D56 PASS · D56 CLOSED · Floating Windows Foundation RELEASED · Next D57 Window Drag System.*
