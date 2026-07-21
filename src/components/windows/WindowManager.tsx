@@ -2,10 +2,11 @@
 
 /**
  * D55.3 — Multi-Window Foundation · Window Manager.
+ * D57.1 — Hosts parallel WindowPositionStore (geometry SSOT; not on WindowAPI).
  * Single WindowRegistry · single WindowState source of truth · full WindowAPI.
  * Lifecycle: create (registers) → register → activate → focus → minimize → restore → close.
  * Renders only WindowProvider around children — zero visual chrome.
- * Authority: docs/D55.1-multi-window-discovery.md · D55.2 API Freeze (unchanged).
+ * Authority: docs/D55.1-multi-window-discovery.md · D55.2 API Freeze (unchanged) · D57.0 Discovery.
  */
 
 import { useMemo, useRef, useState, type ReactNode } from "react";
@@ -13,6 +14,10 @@ import {
   WindowProvider,
   type WindowContextValue,
 } from "./WindowContext";
+import {
+  createWindowPositionStore,
+  ensureDefaultPosition,
+} from "./WindowPositionStore";
 import { createWindowRegistry } from "./WindowRegistry";
 import {
   createEmptyWindowState,
@@ -65,11 +70,15 @@ function snapshotState(state: WindowState): WindowState {
 }
 
 /**
- * Autocontained manager: one registry, one state, full WindowAPI → Provider.
+ * Autocontained manager: one registry, one state, one position store, full WindowAPI → Provider.
+ * Position store is internal SSOT for x/y — never exposed on WindowAPI / WindowState.
  */
 export function WindowManager({ children }: WindowManagerProps) {
   const registryRef = useRef(createWindowRegistry());
   const registry = registryRef.current;
+
+  const positionStoreRef = useRef(createWindowPositionStore());
+  const positionStore = positionStoreRef.current;
 
   const [state, setState] = useState<WindowState>(createEmptyWindowState);
 
@@ -85,6 +94,7 @@ export function WindowManager({ children }: WindowManagerProps) {
           return { id: normalized.id };
         }
         registry.register(normalized);
+        ensureDefaultPosition(positionStore, normalized.id);
         setState((prev) => {
           const next = cloneState(prev);
           next.windows.set(normalized.id, normalizeDefinition(normalized));
@@ -100,6 +110,7 @@ export function WindowManager({ children }: WindowManagerProps) {
       register(definition: WindowDefinition) {
         const normalized = normalizeDefinition(definition);
         registry.register(normalized);
+        ensureDefaultPosition(positionStore, normalized.id);
         setState((prev) => {
           if (prev.windows.has(normalized.id)) {
             return prev;
@@ -112,6 +123,7 @@ export function WindowManager({ children }: WindowManagerProps) {
 
       unregister(id: string) {
         registry.unregister(id);
+        positionStore.delete(id);
         setState((prev) => {
           if (!prev.windows.has(id) && prev.activeId !== id && prev.focusedId !== id && !prev.minimizedIds.has(id)) {
             return prev;
@@ -180,6 +192,7 @@ export function WindowManager({ children }: WindowManagerProps) {
        */
       close(id: string) {
         registry.unregister(id);
+        positionStore.delete(id);
         setState((prev) => {
           if (!prev.windows.has(id) && prev.activeId !== id && prev.focusedId !== id && !prev.minimizedIds.has(id)) {
             return prev;
@@ -198,7 +211,7 @@ export function WindowManager({ children }: WindowManagerProps) {
         return registry.getAll();
       },
     }),
-    [registry]
+    [registry, positionStore]
   );
 
   const value = useMemo<WindowContextValue>(
