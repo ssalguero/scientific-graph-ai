@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * D55.2 — Multi-Window Foundation · Window Context (shell).
- * Exposes WindowState + WindowAPI. No presentation. No wiring.
- * Default values are safe no-ops (DockInteractionContext pattern).
- * Authority: docs/D55.1-multi-window-discovery.md
+ * D55.3 — Multi-Window Foundation · Window Context (shell).
+ * Exposes `{ state, api }` via useWindowContext(). No presentation. No wiring.
+ * Default values remain safe no-ops when Provider is absent.
+ * Authority: docs/D55.1-multi-window-discovery.md · D55.2 API Freeze (unchanged).
  */
 
 import {
@@ -57,10 +57,10 @@ const NOOP_WINDOW_API: WindowAPI = {
   },
 };
 
-export const DEFAULT_WINDOW_CONTEXT: WindowContextValue = {
+export const DEFAULT_WINDOW_CONTEXT: WindowContextValue = Object.freeze({
   state: createEmptyWindowState(),
   api: NOOP_WINDOW_API,
-};
+});
 
 export const WindowContext =
   createContext<WindowContextValue>(DEFAULT_WINDOW_CONTEXT);

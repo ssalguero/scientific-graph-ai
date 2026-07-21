@@ -1,10 +1,11 @@
 "use client";
 
 /**
- * D55.2 — Multi-Window Foundation · Window Manager.
- * Owns WindowState, WindowRegistry, and WindowAPI. Provides Context.
- * No window rendering, overlays, portals, or floating UI.
- * Authority: docs/D55.1-multi-window-discovery.md
+ * D55.3 — Multi-Window Foundation · Window Manager.
+ * Single WindowRegistry · single WindowState source of truth · full WindowAPI.
+ * Lifecycle: create (registers) → register → activate → focus → minimize → restore → close.
+ * Renders only WindowProvider around children — zero visual chrome.
+ * Authority: docs/D55.1-multi-window-discovery.md · D55.2 API Freeze (unchanged).
  */
 
 import { useMemo, useRef, useState, type ReactNode } from "react";
@@ -24,23 +25,47 @@ export type WindowManagerProps = {
   children?: ReactNode;
 };
 
-function cloneState(prev: WindowState): {
-  windows: Map<string, WindowDefinition>;
-  minimizedIds: Set<string>;
-  activeId?: string;
-  focusedId?: string;
-} {
+function normalizeDefinition(definition: WindowDefinition): WindowDefinition {
+  const next: WindowDefinition = {
+    id: definition.id,
+    title: definition.title,
+    visible: definition.visible,
+  };
+  if (definition.dockId !== undefined) {
+    next.dockId = definition.dockId;
+  }
+  if (definition.metadata !== undefined) {
+    next.metadata = { ...definition.metadata };
+  }
+  return next;
+}
+
+function cloneState(prev: WindowState): WindowState {
   return {
     windows: new Map(prev.windows),
     minimizedIds: new Set(prev.minimizedIds),
-    activeId: prev.activeId,
-    focusedId: prev.focusedId,
+    ...(prev.activeId !== undefined ? { activeId: prev.activeId } : {}),
+    ...(prev.focusedId !== undefined ? { focusedId: prev.focusedId } : {}),
   };
 }
 
+function clearWindowRefs(state: WindowState, id: string): void {
+  state.windows.delete(id);
+  state.minimizedIds.delete(id);
+  if (state.activeId === id) {
+    delete state.activeId;
+  }
+  if (state.focusedId === id) {
+    delete state.focusedId;
+  }
+}
+
+function snapshotState(state: WindowState): WindowState {
+  return cloneState(state);
+}
+
 /**
- * Autocontained manager: registry + lifecycle state + WindowAPI.
- * Renders only WindowProvider around children — zero visual chrome.
+ * Autocontained manager: one registry, one state, full WindowAPI → Provider.
  */
 export function WindowManager({ children }: WindowManagerProps) {
   const registryRef = useRef(createWindowRegistry());
@@ -50,20 +75,37 @@ export function WindowManager({ children }: WindowManagerProps) {
 
   const api = useMemo<WindowAPI>(
     () => ({
+      /**
+       * create — builds a valid definition and registers it.
+       * Duplicate id is a no-op (returns existing handle).
+       */
       create(definition: WindowDefinition) {
+        const normalized = normalizeDefinition(definition);
+        if (registry.has(normalized.id)) {
+          return { id: normalized.id };
+        }
+        registry.register(normalized);
         setState((prev) => {
           const next = cloneState(prev);
-          next.windows.set(definition.id, definition);
+          next.windows.set(normalized.id, normalizeDefinition(normalized));
           return next;
         });
-        return { id: definition.id };
+        return { id: normalized.id };
       },
 
+      /**
+       * register — adds an existing window definition to the registry + state.
+       * Duplicate registry id is a no-op at registry layer; state stays in sync.
+       */
       register(definition: WindowDefinition) {
-        registry.register(definition);
+        const normalized = normalizeDefinition(definition);
+        registry.register(normalized);
         setState((prev) => {
+          if (prev.windows.has(normalized.id)) {
+            return prev;
+          }
           const next = cloneState(prev);
-          next.windows.set(definition.id, definition);
+          next.windows.set(normalized.id, normalizeDefinition(normalized));
           return next;
         });
       },
@@ -71,21 +113,23 @@ export function WindowManager({ children }: WindowManagerProps) {
       unregister(id: string) {
         registry.unregister(id);
         setState((prev) => {
+          if (!prev.windows.has(id) && prev.activeId !== id && prev.focusedId !== id && !prev.minimizedIds.has(id)) {
+            return prev;
+          }
           const next = cloneState(prev);
-          next.windows.delete(id);
-          next.minimizedIds.delete(id);
-          if (next.activeId === id) {
-            delete next.activeId;
-          }
-          if (next.focusedId === id) {
-            delete next.focusedId;
-          }
+          clearWindowRefs(next, id);
           return next;
         });
       },
 
       activate(id: string) {
         setState((prev) => {
+          if (!prev.windows.has(id) && !registry.has(id)) {
+            return prev;
+          }
+          if (prev.activeId === id) {
+            return prev;
+          }
           const next = cloneState(prev);
           next.activeId = id;
           return next;
@@ -94,6 +138,12 @@ export function WindowManager({ children }: WindowManagerProps) {
 
       focus(id: string) {
         setState((prev) => {
+          if (!prev.windows.has(id) && !registry.has(id)) {
+            return prev;
+          }
+          if (prev.focusedId === id) {
+            return prev;
+          }
           const next = cloneState(prev);
           next.focusedId = id;
           return next;
@@ -102,6 +152,12 @@ export function WindowManager({ children }: WindowManagerProps) {
 
       minimize(id: string) {
         setState((prev) => {
+          if (!prev.windows.has(id) && !registry.has(id)) {
+            return prev;
+          }
+          if (prev.minimizedIds.has(id)) {
+            return prev;
+          }
           const next = cloneState(prev);
           next.minimizedIds.add(id);
           return next;
@@ -110,24 +166,26 @@ export function WindowManager({ children }: WindowManagerProps) {
 
       restore(id: string) {
         setState((prev) => {
+          if (!prev.minimizedIds.has(id)) {
+            return prev;
+          }
           const next = cloneState(prev);
           next.minimizedIds.delete(id);
           return next;
         });
       },
 
+      /**
+       * close — removes from registry and clears activeId / focusedId / minimizedIds.
+       */
       close(id: string) {
         registry.unregister(id);
         setState((prev) => {
+          if (!prev.windows.has(id) && prev.activeId !== id && prev.focusedId !== id && !prev.minimizedIds.has(id)) {
+            return prev;
+          }
           const next = cloneState(prev);
-          next.windows.delete(id);
-          next.minimizedIds.delete(id);
-          if (next.activeId === id) {
-            delete next.activeId;
-          }
-          if (next.focusedId === id) {
-            delete next.focusedId;
-          }
+          clearWindowRefs(next, id);
           return next;
         });
       },
@@ -145,7 +203,7 @@ export function WindowManager({ children }: WindowManagerProps) {
 
   const value = useMemo<WindowContextValue>(
     () => ({
-      state,
+      state: snapshotState(state),
       api,
     }),
     [state, api]
