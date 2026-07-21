@@ -3121,3 +3121,78 @@ NEXT = D58 Window Resize System
 ---
 
 *## D57.5 APPEND-ONLY 2026-07-21 ? D57.5 COMPLETE ? CA-D57 PASS ? D57 CLOSED ? Window Drag System RELEASED ? Next D58 Window Resize System.*
+
+---
+
+## D58.5
+
+**Microfase:** D58.5 - Window Resize Foundation ? Certification ? Release ? CLOSE  
+**Fecha:** 2026-07-21  
+**Estado:** **D58 CLOSED** ? **Window Resize Foundation = RELEASED** ? **CA-D58 = PASS** ? **NEXT = D59 Snap Foundation**  
+**Modo:** Certification + release doc + append-only este bloque (sin implementacion)
+
+### Resumen
+
+Se libera y cierra oficialmente **D58 - Window Resize Foundation**. GeometryState como unico SSOT de geometria. Pipelines certificados: Pointer -> ResizeHandle -> ResizeBridge -> GeometryState -> FloatingBridge -> Layer -> FloatingWindow; y Resize Math -> Geometry Constraints -> Workspace Constraints -> GeometryState. Drag XOR Resize. WindowAPI D55 y Floating APIs D56 intactas. Umbrella `validate:d58-gate` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D58.5-release.md`](docs/D58.5-release.md) |
+| Serie | **D58 CLOSED** |
+| Producto | **Window Resize Foundation RELEASED** |
+| CA-D58 | **PASS** |
+| Status | **COMPLETE** |
+| `validate:d55-gate` (compat) | **PASS** |
+| `validate:d56-gate` (compat) | **PASS** |
+| `validate:d57-gate` (compat) | **PASS** |
+| `validate:d58-gate` | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D59 Snap Foundation** |
+
+### Componentes certificados
+
+- WindowGeometryState
+- WindowResizeBridge
+- WindowResizeOrigin
+- WindowResizeSession
+- FloatingWindowResizeHandle
+- GeometryConstraints
+- WorkspaceConstraints
+- Constraint Pipeline
+- Drag XOR Resize
+- FloatingWindowBridge integration
+
+### Certification
+
+- validate:d55-gate PASS
+- validate:d56-gate PASS
+- validate:d57-gate PASS
+- validate:d58-gate PASS
+- tsc --noEmit PASS
+- next build PASS
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Window Resize Foundation = RELEASED | **PASS** |
+| D58 = CLOSED | **PASS** |
+| CA-D58 = PASS | **PASS** |
+| Ready for D59 ? Snap Foundation | **PASS** |
+
+### Resolucion
+
+```text
+D58.5 COMPLETE
+Window Resize Foundation = RELEASED
+D58 = CLOSED
+CA-D58 = PASS
+NEXT = D59 Snap Foundation
+```
+
+---
+
+*## D58.5 APPEND-ONLY 2026-07-21 ? D58.5 COMPLETE ? CA-D58 PASS ? D58 CLOSED ? Window Resize Foundation RELEASED ? Next D59 Snap Foundation.*
