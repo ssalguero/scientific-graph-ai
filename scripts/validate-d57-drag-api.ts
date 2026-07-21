@@ -145,6 +145,8 @@ const INTERNAL_LEAKS = [
   "useWindowGeometry",
   "useWindowResize",
   "WindowGeometryState",
+  "GeometryConstraints",
+  "WorkspaceConstraints",
   "WindowDragAPI",
   "WindowDragProvider",
   "WindowGeometryProvider",
