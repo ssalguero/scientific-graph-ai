@@ -106,13 +106,13 @@ assertCase(
     : "react + local only"
 );
 
-/** Forbidden capability / UX / persistence keywords (code only, comments stripped). */
+/** Forbidden capability / UX / persistence keywords (code only, comments stripped).
+ * D56 carve-out: "floating" allowed in Floating* files only; still banned in D55 core. */
 const FORBIDDEN_KEYWORDS = [
   "drag",
   "resize",
   "portal",
   "createPortal",
-  "floating",
   "overlay",
   "LayoutTree",
   "persist",
@@ -124,24 +124,43 @@ const FORBIDDEN_KEYWORDS = [
   "IndexedDB",
 ] as const;
 
+const d55CoreFiles = files.filter((name) => !name.startsWith("Floating"));
+const d55CoreCodeOnly = stripComments(
+  d55CoreFiles.map((name) => readFileSync(join(windowsDir, name), "utf8")).join("\n")
+);
+
 const keywordHits = FORBIDDEN_KEYWORDS.filter((kw) => {
   const pattern = new RegExp(`\\b${kw}\\b`, "i");
-  return pattern.test(codeOnly);
+  return pattern.test(d55CoreCodeOnly);
 });
+
+/** "floating" remains forbidden in D55 core files (Window*). */
+const floatingInCore = /\bfloating\b/i.test(d55CoreCodeOnly);
+assertCase(
+  "d55.gov.noFloatingInD55Core",
+  !floatingInCore,
+  floatingInCore ? "floating keyword in D55 core" : "D55 core free of floating"
+);
 
 assertCase(
   "d55.gov.noForbiddenKeywords",
   keywordHits.length === 0,
   keywordHits.length
     ? `keywords: ${keywordHits.join(",")}`
-    : "no forbidden capability keywords"
+    : "no forbidden capability keywords in D55 core"
 );
 
-/** No wiring: nothing outside windows/ may import the module during D55. */
+/** D56 authorized wiring: page root WindowManager + WorkspacePanels Bridge. */
+const WIRING_ALLOWLIST = new Set([
+  "src/app/page.tsx",
+  "src/components/workspace/WorkspacePanels.tsx",
+]);
+
 const consumerHits: string[] = [];
 for (const file of walkTsFiles(srcDir)) {
   const rel = relative(repoRoot, file).replace(/\\/g, "/");
   if (rel.startsWith("src/components/windows/")) continue;
+  if (WIRING_ALLOWLIST.has(rel)) continue;
   const source = readFileSync(file, "utf8");
   if (
     /@\/components\/windows\b/.test(source) ||
@@ -154,11 +173,11 @@ for (const file of walkTsFiles(srcDir)) {
 }
 
 assertCase(
-  "d55.gov.noExternalWiring",
+  "d55.gov.authorizedExternalWiringOnly",
   consumerHits.length === 0,
   consumerHits.length
-    ? `wired from: ${consumerHits.slice(0, 8).join(",")}`
-    : "no external consumers"
+    ? `unauthorized wired from: ${consumerHits.slice(0, 8).join(",")}`
+    : "only page.tsx + WorkspacePanels authorized"
 );
 
 const failed = results.filter((r) => !r.pass);

@@ -19,7 +19,7 @@ const read = (file: string): string => {
   return existsSync(full) ? readFileSync(full, "utf8") : "";
 };
 
-const ALLOWED_BARREL_EXPORTS = [
+const REQUIRED_BARREL_EXPORTS = [
   "WindowDefinition",
   "WindowState",
   "WindowHandle",
@@ -31,6 +31,17 @@ const ALLOWED_BARREL_EXPORTS = [
   "WindowManager",
   "useWindowContext",
 ] as const;
+
+/** D56 may append Floating* symbols via export *; D55 symbols must remain. */
+const D56_ALLOWED_EXTRA_EXPORTS = new Set([
+  "FloatingWindowModel",
+  "FloatingWindowProps",
+  "FloatingWindowLayerProps",
+  "FloatingWindow",
+  "FloatingWindowLayer",
+  "FloatingWindowBridge",
+]);
+
 
 function collectBarrelExports(source: string): string[] {
   const names = new Set<string>();
@@ -78,16 +89,18 @@ const contextSource = read("WindowContext.tsx");
 const managerSource = read("WindowManager.tsx");
 
 const exported = collectBarrelExports(barrelSource);
-const allowedSet = new Set<string>(ALLOWED_BARREL_EXPORTS);
-const missing = ALLOWED_BARREL_EXPORTS.filter((n) => !exported.includes(n));
-const extra = exported.filter((n) => !allowedSet.has(n));
+const requiredSet = new Set<string>(REQUIRED_BARREL_EXPORTS);
+const missing = REQUIRED_BARREL_EXPORTS.filter((n) => !exported.includes(n));
+const unexpected = exported.filter(
+  (n) => !requiredSet.has(n) && !D56_ALLOWED_EXTRA_EXPORTS.has(n)
+);
 
 assertCase(
-  "d55.api.barrelExactExports",
-  missing.length === 0 && extra.length === 0,
-  missing.length || extra.length
-    ? `missing=[${missing.join(",")}] extra=[${extra.join(",")}]`
-    : `exact ${ALLOWED_BARREL_EXPORTS.length} symbols`
+  "d55.api.barrelRequiredExports",
+  missing.length === 0 && unexpected.length === 0,
+  missing.length || unexpected.length
+    ? `missing=[${missing.join(",")}] unexpected=[${unexpected.join(",")}]`
+    : `required ${REQUIRED_BARREL_EXPORTS.length} D55 symbols present (D56 extras allowed)`
 );
 
 assertCase(
