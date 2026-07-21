@@ -3336,3 +3336,69 @@ READY FOR D60
 ---
 
 *## D59.5 APPEND-ONLY 2026-07-21 - D59.5 COMPLETE - CA-D59 PASS - D59 CLOSED - Snap Foundation RELEASED - Next D60 series alignment.*
+
+---
+
+## D60.0
+
+**Microfase:** D60.0 - Series Alignment Foundation - Discovery - Architecture Freeze  
+**Fecha:** 2026-07-21  
+**Estado:** **D60 OPEN** - **D60.0 = COMPLETE** - **Series Architecture = FROZEN** - **API Freeze = APPROVED** - **Governance = FROZEN** - **Hard Rules = FROZEN** - **READY FOR D60.1**  
+**Modo:** Documental create-only discovery + append-only este bloque (sin implementacion)
+
+### Resumen
+
+Se abre **D60 - Series Alignment Foundation**. Discovery congela arquitectura: primer subpaquete `src/components/windows/series/`; naming Registry / SelectionState / Bridges (sin `*Store`); Hard Rules (sin campos Series en WindowDefinition/WindowState; barrel unico `series/index.ts`); Governance (No React · No JSX · No hooks · No Context · No DOM · No CSS; sin graph/chart/dataset/analysis/math/cientifico); API Freeze de simbolos Series. WindowAPI D55 / Floating / Drag / Resize / Snap intactos. Sin codigo, validators, scripts ni wiring.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D60.0-series-discovery.md`](docs/D60.0-series-discovery.md) |
+| Serie | **D60 OPEN** |
+| Microfase | **D60.0 COMPLETE** |
+| Architecture | **FROZEN** |
+| API Freeze | **APPROVED** |
+| Governance | **FROZEN** |
+| Hard Rules | **FROZEN** |
+| CA-D60 | **FROZEN** (preview) |
+| Roadmap Series D60-D64 | **FROZEN** |
+| `src/**` / `scripts/**` / `package.json` | **UNCHANGED** |
+| Next | **D60.1 Series Identity** |
+
+### Freeze confirmado
+
+- Ubicacion: `src/components/windows/series/` (no `windowing/`; no Series* en raiz de windows/)
+- Naming: SeriesRegistry / SeriesSelectionState / WindowSeriesBridge (sin `*Store`)
+- Hard Rule: sin Series en WindowDefinition / WindowState
+- Hard Rule: Series exportable solo desde `windows/series/index.ts`
+- Governance: No React · No JSX · No hooks · No Context · No DOM · No CSS
+- Infraestructura pura: sin graph / chart / dataset / analysis / math / cientifico
+- Prior freezes D55-D59 intactos
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Discovery doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Architecture / API / Governance / Hard Rules Freeze | **PASS** |
+| CA-D60 congelado (preview) | **PASS** |
+| Roadmap Series D60-D64 congelado | **PASS** |
+| Sin cambios funcionales | **PASS** |
+| Ready for D60.1 - Series Identity | **PASS** |
+
+### Resolucion
+
+```text
+D60.0 COMPLETE
+Series Architecture = FROZEN
+API Freeze = APPROVED
+Governance = FROZEN
+Hard Rules = FROZEN
+CA-D60 = FROZEN
+NO FUNCTIONAL CHANGES
+READY FOR D60.1 - Series Identity
+```
+
+---
+
+*## D60.0 APPEND-ONLY 2026-07-21 - D60.0 COMPLETE - Series Architecture FROZEN - API Freeze APPROVED - Governance FROZEN - Hard Rules FROZEN - Ready D60.1 Series Identity.*
