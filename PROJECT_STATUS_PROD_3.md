@@ -2600,3 +2600,57 @@ NEXT = D51.2 — Infrastructure
 ---
 
 *## D51.1 APPEND-ONLY 2026-07-20 · D51.1 COMPLETE · CA-D51.1 16/16 PASS · Current Shell FROZEN · API FROZEN · Ready for D51.2 Infrastructure.*
+
+---
+
+## D51.5
+
+**Microfase:** D51.5 - Docking Foundation · Release  
+**Fecha:** 2026-07-20  
+**Estado:** **D51 CLOSED** · **Docking Foundation = RELEASED** · **CA-D51 = 12/12 PASS** · **UI Platform Progress = 7/8**  
+**Modo:** Documental only - create `docs/D51.5-release.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json`
+
+### Resumen
+
+Se cierra oficialmente **D51 - Docking Foundation**. Infraestructura de docking liberada (hosts transparentes, registry inmutable, context read-only, wiring move-only alrededor del Inspector `visible={false}`). Umbrella `validate:v11-d51-gate` PASS. UI Platform Progress = **7/8**.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D51.5-release.md`](docs/D51.5-release.md) |
+| Serie | **D51 CLOSED** |
+| Producto | **Docking Foundation RELEASED** |
+| Certification | [`docs/D51.4-certification.md`](docs/D51.4-certification.md) |
+| Discovery | [`docs/D51.1-docking-discovery.md`](docs/D51.1-docking-discovery.md) |
+| CA-D51 | **12/12 PASS** |
+| `validate:docking-foundation` | **PASS** |
+| `validate:v11-d51-gate` | **PASS** |
+| UI Platform Progress | **7/8** |
+| Next | **D52 - Dock Features** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Docking Foundation = RELEASED | **PASS** |
+| D51 = CLOSED | **PASS** |
+| CA-D51 = 12/12 PASS | **PASS** |
+| UI Platform 7/8 | **PASS** |
+| NEXT = D52 Dock Features | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+
+### Resolucion
+
+```text
+D51.5 COMPLETE
+Docking Foundation = RELEASED
+D51 = CLOSED
+CA-D51 = 12/12 PASS
+UI Platform = 7/8
+NEXT = D52 Dock Features
+```
+
+---
+
+*## D51.5 APPEND-ONLY 2026-07-20 · D51.5 COMPLETE · CA-D51 12/12 PASS · D51 CLOSED · Docking Foundation RELEASED · UI Platform 7/8 · Next D52 Dock Features.*
