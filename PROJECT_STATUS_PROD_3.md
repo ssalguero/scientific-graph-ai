@@ -2709,3 +2709,60 @@ NEXT = D52.2 ? Implementation
 ---
 
 *## D52.1 APPEND-ONLY 2026-07-20 · D52.1 COMPLETE · CA-D52.1 6/6 PASS · API Freeze APPROVED · Governance FROZEN · Ready for D52.2 Implementation.*
+
+---
+
+## D52.5
+
+**Microfase:** D52.5 - Dock Features · Release  
+**Fecha:** 2026-07-21  
+**Estado:** **D52 CLOSED** · **Dock Features = RELEASED** · **CA-D52 = 10/10 PASS** · **UI Platform Progress = 8/8**  
+**Modo:** Documental only - create `docs/D52.5-release.md` · append-only este bloque · **cero cambios** `src/**` · `scripts/**` · `package.json` · `page.tsx`
+
+### Resumen
+
+Se cierra oficialmente **D52 - Dock Features**. Modelo Dock liberado (RegistrationApi, Registry live/query, VisibilityApi, DEFAULT_DOCK_LAYOUT/slots, DOCK_FEATURES, DockState v1, Context aditivo). Zero UX preservado. Umbrella `validate:v11-d52-gate` PASS. UI Platform Progress = **8/8**. Interacciones reservadas para D53.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D52.5-release.md`](docs/D52.5-release.md) |
+| Serie | **D52 CLOSED** |
+| Producto | **Dock Features RELEASED** |
+| Certification | [`docs/D52.4-certification.md`](docs/D52.4-certification.md) |
+| Discovery | [`docs/D52.1-dock-features-discovery.md`](docs/D52.1-dock-features-discovery.md) |
+| CA-D52 | **10/10 PASS** |
+| `validate:d52-testing` | **PASS** |
+| `validate:docking-foundation` | **PASS** |
+| `validate:v11-d52-gate` | **PASS** |
+| UI Platform Progress | **8/8** |
+| Next | **D53 - Dock Interactions** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| STATUS append-only | **PASS** |
+| Dock Features = RELEASED | **PASS** |
+| D52 = CLOSED | **PASS** |
+| CA-D52 = 10/10 PASS | **PASS** |
+| Zero UX preserved | **PASS** |
+| UI Platform 8/8 | **PASS** |
+| NEXT = D53 Dock Interactions | **PASS** |
+| Sin cambios src/scripts/package.json/page | **PASS** |
+
+### Resolucion
+
+```text
+D52.5 COMPLETE
+Dock Features = RELEASED
+D52 = CLOSED
+CA-D52 = 10/10 PASS
+Zero UX preserved
+UI Platform = 8/8
+NEXT = D53 Dock Interactions
+```
+
+---
+
+*## D52.5 APPEND-ONLY 2026-07-21 · D52.5 COMPLETE · CA-D52 10/10 PASS · D52 CLOSED · Dock Features RELEASED · UI Platform 8/8 · Next D53 Dock Interactions.*
