@@ -5,19 +5,21 @@
  * D57.1 — Hosts parallel WindowPositionStore (geometry SSOT; not on WindowAPI).
  * D57.2 — Hosts WindowDragBridge (internal session → Position Store; not on WindowAPI).
  * D57.3 — Provides WindowDragAPI to title-bar capture via WindowDragProvider.
+ * D57.4 — Provides WindowPositionStore + revision tick for Bridge Mapping.
  * Single WindowRegistry · single WindowState source of truth · full WindowAPI.
  * Lifecycle: create (registers) → register → activate → focus → minimize → restore → close.
  * Renders only WindowProvider around children — zero visual chrome.
  * Authority: docs/D55.1-multi-window-discovery.md · D55.2 API Freeze (unchanged) · D57.0 Discovery.
  */
 
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   WindowProvider,
   type WindowContextValue,
 } from "./WindowContext";
 import { createWindowDragBridge } from "./WindowDragBridge";
 import { WindowDragProvider } from "./WindowDragContext";
+import { WindowPositionProvider } from "./WindowPositionContext";
 import {
   createWindowPositionStore,
   ensureDefaultPosition,
@@ -88,6 +90,13 @@ export function WindowManager({ children }: WindowManagerProps) {
   const windowDragBridge = windowDragBridgeRef.current;
 
   const [state, setState] = useState<WindowState>(createEmptyWindowState);
+  const [positionRevision, setPositionRevision] = useState(0);
+
+  useEffect(() => {
+    return positionStore.subscribe(() => {
+      setPositionRevision((prev) => prev + 1);
+    });
+  }, [positionStore]);
 
   const api = useMemo<WindowAPI>(
     () => ({
@@ -246,9 +255,19 @@ export function WindowManager({ children }: WindowManagerProps) {
     [windowDragBridge]
   );
 
+  const positionValue = useMemo(
+    () => ({
+      store: positionStore,
+      revision: positionRevision,
+    }),
+    [positionStore, positionRevision]
+  );
+
   return (
     <WindowProvider value={value}>
-      <WindowDragProvider value={windowDragApi}>{children}</WindowDragProvider>
+      <WindowPositionProvider value={positionValue}>
+        <WindowDragProvider value={windowDragApi}>{children}</WindowDragProvider>
+      </WindowPositionProvider>
     </WindowProvider>
   );
 }

@@ -1,6 +1,7 @@
 /**
  * D56.5 — Floating Windows Foundation governance gate.
  * D57.3 — Title-bar Pointer Capture supersession (certified path only).
+ * D57.4 — Bridge Mapping supersession (windows={[]} replaced by Position Store mapping).
  * Authority: D56 presentational + bridge architecture · D57 TitleBar → WindowDragBridge.
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
@@ -114,9 +115,19 @@ assertCase(
 );
 
 assertCase(
-  "d56.gov.bridge.emptyWindows",
-  /<FloatingWindowLayer\s+windows=\{\[\]\}\s*\/>/.test(floatingBridgeCode),
-  "Bridge returns FloatingWindowLayer windows={[]}"
+  "d56.gov.bridge.usesWindowPosition",
+  /\buseWindowPosition\s*\(/.test(floatingBridgeCode),
+  "Bridge reads Position Store via useWindowPosition()"
+);
+
+assertCase(
+  "d56.gov.bridge.mapsModels",
+  /mapToFloatingWindowModels/.test(floatingBridgeCode) &&
+    /<FloatingWindowLayer\s+windows=\{windows\}\s*\/>/.test(
+      floatingBridgeCode
+    ) &&
+    !/windows=\{\[\]\}/.test(floatingBridgeCode),
+  "Bridge maps Position Store → FloatingWindowModel[] (no windows={[]})"
 );
 
 assertCase(
@@ -144,6 +155,18 @@ assertCase(
   illicitContext.length
     ? `useWindowContext in: ${illicitContext.map((f) => f.file).join(",")}`
     : "Bridge is sole Floating* useWindowContext consumer"
+);
+
+const illicitPosition = floatingSources.filter(({ source }) =>
+  /\buseWindowPosition\s*\(/.test(stripComments(source))
+);
+
+assertCase(
+  "d56.gov.bridgeSolePositionConsumer",
+  illicitPosition.length === 0,
+  illicitPosition.length
+    ? `useWindowPosition in: ${illicitPosition.map((f) => f.file).join(",")}`
+    : "Bridge is sole Floating* useWindowPosition consumer"
 );
 
 const joinedFloating = floatingFiles.map((f) => read(f)).join("\n");
@@ -222,9 +245,10 @@ assertCase(
 );
 
 assertCase(
-  "d56.gov.bridgeMappingStillEmpty",
-  /windows=\{\[\]\}/.test(floatingBridgeCode),
-  "D57.3: Bridge mapping not introduced (still windows={[]})"
+  "d56.gov.bridgeMappingActive",
+  /\buseWindowPosition\b/.test(floatingBridgeCode) &&
+    !/windows=\{\[\]\}/.test(floatingBridgeCode),
+  "D57.4: Bridge Mapping active (Position Store → models)"
 );
 
 const failed = results.filter((r) => !r.pass);
