@@ -1,18 +1,19 @@
 /**
  * D57.2 — Window Drag System · WindowDragBridge.
- * Internal contract: session ops → WindowPositionStore mutations.
- * Sole authorized path to mutate coordinates (bridge-required).
+ * D58.1 — Writes x/y via WindowGeometryState (preserves width/height; immutable set).
+ * Sole authorized path for pure position moves (drag-bridge-required).
  * No React. No Pointer Events. No UI. Not part of WindowAPI / public barrel.
- * Authority: D57.0 Discovery · D57.1 Position Store · D55/D56 API Freeze intact.
+ * Authority: D57.0 Discovery · D58.1 GeometryState · D55/D56 API Freeze intact.
  */
 
 import {
-  ensureDefaultPosition,
-  type WindowPosition,
-  type WindowPositionStore,
-} from "./WindowPositionStore";
+  cloneGeometry,
+  ensureDefaultGeometry,
+  type WindowGeometry,
+  type WindowGeometryState,
+} from "./WindowGeometryState";
 
-/** Pointer sample in absolute layer coordinates (D57 Coordinate Space Freeze). */
+/** Pointer sample in absolute layer coordinates (Coordinate Space Freeze). */
 export type WindowDragPointer = {
   x: number;
   y: number;
@@ -20,13 +21,13 @@ export type WindowDragPointer = {
 
 /**
  * Active session payload.
- * origin — window position + pointer sample at beginDrag
+ * origin.geometry — immutable clone at beginDrag
  * pointer — latest pointer sample
  */
 export type WindowDragSession = {
   id: string;
   origin: {
-    position: WindowPosition;
+    geometry: WindowGeometry;
     pointer: WindowDragPointer;
   };
   pointer: WindowDragPointer;
@@ -51,10 +52,6 @@ function clonePointer(pointer: WindowDragPointer): WindowDragPointer {
   return { x: pointer.x, y: pointer.y };
 }
 
-function clonePosition(position: WindowPosition): WindowPosition {
-  return { x: position.x, y: position.y };
-}
-
 function cloneState(state: WindowDragState): WindowDragState {
   if (state.status === "idle") {
     return { status: "idle" };
@@ -63,7 +60,7 @@ function cloneState(state: WindowDragState): WindowDragState {
     status: "dragging",
     id: state.id,
     origin: {
-      position: clonePosition(state.origin.position),
+      geometry: cloneGeometry(state.origin.geometry),
       pointer: clonePointer(state.origin.pointer),
     },
     pointer: clonePointer(state.pointer),
@@ -71,23 +68,19 @@ function cloneState(state: WindowDragState): WindowDragState {
 }
 
 /**
- * Creates a WindowDragBridge bound to a Position Store.
- * Validates active session; translates ops into store.set for x/y only.
+ * Creates a WindowDragBridge bound to GeometryState.
+ * Mutates only x/y; width/height copied from origin (immutable new geometry).
  */
 export function createWindowDragBridge(
-  positionStore: WindowPositionStore
+  geometryState: WindowGeometryState
 ): WindowDragAPI & { getState(): WindowDragState } {
   let state: WindowDragState = { status: "idle" };
 
   return {
-    /**
-     * beginDrag — opens a session for id at pointer (x, y).
-     * Replaces any prior session. Seeds default position if missing.
-     */
     beginDrag(id: string, x: number, y: number): void {
-      ensureDefaultPosition(positionStore, id);
-      const position = positionStore.get(id);
-      if (position === undefined) {
+      ensureDefaultGeometry(geometryState, id);
+      const geometry = geometryState.get(id);
+      if (geometry === undefined) {
         return;
       }
       const pointer = { x, y };
@@ -95,26 +88,24 @@ export function createWindowDragBridge(
         status: "dragging",
         id,
         origin: {
-          position: clonePosition(position),
+          geometry: cloneGeometry(geometry),
           pointer: clonePointer(pointer),
         },
         pointer: clonePointer(pointer),
       };
     },
 
-    /**
-     * updateDrag — moves the active window by delta from origin pointer.
-     * No-op when idle. Writes only via Position Store.
-     */
     updateDrag(x: number, y: number): void {
       if (state.status !== "dragging") {
         return;
       }
       const dx = x - state.origin.pointer.x;
       const dy = y - state.origin.pointer.y;
-      positionStore.set(state.id, {
-        x: state.origin.position.x + dx,
-        y: state.origin.position.y + dy,
+      geometryState.set(state.id, {
+        x: state.origin.geometry.x + dx,
+        y: state.origin.geometry.y + dy,
+        width: state.origin.geometry.width,
+        height: state.origin.geometry.height,
       });
       state = {
         ...state,
@@ -122,10 +113,6 @@ export function createWindowDragBridge(
       };
     },
 
-    /**
-     * endDrag — closes the active session. No-op when idle.
-     * Final coordinates already live in the Position Store.
-     */
     endDrag(): void {
       if (state.status !== "dragging") {
         return;
@@ -133,7 +120,6 @@ export function createWindowDragBridge(
       state = { status: "idle" };
     },
 
-    /** Read-only session snapshot for host cleanup (not a mutation API). */
     getState(): WindowDragState {
       return cloneState(state);
     },

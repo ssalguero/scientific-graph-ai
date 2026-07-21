@@ -2,14 +2,11 @@
 
 /**
  * D55.3 — Multi-Window Foundation · Window Manager.
- * D57.1 — Hosts parallel WindowPositionStore (geometry SSOT; not on WindowAPI).
- * D57.2 — Hosts WindowDragBridge (internal session → Position Store; not on WindowAPI).
- * D57.3 — Provides WindowDragAPI to title-bar capture via WindowDragProvider.
- * D57.4 — Provides WindowPositionStore + revision tick for Bridge Mapping.
- * Single WindowRegistry · single WindowState source of truth · full WindowAPI.
- * Lifecycle: create (registers) → register → activate → focus → minimize → restore → close.
- * Renders only WindowProvider around children — zero visual chrome.
- * Authority: docs/D55.1-multi-window-discovery.md · D55.2 API Freeze (unchanged) · D57.0 Discovery.
+ * D57 — Hosts DragBridge + geometry providers (not on WindowAPI).
+ * D58.1 — Hosts WindowGeometryState + WindowResizeBridge (session infra; no visual resize).
+ * Lifecycle: create → register → activate → focus → minimize → restore → close.
+ * Renders providers only — zero visual chrome.
+ * Authority: D55.1 · D57.5 · D58.0 Discovery · D55/D56 public API Freeze intact.
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -19,11 +16,12 @@ import {
 } from "./WindowContext";
 import { createWindowDragBridge } from "./WindowDragBridge";
 import { WindowDragProvider } from "./WindowDragContext";
-import { WindowPositionProvider } from "./WindowPositionContext";
+import { WindowGeometryProvider } from "./WindowGeometryContext";
 import {
-  createWindowPositionStore,
-  ensureDefaultPosition,
-} from "./WindowPositionStore";
+  createWindowGeometryState,
+  ensureDefaultGeometry,
+} from "./WindowGeometryState";
+import { createWindowResizeBridge } from "./WindowResizeBridge";
 import { createWindowRegistry } from "./WindowRegistry";
 import {
   createEmptyWindowState,
@@ -76,41 +74,40 @@ function snapshotState(state: WindowState): WindowState {
 }
 
 /**
- * Autocontained manager: registry + state + position store + WindowDragBridge → Provider.
+ * Autocontained manager: registry + state + GeometryState + Drag/Resize bridges.
  * Geometry / session infra are internal — never exposed on WindowAPI / WindowState.
  */
 export function WindowManager({ children }: WindowManagerProps) {
   const registryRef = useRef(createWindowRegistry());
   const registry = registryRef.current;
 
-  const positionStoreRef = useRef(createWindowPositionStore());
-  const positionStore = positionStoreRef.current;
+  const geometryStateRef = useRef(createWindowGeometryState());
+  const geometryState = geometryStateRef.current;
 
-  const windowDragBridgeRef = useRef(createWindowDragBridge(positionStore));
+  const windowDragBridgeRef = useRef(createWindowDragBridge(geometryState));
   const windowDragBridge = windowDragBridgeRef.current;
 
+  const windowResizeBridgeRef = useRef(createWindowResizeBridge(geometryState));
+  const windowResizeBridge = windowResizeBridgeRef.current;
+
   const [state, setState] = useState<WindowState>(createEmptyWindowState);
-  const [positionRevision, setPositionRevision] = useState(0);
+  const [geometryRevision, setGeometryRevision] = useState(0);
 
   useEffect(() => {
-    return positionStore.subscribe(() => {
-      setPositionRevision((prev) => prev + 1);
+    return geometryState.subscribe(() => {
+      setGeometryRevision((prev) => prev + 1);
     });
-  }, [positionStore]);
+  }, [geometryState]);
 
   const api = useMemo<WindowAPI>(
     () => ({
-      /**
-       * create — builds a valid definition and registers it.
-       * Duplicate id is a no-op (returns existing handle).
-       */
       create(definition: WindowDefinition) {
         const normalized = normalizeDefinition(definition);
         if (registry.has(normalized.id)) {
           return { id: normalized.id };
         }
         registry.register(normalized);
-        ensureDefaultPosition(positionStore, normalized.id);
+        ensureDefaultGeometry(geometryState, normalized.id);
         setState((prev) => {
           const next = cloneState(prev);
           next.windows.set(normalized.id, normalizeDefinition(normalized));
@@ -119,14 +116,10 @@ export function WindowManager({ children }: WindowManagerProps) {
         return { id: normalized.id };
       },
 
-      /**
-       * register — adds an existing window definition to the registry + state.
-       * Duplicate registry id is a no-op at registry layer; state stays in sync.
-       */
       register(definition: WindowDefinition) {
         const normalized = normalizeDefinition(definition);
         registry.register(normalized);
-        ensureDefaultPosition(positionStore, normalized.id);
+        ensureDefaultGeometry(geometryState, normalized.id);
         setState((prev) => {
           if (prev.windows.has(normalized.id)) {
             return prev;
@@ -138,12 +131,16 @@ export function WindowManager({ children }: WindowManagerProps) {
       },
 
       unregister(id: string) {
-        const session = windowDragBridge.getState();
-        if (session.status === "dragging" && session.id === id) {
+        const dragSession = windowDragBridge.getState();
+        if (dragSession.status === "dragging" && dragSession.id === id) {
           windowDragBridge.endDrag();
         }
+        const resizeSession = windowResizeBridge.getState();
+        if (resizeSession.status === "resizing" && resizeSession.id === id) {
+          windowResizeBridge.endResize();
+        }
         registry.unregister(id);
-        positionStore.delete(id);
+        geometryState.delete(id);
         setState((prev) => {
           if (!prev.windows.has(id) && prev.activeId !== id && prev.focusedId !== id && !prev.minimizedIds.has(id)) {
             return prev;
@@ -207,16 +204,17 @@ export function WindowManager({ children }: WindowManagerProps) {
         });
       },
 
-      /**
-       * close — removes from registry and clears activeId / focusedId / minimizedIds.
-       */
       close(id: string) {
-        const session = windowDragBridge.getState();
-        if (session.status === "dragging" && session.id === id) {
+        const dragSession = windowDragBridge.getState();
+        if (dragSession.status === "dragging" && dragSession.id === id) {
           windowDragBridge.endDrag();
         }
+        const resizeSession = windowResizeBridge.getState();
+        if (resizeSession.status === "resizing" && resizeSession.id === id) {
+          windowResizeBridge.endResize();
+        }
         registry.unregister(id);
-        positionStore.delete(id);
+        geometryState.delete(id);
         setState((prev) => {
           if (!prev.windows.has(id) && prev.activeId !== id && prev.focusedId !== id && !prev.minimizedIds.has(id)) {
             return prev;
@@ -235,7 +233,7 @@ export function WindowManager({ children }: WindowManagerProps) {
         return registry.getAll();
       },
     }),
-    [registry, positionStore, windowDragBridge]
+    [registry, geometryState, windowDragBridge, windowResizeBridge]
   );
 
   const value = useMemo<WindowContextValue>(
@@ -255,19 +253,19 @@ export function WindowManager({ children }: WindowManagerProps) {
     [windowDragBridge]
   );
 
-  const positionValue = useMemo(
+  const geometryValue = useMemo(
     () => ({
-      store: positionStore,
-      revision: positionRevision,
+      geometryState,
+      revision: geometryRevision,
     }),
-    [positionStore, positionRevision]
+    [geometryState, geometryRevision]
   );
 
   return (
     <WindowProvider value={value}>
-      <WindowPositionProvider value={positionValue}>
+      <WindowGeometryProvider value={geometryValue}>
         <WindowDragProvider value={windowDragApi}>{children}</WindowDragProvider>
-      </WindowPositionProvider>
+      </WindowGeometryProvider>
     </WindowProvider>
   );
 }
