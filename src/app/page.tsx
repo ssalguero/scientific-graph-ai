@@ -158,6 +158,7 @@ import {
   WorkspaceLayout,
   WorkspacePanels,
 } from "@/components/workspace";
+import { WindowManager } from "@/components/windows";
 import { AdaptiveToolbar } from "@/components/toolbar";
 import {
   Inspector,
@@ -26718,5 +26719,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 }
 
 export default function Home() {
-  return <GraphEditor />;
+  // D56.4 — WindowManager at highest page root (context available to all overlays).
+  return (
+    <WindowManager>
+      <GraphEditor />
+    </WindowManager>
+  );
 }
