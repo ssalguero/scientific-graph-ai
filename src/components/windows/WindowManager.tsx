@@ -6,10 +6,11 @@
  * D58.1 — Hosts WindowGeometryState + WindowResizeBridge.
  * D58.2 — Provides WindowResizeAPI + drag XOR resize session exclusivity.
  * D58.3 — ResizeBridge uses GeometryConstraints + WorkspaceConstraints defaults.
- * D59.2 — Injects SnapConfig + SnapTargetProviders into DragBridge only (no Resize snap).
+ * D59.2 — Injects SnapConfig + SnapTargetProviders into DragBridge.
+ * D59.3 — Injects same Snap composition into ResizeBridge (post-constraints).
  * Lifecycle: create → register → activate → focus → minimize → restore → close.
  * Renders providers only — zero visual chrome.
- * Authority: D55.1 · D57.5 · D58.0 · D59.0 Discovery · D59.2 Drag Snap Wiring.
+ * Authority: D55.1 · D57.5 · D58.0 · D59.0 Discovery · D59.2 · D59.3.
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -107,26 +108,28 @@ export function WindowManager({ children }: WindowManagerProps) {
     createWindowSnapTargetProvider(),
   ]);
 
+  const getSnapGeometries = (): ReadonlyMap<string, WindowGeometry> => {
+    const all = geometryState.getAll();
+    const minimized = minimizedIdsRef.current;
+    if (minimized.size === 0) {
+      return all;
+    }
+    const filtered = new Map<string, WindowGeometry>();
+    for (const [id, geometry] of all) {
+      if (!minimized.has(id)) {
+        filtered.set(id, geometry);
+      }
+    }
+    return filtered;
+  };
+
   const windowDragBridgeRef = useRef(
     createWindowDragBridge(geometryState, {
       snap: {
         config: snapConfigRef.current,
         providers: snapProvidersRef.current,
         workspace: DEFAULT_WORKSPACE_CONSTRAINTS,
-        getGeometries(): ReadonlyMap<string, WindowGeometry> {
-          const all = geometryState.getAll();
-          const minimized = minimizedIdsRef.current;
-          if (minimized.size === 0) {
-            return all;
-          }
-          const filtered = new Map<string, WindowGeometry>();
-          for (const [id, geometry] of all) {
-            if (!minimized.has(id)) {
-              filtered.set(id, geometry);
-            }
-          }
-          return filtered;
-        },
+        getGeometries: getSnapGeometries,
       },
     })
   );
@@ -136,6 +139,12 @@ export function WindowManager({ children }: WindowManagerProps) {
     createWindowResizeBridge(geometryState, {
       geometryConstraints: DEFAULT_GEOMETRY_CONSTRAINTS,
       workspaceConstraints: DEFAULT_WORKSPACE_CONSTRAINTS,
+      snap: {
+        config: snapConfigRef.current,
+        providers: snapProvidersRef.current,
+        workspace: DEFAULT_WORKSPACE_CONSTRAINTS,
+        getGeometries: getSnapGeometries,
+      },
     })
   );
   const windowResizeBridge = windowResizeBridgeRef.current;
