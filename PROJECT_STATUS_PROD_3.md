@@ -5261,3 +5261,51 @@ READY FOR D63.8 - Minimal Integration
 ---
 
 *## D63.7 APPEND-ONLY 2026-07-22 - D63.7 COMPLETE - Content Barrel RELEASED - READY FOR D63.8.*
+
+## D63.8
+
+**Microfase:** D63.8 - Lifecycle + Tab <-> Series Wiring - Minimal Integration  
+**Fecha:** 2026-07-22  
+**Estado:** **D63.8 = COMPLETE** - **Minimal Integration = RELEASED** - **Library-only composition = ESTABLISHED** - **No product wiring** - **READY FOR D63.9**  
+**Modo:** Library-only helper - cero page.tsx / WindowManager / UI mount / validators / visual change
+
+### Resumen
+
+Se implementa `createContentIntegration(registry)` en `ContentIntegration.ts`: composicion OpaqueContentHandle -> ContentBridge -> ContentRegistry -> `ContentHostProps`. Retorna `{ definition, hostProps }` para consumo library-only. `HR-d63-8-library-only`: never mounted by page.tsx. Sin React/Context/hooks/CSS. Sin lifecycle/persistencia/WindowManager. Sin modificar barrel/windows/index.ts/producto. Freezes D63.1-D63.7 intactos. Zero UX / Zero visual change.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
+| Archivo | `src/components/windows/content/ContentIntegration.ts` |
+| API | `createContentIntegration(registry)` · `ContentIntegration.resolve` |
+| Mount | **NONE (library-only)** |
+| page.tsx | **NOT WIRED** |
+| Status | **COMPLETE** |
+| Next | **D63.9 - Validators** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| ContentIntegration helper creado | **PASS** |
+| Flujo handle -> Bridge -> Registry -> Host props | **PASS** |
+| Library-only · never mounted by page.tsx | **PASS** |
+| Sin product wiring / visual changes | **PASS** |
+| Sin modificar page/WindowManager/barrels/scripts | **PASS** |
+| Contratos D63.1-D63.7 intactos | **PASS** |
+| Ready for D63.9 | **PASS** |
+
+### Resolucion
+
+```text
+D63.8 = COMPLETE
+Minimal Integration = RELEASED
+Library-only composition established
+No product wiring
+No visual changes
+READY FOR D63.9 - Validators
+```
+
+---
+
+*## D63.8 APPEND-ONLY 2026-07-22 - D63.8 COMPLETE - Minimal Integration RELEASED - READY FOR D63.9.*
