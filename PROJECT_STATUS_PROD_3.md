@@ -3553,3 +3553,53 @@ READY FOR D61.1
 ---
 
 *## D61.0 APPEND-ONLY 2026-07-22 - D61.0 COMPLETE - Architecture/API Freeze LOCKED - Implementation NOT STARTED - Next D61.1.*
+
+## D61.1
+
+**Microfase:** D61.1 - Window Tabs Foundation - Tab Identity  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.1 = COMPLETE** - **TabId = IMPLEMENTED** - **READY FOR D61.2**  
+**Modo:** Implementacion create-only TabId.ts - cero Registry/Selection/Bridges/Barrel
+
+### Resumen
+
+Se implementa exclusivamente la identidad del dominio Tabs: `TabId` (opaco string, mismo patron SeriesId/WindowId), `createTabId()`, `isTabId()`. Archivo unico: `src/components/windows/tabs/TabId.ts`. Sin React/JSX/TSX/hooks/Context/CSS. Sin modificar Window*/Series*/Floating/Drag/Resize/Snap. `tsc --noEmit` PASS. `next build` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Archivo | `src/components/windows/tabs/TabId.ts` |
+| API | `TabId` / `createTabId` / `isTabId` |
+| Status | **COMPLETE** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61.2 — Tab Types** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| TabId type | **PASS** |
+| createTabId factory | **PASS** |
+| isTabId validator | **PASS** |
+| Solo TabId.ts (sin Registry/Selection/Bridges/Barrel) | **PASS** |
+| Sin imports prohibidos | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| Ready for D61.2 | **PASS** |
+
+### Resolucion
+
+```text
+D61.1 = COMPLETE
+TabId = IMPLEMENTED
+Factory = IMPLEMENTED
+Validator = IMPLEMENTED
+tsc PASS
+build PASS
+READY FOR D61.2 — Tab Types
+```
+
+---
+
+*## D61.1 APPEND-ONLY 2026-07-22 - D61.1 COMPLETE - TabId IMPLEMENTED - Next D61.2.*
