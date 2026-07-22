@@ -135,10 +135,15 @@ assertCase(
   "dock.features.zeroUxWiring",
   /<Inspector[\s\S]*?\bvisible=\{false\}/.test(pageSource) &&
     /return\s*<>\s*\{children\}\s*<\/>/.test(zoneSource) &&
-    /return\s*<>\s*\{children\}\s*<\/>/.test(panelSource) &&
     !/\bclassName\b/.test(hostSources) &&
-    !/<(div|section|aside)\b/.test(hostSources),
-  "visible={false} + transparent hosts"
+    !/\bstyle\s*=/.test(hostSources) &&
+    !/<(section|aside|main)\b/.test(hostSources) &&
+    // D53.3: DockPanel may expose an a11y-only <div tabIndex/aria>; not a layout chrome host.
+    (/return\s*<>\s*\{children\}\s*<\/>/.test(panelSource) ||
+      (/tabIndex=\{0\}/.test(panelSource) &&
+        /aria-selected=/.test(panelSource) &&
+        /\{children\}/.test(panelSource))),
+  "visible={false} + zero-layout hosts (D53 a11y panel allowed)"
 );
 
 const forbiddenHits: string[] = [];

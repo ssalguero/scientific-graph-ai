@@ -23,7 +23,7 @@ const D51_REQUIRED_FILES = [
   "index.ts",
 ] as const;
 
-/** D52.3 explicit allowlist — nothing else may be added. */
+/** D52.3 explicit allowlist — additive dock model modules. */
 const D52_ALLOWED_ADDITIONS = [
   "dockRegistration.ts",
   "dockVisibility.ts",
@@ -32,9 +32,23 @@ const D52_ALLOWED_ADDITIONS = [
   "dockFeatures.ts",
 ] as const;
 
+/**
+ * D53 Dock Interactions — certified supersession of D51 transparent-panel rules.
+ * Authority: docs/D53.1-dock-interactions-architecture.md · D53 API Freeze.
+ * D64.6 aligns foundation gate with D53 (no src change).
+ */
+const D53_ALLOWED_ADDITIONS = [
+  "DockInteractionContext.tsx",
+  "DockInteractionProvider.tsx",
+  "useDockInteraction.ts",
+  "useDockDrag.ts",
+  "useDockResize.ts",
+] as const;
+
 const REQUIRED_FILES = [
   ...D51_REQUIRED_FILES,
   ...D52_ALLOWED_ADDITIONS,
+  ...D53_ALLOWED_ADDITIONS,
 ] as const;
 
 /** D52 additive DockContextValue keys (allowlist). */
@@ -100,6 +114,7 @@ const uiTokensSource = existsSync(uiTokensPath)
   : "";
 
 const d52Sources = D52_ALLOWED_ADDITIONS.map((file) => readDockingFile(file));
+const d53Sources = D53_ALLOWED_ADDITIONS.map((file) => readDockingFile(file));
 
 const allDockingSources = [
   typesSource,
@@ -111,6 +126,7 @@ const allDockingSources = [
   panelSource,
   barrelSource,
   ...d52Sources,
+  ...d53Sources,
 ].join("\n");
 
 const hostSources = [rootSource, zoneSource, panelSource].join("\n");
@@ -517,30 +533,42 @@ assertCase(
 );
 
 // ============================================================================
-// Gate 11 — noDomWrapper
+// Gate 11 — noDomWrapper (D53-aligned)
+// Root/Zone remain free of layout DOM. DockPanel may use an a11y-only host
+// (tabIndex / aria) without className / style / layout roles (D53.3).
 // ============================================================================
-const hostDomWrappers =
-  /<(div|section|aside|main|article|header|footer|nav)\b/.test(hostSources) ||
-  /\brole\s*=/.test(hostSources) ||
-  /\bclassName\b/.test(hostSources);
+const rootOrZoneLayoutDom =
+  /<(div|section|aside|main|article|header|footer|nav)\b/.test(
+    rootSource + zoneSource
+  ) ||
+  /\bclassName\b/.test(rootSource + zoneSource) ||
+  /\bstyle\s*=/.test(rootSource + zoneSource);
+
+const panelHasLayoutChrome =
+  /\bclassName\b/.test(panelSource) ||
+  /\bstyle\s*=/.test(panelSource) ||
+  /<(section|aside|main|article|header|footer|nav)\b/.test(panelSource);
 
 assertCase(
   "gate11.noDomWrapper",
-  !hostDomWrappers,
-  hostDomWrappers
-    ? "DOM wrapper detected in DockRoot/Zone/Panel"
-    : "no layout DOM wrappers in hosts"
+  !rootOrZoneLayoutDom && !panelHasLayoutChrome,
+  rootOrZoneLayoutDom || panelHasLayoutChrome
+    ? "layout DOM/chrome detected in Dock hosts"
+    : "no layout DOM wrappers (DockPanel a11y host allowed)"
 );
 
 // ============================================================================
-// Gate 12 — transparentHosts
+// Gate 12 — transparentHosts (D53-aligned)
+// DockRoot nests DockProvider → DockInteractionProvider (D53.2).
+// DockZone remains fragment. DockPanel = a11y host (not fragment).
 // ============================================================================
 assertCase(
   "gate12.transparent.DockRoot",
-  /return\s*\(\s*<DockProvider>\s*\{children\}\s*<\/DockProvider>\s*\)/.test(
-    rootSource
-  ) || /<DockProvider>\s*\{children\}\s*<\/DockProvider>/.test(rootSource),
-  "DockRoot = Provider only"
+  /<DockProvider>/.test(rootSource) &&
+    /<DockInteractionProvider>/.test(rootSource) &&
+    /\{children\}/.test(rootSource) &&
+    !/\bclassName\b/.test(rootSource),
+  "DockRoot = DockProvider → DockInteractionProvider → children"
 );
 
 assertCase(
@@ -551,8 +579,12 @@ assertCase(
 
 assertCase(
   "gate12.transparent.DockPanel",
-  /return\s*<>\s*\{children\}\s*<\/>/.test(panelSource),
-  "DockPanel = fragment passthrough"
+  /tabIndex=\{0\}/.test(panelSource) &&
+    /aria-selected=/.test(panelSource) &&
+    /\{children\}/.test(panelSource) &&
+    !/\bclassName\b/.test(panelSource) &&
+    !/\bstyle\s*=/.test(panelSource),
+  "DockPanel = a11y host only (D53.3) · no layout chrome"
 );
 
 // --- Official 12-gate rollup ---
