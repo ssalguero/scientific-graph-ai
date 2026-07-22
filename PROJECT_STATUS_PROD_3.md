@@ -4170,3 +4170,77 @@ READY FOR D62
 ---
 
 *## D61.12 APPEND-ONLY 2026-07-22 - D61.12 COMPLETE - CA-D61 PASS - D61 CLOSED - Window Tabs Foundation RELEASED - Next D62.*
+
+## D62.0
+
+**Microfase:** D62.0 - Tabs UI / Document Switch / Selection Policy - Discovery + Architecture Freeze  
+**Fecha:** 2026-07-22  
+**Estado:** **D62.0 = COMPLETE** - **Tabs UI Architecture = LOCKED** - **API Freeze = LOCKED (principios)** - **Hard Rules = LOCKED** - **CA-D62 = FROZEN** - **Implementation = NOT STARTED** - **READY FOR D62.1**  
+**Modo:** Documental create-only discovery + append-only este bloque - cero src/scripts/package.json
+
+### Resumen
+
+Se congela oficialmente la arquitectura **D62 - Tabs UI / Document Switch / Selection Policy Foundation**. Architecture Review aplicado: (1) mutador publico aditivo en TabRegistry sin fijar nombre (forma API = D62.1); (2) `activeTab` = unica SSOT de activacion (`HR-activeTab-ssot-only`); (3) Document Switch React-agnostico Opaque Content Handle (`HR-switch-react-agnostic`). Roadmap D62.0-D62.12 FROZEN. Sin codigo. Sin validators. Sin `tab-ui/` en src. D61 freezes intactos.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) |
+| Serie | **D62 OPEN** |
+| Microfase | **D62.0 COMPLETE** |
+| Architecture | **LOCKED** |
+| API Freeze | **LOCKED (principios)** |
+| Mutator name | **DEFERRED to D62.1** |
+| `HR-activeTab-ssot-only` | **LOCKED** |
+| `HR-switch-react-agnostic` | **LOCKED** |
+| CA-D62 | **FROZEN (preview)** |
+| Implementation | **NOT STARTED** |
+| Next | **D62.1 — Registry Additive Mutator** |
+
+### Authority
+
+| Item | Estado |
+|------|--------|
+| D61 CLOSED / Tabs Foundation RELEASED | **CITA** |
+| Freezes D55-D61 | **INTACTOS** |
+| src/** / scripts/** / package.json | **SIN CAMBIOS** |
+| tab-ui/ creado | **NO** |
+| D62.1 iniciado | **NO** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Discovery doc creado | **PASS** |
+| Architecture Freeze LOCKED | **PASS** |
+| API principles Freeze LOCKED | **PASS** |
+| Mutator name not frozen in D62.0 | **PASS** |
+| HR-activeTab-ssot-only LOCKED | **PASS** |
+| HR-switch-react-agnostic LOCKED | **PASS** |
+| Governance / Hard Rules LOCKED | **PASS** |
+| Roadmap D62.0-D62.12 FROZEN | **PASS** |
+| CA-D62 preview FROZEN | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+| STATUS append-only | **PASS** |
+| Ready for D62.1 | **PASS** |
+
+### Resolucion
+
+```text
+D62.0 = COMPLETE
+Tabs UI Architecture = LOCKED
+API Freeze = LOCKED (principios)
+Mutator public additive = LOCKED (name deferred to D62.1)
+HR-activeTab-ssot-only = LOCKED
+HR-switch-react-agnostic = LOCKED
+Governance = LOCKED
+Hard Rules = LOCKED
+CA-D62 = FROZEN
+Roadmap D62.0-D62.12 = FROZEN
+Implementation = NOT STARTED
+NO FUNCTIONAL CHANGES
+READY FOR D62.1 — Registry Additive Mutator
+```
+
+---
+
+*## D62.0 APPEND-ONLY 2026-07-22 - D62.0 COMPLETE - Tabs UI Architecture LOCKED - READY FOR D62.1.*
