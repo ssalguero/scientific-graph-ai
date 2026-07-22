@@ -5774,3 +5774,51 @@ READY FOR D64.5 - Layout Integrity
 ---
 
 *## D64.4 APPEND-ONLY 2026-07-22 - D64.4 COMPLETE - BRIDGE INTEGRITY PASS - Next D64.5.*
+
+## D64.5
+
+**Microfase:** D64.5 - Production Stabilization Foundation - Layout Integrity  
+**Fecha:** 2026-07-22  
+**Estado:** **D64.5 = COMPLETE** - **Layout Integrity = PASS** - **Composition tree = VERIFIED** - **READY FOR D64.6**  
+**Modo:** Doc + extension de validate-production-boundaries (layout.*) - cero src / barrels / APIs / page.tsx
+
+### Resumen
+
+Se certifica Layout Integrity: LayoutEngine SSOT con unico consumidor WorkspaceLayout (sin bypass desde page), Workspace sin ownership de registries, Docking via DockRoot/modulos oficiales, Floating solo via FloatingWindowBridge, Series/Tabs/Content en flujo library-only sin atajos, sin dependencias inversas. Evidencia en `docs/D64.5-layout-integrity.md`. Validator extendido: `layout.*` 30/30 + regresion bridge 58/58 = **88/88 PASS**. Sin validador nuevo. Sin cambios funcionales/visuales.
+
+| Campo | Valor |
+|-------|--------|
+| Doc | [`docs/D64.5-layout-integrity.md`](docs/D64.5-layout-integrity.md) |
+| Script | `scripts/validate-production-boundaries.ts` (extendido) |
+| npm | `validate:production-boundaries` |
+| layout.* | **30/30 PASS** |
+| Totales (bridge+layout) | **88/88 PASS** |
+| Resultado | **LAYOUT INTEGRITY PASS** |
+| src / barrels / APIs | **UNCHANGED** |
+| Status | **COMPLETE** |
+| Next | **D64.6 - Validator Suite** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Layout Integrity completado | **PASS** |
+| Arquitectura de composicion verificada | **PASS** |
+| Layout Integrity PASS | **PASS** |
+| Sin cambios funcionales / visuales | **PASS** |
+| NEXT = D64.6 | **PASS** |
+
+### Resolucion
+
+```text
+D64.5 = COMPLETE
+Layout Integrity = PASS
+Composition tree = VERIFIED
+validate:production-boundaries = PASS (88/88)
+NO SRC / BARREL / API CHANGES
+READY FOR D64.6 - Validator Suite
+```
+
+---
+
+*## D64.5 APPEND-ONLY 2026-07-22 - D64.5 COMPLETE - LAYOUT INTEGRITY PASS - Next D64.6.*

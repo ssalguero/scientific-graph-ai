@@ -1,12 +1,14 @@
 /**
  * D64.4 — Production Stabilization · Bridge Integrity (production boundaries).
+ * D64.5 — Layout Integrity section appended (composition · tree · module integration).
  *
- * Scope (exclusive): Bridge direction · cache · ownership · SSOT.
- * Layout composition / tree / module integration = D64.5 (out of scope here).
+ * Bridge scope: direction · cache · ownership · SSOT · product wiring freeze.
+ * Layout scope: LayoutEngine SSOT, Workspace/Dock/Windows composition, no inverse deps.
  *
  * Authority: docs/D64.0-production-baseline.md · docs/D64.1-architecture-audit.md
+ *            docs/D64.5-layout-integrity.md
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const repoRoot = process.cwd();
@@ -424,22 +426,330 @@ assertCase(
 );
 
 // ============================================================================
+// D64.5 — Layout Integrity (composition · tree · module integration)
+// Bridge direction/cache/ownership remain above — do not duplicate here.
+// ============================================================================
+
+const workspaceLayout = read("src/components/workspace/WorkspaceLayout.tsx");
+const workspacePanels = read("src/components/workspace/WorkspacePanels.tsx");
+const workspaceIndex = read("src/components/workspace/index.ts");
+const workspaceLayoutCode = stripComments(workspaceLayout);
+const workspacePanelsCode = stripComments(workspacePanels);
+const workspaceAll =
+  workspaceLayout +
+  workspacePanels +
+  read("src/components/workspace/WorkspaceContent.tsx") +
+  read("src/components/workspace/WorkspaceTokens.ts") +
+  workspaceIndex;
+const workspaceAllCode = stripComments(workspaceAll);
+
+const layoutEngine = read("src/components/layout-engine/LayoutEngine.ts");
+const layoutEngineCode = stripComments(layoutEngine);
+const layoutEngineIndex = read("src/components/layout-engine/index.ts");
+
+const dockingRoot = read("src/components/docking/DockRoot.tsx");
+const dockingRootCode = stripComments(dockingRoot);
+const dockingRegistry = read("src/components/docking/DockRegistry.ts");
+const dockingVisibility = read("src/components/docking/dockVisibility.ts");
+const dockingRegistration = read("src/components/docking/dockRegistration.ts");
+const dockingBarrel = read("src/components/docking/index.ts");
+
+const collectImportHits = (dirRel: string, pattern: RegExp): string[] => {
+  const absDir = join(repoRoot, dirRel);
+  if (!existsSync(absDir)) return [];
+  const hits: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const abs = join(dir, name);
+      if (statSync(abs).isDirectory()) {
+        walk(abs);
+      } else if (/\.(ts|tsx)$/.test(name)) {
+        const src = readFileSync(abs, "utf8");
+        if (pattern.test(src)) {
+          hits.push(abs.replace(/\\/g, "/").split("/src/")[1] ?? abs);
+        }
+      }
+    }
+  };
+  walk(absDir);
+  return hits;
+};
+
+// —— Layout Engine SSOT · no bypasses ——
+
+assertCase(
+  "layout.engine.fileExists",
+  existsSync(join(repoRoot, "src/components/layout-engine/LayoutEngine.ts")),
+  "LayoutEngine.ts"
+);
+
+assertCase(
+  "layout.engine.apiSurface",
+  /export const LayoutEngine\s*=/.test(layoutEngine) &&
+    /resolveFromProps/.test(layoutEngine) &&
+    /getNode/.test(layoutEngine),
+  "LayoutEngine resolveFromProps + getNode"
+);
+
+assertCase(
+  "layout.engine.pure",
+  !/from\s+["']react["']/.test(layoutEngine) &&
+    !/\buse(State|Effect|Context)\b/.test(layoutEngineCode),
+  "LayoutEngine is pure (no React)"
+);
+
+assertCase(
+  "layout.engine.soleConsumer.WorkspaceLayout",
+  /LayoutEngine\.resolveFromProps\s*\(/.test(workspaceLayoutCode) &&
+    /from\s+["']@\/components\/layout-engine["']/.test(workspaceLayout),
+  "WorkspaceLayout is the sole resolveFromProps consumer"
+);
+
+const layoutEngineConsumers = collectImportHits(
+  "src",
+  /from\s+["']@\/components\/layout-engine["']/
+).filter((rel) => !rel.startsWith("components/layout-engine/"));
+assertCase(
+  "layout.engine.noBypassImports",
+  layoutEngineConsumers.length === 1 &&
+    layoutEngineConsumers[0] === "components/workspace/WorkspaceLayout.tsx",
+  `layout-engine importers=[${layoutEngineConsumers.join(", ")}]`
+);
+
+assertCase(
+  "layout.engine.pageNoDirectImport",
+  !/from\s+["']@\/components\/layout-engine["']/.test(pageCode) &&
+    !/LayoutEngine\.resolve/.test(pageCode),
+  "page.tsx must not bypass WorkspaceLayout → LayoutEngine"
+);
+
+assertCase(
+  "layout.engine.noReverseDeps",
+  collectImportHits(
+    "src/components/layout-engine",
+    /from\s+["']@\/components\/(workspace|docking|windows)/
+  ).length === 0,
+  "layout-engine must not import workspace/docking/windows"
+);
+
+assertCase(
+  "layout.engine.barrel",
+  /LayoutEngine/.test(layoutEngineIndex),
+  "layout-engine public barrel exports LayoutEngine"
+);
+
+// —— Workspace composition · no registry ownership ——
+
+assertCase(
+  "layout.workspace.consumesLayoutEngine",
+  /LayoutEngine/.test(workspaceLayoutCode),
+  "Workspace consumes LayoutEngine"
+);
+
+assertCase(
+  "layout.workspace.panels.floatingBridge",
+  /FloatingWindowBridge/.test(workspacePanelsCode) &&
+    /from\s+["']@\/components\/windows["']/.test(workspacePanels),
+  "WorkspacePanels integrates Floating via public windows barrel Bridge"
+);
+
+assertCase(
+  "layout.workspace.noRegistryOwnership",
+  !/createWindowRegistry|createDockRegistry|createSeriesRegistry|createContentRegistry|createTabRegistry/.test(
+    workspaceAllCode
+  ),
+  "Workspace does not own foundation registries"
+);
+
+assertCase(
+  "layout.workspace.noLibraryOnlyCoupling",
+  !/windows\/(series|tabs|tab-ui|content)/.test(workspaceAll),
+  "Workspace must not import series/tabs/tab-ui/content"
+);
+
+assertCase(
+  "layout.workspace.noDockPackageImport",
+  !/from\s+["']@\/components\/docking["']/.test(workspaceAll),
+  "Workspace does not own Dock — page composes Dock into panels slot"
+);
+
+// —— Docking official modules ——
+
+assertCase(
+  "layout.dock.rootProviders",
+  /DockProvider/.test(dockingRootCode) &&
+    /DockInteractionProvider/.test(dockingRootCode),
+  "DockRoot nests DockProvider → DockInteractionProvider"
+);
+
+assertCase(
+  "layout.dock.officialModules",
+  existsSync(join(repoRoot, "src/components/docking/DockRegistry.ts")) &&
+    existsSync(join(repoRoot, "src/components/docking/dockVisibility.ts")) &&
+    existsSync(join(repoRoot, "src/components/docking/dockRegistration.ts")) &&
+    /DOCK_REGISTRY|createDockRegistry/.test(dockingRegistry) &&
+    dockingVisibility.length > 0 &&
+    dockingRegistration.length > 0,
+  "registry / visibility / registration modules present"
+);
+
+assertCase(
+  "layout.dock.barrelExports",
+  /DockRoot/.test(dockingBarrel) && /DOCK_REGISTRY/.test(dockingBarrel),
+  "docking barrel exports DockRoot + seed registry"
+);
+
+assertCase(
+  "layout.dock.noReverseToWorkspaceOrLayout",
+  collectImportHits(
+    "src/components/docking",
+    /from\s+["']@\/components\/(workspace|layout-engine|windows)/
+  ).length === 0,
+  "docking must not import workspace/layout-engine/windows"
+);
+
+assertCase(
+  "layout.dock.pageUsesDockRoot",
+  /DockRoot/.test(page) && /from\s+["']@\/components\/docking["']/.test(page),
+  "page composes Dock via DockRoot (official host)"
+);
+
+// —— Floating Windows via Bridge only ——
+
+assertCase(
+  "layout.floating.viaBridgeOnly.inWorkspace",
+  /FloatingWindowBridge/.test(workspacePanelsCode) &&
+    !/FloatingWindowLayer/.test(workspacePanelsCode) &&
+    !/FloatingWindow\b/.test(workspacePanelsCode.replace(/FloatingWindowBridge/g, "")),
+  "WorkspacePanels uses FloatingWindowBridge only (not Layer/Window directly)"
+);
+
+assertCase(
+  "layout.floating.windowsNoWorkspaceImport",
+  collectImportHits(
+    "src/components/windows",
+    /from\s+["']@\/components\/(workspace|layout-engine|docking)/
+  ).length === 0,
+  "windows/** must not import workspace/layout-engine/docking"
+);
+
+assertCase(
+  "layout.floating.pageUsesWindowManager",
+  /WindowManager/.test(page) &&
+    /from\s+["']@\/components\/windows["']/.test(page),
+  "page hosts WindowManager from public windows barrel"
+);
+
+// —— Tabs / Series / Content official flow · no shortcuts ——
+
+assertCase(
+  "layout.content.officialBarrelsOnly",
+  collectImportHits(
+    "src/components/windows/content",
+    /from\s+["']@\/components\/(workspace|docking|layout-engine)/
+  ).length === 0,
+  "content/** no shortcut to workspace/docking/layout-engine"
+);
+
+assertCase(
+  "layout.series.noReverseToTabsOrContent",
+  collectImportHits(
+    "src/components/windows/series",
+    /from\s+["']\.\.\/(tabs|content|tab-ui)["']/
+  ).length === 0,
+  "series/** must not import tabs/content/tab-ui"
+);
+
+assertCase(
+  "layout.tabs.noReverseToSeriesOrContent",
+  collectImportHits(
+    "src/components/windows/tabs",
+    /from\s+["']\.\.\/(series|content|tab-ui)["']/
+  ).length === 0,
+  "tabs/** must not import series/content/tab-ui"
+);
+
+assertCase(
+  "layout.content.usesOfficialTabsSeriesBarrels",
+  /from\s+["']\.\.\/tabs["']/.test(
+    read("src/components/windows/content/ContentBridge.ts")
+  ) &&
+    /from\s+["']\.\.\/tabs["']/.test(
+      read("src/components/windows/content/TabSeriesBridge.ts")
+    ) &&
+    /from\s+["']\.\.\/series["']/.test(
+      read("src/components/windows/content/TabSeriesBridge.ts")
+    ),
+  "content bridges consume tabs/series barrels (official flow)"
+);
+
+assertCase(
+  "layout.tree.pageNoLibraryOnly",
+  !/windows\/(series|tabs|tab-ui|content)/.test(pageCode),
+  "page.tsx keeps Series/Tabs/Content library-only (no product shortcut)"
+);
+
+// —— Architectural tree · no inverse edges ——
+
+assertCase(
+  "layout.tree.officialCompositionComment",
+  /WorkspaceLayout\s*→\s*LayoutEngine|LayoutEngine \(not page\)/.test(page),
+  "page documents shell authority WorkspaceLayout → LayoutEngine"
+);
+
+assertCase(
+  "layout.tree.noInverse.layoutToShell",
+  collectImportHits(
+    "src/components/layout-engine",
+    /from\s+["']@\/components\/workspace/
+  ).length === 0,
+  "no LayoutEngine → Workspace inverse"
+);
+
+assertCase(
+  "layout.tree.noInverse.windowsToShell",
+  collectImportHits(
+    "src/components/windows",
+    /from\s+["']@\/components\/workspace/
+  ).length === 0,
+  "no Windows → Workspace inverse"
+);
+
+assertCase(
+  "layout.tree.workspaceConsumesDownwardOnly",
+  /layout-engine/.test(workspaceLayout) &&
+    /windows["']/.test(workspacePanels) &&
+    !/createWindowRegistry/.test(workspaceAllCode),
+  "Workspace → LayoutEngine + Windows Bridge (downward composition)"
+);
+
+// ============================================================================
 // Summary
 // ============================================================================
 
 const pass = results.every((r) => r.pass);
 const failed = results.filter((r) => !r.pass);
+const bridgeCases = results.filter((r) => r.id.startsWith("bridge."));
+const layoutCases = results.filter((r) => r.id.startsWith("layout."));
 
 console.log(
   JSON.stringify(
     {
       phase: "production-boundaries",
-      scope: "bridge-integrity",
+      scope: "bridge-integrity + layout-integrity",
       pass,
       total: results.length,
       passed: results.filter((r) => r.pass).length,
       failed: failed.length,
       failedIds: failed.map((r) => r.id),
+      bridge: {
+        total: bridgeCases.length,
+        passed: bridgeCases.filter((r) => r.pass).length,
+      },
+      layout: {
+        total: layoutCases.length,
+        passed: layoutCases.filter((r) => r.pass).length,
+      },
       results,
     },
     null,
@@ -448,7 +758,7 @@ console.log(
 );
 console.log(
   pass
-    ? "\nPASS — production-boundaries (Bridge Integrity)"
+    ? "\nPASS — production-boundaries (Bridge Integrity + Layout Integrity)"
     : `\nFAIL — production-boundaries (${failed.length} cases)`
 );
 process.exit(pass ? 0 : 1);
