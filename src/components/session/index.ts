@@ -1,7 +1,7 @@
 /**
- * D65.1 — Session Foundation · public barrel (D65.1 surface).
+ * D65.1–D65.4 — Session Foundation · public barrel.
  * Authority: D65.0 API Freeze.
- * D65.1 exports SessionTypes only — Definition / State / Registry land in later microfases.
+ * D65.4 adds createSessionRegistry only (SessionRegistry type not barrel-exported).
  */
 
 export type {
@@ -9,3 +9,5 @@ export type {
   SessionMetadata,
   SessionEntry,
 } from "./SessionTypes";
+
+export { createSessionRegistry } from "./SessionRegistry";
