@@ -4707,3 +4707,80 @@ READY FOR D62.11 - Certification
 ---
 
 *## D62.10 APPEND-ONLY 2026-07-22 - D62.10 COMPLETE - Validators IMPLEMENTED - validate:d62-gate PASS - READY FOR D62.11.*
+
+## D62.11
+
+**Microfase:** D62.11 - Tabs UI Foundation - Certification  
+**Fecha:** 2026-07-22  
+**Estado:** **D62.11 = COMPLETE** - **CA-D62 = PASS** - **Tabs UI Foundation = CERTIFIED** - **READY FOR D62.12**  
+**Modo:** Certification only - cero nuevas funcionalidades - cero release doc - cero src/scripts/package.json/docs
+
+### Resumen
+
+Se certifica oficialmente **D62 - Tabs UI Foundation**. Operabilidad sobre Window Tabs Foundation (D61): `TabRegistry.setState`, Selection Policy, Document Switch React-agnostico, `tab-ui/` (TabStrip/TabBar/TabDocumentHost), barrels publicos, validators. Architecture/API/Hard Rules Freeze respetados (`HR-activeTab-ssot-only`, `HR-switch-react-agnostic`). Compatibilidad D61 intacta. Todos los gates PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) |
+| Serie | **D62 certificada (pre-release)** |
+| Producto | **Tabs UI Foundation = CERTIFIED** |
+| CA-D62 | **PASS 9/9** |
+| Status | **COMPLETE** |
+| `validate:d62-tabs-api` | **PASS** |
+| `validate:d62-governance` | **PASS** |
+| `validate:d62-gate` | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D62.12 - Release** |
+
+### Matriz CA-D62
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D62-01 | Mutador publico aditivo Registry (`setState`) · Definition?Entry | **PASS** |
+| CA-D62-02 | Selection Policy externa · Store sin auto-select · solo Selection | **PASS** |
+| CA-D62-03 | Document Switch React-agnostico (Opaque Content Handle) · sin Series | **PASS** |
+| CA-D62-04 | `tab-ui` presentacional · `isActive` derivado de `activeTab` | **PASS** |
+| CA-D62-05 | Render order = insertion/attach order | **PASS** |
+| CA-D62-06 | Barrels `tabs/` + `tab-ui/` · no deep imports · no windows leak | **PASS** |
+| CA-D62-07 | Validators api + governance + gate PASS | **PASS** |
+| CA-D62-08 | Governance · prior freezes · `HR-activeTab-ssot-only` | **PASS** |
+| CA-D62-09 | TypeScript + Build (`tsc` + `next build`) | **PASS** |
+
+```text
+CA-D62 = PASS 9/9
+Tabs UI Foundation = CERTIFIED
+```
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| API Freeze respetada | **PASS** |
+| Architecture Freeze respetada | **PASS** |
+| Hard Rules D62 respetadas | **PASS** |
+| Validators PASS | **PASS** |
+| TypeScript PASS | **PASS** |
+| Build PASS | **PASS** |
+| Sin cambios fuera de alcance D62.11 | **PASS** |
+| CA-D62 = PASS | **PASS** |
+| Tabs UI Foundation = CERTIFIED | **PASS** |
+| Ready for D62.12 | **PASS** |
+
+### Resolucion
+
+```text
+D62.11 = COMPLETE
+CA-D62 = PASS 9/9
+Tabs UI Foundation = CERTIFIED
+validate:d62-tabs-api PASS
+validate:d62-governance PASS
+validate:d62-gate PASS
+tsc PASS
+build PASS
+READY FOR D62.12 - Release
+```
+
+---
+
+*## D62.11 APPEND-ONLY 2026-07-22 - D62.11 COMPLETE - CA-D62 PASS - Tabs UI Foundation CERTIFIED - READY FOR D62.12.*
