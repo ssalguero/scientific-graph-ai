@@ -5072,3 +5072,51 @@ READY FOR D63.4 - TabSeriesBridge
 ---
 
 *## D63.3 APPEND-ONLY 2026-07-22 - D63.3 COMPLETE - Content Slots RELEASED - READY FOR D63.4.*
+
+## D63.4
+
+**Microfase:** D63.4 - Lifecycle + Tab <-> Series Wiring - TabSeriesBridge  
+**Fecha:** 2026-07-22  
+**Estado:** **D63.4 = COMPLETE** - **TabSeriesBridge = RELEASED** - **Identity mapping = ESTABLISHED** - **READY FOR D63.5**  
+**Modo:** Mapping factory only - cero ContentBridge / Host / barrel / validators / Selection / Activation / Focus / producto
+
+### Resumen
+
+Se implementa `createTabSeriesBridge()` como autoridad de mapeo 1<->1 TabId <-> SeriesId: `bind` / `unbind` / `hasTab` / `hasSeries` / `getSeriesForTab` / `getTabForSeries` / `clear`. Binding reemplaza links previos del mismo tab o series. Sin mutar SeriesRegistry/TabRegistry. Sin SeriesSelection/TabSelection/WindowSelection/Activation/Focus. TabId via barrel `tabs/`; SeriesId via barrel `series/`. Sin ContentBridge / ContentHost / index.ts. Sin React/workspace/ciencia. Freezes D55-D63.3 intactos. Zero Product Change.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
+| Archivo | `src/components/windows/content/TabSeriesBridge.ts` |
+| API | `createTabSeriesBridge()` · `TabSeriesBridge` |
+| Cardinalidad | **1<->1 LOCKED** |
+| Status | **COMPLETE** |
+| Next | **D63.5 - ContentBridge** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| createTabSeriesBridge factory | **PASS** |
+| bind/unbind/has/get/clear | **PASS** |
+| Cardinalidad 1<->1 | **PASS** |
+| Sin Selection / Activation / Focus | **PASS** |
+| Sin mutar TabRegistry / SeriesRegistry | **PASS** |
+| Imports via tabs/series barrels only | **PASS** |
+| Sin ContentBridge / Host / barrel | **PASS** |
+| Sin React / workspace / ciencia / producto | **PASS** |
+| Ready for D63.5 | **PASS** |
+
+### Resolucion
+
+```text
+D63.4 = COMPLETE
+TabSeriesBridge = RELEASED
+Identity mapping established
+No product changes
+READY FOR D63.5 - ContentBridge
+```
+
+---
+
+*## D63.4 APPEND-ONLY 2026-07-22 - D63.4 COMPLETE - TabSeriesBridge RELEASED - READY FOR D63.5.*
