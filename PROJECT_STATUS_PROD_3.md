@@ -3655,3 +3655,50 @@ READY FOR D61.3 — Registry Types
 ---
 
 *## D61.2 APPEND-ONLY 2026-07-22 - D61.2 COMPLETE - TabTypes IMPLEMENTED - Next D61.3.*
+
+## D61.3
+
+**Microfase:** D61.3 - Window Tabs Foundation - Registry Types  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.3 = COMPLETE** - **TabRegistryTypes = IMPLEMENTED** - **READY FOR D61.4**  
+**Modo:** Tipos internos Registry only - cero storage/logica/Selection/Bridges
+
+### Resumen
+
+Se implementan exclusivamente los contratos tipados del Registry en `src/components/windows/tabs/TabRegistryTypes.ts`: `TabRegistryCatalog` (Map TabId->TabEntry) y `TabRegistry` (register/unregister/get/has/list/clear). Sin funciones, clases, estado, React/JSX/TSX/hooks/Context/CSS. TabId/TabTypes intactos. `tsc --noEmit` PASS. `next build` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Archivo | `src/components/windows/tabs/TabRegistryTypes.ts` |
+| API | `TabRegistry` / `TabRegistryCatalog` |
+| Status | **COMPLETE** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61.4 — Registry Store** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| TabRegistryTypes | **PASS** |
+| TabRegistry contract | **PASS** |
+| Solo tipos (sin logica/storage) | **PASS** |
+| TabId/TabTypes no modificados | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| Ready for D61.4 | **PASS** |
+
+### Resolucion
+
+```text
+D61.3 = COMPLETE
+TabRegistryTypes = IMPLEMENTED
+tsc PASS
+build PASS
+READY FOR D61.4 — Registry Store
+```
+
+---
+
+*## D61.3 APPEND-ONLY 2026-07-22 - D61.3 COMPLETE - TabRegistryTypes IMPLEMENTED - Next D61.4.*
