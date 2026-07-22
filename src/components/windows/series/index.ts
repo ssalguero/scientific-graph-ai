@@ -1,5 +1,5 @@
 /**
- * D60.1–D60.3 — Series Alignment Foundation · internal barrel.
+ * D60.1–D60.4 — Series Alignment Foundation · internal barrel.
  * Authority: docs/D60.0-series-discovery.md · Hard Rule: series barrel only.
  * Not re-exported from windows/index.ts.
  */
@@ -17,3 +17,5 @@ export type {
 } from "./SeriesSelectionTypes";
 export { createSeriesSelectionState } from "./SeriesSelectionState";
 export { createSeriesSelectionBridge } from "./SeriesSelectionBridge";
+export type { WindowId, WindowSeriesBridge } from "./WindowSeriesBridge";
+export { createWindowSeriesBridge } from "./WindowSeriesBridge";
