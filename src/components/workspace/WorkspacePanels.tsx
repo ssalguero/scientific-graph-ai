@@ -6,15 +6,10 @@ import type { WorkspacePanelsProps } from "./types";
  * D47.2 — Thin overlay host.
  * D56.4 — FloatingWindowBridge between Dock and Toasts (Zero UX: empty windows).
  *
- * Today: Dock · FloatingWindowBridge · toast / ephemeral children.
- *
- * Future:
- * - Inspector
- * - Properties
- * - Notifications
- * - Drawers
- * - AI Assist
- * - Export Queue
+ * Composition today (page-owned children):
+ * - Slot 0: Dock tree (DockRoot → … → Inspector chrome may mount here)
+ * - FloatingWindowBridge (always)
+ * - Remaining siblings: toasts / ephemeral overlays
  *
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
