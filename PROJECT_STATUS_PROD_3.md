@@ -3846,3 +3846,51 @@ READY FOR D61.7 — Selection Store
 ---
 
 *## D61.6 APPEND-ONLY 2026-07-22 - D61.6 COMPLETE - TabSelectionTypes IMPLEMENTED - Next D61.7.*
+
+## D61.7
+
+**Microfase:** D61.7 - Window Tabs Foundation - Selection Store  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.7 = COMPLETE** - **TabSelectionStore = IMPLEMENTED** - **READY FOR D61.8**  
+**Modo:** Store Selection only - cero Bridges/politicas/Registry
+
+### Resumen
+
+Se implementa `createTabSelectionStore()` en `src/components/windows/tabs/TabSelectionStore.ts` con API Freeze `get` / `setActive` / `clear`. Unica responsabilidad: `activeTab` (inicial `undefined`). Sin Window/Registry/Series, auto-select, next tab, eventos ni observers. Sin React/JSX/TSX/hooks/Context/CSS. Archivos previos intactos. `tsc --noEmit` PASS. `next build` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Archivo | `src/components/windows/tabs/TabSelectionStore.ts` |
+| API | `createTabSelectionStore` |
+| Status | **COMPLETE** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61.8 — Bridges** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| createTabSelectionStore | **PASS** |
+| get / setActive / clear | **PASS** |
+| Solo activeTab (sin politicas) | **PASS** |
+| Sin Bridges/Registry coupling | **PASS** |
+| Archivos previos no modificados | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| Ready for D61.8 | **PASS** |
+
+### Resolucion
+
+```text
+D61.7 = COMPLETE
+TabSelectionStore = IMPLEMENTED
+tsc PASS
+build PASS
+READY FOR D61.8 — Bridges
+```
+
+---
+
+*## D61.7 APPEND-ONLY 2026-07-22 - D61.7 COMPLETE - TabSelectionStore IMPLEMENTED - Next D61.8.*
