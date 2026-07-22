@@ -4244,3 +4244,52 @@ READY FOR D62.1 — Registry Additive Mutator
 ---
 
 *## D62.0 APPEND-ONLY 2026-07-22 - D62.0 COMPLETE - Tabs UI Architecture LOCKED - READY FOR D62.1.*
+
+## D62.1
+
+**Microfase:** D62.1 - Tabs UI Foundation - Registry Public Mutator  
+**Fecha:** 2026-07-22  
+**Estado:** **D62.1 = COMPLETE** - **setState = LOCKED** - **READY FOR D62.2**  
+**Modo:** Extensión aditiva TabRegistry only - cero Policy/Switch/UI/validators
+
+### Resumen
+
+Se define e implementa el mutador publico aditivo del TabRegistry diferido en D62.0. API definitiva: `setState(id, state)`. Actualiza unicamente el companion `TabState`; no muta `TabDefinition`; no-op si el tab no existe; clone-on-write; sin Selection/Policy/auto-select/React/Window/Series. `HR-activeTab-ssot-only` intacta: `setState` no es SSOT de activacion. Barrel sin simbolos nuevos (metodo en tipo ya exportado).
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) |
+| API | `TabRegistry.setState(id: TabId, state: TabState): void` |
+| Archivos | `TabRegistryTypes.ts` · `TabRegistry.ts` |
+| Status | **COMPLETE** |
+| D61 APIs | **Intactas (aditivo)** |
+| Next | **D62.2 — Selection Policy Types** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| API `setState` elegida y congelada | **PASS** |
+| Aditivo — no rompe D61 | **PASS** |
+| No muta Definition | **PASS** |
+| No Selection / Policy / auto-select | **PASS** |
+| No React / Window / Series | **PASS** |
+| Clone-on-write + no-op si ausente | **PASS** |
+| Sin Policy/Switch/UI/validators | **PASS** |
+| Ready for D62.2 | **PASS** |
+
+### Resolucion
+
+```text
+D62.1 = COMPLETE
+TabRegistry.setState = LOCKED
+API additive = CONFIRMED
+Definition immutable via mutator = CONFIRMED
+No Selection coupling = CONFIRMED
+HR-activeTab-ssot-only = INTACT
+READY FOR D62.2 — Selection Policy Types
+```
+
+---
+
+*## D62.1 APPEND-ONLY 2026-07-22 - D62.1 COMPLETE - setState LOCKED - READY FOR D62.2.*

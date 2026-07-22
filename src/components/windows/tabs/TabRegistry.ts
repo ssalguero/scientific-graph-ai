@@ -1,11 +1,12 @@
 /**
  * D61.5 — Window Tabs Foundation · Tab Registry façade.
- * Authority: docs/D61.0-tabs-discovery.md · API Freeze D61.
+ * D62.1 — Additive public mutator `setState` (API Freeze D62.1).
+ * Authority: docs/D61.0-tabs-discovery.md · docs/D62.0-tabs-ui-discovery.md.
  * Public Freeze surface — delegates storage to TabRegistryStore. No Selection. No UI.
  */
 
 import type { TabId } from "./TabId";
-import type { TabDefinition, TabEntry } from "./TabTypes";
+import type { TabDefinition, TabEntry, TabState } from "./TabTypes";
 import type { TabRegistry } from "./TabRegistryTypes";
 import {
   createTabRegistryStore,
@@ -32,6 +33,8 @@ function cloneEntry(entry: TabEntry): TabEntry {
  * Duplicate register is a no-op. unregister/clear are safe for missing ids.
  * get / list return clones — callers never receive live store refs.
  * list() preserves insertion order from the store Map.
+ * setState (D62.1): companion TabState only; no-op if missing; clone-on-write;
+ * does not touch Selection / Policy / Definition.
  * Does not touch Selection.
  */
 export function createTabRegistry(
@@ -67,6 +70,17 @@ export function createTabRegistry(
 
     clear(): void {
       store.clear();
+    },
+
+    setState(id: TabId, state: TabState): void {
+      const entry = store.get(id);
+      if (entry === undefined) {
+        return;
+      }
+      store.set(id, {
+        definition: cloneDefinition(entry.definition),
+        state,
+      });
     },
   };
 }
