@@ -5405,3 +5405,49 @@ READY FOR D63.11 - Release
 ---
 
 *## D63.10 APPEND-ONLY 2026-07-22 - D63.10 COMPLETE - Gate RELEASED - D63 GATE PASS - READY FOR D63.11.*
+
+## D63.11
+
+**Microfase:** D63.11 - Lifecycle + Tab <-> Series Wiring - Release  
+**Fecha:** 2026-07-22  
+**Estado:** **D63.11 = COMPLETE** - **Content Foundation = RELEASED** - **Release Documentation = RELEASED** - **READY FOR D63.12**  
+**Modo:** Release doc + append-only este bloque - cero src/scripts/package.json
+
+### Resumen
+
+Se libera oficialmente **Content Foundation** bajo el milestone certificado **D63 - Lifecycle + Tab <-> Series Wiring**. Arquitectura hibrida liberada: Types, Registry SSOT, Slots, TabSeriesBridge 1<->1, ContentBridge sin cache, ContentHost sin ownership, Barrel, Integration library-only, Validators, Gate. Freeze confirmado. Evidencias: API/Governance/No-workspace-coupling/Gate/tsc/build PASS. Zero Product / Visual Change. Cierre formal de serie = D63.12.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D63.11-release.md`](docs/D63.11-release.md) |
+| Producto | **Content Foundation RELEASED** |
+| Milestone | **Lifecycle + Tab <-> Series Wiring** |
+| `validate:d63-gate` | **PASS** |
+| Status | **COMPLETE** |
+| Serie | **D63 OPEN** (cierre = D63.12) |
+| Next | **D63.12 - Certification** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| Content Foundation = RELEASED | **PASS** |
+| Freeze confirmado | **PASS** |
+| Evidencias gate documentadas | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+| Ready for D63.12 | **PASS** |
+
+### Resolucion
+
+```text
+D63.11 = COMPLETE
+Content Foundation = RELEASED
+Release Documentation = RELEASED
+No source changes
+READY FOR D63.12 - Certification
+```
+
+---
+
+*## D63.11 APPEND-ONLY 2026-07-22 - D63.11 COMPLETE - Content Foundation RELEASED - READY FOR D63.12.*
