@@ -4848,3 +4848,83 @@ READY FOR D63 - Lifecycle + Tab <-> Series Wiring
 ---
 
 *## D62.12 APPEND-ONLY 2026-07-22 - D62.12 COMPLETE - CA-D62 PASS - D62 CLOSED - Tabs UI Foundation RELEASED - Next D63.*
+
+
+## D63.0
+
+**Microfase:** D63.0 - Lifecycle + Tab <-> Series Wiring - Discovery + Architecture Freeze  
+**Fecha:** 2026-07-22  
+**Estado:** **D63.0 = COMPLETE** - **Content Lifecycle Architecture = LOCKED** - **API Freeze = LOCKED** - **Hard Rules = LOCKED** - **CA-D63 = FROZEN** - **Implementation = NOT STARTED** - **READY FOR D63.1**  
+**Modo:** Documental create-only discovery + append-only este bloque - cero src/scripts/package.json
+
+### Resumen
+
+Se congela oficialmente la arquitectura hibrida **D63 - Lifecycle + Tab <-> Series Wiring**. Milestone title certificado D62.12 intacto. Entrega: ContentRegistry SSOT + ContentBridge (sin cache) + ContentHost (sin ownership) + TabSeriesBridge 1<->1 mapping-only bajo `src/components/windows/content/`. ContentDefinition opaco `{ id, kind, title }`. ContentRegistry ≠ TabRegistry. Sin renderers cientificos. Sin WindowManager lifecycle. Sin WorkspaceContent. D63.8 library-only (never mounted by page.tsx). D63.11 Release / D63.12 Certification. Roadmap D63.0-D63.12 FROZEN. Sin codigo. Sin validators. Sin `content/` en src. D55-D62 freezes intactos.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
+| Serie | **D63 OPEN** |
+| Microfase | **D63.0 COMPLETE** |
+| Milestone | **Lifecycle + Tab <-> Series Wiring** |
+| Architecture | **LOCKED (hybrid)** |
+| API Freeze | **LOCKED** |
+| ContentDefinition | **`{ id, kind, title }` LOCKED** |
+| TabSeriesBridge | **1<->1 mapping-only LOCKED** |
+| ContentRegistry | **SSOT · ≠ TabRegistry LOCKED** |
+| ContentBridge | **no-cache LOCKED** |
+| ContentHost | **no-ownership LOCKED** |
+| Package previsto | `src/components/windows/content/` |
+| CA-D63 | **FROZEN (preview)** |
+| Implementation | **NOT STARTED** |
+| Next | **D63.1 - Content Types** |
+
+### Authority
+
+| Item | Estado |
+|------|--------|
+| D62 CLOSED / Tabs UI Foundation RELEASED | **CITA** |
+| Freezes D55-D62 | **INTACTOS** |
+| src/** / scripts/** / package.json | **SIN CAMBIOS** |
+| windows/content/ creado | **NO** |
+| D63.1 iniciado | **NO** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Discovery doc creado | **PASS** |
+| Milestone title certificado LOCKED | **PASS** |
+| Architecture Freeze hibrida LOCKED | **PASS** |
+| API Freeze LOCKED | **PASS** |
+| ContentDefinition opaco LOCKED | **PASS** |
+| TabSeriesBridge 1<->1 LOCKED | **PASS** |
+| Registry SSOT + decoupled LOCKED | **PASS** |
+| Bridge no-cache + Host no-ownership LOCKED | **PASS** |
+| Hard Rules / Governance LOCKED | **PASS** |
+| Roadmap D63.0-D63.12 FROZEN | **PASS** |
+| Validators prospectivos documentados | **PASS** |
+| No Goals documentados | **PASS** |
+| CA-D63 preview FROZEN | **PASS** |
+| Sin cambios src/scripts/package.json | **PASS** |
+| STATUS append-only | **PASS** |
+| Ready for D63.1 | **PASS** |
+
+### Resolucion
+
+```text
+D63.0 = COMPLETE
+D63 = OPEN
+Milestone = Lifecycle + Tab <-> Series Wiring
+Content Lifecycle Architecture = LOCKED
+API Freeze = LOCKED
+Hard Rules = LOCKED
+CA-D63 = FROZEN
+Implementation = NOT STARTED
+NO SRC / SCRIPTS / PACKAGE.JSON CHANGES
+READY FOR D63.1 - Content Types
+```
+
+---
+
+*## D63.0 APPEND-ONLY 2026-07-22 - D63.0 COMPLETE - Content Lifecycle Architecture LOCKED - READY FOR D63.1.*
