@@ -4928,3 +4928,51 @@ READY FOR D63.1 - Content Types
 ---
 
 *## D63.0 APPEND-ONLY 2026-07-22 - D63.0 COMPLETE - Content Lifecycle Architecture LOCKED - READY FOR D63.1.*
+
+## D63.1
+
+**Microfase:** D63.1 - Lifecycle + Tab <-> Series Wiring - Content Types  
+**Fecha:** 2026-07-22  
+**Estado:** **D63.1 = COMPLETE** - **Content Types = RELEASED** - **API Freeze = PRESERVED** - **READY FOR D63.2**  
+**Modo:** Types only - cero Registry / Bridge / Host / Slots / barrel / validators / producto
+
+### Resumen
+
+Se implementan los contratos publicos opacos del subsistema content: `ContentDefinition` (`{ id, kind, title }`) y `ContentHostProps` (`{ contentId }`). Types-only en `src/components/windows/content/ContentTypes.ts`. Sin campos renderer. Sin runtime. Sin ContentRegistry / ContentBridge / TabSeriesBridge / ContentSlots / ContentHost / index.ts. Sin React/JSX/hooks/Context/CSS. Sin imports cientificos ni workspace/. Freezes D55-D62 e D63.0 intactos. Zero Product Change.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
+| Archivo | `src/components/windows/content/ContentTypes.ts` |
+| API | `ContentDefinition` / `ContentHostProps` |
+| Status | **COMPLETE** |
+| Runtime | **NONE** |
+| Next | **D63.2 - Content Registry** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| ContentDefinition = { id, kind, title } | **PASS** |
+| ContentHostProps = { contentId } | **PASS** |
+| Sin campos renderer adicionales | **PASS** |
+| Solo tipos (sin runtime) | **PASS** |
+| Sin Registry / Bridge / Host / barrel | **PASS** |
+| Sin React / workspace / ciencia | **PASS** |
+| Sin page.tsx / WindowManager / tabs / series | **PASS** |
+| API Freeze D63.0 preserved | **PASS** |
+| Ready for D63.2 | **PASS** |
+
+### Resolucion
+
+```text
+D63.1 = COMPLETE
+Content Types = RELEASED
+API Freeze preserved
+No product changes
+READY FOR D63.2 - Content Registry
+```
+
+---
+
+*## D63.1 APPEND-ONLY 2026-07-22 - D63.1 COMPLETE - Content Types RELEASED - READY FOR D63.2.*
