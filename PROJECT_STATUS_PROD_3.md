@@ -4784,3 +4784,67 @@ READY FOR D62.12 - Release
 ---
 
 *## D62.11 APPEND-ONLY 2026-07-22 - D62.11 COMPLETE - CA-D62 PASS - Tabs UI Foundation CERTIFIED - READY FOR D62.12.*
+
+## D62.12
+
+**Microfase:** D62.12 - Tabs UI Foundation - Release - CLOSE  
+**Fecha:** 2026-07-22  
+**Estado:** **D62 CLOSED** - **Tabs UI Foundation = RELEASED** - **CA-D62 = PASS** - **NEXT = D63**  
+**Modo:** Release doc + append-only este bloque - cero src/scripts/package.json
+
+### Resumen
+
+Se libera y cierra oficialmente **D62 - Tabs UI Foundation**. Operabilidad sobre D61: `setState`, Selection Policy, Document Switch React-agnostico, `tab-ui/` (TabStrip/TabBar/TabDocumentHost), barrels, validators. Hard Rules: `HR-activeTab-ssot-only`, `HR-switch-react-agnostic`, barrels, no Series wiring. WindowAPI / Series / Floating / Drag / Resize / Snap / Tabs D61 intactos. Zero Product Change. `validate:d62-gate` PASS. Sin deuda tecnica abierta.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D62.12-release.md`](docs/D62.12-release.md) |
+| Serie | **D62 CLOSED** |
+| Producto | **Tabs UI Foundation RELEASED** |
+| CA-D62 | **PASS 9/9** |
+| Status | **COMPLETE** |
+| `validate:d62-tabs-api` | **PASS** |
+| `validate:d62-governance` | **PASS** |
+| `validate:d62-gate` | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D63** |
+
+### Componentes liberados
+
+- TabRegistry.setState
+- TabSelectionPolicy (+ types + createTabSelectionPolicy)
+- TabDocumentSwitch (+ OpaqueContentHandle + createTabDocumentSwitch)
+- tab-ui: TabUiTypes / TabStrip / TabBar / TabDocumentHost
+- barrels tabs/ + tab-ui/
+- validate-d62-* + umbrella gate
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| Tabs UI Foundation = RELEASED | **PASS** |
+| D62 = CLOSED | **PASS** |
+| CA-D62 = PASS | **PASS** |
+| Compatibilidad D61 | **PASS** |
+| Sin deuda tecnica | **PASS** |
+| STATUS append-only | **PASS** |
+| Ready for D63 | **PASS** |
+
+### Resolucion
+
+```text
+D62.12 = COMPLETE
+Tabs UI Foundation = RELEASED
+D62 = CLOSED
+CA-D62 = PASS
+PROD-3 continua estable
+Sin deuda tecnica abierta
+NEXT = D63
+READY FOR D63 - Lifecycle + Tab <-> Series Wiring
+```
+
+---
+
+*## D62.12 APPEND-ONLY 2026-07-22 - D62.12 COMPLETE - CA-D62 PASS - D62 CLOSED - Tabs UI Foundation RELEASED - Next D63.*
