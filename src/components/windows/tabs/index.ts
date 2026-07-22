@@ -3,6 +3,7 @@
  * D62.2 — Selection Policy types re-exports.
  * D62.3 — Selection Policy engine re-export.
  * D62.4 — Document Switch types re-exports.
+ * D62.5 — Document Switch engine re-export.
  * Authority: docs/D61.0-tabs-discovery.md · docs/D62.0-tabs-ui-discovery.md.
  * Hard Rule: tabs barrel only. Not re-exported from windows/index.ts.
  */
@@ -46,6 +47,7 @@ export type {
   TabDocumentSwitchResolveArgs,
   TabDocumentSwitchResolveResult,
 } from "./TabDocumentSwitchTypes";
+export { createTabDocumentSwitch } from "./TabDocumentSwitch";
 
 export type { WindowId, WindowTabsBridge } from "./WindowTabsBridge";
 export { createWindowTabsBridge } from "./WindowTabsBridge";

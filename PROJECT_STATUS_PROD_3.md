@@ -4433,3 +4433,49 @@ READY FOR D62.5 — Document Switch Controller
 ---
 
 *## D62.4 APPEND-ONLY 2026-07-22 - D62.4 COMPLETE - TabDocumentSwitchTypes LOCKED - READY FOR D62.5.*
+
+## D62.5
+
+**Microfase:** D62.5 - Tabs UI Foundation - Document Switch Engine  
+**Fecha:** 2026-07-22  
+**Estado:** **D62.5 = COMPLETE** - **TabDocumentSwitch = IMPLEMENTED** - **READY FOR D62.6**  
+**Modo:** Runtime puro resolve only - cero Host / UI / React / Series / side-effects
+
+### Resumen
+
+Se implementa `createTabDocumentSwitch()`: `resolve({ active, slots })` — active undefined -> undefined; miss -> undefined; hit -> OpaqueContentHandle. React-agnostico. Sin mutar slots/Registry/Selection. Contratos D62.4 respetados. Barrel export aditivo.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) · D62.4 types |
+| Archivo | `src/components/windows/tabs/TabDocumentSwitch.ts` |
+| API | `createTabDocumentSwitch()` / `resolve` |
+| Status | **COMPLETE** |
+| React | **NONE** |
+| Next | **D62.6 — Tab UI Types** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| resolve implementado | **PASS** |
+| HR-switch-react-agnostic | **PASS** |
+| Sin side-effects / mutaciones | **PASS** |
+| Sin Host / UI / Series | **PASS** |
+| Sin modificar Policy/Registry/Store | **PASS** |
+| Barrel export createTabDocumentSwitch | **PASS** |
+| Ready for D62.6 | **PASS** |
+
+### Resolucion
+
+```text
+D62.5 = COMPLETE
+TabDocumentSwitch Engine = IMPLEMENTED
+resolve = IMPLEMENTED
+HR-switch-react-agnostic = INTACT
+READY FOR D62.6 — Tab UI Types
+```
+
+---
+
+*## D62.5 APPEND-ONLY 2026-07-22 - D62.5 COMPLETE - TabDocumentSwitch IMPLEMENTED - READY FOR D62.6.*
