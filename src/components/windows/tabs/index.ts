@@ -1,7 +1,8 @@
 /**
  * D61.1–D61.8 — Window Tabs Foundation · internal barrel.
- * Authority: docs/D61.0-tabs-discovery.md · Hard Rule: tabs barrel only.
- * Not re-exported from windows/index.ts.
+ * D62.2 — Selection Policy types re-exports.
+ * Authority: docs/D61.0-tabs-discovery.md · docs/D62.0-tabs-ui-discovery.md.
+ * Hard Rule: tabs barrel only. Not re-exported from windows/index.ts.
  */
 
 export type { TabId } from "./TabId";
@@ -27,6 +28,12 @@ export { createTabSelectionStore } from "./TabSelectionStore";
 
 export type { TabSelectionBridge } from "./TabSelectionBridge";
 export { createTabSelectionBridge } from "./TabSelectionBridge";
+
+export type {
+  TabSelectionPolicy,
+  TabSelectionPolicyAfterUnregisterArgs,
+  TabSelectionPolicyEnsureActiveArgs,
+} from "./TabSelectionPolicyTypes";
 
 export type { WindowId, WindowTabsBridge } from "./WindowTabsBridge";
 export { createWindowTabsBridge } from "./WindowTabsBridge";
