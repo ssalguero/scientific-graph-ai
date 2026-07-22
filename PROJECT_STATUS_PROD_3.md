@@ -4106,3 +4106,67 @@ READY FOR D61.12 — Release
 ---
 
 *## D61.11 APPEND-ONLY 2026-07-22 - D61.11 COMPLETE - CA-D61 PASS - Next D61.12.*
+
+## D61.12
+
+**Microfase:** D61.12 - Window Tabs Foundation - Release - CLOSE  
+**Fecha:** 2026-07-22  
+**Estado:** **D61 CLOSED** - **Window Tabs Foundation = RELEASED** - **CA-D61 = PASS** - **NEXT = D62**  
+**Modo:** Release doc + append-only este bloque - cero src/scripts/package.json
+
+### Resumen
+
+Se libera y cierra oficialmente **D61 - Window Tabs Foundation**. Subpaquete `src/components/windows/tabs/`: Identity, Types, Registry, Selection, Bridges, Barrel. Hard Rules: sin tabs en WindowDefinition/WindowState; barrel unico `tabs/index.ts`; Definition separado de State; sin auto-select. Governance: No React/JSX/TSX/hooks/Context/DOM/CSS. WindowAPI D55 / Series D60 / Floating / Drag / Resize / Snap intactos. Zero UX Change. `validate:d61-gate` PASS. Sin deuda tecnica abierta.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D61.12-release.md`](docs/D61.12-release.md) |
+| Serie | **D61 CLOSED** |
+| Producto | **Window Tabs Foundation RELEASED** |
+| CA-D61 | **PASS 9/9** |
+| Status | **COMPLETE** |
+| `validate:d61-tabs-api` | **PASS** |
+| `validate:d61-governance` | **PASS** |
+| `validate:d61-gate` | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D62** |
+
+### Componentes liberados
+
+- TabId / createTabId / isTabId
+- TabDefinition / TabState / TabReference / TabEntry
+- TabRegistry / TabRegistryStore / TabRegistryTypes
+- TabSelectionStore / TabSelectionTypes / TabSelectionBridge
+- WindowTabsBridge
+- tabs/index.ts barrel
+- validate-d61-* + umbrella gate
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| Window Tabs Foundation = RELEASED | **PASS** |
+| D61 = CLOSED | **PASS** |
+| CA-D61 = PASS | **PASS** |
+| Compatibilidad D55-D60 | **PASS** |
+| Sin deuda tecnica | **PASS** |
+| STATUS append-only | **PASS** |
+| Ready for D62 | **PASS** |
+
+### Resolucion
+
+```text
+D61.12 = COMPLETE
+Window Tabs Foundation = RELEASED
+D61 = CLOSED
+CA-D61 = PASS
+PROD-3 continua estable
+NEXT = D62
+READY FOR D62
+```
+
+---
+
+*## D61.12 APPEND-ONLY 2026-07-22 - D61.12 COMPLETE - CA-D61 PASS - D61 CLOSED - Window Tabs Foundation RELEASED - Next D62.*
