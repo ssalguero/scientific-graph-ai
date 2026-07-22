@@ -4339,3 +4339,51 @@ READY FOR D62.3 — Selection Policy Engine
 ---
 
 *## D62.2 APPEND-ONLY 2026-07-22 - D62.2 COMPLETE - TabSelectionPolicyTypes LOCKED - READY FOR D62.3.*
+
+## D62.3
+
+**Microfase:** D62.3 - Tabs UI Foundation - Tab Selection Policy Engine  
+**Fecha:** 2026-07-22  
+**Estado:** **D62.3 = COMPLETE** - **TabSelectionPolicy = IMPLEMENTED** - **READY FOR D62.4**  
+**Modo:** Runtime puro Policy only - cero Document Switch / UI / validators / TabState sync
+
+### Resumen
+
+Se implementa `createTabSelectionPolicy()`: `afterUnregister` (no-op si active != removed; next por insertion/attach order; vacio -> clear) y `ensureActive` (no-op si active en candidates; else primer candidato o clear). Escritura solo via `TabSelectionBridge`. Sin setState/TabState sync. Sin React/Series/WindowManager. Sin mutar Registry. Contratos D62.2 respetados.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) · D62.2 types |
+| Archivo | `src/components/windows/tabs/TabSelectionPolicy.ts` |
+| API | `createTabSelectionPolicy()` |
+| Status | **COMPLETE** |
+| TabState sync | **NONE** |
+| Next | **D62.4 — Document Switch Types** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| afterUnregister implementado | **PASS** |
+| ensureActive implementado | **PASS** |
+| Solo escribe SelectionBridge | **PASS** |
+| HR-activeTab-ssot-only | **PASS** |
+| Sin React / UI / Series / Document Switch | **PASS** |
+| Sin modificar Registry/Store/Bridges | **PASS** |
+| Barrel export createTabSelectionPolicy | **PASS** |
+| Ready for D62.4 | **PASS** |
+
+### Resolucion
+
+```text
+D62.3 = COMPLETE
+TabSelectionPolicy Engine = IMPLEMENTED
+afterUnregister = IMPLEMENTED
+ensureActive = IMPLEMENTED
+No TabState sync = CONFIRMED
+READY FOR D62.4 — Document Switch Types
+```
+
+---
+
+*## D62.3 APPEND-ONLY 2026-07-22 - D62.3 COMPLETE - TabSelectionPolicy IMPLEMENTED - READY FOR D62.4.*
