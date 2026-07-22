@@ -5120,3 +5120,51 @@ READY FOR D63.5 - ContentBridge
 ---
 
 *## D63.4 APPEND-ONLY 2026-07-22 - D63.4 COMPLETE - TabSeriesBridge RELEASED - READY FOR D63.5.*
+
+## D63.5
+
+**Microfase:** D63.5 - Lifecycle + Tab <-> Series Wiring - ContentBridge  
+**Fecha:** 2026-07-22  
+**Estado:** **D63.5 = COMPLETE** - **ContentBridge = RELEASED** - **Opaque handle resolution = ESTABLISHED** - **READY FOR D63.6**  
+**Modo:** Resolve factory only - cero Host / barrel / validators / cache / Registry mutation / producto
+
+### Resumen
+
+Se implementa `createContentBridge(registry)` con unica responsabilidad publica `resolve(handle)`: siempre delega a `ContentRegistry.get(handle.contentId)`. Sin cache (`HR-no-content-cache`). Sin almacenamiento propio. Sin mutar Registry. OpaqueContentHandle via barrel `tabs/`. Sin TabRegistry/SeriesRegistry/WindowManager. Sin ContentHost / index.ts. Sin React/workspace/ciencia. Freezes D55-D63.4 intactos. Zero Product Change.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
+| Archivo | `src/components/windows/content/ContentBridge.ts` |
+| API | `createContentBridge(registry)` · `ContentBridge.resolve` |
+| Cache | **NONE (HR-no-content-cache)** |
+| Status | **COMPLETE** |
+| Next | **D63.6 - ContentHost** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| createContentBridge factory | **PASS** |
+| resolve via Registry.get | **PASS** |
+| Sin cache / storage propio | **PASS** |
+| Sin mutar Registry | **PASS** |
+| OpaqueContentHandle via tabs barrel | **PASS** |
+| Sin Host / barrel | **PASS** |
+| Sin React / workspace / ciencia / producto | **PASS** |
+| Sin modificar Registry/Types/Slots/TabSeriesBridge | **PASS** |
+| Ready for D63.6 | **PASS** |
+
+### Resolucion
+
+```text
+D63.5 = COMPLETE
+ContentBridge = RELEASED
+Opaque handle resolution established
+No product changes
+READY FOR D63.6 - ContentHost
+```
+
+---
+
+*## D63.5 APPEND-ONLY 2026-07-22 - D63.5 COMPLETE - ContentBridge RELEASED - READY FOR D63.6.*
