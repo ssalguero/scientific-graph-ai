@@ -6091,3 +6091,67 @@ READY FOR D64.12 - Official Close
 ---
 
 *## D64.11 APPEND-ONLY 2026-07-22 - D64.11 COMPLETE - Foundation RELEASED - Next D64.12.*
+
+## D64.12
+
+**Microfase:** D64.12 - Production Stabilization Foundation - Official Close  
+**Fecha:** 2026-07-22  
+**Estado:** **D64.12 = COMPLETE** - **D64 = CLOSED** - **NEXT = D65**  
+**Modo:** Cierre oficial append-only - sin docs nuevas / sin scripts / sin cambios src/package.json
+
+### Resumen
+
+Cierre oficial de la serie **D64 — Production Stabilization Foundation**. Serie D64 oficialmente cerrada. Infraestructura D45-D63 certificada para produccion. El proyecto queda listo para iniciar **D65**. Release: [`docs/D64-release.md`](docs/D64-release.md). Gate: [`docs/D64.10-production-gate.md`](docs/D64.10-production-gate.md). Sin cambios de codigo.
+
+| Campo | Valor |
+|-------|--------|
+| D64 | **COMPLETE · CLOSED** |
+| Production Stabilization Foundation | **COMPLETE** |
+| Architecture Freeze | **Preservado** |
+| Production Validator Suite | **Certificada** |
+| CA-D64 | **11/11 PASS** |
+| Deuda tecnica (alcance D64) | **Ninguna abierta** |
+| Next | **D65** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| D64 COMPLETE | **PASS** |
+| Production Stabilization Foundation COMPLETE | **PASS** |
+| Architecture Freeze preservado | **PASS** |
+| Production Validator Suite certificada | **PASS** |
+| CA-D64 = 11/11 PASS | **PASS** |
+| Sin deuda tecnica dentro del alcance D64 | **PASS** |
+| D64 CLOSED | **PASS** |
+| NEXT = D65 | **PASS** |
+
+### Declaracion final
+
+```text
+Serie D64 oficialmente cerrada.
+Infraestructura D45-D63 certificada para produccion.
+El proyecto queda listo para iniciar D65.
+
+D64.12 = COMPLETE
+D64 = COMPLETE
+Production Stabilization Foundation = COMPLETE
+Architecture Freeze D45-D63 = PRESERVED
+Production Validator Suite = CERTIFIED
+CA-D64 = 11/11 PASS
+Sin deuda tecnica dentro del alcance D64
+D64 = CLOSED
+NEXT = D65
+```
+
+### Resolucion
+
+```text
+D64.12 = COMPLETE
+D64 CLOSED
+NEXT = D65
+```
+
+---
+
+*## D64.12 APPEND-ONLY 2026-07-22 - D64.12 COMPLETE - D64 CLOSED - Next D65.*
