@@ -5451,3 +5451,80 @@ READY FOR D63.12 - Certification
 ---
 
 *## D63.11 APPEND-ONLY 2026-07-22 - D63.11 COMPLETE - Content Foundation RELEASED - READY FOR D63.12.*
+
+## D63.12
+
+**Microfase:** D63.12 - Lifecycle + Tab <-> Series Wiring - Certification - CLOSE  
+**Fecha:** 2026-07-22  
+**Estado:** **D63 CLOSED** - **Content Foundation = CERTIFIED** - **CA-D63 = PASS** - **NEXT = D64**  
+**Modo:** Certification append-only este bloque - cero src/scripts/package.json/docs
+
+### Resumen
+
+Se certifica y cierra oficialmente **D63 - Lifecycle + Tab <-> Series Wiring**. Content Foundation CERTIFIED: Types opacos, Registry SSOT (!= TabRegistry), Slots, TabSeriesBridge 1<->1 mapping-only, ContentBridge sin cache, ContentHost sin ownership, Barrel content/, Integration library-only (never mounted by page.tsx), Validators, Gate. Architecture/API Freeze respetados. Sin workspace coupling. Sin renderers cientificos. Sin WindowManager lifecycle. Zero functional / visual change. `validate:d63-gate` PASS. Build PASS. Typecheck PASS. PROD-3 sin deuda tecnica. NEXT = D64 (sin planificar en esta microfase).
+
+| Campo | Valor |
+|-------|--------|
+| Release | [`docs/D63.11-release.md`](docs/D63.11-release.md) |
+| Discovery | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
+| Serie | **D63 CLOSED** |
+| Producto | **Content Foundation CERTIFIED** |
+| CA-D63 | **PASS 9/9** |
+| Status | **COMPLETE** |
+| Architecture Freeze | **RESPECTED** |
+| API Freeze | **RESPECTED** |
+| Registry SSOT | **PASS** |
+| TabSeriesBridge 1<->1 | **PASS** |
+| ContentBridge no-cache | **PASS** |
+| Host no-ownership | **PASS** |
+| No workspace coupling | **PASS** |
+| No scientific renderers | **PASS** |
+| No functional / visual changes | **PASS** |
+| `validate:d63-content-api` | **PASS** |
+| `validate:d63-governance` | **PASS** |
+| `validate:d63-no-workspace-coupling` | **PASS** |
+| `validate:d63-gate` | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D64** |
+
+### Confirmaciones CA-D63
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D63-01 | ContentRegistry SSOT · independiente de TabRegistry | **PASS** |
+| CA-D63-02 | ContentDefinition = `{ id, kind, title }` only | **PASS** |
+| CA-D63-03 | ContentBridge resolve via Registry.get · sin cache | **PASS** |
+| CA-D63-04 | ContentHost props-only · sin ownership | **PASS** |
+| CA-D63-05 | TabSeriesBridge 1<->1 mapping-only | **PASS** |
+| CA-D63-06 | Barrel content/ · no leak windows/index.ts | **PASS** |
+| CA-D63-07 | Sin deps cientificas · sin acoplamiento workspace | **PASS** |
+| CA-D63-08 | Zero functional / visual product change | **PASS** |
+| CA-D63-09 | API Freeze · Hard Rules · Gate · tsc · build | **PASS** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Content Foundation = CERTIFIED | **PASS** |
+| D63 = CLOSED | **PASS** |
+| CA-D63 = PASS | **PASS** |
+| Architecture / API Freeze respetados | **PASS** |
+| Sin deuda tecnica | **PASS** |
+| STATUS append-only | **PASS** |
+| NEXT = D64 | **PASS** |
+
+### Resolucion
+
+```text
+D63.12 = COMPLETE
+Content Foundation = CERTIFIED
+D63 = CLOSED
+CA-D63 = PASS
+PROD-3 continua sin deuda tecnica
+NEXT = D64
+```
+
+---
+
+*## D63.12 APPEND-ONLY 2026-07-22 - D63.12 COMPLETE - CA-D63 PASS - D63 CLOSED - Content Foundation CERTIFIED - Next D64.*
