@@ -4525,3 +4525,48 @@ READY FOR D62.7 — Tab Strip UI
 ---
 
 *## D62.6 APPEND-ONLY 2026-07-22 - D62.6 COMPLETE - TabUiTypes LOCKED - READY FOR D62.7.*
+
+## D62.7
+
+**Microfase:** D62.7 - Tabs UI Foundation - TabStrip Presentational UI  
+**Fecha:** 2026-07-22  
+**Estado:** **D62.7 = COMPLETE** - **TabStrip = IMPLEMENTED** - **READY FOR D62.8**  
+**Modo:** Presentational TabStrip only - cero TabBar/Host / Policy / Switch / product
+
+### Resumen
+
+Se implementa `TabStrip` controlado por props (`TabStripProps` D62.6): render orden recibido; `isActive = (tab.id === activeTab)`; callbacks `onSelect` / `onClose`. Sin estado interno, hooks, Context ni side-effects. Sin Registry/Policy/Switch/Window/Series. Sin drag/reorder/shortcuts. Barrel export `TabStrip`.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) · D62.6 types |
+| Archivo | `src/components/windows/tab-ui/TabStrip.tsx` |
+| API | `TabStrip` |
+| Status | **COMPLETE** |
+| Next | **D62.8 — Tab Bar + Document Host** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| TabStrip presentacional | **PASS** |
+| Props-only / sin hooks/state/Context | **PASS** |
+| isActive derivado de activeTab | **PASS** |
+| Orden = props.tabs | **PASS** |
+| Sin tabs/** modificado | **PASS** |
+| Barrel export | **PASS** |
+| Ready for D62.8 | **PASS** |
+
+### Resolucion
+
+```text
+D62.7 = COMPLETE
+TabStrip = IMPLEMENTED
+Props-controlled = CONFIRMED
+HR-activeTab-ssot-only = INTACT
+READY FOR D62.8 — Tab Bar + Document Host
+```
+
+---
+
+*## D62.7 APPEND-ONLY 2026-07-22 - D62.7 COMPLETE - TabStrip IMPLEMENTED - READY FOR D62.8.*

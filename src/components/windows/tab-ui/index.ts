@@ -1,8 +1,7 @@
 /**
- * D62.6 — Tabs UI Foundation · tab-ui barrel (types).
+ * D62.6–D62.7 — Tabs UI Foundation · tab-ui barrel.
  * Authority: docs/D62.0-tabs-ui-discovery.md · Hard Rule: tab-ui barrel only.
  * Not re-exported from windows/index.ts.
- * Components (TabStrip / TabBar / TabDocumentHost) = D62.7+ / D62.8.
  */
 
 export type {
@@ -13,3 +12,5 @@ export type {
   TabBarProps,
   TabDocumentHostProps,
 } from "./TabUiTypes";
+
+export { TabStrip } from "./TabStrip";
