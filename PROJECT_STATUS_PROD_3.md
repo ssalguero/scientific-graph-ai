@@ -3402,3 +3402,85 @@ READY FOR D60.1 - Series Identity
 ---
 
 *## D60.0 APPEND-ONLY 2026-07-21 - D60.0 COMPLETE - Series Architecture FROZEN - API Freeze APPROVED - Governance FROZEN - Hard Rules FROZEN - Ready D60.1 Series Identity.*
+
+---
+
+## D60.5
+
+**Microfase:** D60.5 - Series Alignment Foundation - Validation - Release - CLOSE  
+**Fecha:** 2026-07-21  
+**Estado:** **D60 CLOSED** - **Series Alignment Foundation = RELEASED** - **CA-D60 = PASS** - **NEXT = D61**  
+**Modo:** Certification + validators + release doc + append-only este bloque
+
+### Resumen
+
+Se libera y cierra oficialmente **D60 - Series Alignment Foundation**. Subpaquete `src/components/windows/series/`: Identity, Registry, Selection, WindowSeriesBridge. Hard Rules: sin Series en WindowDefinition/WindowState; barrel unico `series/index.ts`. Governance: No React/JSX/hooks/Context/DOM/CSS; sin dominio. WindowAPI D55 / Floating / Drag / Resize / Snap intactos. Zero UX Change. Umbrella `validate:d60-gate` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Documento | [`docs/D60.5-release.md`](docs/D60.5-release.md) |
+| Serie | **D60 CLOSED** |
+| Producto | **Series Alignment Foundation RELEASED** |
+| CA-D60 | **PASS** |
+| Status | **COMPLETE** |
+| `validate:d55-gate` (compat) | **PASS** |
+| `validate:d56-gate` (compat) | **PASS** |
+| `validate:d57-gate` (compat) | **PASS** |
+| `validate:d58-gate` (compat) | **PASS** |
+| `validate:d59-gate` (compat) | **PASS** |
+| `validate:d60-series-api` | **PASS** |
+| `validate:d60-governance` | **PASS** |
+| `validate:d60-gate` | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61** |
+
+### Componentes certificados
+
+- SeriesId / SeriesTypes / SeriesMetadata
+- SeriesRegistry / SeriesRegistryTypes
+- SeriesSelectionState / SeriesSelectionTypes / SeriesSelectionBridge
+- WindowSeriesBridge
+- validate-d60-* + umbrella gate
+
+### Certification
+
+- validate:d55-gate PASS
+- validate:d56-gate PASS
+- validate:d57-gate PASS
+- validate:d58-gate PASS
+- validate:d59-gate PASS
+- validate:d60-series-api PASS
+- validate:d60-governance PASS
+- validate:d60-gate PASS
+- tsc --noEmit PASS
+- next build PASS
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release doc creado | **PASS** |
+| Validators D60 creados | **PASS** |
+| STATUS append-only | **PASS** |
+| Series Alignment Foundation = RELEASED | **PASS** |
+| D60 = CLOSED | **PASS** |
+| CA-D60 = PASS | **PASS** |
+| Compatibilidad D55-D59 | **PASS** |
+| Ready for D61 | **PASS** |
+
+### Resolucion
+
+```text
+D60.5 = COMPLETE
+Series Alignment Foundation = RELEASED
+D60 = CLOSED
+CA-D60 = PASS
+PROD-3 continua sin deuda tecnica.
+NEXT = D61
+READY FOR D61
+```
+
+---
+
+*## D60.5 APPEND-ONLY 2026-07-21 - D60.5 COMPLETE - CA-D60 PASS - D60 CLOSED - Series Alignment Foundation RELEASED - Next D61.*
