@@ -3749,3 +3749,53 @@ READY FOR D61.5 — Registry
 ---
 
 *## D61.4 APPEND-ONLY 2026-07-22 - D61.4 COMPLETE - TabRegistryStore IMPLEMENTED - Next D61.5.*
+
+## D61.5
+
+**Microfase:** D61.5 - Window Tabs Foundation - Tab Registry  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.5 = COMPLETE** - **TabRegistry = IMPLEMENTED** - **READY FOR D61.6**  
+**Modo:** Fachada publica Registry - delega en Store - cero Selection/Bridges/Window
+
+### Resumen
+
+Se implementa la fachada publica del TabRegistry en `src/components/windows/tabs/TabRegistry.ts`: `createTabRegistry()` con API Freeze `register/unregister/get/has/list/clear`. Delega almacenamiento en `TabRegistryStore`. Duplicate register = no-op. state inicial = inactive. get/list = clone-on-read. list() = insertion order. Sin React/JSX/TSX/hooks/Context/CSS/eventos/Selection. Tipos y Store previos intactos. `tsc --noEmit` PASS. `next build` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Archivo | `src/components/windows/tabs/TabRegistry.ts` |
+| API | `createTabRegistry` / `TabRegistry` |
+| Status | **COMPLETE** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61.6 — Selection Types** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| TabRegistry facade | **PASS** |
+| API Freeze (6 metodos) | **PASS** |
+| Delega en TabRegistryStore | **PASS** |
+| list() insertion order | **PASS** |
+| Sin Selection/Bridges | **PASS** |
+| Archivos previos no modificados | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| Ready for D61.6 | **PASS** |
+
+### Resolucion
+
+```text
+D61.5 = COMPLETE
+TabRegistry = IMPLEMENTED
+API Freeze = RESPECTED
+tsc PASS
+build PASS
+READY FOR D61.6 — Selection Types
+```
+
+---
+
+*## D61.5 APPEND-ONLY 2026-07-22 - D61.5 COMPLETE - TabRegistry IMPLEMENTED - Next D61.6.*
