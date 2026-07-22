@@ -3989,3 +3989,49 @@ READY FOR D61.10 — Validators
 ---
 
 *## D61.9 APPEND-ONLY 2026-07-22 - D61.9 COMPLETE - Barrel IMPLEMENTED - Next D61.10.*
+
+## D61.10
+
+**Microfase:** D61.10 - Window Tabs Foundation - Validators  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.10 = COMPLETE** - **Validators = IMPLEMENTED** - **READY FOR D61.11**  
+**Modo:** Validators only - cero cambios src/tabs produccion
+
+### Resumen
+
+Se implementan los validadores de gobernanza D61: `validate-d61-tabs-api`, `validate-d61-governance`, `validate-d61-gate` (+ scripts npm). Verifican API Freeze, barrel unico, no leaks, no deep imports, No React/JSX/TSX/hooks/Context/CSS, No WindowDefinition/WindowState, tsc y build. `validate:d61-gate` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Scripts | `scripts/validate-d61-*.ts` |
+| npm | `validate:d61-tabs-api` / `validate:d61-governance` / `validate:d61-gate` |
+| Status | **COMPLETE** |
+| `validate:d61-tabs-api` | **PASS** |
+| `validate:d61-governance` | **PASS** |
+| `validate:d61-gate` | **PASS** |
+| Next | **D61.11 — Certification** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| validate-d61-tabs-api | **PASS** |
+| validate-d61-governance | **PASS** |
+| validate-d61-gate | **PASS** |
+| package.json scripts | **PASS** |
+| Sin modificar src/tabs produccion | **PASS** |
+| Ready for D61.11 | **PASS** |
+
+### Resolucion
+
+```text
+D61.10 = COMPLETE
+Validators = IMPLEMENTED
+validate:d61-gate PASS
+READY FOR D61.11 — Certification
+```
+
+---
+
+*## D61.10 APPEND-ONLY 2026-07-22 - D61.10 COMPLETE - Validators IMPLEMENTED - Next D61.11.*

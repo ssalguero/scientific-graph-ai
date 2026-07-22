@@ -84,6 +84,9 @@
     "validate:d60-series-api": "npx tsx scripts/validate-d60-series-api.ts",
     "validate:d60-governance": "npx tsx scripts/validate-d60-governance.ts",
     "validate:d60-gate": "npx tsx scripts/validate-d60-gate.ts",
+    "validate:d61-tabs-api": "npx tsx scripts/validate-d61-tabs-api.ts",
+    "validate:d61-governance": "npx tsx scripts/validate-d61-governance.ts",
+    "validate:d61-gate": "npx tsx scripts/validate-d61-gate.ts",
     "validate:prod2e-d33-axes-gate": "npx tsx scripts/validate-prod2e-d33-axes-gate.ts",
 
     "validate:prod2e-d34-interaction-gate": "npx tsx scripts/validate-prod2e-d34-interaction-gate.ts && npx tsx scripts/validate-prod2e-d33-axes-gate.ts && npx tsc --noEmit && npm run validate:graph-interaction-unit && npm run validate:graph-axes-unit && npm run validate:chart-viewport && npm run validate:chart-viewport-y && npx tsx scripts/validate-prod2e-d29-viewport-gate.ts && npx tsx scripts/validate-prod2e-d30-publication-presets-gate.ts && npx tsx scripts/validate-prod2e-d31-curves-gate.ts && npx tsx scripts/validate-prod2e-d32-series-gate.ts && npx tsx scripts/validate-prod2c-c8-regression-gate.ts",
