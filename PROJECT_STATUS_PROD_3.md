@@ -5024,3 +5024,51 @@ READY FOR D63.3 - Content Slots
 ---
 
 *## D63.2 APPEND-ONLY 2026-07-22 - D63.2 COMPLETE - Content Registry RELEASED - READY FOR D63.3.*
+
+## D63.3
+
+**Microfase:** D63.3 - Lifecycle + Tab <-> Series Wiring - Content Slots  
+**Fecha:** 2026-07-22  
+**Estado:** **D63.3 = COMPLETE** - **Content Slots = RELEASED** - **Typed slot contracts = ESTABLISHED** - **READY FOR D63.4**  
+**Modo:** Types only - cero runtime / storage / Bridge / Host / TabSeriesBridge / barrel / validators / producto
+
+### Resumen
+
+Se congelan los contratos tipados de bindings de contenido: `ContentSlot` (`{ contentId }`) y `ContentSlots` (`ReadonlyMap<string, ContentSlot>`). Catalogo tipado caller-owned. Slots ? Registry ? Bridge. Sin runtime, sin almacenamiento, sin resolve. Sin TabId/SeriesId/TabRegistry/SeriesRegistry. Sin ContentBridge / ContentHost / TabSeriesBridge / index.ts. Sin React/workspace/ciencia. Freezes D55-D63.2 intactos. Zero Product Change.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
+| Archivo | `src/components/windows/content/ContentSlots.ts` |
+| API | `ContentSlot` / `ContentSlots` |
+| Status | **COMPLETE** |
+| Runtime | **NONE** |
+| Next | **D63.4 - TabSeriesBridge** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| ContentSlot / ContentSlots tipados | **PASS** |
+| Solo tipos (sin runtime / storage) | **PASS** |
+| Slots ? Registry ? Bridge | **PASS** |
+| Sin TabRegistry / SeriesRegistry deps | **PASS** |
+| Sin Bridge / Host / TabSeriesBridge / barrel | **PASS** |
+| Sin modificar ContentRegistry / ContentTypes | **PASS** |
+| Sin React / workspace / ciencia / producto | **PASS** |
+| API Freeze preserved | **PASS** |
+| Ready for D63.4 | **PASS** |
+
+### Resolucion
+
+```text
+D63.3 = COMPLETE
+Content Slots = RELEASED
+Typed slot contracts established
+No product changes
+READY FOR D63.4 - TabSeriesBridge
+```
+
+---
+
+*## D63.3 APPEND-ONLY 2026-07-22 - D63.3 COMPLETE - Content Slots RELEASED - READY FOR D63.4.*
