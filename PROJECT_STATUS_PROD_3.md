@@ -3799,3 +3799,50 @@ READY FOR D61.6 — Selection Types
 ---
 
 *## D61.5 APPEND-ONLY 2026-07-22 - D61.5 COMPLETE - TabRegistry IMPLEMENTED - Next D61.6.*
+
+## D61.6
+
+**Microfase:** D61.6 - Window Tabs Foundation - Selection Types  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.6 = COMPLETE** - **TabSelectionTypes = IMPLEMENTED** - **READY FOR D61.7**  
+**Modo:** Tipos internos Selection only - cero Store/Bridges/logica
+
+### Resumen
+
+Se implementan exclusivamente los contratos tipados de Selection en `src/components/windows/tabs/TabSelectionTypes.ts`: `ActiveTab` y `TabSelectionStore` (`get` / `setActive` / `clear`). Unica responsabilidad: `activeTab`. Sin politicas, Window, Series, funciones, clases, React/JSX/TSX/hooks/Context/CSS. Archivos Tabs previos intactos. `tsc --noEmit` PASS. `next build` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Archivo | `src/components/windows/tabs/TabSelectionTypes.ts` |
+| API | `ActiveTab` / `TabSelectionStore` |
+| Status | **COMPLETE** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61.7 — Selection Store** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| TabSelectionTypes | **PASS** |
+| Solo activeTab (sin politicas) | **PASS** |
+| Solo tipos (sin Store/Bridges) | **PASS** |
+| Archivos previos no modificados | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| Ready for D61.7 | **PASS** |
+
+### Resolucion
+
+```text
+D61.6 = COMPLETE
+TabSelectionTypes = IMPLEMENTED
+tsc PASS
+build PASS
+READY FOR D61.7 — Selection Store
+```
+
+---
+
+*## D61.6 APPEND-ONLY 2026-07-22 - D61.6 COMPLETE - TabSelectionTypes IMPLEMENTED - Next D61.7.*
