@@ -5528,3 +5528,54 @@ NEXT = D64
 ---
 
 *## D63.12 APPEND-ONLY 2026-07-22 - D63.12 COMPLETE - CA-D63 PASS - D63 CLOSED - Content Foundation CERTIFIED - Next D64.*
+
+## D64.0
+
+**Microfase:** D64.0 - Production Stabilization Foundation - Production Baseline  
+**Fecha:** 2026-07-22  
+**Estado:** **D64.0 = COMPLETE** - **Architecture Freeze D45-D63 = DECLARED** - **Foundation Manifest = FROZEN** - **D64+ Product = RECLASSIFIED to D65+** - **READY FOR D64.1**  
+**Modo:** Documental create-only - cero src / scripts / package.json / barrels / APIs / page.tsx
+
+### Resumen
+
+Se inicia oficialmente **D64 - Production Stabilization Foundation**. Se declara Architecture Freeze de certificacion sobre D45-D63. Se crean Production Baseline y Foundation Manifest (tabla Domain / Status / Validator). Capacidades productivas historicamente etiquetadas "D64+" se reclasifican a **D65+**. D64 queda reservado a estabilizacion y certificacion unicamente. Sin validators en esta microfase. Manifest sera consumido por `validate-foundation-coverage.ts` en D64.6.
+
+| Campo | Valor |
+|-------|--------|
+| Baseline | [`docs/D64.0-production-baseline.md`](docs/D64.0-production-baseline.md) |
+| Manifest | [`docs/D64.0-foundation-manifest.md`](docs/D64.0-foundation-manifest.md) |
+| Serie | **D64 OPEN** |
+| Architecture Freeze D45-D63 | **DECLARED** |
+| Foundation Manifest | **FROZEN** |
+| D64+ Product | **? D65+** |
+| src / scripts / package.json | **UNCHANGED** |
+| Status | **COMPLETE** |
+| Next | **D64.1 - Architecture Audit** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Production Baseline creado | **PASS** |
+| Foundation Manifest creado | **PASS** |
+| Architecture Freeze declarado | **PASS** |
+| D64+ reclasificado a D65+ | **PASS** |
+| Manifest registrado para D64.6 coverage | **PASS** |
+| Sin cambios funcionales / arquitectonicos en codigo | **PASS** |
+| NEXT = D64.1 | **PASS** |
+
+### Resolucion
+
+```text
+D64.0 = COMPLETE
+Production Baseline = CREATED
+Foundation Manifest = FROZEN
+Architecture Freeze D45-D63 = DECLARED
+D64+ Product = RECLASSIFIED ? D65+
+NO SRC / SCRIPTS / PACKAGE.JSON CHANGES
+READY FOR D64.1 - Architecture Audit
+```
+
+---
+
+*## D64.0 APPEND-ONLY 2026-07-22 - D64.0 COMPLETE - Baseline + Manifest FROZEN - Architecture Freeze DECLARED - D64+ ? D65+ - Next D64.1.*
