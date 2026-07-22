@@ -3943,3 +3943,49 @@ READY FOR D61.9 — Barrel
 ---
 
 *## D61.8 APPEND-ONLY 2026-07-22 - D61.8 COMPLETE - Bridges IMPLEMENTED - Next D61.9.*
+
+## D61.9
+
+**Microfase:** D61.9 - Window Tabs Foundation - Barrel  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.9 = COMPLETE** - **Barrel = IMPLEMENTED** - **READY FOR D61.10**  
+**Modo:** Barrel unico tabs/index.ts - solo reexports - cero logica
+
+### Resumen
+
+Se crea el barrel publico del dominio Tabs en `src/components/windows/tabs/index.ts`. Reexporta API Freeze: TabId, TabTypes, TabRegistry*, TabSelection*, Bridges. Sin logica, React/JSX/TSX/hooks/Context/CSS. Sin modificar implementaciones existentes ni `windows/index.ts`. `tsc --noEmit` PASS. `next build` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Archivo | `src/components/windows/tabs/index.ts` |
+| Status | **COMPLETE** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61.10 — Validators** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Barrel tabs/index.ts | **PASS** |
+| Solo reexports | **PASS** |
+| Sin modificar otros archivos tabs | **PASS** |
+| Sin leak a windows/index.ts | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| Ready for D61.10 | **PASS** |
+
+### Resolucion
+
+```text
+D61.9 = COMPLETE
+Barrel = IMPLEMENTED
+tsc PASS
+build PASS
+READY FOR D61.10 — Validators
+```
+
+---
+
+*## D61.9 APPEND-ONLY 2026-07-22 - D61.9 COMPLETE - Barrel IMPLEMENTED - Next D61.10.*
