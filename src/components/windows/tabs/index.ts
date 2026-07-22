@@ -1,12 +1,12 @@
 /**
- * D61.1–D61.8 — Window Tabs Foundation · internal barrel.
- * D62.2 — Selection Policy types re-exports.
- * D62.3 — Selection Policy engine re-export.
- * D62.4 — Document Switch types re-exports.
- * D62.5 — Document Switch engine re-export.
+ * D61–D62 — Window Tabs Foundation · public barrel (LOCKED D62.9).
  * Authority: docs/D61.0-tabs-discovery.md · docs/D62.0-tabs-ui-discovery.md.
- * Hard Rule: tabs barrel only. Not re-exported from windows/index.ts.
+ * Hard Rules: HR-tabs-barrel-only · HR-no-windows-barrel-leak.
+ * Sole public export path for tabs/**. Not re-exported from windows/index.ts.
+ * Deep imports into tabs/Tab*.ts from outside tabs/ are prohibited.
  */
+
+/* —— D61 · Identity / Types / Registry / Selection / Bridges —— */
 
 export type { TabId } from "./TabId";
 export { createTabId, isTabId } from "./TabId";
@@ -32,12 +32,19 @@ export { createTabSelectionStore } from "./TabSelectionStore";
 export type { TabSelectionBridge } from "./TabSelectionBridge";
 export { createTabSelectionBridge } from "./TabSelectionBridge";
 
+export type { WindowId, WindowTabsBridge } from "./WindowTabsBridge";
+export { createWindowTabsBridge } from "./WindowTabsBridge";
+
+/* —— D62 · Selection Policy —— */
+
 export type {
   TabSelectionPolicy,
   TabSelectionPolicyAfterUnregisterArgs,
   TabSelectionPolicyEnsureActiveArgs,
 } from "./TabSelectionPolicyTypes";
 export { createTabSelectionPolicy } from "./TabSelectionPolicy";
+
+/* —— D62 · Document Switch —— */
 
 export type {
   OpaqueContentHandle,
@@ -48,6 +55,3 @@ export type {
   TabDocumentSwitchResolveResult,
 } from "./TabDocumentSwitchTypes";
 export { createTabDocumentSwitch } from "./TabDocumentSwitch";
-
-export type { WindowId, WindowTabsBridge } from "./WindowTabsBridge";
-export { createWindowTabsBridge } from "./WindowTabsBridge";

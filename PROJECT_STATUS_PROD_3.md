@@ -4615,3 +4615,47 @@ READY FOR D62.9 — Barrels
 ---
 
 *## D62.8 APPEND-ONLY 2026-07-22 - D62.8 COMPLETE - TabBar + TabDocumentHost IMPLEMENTED - READY FOR D62.9.*
+
+## D62.9
+
+**Microfase:** D62.9 - Tabs UI Foundation - Public Barrels  
+**Fecha:** 2026-07-22  
+**Estado:** **D62.9 = COMPLETE** - **Barrels = LOCKED** - **READY FOR D62.10**  
+**Modo:** Solo barrels tabs/index.ts + tab-ui/index.ts - cero logica / componentes / APIs nuevas
+
+### Resumen
+
+Se cierra la superficie publica D62: `tabs/index.ts` (D61 + Policy + Document Switch) y `tab-ui/index.ts` (Types + TabStrip + TabBar + TabDocumentHost). Sin simbolos nuevos. Sin leaks a `windows/index.ts`. Sin deep-import paths publicos. Compatibilidad D61 intacta. Sin validators ni product wiring.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) |
+| Barrels | `tabs/index.ts` · `tab-ui/index.ts` |
+| `windows/index.ts` leaks Tabs*/TabUi* | **NONE** |
+| Status | **COMPLETE** |
+| Next | **D62.10 — Validators** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| tabs barrel D61 + D62 Policy/Switch | **PASS** |
+| tab-ui barrel Types + Strip/Bar/Host | **PASS** |
+| Sin leaks windows/index.ts | **PASS** |
+| Sin APIs/comportamiento nuevos | **PASS** |
+| Compatibilidad D61/D62.8 | **PASS** |
+| Ready for D62.10 | **PASS** |
+
+### Resolucion
+
+```text
+D62.9 = COMPLETE
+Public Barrels = LOCKED
+HR-tabs-barrel-only = CONFIRMED
+HR-no-windows-barrel-leak = CONFIRMED
+READY FOR D62.10 — Validators
+```
+
+---
+
+*## D62.9 APPEND-ONLY 2026-07-22 - D62.9 COMPLETE - Public Barrels LOCKED - READY FOR D62.10.*
