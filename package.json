@@ -95,6 +95,7 @@
     "validate:d63-no-workspace-coupling": "npx tsx scripts/validate-d63-no-workspace-coupling.ts",
     "validate:d63-gate": "npx tsx scripts/validate-d63-gate.ts",
     "validate:api-freeze": "npx tsx scripts/validate-api-freeze.ts",
+    "validate:registry-integrity": "npx tsx scripts/validate-registry-integrity.ts",
     "validate:prod2e-d33-axes-gate": "npx tsx scripts/validate-prod2e-d33-axes-gate.ts",
 
     "validate:prod2e-d34-interaction-gate": "npx tsx scripts/validate-prod2e-d34-interaction-gate.ts && npx tsx scripts/validate-prod2e-d33-axes-gate.ts && npx tsc --noEmit && npm run validate:graph-interaction-unit && npm run validate:graph-axes-unit && npm run validate:chart-viewport && npm run validate:chart-viewport-y && npx tsx scripts/validate-prod2e-d29-viewport-gate.ts && npx tsx scripts/validate-prod2e-d30-publication-presets-gate.ts && npx tsx scripts/validate-prod2e-d31-curves-gate.ts && npx tsx scripts/validate-prod2e-d32-series-gate.ts && npx tsx scripts/validate-prod2c-c8-regression-gate.ts",
