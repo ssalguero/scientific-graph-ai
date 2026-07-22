@@ -1,7 +1,7 @@
 /**
- * D65.1–D65.4 — Session Foundation · public barrel.
+ * D65.1–D65.5 — Session Foundation · public barrel.
  * Authority: D65.0 API Freeze.
- * D65.4 adds createSessionRegistry only (SessionRegistry type not barrel-exported).
+ * D65.5 adds SessionContext shell + useSessionContext (no Provider).
  */
 
 export type {
@@ -11,3 +11,5 @@ export type {
 } from "./SessionTypes";
 
 export { createSessionRegistry } from "./SessionRegistry";
+
+export { SessionContext, useSessionContext } from "./SessionContext";
