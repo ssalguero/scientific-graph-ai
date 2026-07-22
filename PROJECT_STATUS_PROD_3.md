@@ -4035,3 +4035,74 @@ READY FOR D61.11 — Certification
 ---
 
 *## D61.10 APPEND-ONLY 2026-07-22 - D61.10 COMPLETE - Validators IMPLEMENTED - Next D61.11.*
+
+## D61.11
+
+**Microfase:** D61.11 - Window Tabs Foundation - Certification  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.11 = COMPLETE** - **CA-D61 = PASS** - **Serie certificada** - **READY FOR D61.12**  
+**Modo:** Certification only - cero nuevas funcionalidades - cero release doc
+
+### Resumen
+
+Se certifica oficialmente **D61 - Window Tabs Foundation**. Infraestructura Tabs bajo `src/components/windows/tabs/` (Identity, Types, Registry, Selection, Bridges, Barrel). Architecture/API Freeze respetados. Barrel unico. Zero UX. Todos los gates PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Serie | **D61 certificada (pre-release)** |
+| CA-D61 | **PASS 9/9** |
+| Status | **COMPLETE** |
+| `validate:d61-tabs-api` | **PASS** |
+| `validate:d61-governance` | **PASS** |
+| `validate:d61-gate` | **PASS** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61.12 — Release** |
+
+### Matriz CA-D61
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D61-01 | TabId | **PASS** |
+| CA-D61-02 | TabTypes | **PASS** |
+| CA-D61-03 | Registry | **PASS** |
+| CA-D61-04 | Selection | **PASS** |
+| CA-D61-05 | Bridges | **PASS** |
+| CA-D61-06 | Barrel | **PASS** |
+| CA-D61-07 | Validators | **PASS** |
+| CA-D61-08 | Governance | **PASS** |
+| CA-D61-09 | TypeScript + Build | **PASS** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| API Freeze respetada | **PASS** |
+| Architecture Freeze respetada | **PASS** |
+| Barrel unico | **PASS** |
+| Validators PASS | **PASS** |
+| TypeScript PASS | **PASS** |
+| Build PASS | **PASS** |
+| Sin deps no autorizadas | **PASS** |
+| Sin cambios fuera de alcance D61 | **PASS** |
+| CA-D61 = PASS | **PASS** |
+| Ready for D61.12 | **PASS** |
+
+### Resolucion
+
+```text
+D61.11 = COMPLETE
+CA-D61 = PASS 9/9
+Serie D61 certificada
+validate:d61-tabs-api PASS
+validate:d61-governance PASS
+validate:d61-gate PASS
+tsc PASS
+build PASS
+READY FOR D61.12 — Release
+```
+
+---
+
+*## D61.11 APPEND-ONLY 2026-07-22 - D61.11 COMPLETE - CA-D61 PASS - Next D61.12.*
