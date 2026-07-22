@@ -5215,3 +5215,49 @@ READY FOR D63.7 - Content Barrel
 ---
 
 *## D63.6 APPEND-ONLY 2026-07-22 - D63.6 COMPLETE - ContentHost RELEASED - READY FOR D63.7.*
+
+## D63.7
+
+**Microfase:** D63.7 - Lifecycle + Tab <-> Series Wiring - Content Barrel  
+**Fecha:** 2026-07-22  
+**Estado:** **D63.7 = COMPLETE** - **Content Barrel = RELEASED** - **Public exports = ESTABLISHED** - **No windows/index.ts leak** - **READY FOR D63.8**  
+**Modo:** Barrel only - cero integracion / validators / producto / leak a windows/index.ts
+
+### Resumen
+
+Se crea el unico barrel publico `src/components/windows/content/index.ts` reexportando la superficie D63.1-D63.6: ContentDefinition / ContentHostProps / ContentRegistry / createContentRegistry / ContentSlot / ContentSlots / TabSeriesBridge / createTabSeriesBridge / ContentBridge / createContentBridge / ContentHost. `HR-content-barrel-only` · `HR-no-windows-barrel-leak`: sin modificar `windows/index.ts`. Sin integraciones. Sin deep-import policy rotas. Sin cambios funcionales/visuales. Freezes D55-D63.6 intactos. Zero Product Change.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
+| Archivo | `src/components/windows/content/index.ts` |
+| Barrel | **PUBLIC · content only** |
+| windows/index.ts | **NO LEAK** |
+| Status | **COMPLETE** |
+| Next | **D63.8 - Minimal Integration** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| content/index.ts creado | **PASS** |
+| Exports D63.1-D63.6 publicos | **PASS** |
+| Sin simbolos privados | **PASS** |
+| Sin modificar windows/index.ts | **PASS** |
+| Sin integracion / validators / producto | **PASS** |
+| Ready for D63.8 | **PASS** |
+
+### Resolucion
+
+```text
+D63.7 = COMPLETE
+Content Barrel = RELEASED
+Public exports established
+No windows/index.ts leak
+No product changes
+READY FOR D63.8 - Minimal Integration
+```
+
+---
+
+*## D63.7 APPEND-ONLY 2026-07-22 - D63.7 COMPLETE - Content Barrel RELEASED - READY FOR D63.8.*
