@@ -3702,3 +3702,50 @@ READY FOR D61.4 — Registry Store
 ---
 
 *## D61.3 APPEND-ONLY 2026-07-22 - D61.3 COMPLETE - TabRegistryTypes IMPLEMENTED - Next D61.4.*
+
+## D61.4
+
+**Microfase:** D61.4 - Window Tabs Foundation - Registry Store  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.4 = COMPLETE** - **TabRegistryStore = IMPLEMENTED** - **READY FOR D61.5**  
+**Modo:** Almacenamiento interno SSOT only - cero logica Registry/Selection/Bridges
+
+### Resumen
+
+Se implementa exclusivamente el almacenamiento interno del catalogo Tabs en `src/components/windows/tabs/TabRegistryStore.ts`: `TabRegistryStore` + `createTabRegistryStore()` sobre `TabRegistryCatalog` (Map, insertion order). Acceso raw get/set/delete/has/clear/values/size. Sin reglas de negocio, validaciones, Selection, sync ni eventos. Sin React/JSX/TSX/hooks/Context/CSS. TabId/TabTypes/TabRegistryTypes intactos. `tsc --noEmit` PASS. `next build` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Archivo | `src/components/windows/tabs/TabRegistryStore.ts` |
+| API | `TabRegistryStore` / `createTabRegistryStore` |
+| Status | **COMPLETE** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61.5 — Registry** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| TabRegistryStore | **PASS** |
+| createTabRegistryStore | **PASS** |
+| Solo storage (sin logica Registry) | **PASS** |
+| Tipos previos no modificados | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| Ready for D61.5 | **PASS** |
+
+### Resolucion
+
+```text
+D61.4 = COMPLETE
+TabRegistryStore = IMPLEMENTED
+tsc PASS
+build PASS
+READY FOR D61.5 — Registry
+```
+
+---
+
+*## D61.4 APPEND-ONLY 2026-07-22 - D61.4 COMPLETE - TabRegistryStore IMPLEMENTED - Next D61.5.*
