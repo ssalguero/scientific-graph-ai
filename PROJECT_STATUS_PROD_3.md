@@ -3603,3 +3603,55 @@ READY FOR D61.2 — Tab Types
 ---
 
 *## D61.1 APPEND-ONLY 2026-07-22 - D61.1 COMPLETE - TabId IMPLEMENTED - Next D61.2.*
+
+## D61.2
+
+**Microfase:** D61.2 - Window Tabs Foundation - Tab Types  
+**Fecha:** 2026-07-22  
+**Estado:** **D61.2 = COMPLETE** - **TabTypes = IMPLEMENTED** - **READY FOR D61.3**  
+**Modo:** Tipos publicos only - cero logica/storage/registry/bridges
+
+### Resumen
+
+Se implementan exclusivamente los tipos publicos del dominio Tabs en `src/components/windows/tabs/TabTypes.ts`: `TabDefinition` (metadata estable), `TabState` (mutable, no embebido), `TabReference` ({ tabId }), `TabEntry` (companion Definition+State). Sin clases, funciones, estado, React/JSX/TSX/hooks/Context/CSS. Sin modificar Window*/Series*/Floating/Drag/Resize/Snap. `tsc --noEmit` PASS. `next build` PASS.
+
+| Campo | Valor |
+|-------|--------|
+| Authority | [`docs/D61.0-tabs-discovery.md`](docs/D61.0-tabs-discovery.md) |
+| Archivo | `src/components/windows/tabs/TabTypes.ts` |
+| API | `TabDefinition` / `TabState` / `TabReference` / `TabEntry` |
+| Status | **COMPLETE** |
+| `tsc --noEmit` | **PASS** |
+| `next build` | **PASS** |
+| Next | **D61.3 — Registry Types** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| TabDefinition | **PASS** |
+| TabState | **PASS** |
+| TabReference | **PASS** |
+| TabEntry | **PASS** |
+| Solo tipos (sin logica) | **PASS** |
+| Sin imports prohibidos | **PASS** |
+| tsc --noEmit | **PASS** |
+| next build | **PASS** |
+| Ready for D61.3 | **PASS** |
+
+### Resolucion
+
+```text
+D61.2 = COMPLETE
+TabDefinition = IMPLEMENTED
+TabState = IMPLEMENTED
+TabReference = IMPLEMENTED
+TabEntry = IMPLEMENTED
+tsc PASS
+build PASS
+READY FOR D61.3 — Registry Types
+```
+
+---
+
+*## D61.2 APPEND-ONLY 2026-07-22 - D61.2 COMPLETE - TabTypes IMPLEMENTED - Next D61.3.*
