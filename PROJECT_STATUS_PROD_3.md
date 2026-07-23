@@ -6155,3 +6155,72 @@ NEXT = D65
 ---
 
 *## D64.12 APPEND-ONLY 2026-07-22 - D64.12 COMPLETE - D64 CLOSED - Next D65.*
+
+## D65.10
+
+**Microfase:** D65.10 — Window Sessions Foundation — Governance  
+**Fecha:** 2026-07-22  
+**Estado:** **D65.10 = COMPLETE** — **Governance = COMPLETE** — **Session Foundation coverage = CONFIRMED** — **Validators = INTEGRATED** — **READY FOR D65.11**  
+**Modo:** Append-only documentation — **cero cambios** en `src/**` · scripts · validators · barrels · APIs · `page.tsx`
+
+### Resumen
+
+Se finaliza la gobernanza documental de **D65 — Window Sessions Foundation**. Cobertura Session confirmada (Types · Definition · State · Registry · Context · Provider · Bridge · integración mínima en `page.tsx`). Validators D65.9 integrados (`validate:d65-session-api` · `validate:d65-governance` · `validate:session-serializable` · `validate:d65-gate`). API Freeze Session preservado. Barrel `@/components/session` = única entrada pública. Sin deep imports desde page. Sin cambios WindowAPI. Sin impacto en módulos científicos. Sin deuda técnica introducida. Persistencia / Restore / Autosave / Snapshots permanecen diferidos (D66–D69).
+
+| Campo | Valor |
+|-------|--------|
+| Package | `src/components/session/` |
+| Manifest | [`docs/D64.0-foundation-manifest.md`](docs/D64.0-foundation-manifest.md) · Appendix D65.10 |
+| Gate | `validate:d65-gate` |
+| Product Integration (D65.8) | **COMPLETE** (silent Provider + Bridge) |
+| Persistence | **DEFERRED (D66)** |
+| Restore | **DEFERRED (D67)** |
+| Autosave | **DEFERRED (D68)** |
+| Snapshots | **DEFERRED (D69)** |
+| API Freeze | **UNCHANGED / PRESERVED** |
+| Deuda técnica (alcance D65.10) | **Ninguna** |
+| Next | **D65.11 — Certification** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Governance completed | **PASS** |
+| Session Foundation coverage confirmed | **PASS** |
+| Validators integrated (`validate:d65-gate`) | **PASS** |
+| Foundation Manifest appendix Session | **PASS** |
+| API Freeze unchanged | **PASS** |
+| Barrel sole public entry | **PASS** |
+| No deep imports (page ? session) | **PASS** |
+| No Window API changes | **PASS** |
+| No scientific module impact | **PASS** |
+| No technical debt introduced | **PASS** |
+| NEXT = D65.11 Certification | **PASS** |
+
+### Gobernanza (verificación)
+
+```text
+API Freeze Session = PRESERVED
+Barrel @/components/session = SOLE PUBLIC ENTRY
+page.tsx = barrel-only (SessionProvider + SessionBridge)
+No deep imports into session/*
+WindowAPI = UNCHANGED
+Scientific modules = UNCHANGED
+Zero visual / behavioral product change beyond silent mount (D65.8)
+```
+
+### Resolucion
+
+```text
+D65.10 = COMPLETE
+Governance = COMPLETE
+Session Foundation coverage = CONFIRMED
+Validators = INTEGRATED
+No technical debt introduced
+API Freeze = PRESERVED
+READY FOR D65.11 — Certification
+```
+
+---
+
+*## D65.10 APPEND-ONLY 2026-07-22 — D65.10 COMPLETE — Governance COMPLETE — Session coverage CONFIRMED — Next D65.11.*
