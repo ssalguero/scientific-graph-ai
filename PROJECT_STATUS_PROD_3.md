@@ -6273,3 +6273,61 @@ READY FOR D65.12 — Release
 ---
 
 *## D65.11 APPEND-ONLY 2026-07-22 — D65.11 COMPLETE — Session Foundation CERTIFIED — CA-D65 PASS — Next D65.12.*
+
+## D65.12
+
+**Microfase:** D65.12 — Window Sessions Foundation — Release + Official Close  
+**Fecha:** 2026-07-22  
+**Estado:** **D65.12 = COMPLETE** — **D65 = CLOSED** — **Session Foundation = RELEASED** — **CA-D65 = PASS** — **NEXT = D66**  
+**Modo:** Release documental append-only — **cero** src / scripts / APIs / validators / page.tsx
+
+### Resumen
+
+Cierre oficial de la serie **D65 — Window Sessions Foundation**. Session Foundation **RELEASED**: Types · Definition · State · Registry · Context · Provider · Bridge · integración silenciosa · validators · governance · certificación. **CA-D65 = PASS**. API Freeze estable. Zero visual regression. Zero technical debt. Release: [`docs/D65.12-release.md`](docs/D65.12-release.md). Certification: [`docs/D65.11-certification.md`](docs/D65.11-certification.md). El workspace queda preparado para **D66 — Session Persistence**.
+
+| Campo | Valor |
+|-------|--------|
+| Release | [`docs/D65.12-release.md`](docs/D65.12-release.md) |
+| D65 | **COMPLETE · CLOSED** |
+| Session Foundation | **RELEASED** |
+| CA-D65 | **PASS** |
+| API Freeze | **STABLE** |
+| Deuda técnica (alcance D65) | **Ninguna** |
+| Next | **D66 — Session Persistence** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release document created | **PASS** |
+| Session Foundation = RELEASED | **PASS** |
+| D65 CLOSED | **PASS** |
+| CA-D65 PASS | **PASS** |
+| Zero technical debt | **PASS** |
+| NEXT = D66 Session Persistence | **PASS** |
+
+### Declaracion final
+
+```text
+Serie D65 oficialmente cerrada.
+Session Foundation = RELEASED
+CA-D65 = PASS
+API Freeze = STABLE
+Zero visual regression = CONFIRMED
+Zero technical debt = CONFIRMED
+D65 = CLOSED
+NEXT = D66 — Session Persistence
+```
+
+### Resolucion
+
+```text
+D65.12 = COMPLETE
+D65 CLOSED
+Session Foundation RELEASED
+NEXT = D66
+```
+
+---
+
+*## D65.12 APPEND-ONLY 2026-07-22 — D65.12 COMPLETE — D65 CLOSED — Session Foundation RELEASED — CA-D65 PASS — Next D66.*
