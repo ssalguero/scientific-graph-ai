@@ -1,5 +1,5 @@
 /**
- * D68.1–D68.4 — Session Autosave Foundation · public barrel.
+ * D68.1–D68.5 — Session Autosave Foundation · public barrel.
  * Authority: D68.0 Architecture Freeze · API Freeze.
  * Sole public entry: `@/components/session/autosave`.
  * Not re-exported from `session/index.ts` (isolation mirror of persistence/restore).
@@ -8,16 +8,13 @@
  *   AUTOSAVE_DEBOUNCE_MS
  *   AutosaveMutationKind · AutosaveMutationEvent
  *   SessionAutosaveController · SessionAutosaveControllerOptions
- *   createSessionAutosaveController
+ *   createSessionAutosaveController (D68.5)
  *   DirtyTracker · DirtyTrackerSnapshot · createDirtyTracker (D68.2)
  *   AutosaveScheduler · AutosaveSchedulerOptions · createAutosaveScheduler (D68.3)
  *   AutosaveFlushPolicy · AutosaveFlushOperation · createAutosaveFlushPolicy (D68.4)
  */
 
-export {
-  AUTOSAVE_DEBOUNCE_MS,
-  createSessionAutosaveController,
-} from "./AutosaveTypes";
+export { AUTOSAVE_DEBOUNCE_MS } from "./AutosaveTypes";
 
 export type {
   AutosaveMutationKind,
@@ -25,6 +22,8 @@ export type {
   SessionAutosaveController,
   SessionAutosaveControllerOptions,
 } from "./AutosaveTypes";
+
+export { createSessionAutosaveController } from "./SessionAutosaveController";
 
 export { createDirtyTracker } from "./DirtyTracker";
 
