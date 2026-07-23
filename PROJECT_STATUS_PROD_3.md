@@ -6511,3 +6511,61 @@ NEXT = D67.11
 ---
 
 *## D67.10 APPEND-ONLY 2026-07-23 — D67.10 COMPLETE — Session Restore Foundation DOCUMENTED — Ready D67.11.*
+
+
+## D67.11
+
+**Microfase:** D67.11 — Session Restore Foundation — Certification  
+**Fecha:** 2026-07-23  
+**Estado:** **D67.11 = COMPLETE** — **CA-D67 = PASS (10/10)** — **Session Restore Foundation = CERTIFIED** — **READY FOR D67.12**  
+**Modo:** Documental append-only — **cero** src / scripts / package.json · create [`docs/D67.11-certification.md`](docs/D67.11-certification.md)
+
+### Resumen
+
+CA-D67 **10/10 PASS**. Session Restore Foundation certified.
+
+Evidencia: `tsc --noEmit` PASS · `validate:d67` 30/30 PASS · `validate:d67-gate` PASS (incluye d65-gate + d66-gate). Certification: [`docs/D67.11-certification.md`](docs/D67.11-certification.md). Prep: [`docs/D67.10-certification.md`](docs/D67.10-certification.md). Listo para **D67.12 — Release**.
+
+| Campo | Valor |
+|-------|--------|
+| Certification | [`docs/D67.11-certification.md`](docs/D67.11-certification.md) |
+| CA-D67 | **PASS (10/10)** |
+| Session Restore Foundation | **CERTIFIED** |
+| validate:d67-gate | **PASS** |
+| Next | **D67.12 — Release** |
+
+### Checklist CA-D67
+
+| ID | Criterio | Resultado |
+|----|----------|-----------|
+| CA-D67-01 | Restore puro | **PASS** |
+| CA-D67-02 | Validator | **PASS** |
+| CA-D67-03 | RestoreReport | **PASS** |
+| CA-D67-04 | Reconstruction (SessionRegistry only) | **PASS** |
+| CA-D67-05 | Registry Integrity | **PASS** |
+| CA-D67-06 | Pipeline Integrity | **PASS** |
+| CA-D67-07 | API Freeze | **PASS** |
+| CA-D67-08 | Barrel Isolation | **PASS** |
+| CA-D67-09 | TypeScript | **PASS** |
+| CA-D67-10 | Validation Gate | **PASS** |
+
+### Declaracion final
+
+```text
+CA-D67 = PASS (10/10)
+Session Restore Foundation = CERTIFIED
+D67.11 = COMPLETE
+READY FOR D67.12 — Release
+```
+
+### Resolucion
+
+```text
+D67.11 = COMPLETE
+CA-D67 10/10 PASS
+NEXT = D67.12
+```
+
+---
+
+*## D67.11 APPEND-ONLY 2026-07-23 — D67.11 COMPLETE — CA-D67 PASS 10/10 — Session Restore Foundation CERTIFIED — Ready D67.12.*
