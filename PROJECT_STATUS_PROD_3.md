@@ -6224,3 +6224,52 @@ READY FOR D65.11 — Certification
 ---
 
 *## D65.10 APPEND-ONLY 2026-07-22 — D65.10 COMPLETE — Governance COMPLETE — Session coverage CONFIRMED — Next D65.11.*
+
+## D65.11
+
+**Microfase:** D65.11 — Window Sessions Foundation — Certification  
+**Fecha:** 2026-07-22  
+**Estado:** **D65.11 = COMPLETE** — **Session Foundation = CERTIFIED** — **CA-D65 = PASS** — **READY FOR D65.12**  
+**Modo:** Evidencia de validadores · create-only certification doc · append-only STATUS · **cero** src / scripts / APIs / page.tsx
+
+### Resumen
+
+Se certifica oficialmente **D65 — Window Sessions Foundation**. Scope Types · Definition · State · Registry · Context · Provider · Bridge certificado. Arquitectura verificada (API Freeze · factory registry · Provider ownership · Bridge unidireccional · serializable · integración silenciosa). Evidencia: `tsc --noEmit` PASS · `build` PASS · `validate:production-boundaries` PASS · `validate:d65-gate` PASS · `validate:api-freeze` PASS. **CA-D65 = PASS (8/8)**. Zero visual regression. Zero technical debt (alcance D65). Acta: [`docs/D65.11-certification.md`](docs/D65.11-certification.md). Ready for D65.12 Release.
+
+| Campo | Valor |
+|-------|--------|
+| Certification | [`docs/D65.11-certification.md`](docs/D65.11-certification.md) |
+| Session Foundation | **CERTIFIED** |
+| CA-D65 | **PASS (8/8)** |
+| validate:d65-gate | **PASS** |
+| validate:api-freeze | **PASS** |
+| tsc / build | **PASS** |
+| Zero visual regression | **DECLARED** |
+| Zero technical debt | **DECLARED** |
+| Next | **D65.12 — Release** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Certification document created | **PASS** |
+| Scope certified | **PASS** |
+| Architecture verification | **PASS** |
+| Validation results recorded | **PASS** |
+| CA-D65 = PASS | **PASS** |
+| Zero visual regression declared | **PASS** |
+| Zero technical debt declared | **PASS** |
+| READY FOR D65.12 Release | **PASS** |
+
+### Resolucion
+
+```text
+D65.11 = COMPLETE
+Session Foundation = CERTIFIED
+CA-D65 = PASS
+READY FOR D65.12 — Release
+```
+
+---
+
+*## D65.11 APPEND-ONLY 2026-07-22 — D65.11 COMPLETE — Session Foundation CERTIFIED — CA-D65 PASS — Next D65.12.*
