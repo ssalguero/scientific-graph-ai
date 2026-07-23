@@ -1,5 +1,5 @@
 /**
- * D67.1–D67.3 — Session Restore Foundation · public barrel.
+ * D67.1–D67.4 — Session Restore Foundation · public barrel.
  * Authority: D67.0 Architecture Freeze · API Freeze.
  * Sole public entry: `@/components/session/restore`.
  * Not re-exported from `session/index.ts` (D65 barrel remains intact).
@@ -27,3 +27,7 @@ export type {
 export type { RestoreValidator } from "./RestoreValidator";
 
 export { createRestoreValidator } from "./RestoreValidator";
+
+export type { RestoreReport } from "./RestoreReport";
+
+export { createRestoreReport } from "./RestoreReport";

@@ -7,12 +7,7 @@
 import type { SessionRegistry } from "../SessionRegistry";
 import type { SessionId } from "../SessionTypes";
 import type { SessionPersistenceRecord } from "../persistence/SessionPersistenceTypes";
-
-/**
- * Temporary type-only placeholder — replaced by RestoreReport.ts in D67.4.
- * Do not add fields here; D67.4 owns the Freeze shape.
- */
-export interface RestoreReport {}
+import type { RestoreReport } from "./RestoreReport";
 
 /** API Freeze — restore outcome classification. */
 export type RestoreStatus = "success" | "partial" | "failed";
