@@ -1,42 +1,42 @@
-# PROD-3 ? Status: Exportaciùn + DATA-3D VGB
+# PROD-3 ? Status: ExportaciÔøΩn + DATA-3D VGB
 
-**Estado ùpica:** **OPEN**  
+**Estado ÔøΩpica:** **OPEN**  
 **Fecha apertura:** 2026-07-09  
-**ùltima microfase cerrada:** **D39 ? DATA-3D Scatter Plot VGB**  
+**ÔøΩltima microfase cerrada:** **D39 ? DATA-3D Scatter Plot VGB**  
 **Plan:** [`PROJECT_PLAN_PROD_3.md`](PROJECT_PLAN_PROD_3.md)  
 **Discovery:** [`PROJECT_DISCOVERY_PROD_3.md`](PROJECT_DISCOVERY_PROD_3.md)
 
 ---
 
-## ùD39 ? DATA-3D Scatter Plot VGB
+## ÔøΩD39 ? DATA-3D Scatter Plot VGB
 
 **Estado:** **CLOSED** (2026-07-09)  
-**Modo:** BUILD ? dominio ù UI ù persistencia ù gates ù acta
+**Modo:** BUILD ? dominio ÔøΩ UI ÔøΩ persistencia ÔøΩ gates ÔøΩ acta
 
-### Mùtricas D39
+### MÔøΩtricas D39
 
 | Campo | Valor |
 |-------|-------|
 | **Tipo mejorado** | `scatter` v1 (upgrade profesional) |
 | **schemaVersion** | **2** (sin bump) |
 | **Golden fixture** | `scripts/fixtures/project-v2-dataset5-with-scatter-pro.sgproj` |
-| **Amend API Freeze** | Decisiùn J ? `groupVariable` activo en scatter |
+| **Amend API Freeze** | DecisiÔøΩn J ? `groupVariable` activo en scatter |
 | **C8 fixtures** | **33/33 PASS** (27 baseline + 6 scatter-pro) |
 
-### Decisiones arquitectùnicas D39
+### Decisiones arquitectÔøΩnicas D39
 
-| ID | Decisiùn |
+| ID | DecisiÔøΩn |
 |----|----------|
-| **A** | Reutilizar `scatterPoints` ? sin nuevo array efùmero |
+| **A** | Reutilizar `scatterPoints` ? sin nuevo array efÔøΩmero |
 | **B** | Paleta determinista por grupo en `ScatterPreview` |
 | **C** | `clampScatterMarkerSize` 2?20 |
 | **E** | `VisualGraphPreviewPoint` sin campos de estilo en dominio |
 | **G** | Scatter VGB ? Scatter Matrix SCI-40 |
-| **H** | `buildVisualGraphSeries` ? serie ùnica flatten (groups solo en preview) |
-| **I** | Cross-type `groupVariable` ? normalizaciùn en `buildGraphSpecification` |
+| **H** | `buildVisualGraphSeries` ? serie ÔøΩnica flatten (groups solo en preview) |
+| **I** | Cross-type `groupVariable` ? normalizaciÔøΩn en `buildGraphSpecification` |
 | **J** | Amend API Freeze PROD-3 aprobado |
 
-### Gates D39 ? Certificaciùn
+### Gates D39 ? CertificaciÔøΩn
 
 | Gate | Resultado | Detalle |
 |------|-----------|---------|
@@ -47,7 +47,7 @@
 | `validate:prod3-d39-scatter-perf` | **PASS** (informativo) | documental |
 | `npx tsc --noEmit` | **PASS** | ? |
 
-### CA-D39 ? Certificaciùn (10/10)
+### CA-D39 ? CertificaciÔøΩn (10/10)
 
 | ID | Criterio | Resultado |
 |----|----------|-----------|
@@ -58,7 +58,7 @@
 | CA-D39-05 | Gates PASS | **PASS** |
 | CA-D39-06 | VGB-R1 PASS | **PASS** |
 | CA-D39-07 | API Freeze PASS (Amend J) | **PASS** |
-| CA-D39-08 | Regresiùn v1+heatmap+bubble PASS | **PASS** |
+| CA-D39-08 | RegresiÔøΩn v1+heatmap+bubble PASS | **PASS** |
 | CA-D39-09 | Performance documentada | **PASS** |
 | CA-D39-10 | TypeScript PASS | **PASS** |
 
@@ -69,16 +69,16 @@
 ```text
 D39 CLOSED ? Ready for EXPORT-1 / siguiente DATA-3D
 Prerrequisitos verificados:
-  ? Amend API Freeze PROD-3 (Decisiùn J)
+  ? Amend API Freeze PROD-3 (DecisiÔøΩn J)
   ? ScatterPreview + buildScatterPointsFromWorksheet
   ? Golden scatter-pro + C8 33/33
-Next BUILD: EXPORT-1 (segùn MASTER_ROADMAP)
-Nota: D28 PCA permanece en PROD-2E segùn plan congelado ? independiente de D39
+Next BUILD: EXPORT-1 (segÔøΩn MASTER_ROADMAP)
+Nota: D28 PCA permanece en PROD-2E segÔøΩn plan congelado ? independiente de D39
 ```
 
 #### Archivos D39 (producto + gates)
 
-| Acciùn | Archivo |
+| AcciÔøΩn | Archivo |
 |--------|---------|
 | **Creado** | `src/components/graph-builder/ScatterPreview.tsx` |
 | **Creado** | `src/lib/visualGraphBuilder/__tests__/scatter.cases.ts` |
@@ -100,7 +100,7 @@ Nota: D28 PCA permanece en PROD-2E segùn plan congelado ? independiente de D39
 
 ---
 
-## Cronologùa PROD-3
+## CronologÔøΩa PROD-3
 
 ```text
 Apertura PROD-3 ?
@@ -112,12 +112,12 @@ EXPORT-1 (TBD)
 
 ---
 
-## ùD38 ? Architecture Freeze PROD-3
+## ÔøΩD38 ? Architecture Freeze PROD-3
 
 **Fecha:** 2026-07-17  
 **Microfase:** D38 ? Architecture Freeze (documental)  
-**Modo:** BUILD DOCUMENTAL ? APPEND-ONLY ù cero cùdigo ù cero BUILD de producto  
-**Estado:** **Architecture Freeze COMPLETE** ù **PROD-3 NOT CLOSED** ù **NO BUILD STARTED**
+**Modo:** BUILD DOCUMENTAL ? APPEND-ONLY ÔøΩ cero cÔøΩdigo ÔøΩ cero BUILD de producto  
+**Estado:** **Architecture Freeze COMPLETE** ÔøΩ **PROD-3 NOT CLOSED** ÔøΩ **NO BUILD STARTED**
 
 ### 1. Resumen ejecutivo
 
@@ -149,22 +149,22 @@ NO BUILD STARTED
 
 ### 4. Checklist D38
 
-- [x] D38.1 Freeze Validation ? CA PASS ù **CONSISTENT**
-- [x] D38.2 Architecture Freeze ? CA PASS ù **OFFICIAL**
-- [x] D38.3 Governance ? CA PASS ù **OFFICIAL**
-- [x] D38.4 Roadmap Final ? CA PASS ù **OFFICIAL**
-- [x] D38.5 Quality Gates ? CA PASS ù **OFFICIAL**
+- [x] D38.1 Freeze Validation ? CA PASS ÔøΩ **CONSISTENT**
+- [x] D38.2 Architecture Freeze ? CA PASS ÔøΩ **OFFICIAL**
+- [x] D38.3 Governance ? CA PASS ÔøΩ **OFFICIAL**
+- [x] D38.4 Roadmap Final ? CA PASS ÔøΩ **OFFICIAL**
+- [x] D38.5 Quality Gates ? CA PASS ÔøΩ **OFFICIAL**
 
-### 5. CA-D38 ? Certificaciùn
+### 5. CA-D38 ? CertificaciÔøΩn
 
 | ID | Criterio | Evidencia | Resultado |
 |----|----------|-----------|-----------|
-| **CA-D38-01** | Validation | D38.1 CONSISTENT ù CA-D38.1 7/7 | **PASS** |
-| **CA-D38-02** | Architecture Freeze | D38.2 OFFICIAL ù CA-D38.2 9/9 | **PASS** |
-| **CA-D38-03** | Governance | D38.3 OFFICIAL ù CA-D38.3 7/7 | **PASS** |
-| **CA-D38-04** | Roadmap | D38.4 OFFICIAL ù CA-D38.4 8/8 | **PASS** |
-| **CA-D38-05** | Quality Gates | D38.5 OFFICIAL ù CA-D38.5 10/10 | **PASS** |
-| **CA-D38-06** | STATUS actualizado | Este ùD38 APPEND-ONLY | **PASS** |
+| **CA-D38-01** | Validation | D38.1 CONSISTENT ÔøΩ CA-D38.1 7/7 | **PASS** |
+| **CA-D38-02** | Architecture Freeze | D38.2 OFFICIAL ÔøΩ CA-D38.2 9/9 | **PASS** |
+| **CA-D38-03** | Governance | D38.3 OFFICIAL ÔøΩ CA-D38.3 7/7 | **PASS** |
+| **CA-D38-04** | Roadmap | D38.4 OFFICIAL ÔøΩ CA-D38.4 8/8 | **PASS** |
+| **CA-D38-05** | Quality Gates | D38.5 OFFICIAL ÔøΩ CA-D38.5 10/10 | **PASS** |
+| **CA-D38-06** | STATUS actualizado | Este ÔøΩD38 APPEND-ONLY | **PASS** |
 | **CA-D38-07** | Integridad documental | Append Integrity + Verification Record | **PASS** |
 
 **Total CA-D38: 7/7 PASS**
@@ -193,37 +193,37 @@ No Findings
 
 ### 8. Archivos NO modificados (D38)
 
-**No modificado:** `src/**` ù `scripts/**` ù `package.json` ù tests ù `docs/D37.*` ù contenido histùrico de este archivo (ùD39 ù Cronologùa previa) ù D38.1?D38.5 tras su emisiùn
+**No modificado:** `src/**` ÔøΩ `scripts/**` ÔøΩ `package.json` ÔøΩ tests ÔøΩ `docs/D37.*` ÔøΩ contenido histÔøΩrico de este archivo (ÔøΩD39 ÔøΩ CronologÔøΩa previa) ÔøΩ D38.1?D38.5 tras su emisiÔøΩn
 
-**Creados en D38:** `docs/D38.1-freeze-validation.md` ù `docs/D38.2-architecture-freeze.md` ù `docs/D38.3-governance.md` ù `docs/D38.4-roadmap-final.md` ù `docs/D38.5-quality-gates.md`
+**Creados en D38:** `docs/D38.1-freeze-validation.md` ÔøΩ `docs/D38.2-architecture-freeze.md` ÔøΩ `docs/D38.3-governance.md` ÔøΩ `docs/D38.4-roadmap-final.md` ÔøΩ `docs/D38.5-quality-gates.md`
 
-**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este ùD38)
+**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este ÔøΩD38)
 
 ### 9. Append Integrity Rules
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Actualizaciùn ùnicamente al final del documento | **Sù** |
-| Sin modificar secciones previas | **Sù** |
-| Sin alterar contenido histùrico | **Sù** |
-| Sin cambiar numeraciùn existente | **Sù** |
+| ActualizaciÔøΩn ÔøΩnicamente al final del documento | **SÔøΩ** |
+| Sin modificar secciones previas | **SÔøΩ** |
+| Sin alterar contenido histÔøΩrico | **SÔøΩ** |
+| Sin cambiar numeraciÔøΩn existente | **SÔøΩ** |
 
 ### 10. Append Verification Record
 
-| Verificaciùn | Resultado |
+| VerificaciÔøΩn | Resultado |
 |--------------|-----------|
 | Append realizado al EOF | **PASS** |
 | Secciones previas sin cambios | **PASS** |
-| ùD39 histùrico intacto | **PASS** |
-| Numeraciùn preservada | **PASS** |
-| Diff = solo lùneas aùadidas | **PASS** |
+| ÔøΩD39 histÔøΩrico intacto | **PASS** |
+| NumeraciÔøΩn preservada | **PASS** |
+| Diff = solo lÔøΩneas aÔøΩadidas | **PASS** |
 
 ### 11. STATUS Integrity Declaration
 
 ```text
-Este registro histùrico mantiene ùntegramente su contenido previo.
-La secciùn ùD38 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
-No se ha modificado ninguna secciùn histùrica.
+Este registro histÔøΩrico mantiene ÔøΩntegramente su contenido previo.
+La secciÔøΩn ÔøΩD38 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
+No se ha modificado ninguna secciÔøΩn histÔøΩrica.
 ```
 
 ### 12. CA-D38 Exit Criteria
@@ -232,7 +232,7 @@ No se ha modificado ninguna secciùn histùrica.
 |----------|--------|
 | D38.1?D38.5 PASS | **Cumple** |
 | Append realizado correctamente | **Cumple** |
-| Integridad histùrica preservada | **Cumple** |
+| Integridad histÔøΩrica preservada | **Cumple** |
 | Handoff emitido | **Cumple** |
 | Sin inconsistencias abiertas | **Cumple** |
 
@@ -247,34 +247,34 @@ Governance ACTIVE
 Roadmap OFFICIAL
 Quality Gates OFFICIAL
 BUILD NOT STARTED
-La implementaciùn comenzarù ùnicamente en D39 conforme al Roadmap OFFICIAL.
+La implementaciÔøΩn comenzarÔøΩ ÔøΩnicamente en D39 conforme al Roadmap OFFICIAL.
 ```
 
 ---
 
-*ùD38 APPEND-ONLY 2026-07-17 ù CA-D38 7/7 PASS ù Next: D39 ? EXPORT-1 Discovery & BUILD ù No implementation has started.*
+*ÔøΩD38 APPEND-ONLY 2026-07-17 ÔøΩ CA-D38 7/7 PASS ÔøΩ Next: D39 ? EXPORT-1 Discovery & BUILD ÔøΩ No implementation has started.*
 
 ---
 
-## ùD40 ? Certificaciùn Final de la pista Freeze/Planning (PROD-3)
+## ÔøΩD40 ? CertificaciÔøΩn Final de la pista Freeze/Planning (PROD-3)
 
 **Fecha:** 2026-07-17  
-**Microfase:** D40 ? Certificaciùn Final de la pista Freeze/Planning (documental)  
-**Modo:** BUILD DOCUMENTAL ? APPEND-ONLY ù Resolution Note RN-D40 ù cero cùdigo ù cero BUILD de producto  
-**Estado:** **FREEZE_PLANNING_TRACK = CERTIFIED** ù **D40 CERTIFIED** ù **PROD-3 = OPEN** ù **NO BUILD AUTHORIZED BY D40** ù **READY FOR EXPORT-1 DISCOVERY**
+**Microfase:** D40 ? CertificaciÔøΩn Final de la pista Freeze/Planning (documental)  
+**Modo:** BUILD DOCUMENTAL ? APPEND-ONLY ÔøΩ Resolution Note RN-D40 ÔøΩ cero cÔøΩdigo ÔøΩ cero BUILD de producto  
+**Estado:** **FREEZE_PLANNING_TRACK = CERTIFIED** ÔøΩ **D40 CERTIFIED** ÔøΩ **PROD-3 = OPEN** ÔøΩ **NO BUILD AUTHORIZED BY D40** ÔøΩ **READY FOR EXPORT-1 DISCOVERY**
 
 ### 1. Resumen ejecutivo
 
 | Entregable | Estado |
 |------------|--------|
-| D40.1 Discovery Final | **OFFICIAL** ù CA-D40.1 10/10 PASS |
-| D40.2 Validaciùn Global | **OFFICIAL** ù CA-D40.2 10/10 PASS |
-| D40.3 Consolidaciùn Documental | **OFFICIAL** ù CA-D40.3 10/10 PASS |
-| D40.4 Arquitectura Final | **OFFICIAL** ù CA-D40.4 10/10 PASS |
-| D40.5 Certificaciùn Final (CA-D40) | **OFFICIAL** ù FINAL CERTIFICATION READY |
-| D40.6 Resolution Note + Acta | **OFFICIAL** ù CA-D40.6 10/10 PASS |
-| **RN-D40** (AMD-CAND-01) | **Emitida ù RESUELTO** |
-| BUILD de producto | **No iniciado ù no autorizado por D40** |
+| D40.1 Discovery Final | **OFFICIAL** ÔøΩ CA-D40.1 10/10 PASS |
+| D40.2 ValidaciÔøΩn Global | **OFFICIAL** ÔøΩ CA-D40.2 10/10 PASS |
+| D40.3 ConsolidaciÔøΩn Documental | **OFFICIAL** ÔøΩ CA-D40.3 10/10 PASS |
+| D40.4 Arquitectura Final | **OFFICIAL** ÔøΩ CA-D40.4 10/10 PASS |
+| D40.5 CertificaciÔøΩn Final (CA-D40) | **OFFICIAL** ÔøΩ FINAL CERTIFICATION READY |
+| D40.6 Resolution Note + Acta | **OFFICIAL** ÔøΩ CA-D40.6 10/10 PASS |
+| **RN-D40** (AMD-CAND-01) | **Emitida ÔøΩ RESUELTO** |
+| BUILD de producto | **No iniciado ÔøΩ no autorizado por D40** |
 
 ### 2. Estado ? declaraciones
 
@@ -296,9 +296,9 @@ NO BUILD AUTHORIZED BY D40
 | Campo | Contenido |
 |-------|-----------|
 | **ID** | **RN-D40** |
-| **Ambigùedad** | Colisiùn ùD39ù: (a) STATUS ùD39 DATA-3D histùrico ù (b) `docs/D39.*` Execution Planning ù (c) handoffs ùNext: D39 EXPORT-1 BUILDù |
-| **Resoluciùn** | (a) histùrico inmutable ù (b) Execution Planning certificado ù (c) next normativo = **EXPORT-1 Discovery**; no reutilizar numeraciùn D39 para BUILD |
-| **Lùmite** | Sin Amendment ù sin cambio Roadmap/Freeze/Governance/APIs ù sin autorizar BUILD ù sin declarar PROD-3 CLOSED |
+| **AmbigÔøΩedad** | ColisiÔøΩn ÔøΩD39ÔøΩ: (a) STATUS ÔøΩD39 DATA-3D histÔøΩrico ÔøΩ (b) `docs/D39.*` Execution Planning ÔøΩ (c) handoffs ÔøΩNext: D39 EXPORT-1 BUILDÔøΩ |
+| **ResoluciÔøΩn** | (a) histÔøΩrico inmutable ÔøΩ (b) Execution Planning certificado ÔøΩ (c) next normativo = **EXPORT-1 Discovery**; no reutilizar numeraciÔøΩn D39 para BUILD |
+| **LÔøΩmite** | Sin Amendment ÔøΩ sin cambio Roadmap/Freeze/Governance/APIs ÔøΩ sin autorizar BUILD ÔøΩ sin declarar PROD-3 CLOSED |
 | **Documento** | [`docs/D40.6-resolution-note.md`](docs/D40.6-resolution-note.md) |
 
 ### 4. Referencias D40
@@ -315,23 +315,23 @@ NO BUILD AUTHORIZED BY D40
 ### 5. Checklist D40
 
 - [x] D40.1 Discovery Final ? CA PASS
-- [x] D40.2 Validaciùn Global ? CA PASS
-- [x] D40.3 Consolidaciùn Documental ? CA PASS
+- [x] D40.2 ValidaciÔøΩn Global ? CA PASS
+- [x] D40.3 ConsolidaciÔøΩn Documental ? CA PASS
 - [x] D40.4 Arquitectura Final ? CA PASS
-- [x] D40.5 Certificaciùn Final (CA-D40) ? rollup READY ? cerrado con RN
+- [x] D40.5 CertificaciÔøΩn Final (CA-D40) ? rollup READY ? cerrado con RN
 - [x] D40.6 RN-D40 + Acta ? CA PASS
 - [x] AMD-CAND-01 resuelto
-- [x] Append-only ùD40
+- [x] Append-only ÔøΩD40
 
-### 6. CA-D40 ? Certificaciùn (rollup 15/15)
+### 6. CA-D40 ? CertificaciÔøΩn (rollup 15/15)
 
 | ID | Criterio | Resultado |
 |----|----------|-----------|
-| CA-D40-01?11 | Series D37?D39 ù Freeze ù Roadmap ù Gov/QG ù API ù docs ù arch ù PROD-3 OPEN ù sin cùdigo | **PASS** (D40.5) |
-| CA-D40-12 | AMD-CAND-01 vùa RN | **PASS** (RN-D40) |
-| CA-D40-13?15 | Pendientes ù handoff EXPORT-1 Discovery ù integridad | **PASS** (D40.5) |
+| CA-D40-01?11 | Series D37?D39 ÔøΩ Freeze ÔøΩ Roadmap ÔøΩ Gov/QG ÔøΩ API ÔøΩ docs ÔøΩ arch ÔøΩ PROD-3 OPEN ÔøΩ sin cÔøΩdigo | **PASS** (D40.5) |
+| CA-D40-12 | AMD-CAND-01 vÔøΩa RN | **PASS** (RN-D40) |
+| CA-D40-13?15 | Pendientes ÔøΩ handoff EXPORT-1 Discovery ÔøΩ integridad | **PASS** (D40.5) |
 
-**Total CA-D40: 15/15 PASS** ù **CA-D40.6: 10/10 PASS**
+**Total CA-D40: 15/15 PASS** ÔøΩ **CA-D40.6: 10/10 PASS**
 
 ### 7. Handoff
 
@@ -353,50 +353,50 @@ NO BUILD AUTHORIZED BY D40.
 EXPORT-1 Discovery is the sole authorization path to start BUILD.
 ```
 
-### 8. Aclaraciùn de numeraciùn (RN-D40)
+### 8. AclaraciÔøΩn de numeraciÔøΩn (RN-D40)
 
 ```text
-ùD39 en este STATUS = histùrico DATA-3D (DOC-P3-01) ? inmutable.
+ÔøΩD39 en este STATUS = histÔøΩrico DATA-3D (DOC-P3-01) ? inmutable.
 docs/D39.* = Execution Planning certificado ? no es BUILD.
-ùNext: D39 EXPORT-1?ù en ùD38 queda aclarado por RN-D40:
+ÔøΩNext: D39 EXPORT-1?ÔøΩ en ÔøΩD38 queda aclarado por RN-D40:
   next normativo post-D40 = EXPORT-1 Discovery.
-No reutilizar numeraciùn D39 para BUILD.
+No reutilizar numeraciÔøΩn D39 para BUILD.
 ```
 
 ### 9. Archivos (D40)
 
-**Creados:** `docs/D40.1-discovery-final.md` ù `docs/D40.2-global-validation.md` ù `docs/D40.3-document-consolidation.md` ù `docs/D40.4-architecture-final.md` ù `docs/D40.5-final-certification.md` ù `docs/D40.6-resolution-note.md`
+**Creados:** `docs/D40.1-discovery-final.md` ÔøΩ `docs/D40.2-global-validation.md` ÔøΩ `docs/D40.3-document-consolidation.md` ÔøΩ `docs/D40.4-architecture-final.md` ÔøΩ `docs/D40.5-final-certification.md` ÔøΩ `docs/D40.6-resolution-note.md`
 
-**No modificado en D40:** `src/**` ù `scripts/**` ù `package.json` ù tests ù D37.* ù D38.* ù D39.* ù Freeze ù Roadmap ù Governance ù QG ù APIs ù contenido histùrico de este archivo (ùD39 ù Cronologùa ù ùD38)
+**No modificado en D40:** `src/**` ÔøΩ `scripts/**` ÔøΩ `package.json` ÔøΩ tests ÔøΩ D37.* ÔøΩ D38.* ÔøΩ D39.* ÔøΩ Freeze ÔøΩ Roadmap ÔøΩ Governance ÔøΩ QG ÔøΩ APIs ÔøΩ contenido histÔøΩrico de este archivo (ÔøΩD39 ÔøΩ CronologÔøΩa ÔøΩ ÔøΩD38)
 
-**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este ùD40)
+**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este ÔøΩD40)
 
 ### 10. Append Integrity Rules
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Actualizaciùn ùnicamente al final del documento | **Sù** |
-| Sin modificar secciones previas (ùD39 ù Cronologùa ù ùD38) | **Sù** |
-| Sin alterar contenido histùrico | **Sù** |
-| Sin cambiar numeraciùn existente | **Sù** |
+| ActualizaciÔøΩn ÔøΩnicamente al final del documento | **SÔøΩ** |
+| Sin modificar secciones previas (ÔøΩD39 ÔøΩ CronologÔøΩa ÔøΩ ÔøΩD38) | **SÔøΩ** |
+| Sin alterar contenido histÔøΩrico | **SÔøΩ** |
+| Sin cambiar numeraciÔøΩn existente | **SÔøΩ** |
 
 ### 11. Append Verification Record
 
-| Verificaciùn | Resultado |
+| VerificaciÔøΩn | Resultado |
 |--------------|-----------|
 | Append realizado al EOF | **PASS** |
 | Secciones previas sin cambios | **PASS** |
-| ùD39 histùrico intacto | **PASS** |
-| ùD38 intacto | **PASS** |
-| Numeraciùn preservada | **PASS** |
-| Diff STATUS = solo lùneas aùadidas (ùD40) | **PASS** |
+| ÔøΩD39 histÔøΩrico intacto | **PASS** |
+| ÔøΩD38 intacto | **PASS** |
+| NumeraciÔøΩn preservada | **PASS** |
+| Diff STATUS = solo lÔøΩneas aÔøΩadidas (ÔøΩD40) | **PASS** |
 
 ### 12. STATUS Integrity Declaration
 
 ```text
-Este registro histùrico mantiene ùntegramente su contenido previo.
-La secciùn ùD40 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
-No se ha modificado ninguna secciùn histùrica (ùD39 ù Cronologùa ù ùD38).
+Este registro histÔøΩrico mantiene ÔøΩntegramente su contenido previo.
+La secciÔøΩn ÔøΩD40 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
+No se ha modificado ninguna secciÔøΩn histÔøΩrica (ÔøΩD39 ÔøΩ CronologÔøΩa ÔøΩ ÔøΩD38).
 RN-D40 aclara AMD-CAND-01 sin Amendment y sin cerrar PROD-3.
 ```
 
@@ -407,25 +407,25 @@ D40 Completion Declaration
 La serie D40 queda OFFICIAL / CERTIFIED.
 La pista Freeze/Planning queda formalmente CERTIFIED.
 PROD-3 permanece OPEN.
-Architecture Freeze COMPLETE ù Roadmap OFFICIAL ù Execution Baseline READY.
-AMD-CAND-01 RESUELTO vùa RN-D40.
+Architecture Freeze COMPLETE ÔøΩ Roadmap OFFICIAL ÔøΩ Execution Baseline READY.
+AMD-CAND-01 RESUELTO vÔøΩa RN-D40.
 El siguiente trabajo autorizado por el Roadmap es EXPORT-1 Discovery.
 NO BUILD AUTHORIZED BY D40.
 ```
 
 ---
 
-*ùD40 APPEND-ONLY 2026-07-17 ù RN-D40 ù CA-D40 15/15 PASS ù CA-D40.6 10/10 PASS ù FREEZE_PLANNING_TRACK = CERTIFIED ù D40 CERTIFIED ù PROD-3 = OPEN ù Next: EXPORT-1 Discovery ù No BUILD authorized by D40.*
+*ÔøΩD40 APPEND-ONLY 2026-07-17 ÔøΩ RN-D40 ÔøΩ CA-D40 15/15 PASS ÔøΩ CA-D40.6 10/10 PASS ÔøΩ FREEZE_PLANNING_TRACK = CERTIFIED ÔøΩ D40 CERTIFIED ÔøΩ PROD-3 = OPEN ÔøΩ Next: EXPORT-1 Discovery ÔøΩ No BUILD authorized by D40.*
 
 ---
 
-## ùD41 ? EXPORT-1 Discovery (PROD-3)
+## ÔøΩD41 ? EXPORT-1 Discovery (PROD-3)
 
 **Fecha:** 2026-07-17  
 **Serie:** D41.0?D41.7  
-**Estado:** **D41 = CERTIFIED** ù **EXPORT-1 DISCOVERY = COMPLETE** ù **GO BUILD AUTHORIZED** ù **PROD-3 = OPEN** ù **READY FOR EXPORT-1 BUILD**
+**Estado:** **D41 = CERTIFIED** ÔøΩ **EXPORT-1 DISCOVERY = COMPLETE** ÔøΩ **GO BUILD AUTHORIZED** ÔøΩ **PROD-3 = OPEN** ÔøΩ **READY FOR EXPORT-1 BUILD**
 
-### 1. Declaraciùn
+### 1. DeclaraciÔøΩn
 
 ```text
 FREEZE_PLANNING_TRACK = CERTIFIED (D40)
@@ -446,25 +446,25 @@ NO FREEZE / ROADMAP / API ALTERED BY D41
 | Microfase | Resultado |
 |-----------|-----------|
 | D41.0 Series Plan | OFFICIAL |
-| D41.1 Scope & Export Inventory | OFFICIAL ù Scope confirmado |
-| D41.2 Architecture Review | OFFICIAL ù PASS |
-| D41.3 API Freeze Preview | OFFICIAL ù PASS |
-| D41.4 Performance Thresholds & Validation | OFFICIAL ù PASS ù PT-* |
-| D41.5 Risk & Carry-in Resolution | OFFICIAL ù PASS ù 01/02=IN ù SHIM-NL=DEFER |
-| D41.6 Governance & Documentation Review | OFFICIAL ù PASS |
-| D41.7 BUILD Plan Freeze + Discovery Acta | OFFICIAL ù **GO BUILD** ù D41 CERTIFIED |
+| D41.1 Scope & Export Inventory | OFFICIAL ÔøΩ Scope confirmado |
+| D41.2 Architecture Review | OFFICIAL ÔøΩ PASS |
+| D41.3 API Freeze Preview | OFFICIAL ÔøΩ PASS |
+| D41.4 Performance Thresholds & Validation | OFFICIAL ÔøΩ PASS ÔøΩ PT-* |
+| D41.5 Risk & Carry-in Resolution | OFFICIAL ÔøΩ PASS ÔøΩ 01/02=IN ÔøΩ SHIM-NL=DEFER |
+| D41.6 Governance & Documentation Review | OFFICIAL ÔøΩ PASS |
+| D41.7 BUILD Plan Freeze + Discovery Acta | OFFICIAL ÔøΩ **GO BUILD** ÔøΩ D41 CERTIFIED |
 
-### 3. BUILD Plan Freeze (ùpica)
+### 3. BUILD Plan Freeze (ÔøΩpica)
 
 ```text
-Numeraciùn BUILD = D42.1 ? D42.4 (? D39)
+NumeraciÔøΩn BUILD = D42.1 ? D42.4 (? D39)
 D42.1 BUILD Implementation
-D42.2 Testing (Performance ù Regression)
+D42.2 Testing (Performance ÔøΩ Regression)
 D42.3 Certification
 D42.4 Release / M1 Acta
 ```
 
-### 4. Decisiùn
+### 4. DecisiÔøΩn
 
 ```text
 GO BUILD
@@ -475,15 +475,15 @@ First implementation microphase = D42.1.
 
 ### 5. Carry-ins (resumen)
 
-| Carry-in | Disposiciùn |
+| Carry-in | DisposiciÔøΩn |
 |----------|-------------|
 | EXPORT-1-01 sampleStep | IN |
 | EXPORT-1-02 SVG calidad | IN |
 | SHIM-NL | DEFER (si aplica / reapertura documentada) |
 
-### 6. Certificaciùn
+### 6. CertificaciÔøΩn
 
-| ùtem | Resultado |
+| ÔøΩtem | Resultado |
 |------|-----------|
 | CA-D41.7 | 10/10 PASS |
 | CA-D41 rollup | 13/13 PASS |
@@ -494,47 +494,47 @@ First implementation microphase = D42.1.
 
 ```text
 NEXT: D42.1 ? EXPORT-1 BUILD Implementation
-Inputs: D38.* ù D39.* ù D40.* ù D41.*
+Inputs: D38.* ÔøΩ D39.* ÔøΩ D40.* ÔøΩ D41.*
 Do not reuse D39 numbering for BUILD.
 ```
 
 ### 8. Archivos (D41)
 
-**Creados:** `docs/D41.0-export1-discovery-plan.md` ù `docs/D41.1-scope-confirmation-export-inventory.md` ù `docs/D41.2-architecture-review.md` ù `docs/D41.3-api-freeze-preview.md` ù `docs/D41.4-performance-thresholds-validation.md` ù `docs/D41.5-risk-carryin-resolution.md` ù `docs/D41.6-governance-documentation-review.md` ù `docs/D41.7-build-plan-freeze-discovery-acta.md`
+**Creados:** `docs/D41.0-export1-discovery-plan.md` ÔøΩ `docs/D41.1-scope-confirmation-export-inventory.md` ÔøΩ `docs/D41.2-architecture-review.md` ÔøΩ `docs/D41.3-api-freeze-preview.md` ÔøΩ `docs/D41.4-performance-thresholds-validation.md` ÔøΩ `docs/D41.5-risk-carryin-resolution.md` ÔøΩ `docs/D41.6-governance-documentation-review.md` ÔøΩ `docs/D41.7-build-plan-freeze-discovery-acta.md`
 
-**No modificado en D41:** `src/**` ù `scripts/**` ù `package.json` ù tests ù D37.* ù D38.* ù D39.* ù D40.* ù Freeze ù Roadmap ù Governance ù QG ù APIs ù contenido histùrico de este archivo (ùD39 ù Cronologùa ù ùD38 ù ùD40)
+**No modificado en D41:** `src/**` ÔøΩ `scripts/**` ÔøΩ `package.json` ÔøΩ tests ÔøΩ D37.* ÔøΩ D38.* ÔøΩ D39.* ÔøΩ D40.* ÔøΩ Freeze ÔøΩ Roadmap ÔøΩ Governance ÔøΩ QG ÔøΩ APIs ÔøΩ contenido histÔøΩrico de este archivo (ÔøΩD39 ÔøΩ CronologÔøΩa ÔøΩ ÔøΩD38 ÔøΩ ÔøΩD40)
 
-**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este ùD41)
+**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este ÔøΩD41)
 
 ### 9. Append Integrity Rules
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Actualizaciùn ùnicamente al final del documento | **Sù** |
-| Sin modificar secciones previas (ùD39 ù Cronologùa ù ùD38 ù ùD40) | **Sù** |
-| Sin alterar contenido histùrico | **Sù** |
-| Sin cambiar numeraciùn existente | **Sù** |
+| ActualizaciÔøΩn ÔøΩnicamente al final del documento | **SÔøΩ** |
+| Sin modificar secciones previas (ÔøΩD39 ÔøΩ CronologÔøΩa ÔøΩ ÔøΩD38 ÔøΩ ÔøΩD40) | **SÔøΩ** |
+| Sin alterar contenido histÔøΩrico | **SÔøΩ** |
+| Sin cambiar numeraciÔøΩn existente | **SÔøΩ** |
 
 ### 10. STATUS Integrity Declaration
 
 ```text
-Este registro histùrico mantiene ùntegramente su contenido previo.
-La secciùn ùD41 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
-No se ha modificado ninguna secciùn histùrica (ùD39 ù Cronologùa ù ùD38 ù ùD40).
+Este registro histÔøΩrico mantiene ÔøΩntegramente su contenido previo.
+La secciÔøΩn ÔøΩD41 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
+No se ha modificado ninguna secciÔøΩn histÔøΩrica (ÔøΩD39 ÔøΩ CronologÔøΩa ÔøΩ ÔøΩD38 ÔøΩ ÔøΩD40).
 D41 autoriza GO BUILD sin alterar Freeze, Roadmap, Governance, QG ni API Freeze.
 ```
 
 ---
 
-*ùD41 APPEND-ONLY 2026-07-17 ù D41 CERTIFIED ù CA-D41 13/13 PASS ù CA-D41.7 10/10 PASS ù EXPORT-1 DISCOVERY = COMPLETE ù DEFINITION OF SUCCESS = PASS ù GO BUILD AUTHORIZED ù PROD-3 = OPEN ù Next: D42.1 EXPORT-1 BUILD ù BUILD not executed in D41.*
+*ÔøΩD41 APPEND-ONLY 2026-07-17 ÔøΩ D41 CERTIFIED ÔøΩ CA-D41 13/13 PASS ÔøΩ CA-D41.7 10/10 PASS ÔøΩ EXPORT-1 DISCOVERY = COMPLETE ÔøΩ DEFINITION OF SUCCESS = PASS ÔøΩ GO BUILD AUTHORIZED ÔøΩ PROD-3 = OPEN ÔøΩ Next: D42.1 EXPORT-1 BUILD ÔøΩ BUILD not executed in D41.*
 
 ---
 
-## ùD42.0 ? EXPORT-1 Technical Execution Planning (PRE-BUILD)
+## ÔøΩD42.0 ? EXPORT-1 Technical Execution Planning (PRE-BUILD)
 
 **Fecha:** 2026-07-17  
-**Serie:** D42.0 ù D42.0.1?D42.0.5  
-**Estado:** **D42.0 = COMPLETE** ù **CA-D42.0 = 10/10 PASS** ù **BUILD NOT EXECUTED** ù **GO BUILD IN FORCE** ù **EXPORT-1 = READY FOR BUILD** ù **PROD-3 = OPEN**
+**Serie:** D42.0 ÔøΩ D42.0.1?D42.0.5  
+**Estado:** **D42.0 = COMPLETE** ÔøΩ **CA-D42.0 = 10/10 PASS** ÔøΩ **BUILD NOT EXECUTED** ÔøΩ **GO BUILD IN FORCE** ÔøΩ **EXPORT-1 = READY FOR BUILD** ÔøΩ **PROD-3 = OPEN**
 
 ### 1. Authority Statement (eco)
 
@@ -554,7 +554,7 @@ No architectural, API, scope, or governance changes.
 Not a Plan Freeze amendment.
 ```
 
-### 2. Declaraciùn
+### 2. DeclaraciÔøΩn
 
 ```text
 D42.0 TECHNICAL EXECUTION PLANNING = COMPLETE
@@ -564,7 +564,7 @@ GO BUILD AUTHORIZED BY D41.7 = IN FORCE
 EXPORT-1 = READY FOR BUILD
 BUILD NOT EXECUTED
 NO SRC / SCRIPTS / TESTS / PACKAGE.JSON CHANGES
-NO HISTORICAL DOC REWRITES (ùD39 ù ùD38 ù ùD40 ù ùD41 intact)
+NO HISTORICAL DOC REWRITES (ÔøΩD39 ÔøΩ ÔøΩD38 ÔøΩ ÔøΩD40 ÔøΩ ÔøΩD41 intact)
 NEXT = D42.1 ? EXPORT-1 BUILD Implementation
 ```
 
@@ -573,13 +573,13 @@ NEXT = D42.1 ? EXPORT-1 BUILD Implementation
 | Microfase | Resultado |
 |-----------|-----------|
 | D42.0 Series Plan + Authority Statement | OFFICIAL |
-| D42.0.1 Technical Inventory | OFFICIAL ù CA 10/10 |
-| D42.0.2 Implementation Blueprint | OFFICIAL ù CA 10/10 |
-| D42.0.3 Risk Matrix | OFFICIAL ù CA 10/10 |
-| D42.0.4 Validation Blueprint | OFFICIAL ù CA 10/10 |
-| D42.0.5 Certification Plan | OFFICIAL ù CA-D42.0 10/10 |
+| D42.0.1 Technical Inventory | OFFICIAL ÔøΩ CA 10/10 |
+| D42.0.2 Implementation Blueprint | OFFICIAL ÔøΩ CA 10/10 |
+| D42.0.3 Risk Matrix | OFFICIAL ÔøΩ CA 10/10 |
+| D42.0.4 Validation Blueprint | OFFICIAL ÔøΩ CA 10/10 |
+| D42.0.5 Certification Plan | OFFICIAL ÔøΩ CA-D42.0 10/10 |
 
-### 4. Numeraciùn preservada (D41.7)
+### 4. NumeraciÔøΩn preservada (D41.7)
 
 ```text
 D42.1  BUILD Implementation   (RESERVED ? not executed)
@@ -589,9 +589,9 @@ D42.4  Release / M1 Acta      (RESERVED)
 D42.0.* = preparatory documentation ONLY
 ```
 
-### 5. Certificaciùn
+### 5. CertificaciÔøΩn
 
-| ùtem | Resultado |
+| ÔøΩtem | Resultado |
 |------|-----------|
 | CA-D42.0 | 10/10 PASS |
 | CA-D42.0.1 ? CA-D42.0.4 | 10/10 PASS cada uno |
@@ -600,11 +600,11 @@ D42.0.* = preparatory documentation ONLY
 
 ### 6. Archivos (D42.0)
 
-**Creados:** `docs/D42.0-export1-technical-execution-plan.md` ù `docs/D42.0.1-technical-inventory.md` ù `docs/D42.0.2-implementation-blueprint.md` ù `docs/D42.0.3-risk-matrix.md` ù `docs/D42.0.4-validation-blueprint.md` ù `docs/D42.0.5-certification-plan.md`
+**Creados:** `docs/D42.0-export1-technical-execution-plan.md` ÔøΩ `docs/D42.0.1-technical-inventory.md` ÔøΩ `docs/D42.0.2-implementation-blueprint.md` ÔøΩ `docs/D42.0.3-risk-matrix.md` ÔøΩ `docs/D42.0.4-validation-blueprint.md` ÔøΩ `docs/D42.0.5-certification-plan.md`
 
-**No modificado:** `src/**` ù `scripts/**` ù tests ù `package.json` ù D37.* ù D38.* ù D39.* ù D40.* ù D41.* ù Freeze ù Roadmap ù Governance ù QG ù APIs ù contenido histùrico de este archivo (ùD39 ù Cronologùa ù ùD38 ù ùD40 ù ùD41)
+**No modificado:** `src/**` ÔøΩ `scripts/**` ÔøΩ tests ÔøΩ `package.json` ÔøΩ D37.* ÔøΩ D38.* ÔøΩ D39.* ÔøΩ D40.* ÔøΩ D41.* ÔøΩ Freeze ÔøΩ Roadmap ÔøΩ Governance ÔøΩ QG ÔøΩ APIs ÔøΩ contenido histÔøΩrico de este archivo (ÔøΩD39 ÔøΩ CronologÔøΩa ÔøΩ ÔøΩD38 ÔøΩ ÔøΩD40 ÔøΩ ÔøΩD41)
 
-**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este ùD42.0)
+**Actualizado (APPEND-ONLY):** `PROJECT_STATUS_PROD_3.md` (solo este ÔøΩD42.0)
 
 ### 7. Handoff
 
@@ -612,77 +612,77 @@ D42.0.* = preparatory documentation ONLY
 NEXT: D42.1 ? EXPORT-1 BUILD Implementation
 AUTHORIZED BY: D41.7 GO BUILD
 PREPARED BY: D42.0 Technical Execution Planning
-Inputs: D38.* ù D39.* ù D40.* ù D41.* ù D42.0.*
+Inputs: D38.* ÔøΩ D39.* ÔøΩ D40.* ÔøΩ D41.* ÔøΩ D42.0.*
 ```
 
 ### 8. Append Integrity Rules
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Actualizaciùn ùnicamente al final del documento | **Sù** |
-| Sin modificar secciones previas (ùD39 ù Cronologùa ù ùD38 ù ùD40 ù ùD41) | **Sù** |
-| Sin alterar contenido histùrico | **Sù** |
-| Sin cambiar numeraciùn BUILD D41.7 | **Sù** |
+| ActualizaciÔøΩn ÔøΩnicamente al final del documento | **SÔøΩ** |
+| Sin modificar secciones previas (ÔøΩD39 ÔøΩ CronologÔøΩa ÔøΩ ÔøΩD38 ÔøΩ ÔøΩD40 ÔøΩ ÔøΩD41) | **SÔøΩ** |
+| Sin alterar contenido histÔøΩrico | **SÔøΩ** |
+| Sin cambiar numeraciÔøΩn BUILD D41.7 | **SÔøΩ** |
 
 ### 9. Append Verification Record
 
-| Verificaciùn | Resultado |
+| VerificaciÔøΩn | Resultado |
 |--------------|-----------|
 | Append realizado al EOF | **PASS** |
 | Secciones previas sin cambios | **PASS** |
-| ùD41 intacto | **PASS** |
-| Numeraciùn D42.1?D42.4 preservada | **PASS** |
-| Diff STATUS = solo lùneas aùadidas (ùD42.0) | **PASS** |
+| ÔøΩD41 intacto | **PASS** |
+| NumeraciÔøΩn D42.1?D42.4 preservada | **PASS** |
+| Diff STATUS = solo lÔøΩneas aÔøΩadidas (ÔøΩD42.0) | **PASS** |
 
 ### 10. STATUS Integrity Declaration
 
 ```text
-Este registro histùrico mantiene ùntegramente su contenido previo.
-La secciùn ùD42.0 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
-No se ha modificado ninguna secciùn histùrica (ùD39 ù Cronologùa ù ùD38 ù ùD40 ù ùD41).
-D42.0 prepara la ejecuciùn de D42.1 sin alterar Freeze, Roadmap, Governance, QG, API Freeze ni el Plan Freeze de ùpica D41.7.
+Este registro histÔøΩrico mantiene ÔøΩntegramente su contenido previo.
+La secciÔøΩn ÔøΩD42.0 constituye un agregado APPEND-ONLY conforme a la Governance D38.3.
+No se ha modificado ninguna secciÔøΩn histÔøΩrica (ÔøΩD39 ÔøΩ CronologÔøΩa ÔøΩ ÔøΩD38 ÔøΩ ÔøΩD40 ÔøΩ ÔøΩD41).
+D42.0 prepara la ejecuciÔøΩn de D42.1 sin alterar Freeze, Roadmap, Governance, QG, API Freeze ni el Plan Freeze de ÔøΩpica D41.7.
 ```
 
 ---
 
-*ùD42.0 APPEND-ONLY 2026-07-17 ù D42.0 COMPLETE ù CA-D42.0 10/10 PASS ù Technical Execution Planning COMPLETE ù BUILD NOT EXECUTED ù GO BUILD IN FORCE ù EXPORT-1 READY FOR BUILD ù Numeraciùn D42.1?D42.4 intacta ù Next: D42.1 EXPORT-1 BUILD Implementation.*
+*ÔøΩD42.0 APPEND-ONLY 2026-07-17 ÔøΩ D42.0 COMPLETE ÔøΩ CA-D42.0 10/10 PASS ÔøΩ Technical Execution Planning COMPLETE ÔøΩ BUILD NOT EXECUTED ÔøΩ GO BUILD IN FORCE ÔøΩ EXPORT-1 READY FOR BUILD ÔøΩ NumeraciÔøΩn D42.1?D42.4 intacta ÔøΩ Next: D42.1 EXPORT-1 BUILD Implementation.*
 
 ---
 
-## ùD42.1 ? EXPORT-1 BUILD Implementation
+## ÔøΩD42.1 ? EXPORT-1 BUILD Implementation
 
 **Fecha:** 2026-07-17  
 **Serie:** D42.1  
-**Estado:** **D42.1 = COMPLETE** ù **CA-D42.1 = 10/10 PASS** ù **IN IMPLEMENTED** ù **OUT INTACT** ù **READY FOR D42.2** ù **PROD-3 = OPEN**
+**Estado:** **D42.1 = COMPLETE** ÔøΩ **CA-D42.1 = 10/10 PASS** ÔøΩ **IN IMPLEMENTED** ÔøΩ **OUT INTACT** ÔøΩ **READY FOR D42.2** ÔøΩ **PROD-3 = OPEN**
 
-### 1. Declaraciùn
+### 1. DeclaraciÔøΩn
 
 ```text
 GO BUILD AUTHORIZED BY D41.7 = CONSUMED BY D42.1
 D42.1 BUILD Implementation = COMPLETE
-EXPORT-1 IN = PNG ù SVG ù sampleStep ù wiring ù R-A1 move-only
-EXPORT-1 OUT = PDF ù JSON nucleus ù persistence ù GRAPH ù schema ù SHIM-NL DEFER
+EXPORT-1 IN = PNG ÔøΩ SVG ÔøΩ sampleStep ÔøΩ wiring ÔøΩ R-A1 move-only
+EXPORT-1 OUT = PDF ÔøΩ JSON nucleus ÔøΩ persistence ÔøΩ GRAPH ÔøΩ schema ÔøΩ SHIM-NL DEFER
 GRAPH BARRELS UNTOUCHED
 API FREEZE RESPECTED
 NO RELEASE / NO M1 CLOSE
 NEXT = D42.2 ? EXPORT-1 Testing
 ```
 
-### 2. Artefactos cùdigo
+### 2. Artefactos cÔøΩdigo
 
-| Path | Acciùn |
+| Path | AcciÔøΩn |
 |------|--------|
 | `src/app/chartExport.ts` | Creado (R-A1 + captura PNG/SVG + sampleStep export-surface) |
-| `src/app/page.tsx` | Modificado (handlers ù UI DPI/sampleStep ù wiring) |
+| `src/app/page.tsx` | Modificado (handlers ÔøΩ UI DPI/sampleStep ÔøΩ wiring) |
 | `scripts/validate-export1-chart-export-unit.ts` | Creado |
 | `package.json` | Script `validate:export1-chart-export-unit` |
 
-### 3. Documentaciùn
+### 3. DocumentaciÔøΩn
 
-| Path | Acciùn |
+| Path | AcciÔøΩn |
 |------|--------|
 | `docs/D42.1-export1-build-implementation.md` | Creado (acta) |
-| Este archivo ùD42.1 | Append-only |
+| Este archivo ÔøΩD42.1 | Append-only |
 
 ### 4. Validaciones
 
@@ -692,9 +692,9 @@ NEXT = D42.2 ? EXPORT-1 Testing
 | `validate:export1-chart-export-unit` | PASS |
 | `validate:graph-curves-unit` (freeze sampleStep) | PASS |
 
-### 5. Certificaciùn
+### 5. CertificaciÔøΩn
 
-| ùtem | Resultado |
+| ÔøΩtem | Resultado |
 |------|-----------|
 | CA-D42.1 | 10/10 PASS |
 | Architecture Freeze | Respected |
@@ -705,38 +705,38 @@ NEXT = D42.2 ? EXPORT-1 Testing
 
 ```text
 NEXT: D42.2 ? EXPORT-1 Testing
-Execute: Performance (PT-*) ù Regression (prod2e-gate ù smokes)
+Execute: Performance (PT-*) ÔøΩ Regression (prod2e-gate ÔøΩ smokes)
 ```
 
 ### 7. Append Integrity Rules
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append al EOF | **Sù** |
-| Sin modificar ùD39 ù ùD38 ù ùD40 ù ùD41 ù ùD42.0 | **Sù** |
-| Numeraciùn D42.2?D42.4 reservada | **Sù** |
+| Append al EOF | **SÔøΩ** |
+| Sin modificar ÔøΩD39 ÔøΩ ÔøΩD38 ÔøΩ ÔøΩD40 ÔøΩ ÔøΩD41 ÔøΩ ÔøΩD42.0 | **SÔøΩ** |
+| NumeraciÔøΩn D42.2?D42.4 reservada | **SÔøΩ** |
 
 ### 8. STATUS Integrity Declaration
 
 ```text
-ùD42.1 es APPEND-ONLY.
-No se reescribiù documentaciùn histùrica.
+ÔøΩD42.1 es APPEND-ONLY.
+No se reescribiÔøΩ documentaciÔøΩn histÔøΩrica.
 D42.1 implementa BUILD sin cerrar EXPORT-1 ni ejecutar Release.
 ```
 
 ---
 
-*ùD42.1 APPEND-ONLY 2026-07-17 ù D42.1 COMPLETE ù CA-D42.1 10/10 PASS ù BUILD Implementation COMPLETE ù READY FOR D42.2 Testing ù OUT intact ù GRAPH untouched.*
+*ÔøΩD42.1 APPEND-ONLY 2026-07-17 ÔøΩ D42.1 COMPLETE ÔøΩ CA-D42.1 10/10 PASS ÔøΩ BUILD Implementation COMPLETE ÔøΩ READY FOR D42.2 Testing ÔøΩ OUT intact ÔøΩ GRAPH untouched.*
 
 ---
 
-## ùD42.2 ? EXPORT-1 Testing
+## ÔøΩD42.2 ? EXPORT-1 Testing
 
 **Fecha:** 2026-07-17  
 **Serie:** D42.2  
-**Estado:** **D42.2 = COMPLETE** ù **CA-D42.2 = 10/10 PASS** ù **PT-* PASS** ù **SMOKES S1?S8 PASS** ù **READY FOR D42.3** ù **PROD-3 = OPEN**
+**Estado:** **D42.2 = COMPLETE** ÔøΩ **CA-D42.2 = 10/10 PASS** ÔøΩ **PT-* PASS** ÔøΩ **SMOKES S1?S8 PASS** ÔøΩ **READY FOR D42.3** ÔøΩ **PROD-3 = OPEN**
 
-### 1. Declaraciùn
+### 1. DeclaraciÔøΩn
 
 ```text
 D42.2 TESTING = COMPLETE
@@ -744,7 +744,7 @@ CA-D42.2 = 10/10 PASS
 PNG/SVG/sampleStep/pixelRatio VALIDATED
 PT-* PASS (D41.4)
 SMOKE S1?S8 PASS
-GRAPH INTACT ù PDF COMPATIBLE ù PROD-2E REGRESSION PASS
+GRAPH INTACT ÔøΩ PDF COMPATIBLE ÔøΩ PROD-2E REGRESSION PASS
 NO CODE FIXES REQUIRED
 NO SCOPE EXPANSION
 NEXT = D42.3 ? EXPORT-1 Certification
@@ -752,7 +752,7 @@ NEXT = D42.3 ? EXPORT-1 Certification
 
 ### 2. Evidencia clave
 
-| ùrea | Resultado |
+| ÔøΩrea | Resultado |
 |------|-----------|
 | `tsc --noEmit` | PASS |
 | `validate:export1-chart-export-unit` | PASS |
@@ -761,16 +761,16 @@ NEXT = D42.3 ? EXPORT-1 Certification
 | VGB / rendering / PDF unit | PASS |
 | `validate-prod2e-gate.ts` + siblings GRAPH | PASS |
 | Browser smokes S1?S8 | PASS (CDP timed) |
-| PT-PNG-T / PT-SVG-T | ~2.5 s tùpico PASS |
+| PT-PNG-T / PT-SVG-T | ~2.5 s tÔøΩpico PASS |
 | Lint | Ejecutado; errores preexistentes ajenos a EXPORT-1 |
 
 ### 3. Archivos (D42.2)
 
-**Creados:** `docs/D42.2-export1-testing.md` ù `scripts/validate-export1-d42-2-testing.ts`  
+**Creados:** `docs/D42.2-export1-testing.md` ÔøΩ `scripts/validate-export1-d42-2-testing.ts`  
 
-**Actualizados:** `package.json` (`validate:export1-d42-2-testing`) ù este STATUS ùD42.2 (append)
+**Actualizados:** `package.json` (`validate:export1-d42-2-testing`) ÔøΩ este STATUS ÔøΩD42.2 (append)
 
-**No modificado:** `src/**` (sin fixes) ù GRAPH ù persistence ù docs D37?D41 ù ùD42.0 ù ùD42.1
+**No modificado:** `src/**` (sin fixes) ÔøΩ GRAPH ÔøΩ persistence ÔøΩ docs D37?D41 ÔøΩ ÔøΩD42.0 ÔøΩ ÔøΩD42.1
 
 ### 4. Handoff
 
@@ -782,79 +782,79 @@ NEXT: D42.3 ? EXPORT-1 Certification
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append al EOF | **Sù** |
-| Sin reescribir ù previos | **Sù** |
+| Append al EOF | **SÔøΩ** |
+| Sin reescribir ÔøΩ previos | **SÔøΩ** |
 
 ---
 
-*ùD42.2 APPEND-ONLY 2026-07-17 ù D42.2 COMPLETE ù CA-D42.2 10/10 PASS ù Testing COMPLETE ù READY FOR D42.3 Certification.*
+*ÔøΩD42.2 APPEND-ONLY 2026-07-17 ÔøΩ D42.2 COMPLETE ÔøΩ CA-D42.2 10/10 PASS ÔøΩ Testing COMPLETE ÔøΩ READY FOR D42.3 Certification.*
 
 ---
 
-## ùD42.3 ? EXPORT-1 Certification
+## ÔøΩD42.3 ? EXPORT-1 Certification
 
 **Fecha:** 2026-07-17  
 **Serie:** D42.3  
-**Estado:** **D42.3 = COMPLETE** ù **CA-D42.3 = 10/10 PASS** ù **EXPORT-1 = CERTIFIED** ù **READY FOR D42.4** ù **PROD-3 = OPEN**
+**Estado:** **D42.3 = COMPLETE** ÔøΩ **CA-D42.3 = 10/10 PASS** ÔøΩ **EXPORT-1 = CERTIFIED** ÔøΩ **READY FOR D42.4** ÔøΩ **PROD-3 = OPEN**
 
-### 1. Declaraciùn
+### 1. DeclaraciÔøΩn
 
 ```text
 EXPORT-1 = CERTIFIED
 CA-D42.3 = PASS
 EVIDENCE = D42.1 BUILD + D42.2 TESTING CONSOLIDATED
 ARCHITECTURE / API / OWNERSHIP / SCOPE FREEZE = RESPECTED
-GRAPH UNTOUCHED ù PDF COMPATIBLE ù PROD-2E PASS
+GRAPH UNTOUCHED ÔøΩ PDF COMPATIBLE ÔøΩ PROD-2E PASS
 NO SRC CHANGES IN D42.3
 NO RELEASE EXECUTED HERE
 NEXT = D42.4 ? EXPORT-1 Release
 ```
 
-### 2. Certificaciùn
+### 2. CertificaciÔøΩn
 
-| ùtem | Resultado |
+| ÔøΩtem | Resultado |
 |------|-----------|
 | CA-D42.3 | 10/10 PASS |
 | PNG / SVG / pixelRatio / sampleStep | CERTIFIED |
 | Helpers / handlers / wiring / chartExportRef | CERTIFIED |
-| PDF compatibility ù GRAPH ù PROD-2E | CERTIFIED |
+| PDF compatibility ÔøΩ GRAPH ÔøΩ PROD-2E | CERTIFIED |
 | Acta | `docs/D42.3-export1-certification.md` |
 
 ### 3. Archivos (D42.3)
 
 **Creado:** `docs/D42.3-export1-certification.md`  
 
-**Append-only:** este ùD42.3  
+**Append-only:** este ÔøΩD42.3  
 
-**No modificado:** `src/**` ù scripts ù package.json ù GRAPH ù Persistence ù D37?D42.2 ù Freeze ù API
+**No modificado:** `src/**` ÔøΩ scripts ÔøΩ package.json ÔøΩ GRAPH ÔøΩ Persistence ÔøΩ D37?D42.2 ÔøΩ Freeze ÔøΩ API
 
 ### 4. Handoff
 
 ```text
 NEXT: D42.4 ? EXPORT-1 Release
-EXPORT-1 CERTIFIED ù READY FOR RELEASE
+EXPORT-1 CERTIFIED ÔøΩ READY FOR RELEASE
 ```
 
 ### 5. Append Integrity
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append al EOF | **Sù** |
-| Sin reescribir ù previos | **Sù** |
+| Append al EOF | **SÔøΩ** |
+| Sin reescribir ÔøΩ previos | **SÔøΩ** |
 
 ---
 
-*ùD42.3 APPEND-ONLY 2026-07-17 ù D42.3 COMPLETE ù CA-D42.3 10/10 PASS ù EXPORT-1 CERTIFIED ù READY FOR D42.4 Release.*
+*ÔøΩD42.3 APPEND-ONLY 2026-07-17 ÔøΩ D42.3 COMPLETE ÔøΩ CA-D42.3 10/10 PASS ÔøΩ EXPORT-1 CERTIFIED ÔøΩ READY FOR D42.4 Release.*
 
 ---
 
-## ùD42.4 ? EXPORT-1 Release
+## ÔøΩD42.4 ? EXPORT-1 Release
 
 **Fecha:** 2026-07-17  
 **Serie:** D42.0?D42.4  
-**Estado:** **D42.4 = COMPLETE** ù **CA-D42.4 = 10/10 PASS** ù **EXPORT-1 = RELEASED** ù **M1 = EXPORT-1 READY** ù **D42 = CLOSED** ù **PROD-3 = OPEN**
+**Estado:** **D42.4 = COMPLETE** ÔøΩ **CA-D42.4 = 10/10 PASS** ÔøΩ **EXPORT-1 = RELEASED** ÔøΩ **M1 = EXPORT-1 READY** ÔøΩ **D42 = CLOSED** ÔøΩ **PROD-3 = OPEN**
 
-### 1. Declaraciùn
+### 1. DeclaraciÔøΩn
 
 ```text
 EXPORT-1 = RELEASED
@@ -867,41 +867,41 @@ NO SRC / TESTS / SCRIPTS / PACKAGE.JSON CHANGES IN D42.4
 PROD-3 CONTINUES ? NEXT EPIC = EXPORT-2 (D38.4 Roadmap)
 ```
 
-### 2. Cronologùa D42 (cierre)
+### 2. CronologÔøΩa D42 (cierre)
 
 | Microfase | Estado |
 |-----------|--------|
 | D42.0 Technical Execution Planning | COMPLETE |
-| D42.1 BUILD Implementation | COMPLETE ù CA PASS |
-| D42.2 Testing | COMPLETE ù CA PASS |
-| D42.3 Certification | COMPLETE ù CERTIFIED |
-| D42.4 Release | COMPLETE ù **RELEASED** |
+| D42.1 BUILD Implementation | COMPLETE ÔøΩ CA PASS |
+| D42.2 Testing | COMPLETE ÔøΩ CA PASS |
+| D42.3 Certification | COMPLETE ÔøΩ CERTIFIED |
+| D42.4 Release | COMPLETE ÔøΩ **RELEASED** |
 
 ### 3. Baseline actualizado
 
 | Campo | Valor post-Release |
 |-------|-------------------|
-| ùpica #1 EXPORT-1 | **RELEASED / M1 READY** |
-| Capacidad | VGB PNG/SVG alta res ù pixelRatio ù sampleStep (export surface) |
+| ÔøΩpica #1 EXPORT-1 | **RELEASED / M1 READY** |
+| Capacidad | VGB PNG/SVG alta res ÔøΩ pixelRatio ÔøΩ sampleStep (export surface) |
 | GRAPH barrels | Intactos |
 | schemaVersion | 2 (inalterado) |
-| Siguiente ùpica Roadmap | **EXPORT-2** |
+| Siguiente ÔøΩpica Roadmap | **EXPORT-2** |
 
 ### 4. Archivos (D42.4)
 
 **Creado:** `docs/D42.4-export1-release.md`  
 
-**Append-only:** este ùD42.4  
+**Append-only:** este ÔøΩD42.4  
 
-**No modificado:** `src/**` ù tests ù scripts ù `package.json` ù D37?D42.3 ù Freeze ù API ù Governance ù QG
+**No modificado:** `src/**` ÔøΩ tests ÔøΩ scripts ÔøΩ `package.json` ÔøΩ D37?D42.3 ÔøΩ Freeze ÔøΩ API ÔøΩ Governance ÔøΩ QG
 
-### 5. Certificaciùn
+### 5. CertificaciÔøΩn
 
-| ùtem | Resultado |
+| ÔøΩtem | Resultado |
 |------|-----------|
 | CA-D42.4 | 10/10 PASS |
 | Release Gate | PASS |
-| Cierre oficial ùpica | **Sù** |
+| Cierre oficial ÔøΩpica | **SÔøΩ** |
 
 ### 6. Handoff Roadmap
 
@@ -916,20 +916,20 @@ Do not reuse D39 numbering for EXPORT-2 BUILD (RN-D40).
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append al EOF | **Sù** |
-| Sin reescribir ù previos (ùD39?ùD42.3) | **Sù** |
+| Append al EOF | **SÔøΩ** |
+| Sin reescribir ÔøΩ previos (ÔøΩD39?ÔøΩD42.3) | **SÔøΩ** |
 
 ### 8. STATUS Integrity Declaration
 
 ```text
-ùD42.4 es APPEND-ONLY.
+ÔøΩD42.4 es APPEND-ONLY.
 EXPORT-1 queda RELEASED sin alterar Freeze ni reescribir historia.
 PROD-3 permanece OPEN hacia EXPORT-2.
 ```
 
 ---
 
-*ùD42.4 APPEND-ONLY 2026-07-17 ù D42.4 COMPLETE ù CA-D42.4 10/10 PASS ù EXPORT-1 RELEASED ù M1 EXPORT-1 READY ù D42 CLOSED ù PROD-3 OPEN ? EXPORT-2.*
+*ÔøΩD42.4 APPEND-ONLY 2026-07-17 ÔøΩ D42.4 COMPLETE ÔøΩ CA-D42.4 10/10 PASS ÔøΩ EXPORT-1 RELEASED ÔøΩ M1 EXPORT-1 READY ÔøΩ D42 CLOSED ÔøΩ PROD-3 OPEN ? EXPORT-2.*
 
 ---
 
@@ -937,7 +937,7 @@ PROD-3 permanece OPEN hacia EXPORT-2.
 
 **Fecha:** 2026-07-18  
 **Serie:** D43.1?D43.7  
-**Estado:** **D43 = CLOSED** ù **CA-D43 = 6/6 PASS** ù **EXPORT-2 = OPEN** ù **Discovery = COMPLETE** ù **Baseline = FROZEN** ù **Roadmap = APPROVED** ù **PROD-3 = OPEN**
+**Estado:** **D43 = CLOSED** ÔøΩ **CA-D43 = 6/6 PASS** ÔøΩ **EXPORT-2 = OPEN** ÔøΩ **Discovery = COMPLETE** ÔøΩ **Baseline = FROZEN** ÔøΩ **Roadmap = APPROVED** ÔøΩ **PROD-3 = OPEN**
 
 ### 1. Executive Summary
 
@@ -974,7 +974,7 @@ Roadmap APPROVED
 
 ### 5. Checklist
 
-| ùtem | Resultado |
+| ÔøΩtem | Resultado |
 |------|-----------|
 | Discovery | **PASS** |
 | Baseline congelada | **PASS** |
@@ -1012,10 +1012,10 @@ Ready for D44
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append-only al EOF | **Sù** |
-| Previous sections preserved | **Sù** |
-| D42 unchanged | **Sù** |
-| Sin reescribir ùD39?ùD42.4 | **Sù** |
+| Append-only al EOF | **SÔøΩ** |
+| Previous sections preserved | **SÔøΩ** |
+| D42 unchanged | **SÔøΩ** |
+| Sin reescribir ÔøΩD39?ÔøΩD42.4 | **SÔøΩ** |
 
 ### 9. STATUS Integrity Declaration
 
@@ -1028,18 +1028,18 @@ PROD-3 permanece OPEN.
 
 ---
 
-*## D43 APPEND-ONLY 2026-07-18 ù D43 CLOSED ù CA-D43 6/6 PASS ù EXPORT-2 OPEN ù Discovery COMPLETE ù Baseline FROZEN ù Roadmap APPROVED ù Ready for D44 ? EXPORT-2 BUILD.*
+*## D43 APPEND-ONLY 2026-07-18 ÔøΩ D43 CLOSED ÔøΩ CA-D43 6/6 PASS ÔøΩ EXPORT-2 OPEN ÔøΩ Discovery COMPLETE ÔøΩ Baseline FROZEN ÔøΩ Roadmap APPROVED ÔøΩ Ready for D44 ? EXPORT-2 BUILD.*
 
 
 ## D44.1
 
 **Fecha:** 2026-07-18  
 **Microfase:** D44.1 ? BUILD AUTHORIZATION  
-**Estado:** **D44.1 = COMPLETE** ù **BUILD AUTHORIZED** ù **CA-D44.1 = 10/10 PASS** ù **EXPORT-2 = OPEN** ù **PROD-3 = OPEN** ù **NO IMPLEMENTATION IN D44.1**
+**Estado:** **D44.1 = COMPLETE** ÔøΩ **BUILD AUTHORIZED** ÔøΩ **CA-D44.1 = 10/10 PASS** ÔøΩ **EXPORT-2 = OPEN** ÔøΩ **PROD-3 = OPEN** ÔøΩ **NO IMPLEMENTATION IN D44.1**
 
 ### 1. Executive Summary
 
-Gobernanza pre-BUILD de EXPORT-2. Acta de autorizaciùn emitida. Discovery D43 referenciada sin recrear Inventory / Blueprint / Risk / Validation docs. Cùdigo no tocado. Handoff a D44.2 BUILD.
+Gobernanza pre-BUILD de EXPORT-2. Acta de autorizaciÔøΩn emitida. Discovery D43 referenciada sin recrear Inventory / Blueprint / Risk / Validation docs. CÔøΩdigo no tocado. Handoff a D44.2 BUILD.
 
 ### 2. Previous State
 
@@ -1072,7 +1072,7 @@ READY FOR D44.2 ? BUILD
 
 ### 5. Checks
 
-| ùtem | Resultado |
+| ÔøΩtem | Resultado |
 |------|-----------|
 | D43 CLOSED | **PASS** |
 | Architecture Freeze ACTIVE | **PASS** |
@@ -1083,7 +1083,7 @@ READY FOR D44.2 ? BUILD
 | Definition of Done Approved | **PASS** |
 | No New Risks | **PASS** |
 | BUILD AUTHORIZED | **PASS** |
-| Sin cambios `src/**` ù `scripts/**` ù tests | **PASS** |
+| Sin cambios `src/**` ÔøΩ `scripts/**` ÔøΩ tests | **PASS** |
 
 ### 6. CA
 
@@ -1107,10 +1107,10 @@ NEXT = D44.2 ? BUILD
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append-only al EOF | **Sù** |
-| Previous sections preserved | **Sù** |
-| D43 / D42 unchanged | **Sù** |
-| Sin reescribir ùD39?## D43 | **Sù** |
+| Append-only al EOF | **SÔøΩ** |
+| Previous sections preserved | **SÔøΩ** |
+| D43 / D42 unchanged | **SÔøΩ** |
+| Sin reescribir ÔøΩD39?## D43 | **SÔøΩ** |
 
 ### 9. STATUS Integrity Declaration
 
@@ -1123,17 +1123,17 @@ PROD-3 permanece OPEN.
 
 ---
 
-*## D44.1 APPEND-ONLY 2026-07-18 ù D44.1 COMPLETE ù CA-D44.1 10/10 PASS ù BUILD AUTHORIZED ù Ready for D44.2 ? BUILD.*
+*## D44.1 APPEND-ONLY 2026-07-18 ÔøΩ D44.1 COMPLETE ÔøΩ CA-D44.1 10/10 PASS ÔøΩ BUILD AUTHORIZED ÔøΩ Ready for D44.2 ? BUILD.*
 
 ## D44.2
 
 **Fecha:** 2026-07-18  
 **Microfase:** D44.2 ? BUILD  
-**Estado:** **D44.2 = COMPLETE** ù **CA-D44.2 = 10/10 PASS** ù **BUILD = COMPLETE** ù **EXPORT-2 = OPEN** ù **PROD-3 = OPEN** ù **READY FOR D44.3**
+**Estado:** **D44.2 = COMPLETE** ÔøΩ **CA-D44.2 = 10/10 PASS** ÔøΩ **BUILD = COMPLETE** ÔøΩ **EXPORT-2 = OPEN** ÔøΩ **PROD-3 = OPEN** ÔøΩ **READY FOR D44.3**
 
 ### 1. Executive Summary
 
-Implementaciùn EXPORT-2 PDF toggle-aware. Filtro en scientific/report, orquestaciùn en page.tsx, reuso de captureChartAsPngDataUrl, disclaimer UX mùnima. chartExport.ts y GRAPH intactos. Units + tsc PASS.
+ImplementaciÔøΩn EXPORT-2 PDF toggle-aware. Filtro en scientific/report, orquestaciÔøΩn en page.tsx, reuso de captureChartAsPngDataUrl, disclaimer UX mÔøΩnima. chartExport.ts y GRAPH intactos. Units + tsc PASS.
 
 ### 2. Previous State
 
@@ -1156,7 +1156,7 @@ READY FOR D44.3 ? TESTING
 
 ### 4. Documents / Code
 
-| ùtem | Path |
+| ÔøΩtem | Path |
 |------|------|
 | Acta | docs/D44.2-export2-build.md |
 | Filter | src/lib/scientific/report/pdf-section-filter.ts |
@@ -1195,9 +1195,9 @@ NEXT = D44.3 ? TESTING
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append-only al EOF | **Sù** |
-| Previous sections preserved | **Sù** |
-| D44.1 / D43 unchanged | **Sù** |
+| Append-only al EOF | **SÔøΩ** |
+| Previous sections preserved | **SÔøΩ** |
+| D44.1 / D43 unchanged | **SÔøΩ** |
 
 ### 9. STATUS Integrity Declaration
 
@@ -1210,13 +1210,13 @@ PROD-3 permanece OPEN.
 
 ---
 
-*## D44.2 APPEND-ONLY 2026-07-18 ù D44.2 COMPLETE ù CA-D44.2 10/10 PASS ù BUILD COMPLETE ù Ready for D44.3 ? TESTING.*
+*## D44.2 APPEND-ONLY 2026-07-18 ÔøΩ D44.2 COMPLETE ÔøΩ CA-D44.2 10/10 PASS ÔøΩ BUILD COMPLETE ÔøΩ Ready for D44.3 ? TESTING.*
 
 ## D44.3
 
 **Fecha:** 2026-07-18  
 **Microfase:** D44.3 ? TESTING  
-**Estado:** **D44.3 = COMPLETE** ù **CA-D44.3 = 10/10 PASS** ù **TESTING = COMPLETE** ù **EXPORT-2 = OPEN** ù **PROD-3 = OPEN** ù **READY FOR D44.4**
+**Estado:** **D44.3 = COMPLETE** ÔøΩ **CA-D44.3 = 10/10 PASS** ÔøΩ **TESTING = COMPLETE** ÔøΩ **EXPORT-2 = OPEN** ÔøΩ **PROD-3 = OPEN** ÔøΩ **READY FOR D44.4**
 
 ### 1. Executive Summary
 
@@ -1243,7 +1243,7 @@ READY FOR D44.4 ? CERTIFICATION
 
 ### 4. Documents / Artifacts
 
-| ùtem | Path |
+| ÔøΩtem | Path |
 |------|------|
 | Acta | docs/D44.3-export2-testing.md |
 | Harness | scripts/validate-export2-d44-3-testing.ts |
@@ -1286,9 +1286,9 @@ NEXT = D44.4 ? CERTIFICATION
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append-only al EOF | **Sù** |
-| Previous sections preserved | **Sù** |
-| D44.2 / D44.1 unchanged | **Sù** |
+| Append-only al EOF | **SÔøΩ** |
+| Previous sections preserved | **SÔøΩ** |
+| D44.2 / D44.1 unchanged | **SÔøΩ** |
 
 ### 9. STATUS Integrity Declaration
 
@@ -1301,17 +1301,17 @@ PROD-3 permanece OPEN.
 
 ---
 
-*## D44.3 APPEND-ONLY 2026-07-18 ù D44.3 COMPLETE ù CA-D44.3 10/10 PASS ù TESTING COMPLETE ù Ready for D44.4 ? CERTIFICATION.*
+*## D44.3 APPEND-ONLY 2026-07-18 ÔøΩ D44.3 COMPLETE ÔøΩ CA-D44.3 10/10 PASS ÔøΩ TESTING COMPLETE ÔøΩ Ready for D44.4 ? CERTIFICATION.*
 
 ## D44.4
 
 **Fecha:** 2026-07-18  
 **Microfase:** D44.4 ? CERTIFICATION  
-**Estado:** **D44.4 = COMPLETE** ù **CA-D44.4 = 10/10 PASS** ù **EXPORT-2 = CERTIFIED** ù **READY FOR RELEASE** ù **PROD-3 = OPEN** ù **READY FOR D44.5**
+**Estado:** **D44.4 = COMPLETE** ÔøΩ **CA-D44.4 = 10/10 PASS** ÔøΩ **EXPORT-2 = CERTIFIED** ÔøΩ **READY FOR RELEASE** ÔøΩ **PROD-3 = OPEN** ÔøΩ **READY FOR D44.5**
 
 ### 1. Executive Summary
 
-Certificaciùn documental EXPORT-2. Evidencias D44.2/D44.3 consolidadas. Architecture/Governance/Regression/Performance PASS. Sin cùdigo tocado. READY FOR RELEASE.
+CertificaciÔøΩn documental EXPORT-2. Evidencias D44.2/D44.3 consolidadas. Architecture/Governance/Regression/Performance PASS. Sin cÔøΩdigo tocado. READY FOR RELEASE.
 
 ### 2. Previous State
 
@@ -1340,7 +1340,7 @@ READY FOR D44.5 ? RELEASE
 
 ### 5. Checklist
 
-| ùtem | Resultado |
+| ÔøΩtem | Resultado |
 |------|-----------|
 | BUILD certificado | **PASS** |
 | TESTING certificado | **PASS** |
@@ -1371,32 +1371,32 @@ NEXT = D44.5 ? RELEASE
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append-only al EOF | **Sù** |
-| Previous sections preserved | **Sù** |
-| D44.3 / D44.2 unchanged | **Sù** |
+| Append-only al EOF | **SÔøΩ** |
+| Previous sections preserved | **SÔøΩ** |
+| D44.3 / D44.2 unchanged | **SÔøΩ** |
 
 ### 9. STATUS Integrity Declaration
 
 `	ext
 ## D44.4 es APPEND-ONLY.
 CERTIFICATION COMPLETE sin alterar Freeze ni reescribir historia.
-EXPORT-2 CERTIFIED ù READY FOR RELEASE hacia D44.5.
+EXPORT-2 CERTIFIED ÔøΩ READY FOR RELEASE hacia D44.5.
 PROD-3 permanece OPEN.
 `
 
 ---
 
-*## D44.4 APPEND-ONLY 2026-07-18 ù D44.4 COMPLETE ù CA-D44.4 10/10 PASS ù EXPORT-2 CERTIFIED ù READY FOR RELEASE ù Ready for D44.5 ? RELEASE.*
+*## D44.4 APPEND-ONLY 2026-07-18 ÔøΩ D44.4 COMPLETE ÔøΩ CA-D44.4 10/10 PASS ÔøΩ EXPORT-2 CERTIFIED ÔøΩ READY FOR RELEASE ÔøΩ Ready for D44.5 ? RELEASE.*
 
 ## D44.5
 
 **Fecha:** 2026-07-18  
 **Microfase:** D44.5 ? RELEASE  
-**Estado:** **D44.5 = COMPLETE** ù **CA-D44.5 = 10/10 PASS** ù **EXPORT-2 = RELEASED** ù **M2 = EXPORT-2 READY** ù **D44 = CLOSED** ù **PROD-3 = OPEN**
+**Estado:** **D44.5 = COMPLETE** ÔøΩ **CA-D44.5 = 10/10 PASS** ÔøΩ **EXPORT-2 = RELEASED** ÔøΩ **M2 = EXPORT-2 READY** ÔøΩ **D44 = CLOSED** ÔøΩ **PROD-3 = OPEN**
 
 ### 1. Executive Summary
 
-Release Gate PASS. EXPORT-2 RELEASED. Product Milestone M2 = EXPORT-2 READY. Serie D44 CLOSED. Sin cùdigo tocado. PROD-3 continùa hacia PROD-1B (D38.4).
+Release Gate PASS. EXPORT-2 RELEASED. Product Milestone M2 = EXPORT-2 READY. Serie D44 CLOSED. Sin cÔøΩdigo tocado. PROD-3 continÔøΩa hacia PROD-1B (D38.4).
 
 ### 2. Previous State
 
@@ -1436,7 +1436,7 @@ NEXT EPIC = PROD-1B
 
 ### 6. Checklist
 
-| ùtem | Resultado |
+| ÔøΩtem | Resultado |
 |------|-----------|
 | Release Gate PASS | **PASS** |
 | EXPORT-2 RELEASED | **PASS** |
@@ -1467,32 +1467,32 @@ NEXT EPIC (D38.4) = PROD-1B
 
 | Regla | Cumplimiento |
 |-------|--------------|
-| Append-only al EOF | **Sù** |
-| Previous sections preserved | **Sù** |
-| D44.4 / D44.3 unchanged | **Sù** |
+| Append-only al EOF | **SÔøΩ** |
+| Previous sections preserved | **SÔøΩ** |
+| D44.4 / D44.3 unchanged | **SÔøΩ** |
 
 ### 10. STATUS Integrity Declaration
 
 `	ext
 ## D44.5 es APPEND-ONLY.
 RELEASE COMPLETE sin alterar Freeze ni reescribir historia.
-EXPORT-2 RELEASED ù M2 READY ù D44 CLOSED.
+EXPORT-2 RELEASED ÔøΩ M2 READY ÔøΩ D44 CLOSED.
 PROD-3 permanece OPEN hacia PROD-1B.
 `
 
 ---
 
-*## D44.5 APPEND-ONLY 2026-07-18 ù D44.5 COMPLETE ù CA-D44.5 10/10 PASS ù EXPORT-2 RELEASED ù M2 EXPORT-2 READY ù D44 CLOSED ù PROD-3 OPEN ? PROD-1B.*
+*## D44.5 APPEND-ONLY 2026-07-18 ÔøΩ D44.5 COMPLETE ÔøΩ CA-D44.5 10/10 PASS ÔøΩ EXPORT-2 RELEASED ÔøΩ M2 EXPORT-2 READY ÔøΩ D44 CLOSED ÔøΩ PROD-3 OPEN ? PROD-1B.*
 
 ## D45.1
 
 **Fecha:** 2026-07-18  
 **Microfase:** D45.1 ? Discovery + Baseline + Inventory  
-**Estado:** **D45.1 = COMPLETE** ù **CA-D45.1 = 10/10 PASS** ù **UI BASELINE = RECORDED** ù **D45 = OPEN** ù **PROD-3 = OPEN**
+**Estado:** **D45.1 = COMPLETE** ÔøΩ **CA-D45.1 = 10/10 PASS** ÔøΩ **UI BASELINE = RECORDED** ÔøΩ **D45 = OPEN** ÔøΩ **PROD-3 = OPEN**
 
 ### 1. Executive Summary
 
-Discovery documental del track v1.1 UX Foundation. Baseline UI inventariado y medido. Sin cambios de codigo, estilos, exports ni comportamiento. Capa `src/lib/ui/` y `src/components/ui/` confirmadas inexistentes. Listo para D45.2 (Tokens ù Theme ù Icon Registry).
+Discovery documental del track v1.1 UX Foundation. Baseline UI inventariado y medido. Sin cambios de codigo, estilos, exports ni comportamiento. Capa `src/lib/ui/` y `src/components/ui/` confirmadas inexistentes. Listo para D45.2 (Tokens ÔøΩ Theme ÔøΩ Icon Registry).
 
 ### 2. Previous State
 
@@ -1566,7 +1566,7 @@ D45.1 = COMPLETE
 UI BASELINE = RECORDED
 D45 = OPEN
 NO BUILD AUTHORIZED BY D45.1
-NEXT = D45.2 ? UI Tokens ù Theme ù Icon Registry
+NEXT = D45.2 ? UI Tokens ÔøΩ Theme ÔøΩ Icon Registry
 EXPORT-2 / GRAPH FREEZES = PRESERVED
 PROD-3 = OPEN
 NEXT EPIC (D38.4) = PROD-1B
@@ -1585,19 +1585,19 @@ NEXT EPIC (D38.4) = PROD-1B
 ```text
 ## D45.1 es APPEND-ONLY.
 Discovery + Baseline + Inventory COMPLETE sin codigo ni reescritura de historia.
-UI BASELINE RECORDED ù D45 OPEN ù Ready for D45.2.
-PROD-3 permanece OPEN ù PROD-1B (D38.4) no redefinido.
+UI BASELINE RECORDED ÔøΩ D45 OPEN ÔøΩ Ready for D45.2.
+PROD-3 permanece OPEN ÔøΩ PROD-1B (D38.4) no redefinido.
 ```
 
 ---
 
-*## D45.1 APPEND-ONLY 2026-07-18 ù D45.1 COMPLETE ù CA-D45.1 10/10 PASS ù UI BASELINE RECORDED ù D45 OPEN ù Ready for D45.2 ? Tokens ù Theme ù Icons.*
+*## D45.1 APPEND-ONLY 2026-07-18 ÔøΩ D45.1 COMPLETE ÔøΩ CA-D45.1 10/10 PASS ÔøΩ UI BASELINE RECORDED ÔøΩ D45 OPEN ÔøΩ Ready for D45.2 ? Tokens ÔøΩ Theme ÔøΩ Icons.*
 
 ## D45.2
 
 **Fecha:** 2026-07-18  
-**Microfase:** D45.2 ? UI Tokens ù Theme ù Icon Registry  
-**Estado:** **D45.2 = COMPLETE** ù **CA-D45.2 = 10/10 PASS** ù **UI THEME FOUNDATION = READY** ù **D45 = OPEN** ù **PROD-3 = OPEN**
+**Microfase:** D45.2 ? UI Tokens ÔøΩ Theme ÔøΩ Icon Registry  
+**Estado:** **D45.2 = COMPLETE** ÔøΩ **CA-D45.2 = 10/10 PASS** ÔøΩ **UI THEME FOUNDATION = READY** ÔøΩ **D45 = OPEN** ÔøΩ **PROD-3 = OPEN**
 
 ### 1. Executive Summary
 
@@ -1662,7 +1662,7 @@ NEXT = D45.3
 ```text
 D45.2 = COMPLETE
 UI THEME FOUNDATION = READY
-NEXT = D45.3 ? Buttons ù Layout
+NEXT = D45.3 ? Buttons ÔøΩ Layout
 EXPORT / GRAPH FREEZES = PRESERVED
 ```
 
@@ -1678,19 +1678,19 @@ EXPORT / GRAPH FREEZES = PRESERVED
 
 ```text
 ## D45.2 es APPEND-ONLY.
-UI Tokens ù Theme ù Icon Registry COMPLETE.
-Ready for D45.3 ? Button System ù Panel Layout.
+UI Tokens ÔøΩ Theme ÔøΩ Icon Registry COMPLETE.
+Ready for D45.3 ? Button System ÔøΩ Panel Layout.
 ```
 
 ---
 
-*## D45.2 APPEND-ONLY 2026-07-18 ù D45.2 COMPLETE ù CA-D45.2 10/10 PASS ù UI THEME FOUNDATION READY ù Next D45.3.*
+*## D45.2 APPEND-ONLY 2026-07-18 ÔøΩ D45.2 COMPLETE ÔøΩ CA-D45.2 10/10 PASS ÔøΩ UI THEME FOUNDATION READY ÔøΩ Next D45.3.*
 
 ## D45.3
 
 **Fecha:** 2026-07-18  
-**Microfase:** D45.3 ? Button System ù Panel Layout  
-**Estado:** **D45.3 = COMPLETE** ù **CA-D45.3 = 10/10 PASS** ù **BUTTON+PANEL SYSTEM = READY** ù **D45 = OPEN** ù **PROD-3 = OPEN**
+**Microfase:** D45.3 ? Button System ÔøΩ Panel Layout  
+**Estado:** **D45.3 = COMPLETE** ÔøΩ **CA-D45.3 = 10/10 PASS** ÔøΩ **BUTTON+PANEL SYSTEM = READY** ÔøΩ **D45 = OPEN** ÔøΩ **PROD-3 = OPEN**
 
 ### 1. Executive Summary
 
@@ -1770,23 +1770,23 @@ EXPORT / GRAPH FREEZES = PRESERVED
 
 ```text
 ## D45.3 es APPEND-ONLY.
-Button System ù Panel Layout COMPLETE.
+Button System ÔøΩ Panel Layout COMPLETE.
 Ready for D45.4 ? Sidebar Extraction.
 ```
 
 ---
 
-*## D45.3 APPEND-ONLY 2026-07-18 ù D45.3 COMPLETE ù CA-D45.3 10/10 PASS ù BUTTON+PANEL READY ù Next D45.4.*
+*## D45.3 APPEND-ONLY 2026-07-18 ÔøΩ D45.3 COMPLETE ÔøΩ CA-D45.3 10/10 PASS ÔøΩ BUTTON+PANEL READY ÔøΩ Next D45.4.*
 
 ## D45.4
 
 **Fecha:** 2026-07-18  
 **Microfase:** D45.4 ? Sidebar Extraction  
-**Estado:** **D45.4 = COMPLETE** ù **CA-D45.4 = 10/10 PASS** ù **SIDEBAR EXTRACTED** ù **D45 = OPEN** ù **PROD-3 = OPEN**
+**Estado:** **D45.4 = COMPLETE** ÔøΩ **CA-D45.4 = 10/10 PASS** ÔøΩ **SIDEBAR EXTRACTED** ÔøΩ **D45 = OPEN** ÔøΩ **PROD-3 = OPEN**
 
 ### 1. Executive Summary
 
-Sidebar extraido de `page.tsx` a `src/components/ui/sidebar`. Handlers/estado permanecen en page. `getIcon` en SidebarItem. Sin rediseùo visual. Architecture + smoke + tsc PASS.
+Sidebar extraido de `page.tsx` a `src/components/ui/sidebar`. Handlers/estado permanecen en page. `getIcon` en SidebarItem. Sin rediseÔøΩo visual. Architecture + smoke + tsc PASS.
 
 ### 2. Previous State
 
@@ -1846,7 +1846,7 @@ NEXT = D45.5
 ```text
 D45.4 = COMPLETE
 SIDEBAR EXTRACTION = READY
-NEXT = D45.5 ? Validation ù Certification
+NEXT = D45.5 ? Validation ÔøΩ Certification
 EXPORT / GRAPH FREEZES = PRESERVED
 ```
 
@@ -1863,18 +1863,18 @@ EXPORT / GRAPH FREEZES = PRESERVED
 ```text
 ## D45.4 es APPEND-ONLY.
 Sidebar Extraction COMPLETE.
-Ready for D45.5 ? Validation ù Certification.
+Ready for D45.5 ? Validation ÔøΩ Certification.
 ```
 
 ---
 
-*## D45.4 APPEND-ONLY 2026-07-18 ù D45.4 COMPLETE ù CA-D45.4 10/10 PASS ù SIDEBAR EXTRACTED ù Next D45.5.*
+*## D45.4 APPEND-ONLY 2026-07-18 ÔøΩ D45.4 COMPLETE ÔøΩ CA-D45.4 10/10 PASS ÔøΩ SIDEBAR EXTRACTED ÔøΩ Next D45.5.*
 
 ## D45.5
 
 **Fecha:** 2026-07-19  
-**Microfase:** D45.5 ? Validation ù Certification ù Release Gate  
-**Estado:** **D45.5 = COMPLETE** ù **CA-D45.5 = 10/10 PASS** ù **D45 = CLOSED** ù **v1.1 UI Foundation = READY** ù **PROD-3 = OPEN**
+**Microfase:** D45.5 ? Validation ÔøΩ Certification ÔøΩ Release Gate  
+**Estado:** **D45.5 = COMPLETE** ÔøΩ **CA-D45.5 = 10/10 PASS** ÔøΩ **D45 = CLOSED** ÔøΩ **v1.1 UI Foundation = READY** ÔøΩ **PROD-3 = OPEN**
 
 ### 1. Executive Summary
 
@@ -1972,19 +1972,19 @@ PROD-3 = OPEN
 
 ```text
 ## D45.5 es APPEND-ONLY.
-Validation ù Certification COMPLETE.
-D45 CLOSED ù v1.1 UI Foundation READY ù Next D46.
+Validation ÔøΩ Certification COMPLETE.
+D45 CLOSED ÔøΩ v1.1 UI Foundation READY ÔøΩ Next D46.
 ```
 
 ---
 
-*## D45.5 APPEND-ONLY 2026-07-19 ù D45.5 COMPLETE ù CA-D45.5 10/10 PASS ù D45 CLOSED ù v1.1 UI Foundation READY ù Next D46 ? Sidebar Visual Refresh.*
+*## D45.5 APPEND-ONLY 2026-07-19 ÔøΩ D45.5 COMPLETE ÔøΩ CA-D45.5 10/10 PASS ÔøΩ D45 CLOSED ÔøΩ v1.1 UI Foundation READY ÔøΩ Next D46 ? Sidebar Visual Refresh.*
 
 ## D46.5
 
 **Fecha:** 2026-07-19  
-**Microfase:** D46.5 ? Validation ù Certification ù Release Gate  
-**Estado:** **D46.5 = COMPLETE** ù **CA-D46 = 6/6 PASS** ù **D46 = CLOSED** ù **Sidebar v2 = CERTIFIED** ù **PROD-3 = OPEN**
+**Microfase:** D46.5 ? Validation ÔøΩ Certification ÔøΩ Release Gate  
+**Estado:** **D46.5 = COMPLETE** ÔøΩ **CA-D46 = 6/6 PASS** ÔøΩ **D46 = CLOSED** ÔøΩ **Sidebar v2 = CERTIFIED** ÔøΩ **PROD-3 = OPEN**
 
 ### 1. Executive Summary
 
@@ -2091,37 +2091,37 @@ UI Foundation v1.1 continues toward D47
 
 ```text
 ## D46.5 es APPEND-ONLY.
-Validation ù Certification COMPLETE.
-D46 CLOSED ù Sidebar v2 CERTIFIED ù Next D47.
+Validation ÔøΩ Certification COMPLETE.
+D46 CLOSED ÔøΩ Sidebar v2 CERTIFIED ÔøΩ Next D47.
 ```
 
 ---
 
-*## D46.5 APPEND-ONLY 2026-07-19 ù D46.5 COMPLETE ù CA-D46 6/6 PASS ù D46 CLOSED ù Sidebar v2 CERTIFIED ù Next D47 ? Design Tokens v2.*
+*## D46.5 APPEND-ONLY 2026-07-19 ÔøΩ D46.5 COMPLETE ÔøΩ CA-D46 6/6 PASS ÔøΩ D46 CLOSED ÔøΩ Sidebar v2 CERTIFIED ÔøΩ Next D47 ? Design Tokens v2.*
 
 ---
 
 ## D47.1
 
-**Microfase:** D47.1 ? Workspace & Layout Foundation ù Discovery  
+**Microfase:** D47.1 ? Workspace & Layout Foundation ÔøΩ Discovery  
 **Fecha:** 2026-07-19  
-**Estado:** **DISCOVERY COMPLETE** ù **LAYOUT BASELINE = FROZEN** ù **Workspace API Freeze = RECORDED**  
-**Modo:** Documental only ? create `docs/D47.1-layout-discovery.md` ù append-only este bloque ù **cero cambios** `src/**` ù `scripts/**` ù `package.json`
+**Estado:** **DISCOVERY COMPLETE** ÔøΩ **LAYOUT BASELINE = FROZEN** ÔøΩ **Workspace API Freeze = RECORDED**  
+**Modo:** Documental only ? create `docs/D47.1-layout-discovery.md` ÔøΩ append-only este bloque ÔøΩ **cero cambios** `src/**` ÔøΩ `scripts/**` ÔøΩ `package.json`
 
 ### Resumen
 
-Se congela la arquitectura actual del shell (`page.tsx` LOC **26672**) antes de la extracciùn move-only del Workspace. Se registra la **resecuenciaciùn oficial**: D47 = Workspace & Layout Foundation; Design Tokens v2 pasa a **D48**. Workspace API Freeze, Slot API, move-only contract, governance preview y roadmap D48?D52 quedan documentados sin implementaciùn.
+Se congela la arquitectura actual del shell (`page.tsx` LOC **26672**) antes de la extracciÔøΩn move-only del Workspace. Se registra la **resecuenciaciÔøΩn oficial**: D47 = Workspace & Layout Foundation; Design Tokens v2 pasa a **D48**. Workspace API Freeze, Slot API, move-only contract, governance preview y roadmap D48?D52 quedan documentados sin implementaciÔøΩn.
 
 | Campo | Valor |
 |-------|--------|
 | Documento | [`docs/D47.1-layout-discovery.md`](docs/D47.1-layout-discovery.md) |
 | `page.tsx` LOC baseline | **26672** |
 | `src/components/workspace/` | No existe (esperado) |
-| API Freeze | `WorkspaceLayoutProps` ù `WorkspaceContentProps` ù `WorkspacePanelsProps` ù `WORKSPACE_TOKENS` |
+| API Freeze | `WorkspaceLayoutProps` ÔøΩ `WorkspaceContentProps` ÔøΩ `WorkspacePanelsProps` ÔøΩ `WORKSPACE_TOKENS` |
 | Breaking changes en D47 | **No permitted** |
 | CA-D47.1 | **10/10 PASS** |
 
-### Resecuenciaciùn
+### ResecuenciaciÔøΩn
 
 ```text
 D46.5 NEXT (historico) = D47 Design Tokens v2
@@ -2156,20 +2156,20 @@ NEXT = D47.2 ? Workspace Domain Extraction
 
 ---
 
-*## D47.1 APPEND-ONLY 2026-07-19 ù D47.1 COMPLETE ù CA-D47.1 10/10 PASS ù LAYOUT BASELINE FROZEN ù Next D47.2 Workspace Domain Extraction.*
+*## D47.1 APPEND-ONLY 2026-07-19 ÔøΩ D47.1 COMPLETE ÔøΩ CA-D47.1 10/10 PASS ÔøΩ LAYOUT BASELINE FROZEN ÔøΩ Next D47.2 Workspace Domain Extraction.*
 
 ---
 
 ## D48.1
 
-**Microfase:** D48.1 ? Design Tokens v2 ù Discovery  
+**Microfase:** D48.1 ? Design Tokens v2 ÔøΩ Discovery  
 **Fecha:** 2026-07-20  
-**Estado:** **DISCOVERY COMPLETE** ù **TOKEN BASELINE = FROZEN** ù **Design Tokens v2 API Freeze = RECORDED**  
-**Modo:** Documental only ? create `docs/D48.1-design-tokens-v2-discovery.md` ù append-only este bloque ù **cero cambios** `src/**` ù `scripts/**` ù `package.json`
+**Estado:** **DISCOVERY COMPLETE** ÔøΩ **TOKEN BASELINE = FROZEN** ÔøΩ **Design Tokens v2 API Freeze = RECORDED**  
+**Modo:** Documental only ? create `docs/D48.1-design-tokens-v2-discovery.md` ÔøΩ append-only este bloque ÔøΩ **cero cambios** `src/**` ÔøΩ `scripts/**` ÔøΩ `package.json`
 
 ### Resumen
 
-Se congela el baseline visual/token **post-D47 Workspace Foundation** y se abre oficialmente **D48 ? Design Tokens v2**. Inventario de `tokens.ts` / `theme.ts` / `icons.ts` / `WORKSPACE_TOKENS` / Sidebar / Buttons / Panels. API Freeze (`UI_TOKENS`, `WORKSPACE_TOKENS`, theme helpers, icon registry). Sin tokens nuevos ni cambios de cùdigo.
+Se congela el baseline visual/token **post-D47 Workspace Foundation** y se abre oficialmente **D48 ? Design Tokens v2**. Inventario de `tokens.ts` / `theme.ts` / `icons.ts` / `WORKSPACE_TOKENS` / Sidebar / Buttons / Panels. API Freeze (`UI_TOKENS`, `WORKSPACE_TOKENS`, theme helpers, icon registry). Sin tokens nuevos ni cambios de cÔøΩdigo.
 
 | Campo | Valor |
 |-------|--------|
@@ -2204,20 +2204,20 @@ NEXT = D48.2 ? Token Consolidation
 
 ---
 
-*## D48.1 APPEND-ONLY 2026-07-20 ù D48.1 COMPLETE ù CA-D48.1 8/8 PASS ù TOKEN BASELINE FROZEN ù Next D48.2 Token Consolidation.*
+*## D48.1 APPEND-ONLY 2026-07-20 ÔøΩ D48.1 COMPLETE ÔøΩ CA-D48.1 8/8 PASS ÔøΩ TOKEN BASELINE FROZEN ÔøΩ Next D48.2 Token Consolidation.*
 
 ---
 
 ## D47.5
 
-**Microfase:** D47.5 ? Workspace Foundation ù Certification ù Release Gate  
+**Microfase:** D47.5 ? Workspace Foundation ÔøΩ Certification ÔøΩ Release Gate  
 **Fecha:** 2026-07-20  
-**Estado:** **D47 CLOSED** ù **Workspace Foundation CERTIFIED** ù **CA-D47 = PASS**  
-**Modo:** Documental only ? create `docs/D47.5-workspace-foundation-certification.md` ù append-only este bloque ù **cero cambios** `src/**` ù `scripts/**` ù `package.json`
+**Estado:** **D47 CLOSED** ÔøΩ **Workspace Foundation CERTIFIED** ÔøΩ **CA-D47 = PASS**  
+**Modo:** Documental only ? create `docs/D47.5-workspace-foundation-certification.md` ÔøΩ append-only este bloque ÔøΩ **cero cambios** `src/**` ÔøΩ `scripts/**` ÔøΩ `package.json`
 
 ### Resumen
 
-Se certifica y cierra oficialmente **D47 ? UX-1 Workspace & Layout Foundation**. Umbrella `validate:v11-d47-gate` PASS (workspace architecture 26/26, UI architecture, sidebar-v2, tsc, build). Smoke S1?S9 PASS. API Freeze y governance confirmados. Mùtricas: `page.tsx` 26672 ? 26686 (? +14 slot boilerplate); workspace module **111 LOC**.
+Se certifica y cierra oficialmente **D47 ? UX-1 Workspace & Layout Foundation**. Umbrella `validate:v11-d47-gate` PASS (workspace architecture 26/26, UI architecture, sidebar-v2, tsc, build). Smoke S1?S9 PASS. API Freeze y governance confirmados. MÔøΩtricas: `page.tsx` 26672 ? 26686 (? +14 slot boilerplate); workspace module **111 LOC**.
 
 | Campo | Valor |
 |-------|--------|
@@ -2237,7 +2237,7 @@ Se certifica y cierra oficialmente **D47 ? UX-1 Workspace & Layout Foundation**.
 | STATUS append-only | **PASS** |
 | Gates registrados | **PASS** |
 | Smoke tests registrados | **PASS** |
-| Mùtricas registradas | **PASS** |
+| MÔøΩtricas registradas | **PASS** |
 | API Freeze confirmado | **PASS** |
 | Governance confirmada | **PASS** |
 | D47 oficialmente cerrado | **PASS** |
@@ -2255,7 +2255,7 @@ NEXT = D48 ? Design Tokens v2
 
 ---
 
-*## D47.5 APPEND-ONLY 2026-07-20 ù D47.5 COMPLETE ù CA-D47 PASS ù D47 CLOSED ù Workspace Foundation CERTIFIED ù Next D48 ? Design Tokens v2.*
+*## D47.5 APPEND-ONLY 2026-07-20 ÔøΩ D47.5 COMPLETE ÔøΩ CA-D47 PASS ÔøΩ D47 CLOSED ÔøΩ Workspace Foundation CERTIFIED ÔøΩ Next D48 ? Design Tokens v2.*
 
 ---
 
@@ -2312,10 +2312,10 @@ NEXT = D49 ? Adaptive Toolbar
 
 ## D49.1
 
-**Microfase:** D49.1 ? Adaptive Toolbar Foundation ù Discovery  
+**Microfase:** D49.1 ? Adaptive Toolbar Foundation ÔøΩ Discovery  
 **Fecha:** 2026-07-20  
-**Estado:** **D49 OPEN** ù **D49.1 COMPLETE** ù **TOOLBAR BASELINE = FROZEN** ù **API Freeze ACTIVE** ù **CA-D49.1 = 11/11 PASS**  
-**Modo:** Documental only ? create `docs/D49.1-toolbar-discovery.md` ù append-only este bloque ù **cero cambios** `src/**` ù `scripts/**` ù `package.json` ù tokens ù UI
+**Estado:** **D49 OPEN** ÔøΩ **D49.1 COMPLETE** ÔøΩ **TOOLBAR BASELINE = FROZEN** ÔøΩ **API Freeze ACTIVE** ÔøΩ **CA-D49.1 = 11/11 PASS**  
+**Modo:** Documental only ? create `docs/D49.1-toolbar-discovery.md` ÔøΩ append-only este bloque ÔøΩ **cero cambios** `src/**` ÔøΩ `scripts/**` ÔøΩ `package.json` ÔøΩ tokens ÔøΩ UI
 
 ### Resumen
 
@@ -2360,16 +2360,16 @@ READY FOR D49.2
 
 ---
 
-*## D49.1 APPEND-ONLY 2026-07-20 ù D49.1 COMPLETE ù CA-D49.1 11/11 PASS ù TOOLBAR BASELINE FROZEN ù API Freeze ACTIVE ù Next D49.2 Toolbar Domain Extraction.*
+*## D49.1 APPEND-ONLY 2026-07-20 ÔøΩ D49.1 COMPLETE ÔøΩ CA-D49.1 11/11 PASS ÔøΩ TOOLBAR BASELINE FROZEN ÔøΩ API Freeze ACTIVE ÔøΩ Next D49.2 Toolbar Domain Extraction.*
 
 ---
 
 ## D49.5
 
-**Microfase:** D49.5 ? Adaptive Toolbar Foundation ù Certification  
+**Microfase:** D49.5 ? Adaptive Toolbar Foundation ÔøΩ Certification  
 **Fecha:** 2026-07-20  
-**Estado:** **D49 CLOSED** ù **Adaptive Toolbar CERTIFIED** ù **CA-D49.5 = 9/9 PASS**  
-**Modo:** Documental only ? create `docs/D49.5-certification.md` ù append-only este bloque ù **cero cambios** `src/**` ù `scripts/**` ù `package.json`
+**Estado:** **D49 CLOSED** ÔøΩ **Adaptive Toolbar CERTIFIED** ÔøΩ **CA-D49.5 = 9/9 PASS**  
+**Modo:** Documental only ? create `docs/D49.5-certification.md` ÔøΩ append-only este bloque ÔøΩ **cero cambios** `src/**` ÔøΩ `scripts/**` ÔøΩ `package.json`
 
 ### Resumen
 
@@ -2420,7 +2420,7 @@ NEXT = D50 ? Inspector Foundation
 
 ---
 
-*## D49.5 APPEND-ONLY 2026-07-20 ù D49.5 COMPLETE ù CA-D49.5 9/9 PASS ù D49 CLOSED ù Adaptive Toolbar CERTIFIED ù Next D50 Inspector Foundation.*
+*## D49.5 APPEND-ONLY 2026-07-20 ÔøΩ D49.5 COMPLETE ÔøΩ CA-D49.5 9/9 PASS ÔøΩ D49 CLOSED ÔøΩ Adaptive Toolbar CERTIFIED ÔøΩ Next D50 Inspector Foundation.*
 
 ## D50.1
 
@@ -3348,7 +3348,7 @@ READY FOR D60
 
 ### Resumen
 
-Se abre **D60 - Series Alignment Foundation**. Discovery congela arquitectura: primer subpaquete `src/components/windows/series/`; naming Registry / SelectionState / Bridges (sin `*Store`); Hard Rules (sin campos Series en WindowDefinition/WindowState; barrel unico `series/index.ts`); Governance (No React ù No JSX ù No hooks ù No Context ù No DOM ù No CSS; sin graph/chart/dataset/analysis/math/cientifico); API Freeze de simbolos Series. WindowAPI D55 / Floating / Drag / Resize / Snap intactos. Sin codigo, validators, scripts ni wiring.
+Se abre **D60 - Series Alignment Foundation**. Discovery congela arquitectura: primer subpaquete `src/components/windows/series/`; naming Registry / SelectionState / Bridges (sin `*Store`); Hard Rules (sin campos Series en WindowDefinition/WindowState; barrel unico `series/index.ts`); Governance (No React ÔøΩ No JSX ÔøΩ No hooks ÔøΩ No Context ÔøΩ No DOM ÔøΩ No CSS; sin graph/chart/dataset/analysis/math/cientifico); API Freeze de simbolos Series. WindowAPI D55 / Floating / Drag / Resize / Snap intactos. Sin codigo, validators, scripts ni wiring.
 
 | Campo | Valor |
 |-------|--------|
@@ -3370,7 +3370,7 @@ Se abre **D60 - Series Alignment Foundation**. Discovery congela arquitectura: p
 - Naming: SeriesRegistry / SeriesSelectionState / WindowSeriesBridge (sin `*Store`)
 - Hard Rule: sin Series en WindowDefinition / WindowState
 - Hard Rule: Series exportable solo desde `windows/series/index.ts`
-- Governance: No React ù No JSX ù No hooks ù No Context ù No DOM ù No CSS
+- Governance: No React ÔøΩ No JSX ÔøΩ No hooks ÔøΩ No Context ÔøΩ No DOM ÔøΩ No CSS
 - Infraestructura pura: sin graph / chart / dataset / analysis / math / cientifico
 - Prior freezes D55-D59 intactos
 
@@ -3508,14 +3508,14 @@ Se congela oficialmente la arquitectura de **D61 - Window Tabs Foundation**. Nam
 | CA-D61 | **FROZEN (preview)** |
 | Implementation | **NOT STARTED** |
 | `src/components/windows/tabs/` | **NOT CREATED** |
-| Next | **D61.1 ù Tab Identity** |
+| Next | **D61.1 ÔøΩ Tab Identity** |
 
 ### Freeze certificado (documental)
 
 - TabId = string + createTabId + isTabId
 - TabDefinition / TabState / TabReference / TabEntry
-- TabRegistry: register/unregister/get/has/list/clear ù list = insertion order
-- TabSelectionStore: activeTab only ù no auto-select
+- TabRegistry: register/unregister/get/has/list/clear ÔøΩ list = insertion order
+- TabSelectionStore: activeTab only ÔøΩ no auto-select
 - WindowTabsBridge: solo mapeo WindowId -> TabId[]
 - Barrel Freeze + ban deep imports
 - Roadmap D61.0-D61.12
@@ -3546,7 +3546,7 @@ Hard Rules = LOCKED
 CA-D61 = FROZEN
 Implementation = NOT STARTED
 PROD-3 continua sin deuda tecnica.
-NEXT = D61.1 ù Tab Identity
+NEXT = D61.1 ÔøΩ Tab Identity
 READY FOR D61.1
 ```
 
@@ -3573,7 +3573,7 @@ Se implementa exclusivamente la identidad del dominio Tabs: `TabId` (opaco strin
 | Status | **COMPLETE** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.2 ù Tab Types** |
+| Next | **D61.2 ÔøΩ Tab Types** |
 
 ### Checklist
 
@@ -3597,7 +3597,7 @@ Factory = IMPLEMENTED
 Validator = IMPLEMENTED
 tsc PASS
 build PASS
-READY FOR D61.2 ù Tab Types
+READY FOR D61.2 ÔøΩ Tab Types
 ```
 
 ---
@@ -3623,7 +3623,7 @@ Se implementan exclusivamente los tipos publicos del dominio Tabs en `src/compon
 | Status | **COMPLETE** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.3 ù Registry Types** |
+| Next | **D61.3 ÔøΩ Registry Types** |
 
 ### Checklist
 
@@ -3649,7 +3649,7 @@ TabReference = IMPLEMENTED
 TabEntry = IMPLEMENTED
 tsc PASS
 build PASS
-READY FOR D61.3 ù Registry Types
+READY FOR D61.3 ÔøΩ Registry Types
 ```
 
 ---
@@ -3675,7 +3675,7 @@ Se implementan exclusivamente los contratos tipados del Registry en `src/compone
 | Status | **COMPLETE** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.4 ù Registry Store** |
+| Next | **D61.4 ÔøΩ Registry Store** |
 
 ### Checklist
 
@@ -3696,7 +3696,7 @@ D61.3 = COMPLETE
 TabRegistryTypes = IMPLEMENTED
 tsc PASS
 build PASS
-READY FOR D61.4 ù Registry Store
+READY FOR D61.4 ÔøΩ Registry Store
 ```
 
 ---
@@ -3722,7 +3722,7 @@ Se implementa exclusivamente el almacenamiento interno del catalogo Tabs en `src
 | Status | **COMPLETE** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.5 ù Registry** |
+| Next | **D61.5 ÔøΩ Registry** |
 
 ### Checklist
 
@@ -3743,7 +3743,7 @@ D61.4 = COMPLETE
 TabRegistryStore = IMPLEMENTED
 tsc PASS
 build PASS
-READY FOR D61.5 ù Registry
+READY FOR D61.5 ÔøΩ Registry
 ```
 
 ---
@@ -3769,7 +3769,7 @@ Se implementa la fachada publica del TabRegistry en `src/components/windows/tabs
 | Status | **COMPLETE** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.6 ù Selection Types** |
+| Next | **D61.6 ÔøΩ Selection Types** |
 
 ### Checklist
 
@@ -3793,7 +3793,7 @@ TabRegistry = IMPLEMENTED
 API Freeze = RESPECTED
 tsc PASS
 build PASS
-READY FOR D61.6 ù Selection Types
+READY FOR D61.6 ÔøΩ Selection Types
 ```
 
 ---
@@ -3819,7 +3819,7 @@ Se implementan exclusivamente los contratos tipados de Selection en `src/compone
 | Status | **COMPLETE** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.7 ù Selection Store** |
+| Next | **D61.7 ÔøΩ Selection Store** |
 
 ### Checklist
 
@@ -3840,7 +3840,7 @@ D61.6 = COMPLETE
 TabSelectionTypes = IMPLEMENTED
 tsc PASS
 build PASS
-READY FOR D61.7 ù Selection Store
+READY FOR D61.7 ÔøΩ Selection Store
 ```
 
 ---
@@ -3866,7 +3866,7 @@ Se implementa `createTabSelectionStore()` en `src/components/windows/tabs/TabSel
 | Status | **COMPLETE** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.8 ù Bridges** |
+| Next | **D61.8 ÔøΩ Bridges** |
 
 ### Checklist
 
@@ -3888,7 +3888,7 @@ D61.7 = COMPLETE
 TabSelectionStore = IMPLEMENTED
 tsc PASS
 build PASS
-READY FOR D61.8 ù Bridges
+READY FOR D61.8 ÔøΩ Bridges
 ```
 
 ---
@@ -3914,7 +3914,7 @@ Se implementan los Bridges del dominio Tabs: `TabSelectionBridge` / `createTabSe
 | Status | **COMPLETE** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.9 ù Barrel** |
+| Next | **D61.9 ÔøΩ Barrel** |
 
 ### Checklist
 
@@ -3937,7 +3937,7 @@ TabSelectionBridge = IMPLEMENTED
 WindowTabsBridge = IMPLEMENTED
 tsc PASS
 build PASS
-READY FOR D61.9 ù Barrel
+READY FOR D61.9 ÔøΩ Barrel
 ```
 
 ---
@@ -3962,7 +3962,7 @@ Se crea el barrel publico del dominio Tabs en `src/components/windows/tabs/index
 | Status | **COMPLETE** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.10 ù Validators** |
+| Next | **D61.10 ÔøΩ Validators** |
 
 ### Checklist
 
@@ -3983,7 +3983,7 @@ D61.9 = COMPLETE
 Barrel = IMPLEMENTED
 tsc PASS
 build PASS
-READY FOR D61.10 ù Validators
+READY FOR D61.10 ÔøΩ Validators
 ```
 
 ---
@@ -4010,7 +4010,7 @@ Se implementan los validadores de gobernanza D61: `validate-d61-tabs-api`, `vali
 | `validate:d61-tabs-api` | **PASS** |
 | `validate:d61-governance` | **PASS** |
 | `validate:d61-gate` | **PASS** |
-| Next | **D61.11 ù Certification** |
+| Next | **D61.11 ÔøΩ Certification** |
 
 ### Checklist
 
@@ -4029,7 +4029,7 @@ Se implementan los validadores de gobernanza D61: `validate-d61-tabs-api`, `vali
 D61.10 = COMPLETE
 Validators = IMPLEMENTED
 validate:d61-gate PASS
-READY FOR D61.11 ù Certification
+READY FOR D61.11 ÔøΩ Certification
 ```
 
 ---
@@ -4058,7 +4058,7 @@ Se certifica oficialmente **D61 - Window Tabs Foundation**. Infraestructura Tabs
 | `validate:d61-gate` | **PASS** |
 | `tsc --noEmit` | **PASS** |
 | `next build` | **PASS** |
-| Next | **D61.12 ù Release** |
+| Next | **D61.12 ÔøΩ Release** |
 
 ### Matriz CA-D61
 
@@ -4100,7 +4100,7 @@ validate:d61-governance PASS
 validate:d61-gate PASS
 tsc PASS
 build PASS
-READY FOR D61.12 ù Release
+READY FOR D61.12 ÔøΩ Release
 ```
 
 ---
@@ -4194,7 +4194,7 @@ Se congela oficialmente la arquitectura **D62 - Tabs UI / Document Switch / Sele
 | `HR-switch-react-agnostic` | **LOCKED** |
 | CA-D62 | **FROZEN (preview)** |
 | Implementation | **NOT STARTED** |
-| Next | **D62.1 ù Registry Additive Mutator** |
+| Next | **D62.1 ÔøΩ Registry Additive Mutator** |
 
 ### Authority
 
@@ -4238,7 +4238,7 @@ CA-D62 = FROZEN
 Roadmap D62.0-D62.12 = FROZEN
 Implementation = NOT STARTED
 NO FUNCTIONAL CHANGES
-READY FOR D62.1 ù Registry Additive Mutator
+READY FOR D62.1 ÔøΩ Registry Additive Mutator
 ```
 
 ---
@@ -4250,7 +4250,7 @@ READY FOR D62.1 ù Registry Additive Mutator
 **Microfase:** D62.1 - Tabs UI Foundation - Registry Public Mutator  
 **Fecha:** 2026-07-22  
 **Estado:** **D62.1 = COMPLETE** - **setState = LOCKED** - **READY FOR D62.2**  
-**Modo:** Extensiùn aditiva TabRegistry only - cero Policy/Switch/UI/validators
+**Modo:** ExtensiÔøΩn aditiva TabRegistry only - cero Policy/Switch/UI/validators
 
 ### Resumen
 
@@ -4260,17 +4260,17 @@ Se define e implementa el mutador publico aditivo del TabRegistry diferido en D6
 |-------|--------|
 | Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) |
 | API | `TabRegistry.setState(id: TabId, state: TabState): void` |
-| Archivos | `TabRegistryTypes.ts` ù `TabRegistry.ts` |
+| Archivos | `TabRegistryTypes.ts` ÔøΩ `TabRegistry.ts` |
 | Status | **COMPLETE** |
 | D61 APIs | **Intactas (aditivo)** |
-| Next | **D62.2 ù Selection Policy Types** |
+| Next | **D62.2 ÔøΩ Selection Policy Types** |
 
 ### Checklist
 
 | Item | Resultado |
 |------|-----------|
 | API `setState` elegida y congelada | **PASS** |
-| Aditivo ù no rompe D61 | **PASS** |
+| Aditivo ÔøΩ no rompe D61 | **PASS** |
 | No muta Definition | **PASS** |
 | No Selection / Policy / auto-select | **PASS** |
 | No React / Window / Series | **PASS** |
@@ -4287,7 +4287,7 @@ API additive = CONFIRMED
 Definition immutable via mutator = CONFIRMED
 No Selection coupling = CONFIRMED
 HR-activeTab-ssot-only = INTACT
-READY FOR D62.2 ù Selection Policy Types
+READY FOR D62.2 ÔøΩ Selection Policy Types
 ```
 
 ---
@@ -4312,7 +4312,7 @@ Se congelan los contratos publicos del Selection Policy para D62.3: `TabSelectio
 | API | `TabSelectionPolicy` / `AfterUnregisterArgs` / `EnsureActiveArgs` |
 | Status | **COMPLETE** |
 | Runtime | **NONE** |
-| Next | **D62.3 ù Selection Policy Engine** |
+| Next | **D62.3 ÔøΩ Selection Policy Engine** |
 
 ### Checklist
 
@@ -4333,7 +4333,7 @@ D62.2 = COMPLETE
 TabSelectionPolicyTypes = LOCKED
 No runtime = CONFIRMED
 HR-activeTab-ssot-only = INTACT
-READY FOR D62.3 ù Selection Policy Engine
+READY FOR D62.3 ÔøΩ Selection Policy Engine
 ```
 
 ---
@@ -4353,12 +4353,12 @@ Se implementa `createTabSelectionPolicy()`: `afterUnregister` (no-op si active !
 
 | Campo | Valor |
 |-------|--------|
-| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) ù D62.2 types |
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) ÔøΩ D62.2 types |
 | Archivo | `src/components/windows/tabs/TabSelectionPolicy.ts` |
 | API | `createTabSelectionPolicy()` |
 | Status | **COMPLETE** |
 | TabState sync | **NONE** |
-| Next | **D62.4 ù Document Switch Types** |
+| Next | **D62.4 ÔøΩ Document Switch Types** |
 
 ### Checklist
 
@@ -4381,7 +4381,7 @@ TabSelectionPolicy Engine = IMPLEMENTED
 afterUnregister = IMPLEMENTED
 ensureActive = IMPLEMENTED
 No TabState sync = CONFIRMED
-READY FOR D62.4 ù Document Switch Types
+READY FOR D62.4 ÔøΩ Document Switch Types
 ```
 
 ---
@@ -4406,7 +4406,7 @@ Se congelan los contratos publicos del Document Switch React-agnostico: `OpaqueC
 | API | OpaqueContentHandle / Slot / Slots / ResolveArgs / ResolveResult / TabDocumentSwitch |
 | Status | **COMPLETE** |
 | Runtime | **NONE** |
-| Next | **D62.5 ù Document Switch Controller** |
+| Next | **D62.5 ÔøΩ Document Switch Controller** |
 
 ### Checklist
 
@@ -4427,7 +4427,7 @@ D62.4 = COMPLETE
 TabDocumentSwitchTypes = LOCKED
 No runtime = CONFIRMED
 HR-switch-react-agnostic = INTACT
-READY FOR D62.5 ù Document Switch Controller
+READY FOR D62.5 ÔøΩ Document Switch Controller
 ```
 
 ---
@@ -4443,16 +4443,16 @@ READY FOR D62.5 ù Document Switch Controller
 
 ### Resumen
 
-Se implementa `createTabDocumentSwitch()`: `resolve({ active, slots })` ù active undefined -> undefined; miss -> undefined; hit -> OpaqueContentHandle. React-agnostico. Sin mutar slots/Registry/Selection. Contratos D62.4 respetados. Barrel export aditivo.
+Se implementa `createTabDocumentSwitch()`: `resolve({ active, slots })` ÔøΩ active undefined -> undefined; miss -> undefined; hit -> OpaqueContentHandle. React-agnostico. Sin mutar slots/Registry/Selection. Contratos D62.4 respetados. Barrel export aditivo.
 
 | Campo | Valor |
 |-------|--------|
-| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) ù D62.4 types |
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) ÔøΩ D62.4 types |
 | Archivo | `src/components/windows/tabs/TabDocumentSwitch.ts` |
 | API | `createTabDocumentSwitch()` / `resolve` |
 | Status | **COMPLETE** |
 | React | **NONE** |
-| Next | **D62.6 ù Tab UI Types** |
+| Next | **D62.6 ÔøΩ Tab UI Types** |
 
 ### Checklist
 
@@ -4473,7 +4473,7 @@ D62.5 = COMPLETE
 TabDocumentSwitch Engine = IMPLEMENTED
 resolve = IMPLEMENTED
 HR-switch-react-agnostic = INTACT
-READY FOR D62.6 ù Tab UI Types
+READY FOR D62.6 ÔøΩ Tab UI Types
 ```
 
 ---
@@ -4494,11 +4494,11 @@ Se congelan los contratos publicos de presentacion: `TabUiItem`, `TabStripProps`
 | Campo | Valor |
 |-------|--------|
 | Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) |
-| Archivos | `tab-ui/TabUiTypes.ts` ù `tab-ui/index.ts` |
+| Archivos | `tab-ui/TabUiTypes.ts` ÔøΩ `tab-ui/index.ts` |
 | API | TabStripProps / TabBarProps / TabDocumentHostProps |
 | Status | **COMPLETE** |
 | Runtime / components | **NONE** |
-| Next | **D62.7 ù Tab Strip UI** |
+| Next | **D62.7 ÔøΩ Tab Strip UI** |
 
 ### Checklist
 
@@ -4519,7 +4519,7 @@ D62.6 = COMPLETE
 TabUiTypes = LOCKED
 No components = CONFIRMED
 HR-tabs-barrel-only = INTACT
-READY FOR D62.7 ù Tab Strip UI
+READY FOR D62.7 ÔøΩ Tab Strip UI
 ```
 
 ---
@@ -4539,11 +4539,11 @@ Se implementa `TabStrip` controlado por props (`TabStripProps` D62.6): render or
 
 | Campo | Valor |
 |-------|--------|
-| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) ù D62.6 types |
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) ÔøΩ D62.6 types |
 | Archivo | `src/components/windows/tab-ui/TabStrip.tsx` |
 | API | `TabStrip` |
 | Status | **COMPLETE** |
-| Next | **D62.8 ù Tab Bar + Document Host** |
+| Next | **D62.8 ÔøΩ Tab Bar + Document Host** |
 
 ### Checklist
 
@@ -4564,7 +4564,7 @@ D62.7 = COMPLETE
 TabStrip = IMPLEMENTED
 Props-controlled = CONFIRMED
 HR-activeTab-ssot-only = INTACT
-READY FOR D62.8 ù Tab Bar + Document Host
+READY FOR D62.8 ÔøΩ Tab Bar + Document Host
 ```
 
 ---
@@ -4584,11 +4584,11 @@ Se implementan `TabBar` (shell que compone `TabStrip` y reenvia props) y `TabDoc
 
 | Campo | Valor |
 |-------|--------|
-| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) ù D62.6 types ù D62.7 TabStrip |
-| Archivos | `tab-ui/TabBar.tsx` ù `tab-ui/TabDocumentHost.tsx` |
+| Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) ÔøΩ D62.6 types ÔøΩ D62.7 TabStrip |
+| Archivos | `tab-ui/TabBar.tsx` ÔøΩ `tab-ui/TabDocumentHost.tsx` |
 | API | `TabBar` / `TabDocumentHost` |
 | Status | **COMPLETE** |
-| Next | **D62.9 ù Barrels** |
+| Next | **D62.9 ÔøΩ Barrels** |
 
 ### Checklist
 
@@ -4609,7 +4609,7 @@ D62.8 = COMPLETE
 TabBar = IMPLEMENTED
 TabDocumentHost = IMPLEMENTED
 Visual tabs chrome = COMPLETE (components)
-READY FOR D62.9 ù Barrels
+READY FOR D62.9 ÔøΩ Barrels
 ```
 
 ---
@@ -4630,10 +4630,10 @@ Se cierra la superficie publica D62: `tabs/index.ts` (D61 + Policy + Document Sw
 | Campo | Valor |
 |-------|--------|
 | Authority | [`docs/D62.0-tabs-ui-discovery.md`](docs/D62.0-tabs-ui-discovery.md) |
-| Barrels | `tabs/index.ts` ù `tab-ui/index.ts` |
+| Barrels | `tabs/index.ts` ÔøΩ `tab-ui/index.ts` |
 | `windows/index.ts` leaks Tabs*/TabUi* | **NONE** |
 | Status | **COMPLETE** |
-| Next | **D62.10 ù Validators** |
+| Next | **D62.10 ÔøΩ Validators** |
 
 ### Checklist
 
@@ -4653,7 +4653,7 @@ D62.9 = COMPLETE
 Public Barrels = LOCKED
 HR-tabs-barrel-only = CONFIRMED
 HR-no-windows-barrel-leak = CONFIRMED
-READY FOR D62.10 ù Validators
+READY FOR D62.10 ÔøΩ Validators
 ```
 
 ---
@@ -4737,14 +4737,14 @@ Se certifica oficialmente **D62 - Tabs UI Foundation**. Operabilidad sobre Windo
 
 | ID | Criterio | Resultado |
 |----|----------|-----------|
-| CA-D62-01 | Mutador publico aditivo Registry (`setState`) ∑ Definition?Entry | **PASS** |
-| CA-D62-02 | Selection Policy externa ∑ Store sin auto-select ∑ solo Selection | **PASS** |
-| CA-D62-03 | Document Switch React-agnostico (Opaque Content Handle) ∑ sin Series | **PASS** |
-| CA-D62-04 | `tab-ui` presentacional ∑ `isActive` derivado de `activeTab` | **PASS** |
+| CA-D62-01 | Mutador publico aditivo Registry (`setState`) ÔøΩ Definition?Entry | **PASS** |
+| CA-D62-02 | Selection Policy externa ÔøΩ Store sin auto-select ÔøΩ solo Selection | **PASS** |
+| CA-D62-03 | Document Switch React-agnostico (Opaque Content Handle) ÔøΩ sin Series | **PASS** |
+| CA-D62-04 | `tab-ui` presentacional ÔøΩ `isActive` derivado de `activeTab` | **PASS** |
 | CA-D62-05 | Render order = insertion/attach order | **PASS** |
-| CA-D62-06 | Barrels `tabs/` + `tab-ui/` ∑ no deep imports ∑ no windows leak | **PASS** |
+| CA-D62-06 | Barrels `tabs/` + `tab-ui/` ÔøΩ no deep imports ÔøΩ no windows leak | **PASS** |
 | CA-D62-07 | Validators api + governance + gate PASS | **PASS** |
-| CA-D62-08 | Governance ∑ prior freezes ∑ `HR-activeTab-ssot-only` | **PASS** |
+| CA-D62-08 | Governance ÔøΩ prior freezes ÔøΩ `HR-activeTab-ssot-only` | **PASS** |
 | CA-D62-09 | TypeScript + Build (`tsc` + `next build`) | **PASS** |
 
 ```text
@@ -4990,9 +4990,9 @@ Se implementa `createContentRegistry()` como SSOT del catalogo de `ContentDefini
 
 | Campo | Valor |
 |-------|--------|
-| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) ∑ D63.1 types |
+| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) ÔøΩ D63.1 types |
 | Archivo | `src/components/windows/content/ContentRegistry.ts` |
-| API | `createContentRegistry()` ∑ `ContentRegistry` |
+| API | `createContentRegistry()` ÔøΩ `ContentRegistry` |
 | Status | **COMPLETE** |
 | SSOT | **ESTABLISHED** |
 | Next | **D63.3 - Content Slots** |
@@ -5004,7 +5004,7 @@ Se implementa `createContentRegistry()` como SSOT del catalogo de `ContentDefini
 | createContentRegistry factory | **PASS** |
 | register / unregister / get / list | **PASS** |
 | Registry = unico SSOT | **PASS** |
-| list() readonly ∑ get undefined si miss | **PASS** |
+| list() readonly ÔøΩ get undefined si miss | **PASS** |
 | Sin TabRegistry / SeriesRegistry deps | **PASS** |
 | Sin Bridge / Slots / Host / barrel | **PASS** |
 | Sin React / workspace / ciencia / producto | **PASS** |
@@ -5088,7 +5088,7 @@ Se implementa `createTabSeriesBridge()` como autoridad de mapeo 1<->1 TabId <-> 
 |-------|--------|
 | Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
 | Archivo | `src/components/windows/content/TabSeriesBridge.ts` |
-| API | `createTabSeriesBridge()` ∑ `TabSeriesBridge` |
+| API | `createTabSeriesBridge()` ÔøΩ `TabSeriesBridge` |
 | Cardinalidad | **1<->1 LOCKED** |
 | Status | **COMPLETE** |
 | Next | **D63.5 - ContentBridge** |
@@ -5136,7 +5136,7 @@ Se implementa `createContentBridge(registry)` con unica responsabilidad publica 
 |-------|--------|
 | Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
 | Archivo | `src/components/windows/content/ContentBridge.ts` |
-| API | `createContentBridge(registry)` ∑ `ContentBridge.resolve` |
+| API | `createContentBridge(registry)` ÔøΩ `ContentBridge.resolve` |
 | Cache | **NONE (HR-no-content-cache)** |
 | Status | **COMPLETE** |
 | Next | **D63.6 - ContentHost** |
@@ -5182,9 +5182,9 @@ Se implementa `ContentHost` como unica frontera React de `windows/content/`. Con
 
 | Campo | Valor |
 |-------|--------|
-| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) ∑ D63.1 props |
+| Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) ÔøΩ D63.1 props |
 | Archivo | `src/components/windows/content/ContentHost.tsx` |
-| API | `ContentHost` ∑ `ContentHostProps` |
+| API | `ContentHost` ÔøΩ `ContentHostProps` |
 | Ownership | **NONE (HR-host-no-ownership)** |
 | Status | **COMPLETE** |
 | Next | **D63.7 - Content Barrel** |
@@ -5225,13 +5225,13 @@ READY FOR D63.7 - Content Barrel
 
 ### Resumen
 
-Se crea el unico barrel publico `src/components/windows/content/index.ts` reexportando la superficie D63.1-D63.6: ContentDefinition / ContentHostProps / ContentRegistry / createContentRegistry / ContentSlot / ContentSlots / TabSeriesBridge / createTabSeriesBridge / ContentBridge / createContentBridge / ContentHost. `HR-content-barrel-only` ∑ `HR-no-windows-barrel-leak`: sin modificar `windows/index.ts`. Sin integraciones. Sin deep-import policy rotas. Sin cambios funcionales/visuales. Freezes D55-D63.6 intactos. Zero Product Change.
+Se crea el unico barrel publico `src/components/windows/content/index.ts` reexportando la superficie D63.1-D63.6: ContentDefinition / ContentHostProps / ContentRegistry / createContentRegistry / ContentSlot / ContentSlots / TabSeriesBridge / createTabSeriesBridge / ContentBridge / createContentBridge / ContentHost. `HR-content-barrel-only` ÔøΩ `HR-no-windows-barrel-leak`: sin modificar `windows/index.ts`. Sin integraciones. Sin deep-import policy rotas. Sin cambios funcionales/visuales. Freezes D55-D63.6 intactos. Zero Product Change.
 
 | Campo | Valor |
 |-------|--------|
 | Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
 | Archivo | `src/components/windows/content/index.ts` |
-| Barrel | **PUBLIC ∑ content only** |
+| Barrel | **PUBLIC ÔøΩ content only** |
 | windows/index.ts | **NO LEAK** |
 | Status | **COMPLETE** |
 | Next | **D63.8 - Minimal Integration** |
@@ -5277,7 +5277,7 @@ Se implementa `createContentIntegration(registry)` en `ContentIntegration.ts`: c
 |-------|--------|
 | Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
 | Archivo | `src/components/windows/content/ContentIntegration.ts` |
-| API | `createContentIntegration(registry)` ∑ `ContentIntegration.resolve` |
+| API | `createContentIntegration(registry)` ÔøΩ `ContentIntegration.resolve` |
 | Mount | **NONE (library-only)** |
 | page.tsx | **NOT WIRED** |
 | Status | **COMPLETE** |
@@ -5289,7 +5289,7 @@ Se implementa `createContentIntegration(registry)` en `ContentIntegration.ts`: c
 |------|-----------|
 | ContentIntegration helper creado | **PASS** |
 | Flujo handle -> Bridge -> Registry -> Host props | **PASS** |
-| Library-only ∑ never mounted by page.tsx | **PASS** |
+| Library-only ÔøΩ never mounted by page.tsx | **PASS** |
 | Sin product wiring / visual changes | **PASS** |
 | Sin modificar page/WindowManager/barrels/scripts | **PASS** |
 | Contratos D63.1-D63.7 intactos | **PASS** |
@@ -5324,8 +5324,8 @@ Se implementan los validadores metodologicos D63: `validate-d63-content-api.ts` 
 | Campo | Valor |
 |-------|--------|
 | Authority | [`docs/D63.0-content-lifecycle-discovery.md`](docs/D63.0-content-lifecycle-discovery.md) |
-| Scripts | `validate-d63-content-api.ts` ∑ `validate-d63-governance.ts` ∑ `validate-d63-no-workspace-coupling.ts` |
-| npm | `validate:d63-content-api` ∑ `validate:d63-governance` ∑ `validate:d63-no-workspace-coupling` |
+| Scripts | `validate-d63-content-api.ts` ÔøΩ `validate-d63-governance.ts` ÔøΩ `validate-d63-no-workspace-coupling.ts` |
+| npm | `validate:d63-content-api` ÔøΩ `validate:d63-governance` ÔøΩ `validate:d63-no-workspace-coupling` |
 | Gate | **NOT CREATED (D63.10)** |
 | Status | **COMPLETE** |
 | Next | **D63.10 - Gate** |
@@ -5492,15 +5492,15 @@ Se certifica y cierra oficialmente **D63 - Lifecycle + Tab <-> Series Wiring**. 
 
 | ID | Criterio | Resultado |
 |----|----------|-----------|
-| CA-D63-01 | ContentRegistry SSOT ∑ independiente de TabRegistry | **PASS** |
+| CA-D63-01 | ContentRegistry SSOT ÔøΩ independiente de TabRegistry | **PASS** |
 | CA-D63-02 | ContentDefinition = `{ id, kind, title }` only | **PASS** |
-| CA-D63-03 | ContentBridge resolve via Registry.get ∑ sin cache | **PASS** |
-| CA-D63-04 | ContentHost props-only ∑ sin ownership | **PASS** |
+| CA-D63-03 | ContentBridge resolve via Registry.get ÔøΩ sin cache | **PASS** |
+| CA-D63-04 | ContentHost props-only ÔøΩ sin ownership | **PASS** |
 | CA-D63-05 | TabSeriesBridge 1<->1 mapping-only | **PASS** |
-| CA-D63-06 | Barrel content/ ∑ no leak windows/index.ts | **PASS** |
-| CA-D63-07 | Sin deps cientificas ∑ sin acoplamiento workspace | **PASS** |
+| CA-D63-06 | Barrel content/ ÔøΩ no leak windows/index.ts | **PASS** |
+| CA-D63-07 | Sin deps cientificas ÔøΩ sin acoplamiento workspace | **PASS** |
 | CA-D63-08 | Zero functional / visual product change | **PASS** |
-| CA-D63-09 | API Freeze ∑ Hard Rules ∑ Gate ∑ tsc ∑ build | **PASS** |
+| CA-D63-09 | API Freeze ÔøΩ Hard Rules ÔøΩ Gate ÔøΩ tsc ÔøΩ build | **PASS** |
 
 ### Checklist
 
@@ -5828,7 +5828,7 @@ READY FOR D64.6 - Validator Suite
 **Microfase:** D64.6 - Production Stabilization Foundation - Validator Suite  
 **Fecha:** 2026-07-22  
 **Estado:** **D64.6 = COMPLETE** - **validate:d64-gate = PASS** - **Validator Suite = RELEASED** - **READY FOR D64.7**  
-**Modo:** Validators + npm scripts - cero src / barrels / APIs / page.tsx ∑ alineacion documental de gates D51 legacy a D53
+**Modo:** Validators + npm scripts - cero src / barrels / APIs / page.tsx ÔøΩ alineacion documental de gates D51 legacy a D53
 
 ### Resumen
 
@@ -5838,7 +5838,7 @@ Se completa la Production Validator Suite: `validate-foundation-coverage.ts` (ma
 |-------|--------|
 | Coverage | `scripts/validate-foundation-coverage.ts` |
 | Gate | `scripts/validate-d64-gate.ts` |
-| npm | `validate:foundation-coverage` ∑ `validate:d64-gate` |
+| npm | `validate:foundation-coverage` ÔøΩ `validate:d64-gate` |
 | foundation-coverage | **PASS** |
 | d64-gate | **D64 GATE PASS** |
 | src / barrels / APIs | **UNCHANGED** |
@@ -5881,14 +5881,14 @@ READY FOR D64.7 - Documentation
 
 ### Resumen
 
-Se publica el hub documental [`docs/D64.7-documentation.md`](docs/D64.7-documentation.md): Architecture Freeze D45-D63 CERTIFIED (cita), Production Validator Suite inventariada (`validate:api-freeze` ∑ `validate:registry-integrity` ∑ `validate:production-boundaries` ∑ `validate:foundation-coverage` ∑ `validate:d64-gate`), y cross-references hacia D64.0 Baseline, D64.1 Architecture Audit y D64.5 Layout Integrity. Freezes historicos citados sin redefinicion. Append-only en docs D64.0 / D64.1 / D64.5 / Manifest. Sin cambios de codigo.
+Se publica el hub documental [`docs/D64.7-documentation.md`](docs/D64.7-documentation.md): Architecture Freeze D45-D63 CERTIFIED (cita), Production Validator Suite inventariada (`validate:api-freeze` ÔøΩ `validate:registry-integrity` ÔøΩ `validate:production-boundaries` ÔøΩ `validate:foundation-coverage` ÔøΩ `validate:d64-gate`), y cross-references hacia D64.0 Baseline, D64.1 Architecture Audit y D64.5 Layout Integrity. Freezes historicos citados sin redefinicion. Append-only en docs D64.0 / D64.1 / D64.5 / Manifest. Sin cambios de codigo.
 
 | Campo | Valor |
 |-------|--------|
 | Hub | [`docs/D64.7-documentation.md`](docs/D64.7-documentation.md) |
 | Architecture Freeze D45-D63 | **CERTIFIED (documented)** |
 | Validator inventory | **DOCUMENTED** |
-| Cross-refs | D64.0 ∑ D64.1 ∑ D64.5 |
+| Cross-refs | D64.0 ÔøΩ D64.1 ÔøΩ D64.5 |
 | src / scripts / package.json | **UNCHANGED** |
 | Status | **COMPLETE** |
 | Next | **D64.8 - Technical Debt Audit** |
@@ -5934,7 +5934,7 @@ Se completa la auditoria de deuda tecnica D45-D63. Sin TODO/FIXME. Shims WindowP
 | Audit | [`docs/D64.8-technical-debt-audit.md`](docs/D64.8-technical-debt-audit.md) |
 | BLOCKERS | **0** |
 | RESOLVED | **1** (WorkspacePanels Future comment) |
-| ACCEPTED | WindowPosition shims ∑ ContentIntegration ∑ WindowId aliases ∑ HR comments |
+| ACCEPTED | WindowPosition shims ÔøΩ ContentIntegration ÔøΩ WindowId aliases ÔøΩ HR comments |
 | src cambio | Solo comentario JSDoc en WorkspacePanels |
 | Status | **COMPLETE** |
 | Next | **D64.9 - Certification** |
@@ -6101,11 +6101,11 @@ READY FOR D64.12 - Official Close
 
 ### Resumen
 
-Cierre oficial de la serie **D64 ó Production Stabilization Foundation**. Serie D64 oficialmente cerrada. Infraestructura D45-D63 certificada para produccion. El proyecto queda listo para iniciar **D65**. Release: [`docs/D64-release.md`](docs/D64-release.md). Gate: [`docs/D64.10-production-gate.md`](docs/D64.10-production-gate.md). Sin cambios de codigo.
+Cierre oficial de la serie **D64 ÔøΩ Production Stabilization Foundation**. Serie D64 oficialmente cerrada. Infraestructura D45-D63 certificada para produccion. El proyecto queda listo para iniciar **D65**. Release: [`docs/D64-release.md`](docs/D64-release.md). Gate: [`docs/D64.10-production-gate.md`](docs/D64.10-production-gate.md). Sin cambios de codigo.
 
 | Campo | Valor |
 |-------|--------|
-| D64 | **COMPLETE ∑ CLOSED** |
+| D64 | **COMPLETE ÔøΩ CLOSED** |
 | Production Stabilization Foundation | **COMPLETE** |
 | Architecture Freeze | **Preservado** |
 | Production Validator Suite | **Certificada** |
@@ -6158,19 +6158,19 @@ NEXT = D65
 
 ## D65.10
 
-**Microfase:** D65.10 ó Window Sessions Foundation ó Governance  
+**Microfase:** D65.10 ÔøΩ Window Sessions Foundation ÔøΩ Governance  
 **Fecha:** 2026-07-22  
-**Estado:** **D65.10 = COMPLETE** ó **Governance = COMPLETE** ó **Session Foundation coverage = CONFIRMED** ó **Validators = INTEGRATED** ó **READY FOR D65.11**  
-**Modo:** Append-only documentation ó **cero cambios** en `src/**` ∑ scripts ∑ validators ∑ barrels ∑ APIs ∑ `page.tsx`
+**Estado:** **D65.10 = COMPLETE** ÔøΩ **Governance = COMPLETE** ÔøΩ **Session Foundation coverage = CONFIRMED** ÔøΩ **Validators = INTEGRATED** ÔøΩ **READY FOR D65.11**  
+**Modo:** Append-only documentation ÔøΩ **cero cambios** en `src/**` ÔøΩ scripts ÔøΩ validators ÔøΩ barrels ÔøΩ APIs ÔøΩ `page.tsx`
 
 ### Resumen
 
-Se finaliza la gobernanza documental de **D65 ó Window Sessions Foundation**. Cobertura Session confirmada (Types ∑ Definition ∑ State ∑ Registry ∑ Context ∑ Provider ∑ Bridge ∑ integraciÛn mÌnima en `page.tsx`). Validators D65.9 integrados (`validate:d65-session-api` ∑ `validate:d65-governance` ∑ `validate:session-serializable` ∑ `validate:d65-gate`). API Freeze Session preservado. Barrel `@/components/session` = ˙nica entrada p˙blica. Sin deep imports desde page. Sin cambios WindowAPI. Sin impacto en mÛdulos cientÌficos. Sin deuda tÈcnica introducida. Persistencia / Restore / Autosave / Snapshots permanecen diferidos (D66ñD69).
+Se finaliza la gobernanza documental de **D65 ÔøΩ Window Sessions Foundation**. Cobertura Session confirmada (Types ÔøΩ Definition ÔøΩ State ÔøΩ Registry ÔøΩ Context ÔøΩ Provider ÔøΩ Bridge ÔøΩ integraciÔøΩn mÔøΩnima en `page.tsx`). Validators D65.9 integrados (`validate:d65-session-api` ÔøΩ `validate:d65-governance` ÔøΩ `validate:session-serializable` ÔøΩ `validate:d65-gate`). API Freeze Session preservado. Barrel `@/components/session` = ÔøΩnica entrada pÔøΩblica. Sin deep imports desde page. Sin cambios WindowAPI. Sin impacto en mÔøΩdulos cientÔøΩficos. Sin deuda tÔøΩcnica introducida. Persistencia / Restore / Autosave / Snapshots permanecen diferidos (D66ÔøΩD69).
 
 | Campo | Valor |
 |-------|--------|
 | Package | `src/components/session/` |
-| Manifest | [`docs/D64.0-foundation-manifest.md`](docs/D64.0-foundation-manifest.md) ∑ Appendix D65.10 |
+| Manifest | [`docs/D64.0-foundation-manifest.md`](docs/D64.0-foundation-manifest.md) ÔøΩ Appendix D65.10 |
 | Gate | `validate:d65-gate` |
 | Product Integration (D65.8) | **COMPLETE** (silent Provider + Bridge) |
 | Persistence | **DEFERRED (D66)** |
@@ -6178,8 +6178,8 @@ Se finaliza la gobernanza documental de **D65 ó Window Sessions Foundation**. Co
 | Autosave | **DEFERRED (D68)** |
 | Snapshots | **DEFERRED (D69)** |
 | API Freeze | **UNCHANGED / PRESERVED** |
-| Deuda tÈcnica (alcance D65.10) | **Ninguna** |
-| Next | **D65.11 ó Certification** |
+| Deuda tÔøΩcnica (alcance D65.10) | **Ninguna** |
+| Next | **D65.11 ÔøΩ Certification** |
 
 ### Checklist
 
@@ -6197,7 +6197,7 @@ Se finaliza la gobernanza documental de **D65 ó Window Sessions Foundation**. Co
 | No technical debt introduced | **PASS** |
 | NEXT = D65.11 Certification | **PASS** |
 
-### Gobernanza (verificaciÛn)
+### Gobernanza (verificaciÔøΩn)
 
 ```text
 API Freeze Session = PRESERVED
@@ -6218,23 +6218,23 @@ Session Foundation coverage = CONFIRMED
 Validators = INTEGRATED
 No technical debt introduced
 API Freeze = PRESERVED
-READY FOR D65.11 ó Certification
+READY FOR D65.11 ÔøΩ Certification
 ```
 
 ---
 
-*## D65.10 APPEND-ONLY 2026-07-22 ó D65.10 COMPLETE ó Governance COMPLETE ó Session coverage CONFIRMED ó Next D65.11.*
+*## D65.10 APPEND-ONLY 2026-07-22 ÔøΩ D65.10 COMPLETE ÔøΩ Governance COMPLETE ÔøΩ Session coverage CONFIRMED ÔøΩ Next D65.11.*
 
 ## D65.11
 
-**Microfase:** D65.11 ó Window Sessions Foundation ó Certification  
+**Microfase:** D65.11 ÔøΩ Window Sessions Foundation ÔøΩ Certification  
 **Fecha:** 2026-07-22  
-**Estado:** **D65.11 = COMPLETE** ó **Session Foundation = CERTIFIED** ó **CA-D65 = PASS** ó **READY FOR D65.12**  
-**Modo:** Evidencia de validadores ∑ create-only certification doc ∑ append-only STATUS ∑ **cero** src / scripts / APIs / page.tsx
+**Estado:** **D65.11 = COMPLETE** ÔøΩ **Session Foundation = CERTIFIED** ÔøΩ **CA-D65 = PASS** ÔøΩ **READY FOR D65.12**  
+**Modo:** Evidencia de validadores ÔøΩ create-only certification doc ÔøΩ append-only STATUS ÔøΩ **cero** src / scripts / APIs / page.tsx
 
 ### Resumen
 
-Se certifica oficialmente **D65 ó Window Sessions Foundation**. Scope Types ∑ Definition ∑ State ∑ Registry ∑ Context ∑ Provider ∑ Bridge certificado. Arquitectura verificada (API Freeze ∑ factory registry ∑ Provider ownership ∑ Bridge unidireccional ∑ serializable ∑ integraciÛn silenciosa). Evidencia: `tsc --noEmit` PASS ∑ `build` PASS ∑ `validate:production-boundaries` PASS ∑ `validate:d65-gate` PASS ∑ `validate:api-freeze` PASS. **CA-D65 = PASS (8/8)**. Zero visual regression. Zero technical debt (alcance D65). Acta: [`docs/D65.11-certification.md`](docs/D65.11-certification.md). Ready for D65.12 Release.
+Se certifica oficialmente **D65 ÔøΩ Window Sessions Foundation**. Scope Types ÔøΩ Definition ÔøΩ State ÔøΩ Registry ÔøΩ Context ÔøΩ Provider ÔøΩ Bridge certificado. Arquitectura verificada (API Freeze ÔøΩ factory registry ÔøΩ Provider ownership ÔøΩ Bridge unidireccional ÔøΩ serializable ÔøΩ integraciÔøΩn silenciosa). Evidencia: `tsc --noEmit` PASS ÔøΩ `build` PASS ÔøΩ `validate:production-boundaries` PASS ÔøΩ `validate:d65-gate` PASS ÔøΩ `validate:api-freeze` PASS. **CA-D65 = PASS (8/8)**. Zero visual regression. Zero technical debt (alcance D65). Acta: [`docs/D65.11-certification.md`](docs/D65.11-certification.md). Ready for D65.12 Release.
 
 | Campo | Valor |
 |-------|--------|
@@ -6246,7 +6246,7 @@ Se certifica oficialmente **D65 ó Window Sessions Foundation**. Scope Types ∑ De
 | tsc / build | **PASS** |
 | Zero visual regression | **DECLARED** |
 | Zero technical debt | **DECLARED** |
-| Next | **D65.12 ó Release** |
+| Next | **D65.12 ÔøΩ Release** |
 
 ### Checklist
 
@@ -6267,33 +6267,33 @@ Se certifica oficialmente **D65 ó Window Sessions Foundation**. Scope Types ∑ De
 D65.11 = COMPLETE
 Session Foundation = CERTIFIED
 CA-D65 = PASS
-READY FOR D65.12 ó Release
+READY FOR D65.12 ÔøΩ Release
 ```
 
 ---
 
-*## D65.11 APPEND-ONLY 2026-07-22 ó D65.11 COMPLETE ó Session Foundation CERTIFIED ó CA-D65 PASS ó Next D65.12.*
+*## D65.11 APPEND-ONLY 2026-07-22 ÔøΩ D65.11 COMPLETE ÔøΩ Session Foundation CERTIFIED ÔøΩ CA-D65 PASS ÔøΩ Next D65.12.*
 
 ## D65.12
 
-**Microfase:** D65.12 ó Window Sessions Foundation ó Release + Official Close  
+**Microfase:** D65.12 ÔøΩ Window Sessions Foundation ÔøΩ Release + Official Close  
 **Fecha:** 2026-07-22  
-**Estado:** **D65.12 = COMPLETE** ó **D65 = CLOSED** ó **Session Foundation = RELEASED** ó **CA-D65 = PASS** ó **NEXT = D66**  
-**Modo:** Release documental append-only ó **cero** src / scripts / APIs / validators / page.tsx
+**Estado:** **D65.12 = COMPLETE** ÔøΩ **D65 = CLOSED** ÔøΩ **Session Foundation = RELEASED** ÔøΩ **CA-D65 = PASS** ÔøΩ **NEXT = D66**  
+**Modo:** Release documental append-only ÔøΩ **cero** src / scripts / APIs / validators / page.tsx
 
 ### Resumen
 
-Cierre oficial de la serie **D65 ó Window Sessions Foundation**. Session Foundation **RELEASED**: Types ∑ Definition ∑ State ∑ Registry ∑ Context ∑ Provider ∑ Bridge ∑ integraciÛn silenciosa ∑ validators ∑ governance ∑ certificaciÛn. **CA-D65 = PASS**. API Freeze estable. Zero visual regression. Zero technical debt. Release: [`docs/D65.12-release.md`](docs/D65.12-release.md). Certification: [`docs/D65.11-certification.md`](docs/D65.11-certification.md). El workspace queda preparado para **D66 ó Session Persistence**.
+Cierre oficial de la serie **D65 ÔøΩ Window Sessions Foundation**. Session Foundation **RELEASED**: Types ÔøΩ Definition ÔøΩ State ÔøΩ Registry ÔøΩ Context ÔøΩ Provider ÔøΩ Bridge ÔøΩ integraciÔøΩn silenciosa ÔøΩ validators ÔøΩ governance ÔøΩ certificaciÔøΩn. **CA-D65 = PASS**. API Freeze estable. Zero visual regression. Zero technical debt. Release: [`docs/D65.12-release.md`](docs/D65.12-release.md). Certification: [`docs/D65.11-certification.md`](docs/D65.11-certification.md). El workspace queda preparado para **D66 ÔøΩ Session Persistence**.
 
 | Campo | Valor |
 |-------|--------|
 | Release | [`docs/D65.12-release.md`](docs/D65.12-release.md) |
-| D65 | **COMPLETE ∑ CLOSED** |
+| D65 | **COMPLETE ÔøΩ CLOSED** |
 | Session Foundation | **RELEASED** |
 | CA-D65 | **PASS** |
 | API Freeze | **STABLE** |
-| Deuda tÈcnica (alcance D65) | **Ninguna** |
-| Next | **D66 ó Session Persistence** |
+| Deuda tÔøΩcnica (alcance D65) | **Ninguna** |
+| Next | **D66 ÔøΩ Session Persistence** |
 
 ### Checklist
 
@@ -6316,7 +6316,7 @@ API Freeze = STABLE
 Zero visual regression = CONFIRMED
 Zero technical debt = CONFIRMED
 D65 = CLOSED
-NEXT = D66 ó Session Persistence
+NEXT = D66 ÔøΩ Session Persistence
 ```
 
 ### Resolucion
@@ -6330,30 +6330,30 @@ NEXT = D66
 
 ---
 
-*## D65.12 APPEND-ONLY 2026-07-22 ó D65.12 COMPLETE ó D65 CLOSED ó Session Foundation RELEASED ó CA-D65 PASS ó Next D66.*
+*## D65.12 APPEND-ONLY 2026-07-22 ÔøΩ D65.12 COMPLETE ÔøΩ D65 CLOSED ÔøΩ Session Foundation RELEASED ÔøΩ CA-D65 PASS ÔøΩ Next D66.*
 
 ## D66.12
 
-**Microfase:** D66.12 ó Session Persistence Foundation ó Release + Official Close  
+**Microfase:** D66.12 ÔøΩ Session Persistence Foundation ÔøΩ Release + Official Close  
 **Fecha:** 2026-07-23  
-**Estado:** **D66.12 = COMPLETE** ó **D66 = CLOSED** ó **Session Persistence Foundation = RELEASED** ó **CA-D66 = PASS** ó **NEXT = D67**  
-**Modo:** Release documental append-only ó **cero** src / scripts / APIs / validators
+**Estado:** **D66.12 = COMPLETE** ÔøΩ **D66 = CLOSED** ÔøΩ **Session Persistence Foundation = RELEASED** ÔøΩ **CA-D66 = PASS** ÔøΩ **NEXT = D67**  
+**Modo:** Release documental append-only ÔøΩ **cero** src / scripts / APIs / validators
 
 ### Resumen
 
-Cierre oficial de la serie **D66 ó Session Persistence Foundation**. Persistence **RELEASED**: Types ∑ Serializer ∑ Deserializer ∑ Storage Adapter (IndexedDB `ScientificGraphAI` / `sessions`) ∑ Persistence Bridge ∑ barrel `@/components/session/persistence` ∑ wiring privado en SessionProvider ∑ validators ∑ audit ∑ gate ∑ certificaciÛn. **CA-D66 = PASS**. API Freeze estable. Hard Rules preservadas. Compatibilidad D65 y PROD-3 confirmada. Release: [`docs/D66.12-release.md`](docs/D66.12-release.md). Certification: [`docs/D66.11-certification.md`](docs/D66.11-certification.md). Manifest Persistence = **COMPLETE (D66)**. El workspace queda preparado para **D67 ó Session Restore Foundation** sin refactor de D66.
+Cierre oficial de la serie **D66 ÔøΩ Session Persistence Foundation**. Persistence **RELEASED**: Types ÔøΩ Serializer ÔøΩ Deserializer ÔøΩ Storage Adapter (IndexedDB `ScientificGraphAI` / `sessions`) ÔøΩ Persistence Bridge ÔøΩ barrel `@/components/session/persistence` ÔøΩ wiring privado en SessionProvider ÔøΩ validators ÔøΩ audit ÔøΩ gate ÔøΩ certificaciÔøΩn. **CA-D66 = PASS**. API Freeze estable. Hard Rules preservadas. Compatibilidad D65 y PROD-3 confirmada. Release: [`docs/D66.12-release.md`](docs/D66.12-release.md). Certification: [`docs/D66.11-certification.md`](docs/D66.11-certification.md). Manifest Persistence = **COMPLETE (D66)**. El workspace queda preparado para **D67 ÔøΩ Session Restore Foundation** sin refactor de D66.
 
 | Campo | Valor |
 |-------|--------|
 | Release | [`docs/D66.12-release.md`](docs/D66.12-release.md) |
 | Certification | [`docs/D66.11-certification.md`](docs/D66.11-certification.md) |
 | Gate | [`docs/D66.10-gate.md`](docs/D66.10-gate.md) |
-| D66 | **COMPLETE ∑ CLOSED** |
+| D66 | **COMPLETE ÔøΩ CLOSED** |
 | Session Persistence Foundation | **RELEASED** |
 | CA-D66 | **PASS** |
 | API Freeze | **STABLE** |
-| Deuda tÈcnica (alcance D66) | **Ninguna** |
-| Next | **D67 ó Session Restore Foundation** |
+| Deuda tÔøΩcnica (alcance D66) | **Ninguna** |
+| Next | **D67 ÔøΩ Session Restore Foundation** |
 
 ### Checklist
 
@@ -6364,7 +6364,7 @@ Cierre oficial de la serie **D66 ó Session Persistence Foundation**. Persistence
 | D66 CLOSED | **PASS** |
 | CA-D66 PASS | **PASS** |
 | Manifest Persistence = COMPLETE (D66) | **PASS** |
-| Restore / Autosave / Snapshots = PLANNED (D67ñD69) | **PASS** |
+| Restore / Autosave / Snapshots = PLANNED (D67ÔøΩD69) | **PASS** |
 | NEXT = D67 Session Restore Foundation | **PASS** |
 
 ### Declaracion final
@@ -6378,7 +6378,7 @@ Hard Rules = PRESERVED
 D65 compatibility = CONFIRMED
 PROD-3 compatibility = CONFIRMED
 D66 = CLOSED
-NEXT = D67 ó Session Restore Foundation
+NEXT = D67 ÔøΩ Session Restore Foundation
 ```
 
 ### Resolucion
@@ -6392,4 +6392,65 @@ NEXT = D67
 
 ---
 
-*## D66.12 APPEND-ONLY 2026-07-23 ó D66.12 COMPLETE ó D66 CLOSED ó Session Persistence Foundation RELEASED ó CA-D66 PASS ó Next D67.*
+*## D66.12 APPEND-ONLY 2026-07-23 ‚Äî D66.12 COMPLETE ‚Äî D66 CLOSED ‚Äî Session Persistence Foundation RELEASED ‚Äî CA-D66 PASS ‚Äî Next D67.*
+
+
+## D67.0
+
+**Microfase:** D67.0 ‚Äî Session Restore Foundation ‚Äî Plan + Architecture Freeze  
+**Fecha:** 2026-07-23  
+**Estado:** **D67.0 = COMPLETE** ‚Äî **Session Restore Architecture = LOCKED** ‚Äî **API Freeze = LOCKED** ‚Äî **Hard Rules = LOCKED** ‚Äî **Implementation = NOT STARTED** ‚Äî **READY FOR D67.1**  
+**Modo:** Documental append-only ‚Äî **cero** src / scripts / APIs / validators ¬∑ create [`docs/D67.0-plan.md`](docs/D67.0-plan.md) ¬∑ append Manifest
+
+### Resumen
+
+Architecture Freeze oficial de **D67 ‚Äî Session Restore Foundation**. Decisiones SSOT: input = `SessionPersistenceRecord[]` (sin `SessionSnapshot`); alcance = solo `SessionRegistry`; pipeline = load ‚Üí restore ‚Üí validate ‚Üí `deserializeRegistry` (D66) ‚Üí `register` ‚Üí `RestoreResult`; engine sync/stateless; `HR-Restore-Imports`; barrel isolation (`session/index` no reexporta `restore/*`). Window/Tab/Content/Series restore deferred a Workspace Persistence. Sin implementaci√≥n de Types / Engine / Validator. Plan: [`docs/D67.0-plan.md`](docs/D67.0-plan.md).
+
+| Campo | Valor |
+|-------|--------|
+| Plan | [`docs/D67.0-plan.md`](docs/D67.0-plan.md) |
+| Architecture | **LOCKED** |
+| API Freeze | **LOCKED** (documental) |
+| Hard Rules | **LOCKED** |
+| Implementation | **NOT STARTED** |
+| restore/ | **NOT CREATED** |
+| Next | **D67.1 ‚Äî Restore Types** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| `docs/D67.0-plan.md` created | **PASS** |
+| Architecture Freeze LOCKED | **PASS** |
+| API Freeze documental LOCKED | **PASS** |
+| Hard Rules LOCKED (incl. HR-Restore-Imports) | **PASS** |
+| D65/D66 Freezes preserved | **PASS** |
+| No src/scripts implementation | **PASS** |
+| Manifest append (Restore Architecture LOCKED ¬∑ still PLANNED) | **PASS** |
+| READY FOR D67.1 | **PASS** |
+
+### Declaracion final
+
+```text
+D67.0 = COMPLETE
+Session Restore Architecture = LOCKED
+API Freeze = LOCKED
+Hard Rules = LOCKED
+Implementation = NOT STARTED
+D65 Freeze = PRESERVED
+D66 Freeze = PRESERVED
+READY FOR D67.1 ‚Äî Restore Types
+```
+
+### Resolucion
+
+```text
+D67.0 = COMPLETE
+Architecture LOCKED
+Implementation NOT STARTED
+NEXT = D67.1
+```
+
+---
+
+*## D67.0 APPEND-ONLY 2026-07-23 ‚Äî D67.0 COMPLETE ‚Äî Session Restore Architecture LOCKED ‚Äî API Freeze LOCKED ‚Äî Hard Rules LOCKED ‚Äî Implementation NOT STARTED ‚Äî Ready D67.1.*
