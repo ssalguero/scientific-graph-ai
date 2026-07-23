@@ -101,6 +101,8 @@
     "validate:session-persistence": "npx tsx scripts/validate-session-persistence.ts",
     "validate:session-persistence-boundaries": "npx tsx scripts/validate-session-persistence-boundaries.ts",
     "validate:d66-gate": "npx tsx scripts/validate-d66-gate.ts",
+    "validate:d67": "npx tsx scripts/validate-d67.ts",
+    "validate:d67-gate": "npx tsx scripts/validate-d67-gate.ts",
     "validate:api-freeze": "npx tsx scripts/validate-api-freeze.ts",
     "validate:registry-integrity": "npx tsx scripts/validate-registry-integrity.ts",
     "validate:production-boundaries": "npx tsx scripts/validate-production-boundaries.ts",
