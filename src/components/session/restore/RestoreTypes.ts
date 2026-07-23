@@ -1,7 +1,7 @@
 /**
- * D67.1 — Session Restore Foundation · Restore type contracts.
+ * D67.1 / D67.5 — Session Restore Foundation · Restore type contracts.
  * Authority: D67.0 Architecture Freeze · API Freeze.
- * Types + factory contract stub only — no restore logic, no IO, no React, no UI.
+ * Types only — factory implementation lives in SessionRestoreEngine.ts.
  */
 
 import type { SessionRegistry } from "../SessionRegistry";
@@ -44,14 +44,4 @@ export interface RestoreResult {
  */
 export interface SessionRestoreEngine {
   restore(request: RestoreRequest): RestoreResult;
-}
-
-/**
- * Factory contract — functional implementation arrives in D67.5.
- * Stateless; does not capture registry.
- */
-export function createSessionRestoreEngine(): SessionRestoreEngine {
-  throw new Error(
-    "createSessionRestoreEngine: not implemented (D67.5 — Session Restore Engine)"
-  );
 }
