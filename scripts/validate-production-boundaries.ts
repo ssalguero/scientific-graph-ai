@@ -425,6 +425,33 @@ assertCase(
   "page may use public windows barrel / WindowManager (product shell)"
 );
 
+// D65.8 — Session Foundation: page may mount SessionProvider + SessionBridge
+// via the public session barrel only (no deep imports; no other session symbols required).
+
+assertCase(
+  "bridge.productFreeze.page.allowsSessionBarrel",
+  /from\s+["']@\/components\/session["']/.test(pageCode),
+  "page may import public session barrel (D65.8 SessionProvider + SessionBridge)"
+);
+
+assertCase(
+  "bridge.productFreeze.page.no-session-deep",
+  !/from\s+["']@\/components\/session\//.test(pageCode),
+  "page.tsx must not deep-import session/* (barrel only)"
+);
+
+assertCase(
+  "bridge.productFreeze.page.mountsSessionProvider",
+  /<SessionProvider[\s>]/.test(pageCode) && /<\/SessionProvider>/.test(pageCode),
+  "page mounts SessionProvider around app content (D65.8)"
+);
+
+assertCase(
+  "bridge.productFreeze.page.mountsSessionBridgeOnce",
+  (pageCode.match(/<SessionBridge\s*\/>/g) ?? []).length === 1,
+  "page mounts SessionBridge exactly once (D65.8)"
+);
+
 // ============================================================================
 // D64.5 — Layout Integrity (composition · tree · module integration)
 // Bridge direction/cache/ownership remain above — do not duplicate here.

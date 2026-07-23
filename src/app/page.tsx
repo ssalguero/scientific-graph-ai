@@ -159,6 +159,7 @@ import {
   WorkspacePanels,
 } from "@/components/workspace";
 import { WindowManager } from "@/components/windows";
+import { SessionProvider, SessionBridge } from "@/components/session";
 import { AdaptiveToolbar } from "@/components/toolbar";
 import {
   Inspector,
@@ -26720,9 +26721,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
 export default function Home() {
   // D56.4 — WindowManager at highest page root (context available to all overlays).
+  // D65.8 — SessionProvider + SessionBridge (silent; windowIds sync only; no persistence).
   return (
     <WindowManager>
-      <GraphEditor />
+      <SessionProvider>
+        <SessionBridge />
+        <GraphEditor />
+      </SessionProvider>
     </WindowManager>
   );
 }
