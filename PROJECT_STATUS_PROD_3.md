@@ -6331,3 +6331,65 @@ NEXT = D66
 ---
 
 *## D65.12 APPEND-ONLY 2026-07-22 — D65.12 COMPLETE — D65 CLOSED — Session Foundation RELEASED — CA-D65 PASS — Next D66.*
+
+## D66.12
+
+**Microfase:** D66.12 — Session Persistence Foundation — Release + Official Close  
+**Fecha:** 2026-07-23  
+**Estado:** **D66.12 = COMPLETE** — **D66 = CLOSED** — **Session Persistence Foundation = RELEASED** — **CA-D66 = PASS** — **NEXT = D67**  
+**Modo:** Release documental append-only — **cero** src / scripts / APIs / validators
+
+### Resumen
+
+Cierre oficial de la serie **D66 — Session Persistence Foundation**. Persistence **RELEASED**: Types · Serializer · Deserializer · Storage Adapter (IndexedDB `ScientificGraphAI` / `sessions`) · Persistence Bridge · barrel `@/components/session/persistence` · wiring privado en SessionProvider · validators · audit · gate · certificación. **CA-D66 = PASS**. API Freeze estable. Hard Rules preservadas. Compatibilidad D65 y PROD-3 confirmada. Release: [`docs/D66.12-release.md`](docs/D66.12-release.md). Certification: [`docs/D66.11-certification.md`](docs/D66.11-certification.md). Manifest Persistence = **COMPLETE (D66)**. El workspace queda preparado para **D67 — Session Restore Foundation** sin refactor de D66.
+
+| Campo | Valor |
+|-------|--------|
+| Release | [`docs/D66.12-release.md`](docs/D66.12-release.md) |
+| Certification | [`docs/D66.11-certification.md`](docs/D66.11-certification.md) |
+| Gate | [`docs/D66.10-gate.md`](docs/D66.10-gate.md) |
+| D66 | **COMPLETE · CLOSED** |
+| Session Persistence Foundation | **RELEASED** |
+| CA-D66 | **PASS** |
+| API Freeze | **STABLE** |
+| Deuda técnica (alcance D66) | **Ninguna** |
+| Next | **D67 — Session Restore Foundation** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| Release document created | **PASS** |
+| Session Persistence Foundation = RELEASED | **PASS** |
+| D66 CLOSED | **PASS** |
+| CA-D66 PASS | **PASS** |
+| Manifest Persistence = COMPLETE (D66) | **PASS** |
+| Restore / Autosave / Snapshots = PLANNED (D67–D69) | **PASS** |
+| NEXT = D67 Session Restore Foundation | **PASS** |
+
+### Declaracion final
+
+```text
+Serie D66 oficialmente cerrada.
+Session Persistence Foundation = RELEASED
+CA-D66 = PASS
+API Freeze = STABLE
+Hard Rules = PRESERVED
+D65 compatibility = CONFIRMED
+PROD-3 compatibility = CONFIRMED
+D66 = CLOSED
+NEXT = D67 — Session Restore Foundation
+```
+
+### Resolucion
+
+```text
+D66.12 = COMPLETE
+D66 CLOSED
+Session Persistence Foundation RELEASED
+NEXT = D67
+```
+
+---
+
+*## D66.12 APPEND-ONLY 2026-07-23 — D66.12 COMPLETE — D66 CLOSED — Session Persistence Foundation RELEASED — CA-D66 PASS — Next D67.*
