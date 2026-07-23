@@ -1,7 +1,10 @@
 /**
- * D68.4 — Session Autosave Foundation · AutosaveFlushPolicy.
+ * D68.4 / D68.8 — Session Autosave Foundation · AutosaveFlushPolicy.
  * Authority: D68.0 Architecture Freeze · API Freeze · HR-clear-only-on-unregister.
  * Pure decide(snapshot) only — no Bridge, Adapter, Scheduler, Controller, React, or I/O.
+ *
+ * D68.8 edge audit: decide remains pure · needsFullRewrite ⇒ clearThenPersistRegistry
+ * before dirty-count branches · never mutates snapshot.
  */
 
 import type { SessionId } from "../SessionTypes";

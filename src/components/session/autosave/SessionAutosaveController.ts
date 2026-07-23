@@ -1,10 +1,16 @@
 /**
- * D68.5 — Session Autosave Foundation · SessionAutosaveController.
+ * D68.5 / D68.8 — Session Autosave Foundation · SessionAutosaveController.
  * Authority: D68.0 Architecture Freeze · API Freeze ·
  * HR-pause-dirty-continue · HR-flush-single-flight · HR-dispose-no-implicit-flush ·
  * HR-clear-only-on-unregister · HR-autosave-bridge-only · HR-autosave-adapter-clear-only.
  * Assembles DirtyTracker + Scheduler + FlushPolicy + Bridge + Adapter.
  * No React, Context, Registry mutation, Restore, or Provider wiring (D68.6).
+ *
+ * D68.8 edge audit:
+ * - pause → notifyMutation marks dirty only (no schedule / no pendingFlush)
+ * - resume → immediate flush if dirty
+ * - notifyMutation during flushInFlight (!paused) → pendingFlush → re-flush (model B)
+ * - dispose → scheduler.dispose · no implicit flush · idempotent
  */
 
 import type {
@@ -100,7 +106,14 @@ export function createSessionAutosaveController(
         dirty.mark(event.sessionId);
       }
 
+      // HR-pause-dirty-continue: dirty already marked; no schedule / no pendingFlush.
       if (paused) {
+        return;
+      }
+
+      // HR-flush-single-flight (model B): coalesce into re-flush after in-flight write.
+      if (flushInFlight) {
+        pendingFlush = true;
         return;
       }
 

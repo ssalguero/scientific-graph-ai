@@ -11,9 +11,10 @@
  * Owns SessionStorageAdapter + SessionPersistenceBridge via useRef — never exposed on
  * Context/API.
  *
- * D68.6 — Private Autosave wiring (HR-context-no-autosave · HR-no-default-mount-persist ·
+ * D68.6 / D68.8 — Private Autosave wiring (HR-context-no-autosave · HR-no-default-mount-persist ·
  * HR-dispose-no-implicit-flush). Owns SessionAutosaveController via useRef; notifyMutation
  * only after successful API mutators — never on default-session bootstrap.
+ * D68.8: Provider wiring unchanged — dispose on unmount only; no Context leak.
  */
 
 import {

@@ -1,8 +1,14 @@
 /**
- * D68.2 — Session Autosave Foundation · DirtyTracker.
+ * D68.2 / D68.8 — Session Autosave Foundation · DirtyTracker.
  * Authority: D68.0 Architecture Freeze · API Freeze.
  * Pure in-memory dirty state — no React, timers, Bridge, Adapter, I/O,
  * Scheduler, FlushPolicy, or Controller (D68.3+).
+ *
+ * D68.8 edge audit:
+ * - mark → Set dedupe · insertion order preserved · needsFullRewrite untouched
+ * - markRemoved → needsFullRewrite=true · existing order unchanged for prior ids
+ * - clear → empty dirtyIds · needsFullRewrite=false
+ * - snapshot → frozen array copy · Set never exposed
  */
 
 import type { SessionId } from "../SessionTypes";

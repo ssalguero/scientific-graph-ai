@@ -1,8 +1,13 @@
 /**
- * D68.3 — Session Autosave Foundation · AutosaveScheduler.
+ * D68.3 / D68.8 — Session Autosave Foundation · AutosaveScheduler.
  * Authority: D68.0 Architecture Freeze · API Freeze.
  * Debounce-only — no DirtyTracker, FlushPolicy, Controller, Bridge, Adapter,
  * React, or I/O (D68.4+).
+ *
+ * D68.8 edge audit:
+ * - flushNow with no pending callback → no-op
+ * - cancel → clearTimeout · drop pending · does not run callback
+ * - dispose → cancel · no implicit flush · safe to call repeatedly
  */
 
 import { AUTOSAVE_DEBOUNCE_MS } from "./AutosaveTypes";
