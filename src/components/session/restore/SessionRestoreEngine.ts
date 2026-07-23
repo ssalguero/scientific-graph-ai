@@ -1,10 +1,19 @@
 /**
- * D67.5 / D67.6 — Session Restore Foundation · Session Restore Engine.
+ * D67.5–D67.7 — Session Restore Foundation · Session Restore Engine.
  * Authority: D67.0 Architecture Freeze · API Freeze.
- * Sync pipeline: validate → report → deserializeRegistry (D66) → register → result.
  * No React, no IO, no UI — sole write via SessionRegistry.register.
  *
- * Registry reconstruction scope (D67.6):
+ * Official restore pipeline (D67.0 / D67.7 SSOT — order frozen):
+ *   RestoreRequest
+ *     → RestoreValidator.validate(records)     // sole validation
+ *     → createRestoreReport(...)               // initial report seed
+ *     → deserializeRegistry(records)           // sole reconstruction (D66)
+ *     → SessionRegistry.register(...)          // sole write
+ *     → RestoreStatistics                      // computed once
+ *     → RestoreStatus                          // derived from statistics only
+ *     → RestoreResult                          // immutable
+ *
+ * Registry reconstruction scope:
  *   SessionPersistenceRecord[] → deserializeRegistry() → SessionEntry[]
  *     → SessionRegistry.register(...)
  *
@@ -27,7 +36,7 @@ import type {
 } from "./RestoreTypes";
 import { createRestoreValidator } from "./RestoreValidator";
 
-/** Private — RestoreStatus from RestoreStatistics only. */
+/** Private — RestoreStatus derived exclusively from RestoreStatistics. */
 function buildRestoreStatus(statistics: RestoreStatistics): RestoreStatus {
   if (statistics.restored > 0 && statistics.restored === statistics.requested) {
     return "success";
@@ -38,7 +47,7 @@ function buildRestoreStatus(statistics: RestoreStatistics): RestoreStatus {
   return "failed";
 }
 
-/** Private — immutable statistics bag (no calculations beyond field assembly). */
+/** Private — RestoreStatistics assembled once per restore(). */
 function buildStatistics(
   requested: number,
   restored: number,
@@ -79,7 +88,8 @@ type ReconstructionOutcome = {
 
 /**
  * Private — SessionRegistry reconstruction only.
- * Flow: valid records → deserializeRegistry (D66) → registry.register per entry.
+ * Sole reconstruction: deserializeRegistry (D66).
+ * Sole write: registry.register(...).
  * Does not touch Window / Tab / Content / Series registries (deferred D68–D70).
  */
 function restoreEntries(
@@ -98,7 +108,7 @@ function restoreEntries(
     validRecords.push(records[index]!);
   }
 
-  // D66 certified deserializer — sole reconstruction path (no second mechanism).
+  // Pipeline step: deserializeRegistry — sole reconstruction mechanism (D66).
   const entries: readonly SessionEntry[] = deserializeRegistry(validRecords);
 
   const restoredIds: SessionId[] = [];
@@ -107,7 +117,7 @@ function restoreEntries(
   let failed = 0;
 
   for (const entry of entries) {
-    // Sole write surface — public SessionRegistry API only.
+    // Pipeline step: SessionRegistry.register — sole write surface.
     const registered = registry.register(entry);
     if (registered) {
       restored += 1;
@@ -136,6 +146,7 @@ function restoreEntries(
  * Registry is always supplied via RestoreRequest — never captured.
  */
 export function createSessionRestoreEngine(): SessionRestoreEngine {
+  // Sole validation owner for this engine instance.
   const validator = createRestoreValidator();
 
   return {
@@ -143,9 +154,19 @@ export function createSessionRestoreEngine(): SessionRestoreEngine {
       const startedAt = performance.now();
       const { records, registry } = request;
 
+      // --- 1. RestoreValidator.validate(records) — sole validation ---
       const validationErrors = validator.validate(records);
       const errors: RestoreError[] = validationErrors.slice();
       const warnings: RestoreError[] = [];
+
+      // --- 2. createRestoreReport(...) — initial report seed ---
+      let report = createRestoreReport({
+        warnings,
+        errors: validationErrors,
+        restoredItems: 0,
+        skippedItems: 0,
+        elapsedTime: 0,
+      });
 
       const requested = Array.isArray(records) ? records.length : 0;
       let restored = 0;
@@ -157,6 +178,7 @@ export function createSessionRestoreEngine(): SessionRestoreEngine {
         (error) => error.kind === "MissingSnapshot"
       );
 
+      // --- 3–4. deserializeRegistry → SessionRegistry.register ---
       if (!hasMissingPayload && requested > 0) {
         const outcome = restoreEntries(
           records,
@@ -172,16 +194,20 @@ export function createSessionRestoreEngine(): SessionRestoreEngine {
         }
       }
 
+      // --- 5. RestoreStatistics (computed once) ---
       const statistics = buildStatistics(
         requested,
         restored,
         skipped,
         failed
       );
-      const status = buildRestoreStatus(statistics);
-      const elapsedTime = performance.now() - startedAt;
 
-      const report = createRestoreReport({
+      // --- 6. RestoreStatus (derived from statistics only) ---
+      const status = buildRestoreStatus(statistics);
+
+      // --- 7. Final RestoreReport + immutable RestoreResult ---
+      const elapsedTime = performance.now() - startedAt;
+      report = createRestoreReport({
         warnings,
         errors,
         restoredItems: restored,
@@ -189,12 +215,14 @@ export function createSessionRestoreEngine(): SessionRestoreEngine {
         elapsedTime,
       });
 
-      return {
+      const result: RestoreResult = {
         status,
         report,
         statistics,
         restoredIds: restoredIds.slice(),
       };
+
+      return result;
     },
   };
 }
