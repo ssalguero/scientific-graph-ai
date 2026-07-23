@@ -6691,3 +6691,57 @@ NEXT = D68.1
 
 *## D68.0 APPEND-ONLY 2026-07-23 — D68.0 COMPLETE — Session Autosave Architecture LOCKED — API Freeze LOCKED — Hard Rules LOCKED — Implementation NOT STARTED — Ready D68.1.*
 
+
+## D68.10
+
+**Microfase:** D68.10 — Session Autosave Foundation — Documentation / Pre-Certification  
+**Fecha:** 2026-07-23  
+**Estado:** **D68.10 = COMPLETE** — **Session Autosave Foundation = PRE-CERTIFIED / IMPLEMENTED** — **Certification = PENDING** — **READY FOR D68.11**  
+**Modo:** Documental append-only — **cero** src / scripts / package.json — create [`docs/D68.10-pre-certification.md`](docs/D68.10-pre-certification.md) — append Manifest
+
+### Resumen
+
+Pre-certificación oficial de **D68 — Session Autosave Foundation**. Types · DirtyTracker · Scheduler · FlushPolicy · Controller · Provider privado · Barrel · Edge audit · `validate:d68-gate` PASS · `tsc --noEmit` PASS. Compatible con D65/D66/D67. Evidencia: [`docs/D68.10-pre-certification.md`](docs/D68.10-pre-certification.md).
+
+| Campo | Valor |
+|-------|--------|
+| Pre-cert | [`docs/D68.10-pre-certification.md`](docs/D68.10-pre-certification.md) |
+| Architecture | **LOCKED / PRESERVED** |
+| Implementation | **COMPLETE** |
+| Pre-Certification | **COMPLETE** |
+| Certification | **PENDING (D68.11)** |
+| Next | **D68.11 — Certification (CA-D68)** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| `docs/D68.10-pre-certification.md` created | **PASS** |
+| validate:d68 PASS (24/24) | **PASS** |
+| validate:d68-gate PASS | **PASS** |
+| tsc --noEmit PASS | **PASS** |
+| Manifest Autosave PRE-CERTIFIED | **PASS** |
+| READY FOR D68.11 | **PASS** |
+
+### Declaracion final
+
+```text
+D68.10 = COMPLETE
+Session Autosave Foundation = PRE-CERTIFIED
+Implementation = COMPLETE
+Certification = PENDING
+READY FOR D68.11 — Certification
+```
+
+### Resolucion
+
+```text
+D68.10 = COMPLETE
+Pre-Certification COMPLETE
+NEXT = D68.11
+```
+
+---
+
+*## D68.10 APPEND-ONLY 2026-07-23 — D68.10 COMPLETE — Session Autosave Foundation PRE-CERTIFIED — Implementation COMPLETE — Certification PENDING — Ready D68.11.*
+
