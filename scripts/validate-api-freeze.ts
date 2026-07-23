@@ -33,6 +33,7 @@ const API_FREEZE_SCRIPTS: { npmScript: string; gateId: string }[] = [
   { npmScript: "validate:d61-tabs-api", gateId: "d61-tabs-api" },
   { npmScript: "validate:d62-tabs-api", gateId: "d62-tabs-api" },
   { npmScript: "validate:d63-content-api", gateId: "d63-content-api" },
+  { npmScript: "validate:d65-session-api", gateId: "d65-session-api" },
 ];
 
 /** D64.0 §5 Public Barrel Snapshot — paths that must exist. */
@@ -51,6 +52,7 @@ const D64_0_BARRELS = [
   "src/components/windows/tabs/index.ts",
   "src/components/windows/tab-ui/index.ts",
   "src/components/windows/content/index.ts",
+  "src/components/session/index.ts",
 ] as const;
 
 /** Representative public symbols from D64.0 §4 — presence-only (no contract rewrite). */
@@ -130,6 +132,17 @@ const D64_0_REQUIRED_EXPORTS: { barrel: string; symbols: string[] }[] = [
       "ContentHost",
     ],
   },
+  {
+    barrel: "src/components/session/index.ts",
+    symbols: [
+      "SessionId",
+      "SessionEntry",
+      "createSessionRegistry",
+      "SessionProvider",
+      "SessionBridge",
+      "useSessionContext",
+    ],
+  },
 ];
 
 const read = (relPath: string): string => {
@@ -195,6 +208,7 @@ const leakPatterns: { id: string; pattern: RegExp }[] = [
   { id: "tabs", pattern: /from\s+["']\.\/tabs["']/ },
   { id: "tab-ui", pattern: /from\s+["']\.\/tab-ui["']/ },
   { id: "content", pattern: /from\s+["']\.\/content["']/ },
+  { id: "session", pattern: /from\s+["']\.\/session["']/ },
 ];
 
 for (const { id, pattern } of leakPatterns) {
