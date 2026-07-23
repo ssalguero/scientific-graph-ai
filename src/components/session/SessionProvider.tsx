@@ -6,6 +6,10 @@
  * Creates exactly one default session on first mount — id never recreated on re-render.
  * Authority: D65.0 API Freeze · HR-default-session-once · mirrors WindowManager ownership.
  * Bridge = D65.7. page.tsx integration = D65.8.
+ *
+ * D66.7 — Private Persistence wiring only (HR-context-no-persistence).
+ * Owns SessionStorageAdapter + SessionPersistenceBridge via useRef — never exposed on
+ * Context/API; no persist/save/load/clear calls (autosave = D68 · restore = D67).
  */
 
 import {
@@ -14,6 +18,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  createSessionPersistenceBridge,
+  createSessionStorageAdapter,
+  type SessionPersistenceBridge,
+  type SessionStorageAdapter,
+} from "@/components/session/persistence";
 import {
   SessionContext,
   type SessionAPI,
@@ -34,6 +44,21 @@ export type SessionProviderProps = {
 export function SessionProvider({ children }: SessionProviderProps) {
   const registryRef = useRef(createSessionRegistry());
   const registry = registryRef.current;
+
+  /** D66.7 — private Adapter + Bridge; created once; never on Context / API. */
+  const adapterRef = useRef<SessionStorageAdapter | null>(null);
+  if (adapterRef.current === null) {
+    adapterRef.current = createSessionStorageAdapter();
+  }
+  const adapter = adapterRef.current;
+
+  const bridgeRef = useRef<SessionPersistenceBridge | null>(null);
+  if (bridgeRef.current === null) {
+    bridgeRef.current = createSessionPersistenceBridge(
+      registryRef.current,
+      adapter
+    );
+  }
 
   /** One-shot default session — created exactly once for this Provider instance. */
   const defaultSessionRef = useRef<SessionEntry | null>(null);
