@@ -9,15 +9,24 @@
  *
  * D66.7 — Private Persistence wiring only (HR-context-no-persistence).
  * Owns SessionStorageAdapter + SessionPersistenceBridge via useRef — never exposed on
- * Context/API; no persist/save/load/clear calls (autosave = D68 · restore = D67).
+ * Context/API.
+ *
+ * D68.6 — Private Autosave wiring (HR-context-no-autosave · HR-no-default-mount-persist ·
+ * HR-dispose-no-implicit-flush). Owns SessionAutosaveController via useRef; notifyMutation
+ * only after successful API mutators — never on default-session bootstrap.
  */
 
 import {
+  useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+import {
+  createSessionAutosaveController,
+  type SessionAutosaveController,
+} from "@/components/session/autosave";
 import {
   createSessionPersistenceBridge,
   createSessionStorageAdapter,
@@ -59,8 +68,19 @@ export function SessionProvider({ children }: SessionProviderProps) {
       adapter
     );
   }
+  const bridge = bridgeRef.current;
 
-  /** One-shot default session — created exactly once for this Provider instance. */
+  /**
+   * D68.6 — private Autosave Controller; created once; never on Context / API.
+   * Reuses Bridge + Adapter; default debounce (AUTOSAVE_DEBOUNCE_MS).
+   */
+  const autosaveRef = useRef<SessionAutosaveController | null>(null);
+  if (autosaveRef.current === null) {
+    autosaveRef.current = createSessionAutosaveController(bridge, adapter);
+  }
+
+  /** One-shot default session — created exactly once for this Provider instance.
+   * HR-no-default-mount-persist: register here must NOT notify autosave. */
   const defaultSessionRef = useRef<SessionEntry | null>(null);
   if (defaultSessionRef.current === null) {
     const definition = createSessionDefinition();
@@ -79,10 +99,27 @@ export function SessionProvider({ children }: SessionProviderProps) {
     SessionEntry | undefined
   >(() => registry.get(defaultSessionId) ?? defaultSessionRef.current!);
 
-  const api = useMemo<SessionAPI>(
-    () => ({
+  /** D68.6 — dispose on unmount; no implicit flush (HR-dispose-no-implicit-flush). */
+  useEffect(() => {
+    return () => {
+      autosaveRef.current?.dispose();
+    };
+  }, []);
+
+  const api = useMemo<SessionAPI>(() => {
+    const autosave = autosaveRef.current!;
+
+    return {
       register(entry: SessionEntry) {
-        return registry.register(entry);
+        const ok = registry.register(entry);
+        if (!ok) {
+          return false;
+        }
+        autosave.notifyMutation({
+          kind: "register",
+          sessionId: entry.definition.id,
+        });
+        return true;
       },
 
       unregister(id: SessionId) {
@@ -94,6 +131,10 @@ export function SessionProvider({ children }: SessionProviderProps) {
         setActiveSession((prev) =>
           prev?.definition.id === id ? undefined : prev
         );
+        autosave.notifyMutation({
+          kind: "unregister",
+          sessionId: id,
+        });
         return true;
       },
 
@@ -116,6 +157,10 @@ export function SessionProvider({ children }: SessionProviderProps) {
           }
           return registry.get(id);
         });
+        autosave.notifyMutation({
+          kind: "updateState",
+          sessionId: id,
+        });
         return true;
       },
 
@@ -132,9 +177,8 @@ export function SessionProvider({ children }: SessionProviderProps) {
         setActiveSessionId(id);
         setActiveSession(entry);
       },
-    }),
-    [registry]
-  );
+    };
+  }, [registry]);
 
   const value = useMemo<SessionContextValue>(
     () => ({
