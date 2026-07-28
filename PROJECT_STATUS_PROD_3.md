@@ -6796,3 +6796,63 @@ NEXT = D68.12
 
 *## D68.11 APPEND-ONLY 2026-07-23 � D68.11 COMPLETE � CA-D68 PASS 10/10 � Session Autosave Foundation CERTIFIED � Ready D68.12.*
 
+
+## D68.12 — Release
+
+**Microfase:** D68.12 — Session Autosave Foundation — Release + Official Close  
+**Fecha:** 2026-07-28  
+**Estado:** **D68.12 = COMPLETE** — **D68 = CLOSED** — **Session Autosave Foundation = RELEASED** — **CA-D68 = PASS (10/10)** — **NEXT = D69**  
+**Modo:** Release documental append-only — **cero** src / scripts / package.json — create [`docs/D68.12-release.md`](docs/D68.12-release.md) — append Manifest
+
+### Status
+
+**RELEASED**
+
+### Foundation
+
+Session Autosave Foundation
+
+### Result
+
+| Item | Resultado |
+|------|-----------|
+| CA-D68 PASS (10/10) | **PASS** |
+| validate:d68-gate PASS | **PASS** |
+| tsc PASS | **PASS** |
+| API Freeze preserved | **PASS** |
+| D68 CLOSED | **PASS** |
+| Manifest Autosave = COMPLETE (D68) | **PASS** |
+| NEXT = D69 Session Snapshots Foundation | **PASS** |
+
+### Resumen
+
+Session Autosave Foundation **RELEASED**. Cierre oficial de la serie **D68**. Types · DirtyTracker · Scheduler · FlushPolicy · Controller · Provider privado · barrel · validators · CA-D68 10/10. Compatible con D65/D66/D67. Release: [`docs/D68.12-release.md`](docs/D68.12-release.md). Certification: [`docs/D68.11-certification.md`](docs/D68.11-certification.md).
+
+### Declaracion final
+
+```text
+D68 = CLOSED
+Session Autosave Foundation = RELEASED
+CA-D68 = PASS (10/10)
+API Freeze = STABLE
+validate:d68-gate = PASS
+tsc --noEmit = PASS
+NEXT = D69 — Session Snapshots Foundation
+```
+
+### Resolucion
+
+```text
+D68.12 = COMPLETE
+D68 CLOSED
+Session Autosave Foundation RELEASED
+NEXT = D69
+```
+
+### NEXT
+
+**D69 — Session Snapshots Foundation**
+
+---
+
+*## D68.12 APPEND-ONLY 2026-07-28 — D68.12 COMPLETE — D68 CLOSED — Session Autosave Foundation RELEASED — CA-D68 PASS — Next D69.*
