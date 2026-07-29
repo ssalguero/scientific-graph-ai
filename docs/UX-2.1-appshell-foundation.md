@@ -4,13 +4,13 @@
 **Microfase:** UX-2.1 — BUILD (AppShell Foundation)  
 **Fase:** Build presentacional (shell tokens)  
 **Fecha:** 2026-07-29  
-**Estado:** **UX-2.1 = COMPLETE (awaiting human review)** · **NO UX-2.2**  
+**Estado:** **UX-2.1 = CERTIFIED**  
 **Prerrequisitos:** [`docs/UX-2.0-roadmap.md`](UX-2.0-roadmap.md) · Architecture Freeze · D48 SSOT · UX-1.0–1.3  
 
 **Declaración:**
 
 ```text
-UX-2.1 = COMPLETE (appshell foundation)
+UX-2.1 = CERTIFIED (appshell foundation)
 AppShell = CONCEPTUAL (WorkspaceLayout + getAppShell)
 SCOPE = layout.appShellLight / layout.appShellDark VALUES ONLY
 BEHAVIOR = UNCHANGED
@@ -18,8 +18,7 @@ ARCHITECTURE = UNCHANGED
 UI_TOKENS API = FROZEN (no keys added/renamed/removed)
 VISUAL-ONLY = ENFORCED
 NO layout/AppShell.tsx · NO StatusBar · NO ThemeProvider
-READY FOR HUMAN REVIEW
-STOP — do not open UX-2.2
+UX-2.2 = AUTHORIZED (see UX-2.2-toolbar-foundation.md)
 ```
 
 ---
@@ -183,9 +182,9 @@ Mapeo conceptual `DESIGN_SYSTEM.md` → `--app-*` (hex aproximados desde oklch d
 
 ---
 
-## 11. STOP
+## 11. Certification
 
 ```text
-UX-2.1 = COMPLETE (awaiting human review)
-DO NOT OPEN UX-2.2
+UX-2.1 = CERTIFIED
+UX-2.2 = OPEN → COMPLETE (see docs/UX-2.2-toolbar-foundation.md)
 ```

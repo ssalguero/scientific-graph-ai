@@ -252,23 +252,24 @@ export const sidebar = {
 
 /**
  * Shell chrome for Adaptive Toolbar — values from existing primitives only.
- * UX-1.1 Visual Token Alignment: denser spacing, hairline border, surface panel.
+ * UX-2.2 Visual Token Alignment: denser section rhythm, hairline separator,
+ * focus-visible action chrome, raised active — DESIGN_SYSTEM via --app-*.
  */
 export const toolbar = {
-  root: `w-full flex flex-col ${border.bottom} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15}`,
-  section: `w-full ${spacing.spaceY2}`,
-  sectionLeft: `w-full ${spacing.spaceY2}`,
-  sectionCenter: `w-full ${spacing.spaceY2}`,
-  sectionRight: `w-full ${spacing.spaceY2}`,
+  root: `w-full flex flex-col ${border.bottom} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15} ${elevation.flat} ${transitions.colors200}`,
+  section: `w-full ${spacing.spaceY15}`,
+  sectionLeft: `w-full ${spacing.spaceY15}`,
+  sectionCenter: `w-full ${spacing.spaceY15}`,
+  sectionRight: `w-full ${spacing.spaceY15}`,
   group: `flex flex-wrap items-center gap-1.5`,
   groupCompact: `flex flex-wrap items-center ${spacing.px1} gap-1.5`,
-  action: button.outlineSm,
-  actionActive: `${button.outlineSm} ${border.accentSoft} bg-[var(--app-accent)]/10 ${shadows.sm}`,
+  action: `${button.outlineSm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`,
+  actionActive: `${button.outlineSm} ${border.accentSoft} bg-[var(--app-accent)]/10 text-[var(--app-heading)] ${shadows.sm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`,
   actionDisabled: "opacity-50 cursor-not-allowed",
   overflow: "",
   height: "h-7",
   gap: "gap-1.5",
-  padding: spacing.px2,
+  padding: spacing.px25,
   border: border.bottom,
   background: "bg-[var(--app-surface)]",
   radius: radius.md,

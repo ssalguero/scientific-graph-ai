@@ -4,7 +4,7 @@
 **Microfase:** UX-2.0 — ROADMAP (documental)  
 **Fase:** Roadmap oficial  
 **Fecha:** 2026-07-29  
-**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = OPEN (única microfase de BUILD autorizada)** · **NO UX-2.2**  
+**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)**  
 **Prerrequisitos:** UX-1.0–1.3 COMPLETE · Architecture Freeze vigente (D38.2) · D48 SSOT · `DESIGN_SYSTEM.md` referencia visual  
 
 **Declaración:**
@@ -12,15 +12,19 @@
 ```text
 UX-2 = OPEN (Screen Migration Foundation)
 UX-2.0 = COMPLETE (roadmap oficial)
+UX-2.1 = CERTIFIED (AppShell foundation)
+UX-2.2 = COMPLETE (Toolbar foundation — awaiting human review)
+UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)
+RESEQUENCE = UX-2.3 is Workspace & Canvas (not Sidebar); Sidebar deferred
 D48 = SOLE TOKEN SSOT (tokens.ts + --app-*)
 DESIGN_SYSTEM.md = VISUAL REFERENCE ONLY
 Architecture Freeze = VIGENTE
 AppShell = CONCEPTUAL (WorkspaceLayout + getAppShell)
+Toolbar = AdaptiveToolbar (D49 frozen)
 NO layout/AppShell.tsx · NO workstation/ · NO styles.css · NO shadcn/Radix
 UI_TOKENS API = FROZEN (valores only)
 VISUAL-ONLY = ENFORCED
-READY FOR UX-2.1 BUILD
-STOP — do not open UX-2.2 until UX-2.1 is certified
+STOP — human review of UX-2.3 before next visual consolidation phase
 ```
 
 ---
@@ -145,7 +149,8 @@ WorkspaceLayout + getAppShell   ← AppShell conceptual
 |----|----------|---------|---------------|
 | **UX-2.1** | Shell foundation (AppShell conceptual) | Valores `layout.appShellLight\|Dark`; verificar composición `WorkspaceLayout` | StatusBar, `layout/AppShell.tsx`, providers |
 | **UX-2.2** | Toolbar | Restyle `AdaptiveToolbar`; mismos handlers | Rewire de handlers |
-| **UX-2.3** | Sidebar | Migración visual Proyecto / Visualización / Ajustes | Paneles Series/Windows/Session nuevos; SessionProvider |
+| **UX-2.3** | **Workspace & Canvas** (resequenced) | Header + canvas surface en `WorkspaceContent`; DOM-stable wrap de `{workspace}` | Sidebar (deferred); StatusBar; nuevos archivos Workspace*; GraphEditor logic |
+| **UX-2.3b** | Sidebar *(deferred from original UX-2.3)* | Migración visual Proyecto / Visualización / Ajustes | Paneles Series/Windows/Session nuevos; SessionProvider |
 | **UX-2.4** | Inspector | Chrome `inspector/*` + Analysis presentacional | Extraer GraphSettings domain; docking behavior |
 | **UX-2.5** | Workspace chrome | Presentación `FloatingWindow` / tab chrome | Drag / resize / snap / tabs logic |
 | **UX-2.6** | Ventanas / content surfaces | Header, padding, borders de hosts; `ContentDefinition` intacto | ContentRegistry / kinds |
@@ -171,7 +176,7 @@ Tras cada microfase:
 → NO abrir la siguiente microfase hasta certificación.
 ```
 
-UX-2.1 es la **única** microfase de BUILD abierta tras este roadmap. **No abrir UX-2.2** hasta que UX-2.1 esté certificada.
+Tras certificar UX-2.1, UX-2.2 (Toolbar) es la microfase de BUILD previa. **UX-2.3** se resecuenció intencionalmente a **Workspace & Canvas** (migración UI hacia diseño Lovable primero); la Sidebar queda como **UX-2.3b** diferida. Ver [`docs/UX-2.3-workspace-canvas.md`](UX-2.3-workspace-canvas.md).
 
 ---
 
@@ -213,7 +218,9 @@ No porque UX-2 deba modificar estas superficies, sino porque un cambio visual pu
 | Documento | Rol |
 |-----------|-----|
 | Este archivo | Roadmap oficial UX-2 |
-| [`docs/UX-2.1-appshell-foundation.md`](UX-2.1-appshell-foundation.md) | Microfase BUILD UX-2.1 |
+| [`docs/UX-2.1-appshell-foundation.md`](UX-2.1-appshell-foundation.md) | Microfase BUILD UX-2.1 (CERTIFIED) |
+| [`docs/UX-2.2-toolbar-foundation.md`](UX-2.2-toolbar-foundation.md) | Microfase BUILD UX-2.2 |
+| [`docs/UX-2.3-workspace-canvas.md`](UX-2.3-workspace-canvas.md) | Microfase BUILD UX-2.3 (Workspace & Canvas) |
 | [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) | Referencia visual |
 | [`src/lib/ui/tokens.ts`](../src/lib/ui/tokens.ts) | SSOT runtime D48 |
 | [`docs/D38.2-architecture-freeze.md`](D38.2-architecture-freeze.md) | Architecture Freeze |
@@ -225,6 +232,9 @@ No porque UX-2 deba modificar estas superficies, sino porque un cambio visual pu
 
 ```text
 UX-2.0 = COMPLETE (roadmap oficial)
-NEXT = UX-2.1 AppShell Foundation
-DO NOT OPEN UX-2.2
+UX-2.1 = CERTIFIED
+UX-2.2 = COMPLETE (awaiting human review)
+UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)
+SIDEBAR = deferred as UX-2.3b
+STOP — human review of UX-2.3 before next visual consolidation
 ```
