@@ -1,9 +1,12 @@
+import { WorkspaceBodyLayout } from "./panels";
 import { WORKSPACE_TOKENS } from "./WorkspaceTokens";
 import type { WorkspaceContentProps } from "./types";
 
 /**
  * D47.2 — Main column + inner padding. Hosts toolbar and scientific workspace slots.
- * UX-2.3 — Presentational header + IDE canvas surface wrap (DOM-stable: workspace slot once).
+ * UX-2.3 — Presentational header (DOM-stable).
+ * UX-2.4 — Body regions via WorkspaceBodyLayout (canvas + side/bottom panels).
+ * UX-2.5 — Panels use shared Panel shell (BodyLayout owns wrappers).
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
@@ -36,12 +39,7 @@ export function WorkspaceContent({
             Ready
           </p>
         </header>
-        <div
-          data-workspace-canvas
-          className="min-w-0 overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4 shadow-sm sm:p-6 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px)] [background-size:24px_24px]"
-        >
-          {workspace}
-        </div>
+        <WorkspaceBodyLayout>{workspace}</WorkspaceBodyLayout>
       </div>
     </div>
   );
