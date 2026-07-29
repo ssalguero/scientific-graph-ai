@@ -6856,3 +6856,153 @@ NEXT = D69
 ---
 
 *## D68.12 APPEND-ONLY 2026-07-28 — D68.12 COMPLETE — D68 CLOSED — Session Autosave Foundation RELEASED — CA-D68 PASS — Next D69.*
+
+## D69.9 — Certification
+
+**Microfase:** D69.9 — Session Snapshots Foundation — Certification  
+**Fecha:** 2026-07-28  
+**Estado:** **D69.9 = COMPLETE** — **Session Snapshots Foundation = CERTIFIED** — **CA-D69 = PASS (9/9)** — **READY FOR D69.10**  
+**Modo:** Documental append-only — **cero** src / scripts / package.json — create [`docs/D69.9-certification.md`](docs/D69.9-certification.md)
+
+### Status
+
+**CERTIFIED**
+
+### Foundation
+
+Session Snapshots Foundation
+
+### Result
+
+| Item | Resultado |
+|------|-----------|
+| CA-D69 PASS (9/9) | **PASS** |
+| validate:d69 PASS (28/28) | **PASS** |
+| validate:d69-gate PASS | **PASS** |
+| tsc PASS | **PASS** |
+| API Freeze preserved | **PASS** |
+| READY FOR D69.10 | **PASS** |
+
+### Resolucion
+
+```text
+D69.9 = COMPLETE
+Session Snapshots Foundation = CERTIFIED
+CA-D69 = PASS (9/9)
+NEXT = D69.10
+```
+
+---
+
+*## D69.9 APPEND-ONLY 2026-07-28 — D69.9 COMPLETE — Session Snapshots Foundation CERTIFIED — CA-D69 PASS 9/9 — Ready D69.10.*
+
+
+## D69.10 — Pre-Release
+
+**Microfase:** D69.10 — Session Snapshots Foundation — Pre-Release  
+**Fecha:** 2026-07-28  
+**Estado:** **D69.10 = COMPLETE** — **PRE-RELEASED / CERTIFIED** — **CA-D69 = PASS (9/9)** — **READY FOR D69.11**  
+**Modo:** Documental append-only — create [`docs/D69.10-pre-release.md`](docs/D69.10-pre-release.md)
+
+### Status
+
+**PRE-RELEASED**
+
+### Resolucion
+
+```text
+D69.10 = COMPLETE
+Session Snapshots Foundation = PRE-RELEASED
+CA-D69 = PASS (9/9)
+NEXT = D69.11
+```
+
+---
+
+*## D69.10 APPEND-ONLY 2026-07-28 — D69.10 COMPLETE — PRE-RELEASED — Ready D69.11.*
+
+
+## D69.11 — CA Official
+
+**Microfase:** D69.11 — Session Snapshots Foundation — CA Official Record  
+**Fecha:** 2026-07-28  
+**Estado:** **D69.11 = COMPLETE** — **CA-D69 = PASS (9/9)** — **READY FOR D69.12**  
+**Modo:** Documental append-only — create [`docs/D69.11-ca.md`](docs/D69.11-ca.md)
+
+### Status
+
+**CA PASS**
+
+### Resolucion
+
+```text
+D69.11 = COMPLETE
+CA-D69 = PASS (9/9)
+ACCEPTANCE = CONFIRMED
+NEXT = D69.12
+```
+
+---
+
+*## D69.11 APPEND-ONLY 2026-07-28 — D69.11 COMPLETE — CA-D69 PASS 9/9 — Ready D69.12.*
+
+
+## D69.12 — Release
+
+**Microfase:** D69.12 — Session Snapshots Foundation — Release + Official Close  
+**Fecha:** 2026-07-28  
+**Estado:** **D69.12 = COMPLETE** — **D69 = CLOSED** — **Session Snapshots Foundation = RELEASED** — **CA-D69 = PASS (9/9)** — **NEXT = D70**  
+**Modo:** Release documental append-only — **cero** src / scripts / package.json — create [`docs/D69.12-release.md`](docs/D69.12-release.md) — append Manifest
+
+### Status
+
+**RELEASED**
+
+### Foundation
+
+Session Snapshots Foundation
+
+### Result
+
+| Item | Resultado |
+|------|-----------|
+| CA-D69 PASS (9/9) | **PASS** |
+| validate:d69-gate PASS | **PASS** |
+| tsc PASS | **PASS** |
+| API Freeze preserved | **PASS** |
+| D69 CLOSED | **PASS** |
+| Manifest Snapshots = COMPLETE (D69) | **PASS** |
+| NEXT = D70 | **PASS** |
+
+### Resumen
+
+Session Snapshots Foundation **RELEASED**. Cierre oficial de la serie **D69**. Types · Factory · Store · Serializer/Deserializer · Provider privado · barrel · validators · CA-D69 9/9. Compatible con D65-D68. Session Foundation (D65-D69) COMPLETE. Release: [`docs/D69.12-release.md`](docs/D69.12-release.md). CA: [`docs/D69.11-ca.md`](docs/D69.11-ca.md).
+
+### Declaracion final
+
+```text
+D69 = CLOSED
+Session Snapshots Foundation = RELEASED
+CA-D69 = PASS (9/9)
+API Freeze = STABLE
+validate:d69-gate = PASS
+tsc --noEmit = PASS
+NEXT = D70
+```
+
+### Resolucion
+
+```text
+D69.12 = COMPLETE
+D69 CLOSED
+Session Snapshots Foundation RELEASED
+NEXT = D70
+```
+
+### NEXT
+
+**D70**
+
+---
+
+*## D69.12 APPEND-ONLY 2026-07-28 — D69.12 COMPLETE — D69 CLOSED — Session Snapshots Foundation RELEASED — CA-D69 PASS — Next D70.*
