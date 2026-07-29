@@ -7073,3 +7073,148 @@ NEXT = D70.1
 ---
 
 *## D70.0 APPEND-ONLY 2026-07-28 — D70.0 COMPLETE — D70 PLANNED — Restore Points Architecture LOCKED — Ready D70.1.*
+
+## D70.9 — Certification
+
+**Microfase:** D70.9 — Restore Points Foundation — Certification  
+**Fecha:** 2026-07-28  
+**Estado:** **D70.9 = COMPLETE** — **Restore Points Foundation = CERTIFIED** — **CA-D70 = PASS (9/9)** — **READY FOR D70.10**  
+**Modo:** Documental append-only — **cero** src / scripts / package.json — create [`docs/D70.9-certification.md`](docs/D70.9-certification.md)
+
+### Status
+
+**CERTIFIED**
+
+### Foundation
+
+Restore Points Foundation
+
+### Result
+
+| Item | Resultado |
+|------|-----------|
+| CA-D70 PASS (9/9) | **PASS** |
+| validate:d70 PASS (27/27) | **PASS** |
+| validate:d70-gate PASS | **PASS** |
+| tsc PASS | **PASS** |
+| build PASS | **PASS** |
+| Edge Audit PASS | **PASS** |
+| API Freeze preserved | **PASS** |
+| READY FOR D70.10 | **PASS** |
+
+### Resolucion
+
+```text
+D70.9 = COMPLETE
+Restore Points Foundation = CERTIFIED
+CA-D70 = PASS (9/9)
+NEXT = D70.10
+```
+
+---
+
+*## D70.9 APPEND-ONLY 2026-07-28 — D70.9 COMPLETE — Restore Points Foundation CERTIFIED — CA-D70 PASS 9/9 — Ready D70.10.*
+
+
+## D70.10 — Pre-Release
+
+**Microfase:** D70.10 — Restore Points Foundation — Pre-Release  
+**Fecha:** 2026-07-28  
+**Estado:** **D70.10 = COMPLETE** — **PRE-RELEASED / CERTIFIED** — **CA-D70 = PASS (9/9)** — **READY FOR D70.11**  
+**Modo:** Documental append-only — create [`docs/D70.10-pre-release.md`](docs/D70.10-pre-release.md)
+
+### Resolucion
+
+```text
+D70.10 = COMPLETE
+Restore Points Foundation = PRE-RELEASED
+CA-D70 = PASS (9/9)
+NEXT = D70.11
+```
+
+---
+
+*## D70.10 APPEND-ONLY 2026-07-28 — D70.10 COMPLETE — PRE-RELEASED — Ready D70.11.*
+
+
+## D70.11 — CA Official
+
+**Microfase:** D70.11 — Restore Points Foundation — CA Official Record  
+**Fecha:** 2026-07-28  
+**Estado:** **D70.11 = COMPLETE** — **CA-D70 = PASS (9/9)** — **READY FOR D70.12**  
+**Modo:** Documental append-only — create [`docs/D70.11-ca.md`](docs/D70.11-ca.md)
+
+### Resolucion
+
+```text
+D70.11 = COMPLETE
+CA-D70 = PASS (9/9)
+NEXT = D70.12
+```
+
+---
+
+*## D70.11 APPEND-ONLY 2026-07-28 — D70.11 COMPLETE — CA-D70 PASS 9/9 — Ready D70.12.*
+
+
+## D70.12 — Release
+
+**Microfase:** D70.12 — Restore Points Foundation — Release + Official Close  
+**Fecha:** 2026-07-28  
+**Estado:** **D70.12 = COMPLETE** — **D70 = CLOSED** — **Restore Points Foundation = RELEASED** — **CA-D70 = PASS (9/9)** — **NEXT = D71**  
+**Modo:** Release documental append-only — **cero** src / scripts / package.json — create [`docs/D70-release.md`](docs/D70-release.md) — append Manifest
+
+### Status
+
+**RELEASED**
+
+### Foundation
+
+Restore Points Foundation
+
+### Result
+
+| Item | Resultado |
+|------|-----------|
+| CA-D70 PASS (9/9) | **PASS** |
+| validate:d70-gate PASS | **PASS** |
+| tsc PASS | **PASS** |
+| build PASS | **PASS** |
+| API Freeze preserved | **PASS** |
+| D70 CLOSED | **PASS** |
+| Manifest Restore Points = COMPLETE (D70) | **PASS** |
+| NEXT = D71 | **PASS** |
+
+### Resumen
+
+Restore Points Foundation **RELEASED**. Cierre oficial de la serie **D70**. Types · Metadata · Factory · Registry · Serializer/Deserializer · barrel · validators · Isolation Audit · Build Verification · CA-D70 9/9. Compatible con D65-D69. Release: [`docs/D70-release.md`](docs/D70-release.md). CA: [`docs/D70.11-ca.md`](docs/D70.11-ca.md).
+
+### Declaracion final
+
+```text
+D70 = CLOSED
+Restore Points Foundation = RELEASED
+CA-D70 = PASS (9/9)
+API Freeze = STABLE
+validate:d70-gate = PASS
+tsc --noEmit = PASS
+npm run build = PASS
+NEXT = D71
+```
+
+### Resolucion
+
+```text
+D70.12 = COMPLETE
+D70 CLOSED
+Restore Points Foundation RELEASED
+NEXT = D71
+```
+
+### NEXT
+
+**D71**
+
+---
+
+*## D70.12 APPEND-ONLY 2026-07-28 — D70.12 COMPLETE — D70 CLOSED — Restore Points Foundation RELEASED — CA-D70 PASS — Next D71.*
