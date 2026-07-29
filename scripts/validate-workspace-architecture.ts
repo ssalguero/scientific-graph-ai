@@ -70,13 +70,14 @@ const present = existsSync(workspaceDir)
   : [];
 const presentSet = new Set(present);
 const requiredSet = new Set<string>(REQUIRED_FILES);
+/** UX-2.4 — IDE panel chrome directory (allowed alongside the frozen 6-file set). */
+const ALLOWED_EXTRA_ENTRIES = new Set(["panels"]);
 
 assertCase(
   "workspace.files.exact",
-  present.length === REQUIRED_FILES.length &&
-    REQUIRED_FILES.every((f) => presentSet.has(f)) &&
-    present.every((f) => requiredSet.has(f)),
-  `present=[${present.sort().join(", ")}] expected=[${REQUIRED_FILES.join(", ")}]`
+  REQUIRED_FILES.every((f) => presentSet.has(f)) &&
+    present.every((f) => requiredSet.has(f) || ALLOWED_EXTRA_ENTRIES.has(f)),
+  `present=[${present.sort().join(", ")}] expected=[${REQUIRED_FILES.join(", ")}] (+ optional panels/)`
 );
 
 for (const file of REQUIRED_FILES) {

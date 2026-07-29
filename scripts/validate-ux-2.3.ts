@@ -37,6 +37,8 @@ const read = (path: string): string =>
   existsSync(path) ? readFileSync(path, "utf8") : "";
 
 const contentSource = read(contentPath);
+const bodyLayoutPath = join(workspaceDir, "panels", "WorkspaceBodyLayout.tsx");
+const bodyLayoutSource = read(bodyLayoutPath);
 const barrelSource = read(join(workspaceDir, "index.ts"));
 const layoutSource = read(join(workspaceDir, "WorkspaceLayout.tsx"));
 const panelsSource = read(join(workspaceDir, "WorkspacePanels.tsx"));
@@ -51,6 +53,8 @@ const allWorkspaceSources = [
   typesSource,
   barrelSource,
 ].join("\n");
+/** Canvas chrome may live in WorkspaceBodyLayout (UX-2.4); contract is location-agnostic. */
+const chromeSources = [contentSource, bodyLayoutSource].join("\n");
 
 /* -------------------------------------------------------------------------- */
 /* A. Exact 6-file set + no forbidden new files                               */
@@ -63,13 +67,14 @@ const present = existsSync(workspaceDir)
   : [];
 const presentSet = new Set(present);
 const requiredSet = new Set<string>(REQUIRED_FILES);
+/** UX-2.4 — panels/ allowed beside the frozen 6-file set. */
+const ALLOWED_EXTRA_ENTRIES = new Set(["panels"]);
 
 assertCase(
   "ux23.workspace.files.exact",
-  present.length === REQUIRED_FILES.length &&
-    REQUIRED_FILES.every((f) => presentSet.has(f)) &&
-    present.every((f) => requiredSet.has(f)),
-  `present=[${present.sort().join(", ")}] expected=[${REQUIRED_FILES.join(", ")}]`
+  REQUIRED_FILES.every((f) => presentSet.has(f)) &&
+    present.every((f) => requiredSet.has(f) || ALLOWED_EXTRA_ENTRIES.has(f)),
+  `present=[${present.sort().join(", ")}] expected=[${REQUIRED_FILES.join(", ")}] (+ optional panels/)`
 );
 
 for (const forbidden of FORBIDDEN_NEW_FILES) {
@@ -120,10 +125,13 @@ assertCase(
   "data-workspace-header"
 );
 
+const canvasMarkerCount = (
+  chromeSources.match(/data-workspace-canvas(?=[\s>=])/g) ?? []
+).length;
 assertCase(
   "ux23.canvas.marker",
-  /data-workspace-canvas/.test(contentSource),
-  "data-workspace-canvas"
+  canvasMarkerCount === 1,
+  `data-workspace-canvas count=${canvasMarkerCount} (Content and/or BodyLayout)`
 );
 
 assertCase(
@@ -142,18 +150,31 @@ assertCase(
   `{workspace} count=${workspaceRenderCount}`
 );
 
+const workspaceViaBodyLayout =
+  /<WorkspaceBodyLayout>\s*\{workspace\}\s*<\/WorkspaceBodyLayout>/.test(
+    contentSource.replace(/\r\n/g, "\n")
+  );
+const workspaceDirectInContent =
+  /data-workspace-canvas[\s\S]*?>\s*\{workspace\}\s*</.test(contentSource);
+const childrenDirectInBody =
+  /data-workspace-canvas[\s\S]*?>\s*\{children\}\s*</.test(bodyLayoutSource);
+
 assertCase(
   "ux23.dom.workspace.directChildOfCanvas",
-  /data-workspace-canvas[\s\S]*?>\s*\{workspace\}\s*</.test(contentSource),
-  "{workspace} direct child of data-workspace-canvas"
+  workspaceDirectInContent || (workspaceViaBodyLayout && childrenDirectInBody),
+  "{workspace} direct under canvas, or Content→BodyLayout→canvas→{children}"
 );
 
 assertCase(
   "ux23.dom.toolbar.beforeHeader",
-  /\{toolbar\}[\s\S]*?data-workspace-header[\s\S]*?data-workspace-canvas[\s\S]*?\{workspace\}/.test(
+  (/\{toolbar\}[\s\S]*?data-workspace-header[\s\S]*?data-workspace-canvas[\s\S]*?\{workspace\}/.test(
     contentSource
-  ),
-  "order: toolbar → header → canvas → {workspace}"
+  ) ||
+    (/\{toolbar\}[\s\S]*?data-workspace-header[\s\S]*?WorkspaceBodyLayout[\s\S]*?\{workspace\}/.test(
+      contentSource
+    ) &&
+      /data-workspace-canvas/.test(bodyLayoutSource))),
+  "order: toolbar → header → canvas/{workspace} (BodyLayout allowed)"
 );
 
 assertCase(
@@ -181,11 +202,11 @@ assertCase(
 
 assertCase(
   "ux23.uses.app.tokens",
-  /var\(--app-border\)/.test(contentSource) &&
-    /var\(--app-surface\)/.test(contentSource) &&
-    /var\(--app-text-muted\)/.test(contentSource) &&
-    /var\(--app-heading\)/.test(contentSource),
-  "--app-border / --app-surface / --app-text-muted / --app-heading"
+  /var\(--app-border\)/.test(chromeSources) &&
+    /var\(--app-surface\)/.test(chromeSources) &&
+    /var\(--app-text-muted\)/.test(chromeSources) &&
+    /var\(--app-heading\)/.test(chromeSources),
+  "--app-border / --app-surface / --app-text-muted / --app-heading (Content+BodyLayout)"
 );
 
 assertCase(

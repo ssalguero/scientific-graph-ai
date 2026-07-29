@@ -4,7 +4,7 @@
 **Microfase:** UX-2.0 — ROADMAP (documental)  
 **Fase:** Roadmap oficial  
 **Fecha:** 2026-07-29  
-**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)**  
+**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)** · **UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)** · **UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)**  
 **Prerrequisitos:** UX-1.0–1.3 COMPLETE · Architecture Freeze vigente (D38.2) · D48 SSOT · `DESIGN_SYSTEM.md` referencia visual  
 
 **Declaración:**
@@ -15,7 +15,9 @@ UX-2.0 = COMPLETE (roadmap oficial)
 UX-2.1 = CERTIFIED (AppShell foundation)
 UX-2.2 = COMPLETE (Toolbar foundation — awaiting human review)
 UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)
-RESEQUENCE = UX-2.3 is Workspace & Canvas (not Sidebar); Sidebar deferred
+UX-2.4 = COMPLETE (Workspace Panels Foundation — awaiting human review)
+UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)
+RESEQUENCE = UX-2.4 Panels → UX-2.5 Panel Infrastructure → UX-2.6 Panel Content → UX-2.7 Resizable Split → UX-2.8 Panel Persistence
 D48 = SOLE TOKEN SSOT (tokens.ts + --app-*)
 DESIGN_SYSTEM.md = VISUAL REFERENCE ONLY
 Architecture Freeze = VIGENTE
@@ -24,7 +26,7 @@ Toolbar = AdaptiveToolbar (D49 frozen)
 NO layout/AppShell.tsx · NO workstation/ · NO styles.css · NO shadcn/Radix
 UI_TOKENS API = FROZEN (valores only)
 VISUAL-ONLY = ENFORCED
-STOP — human review of UX-2.3 before next visual consolidation phase
+STOP — human review of UX-2.5 before Panel Content (UX-2.6)
 ```
 
 ---
@@ -123,9 +125,9 @@ Referencia permanente. No crear componentes del brief que no existan en PROD-3.
 | Toolbar | `AdaptiveToolbar` |
 | WindowFrame | `FloatingWindow` |
 | ThemeProvider | `themeMode` state (en `GraphEditor`) |
-| Inspector | `inspector/*` + Analysis inline |
+| Inspector | `inspector/*` + Analysis inline (montaje futuro en Right panel) |
 | Sidebar | Proyecto / Visualización / Ajustes |
-| Workspace | `WorkspaceContent` |
+| Workspace | `WorkspaceContent` + `WorkspaceBodyLayout` |
 | StatusBar | No implementado (gap documentado) |
 
 ```text
@@ -137,8 +139,11 @@ SessionProvider
     │
 WorkspaceLayout + getAppShell   ← AppShell conceptual
     ├── Sidebar
-    ├── WorkspaceContent (AdaptiveToolbar + sections)
-    └── WorkspacePanels (Inspector dock + FloatingWindowBridge)
+    ├── WorkspaceContent
+    │     ├── AdaptiveToolbar
+    │     ├── Header
+    │     └── WorkspaceBodyLayout (Left | Canvas | Right + Bottom)
+    └── WorkspacePanels (Dock + FloatingWindowBridge)
 ```
 
 ---
@@ -149,19 +154,22 @@ WorkspaceLayout + getAppShell   ← AppShell conceptual
 |----|----------|---------|---------------|
 | **UX-2.1** | Shell foundation (AppShell conceptual) | Valores `layout.appShellLight\|Dark`; verificar composición `WorkspaceLayout` | StatusBar, `layout/AppShell.tsx`, providers |
 | **UX-2.2** | Toolbar | Restyle `AdaptiveToolbar`; mismos handlers | Rewire de handlers |
-| **UX-2.3** | **Workspace & Canvas** (resequenced) | Header + canvas surface en `WorkspaceContent`; DOM-stable wrap de `{workspace}` | Sidebar (deferred); StatusBar; nuevos archivos Workspace*; GraphEditor logic |
+| **UX-2.3** | **Workspace & Canvas** (resequenced) | Header + canvas surface; DOM-stable wrap de `{workspace}` | Sidebar (deferred); StatusBar; GraphEditor logic |
 | **UX-2.3b** | Sidebar *(deferred from original UX-2.3)* | Migración visual Proyecto / Visualización / Ajustes | Paneles Series/Windows/Session nuevos; SessionProvider |
-| **UX-2.4** | Inspector | Chrome `inspector/*` + Analysis presentacional | Extraer GraphSettings domain; docking behavior |
-| **UX-2.5** | Workspace chrome | Presentación `FloatingWindow` / tab chrome | Drag / resize / snap / tabs logic |
-| **UX-2.6** | Ventanas / content surfaces | Header, padding, borders de hosts; `ContentDefinition` intacto | ContentRegistry / kinds |
-| **UX-2.7** | Dialogs / overlays | SettingsPanel, wizards, modales — shells visuales | Nueva capa modal / providers |
-| **UX-2.8** | Forms | Primitivas presentacionales sobre tokens | Cambiar schemas / bindings |
-| **UX-2.9** | Responsive | Desktop / tablet / notebook / 1080p / 4K | Rediseñar Layout Engine |
-| **UX-2.10** | Accessibility | Contraste, focus, teclado, ARIA, reduced-motion | Reescribir engines |
-| **UX-2.11** | Dark mode + tokens | Auditoría hardcoded → `--app-*`; HC solo si cabe sin API nueva | Segundo tema SSOT |
-| **UX-2.12** | Animation | 100 ms color/opacity; open/close presentacional | Animaciones que afecten layout/measure |
-| **UX-2.13** | Performance | Paint / CLS; sin memo especulativo masivo | Optimizaciones masivas no justificadas |
-| **UX-2.14** | QA | Checklist CA-UX-2 + validators suite | Features nuevas |
+| **UX-2.4** | **Workspace Panels Foundation** (resequenced) | `WorkspaceBodyLayout` + Left/Right/Bottom placeholders | Inspector logic; resize; persistence |
+| **UX-2.5** | **Panel Infrastructure** (resequenced) | Shared `Panel` / `PanelHeader` / `PanelBody`; Left/Right/Bottom wrappers; collapsed + data-* freezes | Explorer/Inspector/Console content; resize; persistence |
+| **UX-2.6** | **Panel Content** | Mount Explorer / Inspector / Console into Body slots | Extraer GraphSettings domain; docking behavior; resize |
+| **UX-2.7** | **Resizable Split Layout** | Splitters / resize presentacional sobre paneles | Persistence; Layout Engine rewrite |
+| **UX-2.8** | **Panel Persistence** | Persistencia de tamaños/visibilidad de paneles | Session schema bump no autorizado |
+| **UX-2.9** | Forms | Primitivas presentacionales sobre tokens | Cambiar schemas / bindings |
+| **UX-2.10** | Responsive | Desktop / tablet / notebook / 1080p / 4K | Rediseñar Layout Engine |
+| **UX-2.11** | Accessibility | Contraste, focus, teclado, ARIA, reduced-motion | Reescribir engines |
+| **UX-2.12** | Dark mode + tokens | Auditoría hardcoded → `--app-*`; HC solo si cabe sin API nueva | Segundo tema SSOT |
+| **UX-2.13** | Animation | 100 ms color/opacity; open/close presentacional | Animaciones que afecten layout/measure |
+| **UX-2.14** | Performance | Paint / CLS; sin memo especulativo masivo | Optimizaciones masivas no justificadas |
+| **UX-2.15** | QA | Checklist CA-UX-2 + validators suite | Features nuevas |
+
+> **Nota:** Ventanas / content surfaces / dialogs (antiguos UX-2.5–2.7) se resecuencian después de la infraestructura de paneles; ver microfases posteriores según certificación.
 
 ---
 
@@ -176,7 +184,7 @@ Tras cada microfase:
 → NO abrir la siguiente microfase hasta certificación.
 ```
 
-Tras certificar UX-2.1, UX-2.2 (Toolbar) es la microfase de BUILD previa. **UX-2.3** se resecuenció intencionalmente a **Workspace & Canvas** (migración UI hacia diseño Lovable primero); la Sidebar queda como **UX-2.3b** diferida. Ver [`docs/UX-2.3-workspace-canvas.md`](UX-2.3-workspace-canvas.md).
+**UX-2.4** introduce la infraestructura física de paneles IDE. **UX-2.5 (Panel Infrastructure)** consolida el shell reutilizable (`Panel` / Header / Body). **UX-2.6 (Panel Content)** monta Explorer / Inspector / Console en los Body slots — no inyectar dominio en `Panel.tsx`. Ver [`docs/UX-2.5-panel-infrastructure.md`](UX-2.5-panel-infrastructure.md).
 
 ---
 
@@ -221,6 +229,8 @@ No porque UX-2 deba modificar estas superficies, sino porque un cambio visual pu
 | [`docs/UX-2.1-appshell-foundation.md`](UX-2.1-appshell-foundation.md) | Microfase BUILD UX-2.1 (CERTIFIED) |
 | [`docs/UX-2.2-toolbar-foundation.md`](UX-2.2-toolbar-foundation.md) | Microfase BUILD UX-2.2 |
 | [`docs/UX-2.3-workspace-canvas.md`](UX-2.3-workspace-canvas.md) | Microfase BUILD UX-2.3 (Workspace & Canvas) |
+| [`docs/UX-2.4-workspace-panels.md`](UX-2.4-workspace-panels.md) | Microfase BUILD UX-2.4 (Panels Foundation) |
+| [`docs/UX-2.5-panel-infrastructure.md`](UX-2.5-panel-infrastructure.md) | Microfase BUILD UX-2.5 (Panel Infrastructure) |
 | [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) | Referencia visual |
 | [`src/lib/ui/tokens.ts`](../src/lib/ui/tokens.ts) | SSOT runtime D48 |
 | [`docs/D38.2-architecture-freeze.md`](D38.2-architecture-freeze.md) | Architecture Freeze |
@@ -235,6 +245,8 @@ UX-2.0 = COMPLETE (roadmap oficial)
 UX-2.1 = CERTIFIED
 UX-2.2 = COMPLETE (awaiting human review)
 UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)
-SIDEBAR = deferred as UX-2.3b
-STOP — human review of UX-2.3 before next visual consolidation
+UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)
+UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)
+NEXT = UX-2.6 Panel Content (after UX-2.5 certification)
+STOP — human review of UX-2.5 before Panel Content
 ```
