@@ -1,0 +1,32 @@
+---
+description: Consume D48 UI_TOKENS compositions; local chrome only from D48 primitives
+globs: src/components/**/*.{ts,tsx},src/app/**/*.{ts,tsx},src/lib/ui/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# UI Tokens Compositions (D48)
+
+D48 (`src/lib/ui/tokens.ts` + facades en `src/lib/ui/theme.ts`) es el único SSOT de class strings visuales. `DESIGN_SYSTEM.md` es guía visual, nunca runtime.
+
+## Regla
+
+Todo componente nuevo o actualizado debe consumir composiciones de `UI_TOKENS` / facades de `theme.ts` o primitivas D48.
+
+Cuando exista una composición D48 equivalente, debe reutilizarse antes de crear una nueva composición local. Si no existe equivalencia clara, puede utilizarse una composición local construida únicamente con primitivas D48.
+
+## Hacer
+
+- Preferir facades existentes: `inputField`, `fieldLabel`, `contentPanel`, `card`, `emptyState`, `getButtonVariant`, `getPanelStyle`, etc.
+- Si no hay equivalencia 1:1: componer localmente desde primitivas (`UI_TOKENS.radius`, `border`, `spacing`, `typography`, `transition`, `--app-*`), como el chrome de FloatingWindow en UX-1.1.
+- Cambiar apariencia alineando **valores** de claves existentes en `tokens.ts`, no inventando un segundo SSOT.
+
+## No hacer
+
+- Copiar como literal paralelo un string ya exportado por D48/theme.
+- Introducir nuevas claves públicas en `UI_TOKENS` sin microfase que lo autorice.
+- Importar `workstation/`, `src/styles.css`, shadcn o Radix como SSOT visual.
+- Forzar migraciones parciales que mezclen facade + overrides ad-hoc cuando no haya equivalencia visual 1:1.
+
+## Fuera de esta regla
+
+Chart-rendering internals, builders científicos puros y geometría de engines (layout/dock/snap) no deben recibir “design system chrome” improvisado; respetar ownership de esas capas.

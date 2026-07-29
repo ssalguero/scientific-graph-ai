@@ -1,7 +1,5 @@
 import { btnPrimary } from "@/app/projectFileUiStyles";
-
-const contentPanel =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text)] transition-colors duration-200";
+import { contentPanel } from "@/lib/ui/theme";
 
 type PublicationEntryBannerProps = {
   canStartWorkflow: boolean;

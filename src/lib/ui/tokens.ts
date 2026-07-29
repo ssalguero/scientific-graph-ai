@@ -104,7 +104,8 @@ export const typography = {
     "text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)] mb-1.5",
   subsectionHeading:
     "text-xs sm:text-sm font-semibold text-[var(--app-heading)]",
-  fieldLabel: "block text-xs font-medium text-[var(--app-heading)] mb-1",
+  fieldLabel:
+    "block text-[11px] font-medium text-[var(--app-heading)] mb-1",
   dataSemanticHint:
     "text-[11px] sm:text-xs text-[var(--app-text-muted)] leading-snug",
   projectFileFieldLabel:
@@ -135,19 +136,20 @@ export const workspace = {
 /* Panel · Button · Sidebar compositions (move-only from theme.ts)            */
 /* -------------------------------------------------------------------------- */
 
-const panelDatasetCard = `${radius.lg} ${border.default} bg-[var(--app-surface-muted)] ${spacing.p2} ${spacing.spaceY15} ${transitions.colors200}`;
+/** UX-1.2 — denser instrument chrome (radius.md); values only, same public keys. */
+const panelDatasetCard = `${radius.md} ${border.default} bg-[var(--app-surface-muted)] ${spacing.p2} ${spacing.spaceY15} ${transitions.colors200}`;
 
 export const panel = {
-  card: `${radius.xl} ${border.default} bg-[var(--app-surface)] ${shadows.sm} ${spacing.p3} sm:p-4 ${transitions.colors200}`,
-  content: `${radius.lg} ${border.default} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15} ${typography.bodyXsSm} ${transitions.colors200}`,
-  subsection: `${radius.lg} ${border.default} bg-[var(--app-surface-muted)] ${spacing.p2} ${spacing.spaceY2} ${transitions.colors200}`,
-  empty: `${radius.lg} ${border.dashed} bg-[var(--app-surface-muted)] ${spacing.px25} ${spacing.py25} ${typography.mutedXsSm} text-center ${transitions.colors200}`,
-  resultsEmpty: `${radius.lg} ${border.dashed} bg-[var(--app-surface-muted)] ${spacing.px25} ${spacing.py15} ${typography.mutedXsSm} text-center ${transitions.colors200}`,
-  resultsText: `${radius.lg} ${border.default} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15} ${typography.bodyXsSm} leading-snug`,
+  card: `${radius.md} ${border.default} bg-[var(--app-surface)] ${spacing.p3} ${transitions.colors200}`,
+  content: `${radius.md} ${border.default} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15} ${typography.bodyXsSm} ${transitions.colors200}`,
+  subsection: `${radius.md} ${border.default} bg-[var(--app-surface-muted)] ${spacing.p2} ${spacing.spaceY2} ${transitions.colors200}`,
+  empty: `${radius.md} ${border.dashed} bg-[var(--app-surface-muted)] ${spacing.px25} ${spacing.py25} ${typography.mutedXsSm} text-center ${transitions.colors200}`,
+  resultsEmpty: `${radius.md} ${border.dashed} bg-[var(--app-surface-muted)] ${spacing.px25} ${spacing.py15} ${typography.mutedXsSm} text-center ${transitions.colors200}`,
+  resultsText: `${radius.md} ${border.default} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15} ${typography.bodyXsSm} leading-snug`,
   resultsSubsection: panelDatasetCard,
-  dataEmpty: `${radius.lg} ${border.dashed} bg-[var(--app-surface-muted)] ${spacing.px25} ${spacing.py15} ${typography.mutedXsSm}`,
+  dataEmpty: `${radius.md} ${border.dashed} bg-[var(--app-surface-muted)] ${spacing.px25} ${spacing.py15} ${typography.mutedXsSm}`,
   dataDataset: panelDatasetCard,
-  dataImport: `${radius.lg} ${border.accentSoft} bg-[var(--app-accent)]/5 ${shadows.sm}`,
+  dataImport: `${radius.md} ${border.accentSoft} bg-[var(--app-accent)]/5`,
   dataAdvanced: "border-dashed opacity-95",
   resultsGrid: `grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 ${spacing.gap2}`,
   resultsPanelFull: "lg:col-span-2 xl:col-span-2",
@@ -155,16 +157,16 @@ export const panel = {
   resultsCompactGrid: `grid grid-cols-1 lg:grid-cols-2 ${spacing.gap2} lg:col-span-2 xl:col-span-2`,
   persistenceBadge:
     "inline-flex shrink-0 items-center rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]",
-  alertBase: `${radius.lg} ${border.bare} ${spacing.px3} ${spacing.py2} text-xs sm:text-sm font-medium ${transitions.colors200}`,
-  inputField: `w-full h-9 ${border.default} ${radius.lg} ${spacing.px25} text-sm text-[var(--app-heading)] bg-[var(--app-surface)] placeholder:text-[var(--app-text-muted)] ${shadows.sm} ${transitions.colors200} focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 focus:border-[var(--app-accent)]`,
-  projectFileInputField: `w-full h-8 ${radius.lg} ${border.default} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15} text-sm text-[var(--app-text)] placeholder:text-[var(--app-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/25`,
+  alertBase: `${radius.md} ${border.bare} ${spacing.px3} ${spacing.py2} text-xs sm:text-sm font-medium ${transitions.colors200}`,
+  inputField: `w-full h-8 ${border.default} ${radius.md} ${spacing.px2} text-xs text-[var(--app-heading)] bg-[var(--app-surface)] placeholder:text-[var(--app-text-muted)] ${transitions.colors200} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 focus-visible:border-[var(--app-accent)]`,
+  projectFileInputField: `w-full h-8 ${radius.md} ${border.default} bg-[var(--app-surface)] ${spacing.px2} ${spacing.py15} text-xs text-[var(--app-text)] placeholder:text-[var(--app-text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`,
 } as const;
 
 export const button = {
-  primary: `inline-flex h-9 items-center justify-center font-semibold text-white text-sm ${spacing.px4} ${radius.lg} ${shadows.sm} ${transitions.colors200} ${shadows.hoverMd} ${animation.activeScale}`,
-  outline: `inline-flex h-9 items-center justify-center ${border.default} bg-[var(--app-surface)] ${spacing.px3} ${radius.lg} text-sm text-[var(--app-text)] ${shadows.sm} ${transitions.colors200} hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)] ${shadows.hover} disabled:opacity-50 disabled:cursor-not-allowed`,
-  outlineSm: `inline-flex h-7 items-center justify-center ${border.default} bg-[var(--app-surface)] ${spacing.px2} ${radius.md} text-xs text-[var(--app-text)] ${shadows.sm} ${transitions.colors200} hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]`,
-  actionBar: `inline-flex h-9 items-center justify-center ${radius.lg} ${spacing.px3} text-sm font-semibold ${shadows.sm} ${transitions.colors200} ${shadows.hoverMd} ${animation.activeScale} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm`,
+  primary: `inline-flex h-8 items-center justify-center font-semibold text-white text-xs ${spacing.px3} ${radius.md} ${transitions.colors200}`,
+  outline: `inline-flex h-8 items-center justify-center ${border.default} bg-[var(--app-surface)] ${spacing.px25} ${radius.md} text-xs text-[var(--app-text)] ${transitions.colors200} hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)] disabled:opacity-50 disabled:cursor-not-allowed`,
+  outlineSm: `inline-flex h-7 items-center justify-center ${border.default} bg-[var(--app-surface)] ${spacing.px2} ${radius.md} text-xs text-[var(--app-text)] ${transitions.colors200} hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]`,
+  actionBar: `inline-flex h-8 items-center justify-center ${radius.md} ${spacing.px25} text-xs font-semibold ${transitions.colors200} disabled:opacity-50 disabled:cursor-not-allowed`,
   actionBarPrimary:
     "bg-emerald-600 text-white hover:bg-emerald-700 min-w-[7.5rem]",
   actionBarSave:
@@ -172,9 +174,9 @@ export const button = {
   actionBarGroup: `flex flex-wrap items-center ${spacing.gap2}`,
   actionBarDivider:
     "hidden sm:block h-7 w-px shrink-0 bg-[var(--app-border)]",
-  projectPrimary: `${radius.lg} bg-emerald-600 ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 ${transitions.colors}`,
-  projectSave: `${radius.lg} border border-emerald-600 bg-emerald-600 ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 ${transitions.colors}`,
-  projectSecondary: `${radius.lg} ${border.default} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-medium text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] ${transitions.colors}`,
+  projectPrimary: `${radius.md} bg-emerald-600 ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 ${transitions.colors}`,
+  projectSave: `${radius.md} border border-emerald-600 bg-emerald-600 ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 ${transitions.colors}`,
+  projectSecondary: `${radius.md} ${border.default} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-medium text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] ${transitions.colors}`,
   toggleInput: "peer sr-only",
   toggleShell: `relative inline-flex h-5 w-9 shrink-0 items-center ${radius.full}`,
   toggleTrackBg: `pointer-events-none absolute inset-0 ${radius.full} ${border.default} bg-[var(--app-toggle-track)] ${transitions.colors200} peer-checked:border-[var(--app-accent)] peer-checked:bg-[var(--app-accent)] peer-disabled:opacity-50`,

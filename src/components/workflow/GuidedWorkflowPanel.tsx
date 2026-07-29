@@ -4,13 +4,7 @@ import type {
   GuidedWorkflowPlan,
   GuidedWorkflowSession,
 } from "@/lib/scientific/workflow";
-
-const contentPanel =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text)] transition-colors duration-200";
-const btnPrimary =
-  "inline-flex h-9 items-center justify-center font-semibold text-white text-sm px-4 rounded-lg shadow-sm transition-colors duration-200 hover:shadow-md active:scale-[0.98]";
-const btnOutlineSm =
-  "inline-flex h-7 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-2 rounded-md text-xs text-[var(--app-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]";
+import { btnOutlineSm, btnPrimary, contentPanel } from "@/lib/ui/theme";
 
 type GuidedWorkflowPanelProps = {
   plan: GuidedWorkflowPlan;

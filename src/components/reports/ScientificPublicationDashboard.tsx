@@ -4,11 +4,7 @@ import { getEvidenceStrengthEngineClassificationLabel } from "@/lib/scientific/m
 import { getPublicationReadinessAnalyzerClassificationLabel } from "@/lib/scientific/methodology/readiness";
 import type { PublicationDashboardAnalysis } from "@/lib/scientific/methodology/publication";
 import { getEffectMagnitudeLabel } from "@/lib/scientific/inference";
-
-const contentPanel =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1.5 text-xs sm:text-sm text-[var(--app-text)] transition-colors duration-200";
-const emptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2.5 py-2.5 text-xs sm:text-sm text-[var(--app-text-muted)] text-center transition-colors duration-200";
+import { contentPanel, emptyState } from "@/lib/ui/theme";
 
 const formatPCAVariancePercent = (value: number) => `${value.toFixed(1)}%`;
 

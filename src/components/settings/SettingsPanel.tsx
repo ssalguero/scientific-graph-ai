@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  toggleInput,
+  toggleShell,
+  toggleTrackBg,
+  toggleThumb,
+} from "@/lib/ui/theme";
+
 export type SettingsPanelProps = {
   theme: "light" | "dark";
   showContextualHints: boolean;
@@ -9,16 +16,9 @@ export type SettingsPanelProps = {
   className?: string;
 };
 
+/** Local shell — denser padding/typography than contentPanel; retained (not 1:1). */
 const panelClassName =
   "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-2 text-xs text-[var(--app-text)]";
-
-const toggleInput = "peer sr-only";
-const toggleShell =
-  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full";
-const toggleTrackBg =
-  "pointer-events-none absolute inset-0 rounded-full border border-[var(--app-border)] bg-[var(--app-toggle-track)] transition-colors duration-200 peer-checked:border-[var(--app-accent)] peer-checked:bg-[var(--app-accent)] peer-disabled:opacity-50";
-const toggleThumb =
-  "pointer-events-none absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[var(--app-toggle-thumb)] shadow-sm transition-transform duration-200 peer-checked:translate-x-4 peer-disabled:opacity-50";
 
 const settingRowClassName =
   "flex items-center justify-between gap-2 rounded-md border border-[var(--app-border)]/60 bg-[var(--app-surface-muted)]/40 px-2 py-1.5";

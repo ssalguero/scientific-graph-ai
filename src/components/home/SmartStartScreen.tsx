@@ -5,10 +5,7 @@ import {
   type IntentRecommendation,
 } from "@/lib/smart-start";
 import { SmartStartIntentAssistant } from "@/components/home/SmartStartIntentAssistant";
-
-const card =
-  "rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm p-3 sm:p-4 transition-colors duration-200";
-const panelHeadingSubtext = "text-xs sm:text-sm text-[var(--app-text-muted)] mt-0.5";
+import { card, panelHeadingSubtext } from "@/lib/ui/theme";
 
 type SmartStartScreenProps = {
   onSelect: (optionId: string) => void;
