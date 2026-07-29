@@ -7006,3 +7006,70 @@ NEXT = D70
 ---
 
 *## D69.12 APPEND-ONLY 2026-07-28 â€” D69.12 COMPLETE â€” D69 CLOSED â€” Session Snapshots Foundation RELEASED â€” CA-D69 PASS â€” Next D70.*
+
+## D70.0
+
+**Microfase:** D70.0 — Restore Points Foundation — Plan + Architecture Freeze  
+**Fecha:** 2026-07-28  
+**Estado:** **D70.0 = COMPLETE** — **D70 = PLANNED** — **Restore Points Architecture = LOCKED** — **API Freeze = LOCKED** — **Hard Rules = LOCKED** — **Implementation = NOT STARTED** — **READY FOR D70.1**  
+**Modo:** Documental append-only — **cero** src / scripts / APIs / validators — create [`docs/D70.0-plan.md`](docs/D70.0-plan.md) — append Manifest
+
+### Resumen
+
+Architecture Freeze oficial de **D70 — Restore Points Foundation**. Decisiones SSOT: RestorePoint encapsula SessionSnapshot completo; Factory = `createRestorePoint` ? `createSessionSnapshot(RESTORE_POINT)` ? wrap; Registry surface exacta `create/get/remove/clear/list/count` (sin update/replace/rename/mutate); **HR-rp-snapshot-identity**; ser/deser puro reutilizando D69; sin Provider wiring; sin IDB/Adapter/Bridge; barrel isolation. Sin UI, historial, undo, versionado. Sin implementación de Types / Registry / validators en esta microfase. Plan: [`docs/D70.0-plan.md`](docs/D70.0-plan.md).
+
+| Campo | Valor |
+|-------|--------|
+| Plan | [`docs/D70.0-plan.md`](docs/D70.0-plan.md) |
+| Architecture | **LOCKED** |
+| API Freeze | **LOCKED** (documental) |
+| Hard Rules | **LOCKED** (incl. HR-rp-snapshot-identity · HR-rp-no-provider · HR-rp-registry-surface) |
+| Implementation | **NOT STARTED** |
+| restorePoints/ | **NOT CREATED** (authority D70.0) |
+| D70 status | **PLANNED** |
+| Next | **D70.1 — Restore Point Types + Metadata** |
+
+### Checklist
+
+| Item | Resultado |
+|------|-----------|
+| `docs/D70.0-plan.md` created | **PASS** |
+| Architecture Freeze LOCKED | **PASS** |
+| API Freeze documental LOCKED | **PASS** |
+| Hard Rules LOCKED (incl. snapshot-identity · registry-surface · no-provider) | **PASS** |
+| D65–D69 Freezes preserved | **PASS** |
+| No src/scripts implementation in D70.0 | **PASS** |
+| Manifest append (Restore Points Architecture LOCKED · D70 PLANNED) | **PASS** |
+| READY FOR D70.1 | **PASS** |
+
+### Declaracion final
+
+```text
+D70.0 = COMPLETE
+D70 = PLANNED
+Restore Points Architecture = LOCKED
+API Freeze = LOCKED
+Hard Rules = LOCKED
+Implementation = NOT STARTED
+D65 Freeze = PRESERVED
+D66 Freeze = PRESERVED
+D67 Freeze = PRESERVED
+D68 Freeze = PRESERVED
+D69 Freeze = PRESERVED
+READY FOR D70.1 — Restore Point Types + Metadata
+```
+
+### Resolucion
+
+```text
+D70.0 = COMPLETE
+NEXT = D70.1
+```
+
+### NEXT
+
+**D70.1 — Restore Point Types + Metadata**
+
+---
+
+*## D70.0 APPEND-ONLY 2026-07-28 — D70.0 COMPLETE — D70 PLANNED — Restore Points Architecture LOCKED — Ready D70.1.*
