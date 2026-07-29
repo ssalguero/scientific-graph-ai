@@ -19741,15 +19741,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             left={
               <>
                 <header className="pb-0.5">
-                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--app-heading)] tracking-tight">
+                  <h1 className="text-sm font-semibold text-[var(--app-heading)] tracking-tight">
                     Scientific Graph AI
                   </h1>
                   {activeWorkspaceSection === "home" ? (
-                    <p className="text-[var(--app-text-muted)] mt-1 text-xs sm:text-sm">
+                    <p className="text-[var(--app-text-muted)] mt-0.5 text-[11px] sm:text-xs">
                       Elija cómo comenzar o entre al laboratorio completo.
                     </p>
                   ) : showWelcomeHint ? (
-                    <p className="text-[var(--app-text-muted)] mt-1 text-xs sm:text-sm">
+                    <p className="text-[var(--app-text-muted)] mt-0.5 text-[11px] sm:text-xs">
                       Importe datos experimentales o abra el constructor de curvas en
                       Datos.
                     </p>
@@ -19757,7 +19757,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </header>
 
                 <nav
-                  className="flex flex-wrap gap-1.5 border-b border-[var(--app-border)] pb-2"
+                  className="flex flex-wrap gap-1.5 border-b border-[var(--app-border)] pb-1.5"
                   role="tablist"
                   aria-label="Workspace científico"
                 >
@@ -19817,7 +19817,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             className={activeWorkspaceSection === "home" ? "" : "hidden"}
             aria-hidden={activeWorkspaceSection !== "home"}
           >
-            <h2 className={sectionLabel}>🏠 Inicio</h2>
+            <h2 className={`${sectionLabel} mb-1 text-[10px] tracking-[0.09em]`}>
+              🏠 Inicio
+            </h2>
             <SmartStartScreen
               onSelect={handleSmartStartSelect}
               onExpertMode={handleSmartStartExpertMode}

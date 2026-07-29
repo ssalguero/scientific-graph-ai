@@ -38,14 +38,14 @@ export function SmartStartIntentAssistant({
 
   return (
     <div
-      className="max-w-2xl mx-auto mb-5 sm:mb-6 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/50 p-3 sm:p-4 text-left"
+      className="w-full rounded-md border border-[var(--app-border)] bg-[var(--app-surface-muted)]/50 p-3 text-left"
       aria-label="Asistente de intención"
     >
       <label
         htmlFor="smart-start-intent-input"
         className={`${fieldLabel} mb-1.5 normal-case tracking-normal text-[var(--app-heading)]`}
       >
-        Describa brevemente qué desea hacer
+        O describa su objetivo
       </label>
       <textarea
         id="smart-start-intent-input"
