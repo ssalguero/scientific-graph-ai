@@ -82,22 +82,22 @@ function SidebarModuleCard({ module }: { module: SidebarModuleEntry }) {
       aria-pressed={module.enabled}
       title={module.description || module.name}
       aria-label={module.name}
-      className={`${contentPanel} flex w-full items-center justify-between gap-2 py-1 px-2 text-left border ${
+      className={`${contentPanel} flex w-full items-center justify-between gap-1.5 !rounded-md !py-1 !px-1.5 text-left border ${
         module.enabled
           ? "border-[var(--app-accent)]/30 bg-[var(--app-accent)]/5"
-          : "border-[var(--app-border)] opacity-85 hover:opacity-100"
-      } ${railCollapsed ? "justify-center px-1" : ""}`}
+          : "border-[var(--app-border)] opacity-85 hover:opacity-100 hover:bg-[var(--app-surface-muted)]"
+      } ${railCollapsed ? "justify-center !px-1" : ""}`}
     >
       <span
         className={`flex items-center gap-1.5 min-w-0 ${
           railCollapsed ? "justify-center" : ""
         }`}
       >
-        <span className="text-sm leading-none shrink-0" aria-hidden>
+        <span className="text-xs leading-none shrink-0" aria-hidden>
           {getIcon(iconName)}
         </span>
         <span
-          className={`text-xs font-semibold text-[var(--app-heading)] truncate ${
+          className={`text-xs font-medium text-[var(--app-heading)] truncate ${
             railCollapsed ? "sr-only" : ""
           }`}
         >
@@ -109,7 +109,7 @@ function SidebarModuleCard({ module }: { module: SidebarModuleEntry }) {
       </span>
       {!railCollapsed ? (
         <span
-          className={`shrink-0 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+          className={`shrink-0 inline-flex rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
             module.enabled
               ? "border border-[var(--app-accent)]/40 text-[var(--app-accent)] bg-[var(--app-accent)]/10"
               : "border border-[var(--app-border)] text-[var(--app-text-muted)]"
@@ -290,7 +290,9 @@ export function Sidebar({
               {getIcon("dashboard")}
             </span>
           ) : (
-            <h2 className={`${panelHeading} text-sm min-w-0 flex-1 truncate`}>
+            <h2
+              className={`${panelHeading} !text-xs !font-semibold min-w-0 flex-1 truncate tracking-tight`}
+            >
               {getIcon("dashboard")} Dashboard Científico
             </h2>
           )}
@@ -381,7 +383,7 @@ export function Sidebar({
                       key={graph.id}
                       type="button"
                       onClick={() => onLoadGraph(graph)}
-                      className={`w-full text-left border rounded-md px-2 py-1.5 text-xs sm:text-sm transition-all duration-200 ${
+                      className={`w-full text-left border rounded-md px-2 py-1 text-xs ${UI_TOKENS.transition.colors200} ${
                         selectedGraphId === graph.id
                           ? sidebarGraphItemActive
                           : sidebarGraphItemIdle

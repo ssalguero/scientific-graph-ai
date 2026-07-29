@@ -110,7 +110,7 @@ export const typography = {
   projectFileFieldLabel:
     "block text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)]",
   sidebarSectionLabel:
-    "text-[11px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]",
+    "text-[10px] font-semibold uppercase tracking-[0.09em] text-[var(--app-text-muted)]",
   bodyXsSm: "text-xs sm:text-sm text-[var(--app-text)]",
   mutedXsSm: "text-xs sm:text-sm text-[var(--app-text-muted)]",
 } as const;
@@ -199,73 +199,77 @@ export const buttonComposed = {
 const sidebarWidthDesktop = "w-[280px] max-w-[280px]";
 const sidebarWidthTablet = "w-[240px] max-w-[240px]";
 const sidebarWidthCollapsed = "w-16 max-w-[4rem]";
-const sidebarShellChrome = `shrink-0 bg-[var(--app-surface)] ${border.right} flex-col min-h-screen ${transitions.all200}`;
+/** UX-1.1 — denser panel chrome; color transitions only (Design System motion direction). */
+const sidebarShellChrome = `shrink-0 bg-[var(--app-surface)] ${border.right} flex-col min-h-screen ${transitions.colors200}`;
 const sidebarShellExpanded = `hidden lg:flex ${sidebarWidthTablet} xl:w-[280px] xl:max-w-[280px] ${sidebarShellChrome}`;
 const sidebarShellCollapsed = `hidden lg:flex ${sidebarWidthCollapsed} ${sidebarShellChrome} overflow-hidden`;
 
 export const sidebar = {
-  divider: `${border.top} my-2`,
+  divider: `${border.top} my-1.5`,
   widthDesktop: sidebarWidthDesktop,
   widthTablet: sidebarWidthTablet,
   widthCollapsed: sidebarWidthCollapsed,
   shellExpanded: sidebarShellExpanded,
   shellCollapsed: sidebarShellCollapsed,
   shell: sidebarShellExpanded,
-  overlayOpen: `fixed inset-y-0 left-0 ${zIndex.modal} flex flex-col bg-[var(--app-surface)] ${border.right} ${elevation.medium} opacity-100 pointer-events-auto ${transitions.all200}`,
+  overlayOpen: `fixed inset-y-0 left-0 ${zIndex.modal} flex flex-col bg-[var(--app-surface)] ${border.right} ${elevation.medium} opacity-100 pointer-events-auto ${transitions.colors200}`,
   overlayClosed:
     "hidden pointer-events-none opacity-0 fixed inset-y-0 left-0",
   overlayBackdrop: `fixed inset-0 ${zIndex.sticky} bg-[var(--app-heading)]/40 opacity-100 pointer-events-auto ${transitions.colors200}`,
-  mobileTrigger: `fixed top-3 left-3 ${zIndex.dropdown} lg:hidden inline-flex items-center justify-center ${radius.lg} ${border.default} bg-[var(--app-surface)] ${spacing.p2} text-[var(--app-text)] ${shadows.sm} hover:bg-[var(--app-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${transitions.all200} ${animation.activeScale}`,
-  header: `${spacing.px3} ${spacing.py25} ${border.bottom} flex items-center ${spacing.gap2}`,
-  collapseToggle: `inline-flex shrink-0 items-center justify-center ${radius.lg} p-1.5 text-[var(--app-text-muted)] hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${transitions.all200} ${animation.activeScale}`,
-  sectionGap: `flex-1 overflow-y-auto ${spacing.px3} ${spacing.py25} space-y-2.5`,
-  sectionGapCollapsed: `flex-1 overflow-y-auto overflow-x-hidden ${spacing.px15} ${spacing.py2} ${spacing.spaceY2}`,
+  mobileTrigger: `fixed top-3 left-3 ${zIndex.dropdown} lg:hidden inline-flex items-center justify-center ${radius.md} ${border.default} bg-[var(--app-surface)] ${spacing.p2} text-[var(--app-text)] ${shadows.sm} hover:bg-[var(--app-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${transitions.colors200}`,
+  header: `${spacing.px25} ${spacing.py2} ${border.bottom} flex items-center ${spacing.gap2}`,
+  collapseToggle: `inline-flex shrink-0 items-center justify-center ${radius.md} p-1 text-[var(--app-text-muted)] hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${transitions.colors200}`,
+  sectionGap: `flex-1 overflow-y-auto ${spacing.px25} ${spacing.py2} space-y-2`,
+  sectionGapCollapsed: `flex-1 overflow-y-auto overflow-x-hidden ${spacing.px15} ${spacing.py15} ${spacing.spaceY15}`,
   railHide: "hidden",
   railSectionWrap:
     "[&>div>button>span:last-child]:sr-only [&>div>button]:justify-center [&>div>button]:px-0",
   sectionSpacing: spacing.spaceY15,
-  sectionHeader: `flex w-full items-center ${spacing.gap2} ${spacing.py15} text-left text-xs font-semibold uppercase tracking-wider text-[var(--app-heading)] ${transitions.all200}`,
+  sectionHeader: `flex w-full items-center ${spacing.gap2} ${spacing.py1} text-left text-[10px] font-semibold uppercase tracking-[0.09em] text-[var(--app-heading)] ${transitions.colors200}`,
   sectionBody: `${spacing.spaceY05} pb-1 pt-0.5`,
   sectionLabel: typography.sidebarSectionLabel,
-  navItem: `flex w-full items-center justify-between ${spacing.gap2} ${radius.lg} ${spacing.px2} ${spacing.py15} text-left ${typography.bodyXsSm} ${transitions.all200} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`,
+  navItem: `flex w-full items-center justify-between gap-1.5 ${radius.md} ${spacing.px2} ${spacing.py1} text-left text-xs text-[var(--app-text)] ${transitions.colors200} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`,
   navItemHover:
     "hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-heading)]",
   navItemActive:
     "bg-[var(--app-accent)]/10 text-[var(--app-heading)] font-semibold ring-1 ring-inset ring-[var(--app-accent)]/25",
-  navItemPressed: animation.activeScale,
+  navItemPressed: "",
   navItemDisabled:
-    "opacity-60 cursor-not-allowed text-[var(--app-text-muted)] hover:bg-transparent hover:text-[var(--app-text-muted)]",
+    "opacity-50 cursor-not-allowed text-[var(--app-text-muted)] hover:bg-transparent hover:text-[var(--app-text-muted)]",
   graphItemActive: `bg-[var(--app-accent)]/10 border-[var(--app-accent)] text-[var(--app-heading)] ${shadows.sm} ring-1 ring-[var(--app-accent)]/25 font-medium`,
   graphItemIdle: `${border.color} text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] hover:border-[var(--app-text-muted)]`,
   btnPrimary: buttonComposed.sidebarPrimary,
   btnSecondary: buttonComposed.sidebarSecondary,
-  soonBadge: `inline-flex shrink-0 items-center ${radius.full} ${border.default} bg-[var(--app-surface-muted)] px-1.5 ${spacing.py05} text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]`,
+  soonBadge: `inline-flex shrink-0 items-center ${radius.md} ${border.default} bg-[var(--app-surface-muted)] px-1.5 ${spacing.py05} text-[9px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]`,
 } as const;
 
 /* -------------------------------------------------------------------------- */
 /* Toolbar compositions (D49.2 — Adaptive Toolbar; primitives only)           */
 /* -------------------------------------------------------------------------- */
 
-/** Shell chrome for Adaptive Toolbar — values from existing primitives only. */
+/**
+ * Shell chrome for Adaptive Toolbar — values from existing primitives only.
+ * UX-1.1 Visual Token Alignment: denser spacing, hairline border, surface panel.
+ */
 export const toolbar = {
-  root: "w-full",
-  section: `w-full ${spacing.spaceY3}`,
-  sectionLeft: `w-full ${spacing.spaceY3}`,
-  sectionCenter: `w-full ${spacing.spaceY3}`,
-  sectionRight: `w-full ${spacing.spaceY3}`,
-  group: `flex flex-wrap items-center ${spacing.gap2}`,
-  groupCompact: `flex flex-wrap items-center ${spacing.px1} ${spacing.gap2}`,
+  root: `w-full flex flex-col ${border.bottom} bg-[var(--app-surface)] ${spacing.px25} ${spacing.py15}`,
+  section: `w-full ${spacing.spaceY2}`,
+  sectionLeft: `w-full ${spacing.spaceY2}`,
+  sectionCenter: `w-full ${spacing.spaceY2}`,
+  sectionRight: `w-full ${spacing.spaceY2}`,
+  group: `flex flex-wrap items-center gap-1.5`,
+  groupCompact: `flex flex-wrap items-center ${spacing.px1} gap-1.5`,
   action: button.outlineSm,
-  actionActive: `${button.outlineSm} ${border.accentSoft} bg-[var(--app-accent)]/10`,
+  actionActive: `${button.outlineSm} ${border.accentSoft} bg-[var(--app-accent)]/10 ${shadows.sm}`,
   actionDisabled: "opacity-50 cursor-not-allowed",
   overflow: "",
-  height: "h-9",
-  gap: spacing.gap2,
-  padding: spacing.px25,
+  height: "h-7",
+  gap: "gap-1.5",
+  padding: spacing.px2,
   border: border.bottom,
   background: "bg-[var(--app-surface)]",
-  radius: radius.lg,
-  shadow: shadows.sm,
+  radius: radius.md,
+  shadow: elevation.flat,
 } as const;
 
 /* -------------------------------------------------------------------------- */
