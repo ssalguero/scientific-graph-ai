@@ -15,6 +15,10 @@
  * HR-dispose-no-implicit-flush). Owns SessionAutosaveController via useRef; notifyMutation
  * only after successful API mutators — never on default-session bootstrap.
  * D68.8: Provider wiring unchanged — dispose on unmount only; no Context leak.
+ *
+ * D69.7 — Private SnapshotStore wiring (HR-context-no-snapshots).
+ * Owns SessionSnapshotStore via useRef — created once; never on Context / API.
+ * No automatic snapshot creation; no autosave / restore / persistence integration.
  */
 
 import {
@@ -34,6 +38,10 @@ import {
   type SessionPersistenceBridge,
   type SessionStorageAdapter,
 } from "@/components/session/persistence";
+import {
+  createSessionSnapshotStore,
+  type SessionSnapshotStore,
+} from "@/components/session/snapshots";
 import {
   SessionContext,
   type SessionAPI,
@@ -78,6 +86,15 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const autosaveRef = useRef<SessionAutosaveController | null>(null);
   if (autosaveRef.current === null) {
     autosaveRef.current = createSessionAutosaveController(bridge, adapter);
+  }
+
+  /**
+   * D69.7 — private SnapshotStore; created once; never on Context / API.
+   * Ownership only — no automatic createSessionSnapshot / autosave / restore wiring.
+   */
+  const snapshotStoreRef = useRef<SessionSnapshotStore | null>(null);
+  if (snapshotStoreRef.current === null) {
+    snapshotStoreRef.current = createSessionSnapshotStore();
   }
 
   /** One-shot default session — created exactly once for this Provider instance.

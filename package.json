@@ -105,6 +105,8 @@
     "validate:d67-gate": "npx tsx scripts/validate-d67-gate.ts",
     "validate:d68": "npx tsx scripts/validate-d68.ts",
     "validate:d68-gate": "npx tsx scripts/validate-d68-gate.ts",
+    "validate:d69": "npx tsx scripts/validate-d69.ts",
+    "validate:d69-gate": "npx tsx scripts/validate-d69-gate.ts",
     "validate:api-freeze": "npx tsx scripts/validate-api-freeze.ts",
     "validate:registry-integrity": "npx tsx scripts/validate-registry-integrity.ts",
     "validate:production-boundaries": "npx tsx scripts/validate-production-boundaries.ts",
