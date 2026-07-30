@@ -8,6 +8,7 @@ import {
   ContextDivider,
   DisclosureSection,
 } from "../../disclosure";
+import { WorkspaceIcon } from "../../iconography";
 import {
   PanelContentRegion,
   PanelFooterRegion,
@@ -27,7 +28,7 @@ import {
   PanelSurface,
   SURFACE_TOKENS,
 } from "../../surfaces";
-import { ActionGroup, PanelToolbar } from "../../toolbar";
+import { ActionButton, ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
 
@@ -40,6 +41,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.18 — PanelLayout + ContentRegion semantic shell.
  * UX-2.18b — SemanticHeader/Status/SectionLabel/InfoBlock/Footer identity grammar.
  * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
+ * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
  * Stable IDs: properties, appearance.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no selection branching).
@@ -54,9 +56,15 @@ export const InspectorContent = memo(function InspectorContent() {
         <PanelLayout>
           <PanelHeaderRegion>
             <SemanticHeader
+              leading={<WorkspaceIcon name="inspector" size="sm" />}
               trailing={
                 <PanelToolbar>
-                  <ActionGroup />
+                  <ActionGroup>
+                    <ActionButton
+                      icon={<WorkspaceIcon name="search" size="sm" />}
+                      appearance="muted"
+                    />
+                  </ActionGroup>
                 </PanelToolbar>
               }
             />
@@ -71,7 +79,7 @@ export const InspectorContent = memo(function InspectorContent() {
                 <DisclosureSection title="Properties" defaultExpanded>
                   <PanelContentSection id="properties" title="Properties">
                     <EmptyState
-                      icon="○"
+                      icon={<WorkspaceIcon name="inspector" size="lg" />}
                       title="Nothing selected"
                       description="Select an object to edit its properties."
                     />
@@ -86,7 +94,7 @@ export const InspectorContent = memo(function InspectorContent() {
                 >
                   <PanelContentSection id="appearance" title="Appearance">
                     <EmptyState
-                      icon="○"
+                      icon={<WorkspaceIcon name="sparkles" size="lg" />}
                       title="Nothing selected"
                       description="Select an object to edit its appearance."
                     />

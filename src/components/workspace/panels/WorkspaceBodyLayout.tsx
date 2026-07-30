@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { useActivePanel } from "../focus";
 import { Hint, HintGroup } from "../hints";
+import { WorkspaceIcon } from "../iconography";
 import {
   PanelContentRegion,
   PanelFooterRegion,
@@ -14,7 +15,12 @@ import {
 import { SemanticFooter, SemanticHeader } from "../semantics";
 import { StatusChip } from "../status";
 import { PanelSurface } from "../surfaces";
-import { ActionGroup, PanelToolbar, ToolbarSpacer } from "../toolbar";
+import {
+  ActionButton,
+  ActionGroup,
+  PanelToolbar,
+  ToolbarSpacer,
+} from "../toolbar";
 import { BottomPanel } from "./BottomPanel";
 import { ConsoleContent } from "./content/ConsoleContent";
 import { ExplorerContent } from "./content/ExplorerContent";
@@ -50,6 +56,7 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.18 — PanelLayout + ToolbarRegion + ContentRegion inside PanelSurface.
  * UX-2.18b — SemanticHeader + SemanticFooter shells (empty; no invented copy).
  * UX-2.19 — PanelToolbar shells; HintGroup/StatusChip as opaque children.
+ * UX-2.20 — WorkspaceIcon in header leading / ActionButton.icon.
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -112,9 +119,15 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
             <PanelLayout>
               <PanelHeaderRegion>
                 <SemanticHeader
+                  leading={<WorkspaceIcon name="sparkles" size="sm" />}
                   trailing={
                     <PanelToolbar>
-                      <ActionGroup />
+                      <ActionGroup>
+                        <ActionButton
+                          icon={<WorkspaceIcon name="sync" size="sm" />}
+                          appearance="muted"
+                        />
+                      </ActionGroup>
                     </PanelToolbar>
                   }
                 />

@@ -54,6 +54,7 @@
     "validate:ux-2.18": "npx tsx scripts/validate-ux-2.18.ts",
     "validate:ux-2.18b": "npx tsx scripts/validate-ux-2.18b.ts",
     "validate:ux-2.19": "npx tsx scripts/validate-ux-2.19.ts",
+    "validate:ux-2.20": "npx tsx scripts/validate-ux-2.20.ts",
     "validate:v11-d47-gate": "npx tsx scripts/validate-v11-d47-gate.ts",
     "validate:design-tokens-v2": "npx tsx scripts/validate-design-tokens-v2.ts",
     "validate:v11-d48-gate": "npx tsx scripts/validate-v11-d48-gate.ts",
@@ -133,7 +134,6 @@
     "validate:foundation-coverage": "npx tsx scripts/validate-foundation-coverage.ts",
     "validate:d64-gate": "npx tsx scripts/validate-d64-gate.ts",
     "validate:prod2e-d33-axes-gate": "npx tsx scripts/validate-prod2e-d33-axes-gate.ts",
-
     "validate:prod2e-d34-interaction-gate": "npx tsx scripts/validate-prod2e-d34-interaction-gate.ts && npx tsx scripts/validate-prod2e-d33-axes-gate.ts && npx tsc --noEmit && npm run validate:graph-interaction-unit && npm run validate:graph-axes-unit && npm run validate:chart-viewport && npm run validate:chart-viewport-y && npx tsx scripts/validate-prod2e-d29-viewport-gate.ts && npx tsx scripts/validate-prod2e-d30-publication-presets-gate.ts && npx tsx scripts/validate-prod2e-d31-curves-gate.ts && npx tsx scripts/validate-prod2e-d32-series-gate.ts && npx tsx scripts/validate-prod2c-c8-regression-gate.ts",
     "validate:prod2e-gate": "npx tsx scripts/validate-prod2e-gate.ts && npm run validate:prod2e-d35-rendering-gate && npm run validate:prod2e-data3b-gate && npm run validate:visual-graph-builder-unit && npx tsc --noEmit",
     "validate:prod2e-d35-rendering-gate": "npx tsx scripts/validate-prod2e-d35-rendering-gate.ts && npx tsx scripts/validate-prod2e-d34-interaction-gate.ts && npx tsc --noEmit && npm run validate:graph-interaction-unit && npm run validate:graph-axes-unit && npm run validate:chart-viewport && npm run validate:chart-viewport-y && npx tsx scripts/validate-prod2e-d29-viewport-gate.ts && npx tsx scripts/validate-prod2e-d30-publication-presets-gate.ts && npx tsx scripts/validate-prod2e-d31-curves-gate.ts && npx tsx scripts/validate-prod2e-d32-series-gate.ts && npx tsx scripts/validate-prod2c-c8-regression-gate.ts && npx tsc --noEmit && npm run validate:graph-rendering-unit",
@@ -213,6 +213,7 @@
     "@supabase/supabase-js": "^2.106.2",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
+    "lucide-react": "^1.28.0",
     "mathjs": "^15.2.0",
     "next": "16.2.6",
     "react": "19.2.4",

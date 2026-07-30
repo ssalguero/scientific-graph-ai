@@ -10,6 +10,7 @@ import {
   ContextDivider,
   DisclosureSection,
 } from "../../disclosure";
+import { WorkspaceIcon } from "../../iconography";
 import {
   PanelContentRegion,
   PanelFooterRegion,
@@ -23,7 +24,7 @@ import {
   SemanticStatus,
 } from "../../semantics";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
-import { ActionGroup, PanelToolbar } from "../../toolbar";
+import { ActionButton, ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
 
@@ -36,6 +37,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.18 — PanelLayout + HeaderRegion + ContentRegion semantic shell.
  * UX-2.18b — SemanticHeader/Status/SectionLabel/Footer identity grammar.
  * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
+ * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
  * Stable IDs: project, layers.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no domain branching).
@@ -51,9 +53,21 @@ export const ExplorerContent = memo(function ExplorerContent() {
           <PanelHeaderRegion>
             <SemanticHeader
               title="Project"
+              leading={<WorkspaceIcon name="project" size="sm" />}
               trailing={
                 <PanelToolbar>
-                  <ActionGroup />
+                  <ActionGroup>
+                    <ActionButton
+                      icon={<WorkspaceIcon name="add" size="sm" />}
+                      appearance="muted"
+                    >
+                      Add
+                    </ActionButton>
+                    <ActionButton
+                      icon={<WorkspaceIcon name="search" size="sm" />}
+                      appearance="muted"
+                    />
+                  </ActionGroup>
                 </PanelToolbar>
               }
             />
@@ -66,7 +80,7 @@ export const ExplorerContent = memo(function ExplorerContent() {
                 <DisclosureSection title="Project" defaultExpanded>
                   <PanelContentSection id="project" title="Project">
                     <EmptyState
-                      icon="○"
+                      icon={<WorkspaceIcon name="project" size="lg" />}
                       title="No series"
                       description="Create your first data series."
                       action={
@@ -90,7 +104,7 @@ export const ExplorerContent = memo(function ExplorerContent() {
                 >
                   <PanelContentSection id="layers" title="Layers">
                     <EmptyState
-                      icon="○"
+                      icon={<WorkspaceIcon name="layers" size="lg" />}
                       title="No layers"
                       description="Layers appear when series are added to the graph."
                     />

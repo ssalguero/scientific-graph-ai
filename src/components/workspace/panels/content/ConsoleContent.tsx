@@ -8,6 +8,7 @@ import {
   ContextDivider,
   DisclosureSection,
 } from "../../disclosure";
+import { WorkspaceIcon } from "../../iconography";
 import {
   PanelContentRegion,
   PanelFooterRegion,
@@ -21,7 +22,7 @@ import {
   SemanticStatus,
 } from "../../semantics";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
-import { ActionGroup, PanelToolbar } from "../../toolbar";
+import { ActionButton, ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
 
@@ -34,6 +35,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.18 — PanelLayout + ContentRegion semantic shell.
  * UX-2.18b — SemanticHeader/Status/SectionLabel/Footer identity grammar.
  * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
+ * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -48,9 +50,15 @@ export const ConsoleContent = memo(function ConsoleContent() {
         <PanelLayout>
           <PanelHeaderRegion>
             <SemanticHeader
+              leading={<WorkspaceIcon name="console" size="sm" />}
               trailing={
                 <PanelToolbar>
-                  <ActionGroup />
+                  <ActionGroup>
+                    <ActionButton
+                      icon={<WorkspaceIcon name="info" size="sm" />}
+                      appearance="muted"
+                    />
+                  </ActionGroup>
                 </PanelToolbar>
               }
             />
@@ -63,7 +71,7 @@ export const ConsoleContent = memo(function ConsoleContent() {
                 <DisclosureSection title="Output" defaultExpanded>
                   <PanelContentSection id="output" title="Output">
                     <EmptyState
-                      icon="○"
+                      icon={<WorkspaceIcon name="console" size="lg" />}
                       title="No output"
                       description="Console messages will appear here."
                     />

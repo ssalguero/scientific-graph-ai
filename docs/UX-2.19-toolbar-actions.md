@@ -23,6 +23,8 @@ BRIDGE = UX-2.18b Semantics → UX-2.19 Toolbar → UX-2.20 Iconography
 READY FOR HUMAN REVIEW
 ```
 
+> **Bridge note:** UX-2.20 Iconography & Microinteractions is COMPLETE. `ACTION_TOKENS` may compose `ICON_TOKENS` (tokens-only bridge).
+
 ---
 
 ## 1. Purpose
@@ -196,3 +198,5 @@ TOKEN RULE = compose-only (no parallel SURFACE/LAYOUT/SEMANTIC scale)
 Next: UX-2.20 — Iconography & Microinteractions
 Do NOT expand Action* props · Do NOT touch actions/ · Do NOT export toolbar publicly
 ```
+
+> **Status note:** UX-2.20 Iconography & Microinteractions is COMPLETE (awaiting human review). See [`docs/UX-2.20-iconography-microinteractions.md`](UX-2.20-iconography-microinteractions.md). Next after UX-2.20: UX-2.21 — Final Visual Polish.
