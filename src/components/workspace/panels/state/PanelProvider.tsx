@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
+import { load, save } from "../persistence/PanelPersistence";
 import { PanelContext, type PanelContextValue } from "./PanelContext";
 import {
   DEFAULT_PANEL_STATE,
@@ -14,13 +15,25 @@ export type PanelProviderProps = {
 };
 
 /**
- * UX-2.7 — Owns panel collapsed + size state.
- * Setters clamp with Math.max(PANEL_MIN_SIZE, value). No max. No persistence.
+ * UX-2.7 / UX-2.8 — Owns panel collapsed + size state.
+ * Setters clamp with Math.max(PANEL_MIN_SIZE, value). No max.
+ * UX-2.8 — Restores from / persists via PanelPersistence facade.
  */
 export function PanelProvider({ children }: PanelProviderProps) {
   const [state, setState] = useState<PanelState>(() => ({
     ...DEFAULT_PANEL_STATE,
   }));
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setState(load());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    save(state);
+  }, [state, hydrated]);
 
   const value: PanelContextValue = {
     state,

@@ -22,8 +22,14 @@ const STATE_FILES = [
   "index.ts",
 ] as const;
 
-const PERSISTENCE_RE =
-  /\blocalStorage\b|\bindexedDB\b|\bpersist\b|\bsave\b|\brestore\b/i;
+/** Direct storage APIs — banned everywhere under panels/state. */
+const DIRECT_STORAGE_RE = /\blocalStorage\b|\bindexedDB\b|\bIndexedDB\b/;
+
+/**
+ * UX-2.8 amend — persistence facade words allowed only in PanelProvider.tsx.
+ * Other state files still ban persist/save/restore/load keywords.
+ */
+const PERSISTENCE_FACADE_RE = /\bpersist\b|\bsave\b|\brestore\b|\bload\b/i;
 
 const results: { id: string; pass: boolean; detail: string }[] = [];
 
@@ -321,13 +327,33 @@ assertCase(
 );
 
 /* -------------------------------------------------------------------------- */
-/* H. No persistence / no resize in state                                     */
+/* H. No direct storage / no resize in state (UX-2.8 amend)                   */
 /* -------------------------------------------------------------------------- */
 
 assertCase(
-  "ux27.no.persistence",
-  !PERSISTENCE_RE.test(allStateSources),
-  "no localStorage/indexedDB/persist/save/restore in panels/state"
+  "ux27.no.directStorage",
+  !DIRECT_STORAGE_RE.test(allStateSources),
+  "no localStorage/indexedDB directly in panels/state"
+);
+
+const stateFilesExceptProvider = [
+  statePanelState,
+  stateContext,
+  stateHook,
+  stateBarrel,
+].join("\n");
+
+assertCase(
+  "ux27.no.persistence.exceptProvider",
+  !PERSISTENCE_FACADE_RE.test(stateFilesExceptProvider),
+  "persist/save/restore/load only allowed in PanelProvider (UX-2.8 facade)"
+);
+
+assertCase(
+  "ux27.provider.persistenceViaFacade",
+  !PERSISTENCE_FACADE_RE.test(stateProvider) ||
+    /from\s+["'][^"']*persistence[^"']*["']/.test(stateProvider),
+  "PanelProvider load/save must go through persistence facade (UX-2.8)"
 );
 
 assertCase(
