@@ -1,3 +1,5 @@
+import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
+
 /** UX-2.14 — Fixed-height uppercase status badge. */
 export type StatusBadgeProps = {
   children: string;
@@ -27,6 +29,7 @@ function toneClasses(
 /**
  * UX-2.14 — Presentational badge (fixed height, uppercase).
  * Pure UI; no domain knowledge.
+ * UX-2.21 — Radius / type scale via SURFACE_TOKENS.metadata.
  */
 export function StatusBadge({
   children,
@@ -36,7 +39,7 @@ export function StatusBadge({
   return (
     <span
       aria-label={ariaLabel}
-      className={`inline-flex h-4 shrink-0 items-center rounded border px-1 text-[9px] font-semibold uppercase tracking-wide transition-[opacity,background-color] duration-150 ${toneClasses(tone)}`}
+      className={`inline-flex shrink-0 items-center border text-[10px] font-medium uppercase tracking-[0.08em] transition-[opacity,background-color] duration-150 ${SURFACE_TOKENS.radius.default} ${SURFACE_TOKENS.padding.sm} ${toneClasses(tone)}`}
     >
       {children}
     </span>

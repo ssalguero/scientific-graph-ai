@@ -24,7 +24,7 @@ NO "use client" · NO hooks · NO handlers · lucide-react ONLY in iconography/
 BRIDGE = ACTION_TOKENS → ICON_TOKENS (tokens only)
 NO VISUAL REGRESSION = spacing · density · typography · layout · identity
                        · toolbar composition · semantic hierarchy frozen
-Next: UX-2.21 — Final Visual Polish
+Next: UX-2.22 — Content Grammar Foundation
 READY FOR HUMAN REVIEW
 ```
 
@@ -209,6 +209,6 @@ TOKEN RULE = ICON_TOKENS sizes/color only; ACTION_TOKENS owns interaction
 REGISTRY = private (not exported)
 NO VISUAL REGRESSION = spacing · density · typography · layout · identity
                        · toolbar composition · semantic hierarchy
-Next: UX-2.21 — Final Visual Polish
+Next: UX-2.22 — Content Grammar Foundation
 Do NOT export registry · Do NOT add INTERACTION_TOKENS · Do NOT expand Action* props
 ```

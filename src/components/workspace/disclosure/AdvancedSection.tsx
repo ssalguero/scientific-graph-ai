@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { UI_TOKENS } from "@/lib/ui/tokens";
 
+import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
 import { RevealButton } from "./RevealButton";
 
 /** UX-2.15 — Fully controlled advanced disclosure block. */
@@ -14,6 +15,7 @@ export type AdvancedSectionProps = {
 
 /**
  * UX-2.15 — Controlled “Advanced ▼” chrome. No internal state.
+ * UX-2.21 — Padding via SURFACE_TOKENS.
  */
 export function AdvancedSection({
   children,
@@ -24,7 +26,7 @@ export function AdvancedSection({
   const panelId = `advanced-section-${label.replace(/\s+/g, "-").toLowerCase()}`;
 
   return (
-    <div className="py-1">
+    <div className={SURFACE_TOKENS.padding.sm}>
       <RevealButton
         expanded={expanded}
         onToggle={onToggle}
@@ -42,7 +44,7 @@ export function AdvancedSection({
         }`}
       >
         <div className="overflow-hidden">
-          <div className="pt-1.5">{children}</div>
+          <div className={SURFACE_TOKENS.padding.sm}>{children}</div>
         </div>
       </div>
     </div>

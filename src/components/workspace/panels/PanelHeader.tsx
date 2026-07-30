@@ -5,6 +5,9 @@ import type { ReactNode } from "react";
 import { getIcon } from "@/lib/ui/icons";
 import { sidebarCollapseToggle } from "@/lib/ui/theme";
 
+import { LAYOUT_TOKENS } from "../layout/LayoutTokens";
+import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
+
 /** UX-2.5 / UX-2.11 / UX-2.12 / UX-2.13 / UX-2.14 / UX-2.15 — Panel header. */
 export type PanelHeaderProps = {
   title: string;
@@ -31,6 +34,7 @@ export type PanelHeaderProps = {
  * UX-2.13 — Optional isActive accent bar + header contrast.
  * UX-2.14 — Optional status / badge / chips (presentational).
  * UX-2.15 — Optional overflow after primary actions (frozen order).
+ * UX-2.21 — Padding / gap / micro-label via LAYOUT + SURFACE tokens.
  *
  * Slot order (frozen):
  * Title → Status → Badge → Chips → Primary actions → Overflow → Collapse
@@ -58,7 +62,7 @@ export function PanelHeader({
 
   return (
     <div
-      className={`relative flex flex-none items-center justify-between gap-2 border-b border-[var(--app-border)] px-3 py-2 transition-colors duration-150 hover:bg-[var(--app-surface-muted)] ${headerBg}`}
+      className={`relative flex flex-none items-center justify-between border-b border-[var(--app-border)] transition-colors duration-150 hover:bg-[var(--app-surface-muted)] ${LAYOUT_TOKENS.headerGap} ${LAYOUT_TOKENS.regionPadding.md} ${headerBg}`}
     >
       {isActive ? (
         <span
@@ -66,21 +70,27 @@ export function PanelHeader({
           className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--app-accent)]"
         />
       ) : null}
-      <div className="flex min-w-0 items-center gap-1.5">
+      <div
+        className={`flex min-w-0 items-center ${SURFACE_TOKENS.gap.sm}`}
+      >
         {status != null ? status : null}
         <p
-          className={`text-[10px] font-semibold uppercase tracking-[0.09em] transition-colors duration-150 ${titleColor}`}
+          className={`${SURFACE_TOKENS.metadata.root} transition-colors duration-150 ${titleColor}`}
         >
           {title}
         </p>
         {badge != null ? badge : null}
         {chips != null ? (
-          <span className="flex min-w-0 flex-wrap items-center gap-1">
+          <span
+            className={`flex min-w-0 flex-wrap items-center ${SURFACE_TOKENS.gap.sm}`}
+          >
             {chips}
           </span>
         ) : null}
       </div>
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div
+        className={`flex shrink-0 items-center ${SURFACE_TOKENS.gap.sm}`}
+      >
         {actions != null ? actions : null}
         {overflow != null ? overflow : null}
         {onToggle != null ? (

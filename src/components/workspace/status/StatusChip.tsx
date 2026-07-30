@@ -1,3 +1,5 @@
+import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
+
 /** UX-2.14 — Compact presentational chip. */
 export type StatusChipProps = {
   children: string;
@@ -6,10 +8,13 @@ export type StatusChipProps = {
 /**
  * UX-2.14 — Small reusable chip (Inspector / Data / Layers / Toolbar later).
  * Pure UI; no domain knowledge.
+ * UX-2.21 — Height/type via SURFACE + semantic vocabulary (10px scale).
  */
 export function StatusChip({ children }: StatusChipProps) {
   return (
-    <span className="inline-flex h-4 shrink-0 items-center rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 text-[9px] font-medium text-[var(--app-text-muted)] transition-[opacity,background-color] duration-150">
+    <span
+      className={`inline-flex shrink-0 items-center bg-[var(--app-surface-muted)] transition-[opacity,background-color] duration-150 ${SURFACE_TOKENS.radius.default} ${SURFACE_TOKENS.border.default} ${SURFACE_TOKENS.padding.sm} ${SURFACE_TOKENS.metadata.root}`}
+    >
       {children}
     </span>
   );

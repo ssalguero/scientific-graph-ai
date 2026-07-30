@@ -14,7 +14,7 @@ import {
 } from "../layout";
 import { SemanticFooter, SemanticHeader } from "../semantics";
 import { StatusChip } from "../status";
-import { PanelSurface } from "../surfaces";
+import { PanelSurface, SURFACE_TOKENS } from "../surfaces";
 import {
   ActionButton,
   ActionGroup,
@@ -57,6 +57,7 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.18b — SemanticHeader + SemanticFooter shells (empty; no invented copy).
  * UX-2.19 — PanelToolbar shells; HintGroup/StatusChip as opaque children.
  * UX-2.20 — WorkspaceIcon in header leading / ActionButton.icon.
+ * UX-2.21 — Canvas radius/padding + icon size alignment via SURFACE/ICON tokens.
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -107,24 +108,24 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
           data-panel-id="canvas"
           data-panel-active={canvasActive ? "true" : "false"}
           onPointerDown={() => activate("canvas")}
-          className={`relative min-w-0 flex-1 overflow-hidden rounded-xl border bg-[var(--app-surface)] p-4 transition-colors transition-shadow duration-200 sm:p-6 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${canvasActiveClass}`}
+          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--app-surface)] transition-colors transition-shadow duration-200 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${SURFACE_TOKENS.radius.canvas} ${SURFACE_TOKENS.padding.md} ${canvasActiveClass}`}
         >
           {canvasActive ? (
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-0.5 rounded-t-xl bg-[var(--app-accent)]"
+              className={`pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--app-accent)] ${SURFACE_TOKENS.radius.canvas}`}
             />
           ) : null}
           <PanelSurface variant="canvas">
             <PanelLayout>
               <PanelHeaderRegion>
                 <SemanticHeader
-                  leading={<WorkspaceIcon name="sparkles" size="sm" />}
+                  leading={<WorkspaceIcon name="sparkles" size="lg" />}
                   trailing={
                     <PanelToolbar>
                       <ActionGroup>
                         <ActionButton
-                          icon={<WorkspaceIcon name="sync" size="sm" />}
+                          icon={<WorkspaceIcon name="sync" size="lg" />}
                           appearance="muted"
                         />
                       </ActionGroup>

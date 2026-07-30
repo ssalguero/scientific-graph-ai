@@ -1,3 +1,5 @@
+import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
+
 /** UX-2.14 — CSS-only loading skeleton variants. */
 export type LoadingSkeletonVariant = "text" | "list" | "table" | "properties";
 
@@ -6,11 +8,12 @@ export type LoadingSkeletonProps = {
 };
 
 const bar =
-  "rounded bg-[var(--app-surface-muted)] transition-[opacity,background-color] duration-150";
+  `rounded bg-[var(--app-surface-muted)] transition-[opacity,background-color] duration-150`;
 
 /**
  * UX-2.14 — Presentational skeleton placeholders.
  * aria-hidden; no libraries.
+ * UX-2.21 — Gaps via SURFACE_TOKENS.
  */
 export function LoadingSkeleton({
   variant = "text",
@@ -18,7 +21,7 @@ export function LoadingSkeleton({
   return (
     <div
       aria-hidden
-      className="flex w-full flex-col gap-1.5 opacity-80"
+      className={`flex w-full flex-col opacity-80 ${SURFACE_TOKENS.gap.sm}`}
       data-skeleton-variant={variant}
     >
       {variant === "text" ? (
@@ -38,17 +41,17 @@ export function LoadingSkeleton({
       ) : null}
       {variant === "table" ? (
         <>
-          <div className="flex gap-1.5">
+          <div className={`flex ${SURFACE_TOKENS.gap.sm}`}>
             <div className={`${bar} h-3 flex-1`} />
             <div className={`${bar} h-3 flex-1`} />
             <div className={`${bar} h-3 flex-1`} />
           </div>
-          <div className="flex gap-1.5">
+          <div className={`flex ${SURFACE_TOKENS.gap.sm}`}>
             <div className={`${bar} h-3 flex-1`} />
             <div className={`${bar} h-3 flex-1`} />
             <div className={`${bar} h-3 flex-1`} />
           </div>
-          <div className="flex gap-1.5">
+          <div className={`flex ${SURFACE_TOKENS.gap.sm}`}>
             <div className={`${bar} h-3 flex-1`} />
             <div className={`${bar} h-3 flex-1`} />
             <div className={`${bar} h-3 flex-1`} />
@@ -57,15 +60,15 @@ export function LoadingSkeleton({
       ) : null}
       {variant === "properties" ? (
         <>
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center ${SURFACE_TOKENS.gap.md}`}>
             <div className={`${bar} h-2.5 w-16 shrink-0`} />
             <div className={`${bar} h-5 flex-1`} />
           </div>
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center ${SURFACE_TOKENS.gap.md}`}>
             <div className={`${bar} h-2.5 w-16 shrink-0`} />
             <div className={`${bar} h-5 flex-1`} />
           </div>
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center ${SURFACE_TOKENS.gap.md}`}>
             <div className={`${bar} h-2.5 w-16 shrink-0`} />
             <div className={`${bar} h-5 flex-1`} />
           </div>

@@ -73,12 +73,12 @@ export const SURFACE_TOKENS = {
       md: "h-5 w-5 text-xs",
     },
   },
-  identityRow: "mb-2 flex items-center gap-1.5 pl-2.5",
   contentInset: "pl-2.5",
   /**
    * UX-2.17 — Composition density keys.
    * Visually equivalent to existing gap/padding/divider density.
    * Any meaningful visual change is a bug — do not redesign density here.
+   * UX-2.21 — sectionGap consumed by PanelContentSection (reachability).
    */
   workspaceGap: {
     sm: "gap-1.5",

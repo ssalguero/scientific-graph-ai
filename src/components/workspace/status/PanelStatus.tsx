@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
 import type { PanelVisualState } from "./PanelVisualState";
 import { StatusDot } from "./StatusDot";
 
@@ -12,15 +13,16 @@ export type PanelStatusProps = {
 /**
  * UX-2.14 — Composes StatusDot with an optional children label slot.
  * No hooks, state, or effects.
+ * UX-2.21 — Gap + micro-label via SURFACE_TOKENS.
  */
 export function PanelStatus({ state, children }: PanelStatusProps) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1">
+    <span
+      className={`inline-flex shrink-0 items-center ${SURFACE_TOKENS.gap.sm}`}
+    >
       <StatusDot state={state} />
       {children != null ? (
-        <span className="text-[9px] font-medium uppercase tracking-wide text-[var(--app-text-muted)]">
-          {children}
-        </span>
+        <span className={SURFACE_TOKENS.metadata.root}>{children}</span>
       ) : null}
     </span>
   );

@@ -327,7 +327,7 @@ assertCase(
     /WorkspaceIcon/.test(doc) &&
     /No Visual Regression/i.test(doc) &&
     /ACTION_TOKENS/.test(doc) &&
-    /Next:\s*UX-2\.21/i.test(doc),
+    (/Next:\s*UX-2\.21/i.test(doc) || /Next:\s*UX-2\.22/i.test(doc)),
   "docs/UX-2.20-iconography-microinteractions.md present with contracts"
 );
 
@@ -342,8 +342,8 @@ assertCase(
   /UX-2\.20\s*=\s*COMPLETE/.test(roadmap) &&
     /Iconography/.test(roadmap) &&
     /UX-2\.21/.test(roadmap) &&
-    /NEXT\s*=\s*UX-2\.21/.test(roadmap),
-  "roadmap marks UX-2.20 COMPLETE; NEXT → UX-2.21"
+    (/NEXT\s*=\s*UX-2\.21/.test(roadmap) || /NEXT\s*=\s*UX-2\.22/.test(roadmap)),
+  "roadmap marks UX-2.20 COMPLETE; NEXT → UX-2.21 or UX-2.22"
 );
 
 assertCase(

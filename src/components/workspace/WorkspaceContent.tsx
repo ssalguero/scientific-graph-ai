@@ -5,6 +5,7 @@ import {
 } from "./panels";
 import { ActivePanelProvider } from "./focus";
 import { PlanningMode, WorkspaceModeProvider } from "./modes";
+import { SURFACE_TOKENS } from "./surfaces/SurfaceTokens";
 import { WORKSPACE_TOKENS } from "./WorkspaceTokens";
 import type { WorkspaceContentProps } from "./types";
 
@@ -17,6 +18,7 @@ import type { WorkspaceContentProps } from "./types";
  * UX-2.9 — PanelResizeProvider nested inside PanelProvider.
  * UX-2.10 — WorkspaceModeProvider wraps PanelProvider; Planning supplies initialState.
  * UX-2.13 — ActivePanelProvider nested inside PanelResizeProvider (UI focus only).
+ * UX-2.21 — Micro-label recipe via SURFACE_TOKENS.metadata.
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
@@ -29,21 +31,19 @@ export function WorkspaceContent({
         {toolbar}
         <header
           data-workspace-header
-          className="flex flex-wrap items-start justify-between gap-2 border-b border-[var(--app-border)] pb-3"
+          className={`flex flex-wrap items-start justify-between border-b border-[var(--app-border)] pb-3 ${SURFACE_TOKENS.gap.md}`}
         >
           <div className="min-w-0 space-y-0.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-[var(--app-text-muted)]">
-              Project
-            </p>
+            <p className={SURFACE_TOKENS.metadata.root}>Project</p>
             <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--app-heading)] sm:text-base">
               Scientific Graph AI
             </h1>
-            <p className="truncate text-xs text-[var(--app-text-muted)] sm:text-sm">
+            <p className={`truncate text-xs sm:text-sm ${SURFACE_TOKENS.tone.default}`}>
               Current Project
             </p>
           </div>
           <p
-            className="shrink-0 text-xs font-medium text-[var(--app-text-muted)] sm:text-sm"
+            className={`shrink-0 text-xs font-medium sm:text-sm ${SURFACE_TOKENS.tone.default}`}
             aria-label="Workspace status"
           >
             Ready

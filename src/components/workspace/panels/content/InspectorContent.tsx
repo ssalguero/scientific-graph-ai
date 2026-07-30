@@ -22,12 +22,7 @@ import {
   SemanticSectionLabel,
   SemanticStatus,
 } from "../../semantics";
-import {
-  PanelAccent,
-  PanelDivider,
-  PanelSurface,
-  SURFACE_TOKENS,
-} from "../../surfaces";
+import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
 import { ActionButton, ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
@@ -36,12 +31,13 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.6 — Inspector body content.
  * UX-2.12 — Hierarchy: Content → PanelContentSection → EmptyState.
  * UX-2.15 — Properties primary; Appearance behind Advanced.
- * UX-2.16 — PanelSurface + Accent + PanelDivider before ContextDivider.
+ * UX-2.16 — PanelSurface + Accent + ContextDivider (UX-2.21: single divider rhythm).
  * UX-2.17 — WorkspaceGroup affinity inside content (layout only).
  * UX-2.18 — PanelLayout + ContentRegion semantic shell.
  * UX-2.18b — SemanticHeader/Status/SectionLabel/InfoBlock/Footer identity grammar.
  * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
  * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
+ * UX-2.21 — Icon sizes aligned to ACTION/ICON slots; divider parity with Explorer/Console.
  * Stable IDs: properties, appearance.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no selection branching).
@@ -56,12 +52,12 @@ export const InspectorContent = memo(function InspectorContent() {
         <PanelLayout>
           <PanelHeaderRegion>
             <SemanticHeader
-              leading={<WorkspaceIcon name="inspector" size="sm" />}
+              leading={<WorkspaceIcon name="inspector" size="lg" />}
               trailing={
                 <PanelToolbar>
                   <ActionGroup>
                     <ActionButton
-                      icon={<WorkspaceIcon name="search" size="sm" />}
+                      icon={<WorkspaceIcon name="search" size="lg" />}
                       appearance="muted"
                     />
                   </ActionGroup>
@@ -72,7 +68,6 @@ export const InspectorContent = memo(function InspectorContent() {
           </PanelHeaderRegion>
           <PanelContentRegion>
             <div className={SURFACE_TOKENS.contentInset}>
-              <PanelDivider spacing="sm" muted />
               <ContextDivider />
               <WorkspaceGroup>
                 <SemanticSectionLabel>Properties</SemanticSectionLabel>

@@ -36,6 +36,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.18b — SemanticHeader/Status/SectionLabel/Footer identity grammar.
  * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
  * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
+ * UX-2.21 — Icon sizes aligned to ACTION/ICON slots.
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -50,12 +51,12 @@ export const ConsoleContent = memo(function ConsoleContent() {
         <PanelLayout>
           <PanelHeaderRegion>
             <SemanticHeader
-              leading={<WorkspaceIcon name="console" size="sm" />}
+              leading={<WorkspaceIcon name="console" size="lg" />}
               trailing={
                 <PanelToolbar>
                   <ActionGroup>
                     <ActionButton
-                      icon={<WorkspaceIcon name="info" size="sm" />}
+                      icon={<WorkspaceIcon name="info" size="lg" />}
                       appearance="muted"
                     />
                   </ActionGroup>

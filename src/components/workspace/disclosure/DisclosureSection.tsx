@@ -4,11 +4,14 @@ import { useId, useState, type ReactNode } from "react";
 
 import { UI_TOKENS } from "@/lib/ui/tokens";
 
+import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
+
 /**
  * UX-2.15 — Uncontrolled disclosure block.
  * Owns local UI state (useState) initialized from defaultExpanded.
  * Never syncs back to props, panel layout state, workspace providers, or persistence.
  * Not semi-controlled: no controlled expand API on this component.
+ * UX-2.21 — Gap / padding / micro-label via SURFACE_TOKENS.
  */
 export type DisclosureSectionProps = {
   title: string;
@@ -25,10 +28,10 @@ export function DisclosureSection({
   const panelId = useId();
 
   return (
-    <div className="py-1">
+    <div className={SURFACE_TOKENS.padding.sm}>
       <button
         type="button"
-        className="flex w-full cursor-pointer items-center gap-1.5 rounded px-0.5 py-0.5 text-left transition-colors duration-150 hover:bg-[var(--app-surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30"
+        className={`flex w-full cursor-pointer items-center rounded text-left transition-colors duration-150 hover:bg-[var(--app-surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${SURFACE_TOKENS.gap.sm} ${SURFACE_TOKENS.padding.sm}`}
         aria-expanded={expanded}
         aria-controls={panelId}
         aria-label={expanded ? `Collapse ${title}` : `Expand ${title}`}
@@ -36,13 +39,11 @@ export function DisclosureSection({
       >
         <span
           aria-hidden
-          className="text-[9px] text-[var(--app-text-muted)]"
+          className={`text-[10px] ${SURFACE_TOKENS.tone.default}`}
         >
           {expanded ? "▾" : "▸"}
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.09em] text-[var(--app-text-muted)]">
-          {title}
-        </span>
+        <span className={SURFACE_TOKENS.metadata.root}>{title}</span>
       </button>
       <div
         id={panelId}
@@ -55,7 +56,7 @@ export function DisclosureSection({
         }`}
       >
         <div className="overflow-hidden">
-          <div className="pt-1">{children}</div>
+          <div className={SURFACE_TOKENS.padding.sm}>{children}</div>
         </div>
       </div>
     </div>

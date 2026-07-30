@@ -5,6 +5,9 @@ export type EmptyActionProps = {
   children: ReactNode;
 };
 
+/**
+ * UX-2.21 — Slot only; vertical rhythm owned by EmptyState gap token.
+ */
 export function EmptyAction({ children }: EmptyActionProps) {
-  return <div className="pt-1">{children}</div>;
+  return <div>{children}</div>;
 }
