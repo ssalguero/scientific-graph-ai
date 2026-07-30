@@ -402,38 +402,45 @@ const runNpm = (script: string): { ok: boolean; detail: string } => {
   };
 };
 
-const ux25 = runNpm("validate:ux-2.5");
-assertCase("ux27.delegate.ux-2.5", ux25.ok, ux25.detail);
+/** UX-2.11 — Parent suites set UX_SKIP_DELEGATES=1 to avoid nested npm/tsc fan-out. */
+const skipDelegates = process.env.UX_SKIP_DELEGATES === "1";
 
-const ux26 = runNpm("validate:ux-2.6");
-assertCase("ux27.delegate.ux-2.6", ux26.ok, ux26.detail);
+if (!skipDelegates) {
+  const ux25 = runNpm("validate:ux-2.5");
+  assertCase("ux27.delegate.ux-2.5", ux25.ok, ux25.detail);
 
-const workspaceArch = runNpm("validate:workspace-architecture");
-assertCase(
-  "ux27.delegate.workspace-architecture",
-  workspaceArch.ok,
-  workspaceArch.detail
-);
+  const ux26 = runNpm("validate:ux-2.6");
+  assertCase("ux27.delegate.ux-2.6", ux26.ok, ux26.detail);
 
-const designTokens = runNpm("validate:design-tokens-v2");
-assertCase(
-  "ux27.delegate.design-tokens-v2",
-  designTokens.ok,
-  designTokens.detail
-);
+  const workspaceArch = runNpm("validate:workspace-architecture");
+  assertCase(
+    "ux27.delegate.workspace-architecture",
+    workspaceArch.ok,
+    workspaceArch.detail
+  );
 
-const tsc = spawnSync("npx", ["tsc", "--noEmit"], {
-  cwd: repoRoot,
-  encoding: "utf8",
-  shell: true,
-});
-assertCase(
-  "ux27.typescript",
-  tsc.status === 0,
-  tsc.status === 0
-    ? "PASS"
-    : `${tsc.stdout ?? ""}\n${tsc.stderr ?? ""}`.trim().slice(-800)
-);
+  const designTokens = runNpm("validate:design-tokens-v2");
+  assertCase(
+    "ux27.delegate.design-tokens-v2",
+    designTokens.ok,
+    designTokens.detail
+  );
+
+  const tsc = spawnSync("npx", ["tsc", "--noEmit"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    shell: true,
+  });
+  assertCase(
+    "ux27.typescript",
+    tsc.status === 0,
+    tsc.status === 0
+      ? "PASS"
+      : `${tsc.stdout ?? ""}\n${tsc.stderr ?? ""}`.trim().slice(-800)
+  );
+} else {
+  assertCase("ux27.delegate.skipped", true, "UX_SKIP_DELEGATES=1 (leaf)");
+}
 
 /* -------------------------------------------------------------------------- */
 /* Summary                                                                    */

@@ -11,6 +11,13 @@ export { RightPanel } from "./RightPanel";
 export type { RightPanelProps } from "./RightPanel";
 export { BottomPanel } from "./BottomPanel";
 export type { BottomPanelProps } from "./BottomPanel";
+export {
+  PanelExpandRail,
+  LeftExpandRail,
+  RightExpandRail,
+  BottomExpandRail,
+} from "./PanelExpandRail";
+export type { PanelExpandRailProps } from "./PanelExpandRail";
 export { WorkspaceBodyLayout } from "./WorkspaceBodyLayout";
 export type { WorkspaceBodyLayoutProps } from "./WorkspaceBodyLayout";
 export {

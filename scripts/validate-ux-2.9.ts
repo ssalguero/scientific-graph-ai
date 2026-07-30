@@ -420,21 +420,28 @@ const runNpm = (script: string): { ok: boolean; detail: string } => {
   };
 };
 
-const ux28 = runNpm("validate:ux-2.8");
-assertCase("ux29.delegate.ux-2.8", ux28.ok, ux28.detail);
+/** UX-2.11 — Parent suites set UX_SKIP_DELEGATES=1 to avoid nested npm/tsc fan-out. */
+const skipDelegates = process.env.UX_SKIP_DELEGATES === "1";
 
-const tsc = spawnSync("npx", ["tsc", "--noEmit"], {
-  cwd: repoRoot,
-  encoding: "utf8",
-  shell: true,
-});
-assertCase(
-  "ux29.typescript",
-  tsc.status === 0,
-  tsc.status === 0
-    ? "PASS"
-    : `${tsc.stdout ?? ""}\n${tsc.stderr ?? ""}`.trim().slice(-800)
-);
+if (!skipDelegates) {
+  const ux28 = runNpm("validate:ux-2.8");
+  assertCase("ux29.delegate.ux-2.8", ux28.ok, ux28.detail);
+
+  const tsc = spawnSync("npx", ["tsc", "--noEmit"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    shell: true,
+  });
+  assertCase(
+    "ux29.typescript",
+    tsc.status === 0,
+    tsc.status === 0
+      ? "PASS"
+      : `${tsc.stdout ?? ""}\n${tsc.stderr ?? ""}`.trim().slice(-800)
+  );
+} else {
+  assertCase("ux29.delegate.skipped", true, "UX_SKIP_DELEGATES=1 (leaf)");
+}
 
 /* -------------------------------------------------------------------------- */
 /* Summary                                                                    */

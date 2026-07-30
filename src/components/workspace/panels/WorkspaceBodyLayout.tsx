@@ -1,12 +1,20 @@
+"use client";
+
 import type { ReactNode } from "react";
 
 import { BottomPanel } from "./BottomPanel";
 import { ConsoleContent } from "./content/ConsoleContent";
 import { ExplorerContent } from "./content/ExplorerContent";
 import { InspectorContent } from "./content/InspectorContent";
+import {
+  BottomExpandRail,
+  LeftExpandRail,
+  RightExpandRail,
+  focusToggleAfterExpand,
+} from "./PanelExpandRail";
 import { LeftPanel } from "./LeftPanel";
 import { RightPanel } from "./RightPanel";
-import { PanelResizeHandle } from "./resize";
+import { PanelResizeHandle, usePanelResize } from "./resize";
 import { usePanelState } from "./state";
 
 /** UX-2.4 — Body grid API (agnostic center slot). */
@@ -20,10 +28,13 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.6 — Mounts Explorer / Inspector / Console content into Body slots.
  * UX-2.7 — Reads panel visual state from PanelProvider; passes collapsed + size.
  * UX-2.9 — Inserts PanelResizeHandle splitters between regions.
+ * UX-2.11 — Expand rails (layout siblings) + animated class when !resize.session.
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
-  const { state } = usePanelState();
+  const { state, expandLeft, expandRight, expandBottom } = usePanelState();
+  const { session } = usePanelResize();
+  const animated = session == null;
 
   const showLeftHandle = !state.leftCollapsed;
   const showRightHandle = !state.rightCollapsed;
@@ -32,7 +43,16 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
   return (
     <div className="flex min-w-0 flex-col">
       <div className="flex min-w-0 flex-col sm:flex-row">
-        <LeftPanel collapsed={state.leftCollapsed} size={state.leftWidth}>
+        {state.leftCollapsed ? (
+          <LeftExpandRail
+            onExpand={() => focusToggleAfterExpand("left", expandLeft)}
+          />
+        ) : null}
+        <LeftPanel
+          collapsed={state.leftCollapsed}
+          size={state.leftWidth}
+          animated={animated}
+        >
           <ExplorerContent />
         </LeftPanel>
         {showLeftHandle ? (
@@ -51,17 +71,32 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
             <PanelResizeHandle axis="right" />
           </div>
         ) : null}
-        <RightPanel collapsed={state.rightCollapsed} size={state.rightWidth}>
+        <RightPanel
+          collapsed={state.rightCollapsed}
+          size={state.rightWidth}
+          animated={animated}
+        >
           <InspectorContent />
         </RightPanel>
+        {state.rightCollapsed ? (
+          <RightExpandRail
+            onExpand={() => focusToggleAfterExpand("right", expandRight)}
+          />
+        ) : null}
       </div>
       {showBottomHandle ? <PanelResizeHandle axis="bottom" /> : null}
       <BottomPanel
         collapsed={state.bottomCollapsed}
         size={state.bottomHeight}
+        animated={animated}
       >
         <ConsoleContent />
       </BottomPanel>
+      {state.bottomCollapsed ? (
+        <BottomExpandRail
+          onExpand={() => focusToggleAfterExpand("bottom", expandBottom)}
+        />
+      ) : null}
     </div>
   );
 }
