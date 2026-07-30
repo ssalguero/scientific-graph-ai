@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { useActivePanel } from "../focus";
 import { ContextActions } from "../actions";
+import { PanelOverflowMenu } from "../disclosure";
 import { PanelStatus, StatusBadge, StatusChip } from "../status";
 import { Panel } from "./Panel";
 import { focusRailAfterCollapse } from "./PanelExpandRail";
@@ -11,7 +12,7 @@ import { PanelBody } from "./PanelBody";
 import { PanelHeader } from "./PanelHeader";
 import { usePanelState } from "./state";
 
-/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.12 / UX-2.13 / UX-2.14 — Right IDE panel wrapper (Inspector chrome). */
+/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.12 / UX-2.13 / UX-2.14 / UX-2.15 — Right IDE panel wrapper (Inspector chrome). */
 export type RightPanelProps = {
   collapsed?: boolean;
   size?: number;
@@ -26,6 +27,7 @@ export type RightPanelProps = {
  * UX-2.12 — Static disabled ContextActions placeholders (no selection logic).
  * UX-2.13 — pointerdown sets active panel to right (UI focus only).
  * UX-2.14 — Static PanelStatus + StatusBadge + StatusChip (presentational).
+ * UX-2.15 — Rename/Color demoted to PanelOverflowMenu (no primary actions).
  */
 export function RightPanel({
   collapsed = false,
@@ -64,9 +66,10 @@ export function RightPanel({
             <StatusBadge aria-label="No selection">No selection</StatusBadge>
           }
           chips={<StatusChip>Selection</StatusChip>}
-          actions={
-            <ContextActions
-              actions={[
+          actions={<ContextActions actions={[]} />}
+          overflow={
+            <PanelOverflowMenu
+              items={[
                 {
                   label: "Rename",
                   ariaLabel: "Rename selection",

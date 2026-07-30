@@ -5,12 +5,12 @@ import type { ReactNode } from "react";
 import { getIcon } from "@/lib/ui/icons";
 import { sidebarCollapseToggle } from "@/lib/ui/theme";
 
-/** UX-2.5 / UX-2.11 / UX-2.12 / UX-2.13 / UX-2.14 — Panel header. */
+/** UX-2.5 / UX-2.11 / UX-2.12 / UX-2.13 / UX-2.14 / UX-2.15 — Panel header. */
 export type PanelHeaderProps = {
   title: string;
   collapsed?: boolean;
   onToggle?: () => void;
-  /** UX-2.12 — Presentational slot between title and toggle. */
+  /** UX-2.12 — Presentational slot between title cluster and overflow. */
   actions?: ReactNode;
   /** UX-2.13 — Visual active chrome only (optional). */
   isActive?: boolean;
@@ -20,6 +20,8 @@ export type PanelHeaderProps = {
   badge?: ReactNode;
   /** UX-2.14 — Optional status chips. */
   chips?: ReactNode;
+  /** UX-2.15 — Optional overflow affordance (after primary actions). */
+  overflow?: ReactNode;
 };
 
 /**
@@ -28,6 +30,10 @@ export type PanelHeaderProps = {
  * UX-2.12 — Optional actions slot (no domain knowledge).
  * UX-2.13 — Optional isActive accent bar + header contrast.
  * UX-2.14 — Optional status / badge / chips (presentational).
+ * UX-2.15 — Optional overflow after primary actions (frozen order).
+ *
+ * Slot order (frozen):
+ * Title → Status → Badge → Chips → Primary actions → Overflow → Collapse
  */
 export function PanelHeader({
   title,
@@ -38,6 +44,7 @@ export function PanelHeader({
   status,
   badge,
   chips,
+  overflow,
 }: PanelHeaderProps) {
   const expanded = !collapsed;
   const label = expanded ? `Collapse ${title}` : `Expand ${title}`;
@@ -75,6 +82,7 @@ export function PanelHeader({
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
         {actions != null ? actions : null}
+        {overflow != null ? overflow : null}
         {onToggle != null ? (
           <button
             type="button"

@@ -159,6 +159,6 @@ API FREEZE = PanelVisualState · PanelStatusProps · StatusDotProps ·
              StatusBadgeProps · StatusChipProps · LoadingSkeletonProps ·
              PanelHeader status?/badge?/chips?
 PACKAGE ISOLATION = status/ ⊥ state ⊥ persistence ⊥ resize ⊥ focus ⊥ modes
-Next: UX-2.15 — Toolbar & Action Refinement
+Next: UX-2.15 — Progressive Disclosure Foundation
 Do NOT mount PanelBusyOverlay · Do NOT add domain branching · Do NOT reopen Panel.tsx
 ```

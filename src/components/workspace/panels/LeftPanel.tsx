@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { useActivePanel } from "../focus";
 import { ContextActions } from "../actions";
+import { PanelOverflowMenu } from "../disclosure";
 import { PanelStatus, StatusBadge } from "../status";
 import { Panel } from "./Panel";
 import { focusRailAfterCollapse } from "./PanelExpandRail";
@@ -11,7 +12,7 @@ import { PanelBody } from "./PanelBody";
 import { PanelHeader } from "./PanelHeader";
 import { usePanelState } from "./state";
 
-/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.12 / UX-2.13 / UX-2.14 — Left IDE panel wrapper (Explorer chrome). */
+/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.12 / UX-2.13 / UX-2.14 / UX-2.15 — Left IDE panel wrapper (Explorer chrome). */
 export type LeftPanelProps = {
   collapsed?: boolean;
   size?: number;
@@ -26,6 +27,7 @@ export type LeftPanelProps = {
  * UX-2.12 — Static ContextActions (presentational; no domain handlers).
  * UX-2.13 — pointerdown sets active panel to left (UI focus only).
  * UX-2.14 — Static PanelStatus + StatusBadge (presentational; no domain).
+ * UX-2.15 — Primary New; Import demoted to PanelOverflowMenu.
  */
 export function LeftPanel({
   collapsed = false,
@@ -65,10 +67,12 @@ export function LeftPanel({
           }
           actions={
             <ContextActions
-              actions={[
-                { label: "New", ariaLabel: "New series" },
-                { label: "Import", ariaLabel: "Import series" },
-              ]}
+              actions={[{ label: "New", ariaLabel: "New series" }]}
+            />
+          }
+          overflow={
+            <PanelOverflowMenu
+              items={[{ label: "Import", ariaLabel: "Import series" }]}
             />
           }
         />

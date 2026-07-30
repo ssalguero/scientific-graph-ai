@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { useActivePanel } from "../focus";
+import { PanelOverflowMenu } from "../disclosure";
 import { PanelStatus, StatusBadge, StatusChip } from "../status";
 import { Panel } from "./Panel";
 import { focusRailAfterCollapse } from "./PanelExpandRail";
@@ -10,7 +11,7 @@ import { PanelBody } from "./PanelBody";
 import { PanelHeader } from "./PanelHeader";
 import { usePanelState } from "./state";
 
-/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.13 / UX-2.14 — Bottom IDE panel wrapper (Console chrome). */
+/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.13 / UX-2.14 / UX-2.15 — Bottom IDE panel wrapper (Console chrome). */
 export type BottomPanelProps = {
   collapsed?: boolean;
   size?: number;
@@ -24,6 +25,7 @@ export type BottomPanelProps = {
  * UX-2.11 — Wires toggleBottom; focus moves to expand rail on collapse.
  * UX-2.13 — pointerdown sets active panel to bottom (UI focus only).
  * UX-2.14 — Static PanelStatus + StatusBadge + StatusChip (presentational).
+ * UX-2.15 — Empty/disabled PanelOverflowMenu (no invented rare actions).
  */
 export function BottomPanel({
   collapsed = false,
@@ -69,6 +71,7 @@ export function BottomPanel({
               <StatusChip>Errors</StatusChip>
             </>
           }
+          overflow={<PanelOverflowMenu items={[]} disabled />}
         />
         <PanelBody>{children}</PanelBody>
       </Panel>
