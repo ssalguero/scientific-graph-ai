@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { getIcon } from "@/lib/ui/icons";
 import { sidebarCollapseToggle } from "@/lib/ui/theme";
 
-/** UX-2.5 / UX-2.11 / UX-2.12 / UX-2.13 — Panel header: title + optional actions + collapse toggle. */
+/** UX-2.5 / UX-2.11 / UX-2.12 / UX-2.13 / UX-2.14 — Panel header. */
 export type PanelHeaderProps = {
   title: string;
   collapsed?: boolean;
@@ -14,6 +14,12 @@ export type PanelHeaderProps = {
   actions?: ReactNode;
   /** UX-2.13 — Visual active chrome only (optional). */
   isActive?: boolean;
+  /** UX-2.14 — Optional status indicator (e.g. PanelStatus). */
+  status?: ReactNode;
+  /** UX-2.14 — Optional status badge. */
+  badge?: ReactNode;
+  /** UX-2.14 — Optional status chips. */
+  chips?: ReactNode;
 };
 
 /**
@@ -21,6 +27,7 @@ export type PanelHeaderProps = {
  * UX-2.11 — Optional toggle; aria-label derived from title only.
  * UX-2.12 — Optional actions slot (no domain knowledge).
  * UX-2.13 — Optional isActive accent bar + header contrast.
+ * UX-2.14 — Optional status / badge / chips (presentational).
  */
 export function PanelHeader({
   title,
@@ -28,6 +35,9 @@ export function PanelHeader({
   onToggle,
   actions,
   isActive = false,
+  status,
+  badge,
+  chips,
 }: PanelHeaderProps) {
   const expanded = !collapsed;
   const label = expanded ? `Collapse ${title}` : `Expand ${title}`;
@@ -41,7 +51,7 @@ export function PanelHeader({
 
   return (
     <div
-      className={`relative flex flex-none items-center justify-between gap-2 border-b border-[var(--app-border)] px-3 py-2 transition-colors duration-200 hover:bg-[var(--app-surface-muted)] ${headerBg}`}
+      className={`relative flex flex-none items-center justify-between gap-2 border-b border-[var(--app-border)] px-3 py-2 transition-colors duration-150 hover:bg-[var(--app-surface-muted)] ${headerBg}`}
     >
       {isActive ? (
         <span
@@ -49,11 +59,20 @@ export function PanelHeader({
           className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--app-accent)]"
         />
       ) : null}
-      <p
-        className={`text-[10px] font-semibold uppercase tracking-[0.09em] transition-colors duration-200 ${titleColor}`}
-      >
-        {title}
-      </p>
+      <div className="flex min-w-0 items-center gap-1.5">
+        {status != null ? status : null}
+        <p
+          className={`text-[10px] font-semibold uppercase tracking-[0.09em] transition-colors duration-150 ${titleColor}`}
+        >
+          {title}
+        </p>
+        {badge != null ? badge : null}
+        {chips != null ? (
+          <span className="flex min-w-0 flex-wrap items-center gap-1">
+            {chips}
+          </span>
+        ) : null}
+      </div>
       <div className="flex shrink-0 items-center gap-1.5">
         {actions != null ? actions : null}
         {onToggle != null ? (
