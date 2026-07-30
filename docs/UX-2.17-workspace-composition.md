@@ -106,7 +106,8 @@ Existing content
 - Replacing UX-2.15 `ContextDivider` or UX-2.16 `PanelDivider`
 - Expanding public `@/components/workspace` barrel with `composition/`
 - Density redesign; spacer scales beyond `none|sm|md`
-- Toolbar / AdaptiveToolbar rewiring (→ UX-2.18)
+- Toolbar / AdaptiveToolbar rewiring (→ UX-2.19)
+- Semantic panel layout regions (→ UX-2.18)
 
 ---
 
@@ -203,7 +204,7 @@ Runs UX-2.17 structural checks (including no local Stack maps, Divider token exc
 | **CA-2.17.5** | Divider is `<div aria-hidden>`; token-only muted | PASS |
 | **CA-2.17.6** | Explorer / Inspector / Console / Canvas composed; outer canvas untouched | PASS |
 | **CA-2.17.7** | No PanelState / focus / resize / persistence / modes coupling | PASS |
-| **CA-2.17.8** | Roadmap 2.17 Composition → 2.18 Toolbar → 2.19 Iconography → 2.20 Polish | PASS |
+| **CA-2.17.8** | Roadmap 2.17 Composition → 2.18 Semantic Layout → 2.19 Toolbar → 2.20 Iconography → 2.21 Polish | PASS |
 | **CA-2.17.9** | `npm run validate:ux-2.17` PASS | PASS |
 
 ---
@@ -215,6 +216,6 @@ UX-2.17 = COMPLETE (awaiting human review)
 API FREEZE = WorkspaceSection · WorkspaceStack · WorkspaceGroup ·
              WorkspaceDivider · WorkspaceSpacer · composition tokens
 PACKAGE ISOLATION = composition/ ⊥ state ⊥ persistence ⊥ resize ⊥ focus ⊥ modes
-Next: UX-2.18 — Toolbar & Action Refinement
+Next: UX-2.18 — Semantic Layout Foundation · UX-2.19 — Toolbar & Action Refinement
 Do NOT redesign density · Do NOT reopen Panel.tsx · Do NOT export composition publicly
 ```

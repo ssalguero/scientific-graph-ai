@@ -2,16 +2,13 @@
 
 import { memo, useState } from "react";
 
-import {
-  WorkspaceGroup,
-  WorkspaceSection,
-  WorkspaceStack,
-} from "../../composition";
+import { WorkspaceGroup } from "../../composition";
 import {
   AdvancedSection,
   ContextDivider,
   DisclosureSection,
 } from "../../disclosure";
+import { PanelContentRegion, PanelLayout } from "../../layout";
 import {
   PanelAccent,
   PanelDivider,
@@ -26,7 +23,8 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.12 — Hierarchy: Content → PanelContentSection → EmptyState.
  * UX-2.15 — Properties primary; Appearance behind Advanced.
  * UX-2.16 — PanelSurface + Accent + PanelDivider before ContextDivider.
- * UX-2.17 — WorkspaceSection / Stack / Group composition (layout only).
+ * UX-2.17 — WorkspaceGroup affinity inside content (layout only).
+ * UX-2.18 — PanelLayout + ContentRegion semantic shell.
  * Stable IDs: properties, appearance.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no selection branching).
@@ -37,9 +35,9 @@ export const InspectorContent = memo(function InspectorContent() {
   return (
     <div data-panel-content="inspector">
       <PanelSurface variant="inspector">
-        <WorkspaceSection>
-          <PanelAccent position="left" tone="inspector" />
-          <WorkspaceStack>
+        <PanelAccent position="left" tone="inspector" />
+        <PanelLayout>
+          <PanelContentRegion>
             <div className={SURFACE_TOKENS.contentInset}>
               <PanelDivider spacing="sm" muted />
               <ContextDivider />
@@ -69,8 +67,8 @@ export const InspectorContent = memo(function InspectorContent() {
                 </AdvancedSection>
               </WorkspaceGroup>
             </div>
-          </WorkspaceStack>
-        </WorkspaceSection>
+          </PanelContentRegion>
+        </PanelLayout>
       </PanelSurface>
     </div>
   );

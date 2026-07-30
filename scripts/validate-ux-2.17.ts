@@ -246,18 +246,16 @@ assertCase(
 
 assertCase(
   "ux217.wire.explorer",
-  hasJsxComponent(explorerSource, "WorkspaceSection") &&
-    hasJsxComponent(explorerSource, "WorkspaceStack") &&
+  hasJsxComponent(explorerSource, "PanelLayout") &&
     hasJsxComponent(explorerSource, "WorkspaceGroup") &&
     hasJsxComponent(explorerSource, "PanelSurface") &&
     hasJsxComponent(explorerSource, "DisclosureSection"),
-  "Explorer: Section + Stack + Group composition"
+  "Explorer: PanelLayout shell + WorkspaceGroup affinity"
 );
 
 assertCase(
   "ux217.wire.inspector",
-  hasJsxComponent(inspectorSource, "WorkspaceSection") &&
-    hasJsxComponent(inspectorSource, "WorkspaceStack") &&
+  hasJsxComponent(inspectorSource, "PanelLayout") &&
     hasJsxComponent(inspectorSource, "WorkspaceGroup") &&
     hasJsxComponent(inspectorSource, "PanelDivider") &&
     hasJsxComponent(inspectorSource, "ContextDivider") &&
@@ -273,33 +271,31 @@ assertCase(
         disclosureIdx > contextDividerIdx
       );
     })(),
-  "Inspector: composition + Accent → PanelDivider → ContextDivider → Disclosure"
+  "Inspector: PanelLayout + Accent → PanelDivider → ContextDivider → Disclosure"
 );
 
 assertCase(
   "ux217.wire.console",
-  hasJsxComponent(consoleSource, "WorkspaceSection") &&
-    hasJsxComponent(consoleSource, "WorkspaceStack") &&
+  hasJsxComponent(consoleSource, "PanelLayout") &&
     hasJsxComponent(consoleSource, "WorkspaceGroup") &&
     hasJsxComponent(consoleSource, "DisclosureSection"),
-  "Console: Section + Stack + Group around Output + Advanced"
+  "Console: PanelLayout + WorkspaceGroup around Output + Advanced"
 );
 
 assertCase(
   "ux217.wire.canvas",
-  hasJsxComponent(bodyLayoutSource, "WorkspaceSection") &&
-    hasJsxComponent(bodyLayoutSource, "WorkspaceStack") &&
+  hasJsxComponent(bodyLayoutSource, "PanelLayout") &&
     hasJsxComponent(bodyLayoutSource, "PanelSurface") &&
     /data-workspace-canvas/.test(bodyLayoutSource) &&
     (() => {
       const canvasIdx = bodyLayoutSource.indexOf("data-workspace-canvas");
       const surfaceIdx = bodyLayoutSource.indexOf("<PanelSurface");
-      const sectionIdx = bodyLayoutSource.indexOf("<WorkspaceSection");
+      const layoutIdx = bodyLayoutSource.indexOf("<PanelLayout");
       return (
-        canvasIdx >= 0 && surfaceIdx > canvasIdx && sectionIdx > surfaceIdx
+        canvasIdx >= 0 && surfaceIdx > canvasIdx && layoutIdx > surfaceIdx
       );
     })(),
-  "Canvas: composition inside PanelSurface; outer node untouched"
+  "Canvas: PanelLayout inside PanelSurface; outer node untouched"
 );
 
 /* -------------------------------------------------------------------------- */

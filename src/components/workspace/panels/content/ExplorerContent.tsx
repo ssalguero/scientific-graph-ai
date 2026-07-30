@@ -4,16 +4,17 @@ import { memo, useState } from "react";
 
 import { UI_TOKENS } from "@/lib/ui/tokens";
 
-import {
-  WorkspaceGroup,
-  WorkspaceSection,
-  WorkspaceStack,
-} from "../../composition";
+import { WorkspaceGroup } from "../../composition";
 import {
   AdvancedSection,
   ContextDivider,
   DisclosureSection,
 } from "../../disclosure";
+import {
+  PanelContentRegion,
+  PanelHeaderRegion,
+  PanelLayout,
+} from "../../layout";
 import {
   PanelAccent,
   PanelIconSlot,
@@ -29,7 +30,8 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.12 — Hierarchy: Content → PanelContentSection → EmptyState.
  * UX-2.15 — Progressive disclosure: Project primary; Layers in Advanced.
  * UX-2.16 — PanelSurface + Accent + IconSlot + static Metadata.
- * UX-2.17 — WorkspaceSection / Stack / Group composition (layout only).
+ * UX-2.17 — WorkspaceGroup affinity inside content (layout only).
+ * UX-2.18 — PanelLayout + HeaderRegion + ContentRegion semantic shell.
  * Stable IDs: project, layers.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no domain branching).
@@ -40,13 +42,15 @@ export const ExplorerContent = memo(function ExplorerContent() {
   return (
     <div data-panel-content="explorer">
       <PanelSurface variant="explorer">
-        <WorkspaceSection>
-          <PanelAccent position="left" tone="explorer" />
-          <WorkspaceStack>
+        <PanelAccent position="left" tone="explorer" />
+        <PanelLayout>
+          <PanelHeaderRegion>
             <div className={SURFACE_TOKENS.identityRow}>
               <PanelIconSlot icon="○" size="sm" tone="explorer" />
               <PanelMetadata>Project</PanelMetadata>
             </div>
+          </PanelHeaderRegion>
+          <PanelContentRegion>
             <WorkspaceGroup>
               <div className={SURFACE_TOKENS.contentInset}>
                 <DisclosureSection title="Project" defaultExpanded>
@@ -83,8 +87,8 @@ export const ExplorerContent = memo(function ExplorerContent() {
                 </AdvancedSection>
               </div>
             </WorkspaceGroup>
-          </WorkspaceStack>
-        </WorkspaceSection>
+          </PanelContentRegion>
+        </PanelLayout>
       </PanelSurface>
     </div>
   );

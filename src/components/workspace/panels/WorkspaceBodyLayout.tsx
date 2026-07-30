@@ -2,12 +2,13 @@
 
 import type { ReactNode } from "react";
 
-import {
-  WorkspaceSection,
-  WorkspaceStack,
-} from "../composition";
 import { useActivePanel } from "../focus";
 import { Hint, HintGroup } from "../hints";
+import {
+  PanelContentRegion,
+  PanelLayout,
+  PanelToolbarRegion,
+} from "../layout";
 import { StatusChip } from "../status";
 import { PanelSurface } from "../surfaces";
 import { BottomPanel } from "./BottomPanel";
@@ -41,7 +42,8 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.13 — Canvas pointerdown sets active panel; rails receive isActive.
  * UX-2.14 — Static StatusChip near HintGroup (presentational workspace feedback).
  * UX-2.16 — PanelSurface wraps only Hints + children (outer canvas node untouched).
- * UX-2.17 — WorkspaceSection / Stack inside PanelSurface (layout only).
+ * UX-2.17 — Composition affinity available inside content regions.
+ * UX-2.18 — PanelLayout + ToolbarRegion + ContentRegion inside PanelSurface.
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -101,21 +103,16 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
             />
           ) : null}
           <PanelSurface variant="canvas">
-            <WorkspaceSection>
-              <WorkspaceStack>
-                <WorkspaceStack
-                  direction="horizontal"
-                  className="flex-wrap items-start"
-                >
-                  <HintGroup>
-                    <Hint variant="tip">Drag files here.</Hint>
-                    <Hint variant="tip">Double-click a series to edit.</Hint>
-                  </HintGroup>
-                  <StatusChip>Synced</StatusChip>
-                </WorkspaceStack>
-                {children}
-              </WorkspaceStack>
-            </WorkspaceSection>
+            <PanelLayout>
+              <PanelToolbarRegion>
+                <HintGroup>
+                  <Hint variant="tip">Drag files here.</Hint>
+                  <Hint variant="tip">Double-click a series to edit.</Hint>
+                </HintGroup>
+                <StatusChip>Synced</StatusChip>
+              </PanelToolbarRegion>
+              <PanelContentRegion>{children}</PanelContentRegion>
+            </PanelLayout>
           </PanelSurface>
         </div>
         {showRightHandle ? (

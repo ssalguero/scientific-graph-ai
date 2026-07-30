@@ -2,16 +2,13 @@
 
 import { memo, useState } from "react";
 
-import {
-  WorkspaceGroup,
-  WorkspaceSection,
-  WorkspaceStack,
-} from "../../composition";
+import { WorkspaceGroup } from "../../composition";
 import {
   AdvancedSection,
   ContextDivider,
   DisclosureSection,
 } from "../../disclosure";
+import { PanelContentRegion, PanelLayout } from "../../layout";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
@@ -21,7 +18,8 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.12 — Hierarchy: Content → PanelContentSection → EmptyState.
  * UX-2.15 — Output disclosed; empty Advanced prepared.
  * UX-2.16 — PanelSurface + Accent (static presentation only).
- * UX-2.17 — WorkspaceSection / Stack / Group composition (layout only).
+ * UX-2.17 — WorkspaceGroup affinity inside content (layout only).
+ * UX-2.18 — PanelLayout + ContentRegion semantic shell.
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -32,9 +30,9 @@ export const ConsoleContent = memo(function ConsoleContent() {
   return (
     <div data-panel-content="console">
       <PanelSurface variant="console">
-        <WorkspaceSection>
-          <PanelAccent position="left" tone="console" />
-          <WorkspaceStack>
+        <PanelAccent position="left" tone="console" />
+        <PanelLayout>
+          <PanelContentRegion>
             <WorkspaceGroup>
               <div className={SURFACE_TOKENS.contentInset}>
                 <DisclosureSection title="Output" defaultExpanded>
@@ -54,8 +52,8 @@ export const ConsoleContent = memo(function ConsoleContent() {
                 />
               </div>
             </WorkspaceGroup>
-          </WorkspaceStack>
-        </WorkspaceSection>
+          </PanelContentRegion>
+        </PanelLayout>
       </PanelSurface>
     </div>
   );
