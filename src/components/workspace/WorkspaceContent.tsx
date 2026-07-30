@@ -1,4 +1,4 @@
-import { WorkspaceBodyLayout } from "./panels";
+import { PanelProvider, WorkspaceBodyLayout } from "./panels";
 import { WORKSPACE_TOKENS } from "./WorkspaceTokens";
 import type { WorkspaceContentProps } from "./types";
 
@@ -7,6 +7,7 @@ import type { WorkspaceContentProps } from "./types";
  * UX-2.3 — Presentational header (DOM-stable).
  * UX-2.4 — Body regions via WorkspaceBodyLayout (canvas + side/bottom panels).
  * UX-2.5 — Panels use shared Panel shell (BodyLayout owns wrappers).
+ * UX-2.7 — PanelProvider wraps BodyLayout only (no hooks in this file).
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
@@ -39,7 +40,9 @@ export function WorkspaceContent({
             Ready
           </p>
         </header>
-        <WorkspaceBodyLayout>{workspace}</WorkspaceBodyLayout>
+        <PanelProvider>
+          <WorkspaceBodyLayout>{workspace}</WorkspaceBodyLayout>
+        </PanelProvider>
       </div>
     </div>
   );

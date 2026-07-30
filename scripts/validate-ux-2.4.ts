@@ -31,10 +31,17 @@ const PANEL_SHELL_FILES = [
   "PanelBody.tsx",
 ] as const;
 
+/** UX-2.6 content/ + UX-2.7 state/ directories (allowed alongside core). */
+const PANEL_DIR_ENTRIES = ["content", "state"] as const;
+
 const ALLOWED_PANEL_FILES = new Set<string>([
   ...PANEL_CORE_FILES,
   ...PANEL_SHELL_FILES,
+  ...PANEL_DIR_ENTRIES,
 ]);
+
+const HOOK_RE =
+  /\buse(State|Reducer|Effect|Memo|Callback|Ref|Context|LayoutEffect|ImperativeHandle|EffectEvent)\s*[<(]/;
 
 const results: { id: string; pass: boolean; detail: string }[] = [];
 
@@ -54,12 +61,49 @@ const leftSource = read(join(panelsDir, "LeftPanel.tsx"));
 const rightSource = read(join(panelsDir, "RightPanel.tsx"));
 const bottomSource = read(join(panelsDir, "BottomPanel.tsx"));
 const panelsBarrelSource = read(join(panelsDir, "index.ts"));
-const allPanelSources = existsSync(panelsDir)
+
+/** Collect .ts/.tsx under dir; optionally skip named subdirs. */
+const collectTsSources = (
+  dir: string,
+  skipDirs: Set<string> = new Set()
+): string[] => {
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
+  const out: string[] = [];
+  for (const name of readdirSync(dir)) {
+    if (name.startsWith(".")) continue;
+    const full = join(dir, name);
+    const st = statSync(full);
+    if (st.isDirectory()) {
+      if (skipDirs.has(name)) continue;
+      out.push(...collectTsSources(full, skipDirs));
+      continue;
+    }
+    if (/\.(tsx?|mts|cts)$/.test(name)) {
+      out.push(read(full));
+    }
+  }
+  return out;
+};
+
+/**
+ * UX-2.7 amend — hooks allowed only in panels/state/** and WorkspaceBodyLayout.tsx.
+ * Governance scans top-level panels (except BodyLayout) + content/.
+ */
+const topLevelPanelSources = existsSync(panelsDir)
   ? readdirSync(panelsDir)
-      .filter((name) => !name.startsWith("."))
+      .filter((name) => !name.startsWith(".") && /\.(tsx?|mts|cts)$/.test(name))
+      .filter((name) => name !== "WorkspaceBodyLayout.tsx")
       .map((name) => read(join(panelsDir, name)))
       .join("\n")
   : "";
+
+const contentTreeSources = collectTsSources(join(panelsDir, "content")).join(
+  "\n"
+);
+
+const allPanelSources = [topLevelPanelSources, contentTreeSources]
+  .filter(Boolean)
+  .join("\n");
 
 /* -------------------------------------------------------------------------- */
 /* A. panels/ structure                                                       */
@@ -245,10 +289,8 @@ assertCase(
 
 assertCase(
   "ux24.governance.noHooks",
-  !/\buse(State|Reducer|Effect|Memo|Callback|Ref|Context|LayoutEffect|ImperativeHandle|EffectEvent)\s*[<(]/.test(
-    allPanelSources
-  ),
-  "no React hooks in panels/*"
+  !HOOK_RE.test(allPanelSources),
+  "no React hooks outside panels/state/** and WorkspaceBodyLayout.tsx"
 );
 
 const panelImportLines = allPanelSources

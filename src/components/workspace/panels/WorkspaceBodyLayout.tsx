@@ -6,8 +6,9 @@ import { ExplorerContent } from "./content/ExplorerContent";
 import { InspectorContent } from "./content/InspectorContent";
 import { LeftPanel } from "./LeftPanel";
 import { RightPanel } from "./RightPanel";
+import { usePanelState } from "./state";
 
-/** UX-2.4 — Presentational body grid API (agnostic center slot). */
+/** UX-2.4 — Body grid API (agnostic center slot). */
 export type WorkspaceBodyLayoutProps = {
   children: ReactNode;
 };
@@ -16,14 +17,16 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.4 — IDE body layout: Left | Canvas | Right + Bottom.
  * UX-2.5 — Panels use shared Panel shell (wrappers).
  * UX-2.6 — Mounts Explorer / Inspector / Console content into Body slots.
- * Presentation-only: no hooks, state, effects, context, or providers.
+ * UX-2.7 — Reads panel visual state from PanelProvider; passes collapsed + size.
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
+  const { state } = usePanelState();
+
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row">
-        <LeftPanel>
+        <LeftPanel collapsed={state.leftCollapsed} size={state.leftWidth}>
           <ExplorerContent />
         </LeftPanel>
         <div
@@ -32,11 +35,14 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
         >
           {children}
         </div>
-        <RightPanel>
+        <RightPanel collapsed={state.rightCollapsed} size={state.rightWidth}>
           <InspectorContent />
         </RightPanel>
       </div>
-      <BottomPanel>
+      <BottomPanel
+        collapsed={state.bottomCollapsed}
+        size={state.bottomHeight}
+      >
         <ConsoleContent />
       </BottomPanel>
     </div>

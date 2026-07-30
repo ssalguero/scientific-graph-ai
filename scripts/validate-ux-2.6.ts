@@ -72,7 +72,37 @@ const inspectorSource = read(join(contentDir, "InspectorContent.tsx"));
 const consoleSource = read(join(contentDir, "ConsoleContent.tsx"));
 const contentBarrelSource = read(join(contentDir, "index.ts"));
 const allContentSources = collectTsSources(contentDir).join("\n");
-const allPanelsTreeSources = collectTsSources(panelsDir).join("\n");
+
+const HOOK_RE =
+  /\buse(State|Reducer|Effect|Memo|Callback|Ref|Context|LayoutEffect|ImperativeHandle|EffectEvent)\s*[<(]/;
+
+/**
+ * UX-2.7 amend — hooks allowed in panels/state/** and WorkspaceBodyLayout.tsx only.
+ */
+const collectTsSourcesForHookScan = (
+  dir: string,
+  relBase = ""
+): string[] => {
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
+  const out: string[] = [];
+  for (const name of readdirSync(dir)) {
+    if (name.startsWith(".")) continue;
+    const full = join(dir, name);
+    const rel = relBase ? `${relBase}/${name}` : name;
+    const st = statSync(full);
+    if (st.isDirectory()) {
+      if (rel === "state" || rel.startsWith("state/")) continue;
+      out.push(...collectTsSourcesForHookScan(full, rel));
+      continue;
+    }
+    if (!/\.(tsx?|mts|cts)$/.test(name)) continue;
+    if (rel === "WorkspaceBodyLayout.tsx") continue;
+    out.push(read(full));
+  }
+  return out;
+};
+
+const hookScanSources = collectTsSourcesForHookScan(panelsDir).join("\n");
 
 /* -------------------------------------------------------------------------- */
 /* A. Files                                                                   */
@@ -263,13 +293,13 @@ assertCase(
 
 assertCase(
   "ux26.bodyLayout.mounts",
-  /<LeftPanel>\s*<ExplorerContent\s*\/>\s*<\/LeftPanel>/.test(
+  /<LeftPanel[\s>][\s\S]*?<ExplorerContent\s*\/>[\s\S]*?<\/LeftPanel>/.test(
     bodyLayoutSource.replace(/\r\n/g, "\n")
   ) &&
-    /<RightPanel>\s*<InspectorContent\s*\/>\s*<\/RightPanel>/.test(
+    /<RightPanel[\s>][\s\S]*?<InspectorContent\s*\/>[\s\S]*?<\/RightPanel>/.test(
       bodyLayoutSource.replace(/\r\n/g, "\n")
     ) &&
-    /<BottomPanel>\s*<ConsoleContent\s*\/>\s*<\/BottomPanel>/.test(
+    /<BottomPanel[\s>][\s\S]*?<ConsoleContent\s*\/>[\s\S]*?<\/BottomPanel>/.test(
       bodyLayoutSource.replace(/\r\n/g, "\n")
     ),
   "BodyLayout wires Explorer/Inspector/Console into panel children"
@@ -342,10 +372,8 @@ assertCase(
 
 assertCase(
   "ux26.governance.noHooks.panelsTree",
-  !/\buse(State|Reducer|Effect|Memo|Callback|Ref|Context|LayoutEffect|ImperativeHandle|EffectEvent)\s*[<(]/.test(
-    allPanelsTreeSources
-  ),
-  "no React hooks in panels/**"
+  !HOOK_RE.test(hookScanSources),
+  "no React hooks outside panels/state/** and WorkspaceBodyLayout.tsx"
 );
 
 const contentImportLines = allContentSources

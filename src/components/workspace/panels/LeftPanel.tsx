@@ -4,19 +4,26 @@ import { Panel } from "./Panel";
 import { PanelBody } from "./PanelBody";
 import { PanelHeader } from "./PanelHeader";
 
-/** UX-2.5 — Left IDE panel wrapper (Explorer chrome; empty body). */
+/** UX-2.5 / UX-2.7 — Left IDE panel wrapper (Explorer chrome). */
 export type LeftPanelProps = {
   collapsed?: boolean;
+  size?: number;
   children?: ReactNode;
 };
 
 /**
  * UX-2.5 — Composes Panel shell + Header + Body.
- * Content slot ready for UX-2.6; Panel remains untouched.
+ * UX-2.7 — Forwards collapsed + size; sizeKey selects CSS var.
  */
-export function LeftPanel({ collapsed, children }: LeftPanelProps) {
+export function LeftPanel({ collapsed, size, children }: LeftPanelProps) {
   return (
-    <Panel title="Explorer" position="left" collapsed={collapsed}>
+    <Panel
+      title="Explorer"
+      position="left"
+      sizeKey="left"
+      collapsed={collapsed}
+      size={size}
+    >
       <PanelHeader title="Explorer" />
       <PanelBody>{children}</PanelBody>
     </Panel>

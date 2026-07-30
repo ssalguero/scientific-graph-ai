@@ -60,7 +60,39 @@ const rightSource = read(join(panelsDir, "RightPanel.tsx"));
 const bottomSource = read(join(panelsDir, "BottomPanel.tsx"));
 const bodyLayoutSource = read(join(panelsDir, "WorkspaceBodyLayout.tsx"));
 const panelsBarrelSource = read(join(panelsDir, "index.ts"));
+
+const HOOK_RE =
+  /\buse(State|Reducer|Effect|Memo|Callback|Ref|Context|LayoutEffect|ImperativeHandle|EffectEvent)\s*[<(]/;
+
+/**
+ * UX-2.7 amend — hooks allowed in panels/state/** and WorkspaceBodyLayout.tsx only.
+ * Collect all .ts/.tsx except those paths for governance.
+ */
+const collectTsSourcesForHookScan = (
+  dir: string,
+  relBase = ""
+): string[] => {
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
+  const out: string[] = [];
+  for (const name of readdirSync(dir)) {
+    if (name.startsWith(".")) continue;
+    const full = join(dir, name);
+    const rel = relBase ? `${relBase}/${name}` : name;
+    const st = statSync(full);
+    if (st.isDirectory()) {
+      if (rel === "state" || rel.startsWith("state/")) continue;
+      out.push(...collectTsSourcesForHookScan(full, rel));
+      continue;
+    }
+    if (!/\.(tsx?|mts|cts)$/.test(name)) continue;
+    if (rel === "WorkspaceBodyLayout.tsx") continue;
+    out.push(read(full));
+  }
+  return out;
+};
+
 const allPanelSources = collectTsSources(panelsDir).join("\n");
+const hookScanSources = collectTsSourcesForHookScan(panelsDir).join("\n");
 
 /* -------------------------------------------------------------------------- */
 /* A. Files                                                                   */
@@ -156,22 +188,18 @@ assertCase(
   "collapsed → w-0 / h-0 + overflow-hidden"
 );
 
+/** UX-2.7 amend — sizes via CSS vars; no Tailwind hardcoded expanded sizes. */
 assertCase(
-  "ux25.sizes.left.320",
-  /w-\[320px\]/.test(panelSource) || /320/.test(leftSource),
-  "left 320px"
-);
-
-assertCase(
-  "ux25.sizes.right.340",
-  /w-\[340px\]/.test(panelSource) || /340/.test(rightSource),
-  "right 340px"
-);
-
-assertCase(
-  "ux25.sizes.bottom.220",
-  /h-\[220px\]/.test(panelSource) || /220/.test(bottomSource),
-  "bottom 220px"
+  "ux25.sizes.noHardcodedExpanded",
+  !/EXPANDED_SIZE/.test(panelSource) &&
+    !/w-\[320px\]/.test(panelSource) &&
+    !/w-\[340px\]/.test(panelSource) &&
+    !/h-\[220px\]/.test(panelSource) &&
+    /PANEL_CSS_VARS/.test(panelSource) &&
+    /--workspace-left-width/.test(panelSource) &&
+    /--workspace-right-width/.test(panelSource) &&
+    /--workspace-bottom-height/.test(panelSource),
+  "CSS vars only; no EXPANDED_SIZE / Tailwind fixed sizes"
 );
 
 assertCase(
@@ -291,10 +319,8 @@ assertCase(
 
 assertCase(
   "ux25.governance.noHooks",
-  !/\buse(State|Reducer|Effect|Memo|Callback|Ref|Context|LayoutEffect|ImperativeHandle|EffectEvent)\s*[<(]/.test(
-    allPanelSources
-  ),
-  "no React hooks in panels/*"
+  !HOOK_RE.test(hookScanSources),
+  "no React hooks outside panels/state/** and WorkspaceBodyLayout.tsx"
 );
 
 const panelImportLines = allPanelSources
