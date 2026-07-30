@@ -3,6 +3,7 @@
 import { memo, useState } from "react";
 
 import { WorkspaceGroup } from "../../composition";
+import { ContentGroup, Notice } from "../../content";
 import {
   AdvancedSection,
   ContextDivider,
@@ -18,7 +19,6 @@ import {
 import {
   SemanticFooter,
   SemanticHeader,
-  SemanticInfoBlock,
   SemanticSectionLabel,
   SemanticStatus,
 } from "../../semantics";
@@ -38,6 +38,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
  * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
  * UX-2.21 — Icon sizes aligned to ACTION/ICON slots; divider parity with Explorer/Console.
+ * UX-2.22 — ContentGroup + Notice (info ≡ SemanticInfoBlock chrome; pixel-identical).
  * Stable IDs: properties, appearance.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no selection branching).
@@ -70,32 +71,34 @@ export const InspectorContent = memo(function InspectorContent() {
             <div className={SURFACE_TOKENS.contentInset}>
               <ContextDivider />
               <WorkspaceGroup>
-                <SemanticSectionLabel>Properties</SemanticSectionLabel>
-                <DisclosureSection title="Properties" defaultExpanded>
-                  <PanelContentSection id="properties" title="Properties">
-                    <EmptyState
-                      icon={<WorkspaceIcon name="inspector" size="lg" />}
-                      title="Nothing selected"
-                      description="Select an object to edit its properties."
-                    />
-                  </PanelContentSection>
-                </DisclosureSection>
-                <ContextDivider />
-                <SemanticSectionLabel>Appearance</SemanticSectionLabel>
-                <AdvancedSection
-                  label="Appearance"
-                  expanded={advancedOpen}
-                  onToggle={() => setAdvancedOpen((open) => !open)}
-                >
-                  <PanelContentSection id="appearance" title="Appearance">
-                    <EmptyState
-                      icon={<WorkspaceIcon name="sparkles" size="lg" />}
-                      title="Nothing selected"
-                      description="Select an object to edit its appearance."
-                    />
-                  </PanelContentSection>
-                </AdvancedSection>
-                <SemanticInfoBlock />
+                <ContentGroup>
+                  <SemanticSectionLabel>Properties</SemanticSectionLabel>
+                  <DisclosureSection title="Properties" defaultExpanded>
+                    <PanelContentSection id="properties" title="Properties">
+                      <EmptyState
+                        icon={<WorkspaceIcon name="inspector" size="lg" />}
+                        title="Nothing selected"
+                        description="Select an object to edit its properties."
+                      />
+                    </PanelContentSection>
+                  </DisclosureSection>
+                  <ContextDivider />
+                  <SemanticSectionLabel>Appearance</SemanticSectionLabel>
+                  <AdvancedSection
+                    label="Appearance"
+                    expanded={advancedOpen}
+                    onToggle={() => setAdvancedOpen((open) => !open)}
+                  >
+                    <PanelContentSection id="appearance" title="Appearance">
+                      <EmptyState
+                        icon={<WorkspaceIcon name="sparkles" size="lg" />}
+                        title="Nothing selected"
+                        description="Select an object to edit its appearance."
+                      />
+                    </PanelContentSection>
+                  </AdvancedSection>
+                  <Notice variant="info" />
+                </ContentGroup>
               </WorkspaceGroup>
             </div>
           </PanelContentRegion>

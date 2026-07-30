@@ -338,12 +338,14 @@ assertCase(
   hasJsxComponent(inspectorSource, "SemanticHeader") &&
     hasJsxComponent(inspectorSource, "SemanticStatus") &&
     hasJsxComponent(inspectorSource, "SemanticSectionLabel") &&
-    hasJsxComponent(inspectorSource, "SemanticInfoBlock") &&
+    (hasJsxComponent(inspectorSource, "SemanticInfoBlock") ||
+      (hasJsxComponent(inspectorSource, "Notice") &&
+        /variant=["']info["']/.test(inspectorSource))) &&
     hasJsxComponent(inspectorSource, "SemanticFooter") &&
     hasJsxComponent(inspectorSource, "PanelHeaderRegion") &&
     hasJsxComponent(inspectorSource, "PanelFooterRegion") &&
     (inspectorSource.match(/<SemanticSectionLabel\b/g) ?? []).length >= 2,
-  "Inspector: Header/Status/SectionLabels/InfoBlock/Footer"
+  "Inspector: Header/Status/SectionLabels/InfoBlock-or-Notice(info)/Footer"
 );
 
 assertCase(

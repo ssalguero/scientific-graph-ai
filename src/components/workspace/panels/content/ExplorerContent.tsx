@@ -5,6 +5,7 @@ import { memo, useState } from "react";
 import { UI_TOKENS } from "@/lib/ui/tokens";
 
 import { WorkspaceGroup } from "../../composition";
+import { ContentGroup } from "../../content";
 import {
   AdvancedSection,
   ContextDivider,
@@ -39,6 +40,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
  * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
  * UX-2.21 — Icon sizes aligned to ACTION/ICON slots; tokens for empty polish.
+ * UX-2.22 — ContentGroup structure only (pixel-identical; no new visible UI).
  * Stable IDs: project, layers.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no domain branching).
@@ -76,42 +78,44 @@ export const ExplorerContent = memo(function ExplorerContent() {
           </PanelHeaderRegion>
           <PanelContentRegion>
             <WorkspaceGroup>
-              <div className={SURFACE_TOKENS.contentInset}>
-                <SemanticSectionLabel>Project</SemanticSectionLabel>
-                <DisclosureSection title="Project" defaultExpanded>
-                  <PanelContentSection id="project" title="Project">
-                    <EmptyState
-                      icon={<WorkspaceIcon name="project" size="lg" />}
-                      title="No series"
-                      description="Create your first data series."
-                      action={
-                        <button
-                          type="button"
-                          className={`${UI_TOKENS.button.outlineSm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`}
-                          aria-label="New series"
-                        >
-                          New Series
-                        </button>
-                      }
-                    />
-                  </PanelContentSection>
-                </DisclosureSection>
-                <ContextDivider />
-                <SemanticSectionLabel>Layers</SemanticSectionLabel>
-                <AdvancedSection
-                  label="Layers"
-                  expanded={advancedOpen}
-                  onToggle={() => setAdvancedOpen((open) => !open)}
-                >
-                  <PanelContentSection id="layers" title="Layers">
-                    <EmptyState
-                      icon={<WorkspaceIcon name="layers" size="lg" />}
-                      title="No layers"
-                      description="Layers appear when series are added to the graph."
-                    />
-                  </PanelContentSection>
-                </AdvancedSection>
-              </div>
+              <ContentGroup>
+                <div className={SURFACE_TOKENS.contentInset}>
+                  <SemanticSectionLabel>Project</SemanticSectionLabel>
+                  <DisclosureSection title="Project" defaultExpanded>
+                    <PanelContentSection id="project" title="Project">
+                      <EmptyState
+                        icon={<WorkspaceIcon name="project" size="lg" />}
+                        title="No series"
+                        description="Create your first data series."
+                        action={
+                          <button
+                            type="button"
+                            className={`${UI_TOKENS.button.outlineSm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`}
+                            aria-label="New series"
+                          >
+                            New Series
+                          </button>
+                        }
+                      />
+                    </PanelContentSection>
+                  </DisclosureSection>
+                  <ContextDivider />
+                  <SemanticSectionLabel>Layers</SemanticSectionLabel>
+                  <AdvancedSection
+                    label="Layers"
+                    expanded={advancedOpen}
+                    onToggle={() => setAdvancedOpen((open) => !open)}
+                  >
+                    <PanelContentSection id="layers" title="Layers">
+                      <EmptyState
+                        icon={<WorkspaceIcon name="layers" size="lg" />}
+                        title="No layers"
+                        description="Layers appear when series are added to the graph."
+                      />
+                    </PanelContentSection>
+                  </AdvancedSection>
+                </div>
+              </ContentGroup>
             </WorkspaceGroup>
           </PanelContentRegion>
           <PanelFooterRegion>

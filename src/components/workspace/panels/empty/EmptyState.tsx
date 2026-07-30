@@ -1,15 +1,18 @@
 import type { ReactNode } from "react";
 
+import {
+  EmptyState as ContentEmptyState,
+} from "../../content";
 import { SURFACE_TOKENS } from "../../surfaces/SurfaceTokens";
 import { EmptyAction } from "./EmptyAction";
-import { EmptyDescription } from "./EmptyDescription";
 import { EmptyIcon } from "./EmptyIcon";
-import { EmptyTitle } from "./EmptyTitle";
 
 /**
  * UX-2.12 — Generic empty-state composer (API frozen).
  * No domain knowledge: Series / Inspector / Layout / state.
  * UX-2.21 — Layout gap/padding via SURFACE_TOKENS (nearest existing keys).
+ * UX-2.22 — Composes workspace/content EmptyState for title/description.
+ * Public props unchanged (icon / title / description / action).
  */
 export type EmptyStateProps = {
   icon?: ReactNode;
@@ -30,10 +33,7 @@ export function EmptyState({
       className={`flex flex-col items-center justify-center text-center ${SURFACE_TOKENS.gap.sm} ${SURFACE_TOKENS.padding.md}`}
     >
       {icon != null ? <EmptyIcon>{icon}</EmptyIcon> : null}
-      <EmptyTitle>{title}</EmptyTitle>
-      {description != null && description !== "" ? (
-        <EmptyDescription>{description}</EmptyDescription>
-      ) : null}
+      <ContentEmptyState title={title} description={description} />
       {action != null ? <EmptyAction>{action}</EmptyAction> : null}
     </div>
   );

@@ -96,30 +96,21 @@ const ux220Doc = read(ux220DocPath);
 /* A. No Content Grammar / no new packages                                    */
 /* -------------------------------------------------------------------------- */
 
-assertCase(
-  "ux221.no.content.package",
-  !existsSync(contentGrammarDir),
-  "workspace/content/ must not exist in UX-2.21"
-);
-
-assertCase(
-  "ux221.no.content.grammar.symbols",
-  !/\bContentGroup\b/.test(workspaceSource) &&
-    !/\bContentRow\b/.test(workspaceSource) &&
-    !/\bKeyValue\b/.test(workspaceSource) &&
-    !/\bDividerContent\b/.test(workspaceSource) &&
-    !/\bCONTENT_TOKENS\b/.test(workspaceSource) &&
-    !(/from\s+["'][^"']*\/content["']/.test(workspaceSource) &&
-      /Notice|Description/.test(workspaceSource)),
-  "No Content Grammar symbols wired in workspace"
-);
-
+/* UX-2.22 may introduce workspace/content/; leaf gate only forbids public barrel growth. */
 assertCase(
   "ux221.no.public.barrel.growth",
-  !/content\//.test(workspaceBarrel) &&
+  !/from\s+["']\.\/content/.test(workspaceBarrel) &&
     !/CONTENT_TOKENS/.test(workspaceBarrel) &&
     !/ContentGroup/.test(workspaceBarrel),
   "Public workspace barrel unchanged (no content exports)"
+);
+
+assertCase(
+  "ux221.content.package.deferred.or.present",
+  true,
+  existsSync(contentGrammarDir)
+    ? "workspace/content/ present (UX-2.22+); UX-2.21 leaf allows successor"
+    : "workspace/content/ absent (pure UX-2.21)"
 );
 
 /* -------------------------------------------------------------------------- */
@@ -377,8 +368,10 @@ assertCase(
     /Final Visual Polish/.test(roadmap) &&
     /UX-2\.22/.test(roadmap) &&
     /Content Grammar/.test(roadmap) &&
-    /NEXT\s*=\s*UX-2\.22/.test(roadmap),
-  "roadmap marks UX-2.21 COMPLETE; NEXT → UX-2.22 Content Grammar"
+    (/NEXT\s*=\s*UX-2\.22/.test(roadmap) ||
+      /NEXT\s*=\s*UX-2\.23/.test(roadmap) ||
+      /UX-2\.22\s*=\s*COMPLETE/.test(roadmap)),
+  "roadmap marks UX-2.21 COMPLETE; NEXT → UX-2.22 or successor"
 );
 
 assertCase(

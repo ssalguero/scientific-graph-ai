@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { SEMANTIC_TOKENS } from "../../semantics/SEMANTIC_TOKENS";
+import { Description } from "../../content";
 
 /** UX-2.12 — Presentational empty-state description. */
 export type EmptyDescriptionProps = {
@@ -10,13 +10,8 @@ export type EmptyDescriptionProps = {
 /**
  * UX-2.21 — Muted secondary text via SEMANTIC_TOKENS; max-width kept from
  * existing EmptyState vocabulary (max-w-[16rem] already present).
+ * UX-2.22 — Composes workspace/content Description (pixel-identical).
  */
 export function EmptyDescription({ children }: EmptyDescriptionProps) {
-  return (
-    <p
-      className={`max-w-[16rem] text-xs leading-relaxed ${SEMANTIC_TOKENS.MUTED_TEXT}`}
-    >
-      {children}
-    </p>
-  );
+  return <Description>{children}</Description>;
 }

@@ -3,6 +3,7 @@
 import { memo, useState } from "react";
 
 import { WorkspaceGroup } from "../../composition";
+import { ContentGroup } from "../../content";
 import {
   AdvancedSection,
   ContextDivider,
@@ -37,6 +38,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
  * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
  * UX-2.21 — Icon sizes aligned to ACTION/ICON slots.
+ * UX-2.22 — ContentGroup + Description via EmptyState (existing copy only).
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -67,24 +69,26 @@ export const ConsoleContent = memo(function ConsoleContent() {
           </PanelHeaderRegion>
           <PanelContentRegion>
             <WorkspaceGroup>
-              <div className={SURFACE_TOKENS.contentInset}>
-                <SemanticSectionLabel>Output</SemanticSectionLabel>
-                <DisclosureSection title="Output" defaultExpanded>
-                  <PanelContentSection id="output" title="Output">
-                    <EmptyState
-                      icon={<WorkspaceIcon name="console" size="lg" />}
-                      title="No output"
-                      description="Console messages will appear here."
-                    />
-                  </PanelContentSection>
-                </DisclosureSection>
-                <ContextDivider />
-                <AdvancedSection
-                  label="Advanced"
-                  expanded={advancedOpen}
-                  onToggle={() => setAdvancedOpen((open) => !open)}
-                />
-              </div>
+              <ContentGroup>
+                <div className={SURFACE_TOKENS.contentInset}>
+                  <SemanticSectionLabel>Output</SemanticSectionLabel>
+                  <DisclosureSection title="Output" defaultExpanded>
+                    <PanelContentSection id="output" title="Output">
+                      <EmptyState
+                        icon={<WorkspaceIcon name="console" size="lg" />}
+                        title="No output"
+                        description="Console messages will appear here."
+                      />
+                    </PanelContentSection>
+                  </DisclosureSection>
+                  <ContextDivider />
+                  <AdvancedSection
+                    label="Advanced"
+                    expanded={advancedOpen}
+                    onToggle={() => setAdvancedOpen((open) => !open)}
+                  />
+                </div>
+              </ContentGroup>
             </WorkspaceGroup>
           </PanelContentRegion>
           <PanelFooterRegion>
