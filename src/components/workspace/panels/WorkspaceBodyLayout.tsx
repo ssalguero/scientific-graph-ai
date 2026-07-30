@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { Hint, HintGroup } from "../hints";
 import { BottomPanel } from "./BottomPanel";
 import { ConsoleContent } from "./content/ConsoleContent";
 import { ExplorerContent } from "./content/ExplorerContent";
@@ -29,6 +30,7 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.7 — Reads panel visual state from PanelProvider; passes collapsed + size.
  * UX-2.9 — Inserts PanelResizeHandle splitters between regions.
  * UX-2.11 — Expand rails (layout siblings) + animated class when !resize.session.
+ * UX-2.12 — Static HintGroup on canvas (presentational; no preference wiring).
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -64,6 +66,12 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
           data-workspace-canvas
           className="min-w-0 flex-1 overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4 shadow-sm sm:p-6 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px)] [background-size:24px_24px]"
         >
+          <div className="mb-3">
+            <HintGroup>
+              <Hint variant="tip">Drag files here.</Hint>
+              <Hint variant="tip">Double-click a series to edit.</Hint>
+            </HintGroup>
+          </div>
           {children}
         </div>
         {showRightHandle ? (

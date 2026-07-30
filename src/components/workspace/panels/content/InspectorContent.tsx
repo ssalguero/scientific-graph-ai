@@ -1,22 +1,31 @@
 import { memo } from "react";
 
+import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
-import { PanelEmptyState } from "./PanelEmptyState";
 
 /**
  * UX-2.6 — Inspector body content.
- * Hierarchy freeze: Content → PanelContentSection → PanelEmptyState.
+ * UX-2.12 — Hierarchy: Content → PanelContentSection → EmptyState.
  * Stable IDs: properties, appearance.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
+ * Always renders EmptyState this phase (no selection branching).
  */
 export const InspectorContent = memo(function InspectorContent() {
   return (
     <div data-panel-content="inspector">
       <PanelContentSection id="properties" title="Properties">
-        <PanelEmptyState message="No selection" />
+        <EmptyState
+          icon="○"
+          title="Nothing selected"
+          description="Select an object to edit its properties."
+        />
       </PanelContentSection>
       <PanelContentSection id="appearance" title="Appearance">
-        <PanelEmptyState message="No selection" />
+        <EmptyState
+          icon="○"
+          title="Nothing selected"
+          description="Select an object to edit its appearance."
+        />
       </PanelContentSection>
     </div>
   );

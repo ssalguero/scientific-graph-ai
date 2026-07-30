@@ -2,13 +2,14 @@
 
 import type { ReactNode } from "react";
 
+import { ContextActions } from "../actions";
 import { Panel } from "./Panel";
 import { focusRailAfterCollapse } from "./PanelExpandRail";
 import { PanelBody } from "./PanelBody";
 import { PanelHeader } from "./PanelHeader";
 import { usePanelState } from "./state";
 
-/** UX-2.5 / UX-2.7 / UX-2.11 — Right IDE panel wrapper (Inspector chrome). */
+/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.12 — Right IDE panel wrapper (Inspector chrome). */
 export type RightPanelProps = {
   collapsed?: boolean;
   size?: number;
@@ -20,6 +21,7 @@ export type RightPanelProps = {
  * UX-2.5 — Composes Panel shell + Header + Body.
  * UX-2.7 — Forwards collapsed + size; sizeKey selects CSS var.
  * UX-2.11 — Wires toggleRight; focus moves to expand rail on collapse.
+ * UX-2.12 — Static disabled ContextActions placeholders (no selection logic).
  */
 export function RightPanel({
   collapsed = false,
@@ -48,6 +50,22 @@ export function RightPanel({
         title="Inspector"
         collapsed={collapsed}
         onToggle={handleToggle}
+        actions={
+          <ContextActions
+            actions={[
+              {
+                label: "Rename",
+                ariaLabel: "Rename selection",
+                disabled: true,
+              },
+              {
+                label: "Color",
+                ariaLabel: "Edit color",
+                disabled: true,
+              },
+            ]}
+          />
+        }
       />
       <PanelBody>{children}</PanelBody>
     </Panel>
