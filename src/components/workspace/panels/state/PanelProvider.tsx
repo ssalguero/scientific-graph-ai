@@ -12,16 +12,22 @@ import {
 
 export type PanelProviderProps = {
   children?: ReactNode;
+  /** UX-2.10 — Optional initial layout (e.g. PlanningMode.apply()). */
+  initialState?: PanelState;
 };
 
 /**
  * UX-2.7 / UX-2.8 — Owns panel collapsed + size state.
  * Setters clamp with Math.max(PANEL_MIN_SIZE, value). No max.
  * UX-2.8 — Restores from / persists via PanelPersistence facade.
+ * UX-2.10 — Optional initialState from Workspace Mode (additive only).
  */
-export function PanelProvider({ children }: PanelProviderProps) {
+export function PanelProvider({
+  children,
+  initialState,
+}: PanelProviderProps) {
   const [state, setState] = useState<PanelState>(() => ({
-    ...DEFAULT_PANEL_STATE,
+    ...(initialState ?? DEFAULT_PANEL_STATE),
   }));
   const [hydrated, setHydrated] = useState(false);
 

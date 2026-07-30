@@ -277,10 +277,10 @@ const contentNorm = contentSource.replace(/\r\n/g, "\n");
 
 assertCase(
   "ux29.mount.hierarchy",
-  /<PanelProvider>[\s\S]*?<PanelResizeProvider>[\s\S]*?<WorkspaceBodyLayout>[\s\S]*?<\/WorkspaceBodyLayout>[\s\S]*?<\/PanelResizeProvider>[\s\S]*?<\/PanelProvider>/.test(
+  /<WorkspaceModeProvider>[\s\S]*?<PanelProvider[\s>][\s\S]*?<PanelResizeProvider>[\s\S]*?<WorkspaceBodyLayout>[\s\S]*?<\/WorkspaceBodyLayout>[\s\S]*?<\/PanelResizeProvider>[\s\S]*?<\/PanelProvider>[\s\S]*?<\/WorkspaceModeProvider>/.test(
     contentNorm
   ),
-  "PanelProvider → PanelResizeProvider → BodyLayout"
+  "WorkspaceModeProvider → PanelProvider → PanelResizeProvider → BodyLayout"
 );
 
 assertCase(

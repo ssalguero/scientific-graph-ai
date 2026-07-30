@@ -3,6 +3,7 @@ import {
   PanelResizeProvider,
   WorkspaceBodyLayout,
 } from "./panels";
+import { PlanningMode, WorkspaceModeProvider } from "./modes";
 import { WORKSPACE_TOKENS } from "./WorkspaceTokens";
 import type { WorkspaceContentProps } from "./types";
 
@@ -13,6 +14,7 @@ import type { WorkspaceContentProps } from "./types";
  * UX-2.5 — Panels use shared Panel shell (BodyLayout owns wrappers).
  * UX-2.7 — PanelProvider wraps BodyLayout only (no hooks in this file).
  * UX-2.9 — PanelResizeProvider nested inside PanelProvider.
+ * UX-2.10 — WorkspaceModeProvider wraps PanelProvider; Planning supplies initialState.
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
@@ -45,11 +47,13 @@ export function WorkspaceContent({
             Ready
           </p>
         </header>
-        <PanelProvider>
-          <PanelResizeProvider>
-            <WorkspaceBodyLayout>{workspace}</WorkspaceBodyLayout>
-          </PanelResizeProvider>
-        </PanelProvider>
+        <WorkspaceModeProvider>
+          <PanelProvider initialState={PlanningMode.apply()}>
+            <PanelResizeProvider>
+              <WorkspaceBodyLayout>{workspace}</WorkspaceBodyLayout>
+            </PanelResizeProvider>
+          </PanelProvider>
+        </WorkspaceModeProvider>
       </div>
     </div>
   );

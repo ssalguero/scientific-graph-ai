@@ -11,13 +11,16 @@ export interface PanelState {
   bottomHeight: number;
 }
 
-/** UX-2.7 — Frozen defaults (hardcoded; do not import dock tokens). */
+/**
+ * UX-2.7 — Frozen defaults (hardcoded; do not import dock tokens).
+ * UX-2.10 — Synced with PlanningMode.apply() (280 / 280 / 240).
+ */
 export const DEFAULT_PANEL_STATE: Readonly<PanelState> = {
   leftCollapsed: false,
   rightCollapsed: false,
   bottomCollapsed: false,
   leftWidth: 280,
-  rightWidth: 320,
+  rightWidth: 280,
   bottomHeight: 240,
 };
 

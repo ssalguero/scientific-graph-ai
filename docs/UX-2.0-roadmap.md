@@ -4,7 +4,7 @@
 **Microfase:** UX-2.0 — ROADMAP (documental)  
 **Fase:** Roadmap oficial  
 **Fecha:** 2026-07-29  
-**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)** · **UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)** · **UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)** · **UX-2.6 = COMPLETE (Panel Content — awaiting human review)** · **UX-2.7 = COMPLETE (Panel State Foundation — awaiting human review)** · **UX-2.8 = COMPLETE (Panel Persistence Foundation — awaiting human review)** · **UX-2.9 = COMPLETE (Panel Resize System — awaiting human review)**  
+**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)** · **UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)** · **UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)** · **UX-2.6 = COMPLETE (Panel Content — awaiting human review)** · **UX-2.7 = COMPLETE (Panel State Foundation — awaiting human review)** · **UX-2.8 = COMPLETE (Panel Persistence Foundation — awaiting human review)** · **UX-2.9 = COMPLETE (Panel Resize System — awaiting human review)** · **UX-2.10 = COMPLETE (Planning Mode Foundation — awaiting human review)**  
 **Prerrequisitos:** UX-1.0–1.3 COMPLETE · Architecture Freeze vigente (D38.2) · D48 SSOT · `DESIGN_SYSTEM.md` referencia visual  
 
 **Declaración:**
@@ -21,7 +21,8 @@ UX-2.6 = COMPLETE (Panel Content — awaiting human review)
 UX-2.7 = COMPLETE (Panel State Foundation — awaiting human review)
 UX-2.8 = COMPLETE (Panel Persistence Foundation — awaiting human review)
 UX-2.9 = COMPLETE (Panel Resize System — awaiting human review)
-RESEQUENCE = UX-2.4 Panels → UX-2.5 Panel Infrastructure → UX-2.6 Panel Content → UX-2.7 Panel State → UX-2.8 Panel Persistence → UX-2.9 Resize Handles → UX-2.10 Collapse/Expand UI → UX-2.11+ Layout / Forms …
+UX-2.10 = COMPLETE (Planning Mode Foundation — awaiting human review)
+RESEQUENCE = UX-2.4 Panels → UX-2.5 Panel Infrastructure → UX-2.6 Panel Content → UX-2.7 Panel State → UX-2.8 Panel Persistence → UX-2.9 Resize Handles → UX-2.10 Planning Mode → UX-2.11 Collapse/Expand UI → UX-2.12+ Forms …
 D48 = SOLE TOKEN SSOT (tokens.ts + --app-*)
 DESIGN_SYSTEM.md = VISUAL REFERENCE ONLY
 Architecture Freeze = VIGENTE
@@ -30,7 +31,7 @@ Toolbar = AdaptiveToolbar (D49 frozen)
 NO layout/AppShell.tsx · NO workstation/ · NO styles.css · NO shadcn/Radix
 UI_TOKENS API = FROZEN (valores only)
 VISUAL-ONLY = ENFORCED
-STOP — human review of UX-2.9 before UX-2.10 / UX-3.0 docking
+STOP — human review of UX-2.10 before UX-2.11 Collapse/Expand / UX-3.0 docking
 ```
 
 ---
@@ -166,14 +167,15 @@ WorkspaceLayout + getAppShell   ← AppShell conceptual
 | **UX-2.7** | **Panel State Foundation** | PanelProvider / Context / usePanelState; CSS-var sizing; collapsed + width/height state | ResizeHandle; persistence; collapse UI buttons |
 | **UX-2.8** | **Panel Persistence Foundation** | `persistence/` + localStorage; serialize/deserialize; Provider hydrate/save | IndexedDB; docking positions; floating windows; reshape PanelState |
 | **UX-2.9** | **Resize Handles** | `panels/resize/` + Pointer Capture splitters; session → Panel setters → UX-2.8 | Layout Engine rewrite; docking; new persistence |
-| **UX-2.10** | **Collapse / Expand UI** | Chrome buttons / affordances for panel collapse | Advanced layout presets |
-| **UX-2.11** | Forms | Primitivas presentacionales sobre tokens | Cambiar schemas / bindings |
-| **UX-2.12** | Responsive | Desktop / tablet / notebook / 1080p / 4K | Rediseñar Layout Engine |
-| **UX-2.13** | Accessibility | Contraste, focus, teclado, ARIA, reduced-motion | Reescribir engines |
-| **UX-2.14** | Dark mode + tokens | Auditoría hardcoded → `--app-*`; HC solo si cabe sin API nueva | Segundo tema SSOT |
-| **UX-2.15** | Animation | 100 ms color/opacity; open/close presentacional | Animaciones que afecten layout/measure |
-| **UX-2.16** | Performance | Paint / CLS; sin memo especulativo masivo | Optimizaciones masivas no justificadas |
-| **UX-2.17** | QA | Checklist CA-UX-2 + validators suite | Features nuevas |
+| **UX-2.10** | **Planning Mode Foundation** | `workspace/modes/` + PlanningMode.apply() → initial PanelState; ModeProvider above PanelProvider | Other modes; mode persistence; collapse chrome; runtime switch UI |
+| **UX-2.11** | **Collapse / Expand UI** *(deferred from original UX-2.10)* | Chrome buttons / affordances for panel collapse | Advanced layout presets; mode switching |
+| **UX-2.12** | Forms | Primitivas presentacionales sobre tokens | Cambiar schemas / bindings |
+| **UX-2.13** | Responsive | Desktop / tablet / notebook / 1080p / 4K | Rediseñar Layout Engine |
+| **UX-2.14** | Accessibility | Contraste, focus, teclado, ARIA, reduced-motion | Reescribir engines |
+| **UX-2.15** | Dark mode + tokens | Auditoría hardcoded → `--app-*`; HC solo si cabe sin API nueva | Segundo tema SSOT |
+| **UX-2.16** | Animation | 100 ms color/opacity; open/close presentacional | Animaciones que afecten layout/measure |
+| **UX-2.17** | Performance | Paint / CLS; sin memo especulativo masivo | Optimizaciones masivas no justificadas |
+| **UX-2.18** | QA | Checklist CA-UX-2 + validators suite | Features nuevas |
 
 > **Nota:** Ventanas / content surfaces / dialogs se resecuencian después de la infraestructura de paneles; ver microfases posteriores según certificación.
 
@@ -190,7 +192,7 @@ Tras cada microfase:
 → NO abrir la siguiente microfase hasta certificación.
 ```
 
-**UX-2.4** introduce la infraestructura física de paneles IDE. **UX-2.5 (Panel Infrastructure)** consolida el shell reutilizable (`Panel` / Header / Body). **UX-2.6 (Panel Content)** monta Explorer / Inspector / Console en los Body slots. **UX-2.7 (Panel State)** añade Provider / Context / CSS-var sizing. **UX-2.8 (Panel Persistence)** añade `persistence/` + localStorage (schema v1) sin reshape de `PanelState`. **UX-2.9 (Panel Resize)** añade `panels/resize/` con Pointer Capture y sesión `startSize`-based. Ver [`docs/UX-2.9-panel-resize.md`](UX-2.9-panel-resize.md).
+**UX-2.4** introduce la infraestructura física de paneles IDE. **UX-2.5 (Panel Infrastructure)** consolida el shell reutilizable (`Panel` / Header / Body). **UX-2.6 (Panel Content)** monta Explorer / Inspector / Console en los Body slots. **UX-2.7 (Panel State)** añade Provider / Context / CSS-var sizing. **UX-2.8 (Panel Persistence)** añade `persistence/` + localStorage (schema v1) sin reshape de `PanelState`. **UX-2.9 (Panel Resize)** añade `panels/resize/` con Pointer Capture y sesión `startSize`-based. **UX-2.10 (Planning Mode)** añade `workspace/modes/` con Planning como productor puro de `PanelState` inicial. Collapse/Expand UI queda **deferred a UX-2.11**. Ver [`docs/UX-2.10-planning-mode.md`](UX-2.10-planning-mode.md).
 
 ---
 
@@ -261,6 +263,7 @@ UX-2.6 = COMPLETE (Panel Content — awaiting human review)
 UX-2.7 = COMPLETE (Panel State Foundation — awaiting human review)
 UX-2.8 = COMPLETE (Panel Persistence Foundation — awaiting human review)
 UX-2.9 = COMPLETE (Panel Resize System — awaiting human review)
-NEXT = UX-2.10 Collapse/Expand UI · UX-3.0 Docking Foundation (after UX-2.9 certification)
-STOP — human review of UX-2.9 before Collapse UI / Docking
+UX-2.10 = COMPLETE (Planning Mode Foundation — awaiting human review)
+NEXT = UX-2.11 Collapse/Expand UI · UX-3.0 Docking Foundation (after UX-2.10 certification)
+STOP — human review of UX-2.10 before Collapse UI / Docking
 ```

@@ -147,9 +147,9 @@ assertCase(
 assertCase(
   "ux27.default.values",
   /leftWidth:\s*280/.test(statePanelState) &&
-    /rightWidth:\s*320/.test(statePanelState) &&
+    /rightWidth:\s*280/.test(statePanelState) &&
     /bottomHeight:\s*240/.test(statePanelState),
-  "defaults 280 / 320 / 240"
+  "defaults 280 / 280 / 240 (UX-2.10 Planning sync)"
 );
 
 assertCase(
@@ -241,7 +241,7 @@ assertCase(
 
 assertCase(
   "ux27.content.wraps.BodyLayout",
-  /<PanelProvider>[\s\S]*?<WorkspaceBodyLayout>\s*\{workspace\}\s*<\/WorkspaceBodyLayout>[\s\S]*?<\/PanelProvider>/.test(
+  /<PanelProvider[\s>][\s\S]*?<WorkspaceBodyLayout>\s*\{workspace\}\s*<\/WorkspaceBodyLayout>[\s\S]*?<\/PanelProvider>/.test(
     contentSource.replace(/\r\n/g, "\n")
   ),
   "WorkspaceContent → PanelProvider → BodyLayout"
