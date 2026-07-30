@@ -44,7 +44,7 @@ Introduce a semantic layout layer so panel shells express interface intent (head
 - `"use client"` or hooks inside `layout/`
 - Variants / density / compact / orientation / direction / padding / gap props on layout components
 - Scroll, overflow, sticky, flex-1, resize, drag, focus, selection, keyboard, commands
-- AdaptiveToolbar / Toolbar & Action Refinement (→ UX-2.19)
+- AdaptiveToolbar / Toolbar & Action Refinement (→ UX-2.18b then UX-2.19)
 - PanelState / persistence / resize / focus / modes / session / docking
 - Outer canvas node / resize handles / rails / focus activation changes
 - Replacing UX-2.15 `ContextDivider` or UX-2.16 `PanelDivider`
@@ -213,6 +213,6 @@ UX-2.18 = COMPLETE (awaiting human review)
 API FREEZE = PanelLayout · regions · LAYOUT_TOKENS
 PACKAGE ISOLATION = layout/ ⊥ state ⊥ persistence ⊥ resize ⊥ focus ⊥ modes
 NO VARIANTS on PanelLayout — new layouts = new components
-Next: UX-2.19 — Toolbar & Action Refinement
+Next: UX-2.18b — Panel Semantics Foundation
 Do NOT redesign density · Do NOT reopen Panel.tsx · Do NOT export layout publicly
 ```

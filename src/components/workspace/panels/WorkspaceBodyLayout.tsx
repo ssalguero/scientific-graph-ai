@@ -6,9 +6,12 @@ import { useActivePanel } from "../focus";
 import { Hint, HintGroup } from "../hints";
 import {
   PanelContentRegion,
+  PanelFooterRegion,
+  PanelHeaderRegion,
   PanelLayout,
   PanelToolbarRegion,
 } from "../layout";
+import { SemanticFooter, SemanticHeader } from "../semantics";
 import { StatusChip } from "../status";
 import { PanelSurface } from "../surfaces";
 import { BottomPanel } from "./BottomPanel";
@@ -44,6 +47,7 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.16 — PanelSurface wraps only Hints + children (outer canvas node untouched).
  * UX-2.17 — Composition affinity available inside content regions.
  * UX-2.18 — PanelLayout + ToolbarRegion + ContentRegion inside PanelSurface.
+ * UX-2.18b — SemanticHeader + SemanticFooter shells (empty; no invented copy).
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -104,6 +108,9 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
           ) : null}
           <PanelSurface variant="canvas">
             <PanelLayout>
+              <PanelHeaderRegion>
+                <SemanticHeader />
+              </PanelHeaderRegion>
               <PanelToolbarRegion>
                 <HintGroup>
                   <Hint variant="tip">Drag files here.</Hint>
@@ -112,6 +119,9 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
                 <StatusChip>Synced</StatusChip>
               </PanelToolbarRegion>
               <PanelContentRegion>{children}</PanelContentRegion>
+              <PanelFooterRegion>
+                <SemanticFooter />
+              </PanelFooterRegion>
             </PanelLayout>
           </PanelSurface>
         </div>

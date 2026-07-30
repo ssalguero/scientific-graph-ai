@@ -8,7 +8,19 @@ import {
   ContextDivider,
   DisclosureSection,
 } from "../../disclosure";
-import { PanelContentRegion, PanelLayout } from "../../layout";
+import {
+  PanelContentRegion,
+  PanelFooterRegion,
+  PanelHeaderRegion,
+  PanelLayout,
+} from "../../layout";
+import {
+  SemanticFooter,
+  SemanticHeader,
+  SemanticInfoBlock,
+  SemanticSectionLabel,
+  SemanticStatus,
+} from "../../semantics";
 import {
   PanelAccent,
   PanelDivider,
@@ -25,6 +37,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.16 — PanelSurface + Accent + PanelDivider before ContextDivider.
  * UX-2.17 — WorkspaceGroup affinity inside content (layout only).
  * UX-2.18 — PanelLayout + ContentRegion semantic shell.
+ * UX-2.18b — SemanticHeader/Status/SectionLabel/InfoBlock/Footer identity grammar.
  * Stable IDs: properties, appearance.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no selection branching).
@@ -37,11 +50,16 @@ export const InspectorContent = memo(function InspectorContent() {
       <PanelSurface variant="inspector">
         <PanelAccent position="left" tone="inspector" />
         <PanelLayout>
+          <PanelHeaderRegion>
+            <SemanticHeader />
+            <SemanticStatus />
+          </PanelHeaderRegion>
           <PanelContentRegion>
             <div className={SURFACE_TOKENS.contentInset}>
               <PanelDivider spacing="sm" muted />
               <ContextDivider />
               <WorkspaceGroup>
+                <SemanticSectionLabel>Properties</SemanticSectionLabel>
                 <DisclosureSection title="Properties" defaultExpanded>
                   <PanelContentSection id="properties" title="Properties">
                     <EmptyState
@@ -52,6 +70,7 @@ export const InspectorContent = memo(function InspectorContent() {
                   </PanelContentSection>
                 </DisclosureSection>
                 <ContextDivider />
+                <SemanticSectionLabel>Appearance</SemanticSectionLabel>
                 <AdvancedSection
                   label="Appearance"
                   expanded={advancedOpen}
@@ -65,9 +84,13 @@ export const InspectorContent = memo(function InspectorContent() {
                     />
                   </PanelContentSection>
                 </AdvancedSection>
+                <SemanticInfoBlock />
               </WorkspaceGroup>
             </div>
           </PanelContentRegion>
+          <PanelFooterRegion>
+            <SemanticFooter />
+          </PanelFooterRegion>
         </PanelLayout>
       </PanelSurface>
     </div>

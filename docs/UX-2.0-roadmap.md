@@ -4,7 +4,7 @@
 **Microfase:** UX-2.0 — ROADMAP (documental)  
 **Fase:** Roadmap oficial  
 **Fecha:** 2026-07-29  
-**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)** · **UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)** · **UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)** · **UX-2.6 = COMPLETE (Panel Content — awaiting human review)** · **UX-2.7 = COMPLETE (Panel State Foundation — awaiting human review)** · **UX-2.8 = COMPLETE (Panel Persistence Foundation — awaiting human review)** · **UX-2.9 = COMPLETE (Panel Resize System — awaiting human review)** · **UX-2.10 = COMPLETE (Planning Mode Foundation — awaiting human review)** · **UX-2.11 = COMPLETE (Collapse / Expand UI — awaiting human review)** · **UX-2.12 = COMPLETE (Empty States & Contextual Actions — awaiting human review)** · **UX-2.13 = COMPLETE (Workspace Orientation — awaiting human review)** · **UX-2.14 = COMPLETE (Panel Status & Workspace Feedback — awaiting human review)** · **UX-2.15 = COMPLETE (Progressive Disclosure — awaiting human review)** · **UX-2.16 = COMPLETE (Panel Identity & Surfaces — awaiting human review)** · **UX-2.17 = COMPLETE (Workspace Composition Foundation — awaiting human review)** · **UX-2.18 = COMPLETE (Semantic Layout Foundation — awaiting human review)**  
+**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)** · **UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)** · **UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)** · **UX-2.6 = COMPLETE (Panel Content — awaiting human review)** · **UX-2.7 = COMPLETE (Panel State Foundation — awaiting human review)** · **UX-2.8 = COMPLETE (Panel Persistence Foundation — awaiting human review)** · **UX-2.9 = COMPLETE (Panel Resize System — awaiting human review)** · **UX-2.10 = COMPLETE (Planning Mode Foundation — awaiting human review)** · **UX-2.11 = COMPLETE (Collapse / Expand UI — awaiting human review)** · **UX-2.12 = COMPLETE (Empty States & Contextual Actions — awaiting human review)** · **UX-2.13 = COMPLETE (Workspace Orientation — awaiting human review)** · **UX-2.14 = COMPLETE (Panel Status & Workspace Feedback — awaiting human review)** · **UX-2.15 = COMPLETE (Progressive Disclosure — awaiting human review)** · **UX-2.16 = COMPLETE (Panel Identity & Surfaces — awaiting human review)** · **UX-2.17 = COMPLETE (Workspace Composition Foundation — awaiting human review)** · **UX-2.18 = COMPLETE (Semantic Layout Foundation — awaiting human review)** · **UX-2.18b = COMPLETE (Panel Semantics Foundation — awaiting human review)**  
 **Prerrequisitos:** UX-1.0–1.3 COMPLETE · Architecture Freeze vigente (D38.2) · D48 SSOT · `DESIGN_SYSTEM.md` referencia visual  
 
 **Declaración:**
@@ -30,7 +30,8 @@ UX-2.15 = COMPLETE (Progressive Disclosure Foundation — awaiting human review)
 UX-2.16 = COMPLETE (Panel Identity & Surface Foundation — awaiting human review)
 UX-2.17 = COMPLETE (Workspace Composition Foundation — awaiting human review)
 UX-2.18 = COMPLETE (Semantic Layout Foundation — awaiting human review)
-RESEQUENCE = UX-2.4 Panels → … → UX-2.13 Workspace Orientation → UX-2.14 Panel Status → UX-2.15 Progressive Disclosure → UX-2.16 Panel Identity & Surfaces → UX-2.17 Workspace Composition Foundation → UX-2.18 Semantic Layout Foundation → UX-2.19 Toolbar & Action Refinement → UX-2.20 Iconography & Microinteractions → UX-2.21 Final Visual Polish (Workspace Polish)
+UX-2.18b = COMPLETE (Panel Semantics Foundation — awaiting human review)
+RESEQUENCE = UX-2.4 Panels → … → UX-2.13 Workspace Orientation → UX-2.14 Panel Status → UX-2.15 Progressive Disclosure → UX-2.16 Panel Identity & Surfaces → UX-2.17 Workspace Composition Foundation → UX-2.18 Semantic Layout Foundation → UX-2.18b Panel Semantics Foundation → UX-2.19 Toolbar & Action Refinement → UX-2.20 Iconography & Microinteractions → UX-2.21 Final Visual Polish (Workspace Polish)
 D48 = SOLE TOKEN SSOT (tokens.ts + --app-*)
 DESIGN_SYSTEM.md = VISUAL REFERENCE ONLY
 Architecture Freeze = VIGENTE
@@ -39,7 +40,7 @@ Toolbar = AdaptiveToolbar (D49 frozen)
 NO layout/AppShell.tsx · NO workstation/ · NO styles.css · NO shadcn/Radix
 UI_TOKENS API = FROZEN (valores only)
 VISUAL-ONLY = ENFORCED
-STOP — human review of UX-2.18 before UX-2.19 Toolbar & Action Refinement / UX-3.0 docking
+STOP — human review of UX-2.18b before UX-2.19 Toolbar & Action Refinement / UX-3.0 docking
 ```
 ---
 
@@ -183,6 +184,7 @@ WorkspaceLayout + getAppShell   ← AppShell conceptual
 | **UX-2.16** | **Panel Identity & Surface Foundation** (resequenced) | `workspace/surfaces/`; SurfaceTokens SSOT; Explorer/Inspector/Console/Canvas identity chrome | PanelState; tone on PanelSurface; domain metadata; PanelHeader API |
 | **UX-2.17** | **Workspace Composition Foundation** (resequenced) | `workspace/composition/`; Section/Stack/Group/Divider/Spacer; layout-only wiring | State; resize; docking; density redesign; public barrel export |
 | **UX-2.18** | **Semantic Layout Foundation** (resequenced) | `workspace/layout/`; PanelLayout + regions; LayoutTokens SSOT; shell wiring | Variants; scroll; state; Toolbar actions; public barrel export |
+| **UX-2.18b** | **Panel Semantics Foundation** (bridge) | `workspace/semantics/`; Semantic* identity grammar; SEMANTIC_TOKENS compose-only | Behavior; new strings; expand Semantic* props; renumber 2.19–2.21 |
 | **UX-2.19** | **Toolbar & Action Refinement** (resequenced; was 2.18) | Toolbar / action polish over AdaptiveToolbar | Rewire of handlers; docking |
 | **UX-2.20** | **Iconography & Microinteractions** (resequenced; was 2.19) | Consistent iconography and microinteractions | New icon libraries that reopen architecture |
 | **UX-2.21** | **Final Visual Polish** (Workspace Polish; was 2.20) | Density, spacing, theme consistency + CA-UX-2 certification | Segundo tema SSOT; features nuevas |
@@ -202,7 +204,7 @@ Tras cada microfase:
 → NO abrir la siguiente microfase hasta certificación.
 ```
 
-**UX-2.4** introduce la infraestructura física de paneles IDE. **UX-2.5 (Panel Infrastructure)** consolida el shell reutilizable (`Panel` / Header / Body). **UX-2.6 (Panel Content)** monta Explorer / Inspector / Console en los Body slots. **UX-2.7 (Panel State)** añade Provider / Context / CSS-var sizing. **UX-2.8 (Panel Persistence)** añade `persistence/` + localStorage (schema v1) sin reshape de `PanelState`. **UX-2.9 (Panel Resize)** añade `panels/resize/` con Pointer Capture y sesión `startSize`-based. **UX-2.10 (Planning Mode)** añade `workspace/modes/` con Planning como productor puro de `PanelState` inicial. **UX-2.11 (Collapse / Expand UI)** añade chrome de colapso / expansión sobre la API existente. **UX-2.12 (Empty States & Contextual Actions)** añade `empty/` / `actions/` / `hints/` presentacionales. **UX-2.13 (Workspace Orientation)** añade `focus/` con `activePanelId` UI-only y chrome `isActive`. **UX-2.14 (Panel Status & Workspace Feedback)** añade `workspace/status/` presentacional y slots `status?`/`badge?`/`chips?` en PanelHeader. **UX-2.15 (Progressive Disclosure)** añade `workspace/disclosure/` y `overflow?` para jerarquía visual sin inventar contenido. **UX-2.16 (Panel Identity & Surfaces)** añade `workspace/surfaces/` con `SURFACE_TOKENS` SSOT e identidad visual por panel. **UX-2.17 (Workspace Composition)** añade `workspace/composition/` con primitives estructurales layout-only. **UX-2.18 (Semantic Layout)** añade `workspace/layout/` con regiones semánticas (`PanelLayout` + Header/Toolbar/Content/Footer). Ver [`docs/UX-2.18-semantic-layout.md`](UX-2.18-semantic-layout.md).
+**UX-2.4** introduce la infraestructura física de paneles IDE. **UX-2.5 (Panel Infrastructure)** consolida el shell reutilizable (`Panel` / Header / Body). **UX-2.6 (Panel Content)** monta Explorer / Inspector / Console en los Body slots. **UX-2.7 (Panel State)** añade Provider / Context / CSS-var sizing. **UX-2.8 (Panel Persistence)** añade `persistence/` + localStorage (schema v1) sin reshape de `PanelState`. **UX-2.9 (Panel Resize)** añade `panels/resize/` con Pointer Capture y sesión `startSize`-based. **UX-2.10 (Planning Mode)** añade `workspace/modes/` con Planning como productor puro de `PanelState` inicial. **UX-2.11 (Collapse / Expand UI)** añade chrome de colapso / expansión sobre la API existente. **UX-2.12 (Empty States & Contextual Actions)** añade `empty/` / `actions/` / `hints/` presentacionales. **UX-2.13 (Workspace Orientation)** añade `focus/` con `activePanelId` UI-only y chrome `isActive`. **UX-2.14 (Panel Status & Workspace Feedback)** añade `workspace/status/` presentacional y slots `status?`/`badge?`/`chips?` en PanelHeader. **UX-2.15 (Progressive Disclosure)** añade `workspace/disclosure/` y `overflow?` para jerarquía visual sin inventar contenido. **UX-2.16 (Panel Identity & Surfaces)** añade `workspace/surfaces/` con `SURFACE_TOKENS` SSOT e identidad visual por panel. **UX-2.17 (Workspace Composition)** añade `workspace/composition/` con primitives estructurales layout-only. **UX-2.18 (Semantic Layout)** añade `workspace/layout/` con regiones semánticas (`PanelLayout` + Header/Toolbar/Content/Footer). Ver [`docs/UX-2.18-semantic-layout.md`](UX-2.18-semantic-layout.md). **UX-2.18b (Panel Semantics)** añade `workspace/semantics/` con gramática de identidad presentacional (`SemanticHeader` / `SemanticStatus` / `SemanticSectionLabel` / `SemanticInfoBlock` / `SemanticFooter`). Ver [`docs/UX-2.18b-panel-semantics.md`](UX-2.18b-panel-semantics.md). UX-2.19–2.21 IDs permanecen sin cambios.
 
 ---
 
@@ -291,6 +293,7 @@ UX-2.15 = COMPLETE (Progressive Disclosure Foundation — awaiting human review)
 UX-2.16 = COMPLETE (Panel Identity & Surface Foundation — awaiting human review)
 UX-2.17 = COMPLETE (Workspace Composition Foundation — awaiting human review)
 UX-2.18 = COMPLETE (Semantic Layout Foundation — awaiting human review)
-NEXT = UX-2.19 Toolbar & Action Refinement · UX-2.20 Iconography & Microinteractions · UX-2.21 Final Visual Polish (Workspace Polish) · UX-3.0 Docking Foundation (after UX-2.18 certification)
-STOP — human review of UX-2.18 before Toolbar & Action Refinement / Docking
+UX-2.18b = COMPLETE (Panel Semantics Foundation — awaiting human review)
+NEXT = UX-2.19 Toolbar & Action Refinement · UX-2.20 Iconography & Microinteractions · UX-2.21 Final Visual Polish (Workspace Polish) · UX-3.0 Docking Foundation (after UX-2.18b certification)
+STOP — human review of UX-2.18b before Toolbar & Action Refinement / Docking
 ```

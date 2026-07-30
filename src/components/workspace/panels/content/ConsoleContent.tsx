@@ -8,7 +8,18 @@ import {
   ContextDivider,
   DisclosureSection,
 } from "../../disclosure";
-import { PanelContentRegion, PanelLayout } from "../../layout";
+import {
+  PanelContentRegion,
+  PanelFooterRegion,
+  PanelHeaderRegion,
+  PanelLayout,
+} from "../../layout";
+import {
+  SemanticFooter,
+  SemanticHeader,
+  SemanticSectionLabel,
+  SemanticStatus,
+} from "../../semantics";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
@@ -20,6 +31,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.16 — PanelSurface + Accent (static presentation only).
  * UX-2.17 — WorkspaceGroup affinity inside content (layout only).
  * UX-2.18 — PanelLayout + ContentRegion semantic shell.
+ * UX-2.18b — SemanticHeader/Status/SectionLabel/Footer identity grammar.
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -32,9 +44,14 @@ export const ConsoleContent = memo(function ConsoleContent() {
       <PanelSurface variant="console">
         <PanelAccent position="left" tone="console" />
         <PanelLayout>
+          <PanelHeaderRegion>
+            <SemanticHeader />
+            <SemanticStatus />
+          </PanelHeaderRegion>
           <PanelContentRegion>
             <WorkspaceGroup>
               <div className={SURFACE_TOKENS.contentInset}>
+                <SemanticSectionLabel>Output</SemanticSectionLabel>
                 <DisclosureSection title="Output" defaultExpanded>
                   <PanelContentSection id="output" title="Output">
                     <EmptyState
@@ -53,6 +70,9 @@ export const ConsoleContent = memo(function ConsoleContent() {
               </div>
             </WorkspaceGroup>
           </PanelContentRegion>
+          <PanelFooterRegion>
+            <SemanticFooter />
+          </PanelFooterRegion>
         </PanelLayout>
       </PanelSurface>
     </div>
