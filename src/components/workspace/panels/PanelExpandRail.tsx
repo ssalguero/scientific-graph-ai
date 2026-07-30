@@ -5,36 +5,55 @@ import { sidebarCollapseToggle } from "@/lib/ui/theme";
 
 import type { PanelPosition } from "./Panel";
 
-/** UX-2.11 — Expand rail props (layout sibling; not inside Panel). */
+/** UX-2.11 / UX-2.13 — Expand rail props (layout sibling; not inside Panel). */
 export type PanelExpandRailProps = {
   position: PanelPosition;
   label: string;
   onExpand: () => void;
+  /** UX-2.13 — Visual active chrome only (optional). */
+  isActive?: boolean;
 };
 
 const positionClass: Record<PanelPosition, string> = {
-  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-0.5",
+  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--app-surface)] px-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--app-surface-muted)]",
   right:
-    "max-md:hidden flex shrink-0 flex-col items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] px-0.5",
+    "max-md:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--app-surface)] px-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--app-surface-muted)]",
   bottom:
-    "flex shrink-0 items-center justify-center border border-[var(--app-border)] bg-[var(--app-surface)] py-0.5",
+    "flex shrink-0 items-center justify-center border bg-[var(--app-surface)] py-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--app-surface-muted)]",
 };
 
 /**
  * UX-2.11 — Presentational expand affordance for a collapsed panel.
+ * UX-2.13 — Optional isActive chrome + data-panel-id / data-panel-active.
  * Mounted by WorkspaceBodyLayout only (never inside Panel).
  */
 export function PanelExpandRail({
   position,
   label,
   onExpand,
+  isActive = false,
 }: PanelExpandRailProps) {
+  const activeClass = isActive
+    ? "border-[var(--app-accent)]/40 shadow-sm"
+    : "border-[var(--app-border)]";
+
   return (
-    <div className={positionClass[position]} data-panel-expand-host={position}>
+    <div
+      className={`relative ${positionClass[position]} ${activeClass}`}
+      data-panel-expand-host={position}
+      data-panel-id={position}
+      data-panel-active={isActive ? "true" : "false"}
+    >
+      {isActive ? (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--app-accent)]"
+        />
+      ) : null}
       <button
         type="button"
         data-panel-expand={position}
-        className={sidebarCollapseToggle}
+        className={`${sidebarCollapseToggle} cursor-pointer`}
         aria-expanded={false}
         aria-label={label}
         onClick={onExpand}
@@ -46,34 +65,55 @@ export function PanelExpandRail({
 }
 
 /** UX-2.11 — Left edge expand rail (Explorer). */
-export function LeftExpandRail({ onExpand }: { onExpand: () => void }) {
+export function LeftExpandRail({
+  onExpand,
+  isActive,
+}: {
+  onExpand: () => void;
+  isActive?: boolean;
+}) {
   return (
     <PanelExpandRail
       position="left"
       label="Expand Explorer"
       onExpand={onExpand}
+      isActive={isActive}
     />
   );
 }
 
 /** UX-2.11 — Right edge expand rail (Inspector). */
-export function RightExpandRail({ onExpand }: { onExpand: () => void }) {
+export function RightExpandRail({
+  onExpand,
+  isActive,
+}: {
+  onExpand: () => void;
+  isActive?: boolean;
+}) {
   return (
     <PanelExpandRail
       position="right"
       label="Expand Inspector"
       onExpand={onExpand}
+      isActive={isActive}
     />
   );
 }
 
 /** UX-2.11 — Bottom edge expand rail (Console). */
-export function BottomExpandRail({ onExpand }: { onExpand: () => void }) {
+export function BottomExpandRail({
+  onExpand,
+  isActive,
+}: {
+  onExpand: () => void;
+  isActive?: boolean;
+}) {
   return (
     <PanelExpandRail
       position="bottom"
       label="Expand Console"
       onExpand={onExpand}
+      isActive={isActive}
     />
   );
 }

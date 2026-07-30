@@ -76,7 +76,7 @@ export function PanelResizeHandle({ axis }: PanelResizeHandleProps) {
       aria-orientation={isVertical ? "horizontal" : "vertical"}
       data-panel-resize-handle={axis}
       style={style}
-      className="bg-transparent hover:bg-[color-mix(in_srgb,var(--app-border)_80%,transparent)]"
+      className="bg-transparent transition-colors duration-200 hover:bg-[var(--app-surface-muted)]"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={finish}

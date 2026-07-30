@@ -12,7 +12,7 @@ export const PANEL_CSS_VARS = {
   bottom: "--workspace-bottom-height",
 } as const;
 
-/** UX-2.5 / UX-2.7 / UX-2.11 — Panel shell API. Shell only — no Header/Body creation. */
+/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.13 — Panel shell API. Shell only — no Header/Body creation. */
 export type PanelProps = {
   title: string;
   position: PanelPosition;
@@ -21,6 +21,8 @@ export type PanelProps = {
   sizeKey?: PanelId;
   /** UX-2.11 — Apply width/height transition class when true (caller: !resize.session). */
   animated?: boolean;
+  /** UX-2.13 — Visual active chrome only (optional; no layout change). */
+  isActive?: boolean;
   children: ReactNode;
 };
 
@@ -28,6 +30,7 @@ export type PanelProps = {
  * UX-2.5 — Geometric chrome shell only.
  * UX-2.7 — Expanded size via CSS variables only (no hardcoded Tailwind widths).
  * UX-2.11 — Optional animated class (no inline transition; disabled during resize).
+ * UX-2.13 — Optional isActive chrome + data-panel-id / data-panel-active.
  * Layout freeze: flex flex-col min-h-0 overflow-hidden.
  * Collapsed freeze: left/right width 0; bottom height 0; overflow-hidden.
  * Children always remain mounted (collapse = geometry only).
@@ -39,6 +42,7 @@ export function Panel({
   size,
   sizeKey,
   animated = false,
+  isActive = false,
   children,
 }: PanelProps) {
   const cssVar = sizeKey ? PANEL_CSS_VARS[sizeKey] : undefined;
@@ -69,14 +73,20 @@ export function Panel({
     ? "transition-[width,height] duration-200 ease-out"
     : "";
 
+  const activeClass = isActive
+    ? "border-[var(--app-accent)]/40 shadow-sm"
+    : "border-[var(--app-border)]";
+
   return (
     <section
       data-workspace-panel={position}
       data-panel-position={position}
+      data-panel-id={position}
+      data-panel-active={isActive ? "true" : "false"}
       data-panel-collapsed={collapsed ? "true" : "false"}
       aria-label={title}
       style={style}
-      className={`flex shrink-0 flex-col min-h-0 overflow-hidden border border-[var(--app-border)] bg-[var(--app-surface)] ${responsiveHide} ${animatedClass}`}
+      className={`flex shrink-0 flex-col min-h-0 overflow-hidden border bg-[var(--app-surface)] transition-colors transition-shadow duration-200 ${activeClass} ${responsiveHide} ${animatedClass}`}
     >
       {children}
     </section>

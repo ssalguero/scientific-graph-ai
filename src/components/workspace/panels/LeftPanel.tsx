@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { useActivePanel } from "../focus";
 import { ContextActions } from "../actions";
 import { Panel } from "./Panel";
 import { focusRailAfterCollapse } from "./PanelExpandRail";
@@ -9,7 +10,7 @@ import { PanelBody } from "./PanelBody";
 import { PanelHeader } from "./PanelHeader";
 import { usePanelState } from "./state";
 
-/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.12 — Left IDE panel wrapper (Explorer chrome). */
+/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.12 / UX-2.13 — Left IDE panel wrapper (Explorer chrome). */
 export type LeftPanelProps = {
   collapsed?: boolean;
   size?: number;
@@ -22,6 +23,7 @@ export type LeftPanelProps = {
  * UX-2.7 — Forwards collapsed + size; sizeKey selects CSS var.
  * UX-2.11 — Wires toggleLeft; focus moves to expand rail on collapse.
  * UX-2.12 — Static ContextActions (presentational; no domain handlers).
+ * UX-2.13 — pointerdown sets active panel to left (UI focus only).
  */
 export function LeftPanel({
   collapsed = false,
@@ -30,6 +32,8 @@ export function LeftPanel({
   children,
 }: LeftPanelProps) {
   const { toggleLeft } = usePanelState();
+  const { activePanelId, setActivePanel } = useActivePanel();
+  const isActive = activePanelId === "left";
 
   const handleToggle = () => {
     const collapsing = !collapsed;
@@ -38,28 +42,32 @@ export function LeftPanel({
   };
 
   return (
-    <Panel
-      title="Explorer"
-      position="left"
-      sizeKey="left"
-      collapsed={collapsed}
-      size={size}
-      animated={animated}
-    >
-      <PanelHeader
+    <div className="contents" onPointerDown={() => setActivePanel("left")}>
+      <Panel
         title="Explorer"
+        position="left"
+        sizeKey="left"
         collapsed={collapsed}
-        onToggle={handleToggle}
-        actions={
-          <ContextActions
-            actions={[
-              { label: "New", ariaLabel: "New series" },
-              { label: "Import", ariaLabel: "Import series" },
-            ]}
-          />
-        }
-      />
-      <PanelBody>{children}</PanelBody>
-    </Panel>
+        size={size}
+        animated={animated}
+        isActive={isActive}
+      >
+        <PanelHeader
+          title="Explorer"
+          collapsed={collapsed}
+          onToggle={handleToggle}
+          isActive={isActive}
+          actions={
+            <ContextActions
+              actions={[
+                { label: "New", ariaLabel: "New series" },
+                { label: "Import", ariaLabel: "Import series" },
+              ]}
+            />
+          }
+        />
+        <PanelBody>{children}</PanelBody>
+      </Panel>
+    </div>
   );
 }

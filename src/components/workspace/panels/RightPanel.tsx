@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { useActivePanel } from "../focus";
 import { ContextActions } from "../actions";
 import { Panel } from "./Panel";
 import { focusRailAfterCollapse } from "./PanelExpandRail";
@@ -9,7 +10,7 @@ import { PanelBody } from "./PanelBody";
 import { PanelHeader } from "./PanelHeader";
 import { usePanelState } from "./state";
 
-/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.12 — Right IDE panel wrapper (Inspector chrome). */
+/** UX-2.5 / UX-2.7 / UX-2.11 / UX-2.12 / UX-2.13 — Right IDE panel wrapper (Inspector chrome). */
 export type RightPanelProps = {
   collapsed?: boolean;
   size?: number;
@@ -22,6 +23,7 @@ export type RightPanelProps = {
  * UX-2.7 — Forwards collapsed + size; sizeKey selects CSS var.
  * UX-2.11 — Wires toggleRight; focus moves to expand rail on collapse.
  * UX-2.12 — Static disabled ContextActions placeholders (no selection logic).
+ * UX-2.13 — pointerdown sets active panel to right (UI focus only).
  */
 export function RightPanel({
   collapsed = false,
@@ -30,6 +32,8 @@ export function RightPanel({
   children,
 }: RightPanelProps) {
   const { toggleRight } = usePanelState();
+  const { activePanelId, setActivePanel } = useActivePanel();
+  const isActive = activePanelId === "right";
 
   const handleToggle = () => {
     const collapsing = !collapsed;
@@ -38,36 +42,40 @@ export function RightPanel({
   };
 
   return (
-    <Panel
-      title="Inspector"
-      position="right"
-      sizeKey="right"
-      collapsed={collapsed}
-      size={size}
-      animated={animated}
-    >
-      <PanelHeader
+    <div className="contents" onPointerDown={() => setActivePanel("right")}>
+      <Panel
         title="Inspector"
+        position="right"
+        sizeKey="right"
         collapsed={collapsed}
-        onToggle={handleToggle}
-        actions={
-          <ContextActions
-            actions={[
-              {
-                label: "Rename",
-                ariaLabel: "Rename selection",
-                disabled: true,
-              },
-              {
-                label: "Color",
-                ariaLabel: "Edit color",
-                disabled: true,
-              },
-            ]}
-          />
-        }
-      />
-      <PanelBody>{children}</PanelBody>
-    </Panel>
+        size={size}
+        animated={animated}
+        isActive={isActive}
+      >
+        <PanelHeader
+          title="Inspector"
+          collapsed={collapsed}
+          onToggle={handleToggle}
+          isActive={isActive}
+          actions={
+            <ContextActions
+              actions={[
+                {
+                  label: "Rename",
+                  ariaLabel: "Rename selection",
+                  disabled: true,
+                },
+                {
+                  label: "Color",
+                  ariaLabel: "Edit color",
+                  disabled: true,
+                },
+              ]}
+            />
+          }
+        />
+        <PanelBody>{children}</PanelBody>
+      </Panel>
+    </div>
   );
 }

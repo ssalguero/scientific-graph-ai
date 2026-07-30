@@ -12,6 +12,7 @@ export function ToolbarAction({
 }: ToolbarActionProps) {
   const className = [
     TOOLBAR_TOKENS.action,
+    "cursor-pointer",
     active ? TOOLBAR_TOKENS.actionActive : null,
     disabled ? TOOLBAR_TOKENS.actionDisabled : null,
   ]

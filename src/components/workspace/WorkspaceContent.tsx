@@ -3,6 +3,7 @@ import {
   PanelResizeProvider,
   WorkspaceBodyLayout,
 } from "./panels";
+import { ActivePanelProvider } from "./focus";
 import { PlanningMode, WorkspaceModeProvider } from "./modes";
 import { WORKSPACE_TOKENS } from "./WorkspaceTokens";
 import type { WorkspaceContentProps } from "./types";
@@ -15,6 +16,7 @@ import type { WorkspaceContentProps } from "./types";
  * UX-2.7 — PanelProvider wraps BodyLayout only (no hooks in this file).
  * UX-2.9 — PanelResizeProvider nested inside PanelProvider.
  * UX-2.10 — WorkspaceModeProvider wraps PanelProvider; Planning supplies initialState.
+ * UX-2.13 — ActivePanelProvider nested inside PanelResizeProvider (UI focus only).
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
@@ -50,7 +52,9 @@ export function WorkspaceContent({
         <WorkspaceModeProvider>
           <PanelProvider initialState={PlanningMode.apply()}>
             <PanelResizeProvider>
-              <WorkspaceBodyLayout>{workspace}</WorkspaceBodyLayout>
+              <ActivePanelProvider>
+                <WorkspaceBodyLayout>{workspace}</WorkspaceBodyLayout>
+              </ActivePanelProvider>
             </PanelResizeProvider>
           </PanelProvider>
         </WorkspaceModeProvider>
