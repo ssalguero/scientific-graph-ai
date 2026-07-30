@@ -23,6 +23,7 @@ import {
   SemanticStatus,
 } from "../../semantics";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
+import { ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
 
@@ -34,6 +35,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.17 — WorkspaceGroup affinity inside content (layout only).
  * UX-2.18 — PanelLayout + HeaderRegion + ContentRegion semantic shell.
  * UX-2.18b — SemanticHeader/Status/SectionLabel/Footer identity grammar.
+ * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
  * Stable IDs: project, layers.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no domain branching).
@@ -47,7 +49,14 @@ export const ExplorerContent = memo(function ExplorerContent() {
         <PanelAccent position="left" tone="explorer" />
         <PanelLayout>
           <PanelHeaderRegion>
-            <SemanticHeader title="Project" />
+            <SemanticHeader
+              title="Project"
+              trailing={
+                <PanelToolbar>
+                  <ActionGroup />
+                </PanelToolbar>
+              }
+            />
             <SemanticStatus />
           </PanelHeaderRegion>
           <PanelContentRegion>

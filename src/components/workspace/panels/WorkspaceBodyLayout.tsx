@@ -14,6 +14,7 @@ import {
 import { SemanticFooter, SemanticHeader } from "../semantics";
 import { StatusChip } from "../status";
 import { PanelSurface } from "../surfaces";
+import { ActionGroup, PanelToolbar, ToolbarSpacer } from "../toolbar";
 import { BottomPanel } from "./BottomPanel";
 import { ConsoleContent } from "./content/ConsoleContent";
 import { ExplorerContent } from "./content/ExplorerContent";
@@ -48,6 +49,7 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.17 — Composition affinity available inside content regions.
  * UX-2.18 — PanelLayout + ToolbarRegion + ContentRegion inside PanelSurface.
  * UX-2.18b — SemanticHeader + SemanticFooter shells (empty; no invented copy).
+ * UX-2.19 — PanelToolbar shells; HintGroup/StatusChip as opaque children.
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -109,14 +111,23 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
           <PanelSurface variant="canvas">
             <PanelLayout>
               <PanelHeaderRegion>
-                <SemanticHeader />
+                <SemanticHeader
+                  trailing={
+                    <PanelToolbar>
+                      <ActionGroup />
+                    </PanelToolbar>
+                  }
+                />
               </PanelHeaderRegion>
               <PanelToolbarRegion>
-                <HintGroup>
-                  <Hint variant="tip">Drag files here.</Hint>
-                  <Hint variant="tip">Double-click a series to edit.</Hint>
-                </HintGroup>
-                <StatusChip>Synced</StatusChip>
+                <PanelToolbar>
+                  <HintGroup>
+                    <Hint variant="tip">Drag files here.</Hint>
+                    <Hint variant="tip">Double-click a series to edit.</Hint>
+                  </HintGroup>
+                  <ToolbarSpacer />
+                  <StatusChip>Synced</StatusChip>
+                </PanelToolbar>
               </PanelToolbarRegion>
               <PanelContentRegion>{children}</PanelContentRegion>
               <PanelFooterRegion>

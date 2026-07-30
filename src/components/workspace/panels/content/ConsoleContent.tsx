@@ -21,6 +21,7 @@ import {
   SemanticStatus,
 } from "../../semantics";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
+import { ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
 
@@ -32,6 +33,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.17 — WorkspaceGroup affinity inside content (layout only).
  * UX-2.18 — PanelLayout + ContentRegion semantic shell.
  * UX-2.18b — SemanticHeader/Status/SectionLabel/Footer identity grammar.
+ * UX-2.19 — PanelToolbar + ActionGroup shell in SemanticHeader.trailing.
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -45,7 +47,13 @@ export const ConsoleContent = memo(function ConsoleContent() {
         <PanelAccent position="left" tone="console" />
         <PanelLayout>
           <PanelHeaderRegion>
-            <SemanticHeader />
+            <SemanticHeader
+              trailing={
+                <PanelToolbar>
+                  <ActionGroup />
+                </PanelToolbar>
+              }
+            />
             <SemanticStatus />
           </PanelHeaderRegion>
           <PanelContentRegion>

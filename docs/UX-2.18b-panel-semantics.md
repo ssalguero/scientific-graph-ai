@@ -184,6 +184,6 @@ API FREEZE = SemanticHeader · SemanticStatus · SemanticSectionLabel ·
              SemanticInfoBlock · SemanticFooter · SEMANTIC_TOKENS
 PACKAGE ISOLATION = semantics/ ⊥ layout ⊥ surfaces ⊥ composition ⊥ disclosure
 TOKEN RULE = compose-only (no parallel SURFACE/LAYOUT scale)
-Next: UX-2.19 — Toolbar & Action Refinement
+Next: UX-2.19 — Toolbar & Action Foundation (COMPLETE — awaiting human review)
 Do NOT expand Semantic* props · Do NOT invent copy · Do NOT export semantics publicly
 ```
