@@ -1,4 +1,8 @@
-import { PanelProvider, WorkspaceBodyLayout } from "./panels";
+import {
+  PanelProvider,
+  PanelResizeProvider,
+  WorkspaceBodyLayout,
+} from "./panels";
 import { WORKSPACE_TOKENS } from "./WorkspaceTokens";
 import type { WorkspaceContentProps } from "./types";
 
@@ -8,6 +12,7 @@ import type { WorkspaceContentProps } from "./types";
  * UX-2.4 — Body regions via WorkspaceBodyLayout (canvas + side/bottom panels).
  * UX-2.5 — Panels use shared Panel shell (BodyLayout owns wrappers).
  * UX-2.7 — PanelProvider wraps BodyLayout only (no hooks in this file).
+ * UX-2.9 — PanelResizeProvider nested inside PanelProvider.
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
@@ -41,7 +46,9 @@ export function WorkspaceContent({
           </p>
         </header>
         <PanelProvider>
-          <WorkspaceBodyLayout>{workspace}</WorkspaceBodyLayout>
+          <PanelResizeProvider>
+            <WorkspaceBodyLayout>{workspace}</WorkspaceBodyLayout>
+          </PanelResizeProvider>
         </PanelProvider>
       </div>
     </div>

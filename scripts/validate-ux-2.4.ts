@@ -31,8 +31,8 @@ const PANEL_SHELL_FILES = [
   "PanelBody.tsx",
 ] as const;
 
-/** UX-2.6 content/ + UX-2.7 state/ directories (allowed alongside core). */
-const PANEL_DIR_ENTRIES = ["content", "state"] as const;
+/** UX-2.6 content/ + UX-2.7 state/ + UX-2.8 persistence/ + UX-2.9 resize/ */
+const PANEL_DIR_ENTRIES = ["content", "state", "persistence", "resize"] as const;
 
 const ALLOWED_PANEL_FILES = new Set<string>([
   ...PANEL_CORE_FILES,

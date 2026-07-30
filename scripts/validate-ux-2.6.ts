@@ -78,6 +78,7 @@ const HOOK_RE =
 
 /**
  * UX-2.7 amend — hooks allowed in panels/state/** and WorkspaceBodyLayout.tsx only.
+ * UX-2.8/2.9 amend — also skip persistence/** and resize/**.
  */
 const collectTsSourcesForHookScan = (
   dir: string,
@@ -91,7 +92,16 @@ const collectTsSourcesForHookScan = (
     const rel = relBase ? `${relBase}/${name}` : name;
     const st = statSync(full);
     if (st.isDirectory()) {
-      if (rel === "state" || rel.startsWith("state/")) continue;
+      if (
+        rel === "state" ||
+        rel.startsWith("state/") ||
+        rel === "persistence" ||
+        rel.startsWith("persistence/") ||
+        rel === "resize" ||
+        rel.startsWith("resize/")
+      ) {
+        continue;
+      }
       out.push(...collectTsSourcesForHookScan(full, rel));
       continue;
     }
@@ -373,7 +383,7 @@ assertCase(
 assertCase(
   "ux26.governance.noHooks.panelsTree",
   !HOOK_RE.test(hookScanSources),
-  "no React hooks outside panels/state/** and WorkspaceBodyLayout.tsx"
+  "no React hooks outside state/**, persistence/**, resize/**, WorkspaceBodyLayout"
 );
 
 const contentImportLines = allContentSources

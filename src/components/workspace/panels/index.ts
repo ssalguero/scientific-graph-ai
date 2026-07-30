@@ -26,3 +26,30 @@ export type {
   PanelContextValue,
   PanelProviderProps,
 } from "./state";
+export {
+  PanelResizeHandle,
+  PanelResizeProvider,
+  PanelResizeContext,
+  usePanelResize,
+  clamp,
+  delta,
+  applyLimits,
+  computeNextSize,
+  snap,
+  MIN_LEFT,
+  MAX_LEFT,
+  MIN_RIGHT,
+  MAX_RIGHT,
+  MIN_BOTTOM,
+  MAX_BOTTOM,
+  HANDLE_SIZE,
+  RESIZE_CONSTRAINTS,
+} from "./resize";
+export type {
+  PanelResizeHandleProps,
+  PanelResizeProviderProps,
+  PanelResizeContextValue,
+  ResizeAxis,
+  ResizeSession,
+  ResizeConstraintSet,
+} from "./resize";
