@@ -4,7 +4,7 @@
 **Microfase:** UX-2.0 — ROADMAP (documental)  
 **Fase:** Roadmap oficial  
 **Fecha:** 2026-07-29  
-**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)** · **UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)** · **UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)**  
+**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)** · **UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)** · **UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)** · **UX-2.6 = COMPLETE (Panel Content — awaiting human review)**  
 **Prerrequisitos:** UX-1.0–1.3 COMPLETE · Architecture Freeze vigente (D38.2) · D48 SSOT · `DESIGN_SYSTEM.md` referencia visual  
 
 **Declaración:**
@@ -17,6 +17,7 @@ UX-2.2 = COMPLETE (Toolbar foundation — awaiting human review)
 UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)
 UX-2.4 = COMPLETE (Workspace Panels Foundation — awaiting human review)
 UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)
+UX-2.6 = COMPLETE (Panel Content — awaiting human review)
 RESEQUENCE = UX-2.4 Panels → UX-2.5 Panel Infrastructure → UX-2.6 Panel Content → UX-2.7 Resizable Split → UX-2.8 Panel Persistence
 D48 = SOLE TOKEN SSOT (tokens.ts + --app-*)
 DESIGN_SYSTEM.md = VISUAL REFERENCE ONLY
@@ -26,7 +27,7 @@ Toolbar = AdaptiveToolbar (D49 frozen)
 NO layout/AppShell.tsx · NO workstation/ · NO styles.css · NO shadcn/Radix
 UI_TOKENS API = FROZEN (valores only)
 VISUAL-ONLY = ENFORCED
-STOP — human review of UX-2.5 before Panel Content (UX-2.6)
+STOP — human review of UX-2.6 before Resizable Split (UX-2.7)
 ```
 
 ---
@@ -158,7 +159,7 @@ WorkspaceLayout + getAppShell   ← AppShell conceptual
 | **UX-2.3b** | Sidebar *(deferred from original UX-2.3)* | Migración visual Proyecto / Visualización / Ajustes | Paneles Series/Windows/Session nuevos; SessionProvider |
 | **UX-2.4** | **Workspace Panels Foundation** (resequenced) | `WorkspaceBodyLayout` + Left/Right/Bottom placeholders | Inspector logic; resize; persistence |
 | **UX-2.5** | **Panel Infrastructure** (resequenced) | Shared `Panel` / `PanelHeader` / `PanelBody`; Left/Right/Bottom wrappers; collapsed + data-* freezes | Explorer/Inspector/Console content; resize; persistence |
-| **UX-2.6** | **Panel Content** | Mount Explorer / Inspector / Console into Body slots | Extraer GraphSettings domain; docking behavior; resize |
+| **UX-2.6** | **Panel Content** | Mount Explorer / Inspector / Console content shells into Body slots (Freeze A/B/C) | Domain logic; GraphSettings extract; docking; resize |
 | **UX-2.7** | **Resizable Split Layout** | Splitters / resize presentacional sobre paneles | Persistence; Layout Engine rewrite |
 | **UX-2.8** | **Panel Persistence** | Persistencia de tamaños/visibilidad de paneles | Session schema bump no autorizado |
 | **UX-2.9** | Forms | Primitivas presentacionales sobre tokens | Cambiar schemas / bindings |
@@ -184,7 +185,7 @@ Tras cada microfase:
 → NO abrir la siguiente microfase hasta certificación.
 ```
 
-**UX-2.4** introduce la infraestructura física de paneles IDE. **UX-2.5 (Panel Infrastructure)** consolida el shell reutilizable (`Panel` / Header / Body). **UX-2.6 (Panel Content)** monta Explorer / Inspector / Console en los Body slots — no inyectar dominio en `Panel.tsx`. Ver [`docs/UX-2.5-panel-infrastructure.md`](UX-2.5-panel-infrastructure.md).
+**UX-2.4** introduce la infraestructura física de paneles IDE. **UX-2.5 (Panel Infrastructure)** consolida el shell reutilizable (`Panel` / Header / Body). **UX-2.6 (Panel Content)** monta Explorer / Inspector / Console en los Body slots — no inyectar dominio en `Panel.tsx`. Ver [`docs/UX-2.6-panel-content.md`](UX-2.6-panel-content.md).
 
 ---
 
@@ -231,6 +232,7 @@ No porque UX-2 deba modificar estas superficies, sino porque un cambio visual pu
 | [`docs/UX-2.3-workspace-canvas.md`](UX-2.3-workspace-canvas.md) | Microfase BUILD UX-2.3 (Workspace & Canvas) |
 | [`docs/UX-2.4-workspace-panels.md`](UX-2.4-workspace-panels.md) | Microfase BUILD UX-2.4 (Panels Foundation) |
 | [`docs/UX-2.5-panel-infrastructure.md`](UX-2.5-panel-infrastructure.md) | Microfase BUILD UX-2.5 (Panel Infrastructure) |
+| [`docs/UX-2.6-panel-content.md`](UX-2.6-panel-content.md) | Microfase BUILD UX-2.6 (Panel Content) |
 | [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) | Referencia visual |
 | [`src/lib/ui/tokens.ts`](../src/lib/ui/tokens.ts) | SSOT runtime D48 |
 | [`docs/D38.2-architecture-freeze.md`](D38.2-architecture-freeze.md) | Architecture Freeze |
@@ -247,6 +249,7 @@ UX-2.2 = COMPLETE (awaiting human review)
 UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)
 UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)
 UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)
-NEXT = UX-2.6 Panel Content (after UX-2.5 certification)
-STOP — human review of UX-2.5 before Panel Content
+UX-2.6 = COMPLETE (Panel Content — awaiting human review)
+NEXT = UX-2.7 Resizable Split (after UX-2.6 certification)
+STOP — human review of UX-2.6 before Resizable Split
 ```

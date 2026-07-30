@@ -32,6 +32,25 @@ const assertCase = (id: string, pass: boolean, detail: string) => {
 const read = (path: string): string =>
   existsSync(path) ? readFileSync(path, "utf8") : "";
 
+/** Collect .ts / .tsx sources under dir (skips non-source entries safely). */
+const collectTsSources = (dir: string): string[] => {
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
+  const out: string[] = [];
+  for (const name of readdirSync(dir)) {
+    if (name.startsWith(".")) continue;
+    const full = join(dir, name);
+    const st = statSync(full);
+    if (st.isDirectory()) {
+      out.push(...collectTsSources(full));
+      continue;
+    }
+    if (/\.(tsx?|mts|cts)$/.test(name)) {
+      out.push(read(full));
+    }
+  }
+  return out;
+};
+
 const contentSource = read(contentPath);
 const panelSource = read(join(panelsDir, "Panel.tsx"));
 const headerSource = read(join(panelsDir, "PanelHeader.tsx"));
@@ -41,12 +60,7 @@ const rightSource = read(join(panelsDir, "RightPanel.tsx"));
 const bottomSource = read(join(panelsDir, "BottomPanel.tsx"));
 const bodyLayoutSource = read(join(panelsDir, "WorkspaceBodyLayout.tsx"));
 const panelsBarrelSource = read(join(panelsDir, "index.ts"));
-const allPanelSources = existsSync(panelsDir)
-  ? readdirSync(panelsDir)
-      .filter((name) => !name.startsWith("."))
-      .map((name) => read(join(panelsDir, name)))
-      .join("\n")
-  : "";
+const allPanelSources = collectTsSources(panelsDir).join("\n");
 
 /* -------------------------------------------------------------------------- */
 /* A. Files                                                                   */
