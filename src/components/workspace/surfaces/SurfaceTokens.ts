@@ -75,4 +75,38 @@ export const SURFACE_TOKENS = {
   },
   identityRow: "mb-2 flex items-center gap-1.5 pl-2.5",
   contentInset: "pl-2.5",
+  /**
+   * UX-2.17 — Composition density keys.
+   * Visually equivalent to existing gap/padding/divider density.
+   * Any meaningful visual change is a bug — do not redesign density here.
+   */
+  workspaceGap: {
+    sm: "gap-1.5",
+    md: "gap-2",
+  },
+  sectionGap: {
+    sm: "gap-1.5",
+    md: "gap-2",
+  },
+  groupGap: {
+    sm: "gap-1.5",
+    md: "gap-2",
+  },
+  dividerColor: "border-0 border-t border-[var(--app-border)]",
+  dividerMuted: "opacity-60",
+  dividerInset: {
+    none: "",
+    sm: "mx-1.5",
+    md: "mx-2.5",
+  },
+  sectionPadding: {
+    none: "",
+    sm: "p-1.5",
+    md: "p-2.5",
+  },
+  spacer: {
+    none: "",
+    sm: "h-1.5",
+    md: "h-2.5",
+  },
 } as const;
