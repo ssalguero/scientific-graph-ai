@@ -7,6 +7,7 @@ import {
   ContextDivider,
   DisclosureSection,
 } from "../../disclosure";
+import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
 
@@ -14,6 +15,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.6 — Console body content.
  * UX-2.12 — Hierarchy: Content → PanelContentSection → EmptyState.
  * UX-2.15 — Output disclosed; empty Advanced prepared.
+ * UX-2.16 — PanelSurface + Accent (static presentation only).
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -23,21 +25,26 @@ export const ConsoleContent = memo(function ConsoleContent() {
 
   return (
     <div data-panel-content="console">
-      <DisclosureSection title="Output" defaultExpanded>
-        <PanelContentSection id="output" title="Output">
-          <EmptyState
-            icon="○"
-            title="No output"
-            description="Console messages will appear here."
+      <PanelSurface variant="console">
+        <PanelAccent position="left" tone="console" />
+        <div className={SURFACE_TOKENS.contentInset}>
+          <DisclosureSection title="Output" defaultExpanded>
+            <PanelContentSection id="output" title="Output">
+              <EmptyState
+                icon="○"
+                title="No output"
+                description="Console messages will appear here."
+              />
+            </PanelContentSection>
+          </DisclosureSection>
+          <ContextDivider />
+          <AdvancedSection
+            label="Advanced"
+            expanded={advancedOpen}
+            onToggle={() => setAdvancedOpen((open) => !open)}
           />
-        </PanelContentSection>
-      </DisclosureSection>
-      <ContextDivider />
-      <AdvancedSection
-        label="Advanced"
-        expanded={advancedOpen}
-        onToggle={() => setAdvancedOpen((open) => !open)}
-      />
+        </div>
+      </PanelSurface>
     </div>
   );
 });

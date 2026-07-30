@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useActivePanel } from "../focus";
 import { Hint, HintGroup } from "../hints";
 import { StatusChip } from "../status";
+import { PanelSurface } from "../surfaces";
 import { BottomPanel } from "./BottomPanel";
 import { ConsoleContent } from "./content/ConsoleContent";
 import { ExplorerContent } from "./content/ExplorerContent";
@@ -35,6 +36,7 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.12 — Static HintGroup on canvas (presentational; no preference wiring).
  * UX-2.13 — Canvas pointerdown sets active panel; rails receive isActive.
  * UX-2.14 — Static StatusChip near HintGroup (presentational workspace feedback).
+ * UX-2.16 — PanelSurface wraps only Hints + children (outer canvas node untouched).
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -93,14 +95,16 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
               className="pointer-events-none absolute inset-x-0 top-0 h-0.5 rounded-t-xl bg-[var(--app-accent)]"
             />
           ) : null}
-          <div className="mb-3 flex flex-wrap items-start gap-2">
-            <HintGroup>
-              <Hint variant="tip">Drag files here.</Hint>
-              <Hint variant="tip">Double-click a series to edit.</Hint>
-            </HintGroup>
-            <StatusChip>Synced</StatusChip>
-          </div>
-          {children}
+          <PanelSurface variant="canvas">
+            <div className="mb-3 flex flex-wrap items-start gap-2">
+              <HintGroup>
+                <Hint variant="tip">Drag files here.</Hint>
+                <Hint variant="tip">Double-click a series to edit.</Hint>
+              </HintGroup>
+              <StatusChip>Synced</StatusChip>
+            </div>
+            {children}
+          </PanelSurface>
         </div>
         {showRightHandle ? (
           <div className="max-md:hidden">

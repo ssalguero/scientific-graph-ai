@@ -203,6 +203,6 @@ API FREEZE = DisclosureSection · AdvancedSection · RevealButton ·
              InlineExpander · PanelOverflowMenu · ContextDivider ·
              PanelHeader overflow?
 PACKAGE ISOLATION = disclosure/ ⊥ state ⊥ persistence ⊥ resize ⊥ focus ⊥ modes
-Next: UX-2.16 — Toolbar & Action Refinement
+Next: UX-2.16 — Panel Identity & Surface Foundation
 Do NOT invent domain content · Do NOT add real menus · Do NOT reopen Panel.tsx
 ```
