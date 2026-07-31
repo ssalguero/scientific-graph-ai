@@ -17,6 +17,13 @@ import {
   PanelLayout,
 } from "../../layout";
 import {
+  BreadcrumbItem,
+  BreadcrumbSeparator,
+  Breadcrumbs,
+  Navigation,
+  PageTitle,
+} from "../../navigation";
+import {
   SemanticFooter,
   SemanticHeader,
   SemanticSectionLabel,
@@ -46,6 +53,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.21 — Icon sizes aligned to ACTION/ICON slots.
  * UX-2.22 — ContentGroup + Description via EmptyState (existing copy only).
  * UX-2.23 — Surface presentation layer around PanelLayout regions.
+ * UX-2.24 — Navigation grammar in SemanticHeader.title (static Workspace › Console).
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -63,6 +71,16 @@ export const ConsoleContent = memo(function ConsoleContent() {
               <PanelHeaderRegion>
                 <SemanticHeader
                   leading={<WorkspaceIcon name="console" size="lg" />}
+                  title={
+                    <Navigation>
+                      <Breadcrumbs>
+                        <BreadcrumbItem>Workspace</BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>Console</BreadcrumbItem>
+                      </Breadcrumbs>
+                      <PageTitle>Console</PageTitle>
+                    </Navigation>
+                  }
                   trailing={
                     <PanelToolbar>
                       <ActionGroup>

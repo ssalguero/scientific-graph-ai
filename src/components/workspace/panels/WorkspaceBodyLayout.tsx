@@ -12,6 +12,13 @@ import {
   PanelLayout,
   PanelToolbarRegion,
 } from "../layout";
+import {
+  BreadcrumbItem,
+  BreadcrumbSeparator,
+  Breadcrumbs,
+  Navigation,
+  PageTitle,
+} from "../navigation";
 import { SemanticFooter, SemanticHeader } from "../semantics";
 import { StatusChip } from "../status";
 import {
@@ -65,6 +72,7 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.20 — WorkspaceIcon in header leading / ActionButton.icon.
  * UX-2.21 — Canvas radius/padding + icon size alignment via SURFACE/ICON tokens.
  * UX-2.23 — Surface presentation layer around PanelLayout regions.
+ * UX-2.24 — Navigation grammar in SemanticHeader.title (static Workspace › Canvas).
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -130,6 +138,16 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
                   <PanelHeaderRegion>
                     <SemanticHeader
                       leading={<WorkspaceIcon name="sparkles" size="lg" />}
+                      title={
+                        <Navigation>
+                          <Breadcrumbs>
+                            <BreadcrumbItem>Workspace</BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>Canvas</BreadcrumbItem>
+                          </Breadcrumbs>
+                          <PageTitle>Canvas</PageTitle>
+                        </Navigation>
+                      }
                       trailing={
                         <PanelToolbar>
                           <ActionGroup>

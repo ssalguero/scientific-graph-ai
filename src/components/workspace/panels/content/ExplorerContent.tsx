@@ -19,6 +19,13 @@ import {
   PanelLayout,
 } from "../../layout";
 import {
+  BreadcrumbItem,
+  BreadcrumbSeparator,
+  Breadcrumbs,
+  Navigation,
+  PageTitle,
+} from "../../navigation";
+import {
   SemanticFooter,
   SemanticHeader,
   SemanticSectionLabel,
@@ -48,6 +55,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.21 — Icon sizes aligned to ACTION/ICON slots; tokens for empty polish.
  * UX-2.22 — ContentGroup structure only (pixel-identical; no new visible UI).
  * UX-2.23 — Surface presentation layer around PanelLayout regions.
+ * UX-2.24 — Navigation grammar in SemanticHeader.title (static Workspace › Explorer).
  * Stable IDs: project, layers.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no domain branching).
@@ -64,8 +72,17 @@ export const ExplorerContent = memo(function ExplorerContent() {
             <SurfaceHeader>
               <PanelHeaderRegion>
                 <SemanticHeader
-                  title="Project"
                   leading={<WorkspaceIcon name="project" size="lg" />}
+                  title={
+                    <Navigation>
+                      <Breadcrumbs>
+                        <BreadcrumbItem>Workspace</BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>Explorer</BreadcrumbItem>
+                      </Breadcrumbs>
+                      <PageTitle>Explorer</PageTitle>
+                    </Navigation>
+                  }
                   trailing={
                     <PanelToolbar>
                       <ActionGroup>

@@ -25,9 +25,7 @@ export function SemanticHeader({
         <span className={SEMANTIC_TOKENS.ICON_SIZE}>{leading}</span>
       ) : null}
       <div className={SEMANTIC_TOKENS.headerTitleCol}>
-        {title != null ? (
-          <span className={SEMANTIC_TOKENS.label}>{title}</span>
-        ) : null}
+        {title != null ? title : null}
         {subtitle != null ? (
           <span className={SEMANTIC_TOKENS.MUTED_TEXT}>{subtitle}</span>
         ) : null}
