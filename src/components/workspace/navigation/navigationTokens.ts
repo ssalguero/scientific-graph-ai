@@ -8,16 +8,16 @@
 export const NAVIGATION_TOKENS = {
   /**
    * Navigation root — vertical stack (Breadcrumbs above PageTitle).
-   * Includes display:flex so components never hardcode flex-col.
+   * UX-2.26 — flex direction owned by Stack; token retained for parity/docs.
    */
-  flexDirection: "flex flex-col",
+  flexDirection: "",
   /** Compact header footprint — no forced chrome height. */
   height: "min-h-0",
   /**
    * Breadcrumbs root — horizontal trail.
-   * Includes display:flex + row so components never hardcode flex-row.
+   * UX-2.26 — flex row owned by Inline; token retained for parity/docs.
    */
-  alignItems: "flex flex-row items-center",
+  alignItems: "",
   /** Generic navigation gap (alias of compact surface gap). */
   gap: "gap-1",
   /** Gap between breadcrumb items / separators. */
@@ -25,8 +25,7 @@ export const NAVIGATION_TOKENS = {
   /** Inline spacing around separator glyph. */
   separatorGap: "px-0.5",
   /** Gap between Breadcrumbs and PageTitle in the vertical stack. */
-  titleGap: "gap-0.5",
-  /** Shared type scale for crumbs / title (dense panel header). */
+  titleGap: "gap-0.5",  /** Shared type scale for crumbs / title (dense panel header). */
   fontSize: "text-xs",
   fontWeight: "font-medium",
   /** PageTitle color — heading token. */

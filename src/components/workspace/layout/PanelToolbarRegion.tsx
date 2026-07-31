@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 
+import { Cluster } from "./Cluster";
 import { LAYOUT_TOKENS } from "./LayoutTokens";
 
 /**
  * UX-2.18 — Semantic toolbar region.
- * Horizontal flex + wrap + toolbar gap; default padding none.
+ * UX-2.26 — Composes Cluster (wrap + row); gap md preserves toolbarGap.
+ * align=start preserves prior items-start (not Cluster default center).
  * No commands, actions, or behavior.
  * Canonical order: second among Header → Toolbar → Content → Footer.
  */
@@ -17,14 +19,19 @@ export function PanelToolbarRegion({
   children,
   className,
 }: PanelToolbarRegionProps) {
-  const classNameJoined = [
-    "flex flex-row flex-wrap items-start",
-    LAYOUT_TOKENS.toolbarGap,
-    LAYOUT_TOKENS.regionPadding.none,
-    className,
-  ]
+  const classNameJoined = [LAYOUT_TOKENS.regionPadding.none, className]
     .filter(Boolean)
     .join(" ");
 
-  return <div className={classNameJoined}>{children}</div>;
+  return (
+    <Cluster
+      gap="md"
+      align="start"
+      justify="start"
+      wrap="wrap"
+      className={classNameJoined || undefined}
+    >
+      {children}
+    </Cluster>
+  );
 }

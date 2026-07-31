@@ -21,8 +21,8 @@ export const CONTENT_TOKENS = {
     md: "gap-2",
   },
   rowDistribute: "justify-between",
-  /** KeyValue — label/value pair (SEMANTIC muted + type scale). */
-  keyValueRoot: "flex items-baseline justify-between gap-2",
+  /** KeyValue — label/value pair (SEMANTIC muted + type scale). Layout via Inline. */
+  keyValueRoot: "",
   keyValueLabel:
     "text-[10px] font-medium text-[var(--app-text-muted)] opacity-70",
   keyValueValue: "text-[10px] text-[var(--app-text)]",
@@ -47,12 +47,11 @@ export const CONTENT_TOKENS = {
   },
   /**
    * Content EmptyState — title + description only (no icon / action).
-   * emptyTitle aliases EmptyTitle vocabulary.
+   * Layout via Stack; emptyTitle aliases EmptyTitle vocabulary.
    */
-  emptyRoot: "flex flex-col items-center",
+  emptyRoot: "",
   emptyGap: "gap-1.5",
-  emptyTitle: "text-sm font-medium text-[var(--app-heading)]",
-  /**
+  emptyTitle: "text-sm font-medium text-[var(--app-heading)]",  /**
    * DividerContent — SURFACE_TOKENS.divider vocabulary (not Toolbar divider).
    */
   divider: {

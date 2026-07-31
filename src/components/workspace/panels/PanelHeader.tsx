@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { getIcon } from "@/lib/ui/icons";
 import { sidebarCollapseToggle } from "@/lib/ui/theme";
 
+import { Cluster, Inline } from "../layout";
 import { LAYOUT_TOKENS } from "../layout/LayoutTokens";
 import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
 
@@ -35,6 +36,7 @@ export type PanelHeaderProps = {
  * UX-2.14 — Optional status / badge / chips (presentational).
  * UX-2.15 — Optional overflow after primary actions (frozen order).
  * UX-2.21 — Padding / gap / micro-label via LAYOUT + SURFACE tokens.
+ * UX-2.26 — Composes Inline / Cluster (no raw flex).
  *
  * Slot order (frozen):
  * Title → Status → Badge → Chips → Primary actions → Overflow → Collapse
@@ -61,8 +63,11 @@ export function PanelHeader({
     : "text-[var(--app-text-muted)]";
 
   return (
-    <div
-      className={`relative flex flex-none items-center justify-between border-b border-[var(--app-border)] transition-colors duration-150 hover:bg-[var(--app-surface-muted)] ${LAYOUT_TOKENS.headerGap} ${LAYOUT_TOKENS.regionPadding.md} ${headerBg}`}
+    <Inline
+      align="center"
+      justify="between"
+      gap="none"
+      className={`relative flex-none border-b border-[var(--app-border)] transition-colors duration-150 hover:bg-[var(--app-surface-muted)] ${LAYOUT_TOKENS.headerGap} ${LAYOUT_TOKENS.regionPadding.md} ${headerBg}`}
     >
       {isActive ? (
         <span
@@ -70,9 +75,7 @@ export function PanelHeader({
           className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--app-accent)]"
         />
       ) : null}
-      <div
-        className={`flex min-w-0 items-center ${SURFACE_TOKENS.gap.sm}`}
-      >
+      <Inline align="center" gap="sm" className="min-w-0">
         {status != null ? status : null}
         <p
           className={`${SURFACE_TOKENS.metadata.root} transition-colors duration-150 ${titleColor}`}
@@ -81,16 +84,12 @@ export function PanelHeader({
         </p>
         {badge != null ? badge : null}
         {chips != null ? (
-          <span
-            className={`flex min-w-0 flex-wrap items-center ${SURFACE_TOKENS.gap.sm}`}
-          >
+          <Cluster gap="sm" align="center" className="min-w-0">
             {chips}
-          </span>
+          </Cluster>
         ) : null}
-      </div>
-      <div
-        className={`flex shrink-0 items-center ${SURFACE_TOKENS.gap.sm}`}
-      >
+      </Inline>
+      <Inline align="center" gap="sm" className="shrink-0">
         {actions != null ? actions : null}
         {overflow != null ? overflow : null}
         {onToggle != null ? (
@@ -105,7 +104,7 @@ export function PanelHeader({
             {expanded ? getIcon("collapse") : getIcon("expand")}
           </button>
         ) : null}
-      </div>
-    </div>
+      </Inline>
+    </Inline>
   );
 }

@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 
 import { LAYOUT_TOKENS } from "./LayoutTokens";
+import { Stack } from "./Stack";
 
 /**
  * UX-2.18 — Semantic header region.
- * Vertical flex + header gap; default padding none.
+ * UX-2.26 — Composes Stack (vertical) + header gap via STACK_GAPS.md.
  * Canonical order: first among Header → Toolbar → Content → Footer.
  */
 export type PanelHeaderRegionProps = {
@@ -16,14 +17,13 @@ export function PanelHeaderRegion({
   children,
   className,
 }: PanelHeaderRegionProps) {
-  const classNameJoined = [
-    "flex flex-col",
-    LAYOUT_TOKENS.headerGap,
-    LAYOUT_TOKENS.regionPadding.none,
-    className,
-  ]
+  const classNameJoined = [LAYOUT_TOKENS.regionPadding.none, className]
     .filter(Boolean)
     .join(" ");
 
-  return <div className={classNameJoined}>{children}</div>;
+  return (
+    <Stack gap="md" className={classNameJoined || undefined}>
+      {children}
+    </Stack>
+  );
 }

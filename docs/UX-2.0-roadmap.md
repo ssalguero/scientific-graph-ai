@@ -4,7 +4,7 @@
 **Microfase:** UX-2.0 — ROADMAP (documental)  
 **Fase:** Roadmap oficial  
 **Fecha:** 2026-07-29  
-**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)** · **UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)** · **UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)** · **UX-2.6 = COMPLETE (Panel Content — awaiting human review)** · **UX-2.7 = COMPLETE (Panel State Foundation — awaiting human review)** · **UX-2.8 = COMPLETE (Panel Persistence Foundation — awaiting human review)** · **UX-2.9 = COMPLETE (Panel Resize System — awaiting human review)** · **UX-2.10 = COMPLETE (Planning Mode Foundation — awaiting human review)** · **UX-2.11 = COMPLETE (Collapse / Expand UI — awaiting human review)** · **UX-2.12 = COMPLETE (Empty States & Contextual Actions — awaiting human review)** · **UX-2.13 = COMPLETE (Workspace Orientation — awaiting human review)** · **UX-2.14 = COMPLETE (Panel Status & Workspace Feedback — awaiting human review)** · **UX-2.15 = COMPLETE (Progressive Disclosure — awaiting human review)** · **UX-2.16 = COMPLETE (Panel Identity & Surfaces — awaiting human review)** · **UX-2.17 = COMPLETE (Workspace Composition Foundation — awaiting human review)** · **UX-2.18 = COMPLETE (Semantic Layout Foundation — awaiting human review)** · **UX-2.18b = COMPLETE (Panel Semantics Foundation — awaiting human review)** · **UX-2.19 = COMPLETE (Toolbar & Action Foundation — awaiting human review)** · **UX-2.20 = COMPLETE (Iconography & Microinteractions — awaiting human review)** · **UX-2.21 = COMPLETE (Final Visual Polish — awaiting human review)** · **UX-2.22 = COMPLETE (Content Grammar Foundation — awaiting human review)** · **UX-2.23 = COMPLETE (Workspace Surface Polish Foundation — awaiting human review)** · **UX-2.24 = COMPLETE (Workspace Navigation Foundation — awaiting human review)** · **UX-2.25 = COMPLETE (Workspace Density & Spacing System — awaiting human review)**  
+**Estado:** **UX-2.0 = COMPLETE (documental)** · **UX-2.1 = CERTIFIED** · **UX-2.2 = COMPLETE (awaiting human review)** · **UX-2.3 = COMPLETE (Workspace & Canvas — awaiting human review)** · **UX-2.4 = COMPLETE (Panels Foundation — awaiting human review)** · **UX-2.5 = COMPLETE (Panel Infrastructure — awaiting human review)** · **UX-2.6 = COMPLETE (Panel Content — awaiting human review)** · **UX-2.7 = COMPLETE (Panel State Foundation — awaiting human review)** · **UX-2.8 = COMPLETE (Panel Persistence Foundation — awaiting human review)** · **UX-2.9 = COMPLETE (Panel Resize System — awaiting human review)** · **UX-2.10 = COMPLETE (Planning Mode Foundation — awaiting human review)** · **UX-2.11 = COMPLETE (Collapse / Expand UI — awaiting human review)** · **UX-2.12 = COMPLETE (Empty States & Contextual Actions — awaiting human review)** · **UX-2.13 = COMPLETE (Workspace Orientation — awaiting human review)** · **UX-2.14 = COMPLETE (Panel Status & Workspace Feedback — awaiting human review)** · **UX-2.15 = COMPLETE (Progressive Disclosure — awaiting human review)** · **UX-2.16 = COMPLETE (Panel Identity & Surfaces — awaiting human review)** · **UX-2.17 = COMPLETE (Workspace Composition Foundation — awaiting human review)** · **UX-2.18 = COMPLETE (Semantic Layout Foundation — awaiting human review)** · **UX-2.18b = COMPLETE (Panel Semantics Foundation — awaiting human review)** · **UX-2.19 = COMPLETE (Toolbar & Action Foundation — awaiting human review)** · **UX-2.20 = COMPLETE (Iconography & Microinteractions — awaiting human review)** · **UX-2.21 = COMPLETE (Final Visual Polish — awaiting human review)** · **UX-2.22 = COMPLETE (Content Grammar Foundation — awaiting human review)** · **UX-2.23 = COMPLETE (Workspace Surface Polish Foundation — awaiting human review)** · **UX-2.24 = COMPLETE (Workspace Navigation Foundation — awaiting human review)** · **UX-2.25 = COMPLETE (Workspace Density & Spacing System — awaiting human review)** · **UX-2.26 = COMPLETE (Workspace Layout Primitives Foundation — awaiting human review)**  
 **Prerrequisitos:** UX-1.0–1.3 COMPLETE · Architecture Freeze vigente (D38.2) · D48 SSOT · `DESIGN_SYSTEM.md` referencia visual  
 
 **Declaración:**
@@ -38,7 +38,8 @@ UX-2.22 = COMPLETE (Content Grammar Foundation — awaiting human review)
 UX-2.23 = COMPLETE (Workspace Surface Polish Foundation — awaiting human review)
 UX-2.24 = COMPLETE (Workspace Navigation Foundation — awaiting human review)
 UX-2.25 = COMPLETE (Workspace Density & Spacing System — awaiting human review)
-RESEQUENCE = UX-2.4 Panels → … → UX-2.13 Workspace Orientation → UX-2.14 Panel Status → UX-2.15 Progressive Disclosure → UX-2.16 Panel Identity & Surfaces → UX-2.17 Workspace Composition Foundation → UX-2.18 Semantic Layout Foundation → UX-2.18b Panel Semantics Foundation → UX-2.19 Toolbar & Action Foundation → UX-2.20 Iconography & Microinteractions → UX-2.21 Final Visual Polish → UX-2.22 Content Grammar Foundation → UX-2.23 Surface Polish Foundation → UX-2.24 Workspace Navigation Foundation → UX-2.25 Workspace Density & Spacing System
+UX-2.26 = COMPLETE (Workspace Layout Primitives Foundation — awaiting human review)
+RESEQUENCE = UX-2.4 Panels → … → UX-2.13 Workspace Orientation → UX-2.14 Panel Status → UX-2.15 Progressive Disclosure → UX-2.16 Panel Identity & Surfaces → UX-2.17 Workspace Composition Foundation → UX-2.18 Semantic Layout Foundation → UX-2.18b Panel Semantics Foundation → UX-2.19 Toolbar & Action Foundation → UX-2.20 Iconography & Microinteractions → UX-2.21 Final Visual Polish → UX-2.22 Content Grammar Foundation → UX-2.23 Surface Polish Foundation → UX-2.24 Workspace Navigation Foundation → UX-2.25 Workspace Density & Spacing System → UX-2.26 Workspace Layout Primitives Foundation
 D48 = SOLE TOKEN SSOT (tokens.ts + --app-*)
 DESIGN_SYSTEM.md = VISUAL REFERENCE ONLY
 Architecture Freeze = VIGENTE
@@ -47,7 +48,7 @@ Toolbar = AdaptiveToolbar (D49 frozen)
 NO layout/AppShell.tsx · NO workstation/ · NO styles.css · NO shadcn/Radix
 UI_TOKENS API = FROZEN (valores only)
 VISUAL-ONLY = ENFORCED
-STOP — human review of UX-2.25 before UX-3.0 docking
+STOP — human review of UX-2.26 before UX-3.0 docking
 ```
 ---
 
@@ -199,6 +200,7 @@ WorkspaceLayout + getAppShell   ← AppShell conceptual
 | **UX-2.23** | **Workspace Surface Polish Foundation** | `workspace/surface/`; SURFACE_TOKENS compose-only; Surface chrome around PanelLayout | Replacing PanelSurface; SurfaceDivider in panels; behavior |
 | **UX-2.24** | **Workspace Navigation Foundation** | `workspace/navigation/`; NAVIGATION_TOKENS; breadcrumbs + PageTitle; SemanticHeader title passthrough | Router; pathname; URL; navigation logic; public barrel |
 | **UX-2.25** | **Workspace Density & Spacing System** | `workspace/density/`; WORKSPACE_DENSITY_TOKENS; DensityProvider marker; DensitySpacer; unidirectional parity | Context; runtime density; typography/colors; public barrel |
+| **UX-2.26** | **Workspace Layout Primitives Foundation** | Extend `workspace/layout/`; Stack/Inline/Cluster/Center/Spacer; LAYOUT_TOKENS expansion; flex wiring | Grid; responsive; overflow helpers; replacing PanelLayout; public barrel |
 
 > **Nota:** Ventanas / content surfaces / dialogs se resecuencian después de la infraestructura de paneles; ver microfases posteriores según certificación.
 
@@ -283,6 +285,7 @@ No porque UX-2 deba modificar estas superficies, sino porque un cambio visual pu
 | [`docs/UX-2.23-surface-polish.md`](UX-2.23-surface-polish.md) | Microfase BUILD UX-2.23 (Workspace Surface Polish Foundation) |
 | [`docs/UX-2.24-workspace-navigation.md`](UX-2.24-workspace-navigation.md) | Microfase BUILD UX-2.24 (Workspace Navigation Foundation) |
 | [`docs/UX-2.25-workspace-density.md`](UX-2.25-workspace-density.md) | Microfase BUILD UX-2.25 (Workspace Density & Spacing System) |
+| [`docs/UX-2.26-workspace-layout-primitives.md`](UX-2.26-workspace-layout-primitives.md) | Microfase BUILD UX-2.26 (Workspace Layout Primitives Foundation) |
 | [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) | Referencia visual |
 | [`src/lib/ui/tokens.ts`](../src/lib/ui/tokens.ts) | SSOT runtime D48 |
 | [`docs/D38.2-architecture-freeze.md`](D38.2-architecture-freeze.md) | Architecture Freeze |
@@ -320,6 +323,7 @@ UX-2.22 = COMPLETE (Content Grammar Foundation — awaiting human review)
 UX-2.23 = COMPLETE (Workspace Surface Polish Foundation — awaiting human review)
 UX-2.24 = COMPLETE (Workspace Navigation Foundation — awaiting human review)
 UX-2.25 = COMPLETE (Workspace Density & Spacing System — awaiting human review)
-NEXT = UX-3.0 Docking Foundation (after UX-2.25 certification)
-STOP — human review of UX-2.25 before Docking
+UX-2.26 = COMPLETE (Workspace Layout Primitives Foundation — awaiting human review)
+NEXT = UX-3.0 Docking Foundation (after UX-2.26 certification)
+STOP — human review of UX-2.26 before Docking
 ```

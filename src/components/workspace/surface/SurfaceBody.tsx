@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 
+import { Stack } from "../layout";
 import { SURFACE_TOKENS } from "./SURFACE_TOKENS";
 
 /**
  * UX-2.23 — Surface body chrome (layout only).
+ * UX-2.26 — Composes Stack; grow/overflow remain existing chrome classes.
  * Padding / gap / flex / overflow. API frozen after UX-2.23.
  */
 export type SurfaceBodyProps = {
@@ -12,10 +14,14 @@ export type SurfaceBodyProps = {
 
 export function SurfaceBody({ children }: SurfaceBodyProps) {
   const className = [
-    "flex min-h-0 flex-1 flex-col overflow-auto",
+    "min-h-0 flex-1 overflow-auto",
     SURFACE_TOKENS.normalSpacing,
     SURFACE_TOKENS.bodyGap,
   ].join(" ");
 
-  return <div className={className}>{children}</div>;
+  return (
+    <Stack gap="none" className={className}>
+      {children}
+    </Stack>
+  );
 }

@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 
 import { DensityProvider } from "../density";
+import { Stack } from "../layout";
 import { SURFACE_TOKENS } from "./SURFACE_TOKENS";
 
 /**
  * UX-2.23 — Presentation surface wrapper.
  * UX-2.25 — DensityProvider semantic boundary (Fragment; no runtime work).
+ * UX-2.26 — Composes Stack for vertical chrome distribution.
  * Background / border / radius / overflow / shadow / flex column only.
  * API frozen after UX-2.23.
  */
@@ -19,12 +21,14 @@ export function Surface({ children }: SurfaceProps) {
     SURFACE_TOKENS.surfaceBorder,
     SURFACE_TOKENS.panelRadius,
     SURFACE_TOKENS.surfaceShadow,
-    "flex flex-col overflow-hidden",
+    "overflow-hidden",
   ].join(" ");
 
   return (
     <DensityProvider>
-      <div className={className}>{children}</div>
+      <Stack gap="none" className={className}>
+        {children}
+      </Stack>
     </DensityProvider>
   );
 }
