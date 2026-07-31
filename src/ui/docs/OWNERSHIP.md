@@ -1,0 +1,22 @@
+# Ownership — `src/ui`
+
+| Artefact | Owner | Responsibility |
+|----------|-------|----------------|
+| `src/ui/` (root) | UX Architecture | DS v3 boundary; public API via `index.ts` |
+| `docs/` | UX Architecture | Technical docs (≠ `ux/docs`) |
+| `foundation/` | Design System | Visual identity; no product JSX |
+| `foundation/tokens/types` | Design System | Typed contracts; no runtime values |
+| `foundation/tokens/primitive` | Design System | Raw scales |
+| `foundation/tokens/semantic` | Design System | Meaning via TokenRef |
+| `foundation/tokens/validators` | Design System | Pure contract checks; not app runtime |
+| Domain facades (`colors`, `spacing`, …) | Design System | Reexport only; no local values |
+| `foundation/icons`, `accessibility` | Design System | Stubs until later microfases |
+| `src/lib/ui` | Product UI (UX-2) | Current runtime SSOT — do not modify from DS work |
+
+## Forbidden imports
+
+See `ARCHITECTURE.md`. Package code must not import product modules or `@/lib/ui`.
+
+## Public API ownership
+
+Only `src/ui/index.ts` defines the curated public surface. Deep paths under `foundation/tokens` are implementation detail (validators stay off the root API in UX-3.1.2).
