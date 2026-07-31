@@ -14,7 +14,7 @@ SCOPE = RuntimeMetrics · RuntimeMetricsCollector · RuntimeMetricsSnapshot
 NO public API · NO visual behavior · NO React in metrics layer
 API FREEZE = absolute (names + signatures)
 O(1) allocation-free increments · immutable snapshots on demand
-Next: UX-4.x DevTools / profiling consumers
+Next: UX-3.11 Runtime Diagnostics Foundation
 ```
 
 ---
@@ -245,4 +245,4 @@ PASS
 - [`docs/UX/UX-3.4.md`](./UX-3.4.md) — unrelated `tokens/runtime/RuntimeMetrics`
 - [`src/ui/docs/THEME.md`](../../src/ui/docs/THEME.md)
 
-**Next:** UX-4.x DevTools / metrics consumers
+**Next:** UX-3.11 Runtime Diagnostics Foundation → then UX-4.x DevTools / consumers
