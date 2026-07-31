@@ -138,6 +138,8 @@ Does **not** export theme validators or runtime.
 
 Package-local consumption (UX-3.5): `src/ui/theme/hooks` exports certified `*Token` helpers plus `useElevation` / `useMotion`. `useTokens` lives under `theme/tokens/hooks` only. Not re-exported from `@/ui`.
 
+Private selector foundation (UX-3.6): `src/ui/theme/runtime/selectors/` (`ThemeRuntime` alias, `ThemeSelector`, `createSelector`, `memoSelector` SSOT, equality, WeakMap cache). Not re-exported from `@/ui`, `theme/index`, `theme/runtime/index`, or `theme/hooks/index`.
+
 Consumption freeze: no application imports of `@/ui` until an integration microfase authorizes wiring.
 
 ## Gate
@@ -147,8 +149,9 @@ npm run validate:theme-runtime
 npm run validate:ux-3.3
 npm run validate:ux-3.4
 npm run validate:ux-3.5
+npm run validate:ux-3.6
 ```
 
 ## Integration Contract (future — not implemented here)
 
-Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks → UX-3.6.
+Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6.

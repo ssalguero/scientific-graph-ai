@@ -1,11 +1,12 @@
 /**
  * UX-3.5 — Private consumption helpers.
  * Not re-exported from hooks/index.ts.
- * memoSelector is reserved infrastructure only (unused by selectors this phase).
+ * memoSelector SSOT lives in theme/runtime/selectors (UX-3.6); this file adapts.
  */
 
 import { isThemeId, type ThemeId } from "../ids";
 import type { ResolvedDesignTokens } from "../tokens/contracts/ResolvedDesignTokens";
+import { memoSelector as memoSelectorImpl } from "../runtime/selectors";
 
 export function assertTheme(value: unknown): asserts value is ThemeId {
   if (!isThemeId(value)) {
@@ -44,8 +45,8 @@ export function freezeDev<T extends object>(value: T): T {
 }
 
 /**
- * Reserved for future phases. UX-3.5 selectors MUST NOT call this.
- * Returns previousResult when tokens === previousTokens (identity).
+ * Compatibility adapter — SSOT is theme/runtime/selectors/memoSelector.
+ * Signature frozen by UX-3.5 validate:ux-3.5.
  */
 export function memoSelector<TTokens, TResult>(
   tokens: TTokens,
@@ -53,12 +54,5 @@ export function memoSelector<TTokens, TResult>(
   previousResult: TResult | undefined,
   select: (tokens: TTokens) => TResult,
 ): TResult {
-  if (
-    previousTokens !== undefined &&
-    previousResult !== undefined &&
-    Object.is(tokens, previousTokens)
-  ) {
-    return previousResult;
-  }
-  return select(tokens);
+  return memoSelectorImpl(tokens, previousTokens, previousResult, select);
 }

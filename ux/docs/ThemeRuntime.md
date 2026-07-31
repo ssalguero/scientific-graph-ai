@@ -88,9 +88,22 @@ Consumption façade under `theme/hooks/` (freeze-safe):
 
 See [`docs/UX/UX-3.5.md`](../../docs/UX/UX-3.5.md).
 
+## UX-3.6 — Theme Runtime Selectors & Memoization Foundation
+
+Private selector infrastructure under `theme/runtime/selectors/` (not barreled publicly):
+
+- `ThemeRuntime` alias of `ResolvedDesignTokens`
+- `ThemeSelector<T>`, `createSelector` (passthrough), `memoSelector` SSOT
+- Equality helpers + ephemeral WeakMap cache (object keys only)
+- `hooks/helpers.memoSelector` is a thin UX-3.5-compatible adapter
+- Runtime / Resolver / consumption hooks unchanged
+
+See [`docs/UX/UX-3.6.md`](../../docs/UX/UX-3.6.md).
+
 ## Related docs
 
 - `ThemeArchitecture.md`
 - `ThemeValidation.md`
 - `docs/UX/UX-3.4.md`
 - `docs/UX/UX-3.5.md`
+- `docs/UX/UX-3.6.md`

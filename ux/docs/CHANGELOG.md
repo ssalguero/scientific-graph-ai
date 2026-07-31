@@ -90,6 +90,16 @@ Initial Official Release
 
 ---
 
+### Theme Runtime Selectors & Memoization Foundation (UX-3.6)
+
+- Private `theme/runtime/selectors/`: `ThemeRuntime` alias, `ThemeSelector`, `createSelector`, `memoSelector` SSOT
+- Ephemeral WeakMap cache (object keys only); equality helpers; no public barrel exports
+- `hooks/helpers.memoSelector` thin adapter for UX-3.5 compatibility
+- No Runtime / Resolver / hooks consumption / visual change; API Freeze preserved
+- Docs: `docs/UX/UX-3.6.md`; gate: `validate:ux-3.6`
+
+---
+
 # Future Releases
 
 ## v1.1

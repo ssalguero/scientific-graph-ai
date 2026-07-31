@@ -13,7 +13,7 @@ SCOPE = useElevation · useMotion · private selectors · private helpers · val
 API FREEZE = preserved (UX-3.1 → UX-3.4 surfaces unchanged)
 NO Runtime change · NO Provider change · NO contract change · NO Theme ID change
 NO CSS change · NO adapters · NO aliases · NO Jest
-Next: UX-3.6 component migration consuming certified hooks
+Next: UX-3.6 Theme Runtime Selectors & Memoization Foundation
 ```
 
 ---
@@ -42,7 +42,7 @@ theme/hooks/
   useElevation | useMotion
         │  (identity: return useTokens().<slice>)
         ▼
-UI components (migration starts UX-3.6)
+UI components (migration after selectors foundation)
 ```
 
 Private (not barreled):
@@ -50,7 +50,7 @@ Private (not barreled):
 | Module | Role |
 |--------|------|
 | `selectors.ts` | Pure `selectX(tokens) → tokens.x` identity accessors |
-| `helpers.ts` | `assertTheme`, `assertTokens`, `freezeDev`, reserved `memoSelector` |
+| `helpers.ts` | `assertTheme`, `assertTokens`, `freezeDev`, `memoSelector` adapter (SSOT in UX-3.6) |
 
 ---
 
@@ -120,8 +120,9 @@ Same purity rules as UX-3.3: sole import of Runtime `useTokens`, no `useMemo` / 
 - No `useThemeState` / enriched theme context
 - No new themes, tokens, CSS, or visual changes
 - No adapters, aliases, or flattened token views
-- No component migration (UX-3.6)
+- No component migration
 - No Jest suite
+- Selectors memoization foundation → UX-3.6
 
 ---
 
@@ -140,3 +141,4 @@ npm run validate:ux-3.5
 - [`ux/docs/ThemeRuntime.md`](../../ux/docs/ThemeRuntime.md)
 - [`ux/docs/CHANGELOG.md`](../../ux/docs/CHANGELOG.md)
 - [`docs/UX/UX-3.4.md`](./UX-3.4.md)
+- [`docs/UX/UX-3.6.md`](./UX-3.6.md)
