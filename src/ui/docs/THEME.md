@@ -146,6 +146,8 @@ Private runtime metrics foundation (UX-3.10): `src/ui/theme/runtime/metrics/` (s
 
 Private runtime diagnostics foundation (UX-3.11): `src/ui/theme/runtime/diagnostics/` (frozen Level/Code, Builder message SSOT, pure Engine → RuntimeHealth). Consumes RuntimeSnapshot + RuntimeMetricsSnapshot only. Not re-exported from public barrels. Not wired into ThemeProvider.
 
+Private runtime health integration (UX-3.12): `src/ui/theme/runtime/health/` (composed RuntimeHealth from Snapshot + Metrics + DiagnosticEngine; frozen Status/Builder/Reporter). Distinct from diagnostics/RuntimeHealth. Not re-exported from public barrels. Not wired into ThemeProvider.
+
 Consumption freeze: no application imports of `@/ui` until an integration microfase authorizes wiring.
 
 ## Gate
@@ -161,8 +163,9 @@ npm run validate:ux-3.8
 npm run validate:ux-3.9
 npm run validate:ux-3.10
 npm run validate:ux-3.11
+npm run validate:ux-3.12
 ```
 
 ## Integration Contract (future — not implemented here)
 
-Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Theme Runtime Snapshot & DevTools Foundation → UX-3.8 COMPLETE. Theme Runtime Observers Foundation → UX-3.9 COMPLETE. Theme Runtime Metrics Foundation → UX-3.10 COMPLETE. Runtime Diagnostics Foundation → UX-3.11 COMPLETE. Visual / interactive DevTools → UX-4.x.
+Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Theme Runtime Snapshot & DevTools Foundation → UX-3.8 COMPLETE. Theme Runtime Observers Foundation → UX-3.9 COMPLETE. Theme Runtime Metrics Foundation → UX-3.10 COMPLETE. Runtime Diagnostics Foundation → UX-3.11 COMPLETE. Runtime Health Integration Foundation → UX-3.12 COMPLETE. Next: UX-3.13 Runtime Health Service. Visual / interactive DevTools → UX-3.14+ / UX-4.x.
