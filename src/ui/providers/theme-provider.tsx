@@ -13,6 +13,12 @@ import {
   isThemeId,
   type ThemeId,
 } from "../theme";
+import {
+  InternalRuntimeProvider,
+  stableRuntime,
+} from "../theme/runtime/context";
+import type { ThemeRuntime } from "../theme/runtime/selectors/ThemeSelector";
+import { resolve } from "../theme/tokens/runtime/ThemeTokenResolver";
 import { getStableThemeCssVars } from "./stable-theme-css-vars";
 import { ThemeContext, useTheme } from "./theme-context";
 
@@ -29,6 +35,7 @@ export type ThemeProviderProps = {
 /**
  * Package-local ThemeProvider (UX-3.1.3).
  * UX-3.4.3 — stable setTheme (controlled ref) + stable cssVars identity cache.
+ * UX-3.7 — private ThemeRuntime identity stabilization (InternalRuntimeProvider).
  *
  * Effects are limited to the provider host element only:
  * - sets data-theme (or configured attribute)
@@ -73,11 +80,22 @@ export function ThemeProvider({
     [theme, setTheme, cssVars],
   );
 
+  // UX-3.7 — obtain TokenCache-built runtime, stabilize reference only.
+  const resolvedRuntime = useMemo(() => resolve(theme), [theme]);
+  const previousRuntimeRef = useRef<ThemeRuntime | null>(null);
+  const stabilizedRuntime = stableRuntime(
+    resolvedRuntime,
+    previousRuntimeRef.current,
+  );
+  previousRuntimeRef.current = stabilizedRuntime;
+
   return (
     <ThemeContext.Provider value={value}>
-      <div {...{ [attribute]: theme }} style={hostStyle}>
-        {children}
-      </div>
+      <InternalRuntimeProvider value={stabilizedRuntime}>
+        <div {...{ [attribute]: theme }} style={hostStyle}>
+          {children}
+        </div>
+      </InternalRuntimeProvider>
     </ThemeContext.Provider>
   );
 }

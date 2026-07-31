@@ -100,6 +100,18 @@ Private selector infrastructure under `theme/runtime/selectors/` (not barreled p
 
 See [`docs/UX/UX-3.6.md`](../../docs/UX/UX-3.6.md).
 
+## UX-3.7 — Runtime Context Optimization
+
+Private referential-stability layer under `theme/runtime/context/` (not barreled publicly):
+
+- Semantic `runtimeFingerprint` (logical Design Token content only)
+- Identity cache (`WeakMap` memo + fingerprint→reference reuse)
+- `stableRuntime` rule: same fingerprint ⇒ same reference; never creates runtimes
+- `InternalRuntimeProvider` behind `ThemeProvider`; public `ThemeContext` unchanged
+- TokenCache remains the sole ThemeRuntime constructor; context layer sits above it
+
+See [`docs/UX/UX-3.7.md`](../../docs/UX/UX-3.7.md).
+
 ## Related docs
 
 - `ThemeArchitecture.md`
@@ -107,3 +119,4 @@ See [`docs/UX/UX-3.6.md`](../../docs/UX/UX-3.6.md).
 - `docs/UX/UX-3.4.md`
 - `docs/UX/UX-3.5.md`
 - `docs/UX/UX-3.6.md`
+- `docs/UX/UX-3.7.md`

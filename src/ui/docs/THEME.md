@@ -140,6 +140,8 @@ Package-local consumption (UX-3.5): `src/ui/theme/hooks` exports certified `*Tok
 
 Private selector foundation (UX-3.6): `src/ui/theme/runtime/selectors/` (`ThemeRuntime` alias, `ThemeSelector`, `createSelector`, `memoSelector` SSOT, equality, WeakMap cache). Not re-exported from `@/ui`, `theme/index`, `theme/runtime/index`, or `theme/hooks/index`.
 
+Private runtime context optimization (UX-3.7): `src/ui/theme/runtime/context/` (semantic fingerprint, identity cache, `stableRuntime`, `InternalRuntimeProvider`). Sits above TokenCache; never builds runtimes; not re-exported from public barrels. Public `ThemeContext` remains `{ theme, setTheme, cssVars }`.
+
 Consumption freeze: no application imports of `@/ui` until an integration microfase authorizes wiring.
 
 ## Gate
@@ -150,8 +152,9 @@ npm run validate:ux-3.3
 npm run validate:ux-3.4
 npm run validate:ux-3.5
 npm run validate:ux-3.6
+npm run validate:ux-3.7
 ```
 
 ## Integration Contract (future — not implemented here)
 
-Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6.
+Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Runtime instrumentation / perf measurement → UX-3.8.

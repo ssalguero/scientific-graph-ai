@@ -100,6 +100,15 @@ Initial Official Release
 
 ---
 
+### Runtime Context Optimization (UX-3.7)
+
+- Private `theme/runtime/context/`: semantic fingerprint, identity cache, `stableRuntime`, `InternalRuntimeProvider`
+- TokenCache remains sole ThemeRuntime constructor; context layer reuses references only
+- Public `ThemeContext` / hooks / selectors unchanged; no new public exports
+- Docs: `docs/UX/UX-3.7.md`; gate: `validate:ux-3.7`
+
+---
+
 # Future Releases
 
 ## v1.1
