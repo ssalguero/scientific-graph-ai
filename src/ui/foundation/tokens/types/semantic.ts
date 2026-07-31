@@ -120,6 +120,13 @@ export type SemanticZIndexTokens = {
   readonly toast: TokenRef;
 };
 
+/** Focus ring — theme-aware; values remapped by Theme Maps (UX-3.1.3). */
+export type SemanticFocusTokens = {
+  readonly ringColor: TokenRef;
+  readonly ringWidth: TokenRef;
+  readonly ringOffset: TokenRef;
+};
+
 export type SemanticTokens = {
   readonly color: SemanticColorTokens;
   readonly spacing: SemanticSpacingTokens;
@@ -129,4 +136,5 @@ export type SemanticTokens = {
   readonly motion: SemanticMotionTokens;
   readonly opacity: SemanticOpacityTokens;
   readonly zIndex: SemanticZIndexTokens;
+  readonly focus: SemanticFocusTokens;
 };

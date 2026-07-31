@@ -1,5 +1,6 @@
 /**
- * Accessibility foundation domain — stub for UX-3.1.2.
- * Focus semantic tokens deferred to UX-3.1.3 (theme-dependent).
+ * Accessibility foundation domain facade.
+ * Focus semantic tokens live under foundation/tokens/semantic/focus.
  */
-export {};
+export { focus } from "../tokens/semantic/focus";
+export type { SemanticFocusTokens } from "../tokens/types";

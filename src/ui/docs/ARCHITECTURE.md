@@ -11,13 +11,13 @@ src/ui/
 ├── index.ts                 # Public API (curated)
 ├── README.md
 ├── docs/                    # Technical docs (this folder)
-└── foundation/              # Visual identity — no product JSX
-    ├── tokens/              # UX-3.1.2 Foundation Tokens
-    ├── colors/ …            # Domain facades → tokens
-    └── …
+├── foundation/              # Visual identity — no product JSX
+│   └── tokens/              # UX-3.1.2 Foundation Tokens (+ focus in 3.1.3)
+├── theme/                   # UX-3.1.3 Theme System (maps + CSS gen)
+└── providers/               # UX-3.1.3 ThemeProvider (package-local; not mounted)
 ```
 
-UX-3.1.2 implements Foundation Tokens only. Higher layers (`primitives/`, `components/`, `patterns/`, `providers/`, `hooks/`, `utils/`, `internal/`, `test-utils/`) already exist as empty scaffolds from UX-3.1.1 (`export {}`); their functional implementation remains out of scope until later microfases.
+UX-3.1.3 implements Theme Maps, pure CSS variable generation, and a package-local ThemeProvider. UI Primitives / Components / Patterns / app wiring remain out of scope. See `THEME.md`.
 
 ## Dependency Rule (package ↔ application)
 
@@ -55,6 +55,15 @@ Foundation
 | Primitives | Foundation only |
 | Foundation | **no** higher layer |
 
+### Theme layer (UX-3.1.3)
+
+```text
+theme/**        →  foundation/tokens   ✓
+providers/**    →  theme (+ React)     ✓
+foundation/tokens → theme | providers  ✗
+theme           →  providers           ✗
+```
+
 ### Freeze
 
 This hierarchy is **frozen as of UX-3.1.1**. Changing it requires:
@@ -62,15 +71,15 @@ This hierarchy is **frozen as of UX-3.1.1**. Changing it requires:
 1. An update to `ux/UI_GOVERNANCE_V3.md`
 2. An Architecture Decision Record (ADR)
 
-## Foundation Tokens (UX-3.1.2)
+## Foundation Tokens (UX-3.1.2 + additive focus)
 
 ```text
 foundation/tokens/
   types/          # contracts (separated from data)
   primitive/      # raw scales
-  semantic/       # TokenRef → primitive
+  semantic/       # TokenRef → primitive (+ focus.ts)
   validators/     # pure functions
-  version.ts
+  version.ts      # TOKEN_CONTRACT_VERSION = "3.1.2"
   index.ts
 ```
 
@@ -83,7 +92,20 @@ primitive → semantic   ✗
 
 **Naming collision:** `tokens/primitive` (token scales, no JSX) ≠ `src/ui/primitives` (React UI atoms; empty scaffold until later microfases).
 
-Focus / theme / CSS variables / component tokens: see `TOKENS.md` evolution table.
+Do **not** create `foundation/theme/`. Theme runtime lives under `src/ui/theme/` + `providers/`.
+
+## Theme System (UX-3.1.3)
+
+See `THEME.md` for the full contract (`THEME_CONTRACT_VERSION = "3.1.3"`).
+
+```text
+theme/
+  maps/           # light | dark | highContrastLight | highContrastDark
+  css/            # pure generators (no DOM)
+  validators/     # package tests — not on @/ui
+providers/
+  theme-provider.tsx   # host-only side effects; not mounted in app
+```
 
 ## Forbidden imports
 
@@ -100,7 +122,7 @@ src/ui
     src/project / project modules
     src/lib/project
     src/lib/session
-    src/lib/ui          # UX-2 runtime — no bridge in 3.1.2
+    src/lib/ui          # UX-2 runtime — no bridge
     (any product domain module)
 ```
 
@@ -114,3 +136,5 @@ Both folders exist as empty scaffolds. When filled: `utils/` may reach the publi
 |----------|------|
 | `ux/docs/*` | Functional Design System SSOT |
 | `src/ui/docs/*` | Technical package docs |
+| `src/ui/docs/THEME.md` | Theme System contract |
+| `src/ui/docs/TOKENS.md` | Foundation Tokens contract |

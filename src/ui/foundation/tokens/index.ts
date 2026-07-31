@@ -24,6 +24,7 @@ export type {
   ZIndexScale,
   SemanticColorTokens,
   SemanticElevationTokens,
+  SemanticFocusTokens,
   SemanticMotionTokens,
   SemanticOpacityTokens,
   SemanticRadiusTokens,

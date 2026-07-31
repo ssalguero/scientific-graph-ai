@@ -1,6 +1,7 @@
 import type { SemanticTokens } from "../types/semantic";
 import { color } from "./color";
 import { elevation } from "./elevation";
+import { focus } from "./focus";
 import { motion } from "./motion";
 import { opacity } from "./opacity";
 import { radius } from "./radius";
@@ -17,11 +18,13 @@ export const semantic = {
   motion,
   opacity,
   zIndex,
+  focus,
 } as const satisfies SemanticTokens;
 
 export {
   color,
   elevation,
+  focus,
   motion,
   opacity,
   radius,

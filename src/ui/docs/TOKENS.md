@@ -4,15 +4,20 @@
 
 **Contract version:** `TOKEN_CONTRACT_VERSION = "3.1.2"`
 
+Theme System is versioned separately: `THEME_CONTRACT_VERSION = "3.1.3"` (see `THEME.md`). These contracts are **decoupled**.
+
 ## Layers
 
 ```text
 Primitive Tokens  →  Semantic Tokens  →  (Component Tokens)  →  UI
+                         ↓
+                   Theme Maps / CSS vars (src/ui/theme — not under foundation/)
 ```
 
 - **Primitive** — raw scales (`color`, `spacing`, `radius`, …). Hex only here.
-- **Semantic** — meaning via `TokenRef` paths into primitive. No hex/rgb.
-- **Component / Theme / CSS** — deferred (see evolution table).
+- **Semantic** — meaning via `TokenRef` paths into primitive. No hex/rgb. Includes `focus`.
+- **Theme / CSS** — see `THEME.md` (UX-3.1.3).
+- **Component Tokens** — deferred to UX-3.2.
 
 ## Types vs data
 
@@ -20,25 +25,26 @@ Primitive Tokens  →  Semantic Tokens  →  (Component Tokens)  →  UI
 |------|------|
 | `tokens/types/` | Type contracts (`ColorScale`, `TokenRef`, …) |
 | `tokens/primitive/` | Primitive data (`as const`) |
-| `tokens/semantic/` | Semantic data (refs only) |
+| `tokens/semantic/` | Semantic data (refs only; + `focus.ts`) |
 | `tokens/validators/` | Pure contract validators (not app runtime) |
 
 ## Domains (IN)
 
-color, spacing, radius, typography, shadow, elevation, motion, opacity, zIndex
+color, spacing, radius, typography, shadow, elevation, motion, opacity, zIndex, **focus**
 
 ## Naming
 
-- Docs / CSS (future): `color.surface.default`, `--color-surface-default`
+- Docs / CSS: `color.surface.default`, `--color-surface-default`
 - TypeScript: `primitive.color.slate[50]`, `semantic.color.surface.default`
 - Spacing doc `space-4` ↔ TS `space4`
-- Future CSS prefixes (`--color-*`, `--spacing-*`) are **distinct** from UX-2 `--app-*`
+- CSS prefixes (`--color-*`, `--spacing-*`, `--focus-*`) are **distinct** from UX-2 `--app-*`
 
 ## Dependency rules
 
 ```text
 semantic  →  primitive     ✓
 primitive →  semantic      ✗
+tokens    →  theme         ✗
 tokens    →  @/lib/ui      ✗
 @/lib/ui  →  @/ui          ✗ (until migration)
 ```
@@ -51,9 +57,9 @@ Application → Patterns → Components → Primitives → Foundation
 
 ## Public API
 
-`@/ui` exports: `primitive`, `semantic`, `TOKEN_CONTRACT_VERSION`, and types `PrimitiveTokens`, `SemanticTokens`, `TokenRef`.
+`@/ui` exports: `primitive`, `semantic`, `TOKEN_CONTRACT_VERSION`, theme surface, `ThemeProvider` — see `src/ui/index.ts`.
 
-Validators are available from `foundation/tokens` for package tests — **not** reexported from `@/ui`.
+Validators (tokens and theme) are available for package tests — **not** reexported from `@/ui`.
 
 ## Validators
 
@@ -61,8 +67,6 @@ Validators are available from `foundation/tokens` for package tests — **not** 
 - `isSemanticToken(path)`
 - `isTokenReference(value)`
 - `validateSemanticReferences()`
-
-No ThemeProvider / CSS / app wiring in 3.1.2.
 
 ## Layer evolution
 
@@ -80,9 +84,9 @@ No ThemeProvider / CSS / app wiring in 3.1.2.
 | | UX-2 `src/lib/ui` | UX-3 `foundation/tokens` |
 |--|-------------------|---------------------------|
 | Form | Tailwind strings + `--app-*` | TS primitive/semantic objects |
-| Runtime | Active app SSOT | Contract only (no consumers yet) |
+| Runtime | Active app SSOT | Contract + theme infra (not mounted) |
 
-Do not reexport or bridge `UI_TOKENS` from `@/ui` in this microfase.
+Do not reexport or bridge `UI_TOKENS` from `@/ui`.
 
 ## Conceptual map (documentation only)
 

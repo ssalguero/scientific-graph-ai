@@ -23,6 +23,7 @@ export type {
 export type {
   SemanticColorTokens,
   SemanticElevationTokens,
+  SemanticFocusTokens,
   SemanticMotionTokens,
   SemanticOpacityTokens,
   SemanticRadiusTokens,
