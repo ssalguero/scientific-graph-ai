@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 
+import { DensityProvider } from "../density";
 import { SURFACE_TOKENS } from "./SURFACE_TOKENS";
 
 /**
  * UX-2.23 — Surface header chrome (layout only).
+ * UX-2.25 — DensityProvider semantic boundary (Fragment; no runtime work).
  * Never renders titles — compose SemanticHeader as children.
  * API frozen after UX-2.23.
  */
@@ -19,5 +21,9 @@ export function SurfaceHeader({ children }: SurfaceHeaderProps) {
     SURFACE_TOKENS.bodyGap,
   ].join(" ");
 
-  return <div className={className}>{children}</div>;
+  return (
+    <DensityProvider>
+      <div className={className}>{children}</div>
+    </DensityProvider>
+  );
 }

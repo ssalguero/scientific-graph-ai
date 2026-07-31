@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { DensityProvider, WORKSPACE_DENSITY_TOKENS } from "../density";
 import { useActivePanel } from "../focus";
 import { Hint, HintGroup } from "../hints";
 import { WorkspaceIcon } from "../iconography";
@@ -73,6 +74,7 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.21 — Canvas radius/padding + icon size alignment via SURFACE/ICON tokens.
  * UX-2.23 — Surface presentation layer around PanelLayout regions.
  * UX-2.24 — Navigation grammar in SemanticHeader.title (static Workspace › Canvas).
+ * UX-2.25 — DensityProvider semantic boundary (Fragment; spacing SSOT).
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -118,12 +120,13 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
             <PanelResizeHandle axis="left" />
           </div>
         ) : null}
+        <DensityProvider>
         <div
           data-workspace-canvas
           data-panel-id="canvas"
           data-panel-active={canvasActive ? "true" : "false"}
           onPointerDown={() => activate("canvas")}
-          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--app-surface)] transition-colors transition-shadow duration-200 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${SURFACE_TOKENS.radius.canvas} ${SURFACE_TOKENS.padding.md} ${canvasActiveClass}`}
+          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--app-surface)] transition-colors transition-shadow duration-200 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
         >
           {canvasActive ? (
             <span
@@ -183,6 +186,7 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
             </Surface>
           </PanelSurface>
         </div>
+        </DensityProvider>
         {showRightHandle ? (
           <div className="max-md:hidden">
             <PanelResizeHandle axis="right" />

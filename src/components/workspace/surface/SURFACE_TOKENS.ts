@@ -1,9 +1,10 @@
 /**
  * UX-2.23 — Surface polish SSOT (compose-only).
- * Independent local map of Tailwind / --app-* literals aligned to existing
- * workspace density (surfaces / layout / UI_TOKENS vocabulary).
+ * Independent local map of Tailwind / --app-* literals aligned to
+ * WORKSPACE_DENSITY_TOKENS (UX-2.25 spacing authority).
  * MUST NOT import or re-export UI_TOKENS, surfaces SURFACE_TOKENS,
- * CONTENT_TOKENS, LAYOUT_TOKENS, or any other *_TOKENS object.
+ * CONTENT_TOKENS, LAYOUT_TOKENS, WORKSPACE_DENSITY_TOKENS, or any other *_TOKENS object.
+ * Unidirectional parity: Density is authority; this file must match Density.
  */
 export const SURFACE_TOKENS = {
   /** Alias of surfaces radius.default / UI radius.md. */

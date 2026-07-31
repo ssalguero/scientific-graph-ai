@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 
+import { DensityProvider } from "../density";
 import { SURFACE_TOKENS } from "./SURFACE_TOKENS";
 
 /**
  * UX-2.23 — Presentation surface wrapper.
+ * UX-2.25 — DensityProvider semantic boundary (Fragment; no runtime work).
  * Background / border / radius / overflow / shadow / flex column only.
  * API frozen after UX-2.23.
  */
@@ -20,5 +22,9 @@ export function Surface({ children }: SurfaceProps) {
     "flex flex-col overflow-hidden",
   ].join(" ");
 
-  return <div className={className}>{children}</div>;
+  return (
+    <DensityProvider>
+      <div className={className}>{children}</div>
+    </DensityProvider>
+  );
 }

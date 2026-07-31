@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 
+import { DensityProvider } from "../density";
 import { LAYOUT_TOKENS } from "./LayoutTokens";
 
 /**
  * UX-2.18 — Semantic panel layout shell.
+ * UX-2.25 — DensityProvider semantic boundary (Fragment; no runtime work).
  * Renders children as-is (no ordering / slots / injection).
  *
  * Canonical region order (documented contract — not enforced):
@@ -23,5 +25,9 @@ export function PanelLayout({ children, className }: PanelLayoutProps) {
     .filter(Boolean)
     .join(" ");
 
-  return <div className={classNameJoined}>{children}</div>;
+  return (
+    <DensityProvider>
+      <div className={classNameJoined}>{children}</div>
+    </DensityProvider>
+  );
 }

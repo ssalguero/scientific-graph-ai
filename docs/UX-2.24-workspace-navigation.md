@@ -20,7 +20,7 @@ Navigation = vertical stack · Breadcrumbs = horizontal trail
 SemanticHeader title = passthrough (no label wrapper); leading icons PRESERVED
 NO "use client" · NO hooks · NO router · NO callbacks · NO public barrel export
 NO frozen API changes · NO behavior / navigation logic
-Next: UX-3.0 Docking Foundation
+Next: UX-2.25 Workspace Density & Spacing System
 READY FOR HUMAN REVIEW
 ```
 
@@ -117,7 +117,7 @@ Static children only. Toolbar / Surface / Layout / Content packages untouched.
 1. `workspace/navigation/` presentational package + local barrel
 2. SemanticHeader title passthrough (presentation only)
 3. Composition wiring in Explorer / Inspector / Console / Canvas
-4. This document + `validate:ux-2.24` + roadmap COMPLETE → UX-3.0
+4. This document + `validate:ux-2.24` + roadmap COMPLETE → UX-2.25
 
 ---
 

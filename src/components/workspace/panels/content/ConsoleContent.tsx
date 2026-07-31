@@ -4,6 +4,7 @@ import { memo, useState } from "react";
 
 import { WorkspaceGroup } from "../../composition";
 import { ContentGroup } from "../../content";
+import { DensityProvider } from "../../density";
 import {
   AdvancedSection,
   ContextDivider,
@@ -54,6 +55,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.22 — ContentGroup + Description via EmptyState (existing copy only).
  * UX-2.23 — Surface presentation layer around PanelLayout regions.
  * UX-2.24 — Navigation grammar in SemanticHeader.title (static Workspace › Console).
+ * UX-2.25 — DensityProvider semantic boundary (Fragment; spacing SSOT).
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -62,6 +64,7 @@ export const ConsoleContent = memo(function ConsoleContent() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   return (
+    <DensityProvider>
     <div data-panel-content="console">
       <PanelSurface variant="console">
         <PanelAccent position="left" tone="console" />
@@ -130,5 +133,6 @@ export const ConsoleContent = memo(function ConsoleContent() {
         </Surface>
       </PanelSurface>
     </div>
+    </DensityProvider>
   );
 });

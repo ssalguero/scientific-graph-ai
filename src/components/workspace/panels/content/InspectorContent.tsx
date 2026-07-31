@@ -4,6 +4,7 @@ import { memo, useState } from "react";
 
 import { WorkspaceGroup } from "../../composition";
 import { ContentGroup, Notice } from "../../content";
+import { DensityProvider } from "../../density";
 import {
   AdvancedSection,
   ContextDivider,
@@ -54,6 +55,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.22 — ContentGroup + Notice (info ≡ SemanticInfoBlock chrome; pixel-identical).
  * UX-2.23 — Surface presentation layer around PanelLayout regions.
  * UX-2.24 — Navigation grammar in SemanticHeader.title (static Workspace › Inspector).
+ * UX-2.25 — DensityProvider semantic boundary (Fragment; spacing SSOT).
  * Stable IDs: properties, appearance.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no selection branching).
@@ -62,6 +64,7 @@ export const InspectorContent = memo(function InspectorContent() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   return (
+    <DensityProvider>
     <div data-panel-content="inspector">
       <PanelSurface variant="inspector">
         <PanelAccent position="left" tone="inspector" />
@@ -141,5 +144,6 @@ export const InspectorContent = memo(function InspectorContent() {
         </Surface>
       </PanelSurface>
     </div>
+    </DensityProvider>
   );
 });

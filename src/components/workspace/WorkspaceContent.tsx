@@ -1,3 +1,4 @@
+import { DensityProvider, WORKSPACE_DENSITY_TOKENS } from "./density";
 import {
   PanelProvider,
   PanelResizeProvider,
@@ -19,6 +20,7 @@ import type { WorkspaceContentProps } from "./types";
  * UX-2.10 — WorkspaceModeProvider wraps PanelProvider; Planning supplies initialState.
  * UX-2.13 — ActivePanelProvider nested inside PanelResizeProvider (UI focus only).
  * UX-2.21 — Micro-label recipe via SURFACE_TOKENS.metadata.
+ * UX-2.25 — Density tokens for header spacing (hardcoded padding/stack gaps removed).
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
@@ -29,11 +31,14 @@ export function WorkspaceContent({
     <div className={WORKSPACE_TOKENS.mainColumn}>
       <div className={WORKSPACE_TOKENS.inner}>
         {toolbar}
+        <DensityProvider>
         <header
           data-workspace-header
-          className={`flex flex-wrap items-start justify-between border-b border-[var(--app-border)] pb-3 ${SURFACE_TOKENS.gap.md}`}
+          className={`flex flex-wrap items-start justify-between border-b border-[var(--app-border)] ${WORKSPACE_DENSITY_TOKENS.sectionGap} ${WORKSPACE_DENSITY_TOKENS.headerGap}`}
         >
-          <div className="min-w-0 space-y-0.5">
+          <div
+            className={`min-w-0 flex flex-col ${WORKSPACE_DENSITY_TOKENS.iconGap}`}
+          >
             <p className={SURFACE_TOKENS.metadata.root}>Project</p>
             <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--app-heading)] sm:text-base">
               Scientific Graph AI
@@ -49,6 +54,7 @@ export function WorkspaceContent({
             Ready
           </p>
         </header>
+        </DensityProvider>
         <WorkspaceModeProvider>
           <PanelProvider initialState={PlanningMode.apply()}>
             <PanelResizeProvider>

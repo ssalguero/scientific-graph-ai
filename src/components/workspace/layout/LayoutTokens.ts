@@ -1,7 +1,8 @@
 /**
  * UX-2.18 — Semantic layout spacing SSOT.
- * Density-equivalent to UX-2.17 composition spacing.
- * Layout package reads these keys only — no surface or composition token imports.
+ * Density-equivalent mirror of UX-2.25 WORKSPACE_DENSITY_TOKENS (compose-only).
+ * Layout package reads these keys only — no surface or density token imports.
+ * Unidirectional parity: Density is authority; this file must match Density.
  */
 export const LAYOUT_TOKENS = {
   /** Gap between PanelLayout region children (matches composition md gap). */
