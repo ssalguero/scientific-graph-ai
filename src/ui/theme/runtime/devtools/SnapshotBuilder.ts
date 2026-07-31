@@ -1,5 +1,6 @@
 /**
  * UX-3.8 — Build immutable RuntimeSnapshot from ThemeRuntime (private).
+ * UX-3.10 — Records snapshot metric (sole recordSnapshot site).
  *
  * SnapshotBuilder never freezes Runtime.
  * Snapshot contains only scalars.
@@ -7,6 +8,7 @@
 
 import { THEME_CONTRACT_VERSION } from "../../version";
 import { runtimeFingerprint } from "../context/runtimeFingerprint";
+import { RuntimeMetricsCollector } from "../metrics";
 import type { ThemeRuntime } from "../selectors/ThemeSelector";
 import type { RuntimeSnapshot } from "./RuntimeSnapshot";
 
@@ -58,6 +60,8 @@ function countLeaves(node: unknown): number {
 }
 
 function build(runtime: ThemeRuntime): RuntimeSnapshot {
+  RuntimeMetricsCollector.recordSnapshot();
+
   const colorCount = countLeaves(runtime.colors);
   const typographyCount = countLeaves(runtime.typography);
   const spacingCount = countLeaves(runtime.spacing);

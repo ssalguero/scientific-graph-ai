@@ -142,6 +142,8 @@ Private selector foundation (UX-3.6): `src/ui/theme/runtime/selectors/` (`ThemeR
 
 Private runtime context optimization (UX-3.7): `src/ui/theme/runtime/context/` (semantic fingerprint, identity cache, `stableRuntime`, `InternalRuntimeProvider`). Sits above TokenCache; never builds runtimes; not re-exported from public barrels. Public `ThemeContext` remains `{ theme, setTheme, cssVars }`.
 
+Private runtime metrics foundation (UX-3.10): `src/ui/theme/runtime/metrics/` (scalar counters, frozen Collector/Reporter, immutable snapshots). Not re-exported from public barrels. Unrelated to UX-3.4.4 `tokens/runtime/RuntimeMetrics.ts` (Benchmark aggregate).
+
 Consumption freeze: no application imports of `@/ui` until an integration microfase authorizes wiring.
 
 ## Gate
@@ -155,8 +157,9 @@ npm run validate:ux-3.6
 npm run validate:ux-3.7
 npm run validate:ux-3.8
 npm run validate:ux-3.9
+npm run validate:ux-3.10
 ```
 
 ## Integration Contract (future — not implemented here)
 
-Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Theme Runtime Snapshot & DevTools Foundation → UX-3.8 COMPLETE. Theme Runtime Observers Foundation → UX-3.9 COMPLETE. Visual / interactive DevTools → UX-4.x.
+Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Theme Runtime Snapshot & DevTools Foundation → UX-3.8 COMPLETE. Theme Runtime Observers Foundation → UX-3.9 COMPLETE. Theme Runtime Metrics Foundation → UX-3.10 COMPLETE. Visual / interactive DevTools → UX-4.x.

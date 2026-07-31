@@ -11,6 +11,7 @@ import type { ThemeMap } from "../../types";
 import type { ColorTokens } from "../contracts/ColorTokens";
 import type { ElevationTokens } from "../contracts/ElevationTokens";
 import type { ResolvedDesignTokens } from "../contracts/ResolvedDesignTokens";
+import { RuntimeMetricsCollector } from "../../runtime/metrics";
 import {
   getSharedInvariantDomains,
   resolveThemeableTree,
@@ -57,10 +58,13 @@ function formatValidationIssues(issues: readonly TokenValidationIssue[]): string
 
 /** Resolve a ThemeId or ThemeMap to typed design tokens. Pure. */
 export function resolve(theme: ThemeId | ThemeMap): ResolvedDesignTokens {
+  RuntimeMetricsCollector.recordResolution();
   const cached = TokenCache.get(theme);
   if (cached) {
+    RuntimeMetricsCollector.recordCacheHit();
     return cached;
   }
+  RuntimeMetricsCollector.recordCacheMiss();
 
   const map = resolveThemeMap(theme);
   const tokens = buildResolvedTokens(map);
