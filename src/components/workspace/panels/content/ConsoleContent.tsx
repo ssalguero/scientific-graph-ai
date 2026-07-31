@@ -22,6 +22,12 @@ import {
   SemanticSectionLabel,
   SemanticStatus,
 } from "../../semantics";
+import {
+  Surface,
+  SurfaceBody,
+  SurfaceFooter,
+  SurfaceHeader,
+} from "../../surface";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
 import { ActionButton, ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
@@ -39,6 +45,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
  * UX-2.21 — Icon sizes aligned to ACTION/ICON slots.
  * UX-2.22 — ContentGroup + Description via EmptyState (existing copy only).
+ * UX-2.23 — Surface presentation layer around PanelLayout regions.
  * Stable ID: output.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no output branching).
@@ -50,51 +57,59 @@ export const ConsoleContent = memo(function ConsoleContent() {
     <div data-panel-content="console">
       <PanelSurface variant="console">
         <PanelAccent position="left" tone="console" />
-        <PanelLayout>
-          <PanelHeaderRegion>
-            <SemanticHeader
-              leading={<WorkspaceIcon name="console" size="lg" />}
-              trailing={
-                <PanelToolbar>
-                  <ActionGroup>
-                    <ActionButton
-                      icon={<WorkspaceIcon name="info" size="lg" />}
-                      appearance="muted"
-                    />
-                  </ActionGroup>
-                </PanelToolbar>
-              }
-            />
-            <SemanticStatus />
-          </PanelHeaderRegion>
-          <PanelContentRegion>
-            <WorkspaceGroup>
-              <ContentGroup>
-                <div className={SURFACE_TOKENS.contentInset}>
-                  <SemanticSectionLabel>Output</SemanticSectionLabel>
-                  <DisclosureSection title="Output" defaultExpanded>
-                    <PanelContentSection id="output" title="Output">
-                      <EmptyState
-                        icon={<WorkspaceIcon name="console" size="lg" />}
-                        title="No output"
-                        description="Console messages will appear here."
+        <Surface>
+          <PanelLayout>
+            <SurfaceHeader>
+              <PanelHeaderRegion>
+                <SemanticHeader
+                  leading={<WorkspaceIcon name="console" size="lg" />}
+                  trailing={
+                    <PanelToolbar>
+                      <ActionGroup>
+                        <ActionButton
+                          icon={<WorkspaceIcon name="info" size="lg" />}
+                          appearance="muted"
+                        />
+                      </ActionGroup>
+                    </PanelToolbar>
+                  }
+                />
+                <SemanticStatus />
+              </PanelHeaderRegion>
+            </SurfaceHeader>
+            <SurfaceBody>
+              <PanelContentRegion>
+                <WorkspaceGroup>
+                  <ContentGroup>
+                    <div className={SURFACE_TOKENS.contentInset}>
+                      <SemanticSectionLabel>Output</SemanticSectionLabel>
+                      <DisclosureSection title="Output" defaultExpanded>
+                        <PanelContentSection id="output" title="Output">
+                          <EmptyState
+                            icon={<WorkspaceIcon name="console" size="lg" />}
+                            title="No output"
+                            description="Console messages will appear here."
+                          />
+                        </PanelContentSection>
+                      </DisclosureSection>
+                      <ContextDivider />
+                      <AdvancedSection
+                        label="Advanced"
+                        expanded={advancedOpen}
+                        onToggle={() => setAdvancedOpen((open) => !open)}
                       />
-                    </PanelContentSection>
-                  </DisclosureSection>
-                  <ContextDivider />
-                  <AdvancedSection
-                    label="Advanced"
-                    expanded={advancedOpen}
-                    onToggle={() => setAdvancedOpen((open) => !open)}
-                  />
-                </div>
-              </ContentGroup>
-            </WorkspaceGroup>
-          </PanelContentRegion>
-          <PanelFooterRegion>
-            <SemanticFooter />
-          </PanelFooterRegion>
-        </PanelLayout>
+                    </div>
+                  </ContentGroup>
+                </WorkspaceGroup>
+              </PanelContentRegion>
+            </SurfaceBody>
+            <SurfaceFooter>
+              <PanelFooterRegion>
+                <SemanticFooter />
+              </PanelFooterRegion>
+            </SurfaceFooter>
+          </PanelLayout>
+        </Surface>
       </PanelSurface>
     </div>
   );

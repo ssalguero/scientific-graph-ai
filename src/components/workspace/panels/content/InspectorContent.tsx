@@ -22,6 +22,12 @@ import {
   SemanticSectionLabel,
   SemanticStatus,
 } from "../../semantics";
+import {
+  Surface,
+  SurfaceBody,
+  SurfaceFooter,
+  SurfaceHeader,
+} from "../../surface";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
 import { ActionButton, ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
@@ -39,6 +45,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
  * UX-2.21 — Icon sizes aligned to ACTION/ICON slots; divider parity with Explorer/Console.
  * UX-2.22 — ContentGroup + Notice (info ≡ SemanticInfoBlock chrome; pixel-identical).
+ * UX-2.23 — Surface presentation layer around PanelLayout regions.
  * Stable IDs: properties, appearance.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no selection branching).
@@ -50,62 +57,70 @@ export const InspectorContent = memo(function InspectorContent() {
     <div data-panel-content="inspector">
       <PanelSurface variant="inspector">
         <PanelAccent position="left" tone="inspector" />
-        <PanelLayout>
-          <PanelHeaderRegion>
-            <SemanticHeader
-              leading={<WorkspaceIcon name="inspector" size="lg" />}
-              trailing={
-                <PanelToolbar>
-                  <ActionGroup>
-                    <ActionButton
-                      icon={<WorkspaceIcon name="search" size="lg" />}
-                      appearance="muted"
-                    />
-                  </ActionGroup>
-                </PanelToolbar>
-              }
-            />
-            <SemanticStatus />
-          </PanelHeaderRegion>
-          <PanelContentRegion>
-            <div className={SURFACE_TOKENS.contentInset}>
-              <ContextDivider />
-              <WorkspaceGroup>
-                <ContentGroup>
-                  <SemanticSectionLabel>Properties</SemanticSectionLabel>
-                  <DisclosureSection title="Properties" defaultExpanded>
-                    <PanelContentSection id="properties" title="Properties">
-                      <EmptyState
-                        icon={<WorkspaceIcon name="inspector" size="lg" />}
-                        title="Nothing selected"
-                        description="Select an object to edit its properties."
-                      />
-                    </PanelContentSection>
-                  </DisclosureSection>
+        <Surface>
+          <PanelLayout>
+            <SurfaceHeader>
+              <PanelHeaderRegion>
+                <SemanticHeader
+                  leading={<WorkspaceIcon name="inspector" size="lg" />}
+                  trailing={
+                    <PanelToolbar>
+                      <ActionGroup>
+                        <ActionButton
+                          icon={<WorkspaceIcon name="search" size="lg" />}
+                          appearance="muted"
+                        />
+                      </ActionGroup>
+                    </PanelToolbar>
+                  }
+                />
+                <SemanticStatus />
+              </PanelHeaderRegion>
+            </SurfaceHeader>
+            <SurfaceBody>
+              <PanelContentRegion>
+                <div className={SURFACE_TOKENS.contentInset}>
                   <ContextDivider />
-                  <SemanticSectionLabel>Appearance</SemanticSectionLabel>
-                  <AdvancedSection
-                    label="Appearance"
-                    expanded={advancedOpen}
-                    onToggle={() => setAdvancedOpen((open) => !open)}
-                  >
-                    <PanelContentSection id="appearance" title="Appearance">
-                      <EmptyState
-                        icon={<WorkspaceIcon name="sparkles" size="lg" />}
-                        title="Nothing selected"
-                        description="Select an object to edit its appearance."
-                      />
-                    </PanelContentSection>
-                  </AdvancedSection>
-                  <Notice variant="info" />
-                </ContentGroup>
-              </WorkspaceGroup>
-            </div>
-          </PanelContentRegion>
-          <PanelFooterRegion>
-            <SemanticFooter />
-          </PanelFooterRegion>
-        </PanelLayout>
+                  <WorkspaceGroup>
+                    <ContentGroup>
+                      <SemanticSectionLabel>Properties</SemanticSectionLabel>
+                      <DisclosureSection title="Properties" defaultExpanded>
+                        <PanelContentSection id="properties" title="Properties">
+                          <EmptyState
+                            icon={<WorkspaceIcon name="inspector" size="lg" />}
+                            title="Nothing selected"
+                            description="Select an object to edit its properties."
+                          />
+                        </PanelContentSection>
+                      </DisclosureSection>
+                      <ContextDivider />
+                      <SemanticSectionLabel>Appearance</SemanticSectionLabel>
+                      <AdvancedSection
+                        label="Appearance"
+                        expanded={advancedOpen}
+                        onToggle={() => setAdvancedOpen((open) => !open)}
+                      >
+                        <PanelContentSection id="appearance" title="Appearance">
+                          <EmptyState
+                            icon={<WorkspaceIcon name="sparkles" size="lg" />}
+                            title="Nothing selected"
+                            description="Select an object to edit its appearance."
+                          />
+                        </PanelContentSection>
+                      </AdvancedSection>
+                      <Notice variant="info" />
+                    </ContentGroup>
+                  </WorkspaceGroup>
+                </div>
+              </PanelContentRegion>
+            </SurfaceBody>
+            <SurfaceFooter>
+              <PanelFooterRegion>
+                <SemanticFooter />
+              </PanelFooterRegion>
+            </SurfaceFooter>
+          </PanelLayout>
+        </Surface>
       </PanelSurface>
     </div>
   );

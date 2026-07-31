@@ -14,6 +14,12 @@ import {
 } from "../layout";
 import { SemanticFooter, SemanticHeader } from "../semantics";
 import { StatusChip } from "../status";
+import {
+  Surface,
+  SurfaceBody,
+  SurfaceFooter,
+  SurfaceHeader,
+} from "../surface";
 import { PanelSurface, SURFACE_TOKENS } from "../surfaces";
 import {
   ActionButton,
@@ -58,6 +64,7 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.19 — PanelToolbar shells; HintGroup/StatusChip as opaque children.
  * UX-2.20 — WorkspaceIcon in header leading / ActionButton.icon.
  * UX-2.21 — Canvas radius/padding + icon size alignment via SURFACE/ICON tokens.
+ * UX-2.23 — Surface presentation layer around PanelLayout regions.
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -117,37 +124,45 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
             />
           ) : null}
           <PanelSurface variant="canvas">
-            <PanelLayout>
-              <PanelHeaderRegion>
-                <SemanticHeader
-                  leading={<WorkspaceIcon name="sparkles" size="lg" />}
-                  trailing={
-                    <PanelToolbar>
-                      <ActionGroup>
-                        <ActionButton
-                          icon={<WorkspaceIcon name="sync" size="lg" />}
-                          appearance="muted"
-                        />
-                      </ActionGroup>
-                    </PanelToolbar>
-                  }
-                />
-              </PanelHeaderRegion>
-              <PanelToolbarRegion>
-                <PanelToolbar>
-                  <HintGroup>
-                    <Hint variant="tip">Drag files here.</Hint>
-                    <Hint variant="tip">Double-click a series to edit.</Hint>
-                  </HintGroup>
-                  <ToolbarSpacer />
-                  <StatusChip>Synced</StatusChip>
-                </PanelToolbar>
-              </PanelToolbarRegion>
-              <PanelContentRegion>{children}</PanelContentRegion>
-              <PanelFooterRegion>
-                <SemanticFooter />
-              </PanelFooterRegion>
-            </PanelLayout>
+            <Surface>
+              <PanelLayout>
+                <SurfaceHeader>
+                  <PanelHeaderRegion>
+                    <SemanticHeader
+                      leading={<WorkspaceIcon name="sparkles" size="lg" />}
+                      trailing={
+                        <PanelToolbar>
+                          <ActionGroup>
+                            <ActionButton
+                              icon={<WorkspaceIcon name="sync" size="lg" />}
+                              appearance="muted"
+                            />
+                          </ActionGroup>
+                        </PanelToolbar>
+                      }
+                    />
+                  </PanelHeaderRegion>
+                </SurfaceHeader>
+                <PanelToolbarRegion>
+                  <PanelToolbar>
+                    <HintGroup>
+                      <Hint variant="tip">Drag files here.</Hint>
+                      <Hint variant="tip">Double-click a series to edit.</Hint>
+                    </HintGroup>
+                    <ToolbarSpacer />
+                    <StatusChip>Synced</StatusChip>
+                  </PanelToolbar>
+                </PanelToolbarRegion>
+                <SurfaceBody>
+                  <PanelContentRegion>{children}</PanelContentRegion>
+                </SurfaceBody>
+                <SurfaceFooter>
+                  <PanelFooterRegion>
+                    <SemanticFooter />
+                  </PanelFooterRegion>
+                </SurfaceFooter>
+              </PanelLayout>
+            </Surface>
           </PanelSurface>
         </div>
         {showRightHandle ? (

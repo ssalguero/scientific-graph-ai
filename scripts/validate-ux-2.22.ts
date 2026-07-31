@@ -403,8 +403,10 @@ assertCase(
   "ux222.roadmap.status",
   /UX-2\.22\s*=\s*COMPLETE/.test(roadmap) &&
     /Content Grammar/.test(roadmap) &&
-    (/NEXT\s*=\s*UX-2\.23/.test(roadmap) || /NEXT\s*→\s*UX-2\.23/.test(roadmap)),
-  "roadmap marks UX-2.22 COMPLETE; NEXT → UX-2.23"
+    (/NEXT\s*=\s*UX-2\.23/.test(roadmap) ||
+      /NEXT\s*→\s*UX-2\.23/.test(roadmap) ||
+      /UX-2\.23\s*=\s*COMPLETE/.test(roadmap)),
+  "roadmap marks UX-2.22 COMPLETE; NEXT → UX-2.23 (or UX-2.23 COMPLETE)"
 );
 
 assertCase(

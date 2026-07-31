@@ -1,3 +1,4 @@
+import { SurfaceDivider } from "../surface";
 import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
 
 /** UX-2.15 — Hairline separator between primary and contextual content. */
@@ -8,11 +9,11 @@ export type ContextDividerProps = {
 /**
  * UX-2.15 — Presentational divider only.
  * UX-2.21 — Spacing / color / muted via SURFACE_TOKENS.divider only.
+ * UX-2.23 — Adapts to SurfaceDivider (official surface-layer implementation).
  */
 export function ContextDivider({ className }: ContextDividerProps) {
   return (
-    <hr
-      aria-hidden
+    <SurfaceDivider
       className={
         className ??
         [

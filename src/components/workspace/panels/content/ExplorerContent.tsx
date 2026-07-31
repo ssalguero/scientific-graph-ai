@@ -24,6 +24,12 @@ import {
   SemanticSectionLabel,
   SemanticStatus,
 } from "../../semantics";
+import {
+  Surface,
+  SurfaceBody,
+  SurfaceFooter,
+  SurfaceHeader,
+} from "../../surface";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
 import { ActionButton, ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
@@ -41,6 +47,7 @@ import { PanelContentSection } from "./PanelContentSection";
  * UX-2.20 — WorkspaceIcon in leading / ActionButton.icon / EmptyState.icon.
  * UX-2.21 — Icon sizes aligned to ACTION/ICON slots; tokens for empty polish.
  * UX-2.22 — ContentGroup structure only (pixel-identical; no new visible UI).
+ * UX-2.23 — Surface presentation layer around PanelLayout regions.
  * Stable IDs: project, layers.
  * UX-2.9 — memo so resize geometry updates do not re-render content.
  * Always renders EmptyState this phase (no domain branching).
@@ -52,76 +59,84 @@ export const ExplorerContent = memo(function ExplorerContent() {
     <div data-panel-content="explorer">
       <PanelSurface variant="explorer">
         <PanelAccent position="left" tone="explorer" />
-        <PanelLayout>
-          <PanelHeaderRegion>
-            <SemanticHeader
-              title="Project"
-              leading={<WorkspaceIcon name="project" size="lg" />}
-              trailing={
-                <PanelToolbar>
-                  <ActionGroup>
-                    <ActionButton
-                      icon={<WorkspaceIcon name="add" size="lg" />}
-                      appearance="muted"
-                    >
-                      Add
-                    </ActionButton>
-                    <ActionButton
-                      icon={<WorkspaceIcon name="search" size="lg" />}
-                      appearance="muted"
-                    />
-                  </ActionGroup>
-                </PanelToolbar>
-              }
-            />
-            <SemanticStatus />
-          </PanelHeaderRegion>
-          <PanelContentRegion>
-            <WorkspaceGroup>
-              <ContentGroup>
-                <div className={SURFACE_TOKENS.contentInset}>
-                  <SemanticSectionLabel>Project</SemanticSectionLabel>
-                  <DisclosureSection title="Project" defaultExpanded>
-                    <PanelContentSection id="project" title="Project">
-                      <EmptyState
-                        icon={<WorkspaceIcon name="project" size="lg" />}
-                        title="No series"
-                        description="Create your first data series."
-                        action={
-                          <button
-                            type="button"
-                            className={`${UI_TOKENS.button.outlineSm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`}
-                            aria-label="New series"
-                          >
-                            New Series
-                          </button>
-                        }
-                      />
-                    </PanelContentSection>
-                  </DisclosureSection>
-                  <ContextDivider />
-                  <SemanticSectionLabel>Layers</SemanticSectionLabel>
-                  <AdvancedSection
-                    label="Layers"
-                    expanded={advancedOpen}
-                    onToggle={() => setAdvancedOpen((open) => !open)}
-                  >
-                    <PanelContentSection id="layers" title="Layers">
-                      <EmptyState
-                        icon={<WorkspaceIcon name="layers" size="lg" />}
-                        title="No layers"
-                        description="Layers appear when series are added to the graph."
-                      />
-                    </PanelContentSection>
-                  </AdvancedSection>
-                </div>
-              </ContentGroup>
-            </WorkspaceGroup>
-          </PanelContentRegion>
-          <PanelFooterRegion>
-            <SemanticFooter />
-          </PanelFooterRegion>
-        </PanelLayout>
+        <Surface>
+          <PanelLayout>
+            <SurfaceHeader>
+              <PanelHeaderRegion>
+                <SemanticHeader
+                  title="Project"
+                  leading={<WorkspaceIcon name="project" size="lg" />}
+                  trailing={
+                    <PanelToolbar>
+                      <ActionGroup>
+                        <ActionButton
+                          icon={<WorkspaceIcon name="add" size="lg" />}
+                          appearance="muted"
+                        >
+                          Add
+                        </ActionButton>
+                        <ActionButton
+                          icon={<WorkspaceIcon name="search" size="lg" />}
+                          appearance="muted"
+                        />
+                      </ActionGroup>
+                    </PanelToolbar>
+                  }
+                />
+                <SemanticStatus />
+              </PanelHeaderRegion>
+            </SurfaceHeader>
+            <SurfaceBody>
+              <PanelContentRegion>
+                <WorkspaceGroup>
+                  <ContentGroup>
+                    <div className={SURFACE_TOKENS.contentInset}>
+                      <SemanticSectionLabel>Project</SemanticSectionLabel>
+                      <DisclosureSection title="Project" defaultExpanded>
+                        <PanelContentSection id="project" title="Project">
+                          <EmptyState
+                            icon={<WorkspaceIcon name="project" size="lg" />}
+                            title="No series"
+                            description="Create your first data series."
+                            action={
+                              <button
+                                type="button"
+                                className={`${UI_TOKENS.button.outlineSm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`}
+                                aria-label="New series"
+                              >
+                                New Series
+                              </button>
+                            }
+                          />
+                        </PanelContentSection>
+                      </DisclosureSection>
+                      <ContextDivider />
+                      <SemanticSectionLabel>Layers</SemanticSectionLabel>
+                      <AdvancedSection
+                        label="Layers"
+                        expanded={advancedOpen}
+                        onToggle={() => setAdvancedOpen((open) => !open)}
+                      >
+                        <PanelContentSection id="layers" title="Layers">
+                          <EmptyState
+                            icon={<WorkspaceIcon name="layers" size="lg" />}
+                            title="No layers"
+                            description="Layers appear when series are added to the graph."
+                          />
+                        </PanelContentSection>
+                      </AdvancedSection>
+                    </div>
+                  </ContentGroup>
+                </WorkspaceGroup>
+              </PanelContentRegion>
+            </SurfaceBody>
+            <SurfaceFooter>
+              <PanelFooterRegion>
+                <SemanticFooter />
+              </PanelFooterRegion>
+            </SurfaceFooter>
+          </PanelLayout>
+        </Surface>
       </PanelSurface>
     </div>
   );
