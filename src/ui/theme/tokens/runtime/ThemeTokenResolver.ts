@@ -1,6 +1,7 @@
 /**
  * UX-3.2.2 — Pure Theme → ResolvedDesignTokens resolver.
- * No DOM, CSS variables, React, cache, or validation.
+ * UX-3.2.5 — TokenCache lookup/store + TokenValidation before cache.
+ * Public API unchanged: resolve(theme: ThemeId | ThemeMap): ResolvedDesignTokens
  */
 
 import { isTokenRef, primitive, semantic } from "../../../foundation/tokens";
@@ -17,6 +18,11 @@ import type { ResolvedDesignTokens } from "../contracts/ResolvedDesignTokens";
 import type { ShadowTokens } from "../contracts/ShadowTokens";
 import type { SpacingTokens } from "../contracts/SpacingTokens";
 import type { TypographyTokens } from "../contracts/TypographyTokens";
+import { TokenCache } from "./TokenCache";
+import {
+  validateResolvedDesignTokens,
+  type TokenValidationIssue,
+} from "./TokenValidation";
 
 /**
  * Walk a TokenRef tree into a new nested object of resolved CSS-ready strings.
@@ -60,10 +66,7 @@ function resolveLayout(): LayoutTokens {
   return {};
 }
 
-/** Resolve a ThemeId or ThemeMap to typed design tokens. Pure. */
-export function resolve(theme: ThemeId | ThemeMap): ResolvedDesignTokens {
-  const map = resolveThemeMap(theme);
-
+function buildResolvedTokens(map: ThemeMap): ResolvedDesignTokens {
   return {
     colors: resolveTree(map.color) as ColorTokens,
     typography: resolveTree(semantic.typography) as TypographyTokens,
@@ -74,6 +77,37 @@ export function resolve(theme: ThemeId | ThemeMap): ResolvedDesignTokens {
     elevation: resolveTree(map.elevation) as ElevationTokens,
     layout: resolveLayout(),
   };
+}
+
+function formatValidationIssues(issues: readonly TokenValidationIssue[]): string {
+  return issues
+    .map((issue) => {
+      if (issue.kind === "MissingToken") {
+        return `${issue.kind}@${issue.path}`;
+      }
+      return `${issue.kind}@${issue.path}: ${issue.detail}`;
+    })
+    .join("; ");
+}
+
+/** Resolve a ThemeId or ThemeMap to typed design tokens. Pure. */
+export function resolve(theme: ThemeId | ThemeMap): ResolvedDesignTokens {
+  const cached = TokenCache.get(theme);
+  if (cached) {
+    return cached;
+  }
+
+  const map = resolveThemeMap(theme);
+  const tokens = buildResolvedTokens(map);
+
+  const issues = validateResolvedDesignTokens(tokens);
+  if (issues.length > 0) {
+    throw new Error(
+      `Invalid ResolvedDesignTokens: ${formatValidationIssues(issues)}`,
+    );
+  }
+
+  return TokenCache.set(theme, tokens);
 }
 
 export const ThemeTokenResolver = {
