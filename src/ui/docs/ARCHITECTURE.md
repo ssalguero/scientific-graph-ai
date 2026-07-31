@@ -13,11 +13,11 @@ src/ui/
 ├── docs/                    # Technical docs (this folder)
 ├── foundation/              # Visual identity — no product JSX
 │   └── tokens/              # UX-3.1.2 Foundation Tokens (+ focus in 3.1.3)
-├── theme/                   # UX-3.1.3 Theme System (maps + CSS gen)
-└── providers/               # UX-3.1.3 ThemeProvider (package-local; not mounted)
+├── theme/                   # Theme System (maps + CSS gen + runtime UX-3.1.4)
+└── providers/               # ThemeProvider (package-local; not mounted)
 ```
 
-UX-3.1.3 implements Theme Maps, pure CSS variable generation, and a package-local ThemeProvider. UI Primitives / Components / Patterns / app wiring remain out of scope. See `THEME.md`.
+UX-3.1.3 implements Theme Maps, pure CSS variable generation, and a package-local ThemeProvider. UX-3.1.4 adds package-internal runtime validation/inspection (no public API or visual change). UI Primitives / Components / Patterns / app wiring remain out of scope. See `THEME.md`.
 
 ## Dependency Rule (package ↔ application)
 
@@ -94,17 +94,29 @@ primitive → semantic   ✗
 
 Do **not** create `foundation/theme/`. Theme runtime lives under `src/ui/theme/` + `providers/`.
 
-## Theme System (UX-3.1.3)
+## Theme System (UX-3.1.3 + runtime UX-3.1.4)
 
 See `THEME.md` for the full contract (`THEME_CONTRACT_VERSION = "3.1.3"`).
 
 ```text
 theme/
-  maps/           # light | dark | highContrastLight | highContrastDark
+  contracts/      # thin contract re-exports
+  maps/           # SSOT: light | dark | highContrastLight | highContrastDark
   css/            # pure generators (no DOM)
-  validators/     # package tests — not on @/ui
+  validators/     # validation rules — not on @/ui
+  runtime/        # orchestrator, registry, inspector, utils (not on @/ui)
+    adapters/     # UX-3.2 extension seam → validators / foundation validators
 providers/
   theme-provider.tsx   # host-only side effects; not mounted in app
+```
+
+### Runtime dependency notes
+
+```text
+runtime/ThemeValidator  →  runtime/adapters  ✓
+runtime/adapters        →  theme/validators + foundation validators  ✓
+runtime                 →  providers  ✗
+ThemeValidator          →  validators/ (direct)  ✗
 ```
 
 ## Forbidden imports

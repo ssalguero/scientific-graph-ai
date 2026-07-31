@@ -13,7 +13,10 @@
 | `foundation/icons` | Design System | Stub until later microfases |
 | `foundation/accessibility` | Design System | Facade → semantic focus |
 | `theme/**` | Design System | Theme Maps, CSS generators, theme validators |
-| `providers/` (ThemeProvider) | Design System | Package-local theme runtime; not app-mounted |
+| `theme/contracts` | Design System | Thin Theme Contract re-exports |
+| `theme/runtime` | Design System | Package-internal runtime (orchestrator, registry, inspector, utils) |
+| `theme/runtime/adapters` | Design System | UX-3.2 extension seam; delegates to existing validators |
+| `providers/` (ThemeProvider) | Design System | Package-local theme host; not app-mounted |
 | App layout wiring of ThemeProvider | Product UI | OUT until integration microfase |
 | `src/lib/ui` | Product UI (UX-2) | Current runtime SSOT — do not modify from DS work |
 
@@ -23,4 +26,4 @@ See `ARCHITECTURE.md`. Package code must not import product modules or `@/lib/ui
 
 ## Public API ownership
 
-Only `src/ui/index.ts` defines the curated public surface. Deep paths under `foundation/tokens` and `theme/validators` are implementation detail (validators stay off the root API).
+Only `src/ui/index.ts` defines the curated public surface. Deep paths under `foundation/tokens`, `theme/validators`, and `theme/runtime` are implementation detail (validators and runtime stay off the root API).

@@ -61,6 +61,15 @@ Initial Official Release
 
 ---
 
+### Theme System (UX-3.1.4)
+
+- Theme Validation & Runtime Infrastructure (package-internal)
+- `runtime/adapters/` extension seam prepared for UX-3.2
+- No public API change; `THEME_CONTRACT_VERSION` remains `3.1.3`
+- Docs: ThemeArchitecture.md, ThemeRuntime.md, ThemeValidation.md
+
+---
+
 # Future Releases
 
 ## v1.1

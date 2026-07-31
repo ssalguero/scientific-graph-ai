@@ -35,6 +35,9 @@ These documents are considered the **Single Source of Truth (SSOT)** for all UI 
 | LAYOUT.md | Application layout architecture |
 | RESPONSIVE.md | Responsive strategy and breakpoints |
 | ACCESSIBILITY.md | Accessibility requirements (WCAG 2.2 AA) |
+| ThemeArchitecture.md | Theme System architecture (themeable vs invariant, adapters seam) |
+| ThemeRuntime.md | Theme runtime utilities (registry, inspector, utils) |
+| ThemeValidation.md | Theme validation orchestration vs validators |
 
 ---
 
