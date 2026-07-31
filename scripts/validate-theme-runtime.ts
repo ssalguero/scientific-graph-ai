@@ -302,7 +302,8 @@ assertCase(
   );
   assertCase("utils.clone.equal", compareThemes(cloned, original), "clone compares equal");
 
-  cloned.color.surface.default = createTokenRef("color.red.500");
+  (cloned.color.surface as { default: ReturnType<typeof createTokenRef> }).default =
+    createTokenRef("color.red.500");
   assertCase(
     "utils.clone.immutableInput",
     compareThemes(original, lightTheme) ||

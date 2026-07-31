@@ -14,7 +14,7 @@ SCOPE = RuntimeSnapshot · SnapshotBuilder · SnapshotComparator
 ZERO production cost · NO public API · NO visual DevTools · NO Provider wiring
 API FREEZE = absolute (names + signatures)
 NO React · NO hooks · NO caches · NO Runtime mutation
-Next: UX-4.x DevTools
+Next: UX-3.9 Theme Runtime Observers Foundation
 ```
 
 ---
@@ -225,4 +225,4 @@ PASS
 - [`docs/UX/UX-3.6.md`](./UX-3.6.md)
 - [`src/ui/docs/THEME.md`](../../src/ui/docs/THEME.md)
 
-**Next:** UX-4.x DevTools
+**Next:** UX-3.9 Theme Runtime Observers Foundation

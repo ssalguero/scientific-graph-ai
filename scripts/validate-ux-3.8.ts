@@ -440,7 +440,9 @@ function isScalar(value: unknown): boolean {
   assertCase(
     block,
     "builder.noRuntimeRef",
-    !Object.values(snapA).some((v) => v === light || typeof v === "object"),
+    !Object.values(snapA).some(
+      (v) => (v as unknown) === light || typeof v === "object",
+    ),
     "snapshot retains no Runtime / object references",
   );
 }

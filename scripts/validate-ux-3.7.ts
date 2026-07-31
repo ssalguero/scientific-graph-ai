@@ -485,7 +485,7 @@ const CONTEXT_DIR = "src/ui/theme/runtime/context";
     "createSelector passthrough intact",
   );
 
-  const first = memoSelector(tokens, null, undefined, selectElevation);
+  const first = memoSelector(tokens, undefined, undefined, selectElevation);
   const second = memoSelector(tokens, tokens, first, selectElevation);
   assertCase(
     block,

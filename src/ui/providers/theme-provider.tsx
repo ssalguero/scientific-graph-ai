@@ -17,6 +17,8 @@ import {
   InternalRuntimeProvider,
   stableRuntime,
 } from "../theme/runtime/context";
+import { SnapshotBuilder } from "../theme/runtime/devtools";
+import { RuntimeNotifier } from "../theme/runtime/observer";
 import type { ThemeRuntime } from "../theme/runtime/selectors/ThemeSelector";
 import { resolve } from "../theme/tokens/runtime/ThemeTokenResolver";
 import { getStableThemeCssVars } from "./stable-theme-css-vars";
@@ -36,6 +38,7 @@ export type ThemeProviderProps = {
  * Package-local ThemeProvider (UX-3.1.3).
  * UX-3.4.3 — stable setTheme (controlled ref) + stable cssVars identity cache.
  * UX-3.7 — private ThemeRuntime identity stabilization (InternalRuntimeProvider).
+ * UX-3.9 — private Runtime observers (fingerprint notify on identity change only).
  *
  * Effects are limited to the provider host element only:
  * - sets data-theme (or configured attribute)
@@ -83,11 +86,20 @@ export function ThemeProvider({
   // UX-3.7 — obtain TokenCache-built runtime, stabilize reference only.
   const resolvedRuntime = useMemo(() => resolve(theme), [theme]);
   const previousRuntimeRef = useRef<ThemeRuntime | null>(null);
-  const stabilizedRuntime = stableRuntime(
-    resolvedRuntime,
-    previousRuntimeRef.current,
-  );
+  const previousFingerprintRef = useRef<string | undefined>(undefined);
+  const previousRuntime = previousRuntimeRef.current;
+  const stabilizedRuntime = stableRuntime(resolvedRuntime, previousRuntime);
   previousRuntimeRef.current = stabilizedRuntime;
+
+  // UX-3.9 — notify private observers only when runtime identity changes.
+  if (stabilizedRuntime !== previousRuntime) {
+    const snapshot = SnapshotBuilder.build(stabilizedRuntime);
+    RuntimeNotifier.notifyIfChanged(
+      previousFingerprintRef.current,
+      snapshot.fingerprint,
+    );
+    previousFingerprintRef.current = snapshot.fingerprint;
+  }
 
   return (
     <ThemeContext.Provider value={value}>

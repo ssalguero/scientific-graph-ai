@@ -21,7 +21,7 @@ export function memoSelector<TTokens, TResult>(
   }
 
   if (typeof tokens === "object" && tokens !== null) {
-    const runtime = tokens as ThemeRuntime;
+    const runtime = tokens as unknown as ThemeRuntime;
     if (selectorCache.has(runtime, select)) {
       return selectorCache.get(runtime, select) as TResult;
     }

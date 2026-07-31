@@ -146,7 +146,7 @@ export { useTokens } from "./hooks/useTokens";
     "export function createSelector",
   );
 
-  const sel: ThemeSelector<string> = (r) => r.colors.background;
+  const sel: ThemeSelector<string> = (r) => r.colors.surface.canvas;
   const wrapped = createSelector(sel);
   assertCase(
     block,
