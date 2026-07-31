@@ -3,16 +3,17 @@
 import {
   useCallback,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type ReactNode,
 } from "react";
 import {
   DEFAULT_THEME,
-  getThemeCssVars,
   isThemeId,
   type ThemeId,
 } from "../theme";
+import { getStableThemeCssVars } from "./stable-theme-css-vars";
 import { ThemeContext, useTheme } from "./theme-context";
 
 export type ThemeProviderProps = {
@@ -27,6 +28,7 @@ export type ThemeProviderProps = {
 
 /**
  * Package-local ThemeProvider (UX-3.1.3).
+ * UX-3.4.3 — stable setTheme (controlled ref) + stable cssVars identity cache.
  *
  * Effects are limited to the provider host element only:
  * - sets data-theme (or configured attribute)
@@ -45,22 +47,22 @@ export function ThemeProvider({
   const initial = isThemeId(defaultTheme) ? defaultTheme : DEFAULT_THEME;
   const [uncontrolled, setUncontrolled] = useState<ThemeId>(initial);
 
+  const controlledRef = useRef(controlledTheme);
+  controlledRef.current = controlledTheme;
+
   const theme: ThemeId =
     controlledTheme !== undefined && isThemeId(controlledTheme)
       ? controlledTheme
       : uncontrolled;
 
-  const setTheme = useCallback(
-    (next: ThemeId) => {
-      if (!isThemeId(next)) return;
-      if (controlledTheme === undefined) {
-        setUncontrolled(next);
-      }
-    },
-    [controlledTheme],
-  );
+  const setTheme = useCallback((next: ThemeId) => {
+    if (!isThemeId(next)) return;
+    if (controlledRef.current === undefined) {
+      setUncontrolled(next);
+    }
+  }, []);
 
-  const cssVars = useMemo(() => getThemeCssVars(theme), [theme]);
+  const cssVars = useMemo(() => getStableThemeCssVars(theme), [theme]);
 
   const hostStyle = useMemo(() => {
     return cssVars as CSSProperties;

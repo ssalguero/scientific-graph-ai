@@ -70,6 +70,16 @@ Initial Official Release
 
 ---
 
+### Theme Runtime Optimization (UX-3.4)
+
+- Transparent resolver/cache/React runtime optimizations (package-internal)
+- Shared invariant domains (lazy-once, frozen); WeakMap fingerprint memo (non-semantic)
+- Private Benchmark / PerformanceCounters / RuntimeMetrics (not exported; hot path unwired)
+- No public API change; API Freeze preserved (UX-3.1 → UX-3.3)
+- Docs: `docs/UX/UX-3.4.md`
+
+---
+
 # Future Releases
 
 ## v1.1

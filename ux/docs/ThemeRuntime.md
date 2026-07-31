@@ -72,7 +72,12 @@ Pure and immutable:
 
 `runtime/adapters/` is the documented extension point for UX-3.2. See `ThemeValidation.md`.
 
+## UX-3.4 — Runtime Optimization
+
+Token-resolution hot path (`tokens/runtime/`) gained private, non-exported optimizations (shared invariant domains, cache fingerprint memo, React reference stability, benchmark helpers). See [`docs/UX/UX-3.4.md`](../../docs/UX/UX-3.4.md). Public barrels and Theme Registry APIs in this folder are unchanged.
+
 ## Related docs
 
 - `ThemeArchitecture.md`
 - `ThemeValidation.md`
+- `docs/UX/UX-3.4.md`

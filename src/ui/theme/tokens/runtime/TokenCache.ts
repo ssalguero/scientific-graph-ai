@@ -1,13 +1,24 @@
 /**
  * UX-3.2.3 — Immutable cache for ResolvedDesignTokens.
+ * UX-3.4.2 — WeakMap fingerprint memo (non-semantic) + skip redundant freeze.
  * Optimization only — no resolution, validation, React, DOM, or CSS.
+ *
+ * WeakMap entries are an optimization only and MUST NOT participate in
+ * observable cache semantics. The string-key Map is the sole source of truth.
  */
 
 import type { ThemeId } from "../../ids";
 import type { ThemeMap } from "../../types";
 import type { ResolvedDesignTokens } from "../contracts/ResolvedDesignTokens";
 
+/** Sole source of observable cache semantics. */
 const store = new Map<string, ResolvedDesignTokens>();
+
+/**
+ * Optional fingerprint memo for ad-hoc ThemeMap objects.
+ * Miss / GC / unused → fall back to full fingerprint; same observable result.
+ */
+const fingerprintMemo = new WeakMap<object, string>();
 
 /** Deep-freeze a value graph. Safe on already-frozen subtrees. */
 function deepFreeze<T>(value: T): T {
@@ -20,6 +31,24 @@ function deepFreeze<T>(value: T): T {
   }
 
   return Object.freeze(value);
+}
+
+/**
+ * True when the entire object graph is already frozen (no walk needed).
+ */
+function isFullyFrozen(value: unknown): boolean {
+  if (value === null || typeof value !== "object") {
+    return true;
+  }
+  if (!Object.isFrozen(value)) {
+    return false;
+  }
+  for (const child of Object.values(value as object)) {
+    if (!isFullyFrozen(child)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -59,7 +88,16 @@ function toCacheKey(theme: ThemeId | ThemeMap): string {
   if (typeof theme === "string") {
     return theme;
   }
-  return `adhoc:${fingerprintThemeMap(theme)}`;
+
+  // WeakMap is non-semantic: miss → same fingerprint as without memo.
+  const memoized = fingerprintMemo.get(theme);
+  if (memoized !== undefined) {
+    return `adhoc:${memoized}`;
+  }
+
+  const fingerprint = fingerprintThemeMap(theme);
+  fingerprintMemo.set(theme, fingerprint);
+  return `adhoc:${fingerprint}`;
 }
 
 export const TokenCache = {
@@ -73,18 +111,20 @@ export const TokenCache = {
 
   /**
    * Deep-freeze via private deepFreeze() and store. Returns the frozen reference.
-   * Not wired to ThemeTokenResolver in UX-3.2.3 — consumers call set explicitly.
+   * Skips redundant freeze walks when the graph is already fully frozen.
    */
   set(
     theme: ThemeId | ThemeMap,
     tokens: ResolvedDesignTokens,
   ): ResolvedDesignTokens {
-    const frozen = deepFreeze(tokens);
+    const frozen = isFullyFrozen(tokens) ? tokens : deepFreeze(tokens);
     store.set(toCacheKey(theme), frozen);
     return frozen;
   },
 
   clear(): void {
+    // Observable reset: drop string store. WeakMap entries become unreachable
+    // with ThemeMap GC; they never alter which tokens are returned.
     store.clear();
   },
 } as const;
