@@ -76,8 +76,21 @@ Pure and immutable:
 
 Token-resolution hot path (`tokens/runtime/`) gained private, non-exported optimizations (shared invariant domains, cache fingerprint memo, React reference stability, benchmark helpers). See [`docs/UX/UX-3.4.md`](../../docs/UX/UX-3.4.md). Public barrels and Theme Registry APIs in this folder are unchanged.
 
+## UX-3.5 — Theme Hooks & Consumption API
+
+Consumption façade under `theme/hooks/` (freeze-safe):
+
+- Certified UX-3.3 `*Token` helpers unchanged
+- New identity hooks: `useElevation`, `useMotion`
+- Private `selectors.ts` / `helpers.ts` (not exported)
+- `useTokens` remains under `theme/tokens/hooks` only
+- Provider `useTheme` and Runtime unchanged
+
+See [`docs/UX/UX-3.5.md`](../../docs/UX/UX-3.5.md).
+
 ## Related docs
 
 - `ThemeArchitecture.md`
 - `ThemeValidation.md`
 - `docs/UX/UX-3.4.md`
+- `docs/UX/UX-3.5.md`

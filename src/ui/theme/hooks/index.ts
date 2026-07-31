@@ -1,11 +1,11 @@
 /**
- * UX-3.3.1 — Consumption-layer hooks for Design System components.
+ * UX-3.5 — Consumption-layer hooks for Design System components.
  *
  * Layer rule:
- * - useTokens belongs to Runtime (theme/tokens/hooks/) — do not move.
- * - use*Token helpers belong here (consumption) — pure delegators only.
+ * - useTokens belongs to Runtime (theme/tokens/hooks/) — do not re-export here.
+ * - use*Token / useElevation / useMotion helpers belong here — pure delegators only.
  *
- * Coexists with theme/tokens/index.ts; does not replace the Runtime barrel.
+ * Private modules (selectors.ts, helpers.ts) are not part of this barrel.
  */
 
 export * from "./useColorToken";
@@ -13,4 +13,5 @@ export * from "./useSpacingToken";
 export * from "./useTypographyToken";
 export * from "./useRadiusToken";
 export * from "./useShadowToken";
-export { useTokens } from "../tokens/hooks/useTokens";
+export * from "./useElevation";
+export * from "./useMotion";

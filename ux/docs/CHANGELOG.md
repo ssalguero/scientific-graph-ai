@@ -80,6 +80,16 @@ Initial Official Release
 
 ---
 
+### Theme Hooks & Consumption API (UX-3.5)
+
+- Freeze-safe consumption façade: `useElevation`, `useMotion` (identity views over Runtime)
+- Private `selectors.ts` / `helpers.ts` (not barreled); `memoSelector` reserved unused
+- `theme/hooks` barrel exports certified `*Token` hooks + new hooks only (no `useTokens` re-export)
+- No Runtime / Provider / contract / visual change; API Freeze preserved
+- Docs: `docs/UX/UX-3.5.md`; gate: `validate:ux-3.5`
+
+---
+
 # Future Releases
 
 ## v1.1

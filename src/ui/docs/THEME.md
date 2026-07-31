@@ -136,14 +136,19 @@ UX-3.1.4 does **not** bump `THEME_CONTRACT_VERSION` (remains `"3.1.3"`).
 Exports theme data + generators + `ThemeProvider` / `useTheme`.
 Does **not** export theme validators or runtime.
 
+Package-local consumption (UX-3.5): `src/ui/theme/hooks` exports certified `*Token` helpers plus `useElevation` / `useMotion`. `useTokens` lives under `theme/tokens/hooks` only. Not re-exported from `@/ui`.
+
 Consumption freeze: no application imports of `@/ui` until an integration microfase authorizes wiring.
 
 ## Gate
 
 ```text
 npm run validate:theme-runtime
+npm run validate:ux-3.3
+npm run validate:ux-3.4
+npm run validate:ux-3.5
 ```
 
 ## Integration Contract (future — not implemented here)
 
-Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Design Tokens Integration / component consumption → UX-3.2.
+Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks → UX-3.6.
