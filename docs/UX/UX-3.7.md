@@ -15,7 +15,7 @@ SOT = TokenCache (único constructor de ThemeRuntime)
 UX-3.7 = stabilize + reuse only · NEVER create runtimes · NEVER replace TokenCache
 API FREEZE = absolute (ThemeContext · ThemeRuntime alias · hooks · selectors)
 NO public hooks · NO public exports · NO second semantic cache · NO Jest
-Next: UX-3.8 Runtime instrumentation / perf measurement
+Next: UX-3.8 Theme Runtime Snapshot & DevTools Foundation COMPLETE → UX-4.x DevTools
 ```
 
 ---

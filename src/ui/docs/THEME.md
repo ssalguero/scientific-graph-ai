@@ -153,8 +153,9 @@ npm run validate:ux-3.4
 npm run validate:ux-3.5
 npm run validate:ux-3.6
 npm run validate:ux-3.7
+npm run validate:ux-3.8
 ```
 
 ## Integration Contract (future — not implemented here)
 
-Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Runtime instrumentation / perf measurement → UX-3.8.
+Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Theme Runtime Snapshot & DevTools Foundation → UX-3.8 COMPLETE. Visual / interactive DevTools → UX-4.x.
