@@ -67,7 +67,8 @@ function collectImports(src: string): string[] {
 }
 
 const DIAG_DIR = "src/ui/theme/runtime/diagnostics";
-const REQUIRED_FILES = [
+/** UX-3.11 DiagnosticEngine files — purity / cycle constraints apply here. */
+const ENGINE_FILES = [
   "DiagnosticLevel.ts",
   "DiagnosticCode.ts",
   "RuntimeDiagnostic.ts",
@@ -76,6 +77,9 @@ const REQUIRED_FILES = [
   "RuntimeHealth.ts",
   "index.ts",
 ] as const;
+/** UX-3.20 facade — allowed to import RuntimePipeline + type-only deps. */
+const FACADE_FILE = "RuntimeDiagnostics.ts";
+const REQUIRED_FILES = [...ENGINE_FILES, FACADE_FILE] as const;
 
 const EXPECTED_CODES = [
   "EMPTY_REGISTRY",
@@ -96,7 +100,7 @@ const EXPECTED_RULE_ORDER = [
 ] as const;
 
 function readDiagSources(): string {
-  return REQUIRED_FILES.map((f) => read(`${DIAG_DIR}/${f}`)).join("\n");
+  return ENGINE_FILES.map((f) => read(`${DIAG_DIR}/${f}`)).join("\n");
 }
 
 function emptyMetrics(
@@ -179,6 +183,7 @@ function baseSnapshot(
     "RuntimeDiagnosticBuilder",
     "RuntimeDiagnosticEngine",
     "RuntimeHealth",
+    "RuntimeDiagnostics",
   ];
   for (const name of reexports) {
     assertCase(
@@ -772,7 +777,6 @@ function baseSnapshot(
     /providers/,
     /theme-provider/,
     /observer/,
-    /selectors/,
     /context/,
     /RuntimeMetricsCollector/,
     /RuntimeNotifier/,
@@ -782,14 +786,16 @@ function baseSnapshot(
     /runtime\/index/,
   ];
 
-  for (const f of REQUIRED_FILES) {
+  // UX-3.11 engine files: sibling + snapshot type imports only
+  for (const f of ENGINE_FILES) {
     const imports = collectImports(stripComments(read(`${DIAG_DIR}/${f}`)));
     for (const spec of imports) {
       const isSibling = spec.startsWith("./");
       const isSnap =
         /devtools\/RuntimeSnapshot/.test(spec) ||
         /metrics\/RuntimeMetricsSnapshot/.test(spec);
-      const bannedHit = banned.some((re) => re.test(spec));
+      const bannedHit =
+        banned.some((re) => re.test(spec)) || /selectors/.test(spec);
       assertCase(
         block,
         `cycles.${f}.${spec}`,
@@ -800,6 +806,32 @@ function baseSnapshot(
       );
     }
   }
+
+  // UX-3.20 facade: RuntimePipeline + type-only ThemeRuntime / ReportSnapshot
+  const facadeAllowed = new Set([
+    "../pipeline/RuntimePipeline",
+    "../selectors/ThemeSelector",
+    "../report/RuntimeReportTypes",
+  ]);
+  const facadeImports = collectImports(
+    stripComments(read(`${DIAG_DIR}/${FACADE_FILE}`)),
+  );
+  for (const spec of facadeImports) {
+    assertCase(
+      block,
+      `cycles.${FACADE_FILE}.${spec}`,
+      facadeAllowed.has(spec),
+      facadeAllowed.has(spec)
+        ? `ok facade import ${spec}`
+        : `unexpected facade import ${spec}`,
+    );
+  }
+  assertCase(
+    block,
+    `cycles.${FACADE_FILE}.hasPipeline`,
+    facadeImports.includes("../pipeline/RuntimePipeline"),
+    "RuntimeDiagnostics imports RuntimePipeline",
+  );
 }
 
 /* -------------------------------------------------------------------------- */

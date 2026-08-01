@@ -65,6 +65,8 @@ function fileHash(rel: string): string {
 
 const REPORTER_PATH = "src/ui/theme/runtime/RuntimeReporter.ts";
 const PIPELINE_PATH = "src/ui/theme/runtime/pipeline/RuntimePipeline.ts";
+const DIAGNOSTICS_PATH =
+  "src/ui/theme/runtime/diagnostics/RuntimeDiagnostics.ts";
 const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
@@ -190,11 +192,14 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
   assertCase(
     block,
     "sig.returnStatement",
-    /const\s+report\s*=\s*RuntimePipeline\.run\s*\(\s*runtime\s*\)/.test(src) &&
+    /const\s+report\s*=\s*RuntimeDiagnostics\.collect\s*\(\s*runtime\s*\)/.test(
+      src,
+    ) &&
       /return\s+report\s*;/.test(src) &&
       !/return\s+report\.health\s*;/.test(src) &&
-      !/return\s+runtimeReport\.health\s*;/.test(src),
-    "return report via RuntimePipeline.run (not .health)",
+      !/return\s+runtimeReport\.health\s*;/.test(src) &&
+      !/\bRuntimePipeline\b/.test(src),
+    "return report via RuntimeDiagnostics.collect (not Pipeline / not .health)",
   );
 
   assertCase(
@@ -285,7 +290,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
   const pipelineSrc = stripComments(read(PIPELINE_PATH));
 
   const reporterAllowed = [
-    "./pipeline/RuntimePipeline",
+    "./diagnostics/RuntimeDiagnostics",
     "./selectors/ThemeSelector",
     "./report/RuntimeReportTypes",
   ];
@@ -302,8 +307,22 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
     "imports.reporterOnlyAllowed",
     reporterUnexpected.length === 0,
     reporterUnexpected.length === 0
-      ? "RuntimeReporter imports = RuntimePipeline + types"
+      ? "RuntimeReporter imports = RuntimeDiagnostics + types"
       : `unexpected reporter imports: ${reporterUnexpected.join(", ")}`,
+  );
+
+  // UX-3.20 — Pipeline delegation lives on RuntimeDiagnostics
+  const diagnosticsSrc = stripComments(read(DIAGNOSTICS_PATH));
+  assertCase(
+    block,
+    "imports.diagnosticsDelegatesPipeline",
+    /const\s+report\s*=\s*RuntimePipeline\.run\s*\(\s*runtime\s*\)/.test(
+      diagnosticsSrc,
+    ) &&
+      /return\s+report\s*;/.test(diagnosticsSrc) &&
+      !/return\s+report\.health\s*;/.test(diagnosticsSrc) &&
+      /from\s+["']\.\.\/pipeline\/RuntimePipeline["']/.test(diagnosticsSrc),
+    "RuntimeDiagnostics.collect → RuntimePipeline.run → return report",
   );
 
   const pipelineAllowed = [

@@ -695,11 +695,12 @@ function fixtures(): {
       !/return\s+runtimeReport\.health\s*;/.test(reporterOrchestrator) &&
       !/\bRuntimeReportBuilder\b/.test(reporterOrchestrator) &&
       /\bRuntimeReportSnapshot\b/.test(reporterFacade) &&
-      /RuntimePipeline\.run/.test(reporterFacade) &&
+      /RuntimeDiagnostics\.collect/.test(reporterFacade) &&
+      !/RuntimePipeline/.test(reporterFacade) &&
       /return\s+report\s*;/.test(reporterFacade) &&
       !/return\s+report\.health\s*;/.test(reporterFacade) &&
       !/report\.build\s*\(/.test(reporterOrchestrator),
-    "RuntimePipeline returns RuntimeReportSnapshot via RuntimeReportReporter; RuntimeReporter delegates (UX-3.19)",
+    "RuntimePipeline returns RuntimeReportSnapshot via RuntimeReportReporter; RuntimeReporter → RuntimeDiagnostics.collect (UX-3.20)",
   );
 
   const providerCandidates = [

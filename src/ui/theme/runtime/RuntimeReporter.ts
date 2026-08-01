@@ -1,20 +1,20 @@
 /**
- * UX-3.19 — Private Theme Runtime reporting facade.
+ * UX-3.20 — Private Theme Runtime reporting facade.
  *
- * Delegates the full private diagnostics pipeline to RuntimePipeline:
+ * Delegates to RuntimeDiagnostics.collect(...):
  * Snapshot → Metrics → Health → Aggregation → Telemetry → Report
  * → return report (RuntimeReportSnapshot).
  *
  * Not exported from any public barrel. Knows no internal pipeline steps —
- * only RuntimePipeline.run(...).
+ * only RuntimeDiagnostics.collect(...).
  */
 
-import { RuntimePipeline } from "./pipeline/RuntimePipeline";
+import { RuntimeDiagnostics } from "./diagnostics/RuntimeDiagnostics";
 import type { ThemeRuntime } from "./selectors/ThemeSelector";
 import type { RuntimeReportSnapshot } from "./report/RuntimeReportTypes";
 
 function build(runtime: ThemeRuntime): Readonly<RuntimeReportSnapshot> {
-  const report = RuntimePipeline.run(runtime);
+  const report = RuntimeDiagnostics.collect(runtime);
   return report;
 }
 

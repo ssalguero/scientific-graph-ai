@@ -78,6 +78,8 @@ function walkFiles(dir: string, acc: string[] = []): string[] {
 
 const REPORTER_PATH = "src/ui/theme/runtime/RuntimeReporter.ts";
 const PIPELINE_PATH = "src/ui/theme/runtime/pipeline/RuntimePipeline.ts";
+const DIAGNOSTICS_PATH =
+  "src/ui/theme/runtime/diagnostics/RuntimeDiagnostics.ts";
 const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 const RUNTIME_ROOT = "src/ui/theme/runtime";
 
@@ -88,12 +90,15 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
 {
   const block: BlockId = "delegation";
   const src = stripComments(read(REPORTER_PATH));
+  const diagSrc = stripComments(read(DIAGNOSTICS_PATH));
 
   assertCase(
     block,
-    "delegates.run",
-    /const\s+report\s*=\s*RuntimePipeline\.run\s*\(\s*runtime\s*\)/.test(src),
-    "const report = RuntimePipeline.run(runtime)",
+    "delegates.collect",
+    /const\s+report\s*=\s*RuntimeDiagnostics\.collect\s*\(\s*runtime\s*\)/.test(
+      src,
+    ),
+    "const report = RuntimeDiagnostics.collect(runtime)",
   );
 
   assertCase(
@@ -101,6 +106,13 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
     "delegates.returnReport",
     /return\s+report\s*;/.test(src) && !/return\s+report\.health\s*;/.test(src),
     "return report (not report.health)",
+  );
+
+  assertCase(
+    block,
+    "delegates.noPipelineInReporter",
+    !/\bRuntimePipeline\b/.test(src),
+    "RuntimeReporter does not reference RuntimePipeline",
   );
 
   assertCase(
@@ -124,13 +136,22 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
   assertCase(
     block,
     "delegates.buildBodyMinimal",
-    /RuntimePipeline\.run/.test(body) &&
+    /RuntimeDiagnostics\.collect/.test(body) &&
       /return\s+report\s*;/.test(body) &&
       !/\bnew\s+/.test(body) &&
       !/\{\s*\.\.\./.test(body) &&
       !/\bObject\.assign\b/.test(body) &&
       !/\bstructuredClone\b/.test(body),
-    "build() body is only pipeline.run + return report",
+    "build() body is only Diagnostics.collect + return report",
+  );
+
+  assertCase(
+    block,
+    "delegates.diagnosticsRunsPipeline",
+    /const\s+report\s*=\s*RuntimePipeline\.run\s*\(\s*runtime\s*\)/.test(
+      diagSrc,
+    ) && /return\s+report\s*;/.test(diagSrc),
+    "RuntimeDiagnostics.collect → RuntimePipeline.run → return report",
   );
 }
 
@@ -224,13 +245,14 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
 {
   const block: BlockId = "reporterNoLayerImports";
   const src = stripComments(read(REPORTER_PATH));
+  const diagSrc = stripComments(read(DIAGNOSTICS_PATH));
 
   const fromMatches = [...src.matchAll(/from\s+["']([^"']+)["']/g)].map(
     (m) => m[1],
   );
 
   const allowedFrom = [
-    "./pipeline/RuntimePipeline",
+    "./diagnostics/RuntimeDiagnostics",
     "./selectors/ThemeSelector",
     "./report/RuntimeReportTypes",
   ];
@@ -242,8 +264,36 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
     "imports.onlyAllowed",
     unexpected.length === 0,
     unexpected.length === 0
-      ? "imports = RuntimePipeline + ThemeRuntime type + RuntimeReportSnapshot type"
+      ? "imports = RuntimeDiagnostics + ThemeRuntime type + RuntimeReportSnapshot type"
       : `unexpected imports: ${unexpected.join(", ")}`,
+  );
+
+  assertCase(
+    block,
+    "imports.noPipelineInReporter",
+    !/\bRuntimePipeline\b/.test(src) &&
+      !fromMatches.some((f) => /pipeline/.test(f)),
+    "RuntimeReporter does not import RuntimePipeline",
+  );
+
+  const diagFrom = [...diagSrc.matchAll(/from\s+["']([^"']+)["']/g)].map(
+    (m) => m[1],
+  );
+  const diagAllowed = [
+    "../pipeline/RuntimePipeline",
+    "../selectors/ThemeSelector",
+    "../report/RuntimeReportTypes",
+  ];
+  const diagUnexpected = diagFrom.filter((f) => !diagAllowed.includes(f));
+
+  assertCase(
+    block,
+    "imports.diagnosticsOnlyAllowed",
+    diagUnexpected.length === 0 &&
+      diagFrom.includes("../pipeline/RuntimePipeline"),
+    diagUnexpected.length === 0
+      ? "RuntimeDiagnostics imports = RuntimePipeline + types"
+      : `unexpected diagnostics imports: ${diagUnexpected.join(", ")}`,
   );
 
   const banned = [
@@ -262,14 +312,17 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
   ];
 
   const foundBanned = banned.filter((s) => new RegExp(`\\b${s}\\b`).test(src));
+  const foundBannedDiag = banned.filter((s) =>
+    new RegExp(`\\b${s}\\b`).test(diagSrc),
+  );
 
   assertCase(
     block,
     "imports.noLayerSymbols",
-    foundBanned.length === 0,
-    foundBanned.length === 0
+    foundBanned.length === 0 && foundBannedDiag.length === 0,
+    foundBanned.length === 0 && foundBannedDiag.length === 0
       ? "no Snapshot/Metrics/Health/Aggregation/Telemetry/Report layer imports"
-      : `banned symbols: ${foundBanned.join(", ")}`,
+      : `banned symbols: ${[...foundBanned, ...foundBannedDiag].join(", ")}`,
   );
 }
 
@@ -462,14 +515,24 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
 {
   const block: BlockId = "behaviorParity";
   const src = stripComments(read(REPORTER_PATH));
+  const diagSrc = stripComments(read(DIAGNOSTICS_PATH));
 
   assertCase(
     block,
     "parity.directReturn",
-    /const\s+report\s*=\s*RuntimePipeline\.run\s*\(\s*runtime\s*\)\s*;\s*return\s+report\s*;/.test(
+    /const\s+report\s*=\s*RuntimeDiagnostics\.collect\s*\(\s*runtime\s*\)\s*;\s*return\s+report\s*;/.test(
       src,
     ),
-    "returns exactly the object from RuntimePipeline.run (no transform)",
+    "returns exactly the object from RuntimeDiagnostics.collect (no transform)",
+  );
+
+  assertCase(
+    block,
+    "parity.diagnosticsDirectReturn",
+    /const\s+report\s*=\s*RuntimePipeline\.run\s*\(\s*runtime\s*\)\s*;\s*return\s+report\s*;/.test(
+      diagSrc,
+    ),
+    "RuntimeDiagnostics returns exactly RuntimePipeline.run result",
   );
 
   assertCase(
@@ -477,14 +540,20 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
     "parity.noClone",
     !/\bstructuredClone\b/.test(src) &&
       !/\bJSON\.parse\b/.test(src) &&
-      !/\bJSON\.stringify\b/.test(src),
+      !/\bJSON\.stringify\b/.test(src) &&
+      !/\bstructuredClone\b/.test(diagSrc) &&
+      !/\bJSON\.parse\b/.test(diagSrc) &&
+      !/\bJSON\.stringify\b/.test(diagSrc),
     "no clone",
   );
 
   assertCase(
     block,
     "parity.noSpread",
-    !/\{\s*\.\.\./.test(src) && !/\[\s*\.\.\./.test(src),
+    !/\{\s*\.\.\./.test(src) &&
+      !/\[\s*\.\.\./.test(src) &&
+      !/\{\s*\.\.\./.test(diagSrc) &&
+      !/\[\s*\.\.\./.test(diagSrc),
     "no spread",
   );
 
@@ -493,7 +562,10 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
     "parity.noMapping",
     !/\.map\s*\(/.test(src) &&
       !/\bObject\.assign\b/.test(src) &&
-      !/\bObject\.fromEntries\b/.test(src),
+      !/\bObject\.fromEntries\b/.test(src) &&
+      !/\.map\s*\(/.test(diagSrc) &&
+      !/\bObject\.assign\b/.test(diagSrc) &&
+      !/\bObject\.fromEntries\b/.test(diagSrc),
     "no mapping / Object.assign reconstruction",
   );
 
@@ -501,7 +573,9 @@ const RUNTIME_ROOT = "src/ui/theme/runtime";
     block,
     "parity.noHealthProjection",
     !/return\s+report\.health\s*;/.test(src) &&
-      !/return\s+.*\.health\s*;/.test(src),
+      !/return\s+.*\.health\s*;/.test(src) &&
+      !/return\s+report\.health\s*;/.test(diagSrc) &&
+      !/return\s+.*\.health\s*;/.test(diagSrc),
     "no .health projection",
   );
 

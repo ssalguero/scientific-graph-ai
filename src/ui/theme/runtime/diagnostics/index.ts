@@ -1,5 +1,5 @@
 /**
- * UX-3.11 — Private runtime diagnostics barrel.
+ * UX-3.11 / UX-3.20 — Private runtime diagnostics barrel.
  * Not re-exported from @/ui, theme/index, runtime/index, hooks/index, or providers/index.
  */
 
@@ -9,3 +9,4 @@ export type { RuntimeDiagnostic } from "./RuntimeDiagnostic";
 export { RuntimeDiagnosticBuilder } from "./RuntimeDiagnosticBuilder";
 export { RuntimeDiagnosticEngine } from "./RuntimeDiagnosticEngine";
 export type { RuntimeHealth } from "./RuntimeHealth";
+export { RuntimeDiagnostics } from "./RuntimeDiagnostics";
