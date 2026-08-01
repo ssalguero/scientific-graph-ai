@@ -64,6 +64,7 @@ function fileHash(rel: string): string {
 }
 
 const REPORTER_PATH = "src/ui/theme/runtime/RuntimeReporter.ts";
+const PIPELINE_PATH = "src/ui/theme/runtime/pipeline/RuntimePipeline.ts";
 const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
@@ -189,9 +190,11 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
   assertCase(
     block,
     "sig.returnStatement",
-    /return\s+runtimeReport\s*;/.test(src) &&
+    /const\s+report\s*=\s*RuntimePipeline\.run\s*\(\s*runtime\s*\)/.test(src) &&
+      /return\s+report\s*;/.test(src) &&
+      !/return\s+report\.health\s*;/.test(src) &&
       !/return\s+runtimeReport\.health\s*;/.test(src),
-    "return runtimeReport (not runtimeReport.health)",
+    "return report via RuntimePipeline.run (not .health)",
   );
 
   assertCase(
@@ -209,7 +212,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
 {
   const block: BlockId = "pipelineOrder";
-  const src = stripComments(read(REPORTER_PATH));
+  const src = stripComments(read(PIPELINE_PATH));
 
   const snapIdx = src.search(/SnapshotBuilder\.build\s*\(\s*runtime\s*\)/);
   const metsIdx = src.search(/RuntimeMetricsReporter\.getSnapshot\s*\(\s*\)/);
@@ -278,43 +281,70 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
 {
   const block: BlockId = "noNewImports";
-  const src = stripComments(read(REPORTER_PATH));
+  const reporterSrc = stripComments(read(REPORTER_PATH));
+  const pipelineSrc = stripComments(read(PIPELINE_PATH));
 
-  const allowedFrom = [
-    "./devtools/SnapshotBuilder",
-    "./metrics/RuntimeMetricsReporter",
-    "./health/RuntimeHealthReporter",
-    "./aggregation/RuntimeAggregationAccumulator",
-    "./aggregation/RuntimeAggregationReporter",
-    "./telemetry/RuntimeTelemetryCollector",
-    "./telemetry/RuntimeTelemetryReporter",
-    "./report/RuntimeReportCollector",
-    "./report/RuntimeReportReporter",
+  const reporterAllowed = [
+    "./pipeline/RuntimePipeline",
     "./selectors/ThemeSelector",
     "./report/RuntimeReportTypes",
   ];
 
-  const fromMatches = [...src.matchAll(/from\s+["']([^"']+)["']/g)].map(
-    (m) => m[1],
+  const reporterFrom = [
+    ...reporterSrc.matchAll(/from\s+["']([^"']+)["']/g),
+  ].map((m) => m[1]);
+  const reporterUnexpected = reporterFrom.filter(
+    (f) => !reporterAllowed.includes(f),
   );
-
-  const unexpected = fromMatches.filter((f) => !allowedFrom.includes(f));
 
   assertCase(
     block,
-    "imports.onlyAllowed",
-    unexpected.length === 0,
-    unexpected.length === 0
-      ? "imports match UX-3.17 set + RuntimeReportTypes"
-      : `unexpected imports: ${unexpected.join(", ")}`,
+    "imports.reporterOnlyAllowed",
+    reporterUnexpected.length === 0,
+    reporterUnexpected.length === 0
+      ? "RuntimeReporter imports = RuntimePipeline + types"
+      : `unexpected reporter imports: ${reporterUnexpected.join(", ")}`,
+  );
+
+  const pipelineAllowed = [
+    "../devtools/SnapshotBuilder",
+    "../metrics/RuntimeMetricsReporter",
+    "../health/RuntimeHealthReporter",
+    "../aggregation/RuntimeAggregationAccumulator",
+    "../aggregation/RuntimeAggregationReporter",
+    "../telemetry/RuntimeTelemetryCollector",
+    "../telemetry/RuntimeTelemetryReporter",
+    "../report/RuntimeReportCollector",
+    "../report/RuntimeReportReporter",
+    "../selectors/ThemeSelector",
+    "../report/RuntimeReportTypes",
+  ];
+
+  const pipelineFrom = [
+    ...pipelineSrc.matchAll(/from\s+["']([^"']+)["']/g),
+  ].map((m) => m[1]);
+  const pipelineUnexpected = pipelineFrom.filter(
+    (f) => !pipelineAllowed.includes(f),
+  );
+
+  assertCase(
+    block,
+    "imports.pipelineOnlyAllowed",
+    pipelineUnexpected.length === 0,
+    pipelineUnexpected.length === 0
+      ? "RuntimePipeline imports match UX-3.17 layer set + RuntimeReportTypes"
+      : `unexpected pipeline imports: ${pipelineUnexpected.join(", ")}`,
   );
 
   assertCase(
     block,
     "imports.noBuilders",
-    !/\bRuntimeAggregationBuilder\b/.test(src) &&
-      !/\bRuntimeTelemetryBuilder\b/.test(src) &&
-      !/\bRuntimeReportBuilder\b/.test(src),
+    !/\bRuntimeAggregationBuilder\b/.test(reporterSrc) &&
+      !/\bRuntimeTelemetryBuilder\b/.test(reporterSrc) &&
+      !/\bRuntimeReportBuilder\b/.test(reporterSrc) &&
+      !/\bRuntimeAggregationBuilder\b/.test(pipelineSrc) &&
+      !/\bRuntimeTelemetryBuilder\b/.test(pipelineSrc) &&
+      !/\bRuntimeReportBuilder\b/.test(pipelineSrc),
     "no Builder imports",
   );
 }
@@ -413,7 +443,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
 {
   const block: BlockId = "encapsulation";
-  const src = stripComments(read(REPORTER_PATH));
+  const src = stripComments(read(PIPELINE_PATH));
 
   assertCase(
     block,

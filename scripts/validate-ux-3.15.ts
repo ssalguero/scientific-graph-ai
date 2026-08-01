@@ -59,6 +59,7 @@ function stripComments(src: string): string {
 }
 
 const REPORTER_PATH = "src/ui/theme/runtime/RuntimeReporter.ts";
+const PIPELINE_PATH = "src/ui/theme/runtime/pipeline/RuntimePipeline.ts";
 const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 
 /* -------------------------------------------------------------------------- */
@@ -144,7 +145,7 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 
 {
   const block: BlockId = "pipelineOrder";
-  const src = stripComments(read(REPORTER_PATH));
+  const src = stripComments(read(PIPELINE_PATH));
 
   const snapIdx = src.search(/SnapshotBuilder\.build\s*\(\s*runtime\s*\)/);
   const metsIdx = src.search(/RuntimeMetricsReporter\.getSnapshot\s*\(\s*\)/);
@@ -229,7 +230,7 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 
 {
   const block: BlockId = "encapsulation";
-  const src = stripComments(read(REPORTER_PATH));
+  const src = stripComments(read(PIPELINE_PATH));
 
   assertCase(
     block,
@@ -466,7 +467,8 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 
 {
   const block: BlockId = "sharedRefs";
-  const src = stripComments(read(REPORTER_PATH));
+  const src = stripComments(read(PIPELINE_PATH));
+  const reporterSrc = stripComments(read(REPORTER_PATH));
 
   assertCase(
     block,
@@ -474,8 +476,12 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
     !/\bstructuredClone\b/.test(src) &&
       !/\bJSON\.parse\b/.test(src) &&
       !/\bJSON\.stringify\b/.test(src) &&
-      !/\{\s*\.\.\./.test(src),
-    "RuntimeReporter has no deep copies / object spreads",
+      !/\{\s*\.\.\./.test(src) &&
+      !/\bstructuredClone\b/.test(reporterSrc) &&
+      !/\bJSON\.parse\b/.test(reporterSrc) &&
+      !/\bJSON\.stringify\b/.test(reporterSrc) &&
+      !/\{\s*\.\.\./.test(reporterSrc),
+    "RuntimePipeline/RuntimeReporter have no deep copies / object spreads",
   );
 
   assertCase(

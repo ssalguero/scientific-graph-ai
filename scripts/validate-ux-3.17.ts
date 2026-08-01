@@ -58,6 +58,7 @@ function stripComments(src: string): string {
 }
 
 const REPORTER_PATH = "src/ui/theme/runtime/RuntimeReporter.ts";
+const PIPELINE_PATH = "src/ui/theme/runtime/pipeline/RuntimePipeline.ts";
 const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
@@ -67,7 +68,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
 {
   const block: BlockId = "pipelineOrder";
-  const src = stripComments(read(REPORTER_PATH));
+  const src = stripComments(read(PIPELINE_PATH));
 
   const snapIdx = src.search(/SnapshotBuilder\.build\s*\(\s*runtime\s*\)/);
   const metsIdx = src.search(/RuntimeMetricsReporter\.getSnapshot\s*\(\s*\)/);
@@ -136,21 +137,21 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
 {
   const block: BlockId = "usesReportReporter";
-  const src = stripComments(read(REPORTER_PATH));
+  const src = stripComments(read(PIPELINE_PATH));
 
   assertCase(
     block,
     "imports.reportCollector",
-    /from\s+["']\.\/report\/RuntimeReportCollector["']/.test(src) ||
-      /from\s+["']\.\/report["']/.test(src),
+    /from\s+["']\.\.\/report\/RuntimeReportCollector["']/.test(src) ||
+      /from\s+["']\.\.\/report["']/.test(src),
     "imports RuntimeReportCollector",
   );
 
   assertCase(
     block,
     "imports.reportReporter",
-    /from\s+["']\.\/report\/RuntimeReportReporter["']/.test(src) ||
-      /from\s+["']\.\/report["']/.test(src),
+    /from\s+["']\.\.\/report\/RuntimeReportReporter["']/.test(src) ||
+      /from\s+["']\.\.\/report["']/.test(src),
     "imports RuntimeReportReporter",
   );
 
@@ -177,7 +178,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
 {
   const block: BlockId = "encapsulation";
-  const src = stripComments(read(REPORTER_PATH));
+  const src = stripComments(read(PIPELINE_PATH));
 
   assertCase(
     block,
@@ -308,7 +309,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
 {
   const block: BlockId = "deterministic";
-  const src = stripComments(read(REPORTER_PATH));
+  const src = stripComments(read(PIPELINE_PATH));
 
   const bans: Array<{ id: string; re: RegExp }> = [
     { id: "Date.now", re: /\bDate\.now\b/ },
@@ -342,7 +343,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
     /new\s+RuntimeAggregationAccumulator\s*\(\s*\)/.test(src) &&
       /new\s+RuntimeTelemetryCollector\s*\(\s*\)/.test(src) &&
       /new\s+RuntimeReportCollector\s*\(\s*\)/.test(src),
-    "collectors/accumulator instantiated inside build()",
+    "collectors/accumulator instantiated inside run()",
   );
 }
 

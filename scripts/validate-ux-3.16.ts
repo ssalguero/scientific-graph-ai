@@ -673,27 +673,33 @@ function fixtures(): {
   );
 
   const reporterOrchestrator = stripComments(
+    read("src/ui/theme/runtime/pipeline/RuntimePipeline.ts"),
+  );
+  const reporterFacade = stripComments(
     read("src/ui/theme/runtime/RuntimeReporter.ts"),
   );
   assertCase(
     block,
     "runtimeReporterUsesReport",
-    (/from\s+["']\.\/report\/RuntimeReportCollector["']/.test(
+    (/from\s+["']\.\.\/report\/RuntimeReportCollector["']/.test(
       reporterOrchestrator,
     ) ||
-      /from\s+["']\.\/report["']/.test(reporterOrchestrator)) &&
-      (/from\s+["']\.\/report\/RuntimeReportReporter["']/.test(
+      /from\s+["']\.\.\/report["']/.test(reporterOrchestrator)) &&
+      (/from\s+["']\.\.\/report\/RuntimeReportReporter["']/.test(
         reporterOrchestrator,
       ) ||
-        /from\s+["']\.\/report["']/.test(reporterOrchestrator)) &&
+        /from\s+["']\.\.\/report["']/.test(reporterOrchestrator)) &&
       /\bRuntimeReportCollector\b/.test(reporterOrchestrator) &&
       /RuntimeReportReporter\.build\s*\(/.test(reporterOrchestrator) &&
       /return\s+runtimeReport\s*;/.test(reporterOrchestrator) &&
       !/return\s+runtimeReport\.health\s*;/.test(reporterOrchestrator) &&
       !/\bRuntimeReportBuilder\b/.test(reporterOrchestrator) &&
-      /\bRuntimeReportSnapshot\b/.test(reporterOrchestrator) &&
+      /\bRuntimeReportSnapshot\b/.test(reporterFacade) &&
+      /RuntimePipeline\.run/.test(reporterFacade) &&
+      /return\s+report\s*;/.test(reporterFacade) &&
+      !/return\s+report\.health\s*;/.test(reporterFacade) &&
       !/report\.build\s*\(/.test(reporterOrchestrator),
-    "RuntimeReporter returns RuntimeReportSnapshot via RuntimeReportReporter (UX-3.18); no Builder",
+    "RuntimePipeline returns RuntimeReportSnapshot via RuntimeReportReporter; RuntimeReporter delegates (UX-3.19)",
   );
 
   const providerCandidates = [
