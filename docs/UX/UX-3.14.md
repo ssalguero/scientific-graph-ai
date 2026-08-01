@@ -16,7 +16,7 @@ NO public API · NO visual behavior · NO React · NO Provider wiring
 Composes RuntimeSnapshot + RuntimeMetricsSnapshot + RuntimeHealth
 into immutable RuntimeTelemetrySnapshot
 API FREEZE = create() · record() · build() · reset()
-Next: UX-3.15 (placeholder)
+Next: UX-3.15 Runtime Telemetry Integration Foundation COMPLETE
 ```
 
 ---
@@ -215,4 +215,4 @@ PASS
 - [`docs/UX/UX-3.10.md`](./UX-3.10.md)
 - [`src/ui/docs/THEME.md`](../../src/ui/docs/THEME.md)
 
-**Next:** UX-3.15 (placeholder — Runtime Health Service / consumer wiring TBD)
+**Next:** [`UX-3.15`](./UX-3.15.md) — Runtime Telemetry Integration Foundation COMPLETE
