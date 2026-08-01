@@ -1,9 +1,9 @@
 /**
- * UX-3.17 — Private Theme Runtime reporting orchestrator.
+ * UX-3.18 — Private Theme Runtime reporting orchestrator.
  *
  * Coordinates the full private diagnostics pipeline:
  * Snapshot → Metrics → Health → Aggregation (discarded) → Telemetry (discarded)
- * → Report → return runtimeReport.health.
+ * → Report → return runtimeReport (RuntimeReportSnapshot).
  *
  * Not exported from any public barrel. Aggregation, Telemetry, and Report
  * snapshots are built only via their respective Reporters — never Builders,
@@ -20,9 +20,9 @@ import { RuntimeTelemetryReporter } from "./telemetry/RuntimeTelemetryReporter";
 import { RuntimeReportCollector } from "./report/RuntimeReportCollector";
 import { RuntimeReportReporter } from "./report/RuntimeReportReporter";
 import type { ThemeRuntime } from "./selectors/ThemeSelector";
-import type { RuntimeHealth } from "./health/RuntimeHealth";
+import type { RuntimeReportSnapshot } from "./report/RuntimeReportTypes";
 
-function build(runtime: ThemeRuntime): Readonly<RuntimeHealth> {
+function build(runtime: ThemeRuntime): Readonly<RuntimeReportSnapshot> {
   const snapshot = SnapshotBuilder.build(runtime);
   const metrics = RuntimeMetricsReporter.getSnapshot();
   const health = RuntimeHealthReporter.build(snapshot, metrics);
@@ -39,7 +39,7 @@ function build(runtime: ThemeRuntime): Readonly<RuntimeHealth> {
   report.record(snapshot, metrics, health);
   const runtimeReport = RuntimeReportReporter.build(report);
 
-  return runtimeReport.health;
+  return runtimeReport;
 }
 
 export const RuntimeReporter = Object.freeze({

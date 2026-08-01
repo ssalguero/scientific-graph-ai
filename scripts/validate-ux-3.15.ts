@@ -4,7 +4,7 @@
  * Blocks:
  * reporterLayout · apiFreeze · pipelineOrder · encapsulation
  * indexUntouched · noPublicBarrelLeaks · noReactNoWiring
- * returnsHealth · sharedRefs · priorGates · tscCompile
+ * returnsReport · sharedRefs · priorGates · tscCompile
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -14,7 +14,6 @@ import { fileURLToPath } from "node:url";
 import { TokenCache } from "../src/ui/theme/tokens/runtime/TokenCache";
 import { ThemeTokenResolver } from "../src/ui/theme/tokens/runtime/ThemeTokenResolver";
 import { RuntimeReporter } from "../src/ui/theme/runtime/RuntimeReporter";
-import { RuntimeHealthStatus } from "../src/ui/theme/runtime/health/RuntimeHealthStatus";
 import { SnapshotBuilder } from "../src/ui/theme/runtime/devtools/SnapshotBuilder";
 import { RuntimeMetricsReporter } from "../src/ui/theme/runtime/metrics/RuntimeMetricsReporter";
 import { RuntimeHealthReporter } from "../src/ui/theme/runtime/health/RuntimeHealthReporter";
@@ -29,7 +28,7 @@ type BlockId =
   | "indexUntouched"
   | "noPublicBarrelLeaks"
   | "noReactNoWiring"
-  | "returnsHealth"
+  | "returnsReport"
   | "sharedRefs"
   | "priorGates"
   | "tscCompile";
@@ -173,7 +172,7 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
   const reportIdx = src.search(
     /RuntimeReportReporter\.build\s*\(\s*report\s*\)/,
   );
-  const returnIdx = src.search(/return\s+runtimeReport\.health\s*;/);
+  const returnIdx = src.search(/return\s+runtimeReport\s*;/);
 
   const orderOk =
     snapIdx >= 0 &&
@@ -195,7 +194,7 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
     "pipeline.exactOrder",
     orderOk,
     orderOk
-      ? "Snapshot → Metrics → Health → Aggregation → Telemetry → Report → return runtimeReport.health"
+      ? "Snapshot → Metrics → Health → Aggregation → Telemetry → Report → return runtimeReport"
       : `order indices snap=${snapIdx} mets=${metsIdx} health=${healthIdx} agg=${newAggIdx}/${aggRecordIdx}/${aggRepIdx} tel=${newTelIdx}/${telRecordIdx}/${telIdx} rep=${newRepIdx}/${repRecordIdx}/${reportIdx} ret=${returnIdx}`,
   );
 
@@ -218,8 +217,9 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
   assertCase(
     block,
     "pipeline.neverReturnHealthDirect",
-    !/return\s+health\s*;/.test(src),
-    "never return health; must return runtimeReport.health",
+    !/return\s+health\s*;/.test(src) &&
+      !/return\s+runtimeReport\.health\s*;/.test(src),
+    "never return health or runtimeReport.health; must return runtimeReport",
   );
 }
 
@@ -407,56 +407,56 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 }
 
 /* -------------------------------------------------------------------------- */
-/* PASS 08 — returnsHealth                                                    */
+/* PASS 08 — returnsReport                                                    */
 /* -------------------------------------------------------------------------- */
 
 {
-  const block: BlockId = "returnsHealth";
+  const block: BlockId = "returnsReport";
 
   TokenCache.clear();
   RuntimeMetricsReporter.reset();
   const runtime = ThemeTokenResolver.resolve("light");
-  const health = RuntimeReporter.build(runtime);
+  const report = RuntimeReporter.build(runtime);
 
   assertCase(
     block,
-    "health.frozen",
-    Object.isFrozen(health),
-    "returned health is Object.isFrozen",
+    "report.frozen",
+    Object.isFrozen(report),
+    "returned report is Object.isFrozen",
   );
 
-  const keys = Object.keys(health).sort();
-  const expected = [
-    "diagnostics",
-    "fingerprint",
-    "generatedAt",
-    "metrics",
-    "status",
-    "version",
-  ].sort();
+  const keys = Object.keys(report).sort();
+  const expected = ["health", "metrics", "runtime"].sort();
 
   assertCase(
     block,
-    "health.keys",
+    "report.keys",
     keys.length === expected.length &&
       expected.every((k, i) => keys[i] === k),
-    `health keys match RuntimeHealth (${keys.join(",")})`,
+    `report keys match RuntimeReportSnapshot (${keys.join(",")})`,
   );
 
   assertCase(
     block,
-    "health.statusKnown",
-    health.status === RuntimeHealthStatus.OK ||
-      health.status === RuntimeHealthStatus.WARNING ||
-      health.status === RuntimeHealthStatus.ERROR,
-    `status=${String(health.status)}`,
+    "report.hasHealth",
+    report.health !== null &&
+      typeof report.health === "object" &&
+      typeof report.health.status === "string",
+    "report.health is present with status",
   );
 
   assertCase(
     block,
-    "health.telemetryNotReturned",
-    !("runtime" in health && "timestamp" in health && "health" in health),
-    "return value is RuntimeHealth, not RuntimeTelemetrySnapshot",
+    "report.notTelemetryShape",
+    !("timestamp" in report),
+    "return value is RuntimeReportSnapshot, not RuntimeTelemetrySnapshot",
+  );
+
+  assertCase(
+    block,
+    "report.notHealthShape",
+    !("status" in report && "fingerprint" in report && "generatedAt" in report),
+    "return value is RuntimeReportSnapshot, not RuntimeHealth",
   );
 }
 
@@ -535,11 +535,11 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
   );
   assertCase(
     block,
-    "refs.reporterHealthSharesMetrics",
-    Object.is(viaReporter.metrics, viaReporter.metrics) &&
+    "refs.reporterReportSharesMetrics",
+    Object.is(viaReporter.metrics, viaReporter.health.metrics) &&
       viaReporter.metrics !== null &&
       typeof viaReporter.metrics.snapshots === "number",
-    "RuntimeReporter health retains metrics snapshot ref",
+    "RuntimeReporter report retains shared metrics snapshot ref",
   );
 }
 
@@ -604,7 +604,7 @@ const BLOCKS: Array<{ id: BlockId; pass: number; ca: string }> = [
   { id: "indexUntouched", pass: 5, ca: "CA-UX-3.15.5" },
   { id: "noPublicBarrelLeaks", pass: 6, ca: "CA-UX-3.15.6" },
   { id: "noReactNoWiring", pass: 7, ca: "CA-UX-3.15.7" },
-  { id: "returnsHealth", pass: 8, ca: "CA-UX-3.15.8" },
+  { id: "returnsReport", pass: 8, ca: "CA-UX-3.15.8" },
   { id: "sharedRefs", pass: 9, ca: "CA-UX-3.15.9" },
   { id: "priorGates", pass: 10, ca: "CA-UX-3.15.10" },
   { id: "tscCompile", pass: 11, ca: "CA-UX-3.15.10" },

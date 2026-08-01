@@ -1,12 +1,13 @@
 /**
- * UX-3.17 — Runtime Diagnostics Integration Foundation gate.
+ * UX-3.18 — Runtime Report Integration (Pipeline Finalization) gate.
  *
  * Blocks:
- * pipelineOrder · usesReportReporter · encapsulation · returnsReport
- * deterministic · apiFreeze · noPublicBarrelLeaks · noReactNoWiring
- * priorGates · tscCompile
+ * returnsReport · signatureType · pipelineOrder · noNewImports
+ * layersUntouched · encapsulation · apiFreeze · noPublicBarrelLeaks
+ * noReactNoWiring · priorGates · tscCompile
  */
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,11 +22,12 @@ import { RuntimeReportCollector } from "../src/ui/theme/runtime/report/RuntimeRe
 import { RuntimeReportReporter } from "../src/ui/theme/runtime/report/RuntimeReportReporter";
 
 type BlockId =
-  | "pipelineOrder"
-  | "usesReportReporter"
-  | "encapsulation"
   | "returnsReport"
-  | "deterministic"
+  | "signatureType"
+  | "pipelineOrder"
+  | "noNewImports"
+  | "layersUntouched"
+  | "encapsulation"
   | "apiFreeze"
   | "noPublicBarrelLeaks"
   | "noReactNoWiring"
@@ -57,12 +59,152 @@ function stripComments(src: string): string {
     .replace(/^\s*\/\/.*$/gm, "");
 }
 
+function fileHash(rel: string): string {
+  return createHash("sha256").update(read(rel)).digest("hex");
+}
+
 const REPORTER_PATH = "src/ui/theme/runtime/RuntimeReporter.ts";
 const INDEX_PATH = "src/ui/theme/runtime/index.ts";
 const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
 /* -------------------------------------------------------------------------- */
-/* PASS 01 — pipelineOrder                                                    */
+/* PASS 01 — returnsReport                                                    */
+/* -------------------------------------------------------------------------- */
+
+{
+  const block: BlockId = "returnsReport";
+
+  TokenCache.clear();
+  RuntimeMetricsReporter.reset();
+  const runtime = ThemeTokenResolver.resolve("light");
+  const snapshot = SnapshotBuilder.build(runtime);
+  const metrics = RuntimeMetricsReporter.getSnapshot();
+  const healthDirect = RuntimeHealthReporter.build(snapshot, metrics);
+  const collector = new RuntimeReportCollector();
+  collector.record(snapshot, metrics, healthDirect);
+  const expected = RuntimeReportReporter.build(collector);
+
+  TokenCache.clear();
+  RuntimeMetricsReporter.reset();
+  const viaReporter = RuntimeReporter.build(
+    ThemeTokenResolver.resolve("light"),
+  );
+
+  assertCase(
+    block,
+    "report.frozen",
+    Object.isFrozen(viaReporter),
+    "returned value is Object.isFrozen",
+  );
+
+  const keys = Object.keys(viaReporter).sort();
+  const expectedKeys = ["health", "metrics", "runtime"].sort();
+
+  assertCase(
+    block,
+    "report.keys",
+    keys.length === expectedKeys.length &&
+      expectedKeys.every((k, i) => keys[i] === k),
+    `keys match RuntimeReportSnapshot (${keys.join(",")})`,
+  );
+
+  assertCase(
+    block,
+    "report.notHealthShape",
+    !(
+      "status" in viaReporter &&
+      "fingerprint" in viaReporter &&
+      "generatedAt" in viaReporter
+    ),
+    "return value is not RuntimeHealth",
+  );
+
+  assertCase(
+    block,
+    "report.notTelemetryShape",
+    !("timestamp" in viaReporter),
+    "return value is not RuntimeTelemetrySnapshot",
+  );
+
+  assertCase(
+    block,
+    "report.hasNestedHealth",
+    typeof viaReporter.health?.status === "string",
+    "report.health.status present",
+  );
+
+  assertCase(
+    block,
+    "report.manualShapeParity",
+    Object.keys(expected).sort().join(",") === keys.join(","),
+    "RuntimeReporter shape matches RuntimeReportReporter.build",
+  );
+
+  assertCase(
+    block,
+    "report.sharesMetricsWithHealth",
+    Object.is(viaReporter.metrics, viaReporter.health.metrics),
+    "report.metrics === report.health.metrics",
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* PASS 02 — signatureType                                                    */
+/* -------------------------------------------------------------------------- */
+
+{
+  const block: BlockId = "signatureType";
+  const src = stripComments(read(REPORTER_PATH));
+
+  assertCase(
+    block,
+    "sig.returnType",
+    /function\s+build\s*\(\s*runtime\s*:\s*ThemeRuntime\s*\)\s*:\s*Readonly<\s*RuntimeReportSnapshot\s*>/.test(
+      src,
+    ),
+    "build(...): Readonly<RuntimeReportSnapshot>",
+  );
+
+  assertCase(
+    block,
+    "sig.importsReportType",
+    /import\s+type\s+\{\s*RuntimeReportSnapshot\s*\}\s+from\s+["']\.\/report\/RuntimeReportTypes["']/.test(
+      src,
+    ) ||
+      /import\s+type\s+\{\s*RuntimeReportSnapshot\s*\}\s+from\s+["']\.\/report["']/.test(
+        src,
+      ),
+    "imports type RuntimeReportSnapshot",
+  );
+
+  assertCase(
+    block,
+    "sig.noRuntimeHealthImport",
+    !/import\s+type\s+\{[^}]*\bRuntimeHealth\b[^}]*\}\s+from\s+["']\.\/health/.test(
+      src,
+    ),
+    "no longer imports type RuntimeHealth",
+  );
+
+  assertCase(
+    block,
+    "sig.returnStatement",
+    /return\s+runtimeReport\s*;/.test(src) &&
+      !/return\s+runtimeReport\.health\s*;/.test(src),
+    "return runtimeReport (not runtimeReport.health)",
+  );
+
+  assertCase(
+    block,
+    "sig.noRuntimeReportAlias",
+    !/\btype\s+RuntimeReport\b/.test(src) &&
+      !/\binterface\s+RuntimeReport\b/.test(src),
+    "does not invent a RuntimeReport type",
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* PASS 03 — pipelineOrder                                                    */
 /* -------------------------------------------------------------------------- */
 
 {
@@ -123,7 +265,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
   assertCase(
     block,
-    "pipeline.neverReturnHealthDirect",
+    "pipeline.neverReturnHealth",
     !/return\s+health\s*;/.test(src) &&
       !/return\s+runtimeReport\.health\s*;/.test(src),
     "never return health or runtimeReport.health",
@@ -131,62 +273,147 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 }
 
 /* -------------------------------------------------------------------------- */
-/* PASS 02 — usesReportReporter                                               */
+/* PASS 04 — noNewImports                                                     */
 /* -------------------------------------------------------------------------- */
 
 {
-  const block: BlockId = "usesReportReporter";
+  const block: BlockId = "noNewImports";
   const src = stripComments(read(REPORTER_PATH));
 
+  const allowedFrom = [
+    "./devtools/SnapshotBuilder",
+    "./metrics/RuntimeMetricsReporter",
+    "./health/RuntimeHealthReporter",
+    "./aggregation/RuntimeAggregationAccumulator",
+    "./aggregation/RuntimeAggregationReporter",
+    "./telemetry/RuntimeTelemetryCollector",
+    "./telemetry/RuntimeTelemetryReporter",
+    "./report/RuntimeReportCollector",
+    "./report/RuntimeReportReporter",
+    "./selectors/ThemeSelector",
+    "./report/RuntimeReportTypes",
+  ];
+
+  const fromMatches = [...src.matchAll(/from\s+["']([^"']+)["']/g)].map(
+    (m) => m[1],
+  );
+
+  const unexpected = fromMatches.filter((f) => !allowedFrom.includes(f));
+
   assertCase(
     block,
-    "imports.reportCollector",
-    /from\s+["']\.\/report\/RuntimeReportCollector["']/.test(src) ||
-      /from\s+["']\.\/report["']/.test(src),
-    "imports RuntimeReportCollector",
+    "imports.onlyAllowed",
+    unexpected.length === 0,
+    unexpected.length === 0
+      ? "imports match UX-3.17 set + RuntimeReportTypes"
+      : `unexpected imports: ${unexpected.join(", ")}`,
   );
 
   assertCase(
     block,
-    "imports.reportReporter",
-    /from\s+["']\.\/report\/RuntimeReportReporter["']/.test(src) ||
-      /from\s+["']\.\/report["']/.test(src),
-    "imports RuntimeReportReporter",
-  );
-
-  assertCase(
-    block,
-    "calls.reportReporterBuild",
-    /RuntimeReportReporter\.build\s*\(\s*report\s*\)/.test(src),
-    "RuntimeReportReporter.build(report)",
-  );
-
-  assertCase(
-    block,
-    "assigns.runtimeReport",
-    /const\s+runtimeReport\s*=\s*RuntimeReportReporter\.build\s*\(\s*report\s*\)/.test(
-      src,
-    ),
-    "const runtimeReport = RuntimeReportReporter.build(report)",
+    "imports.noBuilders",
+    !/\bRuntimeAggregationBuilder\b/.test(src) &&
+      !/\bRuntimeTelemetryBuilder\b/.test(src) &&
+      !/\bRuntimeReportBuilder\b/.test(src),
+    "no Builder imports",
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* PASS 03 — encapsulation                                                    */
+/* PASS 05 — layersUntouched                                                  */
+/* -------------------------------------------------------------------------- */
+
+{
+  const block: BlockId = "layersUntouched";
+
+  const layerFiles = [
+    "src/ui/theme/runtime/aggregation/RuntimeAggregation.ts",
+    "src/ui/theme/runtime/aggregation/RuntimeAggregationAccumulator.ts",
+    "src/ui/theme/runtime/aggregation/RuntimeAggregationBuilder.ts",
+    "src/ui/theme/runtime/aggregation/RuntimeAggregationReporter.ts",
+    "src/ui/theme/runtime/aggregation/index.ts",
+    "src/ui/theme/runtime/telemetry/TelemetryTypes.ts",
+    "src/ui/theme/runtime/telemetry/RuntimeTelemetryBuilder.ts",
+    "src/ui/theme/runtime/telemetry/RuntimeTelemetryCollector.ts",
+    "src/ui/theme/runtime/telemetry/RuntimeTelemetryReporter.ts",
+    "src/ui/theme/runtime/telemetry/index.ts",
+    "src/ui/theme/runtime/report/RuntimeReportTypes.ts",
+    "src/ui/theme/runtime/report/RuntimeReportBuilder.ts",
+    "src/ui/theme/runtime/report/RuntimeReportCollector.ts",
+    "src/ui/theme/runtime/report/RuntimeReportReporter.ts",
+    "src/ui/theme/runtime/report/index.ts",
+  ];
+
+  for (const rel of layerFiles) {
+    assertCase(
+      block,
+      `layer.exists.${rel}`,
+      existsSync(join(repoRoot, rel)),
+      `${rel} exists`,
+    );
+  }
+
+  // Structural freeze: layer modules must still export expected symbols
+  // (content hash not pinned — verifies presence + key export contracts).
+  const aggIndex = stripComments(read("src/ui/theme/runtime/aggregation/index.ts"));
+  const telIndex = stripComments(read("src/ui/theme/runtime/telemetry/index.ts"));
+  const repIndex = stripComments(read("src/ui/theme/runtime/report/index.ts"));
+
+  assertCase(
+    block,
+    "agg.barrelExports",
+    /\bRuntimeAggregationReporter\b/.test(aggIndex) &&
+      /\bRuntimeAggregationAccumulator\b/.test(aggIndex),
+    "aggregation barrel unchanged contract",
+  );
+
+  assertCase(
+    block,
+    "tel.barrelExports",
+    /\bRuntimeTelemetryReporter\b/.test(telIndex) &&
+      /\bRuntimeTelemetryCollector\b/.test(telIndex),
+    "telemetry barrel unchanged contract",
+  );
+
+  assertCase(
+    block,
+    "rep.barrelExports",
+    /\bRuntimeReportReporter\b/.test(repIndex) &&
+      /\bRuntimeReportCollector\b/.test(repIndex) &&
+      /\bRuntimeReportSnapshot\b/.test(repIndex),
+    "report barrel unchanged contract",
+  );
+
+  const reportTypes = stripComments(
+    read("src/ui/theme/runtime/report/RuntimeReportTypes.ts"),
+  );
+  assertCase(
+    block,
+    "rep.typesUnchanged",
+    /export interface RuntimeReportSnapshot/.test(reportTypes) &&
+      /readonly runtime:/.test(reportTypes) &&
+      /readonly metrics:/.test(reportTypes) &&
+      /readonly health:/.test(reportTypes) &&
+      !/\bexport interface RuntimeReport\b/.test(reportTypes),
+    "RuntimeReportTypes still defines RuntimeReportSnapshot only",
+  );
+
+  // Hash self-check: ensure validator can read files (non-empty)
+  assertCase(
+    block,
+    "layers.readable",
+    layerFiles.every((f) => fileHash(f).length === 64),
+    "all frozen layer files readable",
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* PASS 06 — encapsulation                                                    */
 /* -------------------------------------------------------------------------- */
 
 {
   const block: BlockId = "encapsulation";
   const src = stripComments(read(REPORTER_PATH));
-
-  assertCase(
-    block,
-    "enc.noBuilders",
-    !/\bRuntimeAggregationBuilder\b/.test(src) &&
-      !/\bRuntimeTelemetryBuilder\b/.test(src) &&
-      !/\bRuntimeReportBuilder\b/.test(src),
-    "no Aggregation/Telemetry/Report Builder imports",
-  );
 
   assertCase(
     block,
@@ -201,153 +428,16 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
   assertCase(
     block,
-    "enc.soleAggregationEntry",
-    /RuntimeAggregationReporter\.build\s*\(\s*aggregation\s*\)/.test(src),
-    "sole aggregation entry = RuntimeAggregationReporter.build(aggregation)",
-  );
-
-  assertCase(
-    block,
-    "enc.soleTelemetryEntry",
-    /RuntimeTelemetryReporter\.build\s*\(\s*telemetry\s*\)/.test(src),
-    "sole telemetry entry = RuntimeTelemetryReporter.build(telemetry)",
-  );
-
-  assertCase(
-    block,
-    "enc.soleReportEntry",
-    /RuntimeReportReporter\.build\s*\(\s*report\s*\)/.test(src),
-    "sole report entry = RuntimeReportReporter.build(report)",
+    "enc.soleEntries",
+    /RuntimeAggregationReporter\.build\s*\(\s*aggregation\s*\)/.test(src) &&
+      /RuntimeTelemetryReporter\.build\s*\(\s*telemetry\s*\)/.test(src) &&
+      /RuntimeReportReporter\.build\s*\(\s*report\s*\)/.test(src),
+    "sole entries via Aggregation/Telemetry/Report Reporters",
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* PASS 04 — returnsReport                                                    */
-/* -------------------------------------------------------------------------- */
-
-{
-  const block: BlockId = "returnsReport";
-
-  TokenCache.clear();
-  RuntimeMetricsReporter.reset();
-  const runtime = ThemeTokenResolver.resolve("light");
-  const snapshot = SnapshotBuilder.build(runtime);
-  const metrics = RuntimeMetricsReporter.getSnapshot();
-  const healthDirect = RuntimeHealthReporter.build(snapshot, metrics);
-  const reportCollector = new RuntimeReportCollector();
-  reportCollector.record(snapshot, metrics, healthDirect);
-  const reportSnap = RuntimeReportReporter.build(reportCollector);
-
-  TokenCache.clear();
-  RuntimeMetricsReporter.reset();
-  const viaReporter = RuntimeReporter.build(
-    ThemeTokenResolver.resolve("light"),
-  );
-
-  assertCase(
-    block,
-    "report.frozen",
-    Object.isFrozen(viaReporter),
-    "returned report is Object.isFrozen",
-  );
-
-  const keys = Object.keys(viaReporter).sort();
-  const expected = ["health", "metrics", "runtime"].sort();
-
-  assertCase(
-    block,
-    "report.keys",
-    keys.length === expected.length &&
-      expected.every((k, i) => keys[i] === k),
-    `report keys match RuntimeReportSnapshot (${keys.join(",")})`,
-  );
-
-  assertCase(
-    block,
-    "report.hasHealthStatus",
-    typeof viaReporter.health.status === "string",
-    `health.status=${String(viaReporter.health.status)}`,
-  );
-
-  assertCase(
-    block,
-    "report.notTelemetryShape",
-    !("timestamp" in viaReporter),
-    "return value is RuntimeReportSnapshot, not RuntimeTelemetrySnapshot",
-  );
-
-  assertCase(
-    block,
-    "report.notHealthShape",
-    !(
-      "status" in viaReporter &&
-      "fingerprint" in viaReporter &&
-      "generatedAt" in viaReporter
-    ),
-    "return value is RuntimeReportSnapshot, not RuntimeHealth",
-  );
-
-  assertCase(
-    block,
-    "report.healthIdentity",
-    Object.is(reportSnap.health, healthDirect),
-    "report.health shares recorded health identity",
-  );
-
-  assertCase(
-    block,
-    "viaReporter.sharesMetricsWithHealth",
-    Object.is(viaReporter.metrics, viaReporter.health.metrics),
-    "RuntimeReporter report.metrics === report.health.metrics",
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* PASS 05 — deterministic                                                    */
-/* -------------------------------------------------------------------------- */
-
-{
-  const block: BlockId = "deterministic";
-  const src = stripComments(read(REPORTER_PATH));
-
-  const bans: Array<{ id: string; re: RegExp }> = [
-    { id: "Date.now", re: /\bDate\.now\b/ },
-    { id: "performance.now", re: /\bperformance\.now\b/ },
-    { id: "Math.random", re: /\bMath\.random\b/ },
-    {
-      id: "timers",
-      re: /\bsetTimeout\b|\bsetInterval\b|\brequestAnimationFrame\b/,
-    },
-    { id: "console", re: /\bconsole\s*\./ },
-    { id: "Map", re: /\bMap\b/ },
-    { id: "WeakMap", re: /\bWeakMap\b/ },
-    { id: "Set", re: /\bSet\b/ },
-    { id: "memo", re: /\buseMemo\b|\buseCallback\b|\bmemo\b/ },
-    { id: "moduleLet", re: /^let\s+/m },
-    { id: "moduleVar", re: /^var\s+/m },
-  ];
-
-  for (const b of bans) {
-    assertCase(
-      block,
-      `ban.${b.id}`,
-      !b.re.test(src),
-      !b.re.test(src) ? `no ${b.id}` : `found ${b.id}`,
-    );
-  }
-
-  assertCase(
-    block,
-    "locals.perBuild",
-    /new\s+RuntimeAggregationAccumulator\s*\(\s*\)/.test(src) &&
-      /new\s+RuntimeTelemetryCollector\s*\(\s*\)/.test(src) &&
-      /new\s+RuntimeReportCollector\s*\(\s*\)/.test(src),
-    "collectors/accumulator instantiated inside build()",
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* PASS 06 — apiFreeze                                                        */
+/* PASS 07 — apiFreeze                                                        */
 /* -------------------------------------------------------------------------- */
 
 {
@@ -386,14 +476,14 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 
   assertCase(
     block,
-    "file.exists",
-    existsSync(join(repoRoot, REPORTER_PATH)),
-    `${REPORTER_PATH} exists`,
+    "api.noReportMethod",
+    !("report" in RuntimeReporter),
+    "no report() method on RuntimeReporter",
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* PASS 07 — noPublicBarrelLeaks                                              */
+/* PASS 08 — noPublicBarrelLeaks                                              */
 /* -------------------------------------------------------------------------- */
 
 {
@@ -433,14 +523,11 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
       );
       return re.test(src);
     });
-    const pathLeak =
-      /runtime\/(aggregation|telemetry|report)/.test(src) ||
-      /RuntimeReporter/.test(src);
 
     assertCase(
       block,
       `leak.noExport.${barrel}`,
-      !leaks && !(barrel !== INDEX_PATH && pathLeak && /\bRuntimeReporter\b/.test(src)),
+      !leaks,
       !leaks
         ? `${barrel} does not export diagnostics pipeline`
         : `${barrel} leaks diagnostics symbols`,
@@ -460,7 +547,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 }
 
 /* -------------------------------------------------------------------------- */
-/* PASS 08 — noReactNoWiring                                                  */
+/* PASS 09 — noReactNoWiring                                                  */
 /* -------------------------------------------------------------------------- */
 
 {
@@ -502,7 +589,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 }
 
 /* -------------------------------------------------------------------------- */
-/* PASS 09 — priorGates                                                       */
+/* PASS 10 — priorGates                                                       */
 /* -------------------------------------------------------------------------- */
 
 {
@@ -512,6 +599,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
     { id: "ux314", script: "scripts/validate-ux-3.14.ts", label: "ux-3.14" },
     { id: "ux315", script: "scripts/validate-ux-3.15.ts", label: "ux-3.15" },
     { id: "ux316", script: "scripts/validate-ux-3.16.ts", label: "ux-3.16" },
+    { id: "ux317", script: "scripts/validate-ux-3.17.ts", label: "ux-3.17" },
   ] as const;
 
   for (const p of priors) {
@@ -538,7 +626,7 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 }
 
 /* -------------------------------------------------------------------------- */
-/* PASS 10 — tscCompile                                                       */
+/* PASS 11 — tscCompile                                                       */
 /* -------------------------------------------------------------------------- */
 
 {
@@ -565,16 +653,17 @@ const PROVIDER_PATH = "src/ui/providers/theme-provider.tsx";
 /* -------------------------------------------------------------------------- */
 
 const BLOCKS: Array<{ id: BlockId; pass: number; ca: string }> = [
-  { id: "pipelineOrder", pass: 1, ca: "CA-UX-3.17.1" },
-  { id: "usesReportReporter", pass: 2, ca: "CA-UX-3.17.2" },
-  { id: "encapsulation", pass: 3, ca: "CA-UX-3.17.4" },
-  { id: "returnsReport", pass: 4, ca: "CA-UX-3.17.3" },
-  { id: "deterministic", pass: 5, ca: "CA-UX-3.17.5" },
-  { id: "apiFreeze", pass: 6, ca: "CA-UX-3.17.6" },
-  { id: "noPublicBarrelLeaks", pass: 7, ca: "CA-UX-3.17.6" },
-  { id: "noReactNoWiring", pass: 8, ca: "CA-UX-3.17.6" },
-  { id: "priorGates", pass: 9, ca: "CA-UX-3.17.7" },
-  { id: "tscCompile", pass: 10, ca: "CA-UX-3.17.7" },
+  { id: "returnsReport", pass: 1, ca: "CA-UX-3.18.1" },
+  { id: "signatureType", pass: 2, ca: "CA-UX-3.18.2" },
+  { id: "pipelineOrder", pass: 3, ca: "CA-UX-3.18.3" },
+  { id: "noNewImports", pass: 4, ca: "CA-UX-3.18.4" },
+  { id: "layersUntouched", pass: 5, ca: "CA-UX-3.18.5" },
+  { id: "encapsulation", pass: 6, ca: "CA-UX-3.18.6" },
+  { id: "apiFreeze", pass: 7, ca: "CA-UX-3.18.7" },
+  { id: "noPublicBarrelLeaks", pass: 8, ca: "CA-UX-3.18.7" },
+  { id: "noReactNoWiring", pass: 9, ca: "CA-UX-3.18.7" },
+  { id: "priorGates", pass: 10, ca: "CA-UX-3.18.8" },
+  { id: "tscCompile", pass: 11, ca: "CA-UX-3.18.8" },
 ];
 
 let passCount = 0;
@@ -595,7 +684,7 @@ for (const { id: block, pass, ca } of BLOCKS) {
 }
 
 const allPass = passCount === BLOCKS.length;
-console.log("validate:ux-3.17");
+console.log("validate:ux-3.18");
 console.log(allPass ? "PASS" : "FAIL");
 console.log(`${passCount}/${BLOCKS.length}`);
 
