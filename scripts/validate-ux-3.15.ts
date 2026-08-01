@@ -152,40 +152,74 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
   const healthIdx = src.search(
     /RuntimeHealthReporter\.build\s*\(\s*snapshot\s*,\s*metrics\s*\)/,
   );
-  const newColIdx = src.search(/new\s+RuntimeTelemetryCollector\s*\(\s*\)/);
-  const recordIdx = src.search(
-    /collector\.record\s*\(\s*snapshot\s*,\s*metrics\s*,\s*health\s*\)/,
+  const newAggIdx = src.search(
+    /new\s+RuntimeAggregationAccumulator\s*\(\s*\)/,
+  );
+  const aggRecordIdx = src.search(/aggregation\.record\s*\(\s*health\s*\)/);
+  const aggRepIdx = src.search(
+    /RuntimeAggregationReporter\.build\s*\(\s*aggregation\s*\)/,
+  );
+  const newTelIdx = src.search(/new\s+RuntimeTelemetryCollector\s*\(\s*\)/);
+  const telRecordIdx = src.search(
+    /telemetry\.record\s*\(\s*snapshot\s*,\s*metrics\s*,\s*health\s*\)/,
   );
   const telIdx = src.search(
-    /RuntimeTelemetryReporter\.build\s*\(\s*collector\s*\)/,
+    /RuntimeTelemetryReporter\.build\s*\(\s*telemetry\s*\)/,
   );
-  const returnIdx = src.search(/return\s+health\s*;/);
+  const newRepIdx = src.search(/new\s+RuntimeReportCollector\s*\(\s*\)/);
+  const repRecordIdx = src.search(
+    /report\.record\s*\(\s*snapshot\s*,\s*metrics\s*,\s*health\s*\)/,
+  );
+  const reportIdx = src.search(
+    /RuntimeReportReporter\.build\s*\(\s*report\s*\)/,
+  );
+  const returnIdx = src.search(/return\s+runtimeReport\.health\s*;/);
 
   const orderOk =
     snapIdx >= 0 &&
     metsIdx > snapIdx &&
     healthIdx > metsIdx &&
-    newColIdx > healthIdx &&
-    recordIdx > newColIdx &&
-    telIdx > recordIdx &&
-    returnIdx > telIdx;
+    newAggIdx > healthIdx &&
+    aggRecordIdx > newAggIdx &&
+    aggRepIdx > aggRecordIdx &&
+    newTelIdx > aggRepIdx &&
+    telRecordIdx > newTelIdx &&
+    telIdx > telRecordIdx &&
+    newRepIdx > telIdx &&
+    repRecordIdx > newRepIdx &&
+    reportIdx > repRecordIdx &&
+    returnIdx > reportIdx;
 
   assertCase(
     block,
     "pipeline.exactOrder",
     orderOk,
     orderOk
-      ? "Snapshot → Metrics → Health → new Collector → record → TelemetryReporter.build → return health"
-      : `order indices snap=${snapIdx} mets=${metsIdx} health=${healthIdx} new=${newColIdx} record=${recordIdx} tel=${telIdx} ret=${returnIdx}`,
+      ? "Snapshot → Metrics → Health → Aggregation → Telemetry → Report → return runtimeReport.health"
+      : `order indices snap=${snapIdx} mets=${metsIdx} health=${healthIdx} agg=${newAggIdx}/${aggRecordIdx}/${aggRepIdx} tel=${newTelIdx}/${telRecordIdx}/${telIdx} rep=${newRepIdx}/${repRecordIdx}/${reportIdx} ret=${returnIdx}`,
   );
 
   assertCase(
     block,
-    "pipeline.noAggregation",
-    !/\bRuntimeAggregation\b/.test(src) &&
-      !/\bAggregation\b/.test(src) &&
-      !/aggregation\//.test(src),
-    "Aggregation outside pipeline",
+    "pipeline.includesAggregation",
+    /\bRuntimeAggregationAccumulator\b/.test(src) &&
+      /\bRuntimeAggregationReporter\b/.test(src),
+    "Aggregation wired into pipeline (UX-3.17)",
+  );
+
+  assertCase(
+    block,
+    "pipeline.includesReport",
+    /\bRuntimeReportCollector\b/.test(src) &&
+      /\bRuntimeReportReporter\b/.test(src),
+    "Report wired into pipeline (UX-3.17)",
+  );
+
+  assertCase(
+    block,
+    "pipeline.neverReturnHealthDirect",
+    !/return\s+health\s*;/.test(src),
+    "never return health; must return runtimeReport.health",
   );
 }
 
@@ -200,22 +234,42 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
   assertCase(
     block,
     "enc.noCollectorBuild",
-    !/collector\.build\s*\(/.test(src),
-    "never calls collector.build()",
+    !/collector\.build\s*\(/.test(src) &&
+      !/telemetry\.build\s*\(/.test(src) &&
+      !/report\.build\s*\(/.test(src) &&
+      !/aggregation\.build\s*\(/.test(src) &&
+      !/accumulator\.build\s*\(/.test(src),
+    "never calls collector/accumulator.build()",
   );
 
   assertCase(
     block,
-    "enc.noTelemetryBuilder",
-    !/\bRuntimeTelemetryBuilder\b/.test(src),
-    "never references RuntimeTelemetryBuilder",
+    "enc.noBuilders",
+    !/\bRuntimeTelemetryBuilder\b/.test(src) &&
+      !/\bRuntimeAggregationBuilder\b/.test(src) &&
+      !/\bRuntimeReportBuilder\b/.test(src),
+    "never references Aggregation/Telemetry/Report Builders",
   );
 
   assertCase(
     block,
     "enc.soleTelemetryEntry",
-    /RuntimeTelemetryReporter\.build\s*\(\s*collector\s*\)/.test(src),
-    "sole telemetry entry = RuntimeTelemetryReporter.build(collector)",
+    /RuntimeTelemetryReporter\.build\s*\(\s*telemetry\s*\)/.test(src),
+    "sole telemetry entry = RuntimeTelemetryReporter.build(telemetry)",
+  );
+
+  assertCase(
+    block,
+    "enc.soleAggregationEntry",
+    /RuntimeAggregationReporter\.build\s*\(\s*aggregation\s*\)/.test(src),
+    "sole aggregation entry = RuntimeAggregationReporter.build(aggregation)",
+  );
+
+  assertCase(
+    block,
+    "enc.soleReportEntry",
+    /RuntimeReportReporter\.build\s*\(\s*report\s*\)/.test(src),
+    "sole report entry = RuntimeReportReporter.build(report)",
   );
 }
 
@@ -427,10 +481,13 @@ const INDEX_PATH = "src/ui/theme/runtime/index.ts";
   assertCase(
     block,
     "src.recordSameVars",
-    /collector\.record\s*\(\s*snapshot\s*,\s*metrics\s*,\s*health\s*\)/.test(
+    /telemetry\.record\s*\(\s*snapshot\s*,\s*metrics\s*,\s*health\s*\)/.test(
       src,
-    ),
-    "record(snapshot, metrics, health) — same local identities",
+    ) &&
+      /report\.record\s*\(\s*snapshot\s*,\s*metrics\s*,\s*health\s*\)/.test(
+        src,
+      ),
+    "telemetry/report.record(snapshot, metrics, health) — same local identities",
   );
 
   // Behavioral: manual pipeline with same refs must match HealthReporter

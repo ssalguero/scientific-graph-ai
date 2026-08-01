@@ -152,7 +152,11 @@ Private runtime health aggregation (UX-3.13): `src/ui/theme/runtime/aggregation/
 
 Private runtime telemetry foundation (UX-3.14): `src/ui/theme/runtime/telemetry/` (immutable RuntimeTelemetrySnapshot composing RuntimeSnapshot + RuntimeMetricsSnapshot + RuntimeHealth; instance Collector; frozen Builder/Reporter). Composition snapshot — not a historical log. Not re-exported from public barrels. Not wired into ThemeProvider.
 
-Private runtime telemetry integration (UX-3.15): `src/ui/theme/runtime/RuntimeReporter.ts` (private orchestrator: Snapshot → Metrics → Health → Telemetry discarded → return Health). Aggregation outside this pipeline. Not re-exported from `runtime/index.ts` or any public barrel. Not wired into ThemeProvider.
+Private runtime telemetry integration (UX-3.15): `src/ui/theme/runtime/RuntimeReporter.ts` introduced as private orchestrator. Superseded by UX-3.17 full pipeline.
+
+Private runtime report snapshot (UX-3.16): `src/ui/theme/runtime/report/` (immutable RuntimeReportSnapshot composing RuntimeSnapshot + RuntimeMetricsSnapshot + RuntimeHealth; instance Collector; frozen Builder/Reporter). No timestamp. Not re-exported from public barrels.
+
+Private runtime diagnostics integration (UX-3.17): `src/ui/theme/runtime/RuntimeReporter.ts` (private orchestrator: Snapshot → Metrics → Health → Aggregation discarded → Telemetry discarded → Report → return runtimeReport.health). Not re-exported from `runtime/index.ts` or any public barrel. Not wired into ThemeProvider.
 
 Consumption freeze: no application imports of `@/ui` until an integration microfase authorizes wiring.
 
@@ -173,8 +177,10 @@ npm run validate:ux-3.12
 npm run validate:ux-3.13
 npm run validate:ux-3.14
 npm run validate:ux-3.15
+npm run validate:ux-3.16
+npm run validate:ux-3.17
 ```
 
 ## Integration Contract (future — not implemented here)
 
-Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Theme Runtime Snapshot & DevTools Foundation → UX-3.8 COMPLETE. Theme Runtime Observers Foundation → UX-3.9 COMPLETE. Theme Runtime Metrics Foundation → UX-3.10 COMPLETE. Runtime Diagnostics Foundation → UX-3.11 COMPLETE. Runtime Health Integration Foundation → UX-3.12 COMPLETE. Runtime Health Aggregation Foundation → UX-3.13 COMPLETE. Runtime Telemetry Foundation → UX-3.14 COMPLETE. Runtime Telemetry Integration Foundation → UX-3.15 COMPLETE. Next: UX-3.16 (placeholder). Visual / interactive DevTools → UX-3.16+ / UX-4.x.
+Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Theme Runtime Snapshot & DevTools Foundation → UX-3.8 COMPLETE. Theme Runtime Observers Foundation → UX-3.9 COMPLETE. Theme Runtime Metrics Foundation → UX-3.10 COMPLETE. Runtime Diagnostics Foundation → UX-3.11 COMPLETE. Runtime Health Integration Foundation → UX-3.12 COMPLETE. Runtime Health Aggregation Foundation → UX-3.13 COMPLETE. Runtime Telemetry Foundation → UX-3.14 COMPLETE. Runtime Telemetry Integration Foundation → UX-3.15 COMPLETE. Runtime Report Snapshot Foundation → UX-3.16 COMPLETE. Runtime Diagnostics Integration Foundation → UX-3.17 COMPLETE. Next: UX-4.x Consumers.

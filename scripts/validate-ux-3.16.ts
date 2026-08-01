@@ -677,13 +677,23 @@ function fixtures(): {
   );
   assertCase(
     block,
-    "noRuntimeReporterWiring",
-    !/runtime\/report/.test(reporterOrchestrator) &&
-      !/from\s+["'][^"']*\/report[^"']*["']/.test(reporterOrchestrator) &&
-      !/\bRuntimeReport(Snapshot|Builder|Collector|Reporter|Types)\b/.test(
+    "runtimeReporterUsesReport",
+    (/from\s+["']\.\/report\/RuntimeReportCollector["']/.test(
+      reporterOrchestrator,
+    ) ||
+      /from\s+["']\.\/report["']/.test(reporterOrchestrator)) &&
+      (/from\s+["']\.\/report\/RuntimeReportReporter["']/.test(
         reporterOrchestrator,
-      ),
-    "RuntimeReporter.ts does not import report layer",
+      ) ||
+        /from\s+["']\.\/report["']/.test(reporterOrchestrator)) &&
+      /\bRuntimeReportCollector\b/.test(reporterOrchestrator) &&
+      /RuntimeReportReporter\.build\s*\(/.test(reporterOrchestrator) &&
+      /return\s+runtimeReport\.health\s*;/.test(reporterOrchestrator) &&
+      !/\bRuntimeReportBuilder\b/.test(reporterOrchestrator) &&
+      !/\bRuntimeReportSnapshot\b/.test(reporterOrchestrator) &&
+      !/\bRuntimeReportTypes\b/.test(reporterOrchestrator) &&
+      !/report\.build\s*\(/.test(reporterOrchestrator),
+    "RuntimeReporter imports/uses RuntimeReportReporter (UX-3.17); no Builder",
   );
 
   const providerCandidates = [
