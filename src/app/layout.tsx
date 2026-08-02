@@ -5,6 +5,7 @@ import {
   APP_HTML_LANG,
   APP_NAME,
 } from "@/lib/app-branding/constants";
+import { ThemeRuntimeHost } from "./theme-runtime-host";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,7 +33,9 @@ export default function RootLayout({
       lang={APP_HTML_LANG}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ThemeRuntimeHost>{children}</ThemeRuntimeHost>
+      </body>
     </html>
   );
 }

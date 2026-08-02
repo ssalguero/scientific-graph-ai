@@ -4,15 +4,17 @@ Parallel Design System package for UX-3. Coexists with UX-2 (`src/lib/ui`, `src/
 
 ## Current microfase
 
-**UX-3.1.3 — Theme System** (`THEME_CONTRACT_VERSION = "3.1.3"`).
+**UX-4.1 — Theme Runtime Host Integration** (COMPLETE).
 
-Foundation Tokens remain at `TOKEN_CONTRACT_VERSION = "3.1.2"` (contracts are decoupled). Theme Maps, pure CSS variable generators, and a package-local ThemeProvider live under `theme/` + `providers/`. No app wiring, no UI primitives.
+`ThemeProvider` is mounted via app-owned [`src/app/theme-runtime-host.tsx`](../app/theme-runtime-host.tsx). The certified Provider source is **unchanged** (adapt the host, not the Provider). Product UI still paints with UX-2 `--app-*`; UX-3 `--color-*` coexist on the host without chrome consumers.
 
-See `docs/THEME.md`, `docs/TOKENS.md`, and `docs/ARCHITECTURE.md`.
+Theme contract remains `THEME_CONTRACT_VERSION = "3.1.3"`. Foundation Tokens remain at `TOKEN_CONTRACT_VERSION = "3.1.2"`.
+
+See `docs/THEME.md`, `docs/TOKENS.md`, `docs/ARCHITECTURE.md`, and [`docs/UX/UX-4.1.md`](../../docs/UX/UX-4.1.md).
 
 ## Public API
 
-Import only from `@/ui` when a microfase authorizes consumption:
+Import from `@/ui`. In UX-4.1 the **only** authorized application import site is `src/app/theme-runtime-host.tsx`:
 
 ```ts
 import {
@@ -32,7 +34,7 @@ import {
 import type { ThemeId, ThemeMap, SemanticFocusTokens } from "@/ui";
 ```
 
-Until then: **no application imports of `@/ui`**.
+Chrome / component consumption of `useTheme()` is deferred to UX-4.9. Do not import `src/ui/theme/runtime/**` from the application.
 
 ## Dependency Rule
 
@@ -66,6 +68,6 @@ Changes to frozen layers require `UI_GOVERNANCE_V3.md` update + ADR.
 |-------|------|
 | `src/lib/ui` | Active runtime tokens/theme (UX-2) |
 | `src/components/ui` | Product chrome (UX-2) |
-| `src/ui` | DS v3 — tokens + theme infrastructure (not mounted) |
+| `src/ui` | DS v3 — tokens + theme; ThemeProvider mounted via ThemeRuntimeHost (UX-4.1) |
 
 Double stack is intentional until certified deprecation of UX-2 equivalents.

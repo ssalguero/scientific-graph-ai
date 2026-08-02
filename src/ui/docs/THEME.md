@@ -158,7 +158,9 @@ Private runtime report snapshot (UX-3.16): `src/ui/theme/runtime/report/` (immut
 
 Private runtime diagnostics integration (UX-3.17): `src/ui/theme/runtime/RuntimeReporter.ts` (private orchestrator: Snapshot → Metrics → Health → Aggregation discarded → Telemetry discarded → Report → return runtimeReport.health). Not re-exported from `runtime/index.ts` or any public barrel. Not wired into ThemeProvider.
 
-Consumption freeze: no application imports of `@/ui` until an integration microfase authorizes wiring.
+Consumption freeze (UX-3): no application imports of `@/ui` until an integration microfase authorizes wiring.  
+**Lifted by UX-4.1:** application may import `@/ui` only from [`src/app/theme-runtime-host.tsx`](../../app/theme-runtime-host.tsx) (host mount). Chrome consumers remain deferred to UX-4.9.  
+See [`docs/UX/UX-4.1.md`](../../../docs/UX/UX-4.1.md).
 
 ## Gate
 
@@ -181,6 +183,35 @@ npm run validate:ux-3.16
 npm run validate:ux-3.17
 ```
 
-## Integration Contract (future — not implemented here)
+## Integration Contract
 
-Server-controlled `theme` prop; optional elevation of `data-theme` to `<html>`; persistence; FOUC prevention — belong to a dedicated wiring microfase. Component migration consuming certified hooks / selective Runtime selectors → later microfase after UX-3.6. Theme Runtime Snapshot & DevTools Foundation → UX-3.8 COMPLETE. Theme Runtime Observers Foundation → UX-3.9 COMPLETE. Theme Runtime Metrics Foundation → UX-3.10 COMPLETE. Runtime Diagnostics Foundation → UX-3.11 COMPLETE. Runtime Health Integration Foundation → UX-3.12 COMPLETE. Runtime Health Aggregation Foundation → UX-3.13 COMPLETE. Runtime Telemetry Foundation → UX-3.14 COMPLETE. Runtime Telemetry Integration Foundation → UX-3.15 COMPLETE. Runtime Report Snapshot Foundation → UX-3.16 COMPLETE. Runtime Diagnostics Integration Foundation → UX-3.17 COMPLETE. Next: UX-4.x Consumers.
+**SSOT:** [`docs/UX/UX-4.0-roadmap.md`](../../../docs/UX/UX-4.0-roadmap.md) (FROZEN · Version 1.0)  
+**Microfase:** [`docs/UX/UX-4.1.md`](../../../docs/UX/UX-4.1.md) — Theme Runtime Host Integration **COMPLETE**
+
+### UX-4.1 — Host Integration (COMPLETE)
+
+| In | Out (Non-goals) |
+|----|-----------------|
+| Mount certified `ThemeProvider` via app-owned `ThemeRuntimeHost` | Modify ThemeProvider API / props / behavior |
+| Host-scoped `data-theme` + CSS vars (Provider unchanged) | Elevate `data-theme` to `<html>` / FOUC |
+| Authorize `@/ui` import from `theme-runtime-host.tsx` only | Theme persistence / `localStorage` |
+| Dual-stack: UX-2 `--app-*` (active UI) + UX-3 `--color-*` (host) | Wire `RuntimeDiagnostics`; chrome `useTheme()` |
+
+**Policy:** Adapt the host, not the Provider.  
+**Architectural principle:** Integrate the certified runtime into the application without modifying certified runtime components.
+
+**Visual note:** No product visual change is expected. Dual-stack coexistence can look like “theme not working” — that is correct for UX-4.1.
+
+Gate: `npm run validate:ux-4.1`
+
+### Later in UX-4
+
+- **UX-4.2–4.8** — Lovable App Shell (sole chrome composition root) + 5 regions
+- **UX-4.9** — Chrome Runtime Migration (AppShell / Sidebar / Toolbar / Inspector / StatusBar → `@/ui`)
+- **UX-4.10** — Integration Certification (no direct `UI_TOKENS` inside App Shell chrome)
+
+### Deferred beyond UX-4
+
+Server-controlled `theme` prop elevation, persistence, FOUC on `<html>`, DevTools / Runtime overlays, full canvas migration → UX-5 / UX-6 per roadmap Non-goals.
+
+Runtime foundations UX-3.8–3.21 = COMPLETE / CLOSED. **Next microfase:** UX-4.2 App Shell Foundation.

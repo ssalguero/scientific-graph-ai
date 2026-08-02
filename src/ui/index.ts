@@ -6,7 +6,7 @@
  *
  * UX-3.1.3 curated surface: tokens + theme + ThemeProvider.
  * Validators remain package-internal (not reexported here).
- * Application modules must not import @/ui until a later microfase authorizes wiring.
+ * UX-4.1 authorizes application import of @/ui from ThemeRuntimeHost only.
  */
 export {
   primitive,

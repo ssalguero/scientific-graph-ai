@@ -20,7 +20,8 @@ Certified chain =
         → Readonly<RuntimeReportSnapshot>
 API FREEZE = definitive (UX-3.18–3.20 contracts unchanged)
 Result = Runtime Certified · UX Runtime API Frozen · Release Ready
-Next: UX-4.x
+Next: UX-4 — Runtime Host Integration + Lovable App Shell
+      → docs/UX/UX-4.0-roadmap.md (SSOT · FROZEN · Version 1.0)
 ```
 
 ---
@@ -249,12 +250,22 @@ UX Runtime API Frozen
 Release Ready
 ```
 
-**Next:** UX-4.x Consumers / instrumentation extensions behind `RuntimeDiagnostics`.
+**Next:** UX-4 — Runtime Host Integration + Lovable App Shell  
+SSOT: [`docs/UX/UX-4.0-roadmap.md`](./UX-4.0-roadmap.md) (FROZEN · Version 1.0)
+
+```text
+Objective:
+  Mount the certified Theme Runtime into the application (host-scoped).
+  Introduce the Lovable App Shell defined in ux/docs/LAYOUT.md.
+  Progressively migrate application chrome to consume the runtime
+  instead of legacy UI_TOKENS.
+```
 
 ---
 
 ## Related
 
+- [`docs/UX/UX-4.0-roadmap.md`](./UX-4.0-roadmap.md) — **Next series SSOT**
 - [`docs/UX/UX-3.20.md`](./UX-3.20.md)
 - [`docs/UX/UX-3.19.md`](./UX-3.19.md)
 - [`docs/UX/UX-3.18.md`](./UX-3.18.md)
