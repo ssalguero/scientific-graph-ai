@@ -48,7 +48,8 @@ UX-4.5 = COMPLETE (Workspace Integration)
 UX-4.6 = COMPLETE (Inspector Integration)
 UX-4.7 = COMPLETE (Status Bar Integration)
 UX-4.8 = COMPLETE (Responsive + Docking Integration)
-UX-4.9 = NEXT (Chrome Runtime Migration)
+UX-4.9 = COMPLETE (Chrome Runtime Migration)
+UX-4.10 = NEXT (Integration Certification)
 SCOPE = visual infrastructure only
 NO new end-user features
 AppShell = sole composition root for application chrome (from UX-4.2)
@@ -285,21 +286,31 @@ Evidencia: [`UX-4.8.md`](./UX-4.8.md) · `validate:ux-4.8`
 - Reutilizar `DockRoot` / `DockZone` / FloatingWindowLayer / WindowManager
 - Sin nuevas features de docking; sin JS viewport logic en `app-shell/**`
 
-### UX-4.9 — Chrome Runtime Migration
+### UX-4.9 — Chrome Runtime Migration · COMPLETE
 
-Migración **solo del application chrome**, no de toda la aplicación:
+```text
+AppShell chrome + StatusBar CSS var migration only.
+Frozen mapping --app-* → --color-*.
+Dual-stack outside app-shell/** + status-bar/** is intentional.
+Geometry frozen after UX-4.8. Visual parity is structural.
+```
 
-- AppShell, Sidebar, Toolbar, Inspector, StatusBar → `useTheme()` / ThemeContext / CSS vars / `@/ui`
+Evidencia: [`UX-4.9.md`](./UX-4.9.md) · `validate:ux-4.9`
+
+- Migrar placeholders de `AppShell` y chrome de `StatusBarLayout` a `--color-*`
+- Mapping congelado (4 filas); sin mappings adicionales
+- Sin migrar Sidebar / Toolbar / Inspector / Workspace / Canvas
 - Canvas y dominio residuales → UX-5 / UX-6
-- Eliminación de dependencias directas de `UI_TOKENS` / `--app-*` **en chrome**
 
-### UX-4.10 — Integration Certification
+### UX-4.10 — Integration Certification · NEXT
 
 Gates:
 
 - Shell 5 regiones presente; AppShell = único composition root de chrome
 - ThemeProvider montado (host-scoped; sin Diagnostics / sin `<html>` / sin persistence)
-- **No remaining direct theme dependencies inside App Shell** — AppShell, Sidebar, Toolbar, Inspector, StatusBar no leen `UI_TOKENS` directamente; solo `useTheme()` / ThemeContext / CSS vars / `@/ui`
+- AppShell chrome + StatusBar sin `--app-*` / `UI_TOKENS` directo (UX-4.9);
+  Sidebar / Toolbar / Inspector dual-stack permanece intencional hasta UX-5/UX-6
+  salvo decisión explícita de roadmap
 - API Freeze UX-3 intacto; tsc + validators PASS
 - Doc de cierre + **Next: UX-5 Feature Integration**
 
@@ -322,7 +333,8 @@ No reescribir:
 - Shell 5 regiones presente
 - AppShell = único composition root de chrome
 - ThemeProvider montado (host-scoped; sin Diagnostics / `<html>` / persistence)
-- Chrome (AppShell, Sidebar, Toolbar, Inspector, StatusBar) sin `UI_TOKENS` directo
+- AppShell chrome + StatusBar sin `UI_TOKENS` / `--app-*` directo (UX-4.9 COMPLETE)
+- Dual-stack en Sidebar / Toolbar / Inspector / producto = intencional hasta UX-5/UX-6
 - Contratos públicos UX-3 intactos
 - `tsc` + validators en PASS
 
@@ -332,13 +344,13 @@ No reescribir:
 
 UX-4 se da por **cerrada** solo cuando se cumplen todos:
 
-- [ ] Theme Runtime integrado al host (host-scoped)
-- [ ] App Shell implementado como único composition root
-- [ ] Las 5 regiones de LAYOUT.md presentes
-- [ ] Chrome principal migrado a `@/ui`
-- [ ] Sin dependencias directas a `UI_TOKENS` dentro del App Shell
-- [ ] Contratos públicos de UX-3 intactos
-- [ ] Validadores y gates en PASS
+- [x] Theme Runtime integrado al host (host-scoped)
+- [x] App Shell implementado como único composition root
+- [x] Las 5 regiones de LAYOUT.md presentes
+- [x] Chrome AppShell + StatusBar migrado a Theme Runtime CSS vars (UX-4.9)
+- [x] Sin dependencias directas a `UI_TOKENS` / `--app-*` en `app-shell/**` + `status-bar/**`
+- [ ] Contratos públicos de UX-3 intactos (certificar en UX-4.10)
+- [ ] Validadores y gates en PASS (certificar serie en UX-4.10)
 - [ ] UX-5 habilitado sin deuda arquitectónica bloqueante
 
 ---

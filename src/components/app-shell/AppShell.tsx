@@ -9,8 +9,8 @@ import {
 } from "./AppShellRegions";
 
 /**
- * UX-4.2 / UX-4.3 / UX-4.4 / UX-4.5 / UX-4.6 / UX-4.7 / UX-4.8 — Sole composition
- * root for application chrome.
+ * UX-4.2 / UX-4.3 / UX-4.4 / UX-4.5 / UX-4.6 / UX-4.7 / UX-4.8 / UX-4.9 — Sole
+ * composition root for application chrome.
  *
  * Architectural principles (FROZEN):
  * - AppShell is the only composition root for application chrome.
@@ -30,6 +30,8 @@ import {
  *   StatusBar owns visual structure and layout.
  * - UX-4.8 — Normalize, don't invent. Tailwind responsive variants only.
  *   No second responsive system. Docking reused unchanged (not owned here).
+ * - UX-4.9 — Chrome consumes Theme Runtime CSS vars (--color-*). Mapping
+ *   frozen; dual-stack outside app-shell/status-bar is intentional.
  *
  * Layout-only: no hooks, providers, stores, effects, or business logic.
  */
@@ -63,7 +65,7 @@ function AppShellRegionPlaceholder({
       {...{ [APP_SHELL_REGION_ATTR]: region }}
       className={[
         REGION_AREA[region],
-        "flex items-center justify-center border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-2 text-xs text-[var(--app-text-muted)]",
+        "flex items-center justify-center border border-dashed border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-3 py-2 text-xs text-[var(--color-text-muted)]",
       ].join(" ")}
       aria-hidden="true"
     >
