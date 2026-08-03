@@ -26688,18 +26688,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         }
       />
       }
+      inspector={
+        <Inspector
+          visible={false}
+          width={INSPECTOR_TOKENS.defaultWidth}
+        >
+          <InspectorPanel />
+        </Inspector>
+      }
       panels={
         <WorkspacePanels>
           <DockRoot>
             <DockZone side="right">
-              <DockPanel id={DOCK_PANEL_IDS.inspector}>
-                <Inspector
-                  visible={false}
-                  width={INSPECTOR_TOKENS.defaultWidth}
-                >
-                  <InspectorPanel />
-                </Inspector>
-              </DockPanel>
+              <DockPanel id={DOCK_PANEL_IDS.inspector} />
             </DockZone>
           </DockRoot>
 

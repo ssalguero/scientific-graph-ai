@@ -45,7 +45,8 @@ UX-4.2 = COMPLETE (App Shell Foundation)
 UX-4.3 = COMPLETE (Sidebar Alignment)
 UX-4.4 = COMPLETE (Toolbar Migration)
 UX-4.5 = COMPLETE (Workspace Integration)
-UX-4.6 = NEXT (Inspector Integration)
+UX-4.6 = COMPLETE (Inspector Integration)
+UX-4.7 = NEXT (Status Bar Integration)
 SCOPE = visual infrastructure only
 NO new end-user features
 AppShell = sole composition root for application chrome (from UX-4.2)
@@ -259,6 +260,7 @@ Evidencia: [`UX-4.5.md`](./UX-4.5.md) · `validate:ux-4.5`
 
 - Activar / alinear región Inspector docked bajo AppShell
 - Shell chrome primero; binding profundo de props / análisis → UX-5
+- Evidencia: [`UX-4.6.md`](./UX-4.6.md) · `validate:ux-4.6`
 
 ### UX-4.7 — Status Bar
 

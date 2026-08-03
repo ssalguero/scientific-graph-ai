@@ -9,6 +9,8 @@ export type WorkspaceLayoutProps = {
   sidebar: ReactNode;
   workspace: ReactNode;
   panels?: ReactNode;
+  /** UX-4.6 — transparent Inspector Region slot (move-only forward). */
+  inspector?: ReactNode;
   className?: string;
 };
 

@@ -7,7 +7,7 @@ import {
 } from "./AppShellRegions";
 
 /**
- * UX-4.2 / UX-4.3 / UX-4.4 / UX-4.5 — Sole composition root for application chrome.
+ * UX-4.2 / UX-4.3 / UX-4.4 / UX-4.5 / UX-4.6 — Sole composition root for application chrome.
  *
  * Architectural principles (FROZEN):
  * - AppShell is the only composition root for application chrome.
@@ -19,9 +19,12 @@ import {
  * - UX-4.5 — Workspace owns functionality + scroll; AppShell owns Workspace Region
  *   position, bounds (overflow-hidden), and overlay containing block (relative).
  * - AppShell renders the received workspace slot — it does not create Workspace.
+ * - UX-4.6 — Inspector owns width and visibility; AppShell owns Inspector Region
+ *   bounds and position. AppShell renders the received inspector slot — it does
+ *   not create Inspector.
  *
  * Layout-only: no hooks, providers, stores, effects, or business logic.
- * Inspector / Status Bar default to placeholders.
+ * Status Bar defaults to placeholder.
  */
 
 export type AppShellProps = {
@@ -124,7 +127,14 @@ export function AppShell({
           </AppShellRegion>
         }
         inspector={
-          inspector ?? (
+          inspector != null ? (
+            <AppShellRegion
+              region={APP_SHELL_REGIONS.inspector}
+              className="h-full min-h-0 overflow-hidden"
+            >
+              {inspector}
+            </AppShellRegion>
+          ) : (
             <AppShellRegionPlaceholder
               region={APP_SHELL_REGIONS.inspector}
               label="Inspector"
