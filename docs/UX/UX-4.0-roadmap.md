@@ -41,10 +41,13 @@ El roadmap no puede cambiar silenciosamente durante la implementación.
 UX-4 = OPEN (Runtime Host Integration + Lovable App Shell)
 UX-4.0 = FROZEN (roadmap oficial · SSOT · Version 1.0)
 UX-4.1 = COMPLETE (Theme Runtime Host Integration)
-UX-4.2 = NEXT (App Shell Foundation)
+UX-4.2 = COMPLETE (App Shell Foundation)
+UX-4.3 = NEXT (Sidebar Alignment)
 SCOPE = visual infrastructure only
 NO new end-user features
 AppShell = sole composition root for application chrome (from UX-4.2)
+WorkspaceLayout = transitional bridge (NOT a composition root)
+AppShell is layout-only. It owns no application state.
 ThemeProvider = host-scoped (UX-3 contract intact · mounted via ThemeRuntimeHost)
 Runtime API Freeze = VIGENTE (UX-3.21)
 Next Series = UX-5 Feature Integration
@@ -187,21 +190,24 @@ Trabajo:
 - Dual-stack permitido: UI sigue en `--app-*`; provider aplica `--color-*` en el host
 - Doc + validator gate `validate:ux-4.1`
 
-### UX-4.2 — App Shell Foundation
+### UX-4.2 — App Shell Foundation · COMPLETE
 
 ```text
 The App Shell becomes the only composition root for application chrome.
+WorkspaceLayout acts as a transitional bridge.
+AppShell is layout-only. It owns no application state.
+Toolbar relocation deferred to UX-4.4.
 ```
 
-A partir de esta fase, Sidebar, Toolbar, Workspace, Inspector y StatusBar dejan
-de existir como regiones dispersas: todo cuelga del AppShell.
+Evidencia: [`UX-4.2.md`](./UX-4.2.md) · `validate:ux-4.2`
 
-- Composición explícita de 5 regiones según LAYOUT.md (preferencia: wrapper fino con slots sobre `WorkspaceLayout` / `WindowManager` / sessions)
-- Skeleton visible (placeholders OK para Status Bar / Inspector docked)
-- Primer momento en que el usuario **ve** el layout Lovable (esqueleto)
+- Composición explícita de 5 regiones según LAYOUT.md
+- `WorkspaceLayout` = bridge; AppShell = único composition root
+- Placeholders: Toolbar / Inspector / Status Bar
+- AdaptiveToolbar permanece en `WorkspaceContent` (→ UX-4.4)
 - Sin reescritura de Sidebar / Toolbar / Windows; sin features nuevas
 
-### UX-4.3 — Sidebar
+### UX-4.3 — Sidebar Alignment · NEXT
 
 - Alinear Sidebar existente (`src/components/ui/sidebar/*`) a slots / tamaños / jerarquía de LAYOUT.md bajo AppShell
 - Reorganizar, no reescribir

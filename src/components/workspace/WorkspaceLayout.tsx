@@ -1,14 +1,19 @@
+import { AppShell } from "@/components/app-shell";
 import { LayoutEngine } from "@/components/layout-engine";
 import { getAppShell } from "@/lib/ui/theme";
 
-import { WORKSPACE_TOKENS } from "./WorkspaceTokens";
 import type { WorkspaceLayoutProps } from "./types";
 
 /**
- * D47.2 — App shell owner. Sole `<main>` for the Workspace layout.
+ * UX-4.2 — Transitional bridge to AppShell.
+ * WorkspaceLayout acts as a transitional bridge.
+ * AppShell is the only composition root for application chrome.
+ *
+ * D47.2 — Existing props contract preserved (themeMode, sidebar, workspace, panels).
  * D54.3 — Sole consumer of LayoutEngine (wiring mínimo / decisión 1C).
  * Resolves the canonical LayoutTree here; does not propagate it to slots (D55).
- * Move-only chrome: existing props contract preserved; no React layout state/hooks/context.
+ * Move-only chrome: no React layout state/hooks/context.
+ * Geometry is owned by AppShell (layout-only); theme tokens still applied here.
  */
 export function WorkspaceLayout({
   themeMode = "light",
@@ -25,15 +30,18 @@ export function WorkspaceLayout({
     );
   }
 
-  const shellClass = [WORKSPACE_TOKENS.shell, getAppShell(themeMode), className]
-    .filter(Boolean)
-    .join(" ");
+  const shellClass = [getAppShell(themeMode), className].filter(Boolean).join(" ");
 
   return (
-    <main className={shellClass}>
-      {sidebar}
-      {workspace}
-      {panels}
-    </main>
+    <AppShell
+      className={shellClass}
+      sidebar={sidebar}
+      workspace={
+        <>
+          {workspace}
+          {panels}
+        </>
+      }
+    />
   );
 }
