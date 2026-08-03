@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { StatusBar } from "@/components/status-bar";
+
 import { AppShellLayout } from "./AppShellLayout";
 import {
   APP_SHELL_REGION_ATTR,
@@ -7,7 +9,8 @@ import {
 } from "./AppShellRegions";
 
 /**
- * UX-4.2 / UX-4.3 / UX-4.4 / UX-4.5 / UX-4.6 — Sole composition root for application chrome.
+ * UX-4.2 / UX-4.3 / UX-4.4 / UX-4.5 / UX-4.6 / UX-4.7 — Sole composition root
+ * for application chrome.
  *
  * Architectural principles (FROZEN):
  * - AppShell is the only composition root for application chrome.
@@ -22,9 +25,11 @@ import {
  * - UX-4.6 — Inspector owns width and visibility; AppShell owns Inspector Region
  *   bounds and position. AppShell renders the received inspector slot — it does
  *   not create Inspector.
+ * - UX-4.7 — StatusBar is the permanent default chrome of the AppShell.
+ *   Placeholder mode ends in UX-4.7. AppShell owns Status Region position;
+ *   StatusBar owns visual structure and layout.
  *
  * Layout-only: no hooks, providers, stores, effects, or business logic.
- * Status Bar defaults to placeholder.
  */
 
 export type AppShellProps = {
@@ -142,12 +147,12 @@ export function AppShell({
           )
         }
         statusBar={
-          statusBar ?? (
-            <AppShellRegionPlaceholder
-              region={APP_SHELL_REGIONS.statusBar}
-              label="Status Bar"
-            />
-          )
+          <AppShellRegion
+            region={APP_SHELL_REGIONS.statusBar}
+            className="min-w-0"
+          >
+            {statusBar ?? <StatusBar />}
+          </AppShellRegion>
         }
       />
     </main>

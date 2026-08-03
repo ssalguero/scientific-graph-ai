@@ -46,7 +46,8 @@ UX-4.3 = COMPLETE (Sidebar Alignment)
 UX-4.4 = COMPLETE (Toolbar Migration)
 UX-4.5 = COMPLETE (Workspace Integration)
 UX-4.6 = COMPLETE (Inspector Integration)
-UX-4.7 = NEXT (Status Bar Integration)
+UX-4.7 = COMPLETE (Status Bar Integration)
+UX-4.8 = NEXT (Responsive + Docking Integration)
 SCOPE = visual infrastructure only
 NO new end-user features
 AppShell = sole composition root for application chrome (from UX-4.2)
@@ -265,7 +266,8 @@ Evidencia: [`UX-4.5.md`](./UX-4.5.md) · `validate:ux-4.5`
 ### UX-4.7 — Status Bar
 
 - Nuevo Status Bar; región inferior LAYOUT.md
-- Contenido mínimo (placeholder); features reales → UX-5
+- Contenido mínimo (placeholder visual); features reales → UX-5
+- Evidencia: [`UX-4.7.md`](./UX-4.7.md) · `validate:ux-4.7`
 
 ### UX-4.8 — Responsive + Docking
 
