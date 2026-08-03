@@ -44,13 +44,13 @@ UX-5.1  = COMPLETE (Feature Registry Foundation)
 UX-5.2  = COMPLETE (Feature Discovery)
 UX-5.3  = COMPLETE (Feature Metadata)
 UX-5.4  = COMPLETE (Feature Visibility)
-UX-5.5  = PENDING (Feature State)
+UX-5.5  = COMPLETE (Feature State)
 UX-5.6  = PENDING (Feature Provider)
 UX-5.7  = PENDING (Feature Hooks)
 UX-5.8  = PENDING (Feature Integration Bridge)
 UX-5.9  = PENDING (Feature Diagnostics)
 UX-5.10 = PENDING (Integration Certification)
-Next = UX-5.5 (Feature State)
+Next = UX-5.6 (Feature Provider)
 Registry = único SSOT de features
 Metadata = completely immutable
 Estado runtime = separado de definición
@@ -230,7 +230,7 @@ Visibility rules without permissions.
 - visible · hidden · experimental · beta · internal
 - Sin auth / permissions
 
-### UX-5.5 — Feature State · PENDING
+### UX-5.5 — Feature State · COMPLETE
 
 ```text
 Runtime state separated from definition/metadata.
