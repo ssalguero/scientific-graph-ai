@@ -38,7 +38,8 @@ El roadmap no puede cambiar silenciosamente durante la implementación.
 ## Declaración
 
 ```text
-UX-4 = OPEN (Runtime Host Integration + Lovable App Shell)
+UX-4 = CLOSED (Runtime Host Integration + Lovable App Shell)
+UX-4 SERIES CERTIFIED
 UX-4.0 = FROZEN (roadmap oficial · SSOT · Version 1.0)
 UX-4.1 = COMPLETE (Theme Runtime Host Integration)
 UX-4.2 = COMPLETE (App Shell Foundation)
@@ -49,7 +50,7 @@ UX-4.6 = COMPLETE (Inspector Integration)
 UX-4.7 = COMPLETE (Status Bar Integration)
 UX-4.8 = COMPLETE (Responsive + Docking Integration)
 UX-4.9 = COMPLETE (Chrome Runtime Migration)
-UX-4.10 = NEXT (Integration Certification)
+UX-4.10 = COMPLETE (Integration Certification)
 SCOPE = visual infrastructure only
 NO new end-user features
 AppShell = sole composition root for application chrome (from UX-4.2)
@@ -302,7 +303,15 @@ Evidencia: [`UX-4.9.md`](./UX-4.9.md) · `validate:ux-4.9`
 - Sin migrar Sidebar / Toolbar / Inspector / Workspace / Canvas
 - Canvas y dominio residuales → UX-5 / UX-6
 
-### UX-4.10 — Integration Certification · NEXT
+### UX-4.10 — Integration Certification · COMPLETE
+
+```text
+Certification only. No production changes.
+Evidence reused from UX-4.1–UX-4.9 — criteria not redefined.
+Validator read-only. SERIES CERTIFIED = all-or-nothing.
+```
+
+Evidencia: [`UX-4.10.md`](./UX-4.10.md) · `validate:ux-4.10`
 
 Gates:
 
@@ -310,9 +319,9 @@ Gates:
 - ThemeProvider montado (host-scoped; sin Diagnostics / sin `<html>` / sin persistence)
 - AppShell chrome + StatusBar sin `--app-*` / `UI_TOKENS` directo (UX-4.9);
   Sidebar / Toolbar / Inspector dual-stack permanece intencional hasta UX-5/UX-6
-  salvo decisión explícita de roadmap
 - API Freeze UX-3 intacto; tsc + validators PASS
 - Doc de cierre + **Next: UX-5 Feature Integration**
+- **UX-4 SERIES CERTIFIED**
 
 ---
 
@@ -328,7 +337,7 @@ No reescribir:
 
 ---
 
-## 8. Gates y certificación (UX-4.10)
+## 8. Gates y certificación (UX-4.10) · COMPLETE
 
 - Shell 5 regiones presente
 - AppShell = único composition root de chrome
@@ -337,6 +346,7 @@ No reescribir:
 - Dual-stack en Sidebar / Toolbar / Inspector / producto = intencional hasta UX-5/UX-6
 - Contratos públicos UX-3 intactos
 - `tsc` + validators en PASS
+- **UX-4 SERIES CERTIFIED** — evidencia [`UX-4.10.md`](./UX-4.10.md) · `validate:ux-4.10`
 
 ---
 
@@ -349,9 +359,14 @@ UX-4 se da por **cerrada** solo cuando se cumplen todos:
 - [x] Las 5 regiones de LAYOUT.md presentes
 - [x] Chrome AppShell + StatusBar migrado a Theme Runtime CSS vars (UX-4.9)
 - [x] Sin dependencias directas a `UI_TOKENS` / `--app-*` en `app-shell/**` + `status-bar/**`
-- [ ] Contratos públicos de UX-3 intactos (certificar en UX-4.10)
-- [ ] Validadores y gates en PASS (certificar serie en UX-4.10)
-- [ ] UX-5 habilitado sin deuda arquitectónica bloqueante
+- [x] Contratos públicos de UX-3 intactos (certificar en UX-4.10)
+- [x] Validadores y gates en PASS (certificar serie en UX-4.10)
+- [x] UX-5 habilitado sin deuda arquitectónica bloqueante
+
+```text
+UX-4 SERIES CERTIFIED may only be declared if every mandatory certification
+block passes. Partial certification is not permitted.
+```
 
 ---
 
