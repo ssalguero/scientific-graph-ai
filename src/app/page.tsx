@@ -19606,6 +19606,81 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   return (
     <WorkspaceLayout
       themeMode={themeMode}
+      toolbar={
+          <AdaptiveToolbar
+            left={
+              <>
+                <header className="pb-0.5">
+                  <h1 className="text-sm font-semibold text-[var(--app-heading)] tracking-tight">
+                    Scientific Graph AI
+                  </h1>
+                  {activeWorkspaceSection === "home" ? (
+                    <p className="text-[var(--app-text-muted)] mt-0.5 text-[11px] sm:text-xs">
+                      Elija cómo comenzar o entre al laboratorio completo.
+                    </p>
+                  ) : showWelcomeHint ? (
+                    <p className="text-[var(--app-text-muted)] mt-0.5 text-[11px] sm:text-xs">
+                      Importe datos experimentales o abra el constructor de curvas en
+                      Datos.
+                    </p>
+                  ) : null}
+                </header>
+
+                <nav
+                  className="flex flex-wrap gap-1.5 border-b border-[var(--app-border)] pb-1.5"
+                  role="tablist"
+                  aria-label="Workspace científico"
+                >
+                  {visibleWorkspaceTabs.map((tab) => (
+                    <WorkspaceTab
+                      key={tab.id}
+                      section={tab.id}
+                      label={tab.label}
+                      isActive={activeWorkspaceSection === tab.id}
+                      onSelect={selectWorkspaceSection}
+                      badge={
+                        tab.id === "analysis"
+                          ? activeVisibilityToggleCount
+                          : undefined
+                      }
+                    />
+                  ))}
+                </nav>
+
+                {showWorkflowSessionIndicator && activeGuidedWorkflowPlan ? (
+                  <div className="mb-2">
+                    <WorkflowSessionIndicator
+                      plan={activeGuidedWorkflowPlan}
+                      session={guidedWorkflowSession}
+                      hostTab={
+                        guidedWorkflowHostTab !== null &&
+                        guidedWorkflowHostTab !== "home"
+                          ? guidedWorkflowHostTab
+                          : null
+                      }
+                      activeTab={
+                        activeWorkspaceSection as GuidedWorkflowWorkspaceTab
+                      }
+                      onCancel={cancelGuidedWorkflow}
+                    />
+                  </div>
+                ) : null}
+
+                {activeWorkspaceSection !== "home" ? (
+                  <p className="text-[11px] sm:text-xs text-[var(--app-text-muted)] leading-snug -mt-1">
+                    {workspaceSessionContext}
+                  </p>
+                ) : null}
+
+                <LabUsageProfileSelector
+                  value={labUsageProfile}
+                  onChange={setLabUsageProfile}
+                  persistenceBadgeClassName={persistenceBadge}
+                />
+              </>
+            }
+          />
+      }
       sidebar={
       <Sidebar
         onNewCurve={newGraph}
@@ -19736,81 +19811,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       }
       workspace={
       <WorkspaceContent
-        toolbar={
-          <AdaptiveToolbar
-            left={
-              <>
-                <header className="pb-0.5">
-                  <h1 className="text-sm font-semibold text-[var(--app-heading)] tracking-tight">
-                    Scientific Graph AI
-                  </h1>
-                  {activeWorkspaceSection === "home" ? (
-                    <p className="text-[var(--app-text-muted)] mt-0.5 text-[11px] sm:text-xs">
-                      Elija cómo comenzar o entre al laboratorio completo.
-                    </p>
-                  ) : showWelcomeHint ? (
-                    <p className="text-[var(--app-text-muted)] mt-0.5 text-[11px] sm:text-xs">
-                      Importe datos experimentales o abra el constructor de curvas en
-                      Datos.
-                    </p>
-                  ) : null}
-                </header>
-
-                <nav
-                  className="flex flex-wrap gap-1.5 border-b border-[var(--app-border)] pb-1.5"
-                  role="tablist"
-                  aria-label="Workspace científico"
-                >
-                  {visibleWorkspaceTabs.map((tab) => (
-                    <WorkspaceTab
-                      key={tab.id}
-                      section={tab.id}
-                      label={tab.label}
-                      isActive={activeWorkspaceSection === tab.id}
-                      onSelect={selectWorkspaceSection}
-                      badge={
-                        tab.id === "analysis"
-                          ? activeVisibilityToggleCount
-                          : undefined
-                      }
-                    />
-                  ))}
-                </nav>
-
-                {showWorkflowSessionIndicator && activeGuidedWorkflowPlan ? (
-                  <div className="mb-2">
-                    <WorkflowSessionIndicator
-                      plan={activeGuidedWorkflowPlan}
-                      session={guidedWorkflowSession}
-                      hostTab={
-                        guidedWorkflowHostTab !== null &&
-                        guidedWorkflowHostTab !== "home"
-                          ? guidedWorkflowHostTab
-                          : null
-                      }
-                      activeTab={
-                        activeWorkspaceSection as GuidedWorkflowWorkspaceTab
-                      }
-                      onCancel={cancelGuidedWorkflow}
-                    />
-                  </div>
-                ) : null}
-
-                {activeWorkspaceSection !== "home" ? (
-                  <p className="text-[11px] sm:text-xs text-[var(--app-text-muted)] leading-snug -mt-1">
-                    {workspaceSessionContext}
-                  </p>
-                ) : null}
-
-                <LabUsageProfileSelector
-                  value={labUsageProfile}
-                  onChange={setLabUsageProfile}
-                  persistenceBadgeClassName={persistenceBadge}
-                />
-              </>
-            }
-          />
-        }
         workspace={
           <>
           <section

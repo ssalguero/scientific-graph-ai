@@ -11,7 +11,7 @@ import { WORKSPACE_TOKENS } from "./WorkspaceTokens";
 import type { WorkspaceContentProps } from "./types";
 
 /**
- * D47.2 — Main column + inner padding. Hosts toolbar and scientific workspace slots.
+ * D47.2 — Main column + inner padding. Hosts scientific workspace slot.
  * UX-2.3 — Presentational header (DOM-stable).
  * UX-2.4 — Body regions via WorkspaceBodyLayout (canvas + side/bottom panels).
  * UX-2.5 — Panels use shared Panel shell (BodyLayout owns wrappers).
@@ -21,16 +21,15 @@ import type { WorkspaceContentProps } from "./types";
  * UX-2.13 — ActivePanelProvider nested inside PanelResizeProvider (UI focus only).
  * UX-2.21 — Micro-label recipe via SURFACE_TOKENS.metadata.
  * UX-2.25 — Density tokens for header spacing (hardcoded padding/stack gaps removed).
+ * UX-4.4 — Toolbar detached; AdaptiveToolbar lives in AppShell Toolbar Region.
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
-  toolbar,
   workspace,
 }: WorkspaceContentProps) {
   return (
     <div className={WORKSPACE_TOKENS.mainColumn}>
       <div className={WORKSPACE_TOKENS.inner}>
-        {toolbar}
         <DensityProvider>
         <header
           data-workspace-header

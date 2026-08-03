@@ -43,7 +43,8 @@ UX-4.0 = FROZEN (roadmap oficial · SSOT · Version 1.0)
 UX-4.1 = COMPLETE (Theme Runtime Host Integration)
 UX-4.2 = COMPLETE (App Shell Foundation)
 UX-4.3 = COMPLETE (Sidebar Alignment)
-UX-4.4 = NEXT (Toolbar Migration)
+UX-4.4 = COMPLETE (Toolbar Migration)
+UX-4.5 = NEXT (Workspace Integration)
 SCOPE = visual infrastructure only
 NO new end-user features
 AppShell = sole composition root for application chrome (from UX-4.2)
@@ -222,12 +223,21 @@ Evidencia: [`UX-4.3.md`](./UX-4.3.md) · `validate:ux-4.3`
 - Sin min-width 240px impuesto por AppShell (rail collapse safe)
 - Reorganizar, no reescribir; sin Sidebar v2/Context/Provider
 
-### UX-4.4 — Toolbar Migration · NEXT
+### UX-4.4 — Toolbar Migration · COMPLETE
+
+```text
+Move-only AdaptiveToolbar → AppShell Toolbar Region.
+Transparent WorkspaceLayout bridge · single instance.
+Toolbar owns functionality · AppShell owns position.
+```
+
+Evidencia: [`UX-4.4.md`](./UX-4.4.md) · `validate:ux-4.4`
 
 - Mover `AdaptiveToolbar` desde `WorkspaceContent` → región Toolbar top-level del AppShell
 - Freeze comportamental de acciones; foco en posición / composición
+- Sin Toolbar v2 / Context / Provider; AppShell no crea AdaptiveToolbar
 
-### UX-4.5 — Workspace
+### UX-4.5 — Workspace Integration · NEXT
 
 - Región Workspace = canvas + floating windows; workspace-first
 - Reutilizar `WorkspaceBodyLayout`, WindowManager, FloatingWindowLayer
