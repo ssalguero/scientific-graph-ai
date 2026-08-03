@@ -45,12 +45,12 @@ UX-5.2  = COMPLETE (Feature Discovery)
 UX-5.3  = COMPLETE (Feature Metadata)
 UX-5.4  = COMPLETE (Feature Visibility)
 UX-5.5  = COMPLETE (Feature State)
-UX-5.6  = PENDING (Feature Provider)
+UX-5.6  = COMPLETE (Feature Provider)
 UX-5.7  = PENDING (Feature Hooks)
 UX-5.8  = PENDING (Feature Integration Bridge)
 UX-5.9  = PENDING (Feature Diagnostics)
 UX-5.10 = PENDING (Integration Certification)
-Next = UX-5.6 (Feature Provider)
+Next = UX-5.7 (Feature Hooks)
 Registry = único SSOT de features
 Metadata = completely immutable
 Estado runtime = separado de definición
@@ -239,7 +239,7 @@ Runtime state separated from definition/metadata.
 - enabled · disabled · loading · error
 - Separado de metadata
 
-### UX-5.6 — Feature Provider · PENDING
+### UX-5.6 — Feature Provider · COMPLETE
 
 ```text
 First React Provider. Exposes Registry only.
