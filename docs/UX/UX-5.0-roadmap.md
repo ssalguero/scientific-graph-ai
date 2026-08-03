@@ -43,14 +43,14 @@ UX-5.0  = FROZEN (roadmap oficial · SSOT · Version 1.0)
 UX-5.1  = COMPLETE (Feature Registry Foundation)
 UX-5.2  = COMPLETE (Feature Discovery)
 UX-5.3  = COMPLETE (Feature Metadata)
-UX-5.4  = PENDING (Feature Visibility)
+UX-5.4  = COMPLETE (Feature Visibility)
 UX-5.5  = PENDING (Feature State)
 UX-5.6  = PENDING (Feature Provider)
 UX-5.7  = PENDING (Feature Hooks)
 UX-5.8  = PENDING (Feature Integration Bridge)
 UX-5.9  = PENDING (Feature Diagnostics)
 UX-5.10 = PENDING (Integration Certification)
-Next = UX-5.4 (Feature Visibility)
+Next = UX-5.5 (Feature State)
 Registry = único SSOT de features
 Metadata = completely immutable
 Estado runtime = separado de definición
@@ -221,7 +221,7 @@ Does not render anything.
 - icon · title · description · tags · keywords · experimental · hidden
 - Sin render · sin React
 
-### UX-5.4 — Feature Visibility · PENDING
+### UX-5.4 — Feature Visibility · COMPLETE
 
 ```text
 Visibility rules without permissions.
