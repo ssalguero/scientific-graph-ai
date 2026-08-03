@@ -7,14 +7,16 @@ import {
 } from "./AppShellRegions";
 
 /**
- * UX-4.2 — Sole composition root for application chrome.
+ * UX-4.2 / UX-4.3 — Sole composition root for application chrome.
  *
  * Architectural principles (FROZEN):
  * - AppShell is the only composition root for application chrome.
  * - AppShell is layout-only. It owns no application state.
+ * - Sidebar owns width; AppShell owns position.
+ * - Scrolling ownership remains inside Sidebar; AppShell only bounds the region.
  *
  * Layout-only: no hooks, providers, stores, effects, or business logic.
- * Toolbar / Inspector / Status Bar default to placeholders (UX-4.2).
+ * Toolbar / Inspector / Status Bar default to placeholders.
  * AdaptiveToolbar migration is deferred to UX-4.4.
  */
 
@@ -97,7 +99,7 @@ export function AppShell({
         sidebar={
           <AppShellRegion
             region={APP_SHELL_REGIONS.sidebar}
-            className="min-h-0 overflow-auto"
+            className="flex h-full min-h-0 flex-col overflow-hidden"
           >
             {sidebar}
           </AppShellRegion>

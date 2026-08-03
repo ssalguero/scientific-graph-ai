@@ -270,7 +270,12 @@ export function Sidebar({
       <aside
         ref={asideRef}
         id="app-sidebar"
-        className={mergeClassNames(shell, className)}
+        className={mergeClassNames(
+          shell,
+          // UX-4.3 — fill AppShell Sidebar Region (not viewport). Width + scroll stay owned here.
+          "!h-full !min-h-0",
+          className
+        )}
         data-rail={effectiveRailCollapsed ? "collapsed" : "expanded"}
         data-mobile-overlay={isMobile && overlayOpen ? "open" : undefined}
         aria-hidden={isMobile && !overlayOpen ? true : undefined}

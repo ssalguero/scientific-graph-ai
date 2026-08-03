@@ -5,15 +5,17 @@ import { getAppShell } from "@/lib/ui/theme";
 import type { WorkspaceLayoutProps } from "./types";
 
 /**
- * UX-4.2 — Transitional bridge to AppShell.
- * WorkspaceLayout acts as a transitional bridge.
+ * UX-4.2 / UX-4.3 — Transitional bridge to AppShell.
+ * WorkspaceLayout acts as a transitional bridge (NOT a composition root).
  * AppShell is the only composition root for application chrome.
+ *
+ * UX-4.3 — Single Sidebar instance passes through as the sidebar slot;
+ * width and scroll ownership remain inside Sidebar; AppShell owns position.
  *
  * D47.2 — Existing props contract preserved (themeMode, sidebar, workspace, panels).
  * D54.3 — Sole consumer of LayoutEngine (wiring mínimo / decisión 1C).
  * Resolves the canonical LayoutTree here; does not propagate it to slots (D55).
  * Move-only chrome: no React layout state/hooks/context.
- * Geometry is owned by AppShell (layout-only); theme tokens still applied here.
  */
 export function WorkspaceLayout({
   themeMode = "light",
