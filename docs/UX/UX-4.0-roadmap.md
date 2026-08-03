@@ -44,7 +44,8 @@ UX-4.1 = COMPLETE (Theme Runtime Host Integration)
 UX-4.2 = COMPLETE (App Shell Foundation)
 UX-4.3 = COMPLETE (Sidebar Alignment)
 UX-4.4 = COMPLETE (Toolbar Migration)
-UX-4.5 = NEXT (Workspace Integration)
+UX-4.5 = COMPLETE (Workspace Integration)
+UX-4.6 = NEXT (Inspector Integration)
 SCOPE = visual infrastructure only
 NO new end-user features
 AppShell = sole composition root for application chrome (from UX-4.2)
@@ -237,11 +238,22 @@ Evidencia: [`UX-4.4.md`](./UX-4.4.md) · `validate:ux-4.4`
 - Freeze comportamental de acciones; foco en posición / composición
 - Sin Toolbar v2 / Context / Provider; AppShell no crea AdaptiveToolbar
 
-### UX-4.5 — Workspace Integration · NEXT
+### UX-4.5 — Workspace Integration · COMPLETE
 
-- Región Workspace = canvas + floating windows; workspace-first
-- Reutilizar `WorkspaceBodyLayout`, WindowManager, FloatingWindowLayer
+```text
+Composition certification + ownership normalization.
+No structural relocation is performed.
+Workspace Region owns overlay containing block (relative).
+AppShell bounds (overflow-hidden) · Workspace owns scroll.
+```
+
+Evidencia: [`UX-4.5.md`](./UX-4.5.md) · `validate:ux-4.5`
+
+- Certificar Workspace Region como host exclusivo de composición del área central
+- Normalizar límites: `relative h-full min-h-0 min-w-0 overflow-hidden`
+- Reutilizar WorkspaceBodyLayout, WindowManager, FloatingWindowLayer (intactos)
 - Sin nuevas herramientas de canvas (UX-5)
+- Sin mover WindowManager / FloatingWindow* / providers
 
 ### UX-4.6 — Inspector
 

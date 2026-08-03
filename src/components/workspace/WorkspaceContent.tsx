@@ -22,13 +22,14 @@ import type { WorkspaceContentProps } from "./types";
  * UX-2.21 — Micro-label recipe via SURFACE_TOKENS.metadata.
  * UX-2.25 — Density tokens for header spacing (hardcoded padding/stack gaps removed).
  * UX-4.4 — Toolbar detached; AdaptiveToolbar lives in AppShell Toolbar Region.
+ * UX-4.5 — Composition fill (h-full min-h-0); Workspace owns scroll.
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
   workspace,
 }: WorkspaceContentProps) {
   return (
-    <div className={WORKSPACE_TOKENS.mainColumn}>
+    <div className={`${WORKSPACE_TOKENS.mainColumn} h-full min-h-0`}>
       <div className={WORKSPACE_TOKENS.inner}>
         <DensityProvider>
         <header
