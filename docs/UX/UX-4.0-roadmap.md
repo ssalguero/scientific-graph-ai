@@ -47,7 +47,8 @@ UX-4.4 = COMPLETE (Toolbar Migration)
 UX-4.5 = COMPLETE (Workspace Integration)
 UX-4.6 = COMPLETE (Inspector Integration)
 UX-4.7 = COMPLETE (Status Bar Integration)
-UX-4.8 = NEXT (Responsive + Docking Integration)
+UX-4.8 = COMPLETE (Responsive + Docking Integration)
+UX-4.9 = NEXT (Chrome Runtime Migration)
 SCOPE = visual infrastructure only
 NO new end-user features
 AppShell = sole composition root for application chrome (from UX-4.2)
@@ -269,10 +270,20 @@ Evidencia: [`UX-4.5.md`](./UX-4.5.md) · `validate:ux-4.5`
 - Contenido mínimo (placeholder visual); features reales → UX-5
 - Evidencia: [`UX-4.7.md`](./UX-4.7.md) · `validate:ux-4.7`
 
-### UX-4.8 — Responsive + Docking
+### UX-4.8 — Responsive + Docking · COMPLETE
 
-- Reglas de [`ux/docs/RESPONSIVE.md`](../../ux/docs/RESPONSIVE.md); colapso Sidebar / Inspector; docking zones
-- Reutilizar `DockRoot` / `DockZone` / layout-engine
+```text
+Composition certification + layout normalization.
+Normalize, don't invent — no second responsive system.
+Inspector Region owns only the grid track. Inspector owns width and visibility.
+Docking reused unchanged. Tailwind responsive variants only.
+```
+
+Evidencia: [`UX-4.8.md`](./UX-4.8.md) · `validate:ux-4.8`
+
+- Reglas de [`RESPONSIVE.md`](../../ux/docs/RESPONSIVE.md); colapso de tracks
+- Reutilizar `DockRoot` / `DockZone` / FloatingWindowLayer / WindowManager
+- Sin nuevas features de docking; sin JS viewport logic en `app-shell/**`
 
 ### UX-4.9 — Chrome Runtime Migration
 

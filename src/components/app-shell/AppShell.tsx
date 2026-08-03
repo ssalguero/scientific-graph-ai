@@ -9,13 +9,13 @@ import {
 } from "./AppShellRegions";
 
 /**
- * UX-4.2 / UX-4.3 / UX-4.4 / UX-4.5 / UX-4.6 / UX-4.7 — Sole composition root
- * for application chrome.
+ * UX-4.2 / UX-4.3 / UX-4.4 / UX-4.5 / UX-4.6 / UX-4.7 / UX-4.8 — Sole composition
+ * root for application chrome.
  *
  * Architectural principles (FROZEN):
  * - AppShell is the only composition root for application chrome.
  * - AppShell is layout-only. It owns no application state.
- * - Sidebar owns width; AppShell owns position.
+ * - Sidebar owns width; AppShell owns position (grid track only).
  * - Scrolling ownership remains inside Sidebar; AppShell only bounds the region.
  * - Toolbar owns functionality; AppShell owns Toolbar Region position.
  * - AppShell renders the received toolbar slot — it does not create AdaptiveToolbar.
@@ -23,11 +23,13 @@ import {
  *   position, bounds (overflow-hidden), and overlay containing block (relative).
  * - AppShell renders the received workspace slot — it does not create Workspace.
  * - UX-4.6 — Inspector owns width and visibility; AppShell owns Inspector Region
- *   bounds and position. AppShell renders the received inspector slot — it does
- *   not create Inspector.
+ *   bounds and position (grid track only). AppShell renders the received
+ *   inspector slot — it does not create Inspector.
  * - UX-4.7 — StatusBar is the permanent default chrome of the AppShell.
  *   Placeholder mode ends in UX-4.7. AppShell owns Status Region position;
  *   StatusBar owns visual structure and layout.
+ * - UX-4.8 — Normalize, don't invent. Tailwind responsive variants only.
+ *   No second responsive system. Docking reused unchanged (not owned here).
  *
  * Layout-only: no hooks, providers, stores, effects, or business logic.
  */
