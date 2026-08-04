@@ -35,7 +35,7 @@ UX-6.3  = Command Execution Pipeline
 UX-6.4  = Keyboard Shortcuts Foundation
 UX-6.5  = Command Palette Foundation
 UX-6.6  = Menus Foundation
-UX-6.7  = Toolbar Integration
+UX-6.7  = Toolbar Foundation
 UX-6.8  = Context Menus
 UX-6.9  = Command Diagnostics & Metrics
 UX-6.10 = Integration Certification
@@ -122,7 +122,7 @@ UX-6.9–6.10 Diagnostics/Metrics → Integration Certification
 | UX-6.4 | Keyboard Shortcuts Foundation |
 | UX-6.5 | Command Palette Foundation |
 | UX-6.6 | Menus Foundation |
-| UX-6.7 | Toolbar Integration |
+| UX-6.7 | Toolbar Foundation |
 | UX-6.8 | Context Menus |
 | UX-6.9 | Command Diagnostics & Metrics |
 | UX-6.10 | Integration Certification |
@@ -150,7 +150,9 @@ UX-6.9–6.10 Diagnostics/Metrics → Integration Certification
 
 ## 7. Next
 
-**UX-6.6 — Menus Foundation** · [`UX-6.6.md`](./UX-6.6.md) · `validate:ux-6.6`
+**UX-6.7 — Toolbar Foundation** · [`UX-6.7.md`](./UX-6.7.md) · `validate:ux-6.7`
+
+Prior: UX-6.6 Menus · [`UX-6.6.md`](./UX-6.6.md) · `validate:ux-6.6` (historical)
 
 Prior: UX-6.5 Palette · [`UX-6.5.md`](./UX-6.5.md) · `validate:ux-6.5` (historical)
 
@@ -160,4 +162,4 @@ Prior: UX-6.3 Pipeline · [`UX-6.3.md`](./UX-6.3.md) · `validate:ux-6.3` (histo
 
 Prior: UX-6.1 Foundation · [`UX-6.1.md`](./UX-6.1.md) · `validate:ux-6.1` (historical)
 
-After UX-6.6: **UX-6.7 — Toolbar Integration**
+After UX-6.7: **UX-6.8 — Context Menus**
