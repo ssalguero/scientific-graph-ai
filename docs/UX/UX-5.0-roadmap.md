@@ -47,10 +47,10 @@ UX-5.4  = COMPLETE (Feature Visibility)
 UX-5.5  = COMPLETE (Feature State)
 UX-5.6  = COMPLETE (Feature Provider)
 UX-5.7  = COMPLETE (Feature Hooks)
-UX-5.8  = PENDING (Feature Integration Bridge)
+UX-5.8  = COMPLETE (Feature Integration Bridge)
 UX-5.9  = PENDING (Feature Diagnostics)
 UX-5.10 = PENDING (Integration Certification)
-Next = UX-5.8 (Feature Integration Bridge)
+Next = UX-5.9 (Feature Diagnostics)
 Registry = único SSOT de features
 Metadata = completely immutable
 Estado runtime = separado de definición
@@ -258,7 +258,7 @@ Public hooks · API Freeze.
 - `useFeature()` · `useFeatures()` · `useFeatureState()`
 - API Freeze de superficie pública de hooks
 
-### UX-5.8 — Feature Integration Bridge · PENDING
+### UX-5.8 — Feature Integration Bridge · COMPLETE
 
 ```text
 Adaptation bridge only — progressive, reversible.
