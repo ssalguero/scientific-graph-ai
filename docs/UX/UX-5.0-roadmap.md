@@ -38,7 +38,8 @@ El roadmap no puede cambiar silenciosamente durante la implementación.
 ## Declaración
 
 ```text
-UX-5 = Feature Integration (IN PROGRESS)
+UX-5 = CLOSED (Feature Integration)
+UX-5 SERIES CERTIFIED
 UX-5.0  = FROZEN (roadmap oficial · SSOT · Version 1.0)
 UX-5.1  = COMPLETE (Feature Registry Foundation)
 UX-5.2  = COMPLETE (Feature Discovery)
@@ -49,8 +50,7 @@ UX-5.6  = COMPLETE (Feature Provider)
 UX-5.7  = COMPLETE (Feature Hooks)
 UX-5.8  = COMPLETE (Feature Integration Bridge)
 UX-5.9  = COMPLETE (Feature Diagnostics)
-UX-5.10 = PENDING (Integration Certification)
-Next = UX-5.10 (Integration Certification)
+UX-5.10 = COMPLETE (Integration Certification)
 Registry = único SSOT de features
 Metadata = completely immutable
 Estado runtime = separado de definición
@@ -276,7 +276,7 @@ Integrity reports for the registry SSOT.
 
 - enabled · hidden · duplicates · invalid ids · missing metadata
 
-### UX-5.10 — Integration Certification · PENDING
+### UX-5.10 — Integration Certification · COMPLETE
 
 ```text
 Certification only. Series close.
@@ -284,6 +284,8 @@ Certification only. Series close.
 
 - Script final `validate-ux-5.10.ts`
 - Checklist completa · SERIES CERTIFIED = all-or-nothing
+
+Evidencia: [`UX-5.10.md`](./UX-5.10.md) · `validate:ux-5.10`
 
 ---
 
@@ -298,7 +300,7 @@ No reescribir:
 
 ---
 
-## 8. Gates y certificación (UX-5.10)
+## 8. Gates y certificación (UX-5.10) · COMPLETE
 
 - Feature Registry = SSOT único; metadata inmutable; state separado
 - Provider + hooks públicos congelados (5.6–5.7)
@@ -306,7 +308,7 @@ No reescribir:
 - Diagnostics reportan integridad (5.9)
 - Contratos públicos UX-3 / AppShell UX-4 intactos
 - `tsc` + validators en PASS
-- **UX-5 SERIES CERTIFIED** (declarable sólo en 5.10)
+- **UX-5 SERIES CERTIFIED** — evidencia [`UX-5.10.md`](./UX-5.10.md) · `validate:ux-5.10`
 
 ---
 
@@ -314,17 +316,17 @@ No reescribir:
 
 UX-5 se da por **cerrada** solo cuando se cumplen todos:
 
-- [ ] Feature Registry Foundation (5.1)
-- [ ] Discovery (5.2)
-- [ ] Metadata (5.3)
-- [ ] Visibility (5.4)
-- [ ] Feature State (5.5)
-- [ ] Feature Provider (5.6)
-- [ ] Feature Hooks API Freeze (5.7)
-- [ ] Integration Bridge (5.8)
-- [ ] Feature Diagnostics (5.9)
-- [ ] Integration Certification (5.10)
-- [ ] Sin deuda arquitectónica bloqueante para UX-6
+- [x] Feature Registry Foundation (5.1)
+- [x] Discovery (5.2)
+- [x] Metadata (5.3)
+- [x] Visibility (5.4)
+- [x] Feature State (5.5)
+- [x] Feature Provider (5.6)
+- [x] Feature Hooks API Freeze (5.7)
+- [x] Integration Bridge (5.8)
+- [x] Feature Diagnostics (5.9)
+- [x] Integration Certification (5.10)
+- [x] Sin deuda arquitectónica bloqueante para UX-6
 
 ```text
 UX-5 SERIES CERTIFIED may only be declared if every mandatory certification
