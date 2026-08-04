@@ -48,7 +48,7 @@ UX-7.4  = COMPLETE (Command Description Bridge)
 UX-7.5  = COMPLETE (Context Help Foundation)
 UX-7.6  = COMPLETE (Discoverability Pipeline)
 UX-7.7  = COMPLETE (Visibility Diagnostics)
-UX-7.8  = PENDING (Integration)
+UX-7.8  = COMPLETE (Visual Integration)
 UX-7.9  = PENDING (Final Audit)
 UX-7.10 = PENDING (Certification)
 Infrastructure first · no visual chrome until authorized microphases
@@ -138,7 +138,7 @@ UX-7.8–7.10 Integration → Final Audit → Certification
 | UX-7.5 | Context Help Foundation | COMPLETE |
 | UX-7.6 | Discoverability Pipeline | COMPLETE |
 | UX-7.7 | Visibility Diagnostics | COMPLETE |
-| UX-7.8 | Integration | PENDING |
+| UX-7.8 | Visual Integration | COMPLETE |
 | UX-7.9 | Final Audit | PENDING |
 | UX-7.10 | Certification | PENDING |
 
@@ -177,3 +177,4 @@ Historical gates (do not nest):
 - UX-7.5 Context Help Foundation · [`UX-7.5.md`](./UX-7.5.md) · `validate:ux-7.5`
 - UX-7.6 Discoverability Pipeline · [`UX-7.6.md`](./UX-7.6.md) · `validate:ux-7.6`
 - UX-7.7 Visibility Diagnostics · [`UX-7.7.md`](./UX-7.7.md) · `validate:ux-7.7`
+- UX-7.8 Visual Integration · [`UX-7.8.md`](./UX-7.8.md) · `validate:ux-7.8`
