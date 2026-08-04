@@ -39,7 +39,8 @@ El roadmap no puede cambiar silenciosamente durante la implementación.
 ## Declaración
 
 ```text
-UX-7 = OPEN (User Visibility / Discoverability)
+UX-7 = CLOSED (User Visibility / Discoverability)
+UX-7 RELEASE CERTIFIED
 UX-7.0  = FROZEN (roadmap oficial · SSOT · Version 1.0)
 UX-7.1  = COMPLETE (Visibility Foundation)
 UX-7.2  = COMPLETE (Tooltip Foundation)
@@ -50,7 +51,9 @@ UX-7.6  = COMPLETE (Discoverability Pipeline)
 UX-7.7  = COMPLETE (Visibility Diagnostics)
 UX-7.8  = COMPLETE (Visual Integration)
 UX-7.9  = COMPLETE (Final Audit)
-UX-7.10 = PENDING (Certification)
+UX-7.10 = COMPLETE (Release Certification)
+Series Closure Freeze = VIGENTE
+Certification Immutability Freeze = VIGENTE
 Infrastructure first · no visual chrome until authorized microphases
 API Freeze por fase
 Registry Freeze UX-7.1 = four methods only
@@ -59,7 +62,7 @@ AppShell architecture = FROZEN (UX-4)
 Feature Architecture = FROZEN (UX-5)
 Command System = FROZEN (UX-6)
 Runtime API Freeze = VIGENTE (UX-3.21)
-Next Series = UX-8 (placeholder)
+Next Series = UX-8
 ```
 
 ---
@@ -140,7 +143,7 @@ UX-7.8–7.10 Integration → Final Audit → Certification
 | UX-7.7 | Visibility Diagnostics | COMPLETE |
 | UX-7.8 | Visual Integration | COMPLETE |
 | UX-7.9 | Final Audit | COMPLETE |
-| UX-7.10 | Certification | PENDING |
+| UX-7.10 | Release Certification | COMPLETE |
 
 ---
 
@@ -158,7 +161,7 @@ UX-7.8–7.10 Integration → Final Audit → Certification
 
 ## 6. Validator governance
 
-- Active gate = latest completed microfase (`validate:ux-7.N`)
+- Active gate = `validate:ux-7.10` (series final · RELEASE CERTIFIED)
 - Historical validators remain; do not modify prior gates
 - No nested `npm run validate:ux-7.*` chains that hang on Windows
 
@@ -166,10 +169,11 @@ UX-7.8–7.10 Integration → Final Audit → Certification
 
 ## 7. Next → UX-8
 
-**Next Series → UX-8** (placeholder until UX-7.10 Certification)
+**UX-7 RELEASE CERTIFIED** · gate final [`UX-7.10.md`](./UX-7.10.md) · `validate:ux-7.10`
 
-**Preparación para UX-7.10:** Final Audit COMPLETE (`validate:ux-7.9`).  
-Release Certification consume el Audit PASS como prerrequisito de evidencia.
+**Next Series → UX-8**
+
+**Series Closure Freeze:** la serie UX-7 está cerrada. Ninguna microfase UX-7 puede reabrirse. Cualquier cambio posterior requiere nueva serie o decisión explícita de gobierno.
 
 Historical gates (do not nest):
 
@@ -182,3 +186,4 @@ Historical gates (do not nest):
 - UX-7.7 Visibility Diagnostics · [`UX-7.7.md`](./UX-7.7.md) · `validate:ux-7.7`
 - UX-7.8 Visual Integration · [`UX-7.8.md`](./UX-7.8.md) · `validate:ux-7.8`
 - UX-7.9 Final Audit · [`UX-7.9.md`](./UX-7.9.md) · `validate:ux-7.9`
+- UX-7.10 Release Certification · [`UX-7.10.md`](./UX-7.10.md) · `validate:ux-7.10`
