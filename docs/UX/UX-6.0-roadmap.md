@@ -150,7 +150,9 @@ UX-6.9–6.10 Diagnostics/Metrics → Integration Certification
 
 ## 7. Next
 
-**UX-6.7 — Toolbar Foundation** · [`UX-6.7.md`](./UX-6.7.md) · `validate:ux-6.7`
+**UX-6.8 — Context Menus** · [`UX-6.8.md`](./UX-6.8.md) · `validate:ux-6.8`
+
+Prior: UX-6.7 Toolbar · [`UX-6.7.md`](./UX-6.7.md) · `validate:ux-6.7` (historical)
 
 Prior: UX-6.6 Menus · [`UX-6.6.md`](./UX-6.6.md) · `validate:ux-6.6` (historical)
 
@@ -162,4 +164,4 @@ Prior: UX-6.3 Pipeline · [`UX-6.3.md`](./UX-6.3.md) · `validate:ux-6.3` (histo
 
 Prior: UX-6.1 Foundation · [`UX-6.1.md`](./UX-6.1.md) · `validate:ux-6.1` (historical)
 
-After UX-6.7: **UX-6.8 — Context Menus**
+After UX-6.8: **UX-6.9 — Command Diagnostics & Metrics**
