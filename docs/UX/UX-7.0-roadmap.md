@@ -1,0 +1,173 @@
+# UX-7.0 — User Visibility · Roadmap
+
+```text
+Status: FROZEN
+Series: UX-7
+Version: 1.0
+Supersedes: UX-6.10 Next
+Prerequisites: UX-6 SERIES CERTIFIED
+Next Series: UX-8 (placeholder)
+```
+
+**Épica:** UX-7 — User Visibility / Discoverability  
+**Microfase:** UX-7.0 — ROADMAP (documental)  
+**Fecha:** 2026-08-04  
+**Prerrequisitos:** UX-6 CLOSED · UX-6 RELEASE CERTIFIED ([`UX-6.10.md`](./UX-6.10.md))
+
+---
+
+## SSOT precedence
+
+> This document is the Single Source of Truth (SSOT) for the UX-7 series.
+> If any implementation, validation script, or planning document conflicts with
+> this roadmap, this document takes precedence until superseded by a later
+> frozen roadmap.
+
+---
+
+## Change Policy
+
+| Tipo de cambio | Política |
+|----------------|----------|
+| Menor (redacción, referencias, enlaces) | Permitido sin nuevo freeze |
+| Arquitectura, fases, objetivos o gates | Requiere **nuevo freeze** o un **ADR** asociado |
+
+El roadmap no puede cambiar silenciosamente durante la implementación.
+
+---
+
+## Declaración
+
+```text
+UX-7 = OPEN (User Visibility / Discoverability)
+UX-7.0  = FROZEN (roadmap oficial · SSOT · Version 1.0)
+UX-7.1  = COMPLETE (Visibility Foundation)
+UX-7.2  = PENDING (Tooltip Foundation)
+UX-7.3  = PENDING (Shortcut Hint System)
+UX-7.4  = PENDING (Command Description Bridge)
+UX-7.5  = PENDING (Context Help Foundation)
+UX-7.6  = PENDING (Discoverability Pipeline)
+UX-7.7  = PENDING (Visibility Diagnostics)
+UX-7.8  = PENDING (Integration)
+UX-7.9  = PENDING (Final Audit)
+UX-7.10 = PENDING (Certification)
+Infrastructure first · no visual chrome until authorized microphases
+API Freeze por fase
+Registry Freeze UX-7.1 = four methods only
+Sin cambios funcionales visibles en UX-7.1
+AppShell architecture = FROZEN (UX-4)
+Feature Architecture = FROZEN (UX-5)
+Command System = FROZEN (UX-6)
+Runtime API Freeze = VIGENTE (UX-3.21)
+Next Series = UX-8 (placeholder)
+```
+
+---
+
+## 1. Objetivo
+
+Establecer una capa oficial de **Discoverability** que exponga comandos, atajos,
+acciones y estados mediante ayudas visuales reutilizables — desacoplada del
+runtime y sin modificar Commands, Toolbar, Menus, Context Menus ni Pipeline.
+
+```text
+UX-7 wires Discoverability onto certified Commands + Features + AppShell + Runtime.
+UX-7.1 freezes Visibility infrastructure before any visual chrome.
+```
+
+---
+
+## 2. Estado de partida
+
+| Capa | Estado |
+|------|--------|
+| Runtime UX-3 | Certificado, API frozen ([`UX-3.21.md`](./UX-3.21.md)) |
+| AppShell | Sole composition root · layout-only ([`UX-4.2.md`](./UX-4.2.md)) |
+| Feature Architecture | SERIES CERTIFIED ([`UX-5.10.md`](./UX-5.10.md)) |
+| Command System | RELEASE CERTIFIED ([`UX-6.10.md`](./UX-6.10.md)) |
+| Visibility / Discoverability | **No existe** — objetivo de UX-7.1 |
+
+**Freeze técnico:** no romper contratos públicos `@/ui` / Runtime / Features /
+Commands; no ampliar el barrel público `@/ui` hasta que una microfase lo
+autorice; AppShell permanece layout-only.
+
+---
+
+## 3. Decisiones arquitectónicas
+
+1. **Infrastructure first** (UX-7.1): Definition → Factory → Registry → barrel before tooltips, hints, or bridges.
+2. **Metadata only:** Visibility describes actions; it does not execute them.
+3. **Mutable registry by design:** modules publish metadata via `register` (upsert); distinct from query-only CommandRegistry.
+4. **Registry Freeze:** only `register` / `get` / `getAll` / `clear` until UX-8 without a new architecture series.
+5. **Local barrel only** until a phase authorizes `@/ui` expansion.
+6. **No production registration / mount in UX-7.1.**
+7. **Same incremental philosophy as UX-5 / UX-6.**
+
+```text
+UX-6 RELEASE CERTIFIED (Commands)
+        │
+        ▼
+UX-7.1 Visibility Foundation
+        │
+        ▼
+UX-7.2 Tooltip Foundation
+        │
+        ▼
+UX-7.3 Shortcut Hint System
+        │
+        ▼
+UX-7.4 Command Description Bridge
+        │
+        ▼
+UX-7.5–7.7 Context Help → Discoverability Pipeline → Diagnostics
+        │
+        ▼
+UX-7.8–7.10 Integration → Final Audit → Certification
+```
+
+---
+
+## 4. Microfases UX-7.1–UX-7.10
+
+| Fase | Objetivo | Estado |
+|------|----------|--------|
+| UX-7.1 | Visibility Foundation (infra only · empty registry) | COMPLETE |
+| UX-7.2 | Tooltip Foundation | PENDING |
+| UX-7.3 | Shortcut Hint System | PENDING |
+| UX-7.4 | Command Description Bridge | PENDING |
+| UX-7.5 | Context Help Foundation | PENDING |
+| UX-7.6 | Discoverability Pipeline | PENDING |
+| UX-7.7 | Visibility Diagnostics | PENDING |
+| UX-7.8 | Integration | PENDING |
+| UX-7.9 | Final Audit | PENDING |
+| UX-7.10 | Certification | PENDING |
+
+---
+
+## 5. Out of Scope / Non-goals (series)
+
+| Non-goal | Destino |
+|----------|---------|
+| Engine / AI / Collab product capabilities | post–UX series |
+| Command Registry / Pipeline mutations | UX-6 frozen |
+| Feature Registry mutations | UX-5 frozen |
+| Runtime API changes | UX-3.21 frozen |
+| Advanced registry query (`findBy*`, `size`, `has`, …) | UX-8+ (nueva serie) |
+
+---
+
+## 6. Validator governance
+
+- Active gate = latest completed microfase (`validate:ux-7.N`)
+- Historical validators remain; do not modify prior gates
+- No nested `npm run validate:ux-7.*` chains that hang on Windows
+
+---
+
+## 7. Next → UX-8
+
+**Next Series → UX-8** (placeholder until UX-7.10 Certification)
+
+Historical gates (do not nest):
+
+- UX-7.1 Visibility Foundation · [`UX-7.1.md`](./UX-7.1.md) · `validate:ux-7.1`
