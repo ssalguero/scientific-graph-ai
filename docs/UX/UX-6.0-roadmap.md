@@ -6,6 +6,7 @@ Series: UX-6
 Version: 1.0
 Supersedes: UX-5.10 Next
 Prerequisites: UX-5 SERIES CERTIFIED
+Next Series: UX-7
 ```
 
 **Épica:** UX-6 — Command System  
@@ -27,18 +28,19 @@ Prerequisites: UX-5 SERIES CERTIFIED
 ## Declaración
 
 ```text
-UX-6 = Command System (in progress)
+UX-6 = CLOSED (Command System)
+UX-6 RELEASE CERTIFIED
 UX-6.0  = FROZEN (roadmap oficial · SSOT · Version 1.0)
-UX-6.1  = Command System Foundation
-UX-6.2  = Command Registration
-UX-6.3  = Command Execution Pipeline
-UX-6.4  = Keyboard Shortcuts Foundation
-UX-6.5  = Command Palette Foundation
-UX-6.6  = Menus Foundation
-UX-6.7  = Toolbar Foundation
-UX-6.8  = Context Menus
-UX-6.9  = Command Diagnostics & Metrics
-UX-6.10 = Integration Certification
+UX-6.1  = COMPLETE (Command System Foundation)
+UX-6.2  = ABSORBED into UX-6.1 (no independent doc/validator)
+UX-6.3  = COMPLETE (Command Execution Pipeline)
+UX-6.4  = COMPLETE (Keyboard Shortcuts Foundation)
+UX-6.5  = COMPLETE (Command Palette Foundation)
+UX-6.6  = COMPLETE (Menus Foundation)
+UX-6.7  = COMPLETE (Toolbar Foundation)
+UX-6.8  = COMPLETE (Context Menus)
+UX-6.9  = COMPLETE (Command Diagnostics & Metrics)
+UX-6.10 = COMPLETE (Integration Certification)
 Registry = único SSOT de commands (CommandRegistryApi)
 Estado runtime = separado de definición
 Sin lógica de ejecución hasta UX-6.3
@@ -48,6 +50,7 @@ Sin cambios funcionales visibles hasta fases de chrome (UX-6.5+)
 AppShell architecture = FROZEN (UX-4)
 Feature Architecture = FROZEN (UX-5)
 Runtime API Freeze = VIGENTE (UX-3.21)
+Next Series = UX-7
 ```
 
 ---
@@ -114,18 +117,23 @@ UX-6.9–6.10 Diagnostics/Metrics → Integration Certification
 
 ## 4. Microfases UX-6.1–UX-6.10
 
-| Fase | Objetivo |
-|------|----------|
-| UX-6.1 | Command System Foundation (infra only · empty registry) |
-| UX-6.2 | Command Registration |
-| UX-6.3 | Command Execution Pipeline |
-| UX-6.4 | Keyboard Shortcuts Foundation |
-| UX-6.5 | Command Palette Foundation |
-| UX-6.6 | Menus Foundation |
-| UX-6.7 | Toolbar Foundation |
-| UX-6.8 | Context Menus |
-| UX-6.9 | Command Diagnostics & Metrics |
-| UX-6.10 | Integration Certification |
+| Fase | Objetivo | Estado |
+|------|----------|--------|
+| UX-6.1 | Command System Foundation (infra only · empty registry) | COMPLETE |
+| UX-6.2 | Command Registration (absorbed into UX-6.1) | ABSORBED |
+| UX-6.3 | Command Execution Pipeline | COMPLETE |
+| UX-6.4 | Keyboard Shortcuts Foundation | COMPLETE |
+| UX-6.5 | Command Palette Foundation | COMPLETE |
+| UX-6.6 | Menus Foundation | COMPLETE |
+| UX-6.7 | Toolbar Foundation | COMPLETE |
+| UX-6.8 | Context Menus | COMPLETE |
+| UX-6.9 | Command Diagnostics & Metrics | COMPLETE |
+| UX-6.10 | Integration Certification | COMPLETE |
+
+> **Registration Note:** UX-6.2 was absorbed into the Commands Foundation
+> (UX-6.1). Certification validates UX-6.1 + UX-6.3–UX-6.10. Absence of
+> `UX-6.2.md` / `validate:ux-6.2` is an architectural decision, not an omission.
+> See [`UX-6.10.md`](./UX-6.10.md).
 
 ---
 
@@ -148,22 +156,20 @@ UX-6.9–6.10 Diagnostics/Metrics → Integration Certification
 
 ---
 
-## 7. Next
+## 7. Next → UX-7
 
-**UX-6.9 — Diagnostics & Metrics Foundation** · [`UX-6.9.md`](./UX-6.9.md) · `validate:ux-6.9`
+**UX-6 RELEASE CERTIFIED** · gate final [`UX-6.10.md`](./UX-6.10.md) · `validate:ux-6.10`
 
-Prior: UX-6.8 Context Menus · [`UX-6.8.md`](./UX-6.8.md) · `validate:ux-6.8` (historical)
+**Next Series → UX-7**
 
-Prior: UX-6.7 Toolbar · [`UX-6.7.md`](./UX-6.7.md) · `validate:ux-6.7` (historical)
+Historical gates (do not nest):
 
-Prior: UX-6.6 Menus · [`UX-6.6.md`](./UX-6.6.md) · `validate:ux-6.6` (historical)
-
-Prior: UX-6.5 Palette · [`UX-6.5.md`](./UX-6.5.md) · `validate:ux-6.5` (historical)
-
-Prior: UX-6.4 Shortcuts · [`UX-6.4.md`](./UX-6.4.md) · `validate:ux-6.4` (historical)
-
-Prior: UX-6.3 Pipeline · [`UX-6.3.md`](./UX-6.3.md) · `validate:ux-6.3` (historical)
-
-Prior: UX-6.1 Foundation · [`UX-6.1.md`](./UX-6.1.md) · `validate:ux-6.1` (historical)
-
-After UX-6.9: **UX-6.10 — Integration Certification**
+- UX-6.10 Integration Certification · [`UX-6.10.md`](./UX-6.10.md) · `validate:ux-6.10`
+- UX-6.9 Diagnostics & Metrics · [`UX-6.9.md`](./UX-6.9.md) · `validate:ux-6.9`
+- UX-6.8 Context Menus · [`UX-6.8.md`](./UX-6.8.md) · `validate:ux-6.8`
+- UX-6.7 Toolbar · [`UX-6.7.md`](./UX-6.7.md) · `validate:ux-6.7`
+- UX-6.6 Menus · [`UX-6.6.md`](./UX-6.6.md) · `validate:ux-6.6`
+- UX-6.5 Palette · [`UX-6.5.md`](./UX-6.5.md) · `validate:ux-6.5`
+- UX-6.4 Shortcuts · [`UX-6.4.md`](./UX-6.4.md) · `validate:ux-6.4`
+- UX-6.3 Pipeline · [`UX-6.3.md`](./UX-6.3.md) · `validate:ux-6.3`
+- UX-6.1 Foundation · [`UX-6.1.md`](./UX-6.1.md) · `validate:ux-6.1`
