@@ -150,10 +150,12 @@ UX-6.9–6.10 Diagnostics/Metrics → Integration Certification
 
 ## 7. Next
 
-**UX-6.4 — Keyboard Shortcuts Foundation** · [`UX-6.4.md`](./UX-6.4.md) · `validate:ux-6.4`
+**UX-6.5 — Command Palette Foundation** · [`UX-6.5.md`](./UX-6.5.md) · `validate:ux-6.5`
+
+Prior: UX-6.4 Shortcuts · [`UX-6.4.md`](./UX-6.4.md) · `validate:ux-6.4` (historical)
 
 Prior: UX-6.3 Pipeline · [`UX-6.3.md`](./UX-6.3.md) · `validate:ux-6.3` (historical)
 
 Prior: UX-6.1 Foundation · [`UX-6.1.md`](./UX-6.1.md) · `validate:ux-6.1` (historical)
 
-After UX-6.4: **UX-6.5 — Command Palette Foundation**
+After UX-6.5: **UX-6.6 — Menus Integration**
