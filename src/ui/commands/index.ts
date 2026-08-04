@@ -1,5 +1,5 @@
 /**
- * UX-6.1 — Command System local barrel.
+ * UX-6.1 / UX-6.3 — Command System local barrel.
  * Not re-exported from @/ui (src/ui/index.ts) in this phase.
  */
 
@@ -24,3 +24,25 @@ export { createCommandState } from "./CommandState";
 
 export type { CommandDiagnosticsReport } from "./CommandDiagnostics";
 export { createCommandDiagnosticsReport } from "./CommandDiagnostics";
+
+export type {
+  CommandExecutionStatus,
+  CommandExecutionRequest,
+  CommandExecutionRequestInit,
+} from "./CommandExecutionTypes";
+export { createCommandExecutionRequest } from "./CommandExecutionTypes";
+
+export type { CommandExecutionContext } from "./CommandExecutionContext";
+export { createCommandExecutionContext } from "./CommandExecutionContext";
+
+export type {
+  CommandExecutionResult,
+  CommandExecutionResultInit,
+} from "./CommandExecutionResult";
+export { createCommandExecutionResult } from "./CommandExecutionResult";
+
+export type { CommandExecutionDispatcher } from "./CommandExecutionDispatcher";
+export { createCommandExecutionDispatcher } from "./CommandExecutionDispatcher";
+
+export type { CommandExecutionPipeline } from "./CommandExecutionPipeline";
+export { createCommandExecutionPipeline } from "./CommandExecutionPipeline";

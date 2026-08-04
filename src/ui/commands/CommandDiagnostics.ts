@@ -1,28 +1,31 @@
 /**
- * UX-6.1 — Command Diagnostics (pure structural report).
+ * UX-6.1 / UX-6.3 — Command Diagnostics (pure structural report).
  *
  * Pure TypeScript · no React · no Runtime · no side effects.
- * Inspects registry size/ids and state enabled/visible lists.
+ * Inspects registry size/ids, state enabled/visible lists, and pipeline readiness.
  */
 
 import type { CommandRegistryApi } from "./CommandRegistry";
 import type { CommandId } from "./CommandTypes";
 import type { CommandState } from "./CommandState";
+import type { CommandExecutionPipeline } from "./CommandExecutionPipeline";
 
 export type CommandDiagnosticsReport = Readonly<{
   count: number;
   ids: readonly CommandId[];
   enabled: readonly CommandId[];
   visible: readonly CommandId[];
+  pipelineReady: boolean;
 }>;
 
 /**
- * Builds an immutable diagnostics report from registry + states.
+ * Builds an immutable diagnostics report from registry + states + optional pipeline.
  * Pure function — no class, no mutation, no side effects.
  */
 export function createCommandDiagnosticsReport(
   registry: CommandRegistryApi,
   states: ReadonlyMap<CommandId, CommandState>,
+  pipeline?: CommandExecutionPipeline | null,
 ): CommandDiagnosticsReport {
   const definitions = registry.getAll();
   const ids = Object.freeze(definitions.map((def) => def.id));
@@ -39,5 +42,6 @@ export function createCommandDiagnosticsReport(
     ids,
     enabled: Object.freeze(enabled),
     visible: Object.freeze(visible),
+    pipelineReady: pipeline != null,
   });
 }

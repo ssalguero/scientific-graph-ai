@@ -150,4 +150,8 @@ UX-6.9–6.10 Diagnostics/Metrics → Integration Certification
 
 ## 7. Next
 
-**UX-6.1 — Command System Foundation** · [`UX-6.1.md`](./UX-6.1.md) · `validate:ux-6.1`
+**UX-6.3 — Command Execution Pipeline Foundation** · [`UX-6.3.md`](./UX-6.3.md) · `validate:ux-6.3`
+
+Prior: UX-6.1 Foundation · [`UX-6.1.md`](./UX-6.1.md) · `validate:ux-6.1` (historical)
+
+After UX-6.3: **UX-6.4 — Keyboard Shortcuts Foundation**
