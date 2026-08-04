@@ -48,9 +48,9 @@ UX-5.5  = COMPLETE (Feature State)
 UX-5.6  = COMPLETE (Feature Provider)
 UX-5.7  = COMPLETE (Feature Hooks)
 UX-5.8  = COMPLETE (Feature Integration Bridge)
-UX-5.9  = PENDING (Feature Diagnostics)
+UX-5.9  = COMPLETE (Feature Diagnostics)
 UX-5.10 = PENDING (Integration Certification)
-Next = UX-5.9 (Feature Diagnostics)
+Next = UX-5.10 (Integration Certification)
 Registry = único SSOT de features
 Metadata = completely immutable
 Estado runtime = separado de definición
@@ -268,7 +268,7 @@ First phase where visible wiring may begin.
 - Bridge entre Toolbar · Sidebar · Inspector · Panels · Menus
 - Adaptación sin reescritura masiva de comportamiento
 
-### UX-5.9 — Feature Diagnostics · PENDING
+### UX-5.9 — Feature Diagnostics · COMPLETE
 
 ```text
 Integrity reports for the registry SSOT.
