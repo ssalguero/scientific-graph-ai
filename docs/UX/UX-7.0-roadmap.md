@@ -45,7 +45,7 @@ UX-7.1  = COMPLETE (Visibility Foundation)
 UX-7.2  = COMPLETE (Tooltip Foundation)
 UX-7.3  = COMPLETE (Shortcut Hint Foundation)
 UX-7.4  = COMPLETE (Command Description Bridge)
-UX-7.5  = PENDING (Context Help Foundation)
+UX-7.5  = COMPLETE (Context Help Foundation)
 UX-7.6  = PENDING (Discoverability Pipeline)
 UX-7.7  = PENDING (Visibility Diagnostics)
 UX-7.8  = PENDING (Integration)
@@ -135,7 +135,7 @@ UX-7.8–7.10 Integration → Final Audit → Certification
 | UX-7.2 | Tooltip Foundation (content model · Projection Freeze · Resolve Query Only) | COMPLETE |
 | UX-7.3 | Shortcut Hint Foundation (hint model · Projection Freeze · Shortcut Freeze · Title exact copy) | COMPLETE |
 | UX-7.4 | Command Description Bridge | COMPLETE |
-| UX-7.5 | Context Help Foundation | PENDING |
+| UX-7.5 | Context Help Foundation | COMPLETE |
 | UX-7.6 | Discoverability Pipeline | PENDING |
 | UX-7.7 | Visibility Diagnostics | PENDING |
 | UX-7.8 | Integration | PENDING |
@@ -174,3 +174,4 @@ Historical gates (do not nest):
 - UX-7.2 Tooltip Foundation · [`UX-7.2.md`](./UX-7.2.md) · `validate:ux-7.2`
 - UX-7.3 Shortcut Hint Foundation · [`UX-7.3.md`](./UX-7.3.md) · `validate:ux-7.3`
 - UX-7.4 Command Description Bridge · [`UX-7.4.md`](./UX-7.4.md) · `validate:ux-7.4`
+- UX-7.5 Context Help Foundation · [`UX-7.5.md`](./UX-7.5.md) · `validate:ux-7.5`
