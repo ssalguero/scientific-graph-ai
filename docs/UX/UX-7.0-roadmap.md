@@ -49,7 +49,7 @@ UX-7.5  = COMPLETE (Context Help Foundation)
 UX-7.6  = COMPLETE (Discoverability Pipeline)
 UX-7.7  = COMPLETE (Visibility Diagnostics)
 UX-7.8  = COMPLETE (Visual Integration)
-UX-7.9  = PENDING (Final Audit)
+UX-7.9  = COMPLETE (Final Audit)
 UX-7.10 = PENDING (Certification)
 Infrastructure first · no visual chrome until authorized microphases
 API Freeze por fase
@@ -139,7 +139,7 @@ UX-7.8–7.10 Integration → Final Audit → Certification
 | UX-7.6 | Discoverability Pipeline | COMPLETE |
 | UX-7.7 | Visibility Diagnostics | COMPLETE |
 | UX-7.8 | Visual Integration | COMPLETE |
-| UX-7.9 | Final Audit | PENDING |
+| UX-7.9 | Final Audit | COMPLETE |
 | UX-7.10 | Certification | PENDING |
 
 ---
@@ -168,6 +168,9 @@ UX-7.8–7.10 Integration → Final Audit → Certification
 
 **Next Series → UX-8** (placeholder until UX-7.10 Certification)
 
+**Preparación para UX-7.10:** Final Audit COMPLETE (`validate:ux-7.9`).  
+Release Certification consume el Audit PASS como prerrequisito de evidencia.
+
 Historical gates (do not nest):
 
 - UX-7.1 Visibility Foundation · [`UX-7.1.md`](./UX-7.1.md) · `validate:ux-7.1`
@@ -178,3 +181,4 @@ Historical gates (do not nest):
 - UX-7.6 Discoverability Pipeline · [`UX-7.6.md`](./UX-7.6.md) · `validate:ux-7.6`
 - UX-7.7 Visibility Diagnostics · [`UX-7.7.md`](./UX-7.7.md) · `validate:ux-7.7`
 - UX-7.8 Visual Integration · [`UX-7.8.md`](./UX-7.8.md) · `validate:ux-7.8`
+- UX-7.9 Final Audit · [`UX-7.9.md`](./UX-7.9.md) · `validate:ux-7.9`
