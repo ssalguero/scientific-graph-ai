@@ -13,6 +13,9 @@
  *   (Ctrl/Cmd+K · Esc · Overlay · Bridge → Dispatcher · Paint Independence).
  * UX-9.7 — UndoRedoDomHost (Ctrl/Cmd+Z|Y|Shift+Z → Bridge → ThinHistoryAdapter
  *   · structural undo/redo · Paint Independence).
+ * UX-9.8 — WorkspaceDiagnosticsOverlay (env-gated · query-only · under
+ *   UndoRedoDomHost). No new Provider · Context · Registry · Dispatcher.
+ *   Polish lives in FloatingWindow chrome only.
  *
  * Authorized composition point for the Productivity Layer.
  * Mounts certified WindowManager + FocusProvider + SelectionProvider +
@@ -63,6 +66,11 @@
  * Undo / Redo DOM Freeze:
  * UndoRedoDomHost is the sole Ctrl/Cmd+Z · Shift+Z · Y capture surface.
  * Calls UndoRedoBridge only — never Dispatcher · never Adapter directly.
+ *
+ * Diagnostics Visibility Freeze:
+ * WorkspaceDiagnosticsOverlay mounts under UndoRedoDomHost only.
+ * Visible only when NEXT_PUBLIC_WORKSPACE_DIAGNOSTICS=1 · otherwise null.
+ * Query-only · never dispatch · mutate · clear · sync.
  */
 
 import {
@@ -94,6 +102,7 @@ import {
 } from "@/ui/selection";
 import { clipboardIntegrationBridge } from "./clipboard";
 import { CommandPaletteDomHost } from "./commands";
+import { WorkspaceDiagnosticsOverlay } from "./diagnostics";
 import { UndoRedoDomHost } from "./history";
 import { useWindowContext } from "./WindowContext";
 import { useWindowGeometry } from "./WindowGeometryContext";
@@ -468,7 +477,8 @@ function ClipboardDomHost({ children }: { children: ReactNode }) {
  *                                   └─ ClipboardDomHost
  *                                       └─ CommandPaletteDomHost
  *                                           └─ UndoRedoDomHost
- *                                               └─ existing application tree
+ *                                               ├─ existing application tree
+ *                                               └─ WorkspaceDiagnosticsOverlay
  */
 export function ProductCompositionHost({
   children,
@@ -489,7 +499,10 @@ export function ProductCompositionHost({
                   <KeyboardNavigationDomHost>
                     <ClipboardDomHost>
                       <CommandPaletteDomHost>
-                        <UndoRedoDomHost>{children}</UndoRedoDomHost>
+                        <UndoRedoDomHost>
+                          {children}
+                          <WorkspaceDiagnosticsOverlay />
+                        </UndoRedoDomHost>
                       </CommandPaletteDomHost>
                     </ClipboardDomHost>
                   </KeyboardNavigationDomHost>

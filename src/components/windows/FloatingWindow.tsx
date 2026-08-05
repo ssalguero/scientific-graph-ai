@@ -30,8 +30,13 @@
  *   Additive availability badges / ephemeral undo·redo feedback.
  *   Never calls executeUndo/executeRedo · never ThinHistoryAdapter · never stacks.
  *   Undo/Redo chrome never changes Visual Priority cascade.
+ * UX-9.8 — Workspace Polish (chrome only). Visual System Consistency ·
+ *   Chrome Density · Lovable Identity via UI_TOKENS + existing CSS vars.
+ *   Animation Freeze: opacity · transform · shadow · border-color ·
+ *   background-color only · never transition-all · never geometry.
+ *   Never mutates registries · never changes cascade · never layout/drag/resize.
  * Geometry / dock / drag / resize / z-order unchanged.
- * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1–UX-9.7.
+ * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1–UX-9.8.
  */
 
 import type { PointerEvent as ReactPointerEvent } from "react";
@@ -83,9 +88,10 @@ import {
  * Geometry remains inline style (API Freeze).
  * Visual Priority Freeze: Active > Focused > Selected > Hover >
  *   Keyboard Navigation > Discoverability.
- * Clipboard chrome is additive · outside the replacement cascade.
- * Command Palette chrome is additive · temporary overlay feedback only.
- * Undo / Redo chrome is additive · temporary availability + feedback only.
+ * Clipboard · Palette · Undo / Redo chrome are additive · outside cascade.
+ * UX-9.8 Visual System Consistency — shared indicator rhythm across domains.
+ * UX-9.8 Chrome Density — header / badge spacing via UI_TOKENS only.
+ * Animation Freeze — colors / opacity / transform / shadow only · no transition-all.
  */
 
 function keyboardDirectionGlyph(
@@ -110,10 +116,33 @@ function keyboardDirectionGlyph(
       return "·";
   }
 }
+
+/** Shared indicator shell — Visual System Consistency Freeze. */
+const INDICATOR_SHELL = [
+  "inline-flex shrink-0 items-center h-4",
+  UI_TOKENS.spacing.px1,
+  "text-[8px] font-semibold uppercase tracking-wide leading-none",
+  UI_TOKENS.radius.md,
+  UI_TOKENS.shadow.sm,
+  UI_TOKENS.transition.colors200,
+].join(" ");
+
+/** Shared status / glyph shell — same height · radius · spacing · rhythm. */
+const INDICATOR_STATUS_SHELL = [
+  "inline-flex shrink-0 items-center h-4",
+  UI_TOKENS.spacing.px1,
+  "text-[8px] font-medium tracking-wide leading-none",
+  UI_TOKENS.radius.md,
+  UI_TOKENS.shadow.sm,
+  UI_TOKENS.transition.colors200,
+].join(" ");
+
 const FLOATING_WINDOW_CHROME = {
-  rootBase: ["flex h-full flex-col overflow-hidden", UI_TOKENS.radius.md].join(
-    " ",
-  ),
+  rootBase: [
+    "flex h-full flex-col overflow-hidden",
+    UI_TOKENS.radius.md,
+    UI_TOKENS.transition.colors200,
+  ].join(" "),
   /** Highest priority — Workspace Active */
   rootActive: [
     UI_TOKENS.border.accentSoft,
@@ -145,10 +174,14 @@ const FLOATING_WINDOW_CHROME = {
     "bg-[var(--app-surface-muted)]",
     UI_TOKENS.shadow.sm,
   ].join(" "),
+  /** Chrome Density — consistent header height · padding · gaps via tokens */
   headerBase: [
-    "flex h-7 shrink-0 items-center justify-between gap-2 px-2",
+    "flex h-8 shrink-0 items-center justify-between",
+    UI_TOKENS.spacing.gap2,
+    UI_TOKENS.spacing.px2,
     UI_TOKENS.border.bottom,
     "cursor-grab active:cursor-grabbing select-none",
+    UI_TOKENS.transition.colors200,
   ].join(" "),
   headerActive: "bg-[var(--app-accent)]/10",
   headerFocused: "bg-[var(--app-accent)]/5",
@@ -162,104 +195,95 @@ const FLOATING_WINDOW_CHROME = {
     "h-1.5 w-1.5 shrink-0",
     UI_TOKENS.radius.full,
     "bg-[var(--app-accent)]",
+    UI_TOKENS.transition.colors200,
   ].join(" "),
   accentInactive: [
     "h-1.5 w-1.5 shrink-0",
     UI_TOKENS.radius.full,
     "bg-[var(--app-border)]",
+    UI_TOKENS.transition.colors200,
   ].join(" "),
   focusBadge: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
   ].join(" "),
   selectionBadge: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
     "ring-1 ring-inset ring-[var(--app-accent)]/20",
   ].join(" "),
   hoverBadge: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
     "ring-1 ring-inset ring-[var(--app-border)]",
   ].join(" "),
   hoverOverlay: [
     "pointer-events-none absolute inset-0",
     "ring-1 ring-inset ring-[var(--app-border)]/60",
+    UI_TOKENS.transition.colors200,
   ].join(" "),
   /** Keyboard Navigation — additive · never replaces Active / Focus / Hover */
   keyboardBadge: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
     "ring-1 ring-inset ring-[var(--app-border)]",
   ].join(" "),
   keyboardArrow: [
-    "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_STATUS_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
   ].join(" "),
   /** Clipboard — additive · independent domain · never changes Visual Priority */
   clipboardBadge: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
     "ring-1 ring-inset ring-[var(--app-border)]",
   ].join(" "),
   clipboardStatus: [
-    "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_STATUS_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
   ].join(" "),
   clipboardFeedback: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
-    UI_TOKENS.transition.colors200,
   ].join(" "),
   /** Command Palette — additive · temporary · never changes Visual Priority */
   paletteBadge: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
     "ring-1 ring-inset ring-[var(--app-border)]",
   ].join(" "),
   paletteStatus: [
-    "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_STATUS_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
   ].join(" "),
   commandFeedback: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
-    UI_TOKENS.transition.colors200,
   ].join(" "),
   /** Undo / Redo — additive · independent · never changes Visual Priority */
   undoRedoBadge: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
     "ring-1 ring-inset ring-[var(--app-border)]",
   ].join(" "),
   undoRedoFeedback: [
-    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_SHELL,
     "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
-    UI_TOKENS.transition.colors200,
   ].join(" "),
   discHint: [
-    "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
-    UI_TOKENS.radius.md,
+    INDICATOR_STATUS_SHELL,
     "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
   ].join(" "),
   contentSelected: [
-    "mt-1 px-1.5 py-1 text-[10px]",
+    UI_TOKENS.spacing.mt1,
+    UI_TOKENS.spacing.px15,
+    UI_TOKENS.spacing.py1,
+    "text-[10px]",
     UI_TOKENS.radius.md,
+    UI_TOKENS.shadow.sm,
     "bg-[var(--app-accent)]/5 text-[var(--app-text-muted)]",
     "ring-1 ring-inset ring-[var(--app-accent)]/15",
+    UI_TOKENS.transition.colors200,
   ].join(" "),
   close: [
     "inline-flex h-5 w-5 shrink-0 items-center justify-center",
@@ -272,6 +296,7 @@ const FLOATING_WINDOW_CHROME = {
     "min-h-0 flex-1 overflow-auto",
     UI_TOKENS.spacing.p2,
     "bg-[var(--app-surface)] text-xs text-[var(--app-text)]",
+    UI_TOKENS.transition.colors200,
   ].join(" "),
 } as const;
 
@@ -488,7 +513,9 @@ export function FloatingWindow({
         onPointerMove={onTitlePointerMove}
         onPointerUp={onTitlePointerUp}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div
+          className={`flex min-w-0 flex-1 items-center ${UI_TOKENS.spacing.gap2}`}
+        >
           <span
             className={
               isActive
