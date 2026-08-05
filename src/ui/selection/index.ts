@@ -1,5 +1,5 @@
 /**
- * UX-8.2 — Selection System local barrel.
+ * UX-8.3 — Selection System local barrel.
  * Not re-exported from @/ui (src/ui/index.ts) in this phase.
  */
 
@@ -13,6 +13,9 @@ export {
   asSelectionContentId,
   asSelectionSeriesId,
 } from "./SelectionTypes";
+
+export type { SelectionSet } from "./SelectionSet";
+export { createSelectionSet, EMPTY_SELECTION_SET } from "./SelectionSet";
 
 export type { SelectionState, SelectionStateInit } from "./SelectionState";
 export { createSelectionState, EMPTY_SELECTION_STATE } from "./SelectionState";

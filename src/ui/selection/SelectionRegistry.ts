@@ -1,23 +1,32 @@
 /**
- * UX-8.2 — Mutable Selection Registry (SSOT · sole selection authority).
+ * UX-8.3 — Mutable Selection Registry (SSOT · sole selection authority).
  *
- * Contract: SelectionRegistryApi (Registry Freeze)
+ * Contract: SelectionRegistryApi (API Freeze — exactly 16 methods)
  * Singleton: selectionRegistry (empty by design — no production selection)
  *
- * Official methods only: selectWindow / selectContent / selectSeries /
- * clear / get / getState.
- * factory → private state → API Freeze → clone-on-read.
- * No React · no WindowRegistry · no Focus · no cross-registry mutation.
+ * Historical: selectWindow / selectContent / selectSeries / clear / get / getState
+ * Multi: toggle* / clear*Selection / clearAllSelections / range*
  *
- * Independence Freeze: select* mutates only its own axis.
+ * Set Ownership Freeze:
+ *   Mutable Set (private) → clone → SelectionSet → SelectionState → consumer
+ *   Never expose internal mutable Sets.
+ *
+ * Projection Freeze: singulars derived only in createSelectionState.
+ *
+ * Independence Freeze: axis ops mutate only their own Set.
+ *
+ * Historical Semantics: select*(id) replaces axis Set with {id}.
+ * clear() ≡ clearAllSelections().
  *
  * API Stability Freeze: get() and getState() are intentionally equivalent.
- * Both remain frozen for API stability; consumers must not assume differences.
  *
  * Singleton Freeze: selectionRegistry exists ONLY for infrastructure and
  * testing. React consumers MUST use SelectionProvider + useSelection().
+ *
+ * No React · no WindowRegistry · no Focus · no cross-registry mutation.
  */
 
+import { createSelectionSet } from "./SelectionSet";
 import { createSelectionState, type SelectionState } from "./SelectionState";
 import type {
   SelectionContentId,
@@ -26,7 +35,7 @@ import type {
 } from "./SelectionTypes";
 
 /**
- * Mutable registry contract — Registry Freeze UX-8.2.
+ * Mutable registry contract — API Freeze UX-8.3 (exactly 16 methods).
  * Named SelectionRegistryApi to avoid type/value name collision with the singleton.
  */
 export interface SelectionRegistryApi {
@@ -36,53 +45,115 @@ export interface SelectionRegistryApi {
   clear(): void;
   get(): SelectionState;
   getState(): SelectionState;
+  toggleWindow(id: SelectionWindowId): void;
+  toggleContent(id: SelectionContentId): void;
+  toggleSeries(id: SelectionSeriesId): void;
+  clearWindowSelection(): void;
+  clearContentSelection(): void;
+  clearSeriesSelection(): void;
+  clearAllSelections(): void;
+  rangeWindow(
+    start: SelectionWindowId,
+    end: SelectionWindowId,
+    orderedIds: readonly SelectionWindowId[],
+  ): void;
+  rangeContent(
+    start: SelectionContentId,
+    end: SelectionContentId,
+    orderedIds: readonly SelectionContentId[],
+  ): void;
+  rangeSeries(
+    start: SelectionSeriesId,
+    end: SelectionSeriesId,
+    orderedIds: readonly SelectionSeriesId[],
+  ): void;
+}
+
+function rangeSlice<T>(
+  start: T,
+  end: T,
+  orderedIds: readonly T[],
+): T[] | null {
+  const startIndex = orderedIds.indexOf(start);
+  const endIndex = orderedIds.indexOf(end);
+  if (startIndex < 0 || endIndex < 0) {
+    return null;
+  }
+  if (startIndex === endIndex) {
+    return [start];
+  }
+  const from = Math.min(startIndex, endIndex);
+  const to = Math.max(startIndex, endIndex);
+  return orderedIds.slice(from, to + 1);
 }
 
 /**
  * Creates an isolated in-memory selection registry.
- * - Private SelectionState (three independent nullable axes)
+ * - Private mutable Sets per axis (Set Ownership Freeze)
  * - get / getState return a defensive frozen clone (equivalent)
- * - select* mutates only its axis (Independence Freeze)
+ * - Axis ops mutate only their own Set (Independence Freeze)
  */
 export function createSelectionRegistry(): SelectionRegistryApi {
-  let selectedWindowId: SelectionWindowId | null = null;
-  let selectedContentId: SelectionContentId | null = null;
-  let selectedSeriesId: SelectionSeriesId | null = null;
+  const selectedWindowIds = new Set<SelectionWindowId>();
+  const selectedContentIds = new Set<SelectionContentId>();
+  const selectedSeriesIds = new Set<SelectionSeriesId>();
 
   function snapshot(): SelectionState {
+    // Set Ownership Freeze: clone mutable Sets → SelectionSet → SelectionState
     return createSelectionState({
-      selectedWindowId,
-      selectedContentId,
-      selectedSeriesId,
+      selectedWindowIds: createSelectionSet(selectedWindowIds),
+      selectedContentIds: createSelectionSet(selectedContentIds),
+      selectedSeriesIds: createSelectionSet(selectedSeriesIds),
     });
+  }
+
+  function replaceWindow(ids: Iterable<SelectionWindowId>): void {
+    selectedWindowIds.clear();
+    for (const id of ids) {
+      selectedWindowIds.add(id);
+    }
+  }
+
+  function replaceContent(ids: Iterable<SelectionContentId>): void {
+    selectedContentIds.clear();
+    for (const id of ids) {
+      selectedContentIds.add(id);
+    }
+  }
+
+  function replaceSeries(ids: Iterable<SelectionSeriesId>): void {
+    selectedSeriesIds.clear();
+    for (const id of ids) {
+      selectedSeriesIds.add(id);
+    }
   }
 
   return Object.freeze({
     selectWindow(id: SelectionWindowId): void {
-      if (selectedWindowId === id) {
+      if (selectedWindowIds.size === 1 && selectedWindowIds.has(id)) {
         return;
       }
-      selectedWindowId = id;
+      replaceWindow([id]);
     },
 
     selectContent(id: SelectionContentId): void {
-      if (selectedContentId === id) {
+      if (selectedContentIds.size === 1 && selectedContentIds.has(id)) {
         return;
       }
-      selectedContentId = id;
+      replaceContent([id]);
     },
 
     selectSeries(id: SelectionSeriesId): void {
-      if (selectedSeriesId === id) {
+      if (selectedSeriesIds.size === 1 && selectedSeriesIds.has(id)) {
         return;
       }
-      selectedSeriesId = id;
+      replaceSeries([id]);
     },
 
     clear(): void {
-      selectedWindowId = null;
-      selectedContentId = null;
-      selectedSeriesId = null;
+      selectedWindowIds.clear();
+      selectedContentIds.clear();
+      selectedSeriesIds.clear();
     },
 
     get(): SelectionState {
@@ -92,11 +163,89 @@ export function createSelectionRegistry(): SelectionRegistryApi {
     getState(): SelectionState {
       return snapshot();
     },
+
+    toggleWindow(id: SelectionWindowId): void {
+      if (selectedWindowIds.has(id)) {
+        selectedWindowIds.delete(id);
+      } else {
+        selectedWindowIds.add(id);
+      }
+    },
+
+    toggleContent(id: SelectionContentId): void {
+      if (selectedContentIds.has(id)) {
+        selectedContentIds.delete(id);
+      } else {
+        selectedContentIds.add(id);
+      }
+    },
+
+    toggleSeries(id: SelectionSeriesId): void {
+      if (selectedSeriesIds.has(id)) {
+        selectedSeriesIds.delete(id);
+      } else {
+        selectedSeriesIds.add(id);
+      }
+    },
+
+    clearWindowSelection(): void {
+      selectedWindowIds.clear();
+    },
+
+    clearContentSelection(): void {
+      selectedContentIds.clear();
+    },
+
+    clearSeriesSelection(): void {
+      selectedSeriesIds.clear();
+    },
+
+    clearAllSelections(): void {
+      selectedWindowIds.clear();
+      selectedContentIds.clear();
+      selectedSeriesIds.clear();
+    },
+
+    rangeWindow(
+      start: SelectionWindowId,
+      end: SelectionWindowId,
+      orderedIds: readonly SelectionWindowId[],
+    ): void {
+      const slice = rangeSlice(start, end, orderedIds);
+      if (slice === null) {
+        return;
+      }
+      replaceWindow(slice);
+    },
+
+    rangeContent(
+      start: SelectionContentId,
+      end: SelectionContentId,
+      orderedIds: readonly SelectionContentId[],
+    ): void {
+      const slice = rangeSlice(start, end, orderedIds);
+      if (slice === null) {
+        return;
+      }
+      replaceContent(slice);
+    },
+
+    rangeSeries(
+      start: SelectionSeriesId,
+      end: SelectionSeriesId,
+      orderedIds: readonly SelectionSeriesId[],
+    ): void {
+      const slice = rangeSlice(start, end, orderedIds);
+      if (slice === null) {
+        return;
+      }
+      replaceSeries(slice);
+    },
   });
 }
 
 /**
- * Empty singleton SSOT for UX-8.2 bootstrap (empty by design).
+ * Empty singleton SSOT for UX-8.3 bootstrap (empty by design).
  * Singleton Freeze: infrastructure / testing only.
  * React consumers MUST use SelectionProvider + useSelection().
  */
