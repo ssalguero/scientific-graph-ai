@@ -7,7 +7,7 @@ Version: 1.0
 Supersedes: UX-8.10 Next
 Prerequisites: UX-8 SERIES CERTIFIED
 Architecture SSOT: UX-9-architecture.md
-Next: UX-9.9
+Next: UX-9.10
 ```
 
 **Épica:** UX-9 — Productivity Layer  
@@ -83,7 +83,7 @@ UX-9.5  = COMPLETE (Clipboard Integration)
 UX-9.6  = COMPLETE (Command Palette + Interaction Commands)
 UX-9.7  = COMPLETE (Undo / Redo Integration)
 UX-9.8  = COMPLETE (Workspace Polish + Diagnostics)
-UX-9.9  = PENDING (Documentation Freeze)
+UX-9.9  = COMPLETE (Documentation Freeze)
 UX-9.10 = PENDING (Release Certification)
 Architecture SSOT = UX-9-architecture.md (FROZEN)
 Prerequisite = UX-8 RELEASE CERTIFIED
@@ -135,7 +135,7 @@ This roadmap does not duplicate them.
 | UX-9.6 | Command Palette + Interaction Commands | **COMPLETE** |
 | UX-9.7 | Undo / Redo Integration | **COMPLETE** |
 | UX-9.8 | Workspace Polish + Diagnostics | **COMPLETE** |
-| UX-9.9 | Documentation Freeze | PENDING |
+| UX-9.9 | Documentation Freeze | **COMPLETE** |
 | UX-9.10 | Release Certification | PENDING |
 
 ### Visible perception targets (guidance)
@@ -203,7 +203,7 @@ rule).
 
 ---
 
-## 7. Next → UX-9.9
+## 7. Next → UX-9.10
 
 **UX-9.0 FROZEN** · roadmap + architecture SSOT published.  
 **UX-9.1 COMPLETE** · Workspace Activation ([`UX-9.1.md`](./UX-9.1.md)) · `validate:ux-9.1`.  
@@ -213,16 +213,17 @@ rule).
 **UX-9.5 COMPLETE** · Clipboard Integration ([`UX-9.5.md`](./UX-9.5.md)) · `validate:ux-9.5`.  
 **UX-9.6 COMPLETE** · Command Palette + Interaction Commands ([`UX-9.6.md`](./UX-9.6.md)) · `validate:ux-9.6`.  
 **UX-9.7 COMPLETE** · Undo / Redo Integration ([`UX-9.7.md`](./UX-9.7.md)) · `validate:ux-9.7`.  
-**UX-9.8 COMPLETE** · Workspace Polish + Diagnostics ([`UX-9.8.md`](./UX-9.8.md)) · `validate:ux-9.8`.
+**UX-9.8 COMPLETE** · Workspace Polish + Diagnostics ([`UX-9.8.md`](./UX-9.8.md)) · `validate:ux-9.8`.  
+**UX-9.9 COMPLETE** · Documentation Freeze ([`UX-9.9.md`](./UX-9.9.md)) · `validate:ux-9.9`.
 
-**Next microphase → UX-9.9 (Documentation Freeze)**
+**Next microphase → UX-9.10 (Release Certification)**
 
-Expected focus: freeze documentation and series narrative — without new
-Productivity capabilities.
+Expected focus: release certification, roadmap close, and evidence reuse —
+without production changes (same pattern as UX-8.10).
 
 Prerequisite reminder:
 
 - UX-8 RELEASE CERTIFIED · [`UX-8.10.md`](./UX-8.10.md) · `validate:ux-8.10`
 - UX-8 architecture frozen · [`UX-8-architecture.md`](./UX-8-architecture.md)
 - UX-9.1–UX-9.8 COMPLETE (functional Productivity Layer closed)
-- UX-9.8 Workspace Polish + Diagnostics COMPLETE · [`UX-9.8.md`](./UX-9.8.md)
+- UX-9.9 Documentation Freeze COMPLETE · [`UX-9.9.md`](./UX-9.9.md)

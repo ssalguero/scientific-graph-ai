@@ -138,6 +138,7 @@
     "validate:ux-9.6": "npx tsx scripts/validate-ux-9.6.ts",
     "validate:ux-9.7": "npx tsx scripts/validate-ux-9.7.ts",
     "validate:ux-9.8": "npx tsx scripts/validate-ux-9.8.ts",
+    "validate:ux-9.9": "npx tsx scripts/validate-ux-9.9.ts",
     "validate:v11-d47-gate": "npx tsx scripts/validate-v11-d47-gate.ts",
     "validate:design-tokens-v2": "npx tsx scripts/validate-design-tokens-v2.ts",
     "validate:v11-d48-gate": "npx tsx scripts/validate-v11-d48-gate.ts",
