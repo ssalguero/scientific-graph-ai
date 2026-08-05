@@ -14,8 +14,12 @@
  *   → Snapshot → views). Visual Priority: Active > Focused > Selected >
  *   Hover > Discoverability. Never mutates HoverRegistry. Never registers
  *   Visibility SSOT. Discoverability ≠ window lifecycle.
+ * UX-9.4 — Keyboard Navigation chrome (observe useKeyboardNavigation only).
+ *   Visual Priority: Active > Focused > Selected > Hover > Keyboard Navigation
+ *   > Discoverability. Never mutates KeyboardNavigationRegistry.
+ *   Keyboard ≠ Focus · additive badge / arrow / Escape glyph only.
  * Geometry / dock / drag / resize / z-order unchanged.
- * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1 · UX-9.2 · UX-9.3.
+ * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1 · UX-9.2 · UX-9.3 · UX-9.4.
  */
 
 import type { PointerEvent as ReactPointerEvent } from "react";
@@ -23,6 +27,10 @@ import { UI_TOKENS } from "@/lib/ui/tokens";
 import type { DiscoverabilityPipeline } from "@/ui/discoverability";
 import { asFocusTargetId, useFocus } from "@/ui/focus";
 import { asHoverWindowId, useHover } from "@/ui/hover";
+import {
+  KeyboardNavigationDirection,
+  useKeyboardNavigation,
+} from "@/ui/keyboard-nav";
 import { asSelectionWindowId, useSelection } from "@/ui/selection";
 import { asVisibilityId } from "@/ui/visibility";
 import {
@@ -43,8 +51,32 @@ import {
  * Presentational chrome composed from existing D48 / UI_TOKENS only.
  * Token Freeze — no hardcoded colors · no hex · no rgb/rgba · no new palette.
  * Geometry remains inline style (API Freeze).
- * Visual Priority Freeze: Active > Focused > Selected > Hover > Discoverability.
+ * Visual Priority Freeze: Active > Focused > Selected > Hover >
+ *   Keyboard Navigation > Discoverability.
  */
+
+function keyboardDirectionGlyph(
+  direction: KeyboardNavigationDirection,
+): string {
+  switch (direction) {
+    case KeyboardNavigationDirection.NEXT:
+      return "→";
+    case KeyboardNavigationDirection.PREVIOUS:
+      return "←";
+    case KeyboardNavigationDirection.UP:
+      return "↑";
+    case KeyboardNavigationDirection.DOWN:
+      return "↓";
+    case KeyboardNavigationDirection.LEFT:
+      return "←";
+    case KeyboardNavigationDirection.RIGHT:
+      return "→";
+    case KeyboardNavigationDirection.ESCAPE:
+      return "Esc";
+    default:
+      return "·";
+  }
+}
 const FLOATING_WINDOW_CHROME = {
   rootBase: ["flex h-full flex-col overflow-hidden", UI_TOKENS.radius.md].join(
     " ",
@@ -124,6 +156,18 @@ const FLOATING_WINDOW_CHROME = {
     "pointer-events-none absolute inset-0",
     "ring-1 ring-inset ring-[var(--app-border)]/60",
   ].join(" "),
+  /** Keyboard Navigation — additive · never replaces Active / Focus / Hover */
+  keyboardBadge: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
+    "ring-1 ring-inset ring-[var(--app-border)]",
+  ].join(" "),
+  keyboardArrow: [
+    "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
+  ].join(" "),
   discHint: [
     "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
     UI_TOKENS.radius.md,
@@ -167,10 +211,11 @@ export function FloatingWindow({
   const { registry: focusRegistry } = useFocus();
   const { registry: selectionRegistry } = useSelection();
   const { registry: hoverRegistry } = useHover();
+  const { registry: keyboardRegistry } = useKeyboardNavigation();
   const { beginDrag, updateDrag, endDrag } = useWindowDrag();
   const { beginResize, updateResize, endResize } = useWindowResize();
 
-  /** Workspace Active ≠ Focused ≠ Selected ≠ Hover (UX-9.1–UX-9.3). */
+  /** Workspace Active ≠ Focused ≠ Selected ≠ Hover ≠ Keyboard (UX-9.1–UX-9.4). */
   const isActive = state.activeId === model.id;
   const isFocused = focusRegistry.isFocused(asFocusTargetId(model.id));
   const selectionState = selectionRegistry.getState();
@@ -181,6 +226,9 @@ export function FloatingWindow({
   const hoverState = hoverRegistry.getState();
   const isHovered =
     hoverState.hoveredWindowId === asHoverWindowId(model.id);
+  const keyboardState = keyboardRegistry.getState();
+  const lastDirection = keyboardState.lastDirection;
+  const hasKeyboardNav = lastDirection !== null;
 
   /** Discoverability — shared Pipeline → Snapshot → views (empty SSOT → empty). */
   const discSnapshot =
@@ -244,7 +292,7 @@ export function FloatingWindow({
     event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
-  /** Visual Priority: Active > Focused > Selected > Hover > Discoverability */
+  /** Visual Priority: Active > Focused > Selected > Hover > Keyboard Navigation > Discoverability */
   const rootClass = [
     FLOATING_WINDOW_CHROME.rootBase,
     "relative",
@@ -277,6 +325,8 @@ export function FloatingWindow({
       data-window-focused={isFocused ? "true" : "false"}
       data-window-selected={isSelected ? "true" : "false"}
       data-window-hovered={isHovered ? "true" : "false"}
+      data-keyboard-nav={hasKeyboardNav ? "true" : "false"}
+      data-keyboard-direction={lastDirection ?? undefined}
       data-discoverability-hint={hasDiscoverabilityHint ? "true" : "false"}
       className={rootClass}
       style={{
@@ -344,6 +394,23 @@ export function FloatingWindow({
             >
               Hover
             </span>
+          ) : null}
+          {hasKeyboardNav && lastDirection !== null ? (
+            <>
+              <span
+                className={FLOATING_WINDOW_CHROME.keyboardBadge}
+                data-keyboard-badge="true"
+              >
+                Nav
+              </span>
+              <span
+                className={FLOATING_WINDOW_CHROME.keyboardArrow}
+                data-keyboard-arrow="true"
+                aria-hidden="true"
+              >
+                {keyboardDirectionGlyph(lastDirection)}
+              </span>
+            </>
           ) : null}
           {hasDiscoverabilityHint && discSnapshot !== undefined ? (
             <span

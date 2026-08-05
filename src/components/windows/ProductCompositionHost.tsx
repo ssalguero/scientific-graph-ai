@@ -5,10 +5,12 @@
  * UX-9.2 — Provider Composition Completion: FocusProvider → SelectionProvider.
  *   FocusSelectionVisualSeed (temporary · Demo Minimality Freeze).
  * UX-9.3 — HoverProvider mount · HoverVisualSeed (temporary · ephemeral).
+ * UX-9.4 — KeyboardNavigationProvider · KeyboardNavigationVisualSeed ·
+ *   KeyboardNavigationDomHost (onKeyDown → move · Paint Independence).
  *
  * Authorized composition point for the Productivity Layer.
  * Mounts certified WindowManager + FocusProvider + SelectionProvider +
- * HoverProvider only.
+ * HoverProvider + KeyboardNavigationProvider only.
  * No new Provider · Context · Registry · Dispatcher · Contract.
  *
  * Small Incremental Visual Integration:
@@ -28,9 +30,23 @@
  * HoverVisualSeed is a temporary one-shot demo init.
  * NO-OP when hover already present. Permanently inactive after first pass.
  * Never re-synchronizes with real hover.
+ *
+ * Keyboard Seed Canonical / Ephemerality Freeze:
+ * KeyboardNavigationVisualSeed initializes via move(NEXT) only — never next().
+ * One-shot · permanently inactive after write or existing direction.
+ *
+ * Keyboard DOM Freeze:
+ * KeyboardNavigationDomHost is the sole onKeyDown / onKeyDownCapture surface.
+ * No document/window listeners.
  */
 
-import { useEffect, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from "react";
 import { asFocusTargetId, FocusProvider, useFocus } from "@/ui/focus";
 import {
   asHoverContentId,
@@ -38,6 +54,11 @@ import {
   HoverProvider,
   useHover,
 } from "@/ui/hover";
+import {
+  KeyboardNavigationDirection,
+  KeyboardNavigationProvider,
+  useKeyboardNavigation,
+} from "@/ui/keyboard-nav";
 import {
   asSelectionContentId,
   asSelectionWindowId,
@@ -199,15 +220,115 @@ function HoverVisualSeed() {
 }
 
 /**
+ * Temporary visual-integration utility only (UX-9.4).
+ * Keyboard Seed Canonical Freeze — move(NEXT) only · never next().
+ * Keyboard Ephemerality Freeze — one-shot; permanently inactive after pass.
+ */
+function KeyboardNavigationVisualSeed() {
+  const { state } = useWindowContext();
+  const { registry } = useKeyboardNavigation();
+  const seededRef = useRef(false);
+
+  useEffect(() => {
+    if (seededRef.current) {
+      return;
+    }
+
+    const keyboardState = registry.getState();
+
+    // Keyboard Ephemerality — existing direction → NO-OP forever
+    if (keyboardState.lastDirection !== null) {
+      seededRef.current = true;
+      return;
+    }
+    if (state.windows.size === 0) {
+      return;
+    }
+
+    seededRef.current = true;
+
+    // Keyboard Seed Canonical Freeze — move(NEXT) only
+    registry.move(KeyboardNavigationDirection.NEXT);
+  }, [state.windows, registry]);
+
+  return null;
+}
+
+/**
+ * Sole keyboard capture surface (Keyboard DOM Freeze).
+ * Translates keys → move(direction) only (Direction Normalization Freeze).
+ * Paint Independence: ensures snapshot can reach chrome; mechanism not frozen.
+ */
+function KeyboardNavigationDomHost({ children }: { children: ReactNode }) {
+  const { registry } = useKeyboardNavigation();
+  const { state } = useWindowContext();
+  const [, setPaint] = useState(0);
+
+  // After seed (or any registry write), ensure chrome can observe the snapshot.
+  useEffect(() => {
+    if (registry.getState().lastDirection !== null) {
+      setPaint((n) => n + 1);
+    }
+  }, [registry, state.windows.size]);
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    let direction: KeyboardNavigationDirection | null = null;
+
+    if (event.key === "Tab") {
+      direction = event.shiftKey
+        ? KeyboardNavigationDirection.PREVIOUS
+        : KeyboardNavigationDirection.NEXT;
+      event.preventDefault();
+    } else if (event.key === "ArrowUp") {
+      direction = KeyboardNavigationDirection.UP;
+      event.preventDefault();
+    } else if (event.key === "ArrowDown") {
+      direction = KeyboardNavigationDirection.DOWN;
+      event.preventDefault();
+    } else if (event.key === "ArrowLeft") {
+      direction = KeyboardNavigationDirection.LEFT;
+      event.preventDefault();
+    } else if (event.key === "ArrowRight") {
+      direction = KeyboardNavigationDirection.RIGHT;
+      event.preventDefault();
+    } else if (event.key === "Escape") {
+      direction = KeyboardNavigationDirection.ESCAPE;
+      event.preventDefault();
+    }
+
+    if (direction === null) {
+      return;
+    }
+
+    registry.move(direction);
+    setPaint((n) => n + 1);
+  };
+
+  return (
+    <div
+      data-keyboard-nav-host="true"
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      className="h-full w-full outline-none"
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
  * ProductCompositionHost
  *   └─ WindowManager
  *       └─ FocusProvider
  *           └─ SelectionProvider
  *               └─ HoverProvider
- *                   ├─ WorkspaceActivationSeed
- *                   ├─ FocusSelectionVisualSeed
- *                   ├─ HoverVisualSeed
- *                   └─ existing application tree
+ *                   └─ KeyboardNavigationProvider
+ *                       ├─ WorkspaceActivationSeed
+ *                       ├─ FocusSelectionVisualSeed
+ *                       ├─ HoverVisualSeed
+ *                       ├─ KeyboardNavigationVisualSeed
+ *                       └─ KeyboardNavigationDomHost
+ *                           └─ existing application tree
  */
 export function ProductCompositionHost({
   children,
@@ -217,10 +338,13 @@ export function ProductCompositionHost({
       <FocusProvider>
         <SelectionProvider>
           <HoverProvider>
-            <WorkspaceActivationSeed />
-            <FocusSelectionVisualSeed />
-            <HoverVisualSeed />
-            {children}
+            <KeyboardNavigationProvider>
+              <WorkspaceActivationSeed />
+              <FocusSelectionVisualSeed />
+              <HoverVisualSeed />
+              <KeyboardNavigationVisualSeed />
+              <KeyboardNavigationDomHost>{children}</KeyboardNavigationDomHost>
+            </KeyboardNavigationProvider>
           </HoverProvider>
         </SelectionProvider>
       </FocusProvider>
