@@ -1,13 +1,14 @@
 # UX-9.0 — Productivity Layer · Roadmap
 
 ```text
-Status: FROZEN
+Status: CLOSED
 Series: UX-9
 Version: 1.0
 Supersedes: UX-8.10 Next
 Prerequisites: UX-8 SERIES CERTIFIED
 Architecture SSOT: UX-9-architecture.md
-Next: UX-9.10
+UX-9 RELEASE CERTIFIED
+Next Series: UX-10
 ```
 
 **Épica:** UX-9 — Productivity Layer  
@@ -68,12 +69,16 @@ Interaction Infrastructure (UX-8)
 Visible Productivity (UX-9)
 ```
 
+Series Identity Freeze = VIGENTE after UX-9.10. The official name remains
+**Productivity Layer**. UX-9.10 certifies identity; it does not redefine it.
+
 ---
 
 ## Declaración
 
 ```text
-UX-9 = Productivity Layer (OPEN)
+UX-9 = CLOSED (Productivity Layer)
+UX-9 RELEASE CERTIFIED
 UX-9.0  = FROZEN (roadmap oficial · SSOT de secuencia · Version 1.0)
 UX-9.1  = COMPLETE (Workspace Activation)
 UX-9.2  = COMPLETE (Focus + Selection Visual)
@@ -84,7 +89,7 @@ UX-9.6  = COMPLETE (Command Palette + Interaction Commands)
 UX-9.7  = COMPLETE (Undo / Redo Integration)
 UX-9.8  = COMPLETE (Workspace Polish + Diagnostics)
 UX-9.9  = COMPLETE (Documentation Freeze)
-UX-9.10 = PENDING (Release Certification)
+UX-9.10 = COMPLETE (Release Certification)
 Architecture SSOT = UX-9-architecture.md (FROZEN)
 Prerequisite = UX-8 RELEASE CERTIFIED
 No validate:ux-9.0
@@ -92,6 +97,8 @@ No package.json changes in UX-9.0
 No src/** changes in UX-9.0
 Visible User Outcome = governance rule for UX-9.1 → UX-9.8
 ProductCompositionHost = architectural target (not implemented in UX-9.0)
+Certification Finality Freeze = VIGENTE
+Productivity Finality = VIGENTE
 ```
 
 ---
@@ -136,7 +143,7 @@ This roadmap does not duplicate them.
 | UX-9.7 | Undo / Redo Integration | **COMPLETE** |
 | UX-9.8 | Workspace Polish + Diagnostics | **COMPLETE** |
 | UX-9.9 | Documentation Freeze | **COMPLETE** |
-| UX-9.10 | Release Certification | PENDING |
+| UX-9.10 | Release Certification | **COMPLETE** |
 
 ### Visible perception targets (guidance)
 
@@ -194,36 +201,41 @@ rule).
 
 ## 6. Validator governance
 
-- **No** `validate:ux-9.0`
-- **No** `package.json` changes in UX-9.0
-- **No** nested `npm run validate:ux-9.*` chains
-- Validators begin with **UX-9.1**
-- Historical UX-8 validators remain; do not modify prior gates
+- Active gate = `validate:ux-9.10` (series final · RELEASE CERTIFIED)
+- Historical validators remain; do not modify prior gates
+- No nested `npm run validate:ux-9.*` chains
+- Final series gate = `validate:ux-9.10` COMPLETE
 - UX-8.10 RELEASE CERTIFIED remains the series-entry prerequisite
 
 ---
 
-## 7. Next → UX-9.10
+## 7. Next → UX-10
 
-**UX-9.0 FROZEN** · roadmap + architecture SSOT published.  
-**UX-9.1 COMPLETE** · Workspace Activation ([`UX-9.1.md`](./UX-9.1.md)) · `validate:ux-9.1`.  
-**UX-9.2 COMPLETE** · Focus + Selection Visual ([`UX-9.2.md`](./UX-9.2.md)) · `validate:ux-9.2`.  
-**UX-9.3 COMPLETE** · Hover + Visibility / Discoverability ([`UX-9.3.md`](./UX-9.3.md)) · `validate:ux-9.3`.  
-**UX-9.4 COMPLETE** · Keyboard Navigation ([`UX-9.4.md`](./UX-9.4.md)) · `validate:ux-9.4`.  
-**UX-9.5 COMPLETE** · Clipboard Integration ([`UX-9.5.md`](./UX-9.5.md)) · `validate:ux-9.5`.  
-**UX-9.6 COMPLETE** · Command Palette + Interaction Commands ([`UX-9.6.md`](./UX-9.6.md)) · `validate:ux-9.6`.  
-**UX-9.7 COMPLETE** · Undo / Redo Integration ([`UX-9.7.md`](./UX-9.7.md)) · `validate:ux-9.7`.  
-**UX-9.8 COMPLETE** · Workspace Polish + Diagnostics ([`UX-9.8.md`](./UX-9.8.md)) · `validate:ux-9.8`.  
-**UX-9.9 COMPLETE** · Documentation Freeze ([`UX-9.9.md`](./UX-9.9.md)) · `validate:ux-9.9`.
+**UX-9 RELEASE CERTIFIED** · gate final [`UX-9.10.md`](./UX-9.10.md) · `validate:ux-9.10`
 
-**Next microphase → UX-9.10 (Release Certification)**
+**Series Closed.** Series Closure Freeze / Certification Finality Freeze /
+Productivity Finality = VIGENTE.
+Ninguna microfase UX-9 puede reabrirse. Cualquier cambio posterior requiere
+nueva serie (UX-10+) o decisión explícita de gobierno.
 
-Expected focus: release certification, roadmap close, and evidence reuse —
-without production changes (same pattern as UX-8.10).
+**Next Series → UX-10**
 
-Prerequisite reminder:
+UX-10 begins the product redesign phase outside the certified UX-9 Productivity
+Layer (AppShell, sidebar, toolbar, dashboard, and replacement of temporary
+seeds by real product flows).
 
-- UX-8 RELEASE CERTIFIED · [`UX-8.10.md`](./UX-8.10.md) · `validate:ux-8.10`
-- UX-8 architecture frozen · [`UX-8-architecture.md`](./UX-8-architecture.md)
-- UX-9.1–UX-9.8 COMPLETE (functional Productivity Layer closed)
-- UX-9.9 Documentation Freeze COMPLETE · [`UX-9.9.md`](./UX-9.9.md)
+Architecture SSOT remains [`UX-9-architecture.md`](./UX-9-architecture.md)
+for the closed UX-9 series.
+
+Historical gates (do not nest):
+
+- UX-9.1 Workspace Activation · [`UX-9.1.md`](./UX-9.1.md) · `validate:ux-9.1`
+- UX-9.2 Focus + Selection Visual · [`UX-9.2.md`](./UX-9.2.md) · `validate:ux-9.2`
+- UX-9.3 Hover + Visibility / Discoverability · [`UX-9.3.md`](./UX-9.3.md) · `validate:ux-9.3`
+- UX-9.4 Keyboard Navigation · [`UX-9.4.md`](./UX-9.4.md) · `validate:ux-9.4`
+- UX-9.5 Clipboard Integration · [`UX-9.5.md`](./UX-9.5.md) · `validate:ux-9.5`
+- UX-9.6 Command Palette + Interaction Commands · [`UX-9.6.md`](./UX-9.6.md) · `validate:ux-9.6`
+- UX-9.7 Undo / Redo Integration · [`UX-9.7.md`](./UX-9.7.md) · `validate:ux-9.7`
+- UX-9.8 Workspace Polish + Diagnostics · [`UX-9.8.md`](./UX-9.8.md) · `validate:ux-9.8`
+- UX-9.9 Documentation Freeze · [`UX-9.9.md`](./UX-9.9.md) · `validate:ux-9.9`
+- UX-9.10 Release Certification · [`UX-9.10.md`](./UX-9.10.md) · `validate:ux-9.10`
