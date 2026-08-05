@@ -158,7 +158,7 @@ import {
   WorkspaceLayout,
   WorkspacePanels,
 } from "@/components/workspace";
-import { WindowManager } from "@/components/windows";
+import { ProductCompositionHost } from "@/components/windows";
 import { SessionProvider, SessionBridge } from "@/components/session";
 import { AdaptiveToolbar } from "@/components/toolbar";
 import {
@@ -26723,14 +26723,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 }
 
 export default function Home() {
-  // D56.4 — WindowManager at highest page root (context available to all overlays).
+  // UX-9.1 — ProductCompositionHost owns WindowManager + FocusProvider composition.
   // D65.8 — SessionProvider + SessionBridge (silent; windowIds sync only; no persistence).
   return (
-    <WindowManager>
+    <ProductCompositionHost>
       <SessionProvider>
         <SessionBridge />
         <GraphEditor />
       </SessionProvider>
-    </WindowManager>
+    </ProductCompositionHost>
   );
 }

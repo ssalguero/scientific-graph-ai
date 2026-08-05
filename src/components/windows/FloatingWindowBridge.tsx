@@ -4,13 +4,14 @@
  * D56.3 — Floating Windows Foundation · FloatingWindowBridge.
  * D57.4 — Bridge Mapping introduced.
  * D58.1 — Maps WindowGeometryState → FloatingWindowModel[] (no hardcoded sizes).
+ * UX-9.1 — Workspace activation: pointerdown → WindowAPI.activate (chrome only).
+ *   Does not change z-order · geometry · docking · drag · resize.
  * Sole Floating* consumer of useWindowContext.
- * Layer props unchanged: windows: readonly FloatingWindowModel[].
- * Authority: D56 presentational + bridge · D58.1 GeometryState.
+ * Authority: D56 presentational + bridge · D58.1 GeometryState · UX-9.1.
  */
 
 import { useWindowContext } from "./WindowContext";
-import { FloatingWindowLayer } from "./FloatingWindowLayer";
+import { FloatingWindow } from "./FloatingWindow";
 import type { FloatingWindowModel } from "./FloatingWindowTypes";
 import { useWindowGeometry } from "./WindowGeometryContext";
 import type { WindowGeometry } from "./WindowGeometryState";
@@ -22,7 +23,7 @@ import type { WindowState } from "./WindowTypes";
  */
 function mapToFloatingWindowModels(
   state: WindowState,
-  geometries: ReadonlyMap<string, WindowGeometry>
+  geometries: ReadonlyMap<string, WindowGeometry>,
 ): FloatingWindowModel[] {
   const models: FloatingWindowModel[] = [];
   let zIndex = 1;
@@ -57,7 +58,7 @@ function mapToFloatingWindowModels(
 }
 
 export function FloatingWindowBridge() {
-  const { state } = useWindowContext();
+  const { state, api } = useWindowContext();
   const { geometryState, revision } = useWindowGeometry();
 
   // revision tick forces re-read after GeometryState mutations
@@ -65,5 +66,20 @@ export function FloatingWindowBridge() {
 
   const windows = mapToFloatingWindowModels(state, geometryState.getAll());
 
-  return <FloatingWindowLayer windows={windows} />;
+  return (
+    <>
+      {windows
+        .filter((window) => window.visible)
+        .map((window) => (
+          <div
+            key={window.id}
+            onPointerDownCapture={() => {
+              api.activate(window.id);
+            }}
+          >
+            <FloatingWindow window={window} />
+          </div>
+        ))}
+    </>
+  );
 }

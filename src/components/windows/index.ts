@@ -18,6 +18,8 @@ export { createWindowRegistry } from "./WindowRegistry";
 
 export { WindowProvider, useWindowContext } from "./WindowContext";
 export { WindowManager } from "./WindowManager";
+export { ProductCompositionHost } from "./ProductCompositionHost";
+export type { ProductCompositionHostProps } from "./ProductCompositionHost";
 
 export * from "./FloatingWindowTypes";
 export * from "./FloatingWindow";
