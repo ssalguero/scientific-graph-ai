@@ -8,10 +8,14 @@
  *   Does not change z-order · geometry · docking · drag · resize.
  * UX-9.2 — Still activation-only. Never mutates FocusRegistry or SelectionRegistry.
  *   No Window → Selection · Focus → Selection coupling.
+ * UX-9.3 — Owns one DiscoverabilityPipeline (Pipeline Lifetime Freeze) and fans
+ *   it out to FloatingWindow. Never mutates HoverRegistry. No new Context.
  * Sole Floating* consumer of useWindowContext.
- * Authority: D56 presentational + bridge · D58.1 GeometryState · UX-9.1 · UX-9.2.
+ * Authority: D56 presentational + bridge · D58.1 GeometryState · UX-9.1–UX-9.3.
  */
 
+import { useRef } from "react";
+import { createDiscoverabilityPipeline } from "@/ui/discoverability";
 import { useWindowContext } from "./WindowContext";
 import { FloatingWindow } from "./FloatingWindow";
 import type { FloatingWindowModel } from "./FloatingWindowTypes";
@@ -62,11 +66,14 @@ function mapToFloatingWindowModels(
 export function FloatingWindowBridge() {
   const { state, api } = useWindowContext();
   const { geometryState, revision } = useWindowGeometry();
+  /** Discoverability Pipeline Lifetime Freeze — one pipeline per composition. */
+  const pipelineRef = useRef(createDiscoverabilityPipeline());
 
   // revision tick forces re-read after GeometryState mutations
   void revision;
 
   const windows = mapToFloatingWindowModels(state, geometryState.getAll());
+  const pipeline = pipelineRef.current;
 
   return (
     <>
@@ -79,7 +86,7 @@ export function FloatingWindowBridge() {
               api.activate(window.id);
             }}
           >
-            <FloatingWindow window={window} />
+            <FloatingWindow window={window} pipeline={pipeline} />
           </div>
         ))}
     </>

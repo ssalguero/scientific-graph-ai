@@ -10,16 +10,26 @@
  * UX-9.2 — Focus + Selection Visual chrome (observe FocusRegistry +
  *   SelectionRegistry only). Visual Priority: Active > Focused > Selected.
  *   Never mutates FocusRegistry or SelectionRegistry.
- * Props surface unchanged (FloatingWindowProps). No local geometry state.
- * No WindowManager imports. No geometry / dock / drag / resize / z-order changes.
- * Authority: FloatingWindowProps (D56.1 API Freeze) · D58.0 · UX-9.1 · UX-9.2.
+ * UX-9.3 — Hover + Discoverability chrome (observe useHover + shared Pipeline
+ *   → Snapshot → views). Visual Priority: Active > Focused > Selected >
+ *   Hover > Discoverability. Never mutates HoverRegistry. Never registers
+ *   Visibility SSOT. Discoverability ≠ window lifecycle.
+ * Geometry / dock / drag / resize / z-order unchanged.
+ * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1 · UX-9.2 · UX-9.3.
  */
 
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { UI_TOKENS } from "@/lib/ui/tokens";
+import type { DiscoverabilityPipeline } from "@/ui/discoverability";
 import { asFocusTargetId, useFocus } from "@/ui/focus";
+import { asHoverWindowId, useHover } from "@/ui/hover";
 import { asSelectionWindowId, useSelection } from "@/ui/selection";
-import type { FloatingWindowProps } from "./FloatingWindowTypes";
+import { asVisibilityId } from "@/ui/visibility";
+import {
+  DiscoverabilityView,
+  queryDiscSnapshot,
+} from "@/ui/visual-integration";
+import type { FloatingWindowModel } from "./FloatingWindowTypes";
 import { useWindowContext } from "./WindowContext";
 import { useWindowDrag } from "./WindowDragContext";
 import { useWindowResize } from "./WindowResizeContext";
@@ -33,7 +43,7 @@ import {
  * Presentational chrome composed from existing D48 / UI_TOKENS only.
  * Token Freeze — no hardcoded colors · no hex · no rgb/rgba · no new palette.
  * Geometry remains inline style (API Freeze).
- * Visual Priority Freeze: Active > Focused > Selected.
+ * Visual Priority Freeze: Active > Focused > Selected > Hover > Discoverability.
  */
 const FLOATING_WINDOW_CHROME = {
   rootBase: ["flex h-full flex-col overflow-hidden", UI_TOKENS.radius.md].join(
@@ -45,17 +55,24 @@ const FLOATING_WINDOW_CHROME = {
     "bg-[var(--app-surface)]",
     UI_TOKENS.shadow.md,
   ].join(" "),
-  /** Medium priority — Focused (when not Active) */
+  /** Focused (when not Active) */
   rootFocused: [
     "border border-[var(--app-accent)]/25",
     "bg-[var(--app-surface)]",
     UI_TOKENS.shadow.sm,
   ].join(" "),
-  /** Lowest priority — Selected (when not Active and not Focused) */
+  /** Selected (when not Active and not Focused) */
   rootSelected: [
     UI_TOKENS.border.default,
     "bg-[var(--app-surface)]",
     "ring-1 ring-inset ring-[var(--app-accent)]/20",
+    UI_TOKENS.shadow.sm,
+  ].join(" "),
+  /** Hover (when not Active / Focused / Selected) */
+  rootHovered: [
+    UI_TOKENS.border.default,
+    "bg-[var(--app-surface)]",
+    "ring-1 ring-inset ring-[var(--app-border)]",
     UI_TOKENS.shadow.sm,
   ].join(" "),
   rootInactive: [
@@ -70,6 +87,7 @@ const FLOATING_WINDOW_CHROME = {
   ].join(" "),
   headerActive: "bg-[var(--app-accent)]/10",
   headerFocused: "bg-[var(--app-accent)]/5",
+  headerHovered: "bg-[var(--app-surface)]",
   headerInactive: "bg-[var(--app-surface-muted)]",
   titleActive:
     "min-w-0 truncate text-[11px] font-semibold tracking-tight text-[var(--app-heading)]",
@@ -96,6 +114,21 @@ const FLOATING_WINDOW_CHROME = {
     "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
     "ring-1 ring-inset ring-[var(--app-accent)]/20",
   ].join(" "),
+  hoverBadge: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
+    "ring-1 ring-inset ring-[var(--app-border)]",
+  ].join(" "),
+  hoverOverlay: [
+    "pointer-events-none absolute inset-0",
+    "ring-1 ring-inset ring-[var(--app-border)]/60",
+  ].join(" "),
+  discHint: [
+    "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
+  ].join(" "),
   contentSelected: [
     "mt-1 px-1.5 py-1 text-[10px]",
     UI_TOKENS.radius.md,
@@ -116,14 +149,28 @@ const FLOATING_WINDOW_CHROME = {
   ].join(" "),
 } as const;
 
-export function FloatingWindow({ window: model }: FloatingWindowProps) {
+type FloatingWindowChromeProps = Readonly<{
+  window: FloatingWindowModel;
+  /**
+   * Shared composition pipeline from FloatingWindowBridge.
+   * Optional for presentational FloatingWindowLayer (no product Discoverability).
+   * Never create a pipeline inside FloatingWindow (Pipeline Lifetime Freeze).
+   */
+  pipeline?: DiscoverabilityPipeline;
+}>;
+
+export function FloatingWindow({
+  window: model,
+  pipeline,
+}: FloatingWindowChromeProps) {
   const { state } = useWindowContext();
   const { registry: focusRegistry } = useFocus();
   const { registry: selectionRegistry } = useSelection();
+  const { registry: hoverRegistry } = useHover();
   const { beginDrag, updateDrag, endDrag } = useWindowDrag();
   const { beginResize, updateResize, endResize } = useWindowResize();
 
-  /** Workspace Active ≠ Focused ≠ Selected (UX-9.1 / UX-9.2). */
+  /** Workspace Active ≠ Focused ≠ Selected ≠ Hover (UX-9.1–UX-9.3). */
   const isActive = state.activeId === model.id;
   const isFocused = focusRegistry.isFocused(asFocusTargetId(model.id));
   const selectionState = selectionRegistry.getState();
@@ -131,6 +178,21 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
     asSelectionWindowId(model.id),
   );
   const selectedContentIds = [...selectionState.selectedContentIds];
+  const hoverState = hoverRegistry.getState();
+  const isHovered =
+    hoverState.hoveredWindowId === asHoverWindowId(model.id);
+
+  /** Discoverability — shared Pipeline → Snapshot → views (empty SSOT → empty). */
+  const discSnapshot =
+    pipeline !== undefined
+      ? queryDiscSnapshot(pipeline, asVisibilityId(model.id))
+      : undefined;
+  const hasDiscoverabilityHint =
+    discSnapshot !== undefined &&
+    (discSnapshot.tooltip !== undefined ||
+      discSnapshot.shortcutHint !== undefined ||
+      discSnapshot.commandDescription !== undefined ||
+      discSnapshot.contextHelp !== undefined);
 
   const onTitlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest("button")) {
@@ -182,16 +244,19 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
     event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
-  /** Visual Priority: Active > Focused > Selected */
+  /** Visual Priority: Active > Focused > Selected > Hover > Discoverability */
   const rootClass = [
     FLOATING_WINDOW_CHROME.rootBase,
+    "relative",
     isActive
       ? FLOATING_WINDOW_CHROME.rootActive
       : isFocused
         ? FLOATING_WINDOW_CHROME.rootFocused
         : isSelected
           ? FLOATING_WINDOW_CHROME.rootSelected
-          : FLOATING_WINDOW_CHROME.rootInactive,
+          : isHovered
+            ? FLOATING_WINDOW_CHROME.rootHovered
+            : FLOATING_WINDOW_CHROME.rootInactive,
   ].join(" ");
 
   const headerClass = [
@@ -200,7 +265,9 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
       ? FLOATING_WINDOW_CHROME.headerActive
       : isFocused
         ? FLOATING_WINDOW_CHROME.headerFocused
-        : FLOATING_WINDOW_CHROME.headerInactive,
+        : isHovered
+          ? FLOATING_WINDOW_CHROME.headerHovered
+          : FLOATING_WINDOW_CHROME.headerInactive,
   ].join(" ");
 
   return (
@@ -209,6 +276,8 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
       data-workspace-active={isActive ? "true" : "false"}
       data-window-focused={isFocused ? "true" : "false"}
       data-window-selected={isSelected ? "true" : "false"}
+      data-window-hovered={isHovered ? "true" : "false"}
+      data-discoverability-hint={hasDiscoverabilityHint ? "true" : "false"}
       className={rootClass}
       style={{
         position: "absolute",
@@ -219,6 +288,13 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
         zIndex: model.zIndex,
       }}
     >
+      {isHovered && !isActive && !isFocused && !isSelected ? (
+        <div
+          className={FLOATING_WINDOW_CHROME.hoverOverlay}
+          data-hover-overlay="true"
+          aria-hidden="true"
+        />
+      ) : null}
       <header
         data-floating-window-title={model.id}
         className={headerClass}
@@ -259,6 +335,22 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
               data-selection-badge="true"
             >
               Sel
+            </span>
+          ) : null}
+          {isHovered ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.hoverBadge}
+              data-hover-badge="true"
+            >
+              Hover
+            </span>
+          ) : null}
+          {hasDiscoverabilityHint && discSnapshot !== undefined ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.discHint}
+              data-discoverability-indicator="true"
+            >
+              <DiscoverabilityView snapshot={discSnapshot} />
             </span>
           ) : null}
         </div>

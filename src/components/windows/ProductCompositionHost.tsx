@@ -4,9 +4,11 @@
  * UX-9.1 — ProductCompositionHost.
  * UX-9.2 — Provider Composition Completion: FocusProvider → SelectionProvider.
  *   FocusSelectionVisualSeed (temporary · Demo Minimality Freeze).
+ * UX-9.3 — HoverProvider mount · HoverVisualSeed (temporary · ephemeral).
  *
  * Authorized composition point for the Productivity Layer.
- * Mounts certified WindowManager + FocusProvider + SelectionProvider only.
+ * Mounts certified WindowManager + FocusProvider + SelectionProvider +
+ * HoverProvider only.
  * No new Provider · Context · Registry · Dispatcher · Contract.
  *
  * Small Incremental Visual Integration:
@@ -21,10 +23,21 @@
  * FocusSelectionVisualSeed is a temporary visual-integration utility.
  * Demo Minimality: focus + selectWindow + selectContent only.
  * Auto NO-OP when focus/selection already present.
+ *
+ * Hover Visual Seed Freeze / Hover Ephemerality Freeze:
+ * HoverVisualSeed is a temporary one-shot demo init.
+ * NO-OP when hover already present. Permanently inactive after first pass.
+ * Never re-synchronizes with real hover.
  */
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { asFocusTargetId, FocusProvider, useFocus } from "@/ui/focus";
+import {
+  asHoverContentId,
+  asHoverWindowId,
+  HoverProvider,
+  useHover,
+} from "@/ui/hover";
 import {
   asSelectionContentId,
   asSelectionWindowId,
@@ -42,6 +55,7 @@ export type ProductCompositionHostProps = Readonly<{
 const SEED_WINDOW_A = "ux-9.1-seed-a";
 const SEED_WINDOW_B = "ux-9.1-seed-b";
 const SEED_CONTENT = "ux-9.2-seed-content";
+const SEED_HOVER_CONTENT = "ux-9.3-seed-content";
 
 /**
  * Temporary integration utility only.
@@ -140,13 +154,60 @@ function FocusSelectionVisualSeed() {
 }
 
 /**
+ * Temporary visual-integration utility only (UX-9.3).
+ * Hover Visual Seed Freeze — hoverWindow + hoverContent only.
+ * Hover Ephemerality Freeze — one-shot; permanently inactive after pass.
+ * Never enter · leave · history · coordinates · clear · singleton.
+ */
+function HoverVisualSeed() {
+  const { state } = useWindowContext();
+  const { registry: hoverApi } = useHover();
+  const seededRef = useRef(false);
+
+  useEffect(() => {
+    if (seededRef.current) {
+      return;
+    }
+
+    const hoverState = hoverApi.getState();
+
+    // Hover Visual Seed Freeze — product hover present → NO-OP forever
+    if (
+      hoverState.hoveredWindowId !== null ||
+      hoverState.hoveredContentId !== null
+    ) {
+      seededRef.current = true;
+      return;
+    }
+    if (state.windows.size === 0) {
+      return;
+    }
+
+    const firstWindow = state.windows.values().next().value;
+    if (!firstWindow) {
+      return;
+    }
+
+    seededRef.current = true;
+
+    // One-shot demo writes only (Hover Ephemerality Freeze)
+    hoverApi.hoverWindow(asHoverWindowId(firstWindow.id));
+    hoverApi.hoverContent(asHoverContentId(SEED_HOVER_CONTENT));
+  }, [state.windows, hoverApi]);
+
+  return null;
+}
+
+/**
  * ProductCompositionHost
  *   └─ WindowManager
  *       └─ FocusProvider
  *           └─ SelectionProvider
- *               ├─ WorkspaceActivationSeed
- *               ├─ FocusSelectionVisualSeed
- *               └─ existing application tree
+ *               └─ HoverProvider
+ *                   ├─ WorkspaceActivationSeed
+ *                   ├─ FocusSelectionVisualSeed
+ *                   ├─ HoverVisualSeed
+ *                   └─ existing application tree
  */
 export function ProductCompositionHost({
   children,
@@ -155,9 +216,12 @@ export function ProductCompositionHost({
     <WindowManager>
       <FocusProvider>
         <SelectionProvider>
-          <WorkspaceActivationSeed />
-          <FocusSelectionVisualSeed />
-          {children}
+          <HoverProvider>
+            <WorkspaceActivationSeed />
+            <FocusSelectionVisualSeed />
+            <HoverVisualSeed />
+            {children}
+          </HoverProvider>
         </SelectionProvider>
       </FocusProvider>
     </WindowManager>
