@@ -46,7 +46,7 @@ UX-8.2  = COMPLETE (Selection Foundation)
 UX-8.3  = COMPLETE (Multi Selection)
 UX-8.4  = COMPLETE (Hover System)
 UX-8.5  = COMPLETE (Keyboard Navigation)
-UX-8.6  = PENDING (Clipboard Foundation)
+UX-8.6  = COMPLETE (Clipboard Foundation)
 UX-8.7  = PENDING (Interaction Commands)
 UX-8.8  = PENDING (Interaction Diagnostics)
 UX-8.9  = PENDING (Documentation Freeze)
@@ -95,7 +95,7 @@ This roadmap does not duplicate them.
 | UX-8.3 | Multi Selection | COMPLETE |
 | UX-8.4 | Hover System | COMPLETE |
 | UX-8.5 | Keyboard Navigation (pure API) | COMPLETE |
-| UX-8.6 | Clipboard Foundation | PENDING |
+| UX-8.6 | Clipboard Foundation | COMPLETE |
 | UX-8.7 | Interaction Commands | PENDING |
 | UX-8.8 | Interaction Diagnostics | PENDING |
 | UX-8.9 | Documentation Freeze | PENDING |
@@ -141,3 +141,4 @@ Historical gates (do not nest):
 - UX-8.3 Multi Selection · [`UX-8.3.md`](./UX-8.3.md) · `validate:ux-8.3`
 - UX-8.4 Hover System · [`UX-8.4.md`](./UX-8.4.md) · `validate:ux-8.4`
 - UX-8.5 Keyboard Navigation · [`UX-8.5.md`](./UX-8.5.md) · `validate:ux-8.5`
+- UX-8.6 Clipboard Foundation · [`UX-8.6.md`](./UX-8.6.md) · `validate:ux-8.6`
