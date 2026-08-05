@@ -7,7 +7,7 @@ Version: 1.0
 Supersedes: UX-8.10 Next
 Prerequisites: UX-8 SERIES CERTIFIED
 Architecture SSOT: UX-9-architecture.md
-Next: UX-9.2
+Next: UX-9.3
 ```
 
 **Épica:** UX-9 — Productivity Layer  
@@ -76,7 +76,7 @@ Visible Productivity (UX-9)
 UX-9 = Productivity Layer (OPEN)
 UX-9.0  = FROZEN (roadmap oficial · SSOT de secuencia · Version 1.0)
 UX-9.1  = COMPLETE (Workspace Activation)
-UX-9.2  = PENDING (Focus + Selection Visual)
+UX-9.2  = COMPLETE (Focus + Selection Visual)
 UX-9.3  = PENDING (Hover + Visibility)
 UX-9.4  = PENDING (Keyboard Navigation)
 UX-9.5  = PENDING (Clipboard Integration)
@@ -128,7 +128,7 @@ This roadmap does not duplicate them.
 |------|----------|--------|
 | UX-9.0 | Roadmap + Architecture | **FROZEN** |
 | UX-9.1 | Workspace Activation | **COMPLETE** |
-| UX-9.2 | Focus + Selection Visual | PENDING |
+| UX-9.2 | Focus + Selection Visual | **COMPLETE** |
 | UX-9.3 | Hover + Visibility | PENDING |
 | UX-9.4 | Keyboard Navigation | PENDING |
 | UX-9.5 | Clipboard Integration | PENDING |
@@ -203,19 +203,20 @@ rule).
 
 ---
 
-## 7. Next → UX-9.2
+## 7. Next → UX-9.3
 
 **UX-9.0 FROZEN** · roadmap + architecture SSOT published.  
-**UX-9.1 COMPLETE** · Workspace Activation ([`UX-9.1.md`](./UX-9.1.md)) · `validate:ux-9.1`.
+**UX-9.1 COMPLETE** · Workspace Activation ([`UX-9.1.md`](./UX-9.1.md)) · `validate:ux-9.1`.  
+**UX-9.2 COMPLETE** · Focus + Selection Visual ([`UX-9.2.md`](./UX-9.2.md)) · `validate:ux-9.2`.
 
-**Next microphase → UX-9.2 (Focus + Selection Visual)**
+**Next microphase → UX-9.3 (Hover + Visibility)**
 
-Expected Visible User Outcome direction: focus and selection chrome perceptible
-on the ProductCompositionHost integration established in UX-9.1 — without new
-base systems.
+Expected Visible User Outcome direction: hover and visibility feedback
+perceptible on the ProductCompositionHost integration — without new base systems.
 
 Prerequisite reminder:
 
 - UX-8 RELEASE CERTIFIED · [`UX-8.10.md`](./UX-8.10.md) · `validate:ux-8.10`
 - UX-8 architecture frozen · [`UX-8-architecture.md`](./UX-8-architecture.md)
 - UX-9.1 Workspace Activation COMPLETE · [`UX-9.1.md`](./UX-9.1.md)
+- UX-9.2 Focus + Selection Visual COMPLETE · [`UX-9.2.md`](./UX-9.2.md)

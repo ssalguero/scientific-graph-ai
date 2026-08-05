@@ -6,8 +6,10 @@
  * D58.1 — Maps WindowGeometryState → FloatingWindowModel[] (no hardcoded sizes).
  * UX-9.1 — Workspace activation: pointerdown → WindowAPI.activate (chrome only).
  *   Does not change z-order · geometry · docking · drag · resize.
+ * UX-9.2 — Still activation-only. Never mutates FocusRegistry or SelectionRegistry.
+ *   No Window → Selection · Focus → Selection coupling.
  * Sole Floating* consumer of useWindowContext.
- * Authority: D56 presentational + bridge · D58.1 GeometryState · UX-9.1.
+ * Authority: D56 presentational + bridge · D58.1 GeometryState · UX-9.1 · UX-9.2.
  */
 
 import { useWindowContext } from "./WindowContext";

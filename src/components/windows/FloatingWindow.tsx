@@ -7,14 +7,18 @@
  * UX-1.1 — Visual chrome only (D48 tokens); props / lifecycle unchanged.
  * UX-9.1 — Workspace Active chrome (border · shadow · title · background ·
  *   accent · indicators). Token Freeze: UI_TOKENS + existing CSS vars only.
- *   Reads WindowManager.activeId only — does NOT drive FocusRegistry.
+ * UX-9.2 — Focus + Selection Visual chrome (observe FocusRegistry +
+ *   SelectionRegistry only). Visual Priority: Active > Focused > Selected.
+ *   Never mutates FocusRegistry or SelectionRegistry.
  * Props surface unchanged (FloatingWindowProps). No local geometry state.
  * No WindowManager imports. No geometry / dock / drag / resize / z-order changes.
- * Authority: FloatingWindowProps (D56.1 API Freeze) · D58.0 · UX-9.1.
+ * Authority: FloatingWindowProps (D56.1 API Freeze) · D58.0 · UX-9.1 · UX-9.2.
  */
 
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { UI_TOKENS } from "@/lib/ui/tokens";
+import { asFocusTargetId, useFocus } from "@/ui/focus";
+import { asSelectionWindowId, useSelection } from "@/ui/selection";
 import type { FloatingWindowProps } from "./FloatingWindowTypes";
 import { useWindowContext } from "./WindowContext";
 import { useWindowDrag } from "./WindowDragContext";
@@ -29,15 +33,30 @@ import {
  * Presentational chrome composed from existing D48 / UI_TOKENS only.
  * Token Freeze — no hardcoded colors · no hex · no rgb/rgba · no new palette.
  * Geometry remains inline style (API Freeze).
+ * Visual Priority Freeze: Active > Focused > Selected.
  */
 const FLOATING_WINDOW_CHROME = {
   rootBase: ["flex h-full flex-col overflow-hidden", UI_TOKENS.radius.md].join(
     " ",
   ),
+  /** Highest priority — Workspace Active */
   rootActive: [
     UI_TOKENS.border.accentSoft,
     "bg-[var(--app-surface)]",
     UI_TOKENS.shadow.md,
+  ].join(" "),
+  /** Medium priority — Focused (when not Active) */
+  rootFocused: [
+    "border border-[var(--app-accent)]/25",
+    "bg-[var(--app-surface)]",
+    UI_TOKENS.shadow.sm,
+  ].join(" "),
+  /** Lowest priority — Selected (when not Active and not Focused) */
+  rootSelected: [
+    UI_TOKENS.border.default,
+    "bg-[var(--app-surface)]",
+    "ring-1 ring-inset ring-[var(--app-accent)]/20",
+    UI_TOKENS.shadow.sm,
   ].join(" "),
   rootInactive: [
     UI_TOKENS.border.default,
@@ -50,6 +69,7 @@ const FLOATING_WINDOW_CHROME = {
     "cursor-grab active:cursor-grabbing select-none",
   ].join(" "),
   headerActive: "bg-[var(--app-accent)]/10",
+  headerFocused: "bg-[var(--app-accent)]/5",
   headerInactive: "bg-[var(--app-surface-muted)]",
   titleActive:
     "min-w-0 truncate text-[11px] font-semibold tracking-tight text-[var(--app-heading)]",
@@ -64,6 +84,23 @@ const FLOATING_WINDOW_CHROME = {
     "h-1.5 w-1.5 shrink-0",
     UI_TOKENS.radius.full,
     "bg-[var(--app-border)]",
+  ].join(" "),
+  focusBadge: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
+  ].join(" "),
+  selectionBadge: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
+    "ring-1 ring-inset ring-[var(--app-accent)]/20",
+  ].join(" "),
+  contentSelected: [
+    "mt-1 px-1.5 py-1 text-[10px]",
+    UI_TOKENS.radius.md,
+    "bg-[var(--app-accent)]/5 text-[var(--app-text-muted)]",
+    "ring-1 ring-inset ring-[var(--app-accent)]/15",
   ].join(" "),
   close: [
     "inline-flex h-5 w-5 shrink-0 items-center justify-center",
@@ -81,11 +118,19 @@ const FLOATING_WINDOW_CHROME = {
 
 export function FloatingWindow({ window: model }: FloatingWindowProps) {
   const { state } = useWindowContext();
+  const { registry: focusRegistry } = useFocus();
+  const { registry: selectionRegistry } = useSelection();
   const { beginDrag, updateDrag, endDrag } = useWindowDrag();
   const { beginResize, updateResize, endResize } = useWindowResize();
 
-  /** Workspace Active only — ≠ Window Focus ≠ Panel Selection (UX-9.1). */
+  /** Workspace Active ≠ Focused ≠ Selected (UX-9.1 / UX-9.2). */
   const isActive = state.activeId === model.id;
+  const isFocused = focusRegistry.isFocused(asFocusTargetId(model.id));
+  const selectionState = selectionRegistry.getState();
+  const isSelected = selectionState.selectedWindowIds.has(
+    asSelectionWindowId(model.id),
+  );
+  const selectedContentIds = [...selectionState.selectedContentIds];
 
   const onTitlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest("button")) {
@@ -137,24 +182,33 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
     event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
+  /** Visual Priority: Active > Focused > Selected */
   const rootClass = [
     FLOATING_WINDOW_CHROME.rootBase,
     isActive
       ? FLOATING_WINDOW_CHROME.rootActive
-      : FLOATING_WINDOW_CHROME.rootInactive,
+      : isFocused
+        ? FLOATING_WINDOW_CHROME.rootFocused
+        : isSelected
+          ? FLOATING_WINDOW_CHROME.rootSelected
+          : FLOATING_WINDOW_CHROME.rootInactive,
   ].join(" ");
 
   const headerClass = [
     FLOATING_WINDOW_CHROME.headerBase,
     isActive
       ? FLOATING_WINDOW_CHROME.headerActive
-      : FLOATING_WINDOW_CHROME.headerInactive,
+      : isFocused
+        ? FLOATING_WINDOW_CHROME.headerFocused
+        : FLOATING_WINDOW_CHROME.headerInactive,
   ].join(" ");
 
   return (
     <div
       data-floating-window={model.id}
       data-workspace-active={isActive ? "true" : "false"}
+      data-window-focused={isFocused ? "true" : "false"}
+      data-window-selected={isSelected ? "true" : "false"}
       className={rootClass}
       style={{
         position: "absolute",
@@ -191,6 +245,22 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
           >
             {model.title}
           </span>
+          {isFocused ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.focusBadge}
+              data-focus-badge="true"
+            >
+              Focus
+            </span>
+          ) : null}
+          {isSelected ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.selectionBadge}
+              data-selection-badge="true"
+            >
+              Sel
+            </span>
+          ) : null}
         </div>
         <button
           type="button"
@@ -200,7 +270,17 @@ export function FloatingWindow({ window: model }: FloatingWindowProps) {
           ×
         </button>
       </header>
-      <section className={FLOATING_WINDOW_CHROME.body}>{model.content}</section>
+      <section className={FLOATING_WINDOW_CHROME.body}>
+        {model.content}
+        {isSelected && selectedContentIds.length > 0 ? (
+          <div
+            className={FLOATING_WINDOW_CHROME.contentSelected}
+            data-content-selected="true"
+          >
+            Content · {selectedContentIds.join(", ")}
+          </div>
+        ) : null}
+      </section>
       {FLOATING_WINDOW_RESIZE_EDGES.map((edge) => (
         <FloatingWindowResizeHandle
           key={edge}
