@@ -49,7 +49,7 @@ UX-8.5  = COMPLETE (Keyboard Navigation)
 UX-8.6  = COMPLETE (Clipboard Foundation)
 UX-8.7  = COMPLETE (Interaction Commands)
 UX-8.8  = COMPLETE (Interaction Diagnostics)
-UX-8.9  = PENDING (Documentation Freeze)
+UX-8.9  = COMPLETE (Documentation Freeze)
 UX-8.10 = PENDING (Release Certification)
 Architecture SSOT = UX-8-architecture.md (FROZEN)
 Dependency Rule = VIGENTE
@@ -98,7 +98,7 @@ This roadmap does not duplicate them.
 | UX-8.6 | Clipboard Foundation | COMPLETE |
 | UX-8.7 | Interaction Commands | COMPLETE |
 | UX-8.8 | Interaction Diagnostics | COMPLETE |
-| UX-8.9 | Documentation Freeze | PENDING |
+| UX-8.9 | Documentation Freeze | COMPLETE |
 | UX-8.10 | Release Certification | PENDING |
 
 ---
@@ -144,3 +144,4 @@ Historical gates (do not nest):
 - UX-8.6 Clipboard Foundation · [`UX-8.6.md`](./UX-8.6.md) · `validate:ux-8.6`
 - UX-8.7 Interaction Commands Foundation · [`UX-8.7.md`](./UX-8.7.md) · `validate:ux-8.7`
 - UX-8.8 Interaction Diagnostics · [`UX-8.8.md`](./UX-8.8.md) · `validate:ux-8.8`
+- UX-8.9 Documentation Freeze · [`UX-8.9.md`](./UX-8.9.md) · `validate:ux-8.9`
