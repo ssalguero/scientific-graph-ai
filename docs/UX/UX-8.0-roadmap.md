@@ -1,12 +1,13 @@
 # UX-8.0 — Workspace Interaction System · Roadmap
 
 ```text
-Status: FROZEN
+Status: CLOSED
 Series: UX-8
 Version: 1.0
 Supersedes: UX-7.10 Next
 Prerequisites: UX-7 SERIES CERTIFIED
 Architecture SSOT: UX-8-architecture.md
+UX-8 RELEASE CERTIFIED
 Next Series: UX-9
 ```
 
@@ -39,7 +40,8 @@ Next Series: UX-9
 ## Declaración
 
 ```text
-UX-8 = IN PROGRESS (Workspace Interaction System)
+UX-8 = CLOSED (Workspace Interaction System)
+UX-8 RELEASE CERTIFIED
 UX-8.0  = FROZEN (roadmap oficial · SSOT de secuencia · Version 1.0)
 UX-8.1  = COMPLETE (Focus System Foundation)
 UX-8.2  = COMPLETE (Selection Foundation)
@@ -50,7 +52,7 @@ UX-8.6  = COMPLETE (Clipboard Foundation)
 UX-8.7  = COMPLETE (Interaction Commands)
 UX-8.8  = COMPLETE (Interaction Diagnostics)
 UX-8.9  = COMPLETE (Documentation Freeze)
-UX-8.10 = PENDING (Release Certification)
+UX-8.10 = COMPLETE (Release Certification)
 Architecture SSOT = UX-8-architecture.md (FROZEN)
 Dependency Rule = VIGENTE
 Authorities Matrix = VIGENTE
@@ -59,6 +61,9 @@ Local barrel only · no @/ui expansion
 Sin product mount en UX-8
 AppShell / Features / Commands / Visibility / Runtime = FROZEN
 Window surfaces D55–D63 = INTOCABLES
+Series Closure Freeze = VIGENTE
+Certification Finality Freeze = VIGENTE
+Series closed.
 Next Series = UX-9
 ```
 
@@ -99,7 +104,7 @@ This roadmap does not duplicate them.
 | UX-8.7 | Interaction Commands | COMPLETE |
 | UX-8.8 | Interaction Diagnostics | COMPLETE |
 | UX-8.9 | Documentation Freeze | COMPLETE |
-| UX-8.10 | Release Certification | PENDING |
+| UX-8.10 | Release Certification | COMPLETE |
 
 ---
 
@@ -121,16 +126,20 @@ This roadmap does not duplicate them.
 
 ## 5. Validator governance
 
-- Active construction gate advances per microphase (`validate:ux-8.N`)
+- Active gate = `validate:ux-8.10` (series final · RELEASE CERTIFIED)
 - Historical validators remain; do not modify prior gates
 - No nested `npm run validate:ux-8.*` chains that hang on Windows
-- Final series gate = `validate:ux-8.10` (when COMPLETE)
+- Final series gate = `validate:ux-8.10` COMPLETE
 
 ---
 
 ## 6. Next → UX-9
 
-After UX-8.10 RELEASE CERTIFIED:
+**UX-8 RELEASE CERTIFIED** · gate final [`UX-8.10.md`](./UX-8.10.md) · `validate:ux-8.10`
+
+**Series closed.** Series Closure Freeze / Certification Finality Freeze = VIGENTE.
+Ninguna microfase UX-8 puede reabrirse. Cualquier cambio posterior requiere
+nueva serie (UX-9+) o decisión explícita de gobierno.
 
 **Next Series → UX-9 (Productivity Layer)**
 
@@ -145,3 +154,4 @@ Historical gates (do not nest):
 - UX-8.7 Interaction Commands Foundation · [`UX-8.7.md`](./UX-8.7.md) · `validate:ux-8.7`
 - UX-8.8 Interaction Diagnostics · [`UX-8.8.md`](./UX-8.8.md) · `validate:ux-8.8`
 - UX-8.9 Documentation Freeze · [`UX-8.9.md`](./UX-8.9.md) · `validate:ux-8.9`
+- UX-8.10 Release Certification · [`UX-8.10.md`](./UX-8.10.md) · `validate:ux-8.10`
