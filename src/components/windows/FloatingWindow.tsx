@@ -18,12 +18,18 @@
  *   Visual Priority: Active > Focused > Selected > Hover > Keyboard Navigation
  *   > Discoverability. Never mutates KeyboardNavigationRegistry.
  *   Keyboard ≠ Focus · additive badge / arrow / Escape glyph only.
+ * UX-9.5 — Clipboard chrome (observe useClipboard + Bridge feedback only).
+ *   Additive badge / status / ephemeral copy·paste feedback.
+ *   Never mutates ClipboardRegistry · never calls Bridge · never navigator.clipboard.
+ *   Clipboard feedback never changes Visual Priority cascade.
  * Geometry / dock / drag / resize / z-order unchanged.
- * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1 · UX-9.2 · UX-9.3 · UX-9.4.
+ * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1–UX-9.5.
  */
 
 import type { PointerEvent as ReactPointerEvent } from "react";
+import { useSyncExternalStore } from "react";
 import { UI_TOKENS } from "@/lib/ui/tokens";
+import { useClipboard } from "@/ui/clipboard";
 import type { DiscoverabilityPipeline } from "@/ui/discoverability";
 import { asFocusTargetId, useFocus } from "@/ui/focus";
 import { asHoverWindowId, useHover } from "@/ui/hover";
@@ -37,6 +43,10 @@ import {
   DiscoverabilityView,
   queryDiscSnapshot,
 } from "@/ui/visual-integration";
+import {
+  getClipboardFeedback,
+  subscribeClipboardFeedback,
+} from "./clipboard";
 import type { FloatingWindowModel } from "./FloatingWindowTypes";
 import { useWindowContext } from "./WindowContext";
 import { useWindowDrag } from "./WindowDragContext";
@@ -53,6 +63,7 @@ import {
  * Geometry remains inline style (API Freeze).
  * Visual Priority Freeze: Active > Focused > Selected > Hover >
  *   Keyboard Navigation > Discoverability.
+ * Clipboard chrome is additive · outside the replacement cascade.
  */
 
 function keyboardDirectionGlyph(
@@ -168,6 +179,24 @@ const FLOATING_WINDOW_CHROME = {
     UI_TOKENS.radius.md,
     "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
   ].join(" "),
+  /** Clipboard — additive · independent domain · never changes Visual Priority */
+  clipboardBadge: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
+    "ring-1 ring-inset ring-[var(--app-border)]",
+  ].join(" "),
+  clipboardStatus: [
+    "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
+  ].join(" "),
+  clipboardFeedback: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
+    UI_TOKENS.transition.colors200,
+  ].join(" "),
   discHint: [
     "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
     UI_TOKENS.radius.md,
@@ -212,10 +241,16 @@ export function FloatingWindow({
   const { registry: selectionRegistry } = useSelection();
   const { registry: hoverRegistry } = useHover();
   const { registry: keyboardRegistry } = useKeyboardNavigation();
+  const { registry: clipboardApi } = useClipboard();
+  const clipboardFeedback = useSyncExternalStore(
+    subscribeClipboardFeedback,
+    getClipboardFeedback,
+    getClipboardFeedback,
+  );
   const { beginDrag, updateDrag, endDrag } = useWindowDrag();
   const { beginResize, updateResize, endResize } = useWindowResize();
 
-  /** Workspace Active ≠ Focused ≠ Selected ≠ Hover ≠ Keyboard (UX-9.1–UX-9.4). */
+  /** Workspace Active ≠ Focused ≠ Selected ≠ Hover ≠ Keyboard ≠ Clipboard. */
   const isActive = state.activeId === model.id;
   const isFocused = focusRegistry.isFocused(asFocusTargetId(model.id));
   const selectionState = selectionRegistry.getState();
@@ -229,6 +264,10 @@ export function FloatingWindow({
   const keyboardState = keyboardRegistry.getState();
   const lastDirection = keyboardState.lastDirection;
   const hasKeyboardNav = lastDirection !== null;
+  const clipboardEntry = clipboardApi.getState().entry;
+  const hasClipboard = clipboardEntry !== null;
+  const showCopyFeedback = clipboardFeedback?.kind === "copy";
+  const showPasteFeedback = clipboardFeedback?.kind === "paste";
 
   /** Discoverability — shared Pipeline → Snapshot → views (empty SSOT → empty). */
   const discSnapshot =
@@ -292,7 +331,8 @@ export function FloatingWindow({
     event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
-  /** Visual Priority: Active > Focused > Selected > Hover > Keyboard Navigation > Discoverability */
+  /** Visual Priority: Active > Focused > Selected > Hover > Keyboard Navigation > Discoverability
+   *  Clipboard chrome is additive and does not participate in this cascade. */
   const rootClass = [
     FLOATING_WINDOW_CHROME.rootBase,
     "relative",
@@ -327,6 +367,8 @@ export function FloatingWindow({
       data-window-hovered={isHovered ? "true" : "false"}
       data-keyboard-nav={hasKeyboardNav ? "true" : "false"}
       data-keyboard-direction={lastDirection ?? undefined}
+      data-clipboard={hasClipboard ? "true" : "false"}
+      data-clipboard-feedback={clipboardFeedback?.kind ?? undefined}
       data-discoverability-hint={hasDiscoverabilityHint ? "true" : "false"}
       className={rootClass}
       style={{
@@ -411,6 +453,38 @@ export function FloatingWindow({
                 {keyboardDirectionGlyph(lastDirection)}
               </span>
             </>
+          ) : null}
+          {hasClipboard ? (
+            <>
+              <span
+                className={FLOATING_WINDOW_CHROME.clipboardBadge}
+                data-clipboard-badge="true"
+              >
+                Clip
+              </span>
+              <span
+                className={FLOATING_WINDOW_CHROME.clipboardStatus}
+                data-clipboard-status="true"
+              >
+                Ready
+              </span>
+            </>
+          ) : null}
+          {showCopyFeedback ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.clipboardFeedback}
+              data-clipboard-copy-feedback="true"
+            >
+              Copied
+            </span>
+          ) : null}
+          {showPasteFeedback ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.clipboardFeedback}
+              data-clipboard-paste-feedback="true"
+            >
+              Pasted
+            </span>
           ) : null}
           {hasDiscoverabilityHint && discSnapshot !== undefined ? (
             <span

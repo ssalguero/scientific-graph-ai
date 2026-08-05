@@ -7,10 +7,12 @@
  * UX-9.3 — HoverProvider mount · HoverVisualSeed (temporary · ephemeral).
  * UX-9.4 — KeyboardNavigationProvider · KeyboardNavigationVisualSeed ·
  *   KeyboardNavigationDomHost (onKeyDown → move · Paint Independence).
+ * UX-9.5 — ClipboardProvider · ClipboardVisualSeed · ClipboardDomHost
+ *   (Ctrl/Cmd+C|V → Bridge · Paint Independence).
  *
  * Authorized composition point for the Productivity Layer.
  * Mounts certified WindowManager + FocusProvider + SelectionProvider +
- * HoverProvider + KeyboardNavigationProvider only.
+ * HoverProvider + KeyboardNavigationProvider + ClipboardProvider only.
  * No new Provider · Context · Registry · Dispatcher · Contract.
  *
  * Small Incremental Visual Integration:
@@ -36,8 +38,16 @@
  * One-shot · permanently inactive after write or existing direction.
  *
  * Keyboard DOM Freeze:
- * KeyboardNavigationDomHost is the sole onKeyDown / onKeyDownCapture surface.
+ * KeyboardNavigationDomHost is the sole onKeyDown surface for navigation keys.
  * No document/window listeners.
+ *
+ * Clipboard Seed / Ephemerality Freeze:
+ * ClipboardVisualSeed is a temporary one-shot via Bridge.copy.
+ * NO-OP when Clipboard already contains an entry.
+ *
+ * Clipboard DOM Freeze:
+ * ClipboardDomHost is the sole Ctrl/Cmd+C|V capture surface.
+ * Calls ClipboardIntegrationBridge only — never navigator.clipboard.
  */
 
 import {
@@ -47,6 +57,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from "react";
+import { ClipboardProvider, useClipboard } from "@/ui/clipboard";
 import { asFocusTargetId, FocusProvider, useFocus } from "@/ui/focus";
 import {
   asHoverContentId,
@@ -65,6 +76,7 @@ import {
   SelectionProvider,
   useSelection,
 } from "@/ui/selection";
+import { clipboardIntegrationBridge } from "./clipboard";
 import { useWindowContext } from "./WindowContext";
 import { useWindowGeometry } from "./WindowGeometryContext";
 import { WindowManager } from "./WindowManager";
@@ -77,6 +89,7 @@ const SEED_WINDOW_A = "ux-9.1-seed-a";
 const SEED_WINDOW_B = "ux-9.1-seed-b";
 const SEED_CONTENT = "ux-9.2-seed-content";
 const SEED_HOVER_CONTENT = "ux-9.3-seed-content";
+const SEED_CLIPBOARD_TEXT = "UX-9.5 clipboard";
 
 /**
  * Temporary integration utility only.
@@ -255,7 +268,43 @@ function KeyboardNavigationVisualSeed() {
 }
 
 /**
- * Sole keyboard capture surface (Keyboard DOM Freeze).
+ * Temporary visual-integration utility only (UX-9.5).
+ * Clipboard Seed Freeze — one-shot via Bridge.copy · never re-sync.
+ * Obeys Clipboard Success Freeze · Entry Canonical Freeze.
+ */
+function ClipboardVisualSeed() {
+  const { registry } = useClipboard();
+  const seededRef = useRef(false);
+  const [, setPaint] = useState(0);
+
+  useEffect(() => {
+    if (seededRef.current) {
+      return;
+    }
+
+    // Clipboard Seed Freeze — existing entry → NO-OP forever
+    if (registry.getState().entry !== null) {
+      seededRef.current = true;
+      return;
+    }
+
+    seededRef.current = true;
+
+    void clipboardIntegrationBridge
+      .copy(SEED_CLIPBOARD_TEXT, registry)
+      .then(() => {
+        setPaint((n) => n + 1);
+      })
+      .catch(() => {
+        // Success Freeze — failure leaves Registry untouched; seed stays done
+      });
+  }, [registry]);
+
+  return null;
+}
+
+/**
+ * Sole keyboard capture surface for navigation (Keyboard DOM Freeze).
  * Translates keys → move(direction) only (Direction Normalization Freeze).
  * Paint Independence: ensures snapshot can reach chrome; mechanism not frozen.
  */
@@ -317,18 +366,88 @@ function KeyboardNavigationDomHost({ children }: { children: ReactNode }) {
 }
 
 /**
+ * Sole Copy/Paste capture surface (Clipboard DOM Freeze).
+ * Ctrl/Cmd+C · Ctrl/Cmd+V → Bridge only — never navigator.clipboard.
+ */
+function ClipboardDomHost({ children }: { children: ReactNode }) {
+  const { registry } = useClipboard();
+  const [, setPaint] = useState(0);
+
+  useEffect(() => {
+    if (registry.getState().entry !== null) {
+      setPaint((n) => n + 1);
+    }
+  }, [registry]);
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const mod = event.ctrlKey || event.metaKey;
+    if (!mod) {
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+    if (key !== "c" && key !== "v") {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (key === "c") {
+      const selected =
+        typeof window !== "undefined"
+          ? window.getSelection()?.toString() ?? ""
+          : "";
+      const text = selected.length > 0 ? selected : SEED_CLIPBOARD_TEXT;
+      void clipboardIntegrationBridge
+        .copy(text, registry)
+        .then(() => {
+          setPaint((n) => n + 1);
+        })
+        .catch(() => {
+          // Success Freeze — no Registry.set · no feedback
+        });
+      return;
+    }
+
+    void clipboardIntegrationBridge
+      .paste(registry)
+      .then(() => {
+        setPaint((n) => n + 1);
+      })
+      .catch(() => {
+        // Success Freeze — no Registry.set · no feedback
+      });
+  };
+
+  return (
+    <div
+      data-clipboard-host="true"
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      className="h-full w-full outline-none"
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
  * ProductCompositionHost
  *   └─ WindowManager
  *       └─ FocusProvider
  *           └─ SelectionProvider
  *               └─ HoverProvider
  *                   └─ KeyboardNavigationProvider
- *                       ├─ WorkspaceActivationSeed
- *                       ├─ FocusSelectionVisualSeed
- *                       ├─ HoverVisualSeed
- *                       ├─ KeyboardNavigationVisualSeed
- *                       └─ KeyboardNavigationDomHost
- *                           └─ existing application tree
+ *                       └─ ClipboardProvider
+ *                           ├─ WorkspaceActivationSeed
+ *                           ├─ FocusSelectionVisualSeed
+ *                           ├─ HoverVisualSeed
+ *                           ├─ KeyboardNavigationVisualSeed
+ *                           ├─ ClipboardVisualSeed
+ *                           └─ KeyboardNavigationDomHost
+ *                               └─ ClipboardDomHost
+ *                                   └─ existing application tree
  */
 export function ProductCompositionHost({
   children,
@@ -339,11 +458,16 @@ export function ProductCompositionHost({
         <SelectionProvider>
           <HoverProvider>
             <KeyboardNavigationProvider>
-              <WorkspaceActivationSeed />
-              <FocusSelectionVisualSeed />
-              <HoverVisualSeed />
-              <KeyboardNavigationVisualSeed />
-              <KeyboardNavigationDomHost>{children}</KeyboardNavigationDomHost>
+              <ClipboardProvider>
+                <WorkspaceActivationSeed />
+                <FocusSelectionVisualSeed />
+                <HoverVisualSeed />
+                <KeyboardNavigationVisualSeed />
+                <ClipboardVisualSeed />
+                <KeyboardNavigationDomHost>
+                  <ClipboardDomHost>{children}</ClipboardDomHost>
+                </KeyboardNavigationDomHost>
+              </ClipboardProvider>
             </KeyboardNavigationProvider>
           </HoverProvider>
         </SelectionProvider>

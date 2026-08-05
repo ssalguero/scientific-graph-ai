@@ -7,7 +7,7 @@ Version: 1.0
 Supersedes: UX-8.10 Next
 Prerequisites: UX-8 SERIES CERTIFIED
 Architecture SSOT: UX-9-architecture.md
-Next: UX-9.5
+Next: UX-9.6
 ```
 
 **Épica:** UX-9 — Productivity Layer  
@@ -79,7 +79,7 @@ UX-9.1  = COMPLETE (Workspace Activation)
 UX-9.2  = COMPLETE (Focus + Selection Visual)
 UX-9.3  = COMPLETE (Hover + Visibility)
 UX-9.4  = COMPLETE (Keyboard Navigation)
-UX-9.5  = PENDING (Clipboard Integration)
+UX-9.5  = COMPLETE (Clipboard Integration)
 UX-9.6  = PENDING (Command Palette + Interaction Commands)
 UX-9.7  = PENDING (Undo / Redo Integration)
 UX-9.8  = PENDING (Workspace Polish + Diagnostics)
@@ -131,7 +131,7 @@ This roadmap does not duplicate them.
 | UX-9.2 | Focus + Selection Visual | **COMPLETE** |
 | UX-9.3 | Hover + Visibility | **COMPLETE** |
 | UX-9.4 | Keyboard Navigation | **COMPLETE** |
-| UX-9.5 | Clipboard Integration | PENDING |
+| UX-9.5 | Clipboard Integration | **COMPLETE** |
 | UX-9.6 | Command Palette + Interaction Commands | PENDING |
 | UX-9.7 | Undo / Redo Integration | PENDING |
 | UX-9.8 | Workspace Polish + Diagnostics | PENDING |
@@ -203,18 +203,19 @@ rule).
 
 ---
 
-## 7. Next → UX-9.5
+## 7. Next → UX-9.6
 
 **UX-9.0 FROZEN** · roadmap + architecture SSOT published.  
 **UX-9.1 COMPLETE** · Workspace Activation ([`UX-9.1.md`](./UX-9.1.md)) · `validate:ux-9.1`.  
 **UX-9.2 COMPLETE** · Focus + Selection Visual ([`UX-9.2.md`](./UX-9.2.md)) · `validate:ux-9.2`.  
 **UX-9.3 COMPLETE** · Hover + Visibility / Discoverability ([`UX-9.3.md`](./UX-9.3.md)) · `validate:ux-9.3`.  
-**UX-9.4 COMPLETE** · Keyboard Navigation ([`UX-9.4.md`](./UX-9.4.md)) · `validate:ux-9.4`.
+**UX-9.4 COMPLETE** · Keyboard Navigation ([`UX-9.4.md`](./UX-9.4.md)) · `validate:ux-9.4`.  
+**UX-9.5 COMPLETE** · Clipboard Integration ([`UX-9.5.md`](./UX-9.5.md)) · `validate:ux-9.5`.
 
-**Next microphase → UX-9.5 (Clipboard Integration)**
+**Next microphase → UX-9.6 (Command Palette + Interaction Commands)**
 
-Expected Visible User Outcome direction: clipboard feedback perceptible on the
-ProductCompositionHost integration — without new base systems.
+Expected Visible User Outcome direction: command palette / interaction commands
+perceptible on the ProductCompositionHost integration — without new base systems.
 
 Prerequisite reminder:
 
@@ -224,3 +225,4 @@ Prerequisite reminder:
 - UX-9.2 Focus + Selection Visual COMPLETE · [`UX-9.2.md`](./UX-9.2.md)
 - UX-9.3 Hover + Visibility COMPLETE · [`UX-9.3.md`](./UX-9.3.md)
 - UX-9.4 Keyboard Navigation COMPLETE · [`UX-9.4.md`](./UX-9.4.md)
+- UX-9.5 Clipboard Integration COMPLETE · [`UX-9.5.md`](./UX-9.5.md)
