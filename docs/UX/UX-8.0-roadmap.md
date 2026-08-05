@@ -42,7 +42,7 @@ Next Series: UX-9
 UX-8 = IN PROGRESS (Workspace Interaction System)
 UX-8.0  = FROZEN (roadmap oficial · SSOT de secuencia · Version 1.0)
 UX-8.1  = COMPLETE (Focus System Foundation)
-UX-8.2  = PENDING (Selection Foundation)
+UX-8.2  = COMPLETE (Selection Foundation)
 UX-8.3  = PENDING (Multi Selection)
 UX-8.4  = PENDING (Hover System)
 UX-8.5  = PENDING (Keyboard Navigation)
@@ -91,7 +91,7 @@ This roadmap does not duplicate them.
 | Fase | Objetivo | Estado |
 |------|----------|--------|
 | UX-8.1 | Focus System Foundation | COMPLETE |
-| UX-8.2 | Selection Foundation | PENDING |
+| UX-8.2 | Selection Foundation | COMPLETE |
 | UX-8.3 | Multi Selection | PENDING |
 | UX-8.4 | Hover System | PENDING |
 | UX-8.5 | Keyboard Navigation (pure API) | PENDING |
@@ -137,3 +137,4 @@ After UX-8.10 RELEASE CERTIFIED:
 Historical gates (do not nest):
 
 - UX-8.1 Focus System Foundation · [`UX-8.1.md`](./UX-8.1.md) · `validate:ux-8.1`
+- UX-8.2 Selection Foundation · [`UX-8.2.md`](./UX-8.2.md) · `validate:ux-8.2`
