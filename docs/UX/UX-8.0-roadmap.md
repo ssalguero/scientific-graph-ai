@@ -44,7 +44,7 @@ UX-8.0  = FROZEN (roadmap oficial · SSOT de secuencia · Version 1.0)
 UX-8.1  = COMPLETE (Focus System Foundation)
 UX-8.2  = COMPLETE (Selection Foundation)
 UX-8.3  = COMPLETE (Multi Selection)
-UX-8.4  = PENDING (Hover System)
+UX-8.4  = COMPLETE (Hover System)
 UX-8.5  = PENDING (Keyboard Navigation)
 UX-8.6  = PENDING (Clipboard Foundation)
 UX-8.7  = PENDING (Interaction Commands)
@@ -93,7 +93,7 @@ This roadmap does not duplicate them.
 | UX-8.1 | Focus System Foundation | COMPLETE |
 | UX-8.2 | Selection Foundation | COMPLETE |
 | UX-8.3 | Multi Selection | COMPLETE |
-| UX-8.4 | Hover System | PENDING |
+| UX-8.4 | Hover System | COMPLETE |
 | UX-8.5 | Keyboard Navigation (pure API) | PENDING |
 | UX-8.6 | Clipboard Foundation | PENDING |
 | UX-8.7 | Interaction Commands | PENDING |
@@ -139,3 +139,4 @@ Historical gates (do not nest):
 - UX-8.1 Focus System Foundation · [`UX-8.1.md`](./UX-8.1.md) · `validate:ux-8.1`
 - UX-8.2 Selection Foundation · [`UX-8.2.md`](./UX-8.2.md) · `validate:ux-8.2`
 - UX-8.3 Multi Selection · [`UX-8.3.md`](./UX-8.3.md) · `validate:ux-8.3`
+- UX-8.4 Hover System · [`UX-8.4.md`](./UX-8.4.md) · `validate:ux-8.4`
