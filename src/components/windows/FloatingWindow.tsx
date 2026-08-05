@@ -26,8 +26,12 @@
  *   Additive palette status / accepted·rejected / execution badge.
  *   Never calls dispatch() · clear() · createCommandEnvelope().
  *   Palette feedback never changes Visual Priority cascade.
+ * UX-9.7 — Undo / Redo chrome (observe UndoRedoBridge overlay + feedback only).
+ *   Additive availability badges / ephemeral undo·redo feedback.
+ *   Never calls executeUndo/executeRedo · never ThinHistoryAdapter · never stacks.
+ *   Undo/Redo chrome never changes Visual Priority cascade.
  * Geometry / dock / drag / resize / z-order unchanged.
- * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1–UX-9.6.
+ * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1–UX-9.7.
  */
 
 import type { PointerEvent as ReactPointerEvent } from "react";
@@ -57,6 +61,12 @@ import {
   subscribeCommandFeedback,
   subscribeOverlayState,
 } from "./commands";
+import {
+  getUndoRedoFeedback,
+  getUndoRedoOverlay,
+  subscribeUndoRedoFeedback,
+  subscribeUndoRedoOverlay,
+} from "./history";
 import type { FloatingWindowModel } from "./FloatingWindowTypes";
 import { useWindowContext } from "./WindowContext";
 import { useWindowDrag } from "./WindowDragContext";
@@ -75,6 +85,7 @@ import {
  *   Keyboard Navigation > Discoverability.
  * Clipboard chrome is additive · outside the replacement cascade.
  * Command Palette chrome is additive · temporary overlay feedback only.
+ * Undo / Redo chrome is additive · temporary availability + feedback only.
  */
 
 function keyboardDirectionGlyph(
@@ -226,6 +237,19 @@ const FLOATING_WINDOW_CHROME = {
     "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
     UI_TOKENS.transition.colors200,
   ].join(" "),
+  /** Undo / Redo — additive · independent · never changes Visual Priority */
+  undoRedoBadge: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
+    "ring-1 ring-inset ring-[var(--app-border)]",
+  ].join(" "),
+  undoRedoFeedback: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
+    UI_TOKENS.transition.colors200,
+  ].join(" "),
   discHint: [
     "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
     UI_TOKENS.radius.md,
@@ -286,10 +310,20 @@ export function FloatingWindow({
     getCommandFeedback,
     getCommandFeedback,
   );
+  const undoRedoOverlay = useSyncExternalStore(
+    subscribeUndoRedoOverlay,
+    getUndoRedoOverlay,
+    getUndoRedoOverlay,
+  );
+  const undoRedoFeedback = useSyncExternalStore(
+    subscribeUndoRedoFeedback,
+    getUndoRedoFeedback,
+    getUndoRedoFeedback,
+  );
   const { beginDrag, updateDrag, endDrag } = useWindowDrag();
   const { beginResize, updateResize, endResize } = useWindowResize();
 
-  /** Workspace Active ≠ Focused ≠ Selected ≠ Hover ≠ Keyboard ≠ Clipboard ≠ Palette. */
+  /** Workspace Active ≠ Focused ≠ Selected ≠ Hover ≠ Keyboard ≠ Clipboard ≠ Palette ≠ Undo. */
   const isActive = state.activeId === model.id;
   const isFocused = focusRegistry.isFocused(asFocusTargetId(model.id));
   const selectionState = selectionRegistry.getState();
@@ -311,6 +345,16 @@ export function FloatingWindow({
   const showAcceptedFeedback = commandFeedback?.kind === "accepted";
   const showRejectedFeedback = commandFeedback?.kind === "rejected";
   const hasExecutionBadge = commandFeedback !== null;
+  const canUndo = undoRedoOverlay.canUndo;
+  const canRedo = undoRedoOverlay.canRedo;
+  const showUndoAvailableFeedback =
+    undoRedoFeedback?.kind === "undo-available";
+  const showRedoAvailableFeedback =
+    undoRedoFeedback?.kind === "redo-available";
+  const showUndoExecutedFeedback =
+    undoRedoFeedback?.kind === "undo-executed";
+  const showRedoExecutedFeedback =
+    undoRedoFeedback?.kind === "redo-executed";
 
   /** Discoverability — shared Pipeline → Snapshot → views (empty SSOT → empty). */
   const discSnapshot =
@@ -376,7 +420,8 @@ export function FloatingWindow({
 
   /** Visual Priority: Active > Focused > Selected > Hover > Keyboard Navigation > Discoverability
    *  Clipboard chrome is additive and does not participate in this cascade.
-   *  Command Palette chrome is additive and does not participate in this cascade. */
+   *  Command Palette chrome is additive and does not participate in this cascade.
+   *  Undo / Redo chrome is additive and does not participate in this cascade. */
   const rootClass = [
     FLOATING_WINDOW_CHROME.rootBase,
     "relative",
@@ -415,6 +460,9 @@ export function FloatingWindow({
       data-clipboard-feedback={clipboardFeedback?.kind ?? undefined}
       data-command-palette={paletteOpen ? "true" : "false"}
       data-command-feedback={commandFeedback?.kind ?? undefined}
+      data-undo={canUndo ? "true" : "false"}
+      data-redo={canRedo ? "true" : "false"}
+      data-undo-feedback={undoRedoFeedback?.kind ?? undefined}
       data-discoverability-hint={hasDiscoverabilityHint ? "true" : "false"}
       className={rootClass}
       style={{
@@ -570,6 +618,54 @@ export function FloatingWindow({
               data-command-rejected-feedback="true"
             >
               Rejected
+            </span>
+          ) : null}
+          {canUndo ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.undoRedoBadge}
+              data-undo-badge="true"
+            >
+              Undo
+            </span>
+          ) : null}
+          {canRedo ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.undoRedoBadge}
+              data-redo-badge="true"
+            >
+              Redo
+            </span>
+          ) : null}
+          {showUndoAvailableFeedback ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.undoRedoFeedback}
+              data-undo-available-feedback="true"
+            >
+              Undo ready
+            </span>
+          ) : null}
+          {showRedoAvailableFeedback ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.undoRedoFeedback}
+              data-redo-available-feedback="true"
+            >
+              Redo ready
+            </span>
+          ) : null}
+          {showUndoExecutedFeedback ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.undoRedoFeedback}
+              data-undo-executed-feedback="true"
+            >
+              Undone
+            </span>
+          ) : null}
+          {showRedoExecutedFeedback ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.undoRedoFeedback}
+              data-redo-executed-feedback="true"
+            >
+              Redone
             </span>
           ) : null}
           {hasDiscoverabilityHint && discSnapshot !== undefined ? (

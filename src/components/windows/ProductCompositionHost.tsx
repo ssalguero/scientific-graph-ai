@@ -11,6 +11,8 @@
  *   (Ctrl/Cmd+C|V → Bridge · Paint Independence).
  * UX-9.6 — InteractionCommandProvider · CommandPaletteDomHost
  *   (Ctrl/Cmd+K · Esc · Overlay · Bridge → Dispatcher · Paint Independence).
+ * UX-9.7 — UndoRedoDomHost (Ctrl/Cmd+Z|Y|Shift+Z → Bridge → ThinHistoryAdapter
+ *   · structural undo/redo · Paint Independence).
  *
  * Authorized composition point for the Productivity Layer.
  * Mounts certified WindowManager + FocusProvider + SelectionProvider +
@@ -18,6 +20,7 @@
  * InteractionCommandProvider only.
  * No new Provider · Context · Registry · Dispatcher · Contract.
  * CommandPaletteProvider is never mounted (Palette Module Purity).
+ * ThinHistoryAdapter is the sole UX-9.7 history exception (not a Registry).
  *
  * Small Incremental Visual Integration:
  * Future UX-9 phases extend this host; they never replace it.
@@ -56,6 +59,10 @@
  * Palette DOM Freeze:
  * CommandPaletteDomHost is the sole Ctrl/Cmd+K · Esc palette capture surface.
  * Overlay lives in Productivity Layer only — never src/ui/palette.
+ *
+ * Undo / Redo DOM Freeze:
+ * UndoRedoDomHost is the sole Ctrl/Cmd+Z · Shift+Z · Y capture surface.
+ * Calls UndoRedoBridge only — never Dispatcher · never Adapter directly.
  */
 
 import {
@@ -87,6 +94,7 @@ import {
 } from "@/ui/selection";
 import { clipboardIntegrationBridge } from "./clipboard";
 import { CommandPaletteDomHost } from "./commands";
+import { UndoRedoDomHost } from "./history";
 import { useWindowContext } from "./WindowContext";
 import { useWindowGeometry } from "./WindowGeometryContext";
 import { WindowManager } from "./WindowManager";
@@ -459,7 +467,8 @@ function ClipboardDomHost({ children }: { children: ReactNode }) {
  *                               └─ KeyboardNavigationDomHost
  *                                   └─ ClipboardDomHost
  *                                       └─ CommandPaletteDomHost
- *                                           └─ existing application tree
+ *                                           └─ UndoRedoDomHost
+ *                                               └─ existing application tree
  */
 export function ProductCompositionHost({
   children,
@@ -479,7 +488,9 @@ export function ProductCompositionHost({
                   <ClipboardVisualSeed />
                   <KeyboardNavigationDomHost>
                     <ClipboardDomHost>
-                      <CommandPaletteDomHost>{children}</CommandPaletteDomHost>
+                      <CommandPaletteDomHost>
+                        <UndoRedoDomHost>{children}</UndoRedoDomHost>
+                      </CommandPaletteDomHost>
                     </ClipboardDomHost>
                   </KeyboardNavigationDomHost>
                 </InteractionCommandProvider>

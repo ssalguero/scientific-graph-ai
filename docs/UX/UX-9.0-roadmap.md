@@ -7,7 +7,7 @@ Version: 1.0
 Supersedes: UX-8.10 Next
 Prerequisites: UX-8 SERIES CERTIFIED
 Architecture SSOT: UX-9-architecture.md
-Next: UX-9.7
+Next: UX-9.8
 ```
 
 **Épica:** UX-9 — Productivity Layer  
@@ -81,7 +81,7 @@ UX-9.3  = COMPLETE (Hover + Visibility)
 UX-9.4  = COMPLETE (Keyboard Navigation)
 UX-9.5  = COMPLETE (Clipboard Integration)
 UX-9.6  = COMPLETE (Command Palette + Interaction Commands)
-UX-9.7  = PENDING (Undo / Redo Integration)
+UX-9.7  = COMPLETE (Undo / Redo Integration)
 UX-9.8  = PENDING (Workspace Polish + Diagnostics)
 UX-9.9  = PENDING (Documentation Freeze)
 UX-9.10 = PENDING (Release Certification)
@@ -133,7 +133,7 @@ This roadmap does not duplicate them.
 | UX-9.4 | Keyboard Navigation | **COMPLETE** |
 | UX-9.5 | Clipboard Integration | **COMPLETE** |
 | UX-9.6 | Command Palette + Interaction Commands | **COMPLETE** |
-| UX-9.7 | Undo / Redo Integration | PENDING |
+| UX-9.7 | Undo / Redo Integration | **COMPLETE** |
 | UX-9.8 | Workspace Polish + Diagnostics | PENDING |
 | UX-9.9 | Documentation Freeze | PENDING |
 | UX-9.10 | Release Certification | PENDING |
@@ -203,7 +203,7 @@ rule).
 
 ---
 
-## 7. Next → UX-9.7
+## 7. Next → UX-9.8
 
 **UX-9.0 FROZEN** · roadmap + architecture SSOT published.  
 **UX-9.1 COMPLETE** · Workspace Activation ([`UX-9.1.md`](./UX-9.1.md)) · `validate:ux-9.1`.  
@@ -211,12 +211,13 @@ rule).
 **UX-9.3 COMPLETE** · Hover + Visibility / Discoverability ([`UX-9.3.md`](./UX-9.3.md)) · `validate:ux-9.3`.  
 **UX-9.4 COMPLETE** · Keyboard Navigation ([`UX-9.4.md`](./UX-9.4.md)) · `validate:ux-9.4`.  
 **UX-9.5 COMPLETE** · Clipboard Integration ([`UX-9.5.md`](./UX-9.5.md)) · `validate:ux-9.5`.  
-**UX-9.6 COMPLETE** · Command Palette + Interaction Commands ([`UX-9.6.md`](./UX-9.6.md)) · `validate:ux-9.6`.
+**UX-9.6 COMPLETE** · Command Palette + Interaction Commands ([`UX-9.6.md`](./UX-9.6.md)) · `validate:ux-9.6`.  
+**UX-9.7 COMPLETE** · Undo / Redo Integration ([`UX-9.7.md`](./UX-9.7.md)) · `validate:ux-9.7`.
 
-**Next microphase → UX-9.7 (Undo / Redo Integration)**
+**Next microphase → UX-9.8 (Workspace Polish + Diagnostics)**
 
-Expected Visible User Outcome direction: undo / redo perceptible on the
-ProductCompositionHost integration — without new base systems.
+Expected Visible User Outcome direction: application «feels finished» —
+visual cohesion and diagnostics — without new Productivity capabilities.
 
 Prerequisite reminder:
 
@@ -228,3 +229,4 @@ Prerequisite reminder:
 - UX-9.4 Keyboard Navigation COMPLETE · [`UX-9.4.md`](./UX-9.4.md)
 - UX-9.5 Clipboard Integration COMPLETE · [`UX-9.5.md`](./UX-9.5.md)
 - UX-9.6 Command Palette + Interaction Commands COMPLETE · [`UX-9.6.md`](./UX-9.6.md)
+- UX-9.7 Undo / Redo Integration COMPLETE · [`UX-9.7.md`](./UX-9.7.md)
