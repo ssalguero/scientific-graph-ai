@@ -9,11 +9,15 @@
  *   KeyboardNavigationDomHost (onKeyDown → move · Paint Independence).
  * UX-9.5 — ClipboardProvider · ClipboardVisualSeed · ClipboardDomHost
  *   (Ctrl/Cmd+C|V → Bridge · Paint Independence).
+ * UX-9.6 — InteractionCommandProvider · CommandPaletteDomHost
+ *   (Ctrl/Cmd+K · Esc · Overlay · Bridge → Dispatcher · Paint Independence).
  *
  * Authorized composition point for the Productivity Layer.
  * Mounts certified WindowManager + FocusProvider + SelectionProvider +
- * HoverProvider + KeyboardNavigationProvider + ClipboardProvider only.
+ * HoverProvider + KeyboardNavigationProvider + ClipboardProvider +
+ * InteractionCommandProvider only.
  * No new Provider · Context · Registry · Dispatcher · Contract.
+ * CommandPaletteProvider is never mounted (Palette Module Purity).
  *
  * Small Incremental Visual Integration:
  * Future UX-9 phases extend this host; they never replace it.
@@ -48,6 +52,10 @@
  * Clipboard DOM Freeze:
  * ClipboardDomHost is the sole Ctrl/Cmd+C|V capture surface.
  * Calls ClipboardIntegrationBridge only — never navigator.clipboard.
+ *
+ * Palette DOM Freeze:
+ * CommandPaletteDomHost is the sole Ctrl/Cmd+K · Esc palette capture surface.
+ * Overlay lives in Productivity Layer only — never src/ui/palette.
  */
 
 import {
@@ -65,6 +73,7 @@ import {
   HoverProvider,
   useHover,
 } from "@/ui/hover";
+import { InteractionCommandProvider } from "@/ui/interaction-commands";
 import {
   KeyboardNavigationDirection,
   KeyboardNavigationProvider,
@@ -77,6 +86,7 @@ import {
   useSelection,
 } from "@/ui/selection";
 import { clipboardIntegrationBridge } from "./clipboard";
+import { CommandPaletteDomHost } from "./commands";
 import { useWindowContext } from "./WindowContext";
 import { useWindowGeometry } from "./WindowGeometryContext";
 import { WindowManager } from "./WindowManager";
@@ -440,14 +450,16 @@ function ClipboardDomHost({ children }: { children: ReactNode }) {
  *               └─ HoverProvider
  *                   └─ KeyboardNavigationProvider
  *                       └─ ClipboardProvider
- *                           ├─ WorkspaceActivationSeed
- *                           ├─ FocusSelectionVisualSeed
- *                           ├─ HoverVisualSeed
- *                           ├─ KeyboardNavigationVisualSeed
- *                           ├─ ClipboardVisualSeed
- *                           └─ KeyboardNavigationDomHost
- *                               └─ ClipboardDomHost
- *                                   └─ existing application tree
+ *                           └─ InteractionCommandProvider
+ *                               ├─ WorkspaceActivationSeed
+ *                               ├─ FocusSelectionVisualSeed
+ *                               ├─ HoverVisualSeed
+ *                               ├─ KeyboardNavigationVisualSeed
+ *                               ├─ ClipboardVisualSeed
+ *                               └─ KeyboardNavigationDomHost
+ *                                   └─ ClipboardDomHost
+ *                                       └─ CommandPaletteDomHost
+ *                                           └─ existing application tree
  */
 export function ProductCompositionHost({
   children,
@@ -459,14 +471,18 @@ export function ProductCompositionHost({
           <HoverProvider>
             <KeyboardNavigationProvider>
               <ClipboardProvider>
-                <WorkspaceActivationSeed />
-                <FocusSelectionVisualSeed />
-                <HoverVisualSeed />
-                <KeyboardNavigationVisualSeed />
-                <ClipboardVisualSeed />
-                <KeyboardNavigationDomHost>
-                  <ClipboardDomHost>{children}</ClipboardDomHost>
-                </KeyboardNavigationDomHost>
+                <InteractionCommandProvider>
+                  <WorkspaceActivationSeed />
+                  <FocusSelectionVisualSeed />
+                  <HoverVisualSeed />
+                  <KeyboardNavigationVisualSeed />
+                  <ClipboardVisualSeed />
+                  <KeyboardNavigationDomHost>
+                    <ClipboardDomHost>
+                      <CommandPaletteDomHost>{children}</CommandPaletteDomHost>
+                    </ClipboardDomHost>
+                  </KeyboardNavigationDomHost>
+                </InteractionCommandProvider>
               </ClipboardProvider>
             </KeyboardNavigationProvider>
           </HoverProvider>

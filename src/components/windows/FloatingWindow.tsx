@@ -22,8 +22,12 @@
  *   Additive badge / status / ephemeral copy·paste feedback.
  *   Never mutates ClipboardRegistry · never calls Bridge · never navigator.clipboard.
  *   Clipboard feedback never changes Visual Priority cascade.
+ * UX-9.6 — Command Palette chrome (observe overlay + command feedback only).
+ *   Additive palette status / accepted·rejected / execution badge.
+ *   Never calls dispatch() · clear() · createCommandEnvelope().
+ *   Palette feedback never changes Visual Priority cascade.
  * Geometry / dock / drag / resize / z-order unchanged.
- * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1–UX-9.5.
+ * Authority: FloatingWindowProps (D56.1) · D58.0 · UX-9.1–UX-9.6.
  */
 
 import type { PointerEvent as ReactPointerEvent } from "react";
@@ -47,6 +51,12 @@ import {
   getClipboardFeedback,
   subscribeClipboardFeedback,
 } from "./clipboard";
+import {
+  getCommandFeedback,
+  getOverlayState,
+  subscribeCommandFeedback,
+  subscribeOverlayState,
+} from "./commands";
 import type { FloatingWindowModel } from "./FloatingWindowTypes";
 import { useWindowContext } from "./WindowContext";
 import { useWindowDrag } from "./WindowDragContext";
@@ -64,6 +74,7 @@ import {
  * Visual Priority Freeze: Active > Focused > Selected > Hover >
  *   Keyboard Navigation > Discoverability.
  * Clipboard chrome is additive · outside the replacement cascade.
+ * Command Palette chrome is additive · temporary overlay feedback only.
  */
 
 function keyboardDirectionGlyph(
@@ -197,6 +208,24 @@ const FLOATING_WINDOW_CHROME = {
     "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
     UI_TOKENS.transition.colors200,
   ].join(" "),
+  /** Command Palette — additive · temporary · never changes Visual Priority */
+  paletteBadge: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
+    "ring-1 ring-inset ring-[var(--app-border)]",
+  ].join(" "),
+  paletteStatus: [
+    "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
+  ].join(" "),
+  commandFeedback: [
+    "shrink-0 px-1 py-0 text-[8px] font-semibold uppercase tracking-wide",
+    UI_TOKENS.radius.md,
+    "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
+    UI_TOKENS.transition.colors200,
+  ].join(" "),
   discHint: [
     "shrink-0 px-1 py-0 text-[8px] font-medium tracking-wide",
     UI_TOKENS.radius.md,
@@ -247,10 +276,20 @@ export function FloatingWindow({
     getClipboardFeedback,
     getClipboardFeedback,
   );
+  const paletteOverlay = useSyncExternalStore(
+    subscribeOverlayState,
+    getOverlayState,
+    getOverlayState,
+  );
+  const commandFeedback = useSyncExternalStore(
+    subscribeCommandFeedback,
+    getCommandFeedback,
+    getCommandFeedback,
+  );
   const { beginDrag, updateDrag, endDrag } = useWindowDrag();
   const { beginResize, updateResize, endResize } = useWindowResize();
 
-  /** Workspace Active ≠ Focused ≠ Selected ≠ Hover ≠ Keyboard ≠ Clipboard. */
+  /** Workspace Active ≠ Focused ≠ Selected ≠ Hover ≠ Keyboard ≠ Clipboard ≠ Palette. */
   const isActive = state.activeId === model.id;
   const isFocused = focusRegistry.isFocused(asFocusTargetId(model.id));
   const selectionState = selectionRegistry.getState();
@@ -268,6 +307,10 @@ export function FloatingWindow({
   const hasClipboard = clipboardEntry !== null;
   const showCopyFeedback = clipboardFeedback?.kind === "copy";
   const showPasteFeedback = clipboardFeedback?.kind === "paste";
+  const paletteOpen = paletteOverlay.open;
+  const showAcceptedFeedback = commandFeedback?.kind === "accepted";
+  const showRejectedFeedback = commandFeedback?.kind === "rejected";
+  const hasExecutionBadge = commandFeedback !== null;
 
   /** Discoverability — shared Pipeline → Snapshot → views (empty SSOT → empty). */
   const discSnapshot =
@@ -332,7 +375,8 @@ export function FloatingWindow({
   };
 
   /** Visual Priority: Active > Focused > Selected > Hover > Keyboard Navigation > Discoverability
-   *  Clipboard chrome is additive and does not participate in this cascade. */
+   *  Clipboard chrome is additive and does not participate in this cascade.
+   *  Command Palette chrome is additive and does not participate in this cascade. */
   const rootClass = [
     FLOATING_WINDOW_CHROME.rootBase,
     "relative",
@@ -369,6 +413,8 @@ export function FloatingWindow({
       data-keyboard-direction={lastDirection ?? undefined}
       data-clipboard={hasClipboard ? "true" : "false"}
       data-clipboard-feedback={clipboardFeedback?.kind ?? undefined}
+      data-command-palette={paletteOpen ? "true" : "false"}
+      data-command-feedback={commandFeedback?.kind ?? undefined}
       data-discoverability-hint={hasDiscoverabilityHint ? "true" : "false"}
       className={rootClass}
       style={{
@@ -484,6 +530,46 @@ export function FloatingWindow({
               data-clipboard-paste-feedback="true"
             >
               Pasted
+            </span>
+          ) : null}
+          {paletteOpen ? (
+            <>
+              <span
+                className={FLOATING_WINDOW_CHROME.paletteBadge}
+                data-palette-badge="true"
+              >
+                Cmd
+              </span>
+              <span
+                className={FLOATING_WINDOW_CHROME.paletteStatus}
+                data-palette-status="true"
+              >
+                Open
+              </span>
+            </>
+          ) : null}
+          {hasExecutionBadge ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.paletteBadge}
+              data-execution-badge="true"
+            >
+              Exec
+            </span>
+          ) : null}
+          {showAcceptedFeedback ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.commandFeedback}
+              data-command-accepted-feedback="true"
+            >
+              Accepted
+            </span>
+          ) : null}
+          {showRejectedFeedback ? (
+            <span
+              className={FLOATING_WINDOW_CHROME.commandFeedback}
+              data-command-rejected-feedback="true"
+            >
+              Rejected
             </span>
           ) : null}
           {hasDiscoverabilityHint && discSnapshot !== undefined ? (
