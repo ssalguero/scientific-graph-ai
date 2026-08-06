@@ -1,3 +1,8 @@
+/**
+ * File save/open (.sgproj download / parse) UX boundary.
+ * Not a certified ENGINE Product Flow dual-path — serialization stays in app.
+ * Durable local library open/save/export uses `@/engine` via localProjectActions.
+ */
 import {
   DEFAULT_PROJECT_NAME,
   hydrateProjectJson,

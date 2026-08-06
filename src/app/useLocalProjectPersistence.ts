@@ -2,18 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { createLocalProjectRepository } from "@/lib/project/adapters/indexeddb";
 import type { DetectPersistenceConflictInput } from "@/lib/project/application/persistence-conflict";
-import type { LocalProjectRepository } from "@/lib/project/domain/local-project";
 import type { LocalProjectSummary } from "@/lib/project/domain/local-project";
 import {
   openLocalProjectDraft,
 } from "@/lib/project/application/local-project";
 
+import { ensureAppEngineConfigured } from "./engineBootstrap";
 import {
   createLocalProjectActions,
   type LocalProjectActions,
 } from "./localProjectActions";
+import { getLocalProjectRepository } from "./localProjectRepository";
 import type { ProjectFileFeedback } from "./projectFileActions";
 import {
   applyHydrateProjectPatch,
@@ -24,14 +24,7 @@ import type { HydrateProjectV2Patch } from "@/lib/project/editor-hydrate-context
 import { buildPersistenceConflictView } from "./persistence/persistenceViews";
 import { buildLocalCommittedRevisionRef } from "./persistence/revisionRefs";
 
-let sharedRepo: LocalProjectRepository | null = null;
-
-export const getLocalProjectRepository = (): LocalProjectRepository => {
-  if (!sharedRepo) {
-    sharedRepo = createLocalProjectRepository();
-  }
-  return sharedRepo;
-};
+export { getLocalProjectRepository } from "./localProjectRepository";
 
 export type UseLocalProjectPersistenceParams = {
   buildCollectContextV2: () => EditorProjectCollectContextV2;
@@ -48,6 +41,9 @@ export type LocalProjectRecoveryPrompt = {
 };
 
 export function useLocalProjectPersistence(params: UseLocalProjectPersistenceParams) {
+  // Wire IndexedDB into ENGINE before any certified Product Flow facade runs.
+  ensureAppEngineConfigured();
+
   const repo = useMemo(() => getLocalProjectRepository(), []);
   const [projects, setProjects] = useState<LocalProjectSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);

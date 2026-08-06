@@ -1,3 +1,17 @@
+/**
+ * Local project actions for GraphEditor (IndexedDB open/save/export UI glue).
+ *
+ * ENGINE-9: Certified Product Flows (open / save / export / close) go through
+ * `@/engine`. This module keeps view-state feedback, hydrate apply, and Blob
+ * download — not business orchestration.
+ */
+
+import {
+  closeProject,
+  exportProject,
+  openProject,
+  saveProject,
+} from "@/engine";
 import type {
   LocalProjectRepository,
   LocalProjectSummary,
@@ -5,18 +19,15 @@ import type {
 import {
   deleteLocalProject,
   duplicateLocalProject,
-  exportLocalProjectToSgproj,
   listLocalProjects,
-  openLocalProject,
   renameLocalProject,
-  saveLocalProject,
-  type OpenLocalProjectResult,
 } from "@/lib/project/application/local-project";
 import {
   formatLocalProjectError,
   formatLocalProjectIntegrityWarning,
 } from "@/lib/project/userMessages";
 
+import { ensureAppEngineConfigured } from "./engineBootstrap";
 import { applyExperimentalXViewportFit } from "./chartViewport";
 import {
   applyHydrateProjectPatch,
@@ -38,9 +49,33 @@ export type LocalProjectActionsDeps = {
   setActiveLocalProjectId?: (id: string | null) => void;
 };
 
+type OpenedProjectView = {
+  patch: HydrateProjectV2Patch;
+  integrityStatus: "VALID" | "CHECKSUM_FAILED" | "NOT_VERIFIED";
+  summary: { name: string };
+};
+
+type SaveProjectView = {
+  id: string;
+  name: string;
+  summary?: LocalProjectSummary;
+};
+
+type ExportProjectView = {
+  json: string;
+};
+
+const engineFailureMessage = (response: {
+  error?: { message?: string; code?: string } | undefined;
+}): string => {
+  if (response.error?.message) return response.error.message;
+  if (response.error?.code) return response.error.code;
+  return "Operación de proyecto fallida.";
+};
+
 const applyOpenedProject = (
   deps: LocalProjectActionsDeps,
-  opened: OpenLocalProjectResult
+  opened: OpenedProjectView
 ) => {
   const applyContext = deps.buildApplyContext();
   applyHydrateProjectPatch(opened.patch, applyContext);
@@ -69,33 +104,48 @@ const applyOpenedProject = (
 
 export const createLocalProjectActions = (deps: LocalProjectActionsDeps) => {
   const handleSaveLocalProject = async (projectName: string) => {
-    const result = await saveLocalProject({
-      repo: deps.repo,
-      ctx: deps.buildCollectContextV2(),
+    ensureAppEngineConfigured();
+    const response = await saveProject({
       projectName,
+      ctx: deps.buildCollectContextV2(),
       appVersion: APP_VERSION,
     });
-    if (!result.ok) {
+    if (!response.ok) {
       deps.setProjectFileFeedback({
         kind: "error",
-        message: formatLocalProjectError(result.error),
+        message: engineFailureMessage(response),
+      });
+      return null;
+    }
+    const saved = response.result as SaveProjectView | undefined;
+    if (!saved?.id) {
+      deps.setProjectFileFeedback({
+        kind: "error",
+        message: "Guardado sin resultado de proyecto.",
       });
       return null;
     }
     deps.suppressProjectDirtyRef.current = true;
     deps.setIsProjectDirty(false);
-    deps.setActiveLocalProjectId?.(result.value.id);
+    deps.setActiveLocalProjectId?.(saved.id);
     deps.setProjectFileFeedback({
       kind: "success",
-      message: `Proyecto guardado localmente: ${result.value.name}.`,
+      message: `Proyecto guardado localmente: ${saved.name}.`,
     });
-    return result.value;
+    return (
+      saved.summary ??
+      ({
+        id: saved.id,
+        name: saved.name,
+      } as LocalProjectSummary)
+    );
   };
 
   const handleOpenLocalProject = async (
     id: string,
     options?: { skipIntegrityWarning?: boolean }
   ) => {
+    ensureAppEngineConfigured();
     const record = await deps.repo.getById(id);
     if (
       record &&
@@ -108,20 +158,29 @@ export const createLocalProjectActions = (deps: LocalProjectActionsDeps) => {
       });
     }
 
-    const result = await openLocalProject({ repo: deps.repo, id });
-    if (!result.ok) {
+    const response = await openProject({ id });
+    if (!response.ok) {
       deps.setProjectFileFeedback({
         kind: "error",
-        message: formatLocalProjectError(result.error),
+        message: engineFailureMessage(response),
       });
       return false;
     }
 
-    applyOpenedProject(deps, result.value);
+    const opened = response.result as OpenedProjectView | undefined;
+    if (!opened?.patch) {
+      deps.setProjectFileFeedback({
+        kind: "error",
+        message: "Apertura sin parche de hidratación.",
+      });
+      return false;
+    }
+
+    applyOpenedProject(deps, opened);
     deps.setProjectFileFeedback({
       kind:
-        result.value.integrityStatus === "CHECKSUM_FAILED" ? "warning" : "success",
-      message: `Proyecto "${result.value.summary.name}" abierto desde biblioteca local.`,
+        opened.integrityStatus === "CHECKSUM_FAILED" ? "warning" : "success",
+      message: `Proyecto "${opened.summary.name}" abierto desde biblioteca local.`,
     });
     return true;
   };
@@ -174,15 +233,24 @@ export const createLocalProjectActions = (deps: LocalProjectActionsDeps) => {
   };
 
   const handleExportLocalProjectSgproj = async (id: string) => {
-    const result = await exportLocalProjectToSgproj(deps.repo, id);
-    if (!result.ok) {
+    ensureAppEngineConfigured();
+    const response = await exportProject({ projectId: id });
+    if (!response.ok) {
       deps.setProjectFileFeedback({
         kind: "error",
-        message: formatLocalProjectError(result.error),
+        message: engineFailureMessage(response),
       });
       return;
     }
-    const blob = new Blob([result.value], {
+    const exported = response.result as ExportProjectView | undefined;
+    if (!exported?.json) {
+      deps.setProjectFileFeedback({
+        kind: "error",
+        message: "Exportación sin payload .sgproj.",
+      });
+      return;
+    }
+    const blob = new Blob([exported.json], {
       type: "application/vnd.scientific-graph-ai.project+json",
     });
     const url = URL.createObjectURL(blob);
@@ -197,6 +265,11 @@ export const createLocalProjectActions = (deps: LocalProjectActionsDeps) => {
     });
   };
 
+  const handleCloseLocalProject = async () => {
+    ensureAppEngineConfigured();
+    await closeProject({});
+  };
+
   return {
     handleSaveLocalProject,
     handleOpenLocalProject,
@@ -205,6 +278,7 @@ export const createLocalProjectActions = (deps: LocalProjectActionsDeps) => {
     handleDuplicateLocalProject,
     handleRenameLocalProject,
     handleExportLocalProjectSgproj,
+    handleCloseLocalProject,
   };
 };
 

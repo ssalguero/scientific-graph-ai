@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Project draft autosave (IndexedDB).
+ * Not a certified public ENGINE Product Flow — local draft persistence remains
+ * app-owned until a draft facade exists. Durable save uses `@/engine` `saveProject`.
+ */
+
 import { useEffect, useRef } from "react";
 
 import { saveLocalProjectDraft } from "@/lib/project/application/local-project";

@@ -42,12 +42,14 @@ import {
   type ExperimentalSeries,
   type ExperimentalStatistics,
 } from "@/lib/graph/series";
+// ENGINE-9: Import Dataset Product Flow via `@/engine` `importDataset`.
+import { closeProject, importDataset } from "@/engine";
 import {
-  attemptExperimentalImport,
   type ImportAuxiliaryColumn,
   type ImportReport,
   type WorkbookAnalysis,
 } from "@/lib/import";
+import { ensureAppEngineConfigured } from "./engineBootstrap";
 import {
   buildColumnRegistryFromImportAuxiliary,
   seriesToWorksheet,
@@ -16024,7 +16026,44 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     };
 
     try {
-      const result = await attemptExperimentalImport(selectedDataSourceId, file);
+      ensureAppEngineConfigured();
+      const response = await importDataset({
+        sourceId: selectedDataSourceId,
+        file,
+      });
+
+      if (!response.ok) {
+        setLastImportReport(null);
+        setExperimentalImportError(
+          response.error?.message ??
+            "No se pudo leer el archivo. Verifique el formato e intente nuevamente."
+        );
+        return;
+      }
+
+      const result = response.result as
+        | {
+            kind: "wizard";
+            analysis: WorkbookAnalysis;
+          }
+        | {
+            kind: "error";
+            message: string;
+          }
+        | {
+            kind: "success";
+            series: ExperimentalSeries[];
+            report: ImportReport | null;
+          }
+        | undefined;
+
+      if (!result) {
+        setLastImportReport(null);
+        setExperimentalImportError(
+          "Importación sin resultado. Verifique el formato e intente nuevamente."
+        );
+        return;
+      }
 
       if (result.kind === "wizard") {
         setExperimentalImportError(null);
@@ -19498,6 +19537,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setActiveLocalProjectId(null);
     clearProjectHistory();
     resetProjectFromHook();
+    void closeProject({}).catch(() => {
+      // ENGINE active project clear — UI reset already applied.
+    });
   };
 
   const handleOpenProjectFile = async (file: File) => {
