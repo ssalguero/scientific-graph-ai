@@ -18,25 +18,25 @@ export const SURFACE_TOKENS = {
     md: "gap-2",
   },
   border: {
-    default: "border border-[var(--app-border)]",
+    default: "border border-[var(--color-border-default)]",
     none: "border-0",
   },
   mutedOpacity: "opacity-70",
   elevated: "shadow-sm",
   variant: {
     default:
-      "relative bg-[var(--app-surface)] text-[var(--app-text)]",
+      "relative bg-[var(--color-surface-default)] text-[var(--color-text-primary)]",
     explorer:
-      "relative bg-[var(--app-surface)] text-[var(--app-text)]",
+      "relative bg-[var(--color-surface-default)] text-[var(--color-text-primary)]",
     inspector:
-      "relative bg-[var(--app-surface)] text-[var(--app-text)]",
+      "relative bg-[var(--color-surface-default)] text-[var(--color-text-primary)]",
     console:
-      "relative bg-[var(--app-surface)] text-[var(--app-text)]",
+      "relative bg-[var(--color-surface-default)] text-[var(--color-text-primary)]",
     canvas:
-      "relative bg-transparent text-[var(--app-text)]",
+      "relative bg-transparent text-[var(--color-text-primary)]",
   },
   tone: {
-    default: "text-[var(--app-text-muted)]",
+    default: "text-[var(--color-text-muted)]",
     explorer: "text-sky-600 dark:text-sky-400",
     inspector: "text-violet-600 dark:text-violet-400",
     console: "text-emerald-600 dark:text-emerald-400",
@@ -49,14 +49,14 @@ export const SURFACE_TOKENS = {
       top: "inset-x-1 top-0 h-0.5 rounded-full",
     },
     tone: {
-      default: "text-[var(--app-accent)]",
+      default: "text-[var(--color-brand-primary)]",
       explorer: "text-sky-500/80",
       inspector: "text-violet-500/80",
       console: "text-emerald-500/80",
     },
   },
   divider: {
-    base: "border-0 border-t border-[var(--app-border)]",
+    base: "border-0 border-t border-[var(--color-border-default)]",
     spacing: {
       sm: "my-1.5",
       md: "my-2.5",
@@ -64,7 +64,7 @@ export const SURFACE_TOKENS = {
     muted: "opacity-60",
   },
   metadata: {
-    root: "text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--app-text-muted)]",
+    root: "text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--color-text-muted)]",
   },
   iconSlot: {
     base: "inline-flex shrink-0 items-center justify-center",
@@ -92,7 +92,7 @@ export const SURFACE_TOKENS = {
     sm: "gap-1.5",
     md: "gap-2",
   },
-  dividerColor: "border-0 border-t border-[var(--app-border)]",
+  dividerColor: "border-0 border-t border-[var(--color-border-default)]",
   dividerMuted: "opacity-60",
   dividerInset: {
     none: "",

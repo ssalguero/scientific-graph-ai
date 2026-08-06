@@ -94,8 +94,8 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
 
   const canvasActive = activePanelId === "canvas";
   const canvasActiveClass = canvasActive
-    ? "border-[var(--app-accent)]/40 shadow-sm"
-    : "border-[var(--app-border)] shadow-sm";
+    ? "border-[var(--color-brand-primary)]/40 shadow-sm"
+    : "border-[var(--color-border-default)] shadow-sm";
 
   return (
     <div className="flex min-w-0 flex-col">
@@ -126,12 +126,12 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
           data-panel-id="canvas"
           data-panel-active={canvasActive ? "true" : "false"}
           onPointerDown={() => activate("canvas")}
-          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--app-surface)] transition-colors transition-shadow duration-200 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--app-border)_35%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
+          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--color-surface-default)] transition-colors transition-shadow duration-200 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--color-border-default)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--color-border-default)_35%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
         >
           {canvasActive ? (
             <span
               aria-hidden
-              className={`pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--app-accent)] ${SURFACE_TOKENS.radius.canvas}`}
+              className={`pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--color-brand-primary)] ${SURFACE_TOKENS.radius.canvas}`}
             />
           ) : null}
           <PanelSurface variant="canvas">

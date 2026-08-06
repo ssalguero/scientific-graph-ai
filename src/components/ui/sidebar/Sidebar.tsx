@@ -84,8 +84,8 @@ function SidebarModuleCard({ module }: { module: SidebarModuleEntry }) {
       aria-label={module.name}
       className={`${contentPanel} flex w-full items-center justify-between gap-1.5 !rounded-md !py-1 !px-1.5 text-left border ${
         module.enabled
-          ? "border-[var(--app-accent)]/30 bg-[var(--app-accent)]/5"
-          : "border-[var(--app-border)] opacity-85 hover:opacity-100 hover:bg-[var(--app-surface-muted)]"
+          ? "border-[var(--color-brand-primary)]/30 bg-[var(--color-brand-primary)]/5"
+          : "border-[var(--color-border-default)] opacity-85 hover:opacity-100 hover:bg-[var(--color-surface-canvas)]"
       } ${railCollapsed ? "justify-center !px-1" : ""}`}
     >
       <span
@@ -97,7 +97,7 @@ function SidebarModuleCard({ module }: { module: SidebarModuleEntry }) {
           {getIcon(iconName)}
         </span>
         <span
-          className={`text-xs font-medium text-[var(--app-heading)] truncate ${
+          className={`text-xs font-medium text-[var(--color-text-primary)] truncate ${
             railCollapsed ? "sr-only" : ""
           }`}
         >
@@ -111,8 +111,8 @@ function SidebarModuleCard({ module }: { module: SidebarModuleEntry }) {
         <span
           className={`shrink-0 inline-flex rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
             module.enabled
-              ? "border border-[var(--app-accent)]/40 text-[var(--app-accent)] bg-[var(--app-accent)]/10"
-              : "border border-[var(--app-border)] text-[var(--app-text-muted)]"
+              ? "border border-[var(--color-brand-primary)]/40 text-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10"
+              : "border border-[var(--color-border-default)] text-[var(--color-text-muted)]"
           }`}
         >
           {module.enabled ? "Activo" : "Inactivo"}
@@ -379,7 +379,7 @@ export function Sidebar({
             {graphLibraryOpen && !effectiveRailCollapsed ? (
               <div className="space-y-1 max-h-36 overflow-y-auto pr-0.5">
                 {graphs.length === 0 ? (
-                  <p className="text-[11px] text-[var(--app-text-muted)] px-1">
+                  <p className="text-[11px] text-[var(--color-text-muted)] px-1">
                     Sin gráficos guardados en nube.
                   </p>
                 ) : (
@@ -428,7 +428,7 @@ export function Sidebar({
               ref={projectPanelRef}
               className={
                 highlightProjectPanel && !effectiveRailCollapsed
-                  ? "rounded-lg ring-2 ring-[var(--app-accent)]/50 bg-[var(--app-accent)]/5 p-2 -mx-0.5 transition-all duration-300"
+                  ? "rounded-lg ring-2 ring-[var(--color-brand-primary)]/50 bg-[var(--color-brand-primary)]/5 p-2 -mx-0.5 transition-all duration-300"
                   : undefined
               }
             >
@@ -476,7 +476,7 @@ export function Sidebar({
           >
             <SidebarSection title="Científico" icon="modules" defaultOpen={false}>
               {!effectiveRailCollapsed ? (
-                <p className="text-[11px] text-[var(--app-text-muted)] mb-1">
+                <p className="text-[11px] text-[var(--color-text-muted)] mb-1">
                   Módulos activos: {activeModuleCount} de {modulesTotal}
                 </p>
               ) : null}

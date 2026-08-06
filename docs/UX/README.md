@@ -14,7 +14,8 @@ This directory contains the official User Experience documentation for Scientifi
 ## Implementation Series
 
 - [UX-I0 — Visual Modernization Foundation](./implementation/UX-I0-Visual-Modernization-Foundation.md) — **PLANNING CERTIFIED**
-- [UX-I0 Build](./implementation/UX-I0-Visual-Modernization-Foundation-BUILD.md) — **IMPLEMENTED** · Foundation **COMPLETE** · Next **UX-I1**
+- [UX-I0 Build](./implementation/UX-I0-Visual-Modernization-Foundation-BUILD.md) — **IMPLEMENTED** · Foundation **COMPLETE**
+- [UX-I1 Build](./implementation/UX-I1-Application-Shell-Modernization-BUILD.md) — **IMPLEMENTED** · Shell **COMPLETE** · Next **UX-I2**
 - [Series index](./implementation/README.md)
 
 UX documentation complements, but does not replace:

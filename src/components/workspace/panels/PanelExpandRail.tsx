@@ -15,11 +15,11 @@ export type PanelExpandRailProps = {
 };
 
 const positionClass: Record<PanelPosition, string> = {
-  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--app-surface)] px-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--app-surface-muted)]",
+  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--color-surface-default)] px-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--color-surface-canvas)]",
   right:
-    "max-md:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--app-surface)] px-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--app-surface-muted)]",
+    "max-md:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--color-surface-default)] px-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--color-surface-canvas)]",
   bottom:
-    "flex shrink-0 items-center justify-center border bg-[var(--app-surface)] py-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--app-surface-muted)]",
+    "flex shrink-0 items-center justify-center border bg-[var(--color-surface-default)] py-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--color-surface-canvas)]",
 };
 
 /**
@@ -34,8 +34,8 @@ export function PanelExpandRail({
   isActive = false,
 }: PanelExpandRailProps) {
   const activeClass = isActive
-    ? "border-[var(--app-accent)]/40 shadow-sm"
-    : "border-[var(--app-border)]";
+    ? "border-[var(--color-brand-primary)]/40 shadow-sm"
+    : "border-[var(--color-border-default)]";
 
   return (
     <div
@@ -47,7 +47,7 @@ export function PanelExpandRail({
       {isActive ? (
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--app-accent)]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--color-brand-primary)]"
         />
       ) : null}
       <button

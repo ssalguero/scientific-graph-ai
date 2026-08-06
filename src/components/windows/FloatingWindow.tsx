@@ -146,32 +146,32 @@ const FLOATING_WINDOW_CHROME = {
   /** Highest priority — Workspace Active */
   rootActive: [
     UI_TOKENS.border.accentSoft,
-    "bg-[var(--app-surface)]",
+    "bg-[var(--color-surface-default)]",
     UI_TOKENS.shadow.md,
   ].join(" "),
   /** Focused (when not Active) */
   rootFocused: [
-    "border border-[var(--app-accent)]/25",
-    "bg-[var(--app-surface)]",
+    "border border-[var(--color-brand-primary)]/25",
+    "bg-[var(--color-surface-default)]",
     UI_TOKENS.shadow.sm,
   ].join(" "),
   /** Selected (when not Active and not Focused) */
   rootSelected: [
     UI_TOKENS.border.default,
-    "bg-[var(--app-surface)]",
-    "ring-1 ring-inset ring-[var(--app-accent)]/20",
+    "bg-[var(--color-surface-default)]",
+    "ring-1 ring-inset ring-[var(--color-brand-primary)]/20",
     UI_TOKENS.shadow.sm,
   ].join(" "),
   /** Hover (when not Active / Focused / Selected) */
   rootHovered: [
     UI_TOKENS.border.default,
-    "bg-[var(--app-surface)]",
-    "ring-1 ring-inset ring-[var(--app-border)]",
+    "bg-[var(--color-surface-default)]",
+    "ring-1 ring-inset ring-[var(--color-border-default)]",
     UI_TOKENS.shadow.sm,
   ].join(" "),
   rootInactive: [
     UI_TOKENS.border.default,
-    "bg-[var(--app-surface-muted)]",
+    "bg-[var(--color-surface-canvas)]",
     UI_TOKENS.shadow.sm,
   ].join(" "),
   /** Chrome Density — consistent header height · padding · gaps via tokens */
@@ -183,96 +183,96 @@ const FLOATING_WINDOW_CHROME = {
     "cursor-grab active:cursor-grabbing select-none",
     UI_TOKENS.transition.colors200,
   ].join(" "),
-  headerActive: "bg-[var(--app-accent)]/10",
-  headerFocused: "bg-[var(--app-accent)]/5",
-  headerHovered: "bg-[var(--app-surface)]",
-  headerInactive: "bg-[var(--app-surface-muted)]",
+  headerActive: "bg-[var(--color-brand-primary)]/10",
+  headerFocused: "bg-[var(--color-brand-primary)]/5",
+  headerHovered: "bg-[var(--color-surface-default)]",
+  headerInactive: "bg-[var(--color-surface-canvas)]",
   titleActive:
-    "min-w-0 truncate text-[11px] font-semibold tracking-tight text-[var(--app-heading)]",
+    "min-w-0 truncate text-[11px] font-semibold tracking-tight text-[var(--color-text-primary)]",
   titleInactive:
-    "min-w-0 truncate text-[11px] font-medium tracking-tight text-[var(--app-text-muted)]",
+    "min-w-0 truncate text-[11px] font-medium tracking-tight text-[var(--color-text-muted)]",
   accentActive: [
     "h-1.5 w-1.5 shrink-0",
     UI_TOKENS.radius.full,
-    "bg-[var(--app-accent)]",
+    "bg-[var(--color-brand-primary)]",
     UI_TOKENS.transition.colors200,
   ].join(" "),
   accentInactive: [
     "h-1.5 w-1.5 shrink-0",
     UI_TOKENS.radius.full,
-    "bg-[var(--app-border)]",
+    "bg-[var(--color-border-default)]",
     UI_TOKENS.transition.colors200,
   ].join(" "),
   focusBadge: [
     INDICATOR_SHELL,
-    "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
+    "text-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10",
   ].join(" "),
   selectionBadge: [
     INDICATOR_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
-    "ring-1 ring-inset ring-[var(--app-accent)]/20",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-canvas)]",
+    "ring-1 ring-inset ring-[var(--color-brand-primary)]/20",
   ].join(" "),
   hoverBadge: [
     INDICATOR_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
-    "ring-1 ring-inset ring-[var(--app-border)]",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-default)]",
+    "ring-1 ring-inset ring-[var(--color-border-default)]",
   ].join(" "),
   hoverOverlay: [
     "pointer-events-none absolute inset-0",
-    "ring-1 ring-inset ring-[var(--app-border)]/60",
+    "ring-1 ring-inset ring-[var(--color-border-default)]/60",
     UI_TOKENS.transition.colors200,
   ].join(" "),
   /** Keyboard Navigation — additive · never replaces Active / Focus / Hover */
   keyboardBadge: [
     INDICATOR_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
-    "ring-1 ring-inset ring-[var(--app-border)]",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-canvas)]",
+    "ring-1 ring-inset ring-[var(--color-border-default)]",
   ].join(" "),
   keyboardArrow: [
     INDICATOR_STATUS_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-default)]",
   ].join(" "),
   /** Clipboard — additive · independent domain · never changes Visual Priority */
   clipboardBadge: [
     INDICATOR_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
-    "ring-1 ring-inset ring-[var(--app-border)]",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-canvas)]",
+    "ring-1 ring-inset ring-[var(--color-border-default)]",
   ].join(" "),
   clipboardStatus: [
     INDICATOR_STATUS_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-default)]",
   ].join(" "),
   clipboardFeedback: [
     INDICATOR_SHELL,
-    "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
+    "text-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10",
   ].join(" "),
   /** Command Palette — additive · temporary · never changes Visual Priority */
   paletteBadge: [
     INDICATOR_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
-    "ring-1 ring-inset ring-[var(--app-border)]",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-canvas)]",
+    "ring-1 ring-inset ring-[var(--color-border-default)]",
   ].join(" "),
   paletteStatus: [
     INDICATOR_STATUS_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface)]",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-default)]",
   ].join(" "),
   commandFeedback: [
     INDICATOR_SHELL,
-    "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
+    "text-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10",
   ].join(" "),
   /** Undo / Redo — additive · independent · never changes Visual Priority */
   undoRedoBadge: [
     INDICATOR_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
-    "ring-1 ring-inset ring-[var(--app-border)]",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-canvas)]",
+    "ring-1 ring-inset ring-[var(--color-border-default)]",
   ].join(" "),
   undoRedoFeedback: [
     INDICATOR_SHELL,
-    "text-[var(--app-accent)] bg-[var(--app-accent)]/10",
+    "text-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10",
   ].join(" "),
   discHint: [
     INDICATOR_STATUS_SHELL,
-    "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)]",
+    "text-[var(--color-text-muted)] bg-[var(--color-surface-canvas)]",
   ].join(" "),
   contentSelected: [
     UI_TOKENS.spacing.mt1,
@@ -281,21 +281,21 @@ const FLOATING_WINDOW_CHROME = {
     "text-[10px]",
     UI_TOKENS.radius.md,
     UI_TOKENS.shadow.sm,
-    "bg-[var(--app-accent)]/5 text-[var(--app-text-muted)]",
-    "ring-1 ring-inset ring-[var(--app-accent)]/15",
+    "bg-[var(--color-brand-primary)]/5 text-[var(--color-text-muted)]",
+    "ring-1 ring-inset ring-[var(--color-brand-primary)]/15",
     UI_TOKENS.transition.colors200,
   ].join(" "),
   close: [
     "inline-flex h-5 w-5 shrink-0 items-center justify-center",
     UI_TOKENS.radius.md,
-    "text-xs leading-none text-[var(--app-text-muted)]",
-    "hover:bg-[var(--app-surface)] hover:text-[var(--app-heading)]",
+    "text-xs leading-none text-[var(--color-text-muted)]",
+    "hover:bg-[var(--color-surface-default)] hover:text-[var(--color-text-primary)]",
     UI_TOKENS.transition.colors200,
   ].join(" "),
   body: [
     "min-h-0 flex-1 overflow-auto",
     UI_TOKENS.spacing.p2,
-    "bg-[var(--app-surface)] text-xs text-[var(--app-text)]",
+    "bg-[var(--color-surface-default)] text-xs text-[var(--color-text-primary)]",
     UI_TOKENS.transition.colors200,
   ].join(" "),
 } as const;

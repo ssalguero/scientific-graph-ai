@@ -124,4 +124,4 @@ Observable visual improvement begins at **W0** (canvas, brand, chrome no longer 
 - Visual Modernization Foundation: **COMPLETE**  
 - Design System: **integrated** (consumption)  
 - ENGINE / DATA / AI: **preserved**  
-- Next authorized phase: **UX-I1 — Application Shell Modernization**  
+- Next authorized phase: **UX-I2 — Shared Components Modernization**  

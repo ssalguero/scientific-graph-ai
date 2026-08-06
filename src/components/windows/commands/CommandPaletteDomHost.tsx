@@ -29,31 +29,31 @@ import { interactionCommandBridge } from "./InteractionCommandBridge";
 const OVERLAY_CHROME = {
   backdrop: [
     "fixed inset-0 z-[80]",
-    "bg-[var(--app-surface-muted)]/70",
+    "bg-[var(--color-surface-canvas)]/70",
   ].join(" "),
   panel: [
     "fixed left-1/2 top-[18%] z-[90] w-[min(32rem,calc(100vw-2rem))] -translate-x-1/2",
     "flex flex-col overflow-hidden",
     UI_TOKENS.radius.md,
     UI_TOKENS.border.default,
-    "bg-[var(--app-surface)]",
+    "bg-[var(--color-surface-default)]",
     UI_TOKENS.shadow.md,
   ].join(" "),
   input: [
     "w-full border-0 bg-transparent px-3 py-2.5 text-sm outline-none",
-    "text-[var(--app-text)] placeholder:text-[var(--app-text-muted)]",
+    "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]",
     UI_TOKENS.border.bottom,
   ].join(" "),
   list: "max-h-64 overflow-auto py-1",
   item: [
     "flex w-full cursor-pointer items-center px-3 py-2 text-left text-sm",
-    "text-[var(--app-text)]",
+    "text-[var(--color-text-primary)]",
   ].join(" "),
-  itemSelected: "bg-[var(--app-accent)]/10 text-[var(--app-heading)]",
-  empty: "px-3 py-4 text-sm text-[var(--app-text-muted)]",
+  itemSelected: "bg-[var(--color-brand-primary)]/10 text-[var(--color-text-primary)]",
+  empty: "px-3 py-4 text-sm text-[var(--color-text-muted)]",
   hint: [
     "flex items-center justify-between gap-2 px-3 py-1.5 text-[10px]",
-    "text-[var(--app-text-muted)]",
+    "text-[var(--color-text-muted)]",
     UI_TOKENS.border.bottom,
   ].join(" "),
 } as const;

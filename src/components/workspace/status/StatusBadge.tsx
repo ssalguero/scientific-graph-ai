@@ -13,16 +13,16 @@ function toneClasses(
 ): string {
   switch (tone) {
     case "success":
-      return "border-[var(--app-success)]/35 bg-[var(--app-success-bg)] text-[var(--app-success-text)]";
+      return "border-[var(--color-feedback-success)]/35 bg-[color-mix(in srgb, var(--color-feedback-success) 16%, var(--color-surface-default))] text-[var(--color-feedback-success)]";
     case "warning":
-      return "border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] text-[var(--app-warning-text)]";
+      return "border-[color-mix(in srgb, var(--color-feedback-warning) 35%, var(--color-border-default))] bg-[color-mix(in srgb, var(--color-feedback-warning) 16%, var(--color-surface-default))] text-[var(--color-feedback-warning)]";
     case "danger":
-      return "border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] text-[var(--app-danger-text)]";
+      return "border-[color-mix(in srgb, var(--color-feedback-danger) 35%, var(--color-border-default))] bg-[color-mix(in srgb, var(--color-feedback-danger) 14%, var(--color-surface-default))] text-[var(--color-feedback-danger)]";
     case "accent":
-      return "border-[var(--app-accent)]/35 bg-[var(--app-accent)]/10 text-[var(--app-heading)]";
+      return "border-[var(--color-brand-primary)]/35 bg-[var(--color-brand-primary)]/10 text-[var(--color-text-primary)]";
     case "muted":
     default:
-      return "border-[var(--app-border)] bg-[var(--app-surface-muted)] text-[var(--app-text-muted)]";
+      return "border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] text-[var(--color-text-muted)]";
   }
 }
 

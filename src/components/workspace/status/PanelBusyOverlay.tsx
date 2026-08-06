@@ -11,11 +11,11 @@ export function PanelBusyOverlay() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[var(--app-surface)]/40 transition-opacity duration-150"
+      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-surface-default)]/40 transition-opacity duration-150"
       data-panel-busy-overlay
     >
       <span
-        className={`animate-spin rounded-full border-2 border-[var(--app-border)] border-t-[var(--app-accent)] ${ICON_TOKENS.sizeLg} ${SURFACE_TOKENS.mutedOpacity}`}
+        className={`animate-spin rounded-full border-2 border-[var(--color-border-default)] border-t-[var(--color-brand-primary)] ${ICON_TOKENS.sizeLg} ${SURFACE_TOKENS.mutedOpacity}`}
         data-panel-busy-spinner
       />
     </div>

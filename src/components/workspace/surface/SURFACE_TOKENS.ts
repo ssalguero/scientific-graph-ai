@@ -1,6 +1,6 @@
 /**
  * UX-2.23 — Surface polish SSOT (compose-only).
- * Independent local map of Tailwind / --app-* literals aligned to
+ * Independent local map of Tailwind / Design System --color-* literals aligned to
  * WORKSPACE_DENSITY_TOKENS (UX-2.25 spacing authority).
  * MUST NOT import or re-export UI_TOKENS, surfaces SURFACE_TOKENS,
  * CONTENT_TOKENS, LAYOUT_TOKENS, WORKSPACE_DENSITY_TOKENS, or any other *_TOKENS object.

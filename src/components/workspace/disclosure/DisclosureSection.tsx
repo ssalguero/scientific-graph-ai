@@ -31,7 +31,7 @@ export function DisclosureSection({
     <div className={SURFACE_TOKENS.padding.sm}>
       <button
         type="button"
-        className={`flex w-full cursor-pointer items-center rounded text-left transition-colors duration-150 hover:bg-[var(--app-surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${SURFACE_TOKENS.gap.sm} ${SURFACE_TOKENS.padding.sm}`}
+        className={`flex w-full cursor-pointer items-center rounded text-left transition-colors duration-150 hover:bg-[var(--color-surface-canvas)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30 ${SURFACE_TOKENS.gap.sm} ${SURFACE_TOKENS.padding.sm}`}
         aria-expanded={expanded}
         aria-controls={panelId}
         aria-label={expanded ? `Collapse ${title}` : `Expand ${title}`}

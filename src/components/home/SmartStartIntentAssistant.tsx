@@ -38,12 +38,12 @@ export function SmartStartIntentAssistant({
 
   return (
     <div
-      className="w-full rounded-md border border-[var(--app-border)] bg-[var(--app-surface-muted)]/50 p-3 text-left"
+      className="w-full rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/50 p-3 text-left"
       aria-label="Asistente de intención"
     >
       <label
         htmlFor="smart-start-intent-input"
-        className={`${fieldLabel} mb-1.5 normal-case tracking-normal text-[var(--app-heading)]`}
+        className={`${fieldLabel} mb-1.5 normal-case tracking-normal text-[var(--color-text-primary)]`}
       >
         O describa su objetivo
       </label>
@@ -72,13 +72,13 @@ export function SmartStartIntentAssistant({
 
       {recommendation ? (
         <div
-          className="mt-3 rounded-md border border-[var(--app-accent)]/30 bg-[var(--app-accent)]/5 px-3 py-2.5 space-y-2"
+          className="mt-3 rounded-md border border-[var(--color-brand-primary)]/30 bg-[var(--color-brand-primary)]/5 px-3 py-2.5 space-y-2"
           role="status"
         >
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             {formatIntentRecommendationSummary(recommendation)}
           </p>
-          <p className="text-xs text-[var(--app-text-muted)]">
+          <p className="text-xs text-[var(--color-text-muted)]">
             Destino: {recommendation.destinationLabel}
           </p>
           <button
@@ -92,7 +92,7 @@ export function SmartStartIntentAssistant({
       ) : null}
 
       {noMatchMessage ? (
-        <p className="mt-2 text-xs text-[var(--app-text-muted)]" role="status">
+        <p className="mt-2 text-xs text-[var(--color-text-muted)]" role="status">
           {noMatchMessage}
         </p>
       ) : null}

@@ -1,6 +1,6 @@
 /**
  * UX-2.24 — Navigation grammar SSOT (compose-only).
- * Independent local map of Tailwind / --app-* literals aligned to existing
+ * Independent local map of Tailwind / Design System --color-* utilities aligned to existing
  * workspace density (surfaces / layout / semantic vocabulary).
  * MUST NOT import or re-export UI_TOKENS, SURFACE_TOKENS, CONTENT_TOKENS,
  * LAYOUT_TOKENS, SEMANTIC_TOKENS, or any other *_TOKENS object.
@@ -29,11 +29,11 @@ export const NAVIGATION_TOKENS = {
   fontSize: "text-xs",
   fontWeight: "font-medium",
   /** PageTitle color — heading token. */
-  color: "text-[var(--app-heading)]",
+  color: "text-[var(--color-text-primary)]",
   /** BreadcrumbItem muted color. */
-  mutedColor: "text-[var(--app-text-muted)]",
+  mutedColor: "text-[var(--color-text-muted)]",
   /** Separator glyph color. */
-  separatorColor: "text-[var(--app-text-muted)]",
+  separatorColor: "text-[var(--color-text-muted)]",
   separator: {
     glyph: "›",
   },

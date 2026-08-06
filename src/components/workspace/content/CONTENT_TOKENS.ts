@@ -1,6 +1,6 @@
 /**
  * UX-2.22 — Content grammar SSOT (compose-only).
- * Reuses existing Tailwind / --app-* utilities already owned by
+ * Reuses existing Tailwind / Design System --color-* utilities already owned by
  * SURFACE / LAYOUT / SEMANTIC / ACTION / ICON tokens.
  * MUST NOT invent colors, spacing, or radii.
  * MUST NOT duplicate SURFACE_TOKENS / LAYOUT_TOKENS / SEMANTIC_TOKENS /
@@ -24,26 +24,26 @@ export const CONTENT_TOKENS = {
   /** KeyValue — label/value pair (SEMANTIC muted + type scale). Layout via Inline. */
   keyValueRoot: "",
   keyValueLabel:
-    "text-[10px] font-medium text-[var(--app-text-muted)] opacity-70",
-  keyValueValue: "text-[10px] text-[var(--app-text)]",
+    "text-[10px] font-medium text-[var(--color-text-muted)] opacity-70",
+  keyValueValue: "text-[10px] text-[var(--color-text-primary)]",
   /**
    * Description — EmptyDescription vocabulary (max-w + text-xs + muted).
    * Alias of SEMANTIC_TOKENS.MUTED_TEXT + existing empty description scale.
    */
   description:
-    "max-w-[16rem] text-xs leading-relaxed text-[var(--app-text-muted)]",
+    "max-w-[16rem] text-xs leading-relaxed text-[var(--color-text-muted)]",
   /**
-   * Notice variants — compose SEMANTIC infoRoot + StatusBadge --app-* tones.
+   * Notice variants — compose SEMANTIC infoRoot + StatusBadge Design System tones.
    * info mirrors SEMANTIC_TOKENS.infoRoot exactly (pixel parity).
    */
   notice: {
-    info: "border border-[var(--app-border)] p-1.5 text-[10px] text-[var(--app-text-muted)]",
+    info: "border border-[var(--color-border-default)] p-1.5 text-[10px] text-[var(--color-text-muted)]",
     warning:
-      "border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] p-1.5 text-[10px] text-[var(--app-warning-text)]",
+      "border border-[color-mix(in srgb, var(--color-feedback-warning) 35%, var(--color-border-default))] bg-[color-mix(in srgb, var(--color-feedback-warning) 16%, var(--color-surface-default))] p-1.5 text-[10px] text-[var(--color-feedback-warning)]",
     success:
-      "border border-[var(--app-success)]/35 bg-[var(--app-success-bg)] p-1.5 text-[10px] text-[var(--app-success-text)]",
+      "border border-[var(--color-feedback-success)]/35 bg-[color-mix(in srgb, var(--color-feedback-success) 16%, var(--color-surface-default))] p-1.5 text-[10px] text-[var(--color-feedback-success)]",
     danger:
-      "border border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] p-1.5 text-[10px] text-[var(--app-danger-text)]",
+      "border border-[var(--color-border-danger)] bg-[color-mix(in srgb, var(--color-feedback-danger) 14%, var(--color-surface-default))] p-1.5 text-[10px] text-[var(--color-feedback-danger)]",
   },
   /**
    * Content EmptyState — title + description only (no icon / action).
@@ -51,11 +51,11 @@ export const CONTENT_TOKENS = {
    */
   emptyRoot: "",
   emptyGap: "gap-1.5",
-  emptyTitle: "text-sm font-medium text-[var(--app-heading)]",  /**
+  emptyTitle: "text-sm font-medium text-[var(--color-text-primary)]",  /**
    * DividerContent — SURFACE_TOKENS.divider vocabulary (not Toolbar divider).
    */
   divider: {
-    base: "border-0 border-t border-[var(--app-border)]",
+    base: "border-0 border-t border-[var(--color-border-default)]",
     spacing: "my-2.5",
     muted: "opacity-60",
   },

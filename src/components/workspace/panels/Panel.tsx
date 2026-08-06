@@ -74,8 +74,8 @@ export function Panel({
     : "";
 
   const activeClass = isActive
-    ? "border-[var(--app-accent)]/40 shadow-sm"
-    : "border-[var(--app-border)]";
+    ? "border-[var(--color-brand-primary)]/40 shadow-sm"
+    : "border-[var(--color-border-default)]";
 
   return (
     <section
@@ -86,7 +86,7 @@ export function Panel({
       data-panel-collapsed={collapsed ? "true" : "false"}
       aria-label={title}
       style={style}
-      className={`flex shrink-0 flex-col min-h-0 overflow-hidden border bg-[var(--app-surface)] transition-colors transition-shadow duration-200 ${activeClass} ${responsiveHide} ${animatedClass}`}
+      className={`flex shrink-0 flex-col min-h-0 overflow-hidden border bg-[var(--color-surface-default)] transition-colors transition-shadow duration-200 ${activeClass} ${responsiveHide} ${animatedClass}`}
     >
       {children}
     </section>

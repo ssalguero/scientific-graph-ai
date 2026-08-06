@@ -8,19 +8,19 @@ export type StatusDotProps = {
 function toneClass(state: PanelVisualState): string {
   switch (state) {
     case "success":
-      return "bg-[var(--app-success)]";
+      return "bg-[var(--color-feedback-success)]";
     case "warning":
-      return "bg-[var(--app-warning)]";
+      return "bg-[var(--color-feedback-warning)]";
     case "error":
-      return "bg-[var(--app-danger)]";
+      return "bg-[var(--color-feedback-danger)]";
     case "active":
     case "loading":
     case "busy":
-      return "bg-[var(--app-accent)]";
+      return "bg-[var(--color-brand-primary)]";
     case "idle":
     case "empty":
     default:
-      return "bg-[var(--app-text-muted)]";
+      return "bg-[var(--color-text-muted)]";
   }
 }
 

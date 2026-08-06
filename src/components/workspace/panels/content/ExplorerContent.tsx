@@ -121,7 +121,7 @@ export const ExplorerContent = memo(function ExplorerContent() {
                             action={
                               <button
                                 type="button"
-                                className={`${UI_TOKENS.button.outlineSm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30`}
+                                className={`${UI_TOKENS.button.outlineSm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30`}
                                 aria-label="New series"
                               >
                                 New Series

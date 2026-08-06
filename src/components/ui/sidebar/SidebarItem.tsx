@@ -84,14 +84,14 @@ export function SidebarItem({
         {badge}
         {caret != null ? (
           <span
-            className="text-[10px] text-[var(--app-text-muted)]"
+            className="text-[10px] text-[var(--color-text-muted)]"
             aria-hidden
           >
             {caret}
           </span>
         ) : null}
         {disabled && !badge ? (
-          <span className="text-xs text-[var(--app-text-muted)]">Inactivo</span>
+          <span className="text-xs text-[var(--color-text-muted)]">Inactivo</span>
         ) : null}
       </span>
     </>

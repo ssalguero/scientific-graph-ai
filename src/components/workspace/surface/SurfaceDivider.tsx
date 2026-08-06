@@ -18,7 +18,7 @@ export function SurfaceDivider({ className }: SurfaceDividerProps) {
       className={
         className ??
         [
-          "border-0 border-t border-[var(--app-border)]",
+          "border-0 border-t border-[var(--color-border-default)]",
           WORKSPACE_DENSITY_TOKENS.sectionGap,
           SURFACE_TOKENS.dividerOpacity,
         ].join(" ")

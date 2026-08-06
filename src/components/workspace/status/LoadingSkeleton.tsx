@@ -8,7 +8,7 @@ export type LoadingSkeletonProps = {
 };
 
 const bar =
-  `rounded bg-[var(--app-surface-muted)] transition-[opacity,background-color] duration-150`;
+  `rounded bg-[var(--color-surface-canvas)] transition-[opacity,background-color] duration-150`;
 
 /**
  * UX-2.14 — Presentational skeleton placeholders.

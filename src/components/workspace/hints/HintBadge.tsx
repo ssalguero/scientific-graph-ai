@@ -11,7 +11,7 @@ export type HintBadgeProps = {
 export function HintBadge({ label }: HintBadgeProps) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center bg-[var(--app-surface-muted)] ${SURFACE_TOKENS.radius.default} ${SURFACE_TOKENS.border.default} ${SURFACE_TOKENS.padding.sm} ${SURFACE_TOKENS.metadata.root}`}
+      className={`inline-flex shrink-0 items-center bg-[var(--color-surface-canvas)] ${SURFACE_TOKENS.radius.default} ${SURFACE_TOKENS.border.default} ${SURFACE_TOKENS.padding.sm} ${SURFACE_TOKENS.metadata.root}`}
     >
       {label}
     </span>

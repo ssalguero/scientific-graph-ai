@@ -26,17 +26,17 @@ export function CompareStepsBanner({
 
   return (
     <div
-      className="rounded-lg border border-[var(--app-accent)]/35 bg-[var(--app-accent)]/5 px-3 py-3 sm:px-4"
+      className="rounded-lg border border-[var(--color-brand-primary)]/35 bg-[var(--color-brand-primary)]/5 px-3 py-3 sm:px-4"
       role="status"
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold text-[var(--app-heading)]">
+        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
           Comparación multi-dataset A/B
         </p>
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-heading)]"
+          className="shrink-0 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           aria-label="Cerrar guía de pasos"
         >
           ✕
@@ -49,7 +49,7 @@ export function CompareStepsBanner({
             className={`text-xs sm:text-sm flex items-start gap-2 ${
               step.done
                 ? "text-emerald-700"
-                : "text-[var(--app-text-muted)]"
+                : "text-[var(--color-text-muted)]"
             }`}
           >
             <span aria-hidden>{step.done ? "✓" : `${index + 1}.`}</span>

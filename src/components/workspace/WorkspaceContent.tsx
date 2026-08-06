@@ -34,13 +34,13 @@ export function WorkspaceContent({
         <DensityProvider>
         <header
           data-workspace-header
-          className={`flex flex-wrap items-start justify-between border-b border-[var(--app-border)] ${WORKSPACE_DENSITY_TOKENS.sectionGap} ${WORKSPACE_DENSITY_TOKENS.headerGap}`}
+          className={`flex flex-wrap items-start justify-between border-b border-[var(--color-border-default)] ${WORKSPACE_DENSITY_TOKENS.sectionGap} ${WORKSPACE_DENSITY_TOKENS.headerGap}`}
         >
           <div
             className={`min-w-0 flex flex-col ${WORKSPACE_DENSITY_TOKENS.iconGap}`}
           >
             <p className={SURFACE_TOKENS.metadata.root}>Project</p>
-            <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--app-heading)] sm:text-base">
+            <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-base">
               Scientific Graph AI
             </h1>
             <p className={`truncate text-xs sm:text-sm ${SURFACE_TOKENS.tone.default}`}>

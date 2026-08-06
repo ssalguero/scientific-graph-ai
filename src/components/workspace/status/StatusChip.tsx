@@ -13,7 +13,7 @@ export type StatusChipProps = {
 export function StatusChip({ children }: StatusChipProps) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center bg-[var(--app-surface-muted)] transition-[opacity,background-color] duration-150 ${SURFACE_TOKENS.radius.default} ${SURFACE_TOKENS.border.default} ${SURFACE_TOKENS.padding.sm} ${SURFACE_TOKENS.metadata.root}`}
+      className={`inline-flex shrink-0 items-center bg-[var(--color-surface-canvas)] transition-[opacity,background-color] duration-150 ${SURFACE_TOKENS.radius.default} ${SURFACE_TOKENS.border.default} ${SURFACE_TOKENS.padding.sm} ${SURFACE_TOKENS.metadata.root}`}
     >
       {children}
     </span>

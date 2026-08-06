@@ -44,7 +44,7 @@ export function SidebarSection({
         aria-expanded={open}
       >
         <span
-          className="w-3 text-xs text-[var(--app-text-muted)]"
+          className="w-3 text-xs text-[var(--color-text-muted)]"
           aria-hidden
         >
           {getIcon(open ? "collapse" : "expand")}

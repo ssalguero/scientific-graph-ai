@@ -23,7 +23,7 @@ export function RevealButton({
   return (
     <button
       type="button"
-      className={`inline-flex cursor-pointer items-center transition-colors duration-150 hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-heading)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30 ${ACTION_TOKENS.gap} ${ACTION_TOKENS.padding} ${ACTION_TOKENS.radius} text-[10px] font-medium ${SURFACE_TOKENS.tone.default}`}
+      className={`inline-flex cursor-pointer items-center transition-colors duration-150 hover:bg-[var(--color-surface-canvas)] hover:text-[var(--color-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30 ${ACTION_TOKENS.gap} ${ACTION_TOKENS.padding} ${ACTION_TOKENS.radius} text-[10px] font-medium ${SURFACE_TOKENS.tone.default}`}
       aria-expanded={expanded}
       aria-controls={controlsId}
       aria-label={label}

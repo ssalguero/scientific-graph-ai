@@ -16,15 +16,15 @@ export function PublicationEntryBanner({
 }: PublicationEntryBannerProps) {
   return (
     <div
-      className={`${contentPanel} border border-[var(--app-accent)]/30 mb-3`}
+      className={`${contentPanel} border border-[var(--color-brand-primary)]/30 mb-3`}
       role="status"
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Evaluar publicación (SCI-59 → SCI-56 / SCI-60)
           </p>
-          <p className="text-xs text-[var(--app-text-muted)] mt-1">
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Workflow guiado hacia dashboards metodológicos y de preparación
             editorial. Resalte los toggles SCI-56 y SCI-60 abajo.
           </p>
@@ -32,7 +32,7 @@ export function PublicationEntryBanner({
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-heading)]"
+          className="shrink-0 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           aria-label="Cerrar guía"
         >
           ✕

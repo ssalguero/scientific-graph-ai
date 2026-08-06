@@ -1,7 +1,7 @@
 /**
  * UX-2.19 — Toolbar / action visual SSOT (compose-only).
  * UX-2.20 — Value-only microinteraction enrichment; may compose ICON_TOKENS.
- * Aliases existing Tailwind / --app-* utilities already used by
+ * Aliases existing Tailwind / Design System --color-* utilities already used by
  * surface, layout, and semantic token packages.
  * MUST NOT redefine spacing or typography scales.
  * MUST NOT pull in surface/layout/semantic token objects.
@@ -32,7 +32,7 @@ export const ACTION_TOKENS = {
    * + reduced-motion (CSS only; span remains non-focusable).
    */
   button:
-    "inline-flex min-h-4 items-center gap-2 rounded-md p-1.5 text-[10px] font-medium text-[var(--app-text-muted)] transition-[color,background-color,border-color,opacity] duration-100 motion-reduce:transition-none active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/30",
+    "inline-flex min-h-4 items-center gap-2 rounded-md p-1.5 text-[10px] font-medium text-[var(--color-text-muted)] transition-[color,background-color,border-color,opacity] duration-100 motion-reduce:transition-none active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30",
   /** ActionGroup root — composes gap. */
   group: "inline-flex flex-row flex-wrap items-center gap-2",
   /** PanelToolbar root — composes height + gap. */
@@ -45,8 +45,8 @@ export const ACTION_TOKENS = {
   /** Visual appearance classes (CSS only; no state machine). */
   appearances: {
     default: "",
-    muted: "opacity-70 text-[var(--app-text-muted)]",
-    active: "text-[var(--app-heading)]",
+    muted: "opacity-70 text-[var(--color-text-muted)]",
+    active: "text-[var(--color-text-primary)]",
     disabled: "opacity-70 pointer-events-none",
   },
 } as const;

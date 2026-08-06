@@ -56,23 +56,23 @@ export function PanelHeader({
   const label = expanded ? `Collapse ${title}` : `Expand ${title}`;
 
   const headerBg = isActive
-    ? "bg-[var(--app-surface-muted)]"
+    ? "bg-[var(--color-surface-canvas)]"
     : "bg-transparent";
   const titleColor = isActive
-    ? "text-[var(--app-heading)]"
-    : "text-[var(--app-text-muted)]";
+    ? "text-[var(--color-text-primary)]"
+    : "text-[var(--color-text-muted)]";
 
   return (
     <Inline
       align="center"
       justify="between"
       gap="none"
-      className={`relative flex-none border-b border-[var(--app-border)] transition-colors duration-150 hover:bg-[var(--app-surface-muted)] ${LAYOUT_TOKENS.headerGap} ${LAYOUT_TOKENS.regionPadding.md} ${headerBg}`}
+      className={`relative flex-none border-b border-[var(--color-border-default)] transition-colors duration-150 hover:bg-[var(--color-surface-canvas)] ${LAYOUT_TOKENS.headerGap} ${LAYOUT_TOKENS.regionPadding.md} ${headerBg}`}
     >
       {isActive ? (
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--app-accent)]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--color-brand-primary)]"
         />
       ) : null}
       <Inline align="center" gap="sm" className="min-w-0">

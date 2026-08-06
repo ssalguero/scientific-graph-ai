@@ -43,8 +43,8 @@ export const btnOutline = UI_TOKENS.button.outline;
 export const btnOutlineSm = UI_TOKENS.button.outlineSm;
 
 export const alertBase = UI_TOKENS.panel.alertBase;
-export const alertError = `${alertBase} border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] text-[var(--app-danger-text)]`;
-export const alertWarning = `${alertBase} border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] text-[var(--app-warning-text)]`;
+export const alertError = `${alertBase} border-[var(--color-border-danger)] bg-[color-mix(in srgb, var(--color-feedback-danger) 14%, var(--color-surface-default))] text-[var(--color-feedback-danger)]`;
+export const alertWarning = `${alertBase} border-[color-mix(in srgb, var(--color-feedback-warning) 35%, var(--color-border-default))] bg-[color-mix(in srgb, var(--color-feedback-warning) 16%, var(--color-surface-default))] text-[var(--color-feedback-warning)]`;
 
 export const toggleInput = UI_TOKENS.button.toggleInput;
 export const toggleShell = UI_TOKENS.button.toggleShell;
@@ -284,17 +284,17 @@ export function getBadgeStyle(kind: BadgeStyleKind): string {
 export function getStatusColor(status: StatusColorKind): string {
   switch (status) {
     case "success":
-      return "text-[var(--app-success)]";
+      return "text-[var(--color-feedback-success)]";
     case "warning":
-      return "text-[var(--app-warning)]";
+      return "text-[var(--color-feedback-warning)]";
     case "danger":
-      return "text-[var(--app-danger)]";
+      return "text-[var(--color-feedback-danger)]";
     case "muted":
-      return "text-[var(--app-text-muted)]";
+      return "text-[var(--color-text-muted)]";
     case "accent":
-      return "text-[var(--app-accent)]";
+      return "text-[var(--color-brand-primary)]";
     case "info":
-      return "text-[var(--app-info-text)]";
+      return "text-[var(--color-feedback-info)]";
     default: {
       const _exhaustive: never = status;
       return _exhaustive;

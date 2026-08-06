@@ -10,6 +10,7 @@ This series does **not** redefine the Design System (UX-1…UX-9 RELEASE / SERIE
 | Phase | Title | Status | Path |
 |-------|-------|--------|------|
 | **UX-I0** | Visual Modernization Foundation | **PLANNING CERTIFIED** · **BUILD IMPLEMENTED** · Foundation **COMPLETE** | [Planning](./UX-I0-Visual-Modernization-Foundation.md) · [Build](./UX-I0-Visual-Modernization-Foundation-BUILD.md) |
+| **UX-I1** | Application Shell Modernization | **BUILD IMPLEMENTED** · Shell **COMPLETE** | [Build](./UX-I1-Application-Shell-Modernization-BUILD.md) |
 
 ## Principles
 
@@ -20,4 +21,4 @@ This series does **not** redefine the Design System (UX-1…UX-9 RELEASE / SERIE
 
 ## Next
 
-**UX-I1 — Application Shell Modernization**
+**UX-I2 — Shared Components Modernization**

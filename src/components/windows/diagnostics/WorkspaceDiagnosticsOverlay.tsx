@@ -39,22 +39,22 @@ const OVERLAY_CHROME = {
     UI_TOKENS.radius.md,
     UI_TOKENS.border.default,
     UI_TOKENS.shadow.md,
-    "bg-[var(--app-surface)]",
+    "bg-[var(--color-surface-default)]",
     UI_TOKENS.spacing.p2,
     UI_TOKENS.spacing.spaceY15,
-    "text-[10px] text-[var(--app-text)]",
+    "text-[10px] text-[var(--color-text-primary)]",
     UI_TOKENS.transition.colors200,
   ].join(" "),
   title: [
-    "font-semibold uppercase tracking-wide text-[var(--app-heading)]",
+    "font-semibold uppercase tracking-wide text-[var(--color-text-primary)]",
   ].join(" "),
   group: [UI_TOKENS.spacing.spaceY05].join(" "),
   groupLabel: [
-    "font-semibold uppercase tracking-wide text-[var(--app-text-muted)]",
+    "font-semibold uppercase tracking-wide text-[var(--color-text-muted)]",
   ].join(" "),
   row: "flex items-baseline justify-between gap-2",
-  label: "text-[var(--app-text-muted)]",
-  value: "truncate text-[var(--app-text)] font-medium",
+  label: "text-[var(--color-text-muted)]",
+  value: "truncate text-[var(--color-text-primary)] font-medium",
 } as const;
 
 function displayValue(value: string | number | null | undefined): string {
