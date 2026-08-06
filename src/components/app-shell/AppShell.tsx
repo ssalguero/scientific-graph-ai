@@ -30,8 +30,8 @@ import {
  *   StatusBar owns visual structure and layout.
  * - UX-4.8 — Normalize, don't invent. Tailwind responsive variants only.
  *   No second responsive system. Docking reused unchanged (not owned here).
- * - UX-4.9 — Chrome consumes Theme Runtime CSS vars (--color-*). Mapping
- *   frozen; dual-stack outside app-shell/status-bar is intentional.
+ * - UX-4.9 / UX-I0 — Chrome consumes Theme Runtime CSS vars (--color-*).
+ *   Legacy `--app-*` product surfaces resolve via ThemeRuntimeHost bridge.
  *
  * Layout-only: no hooks, providers, stores, effects, or business logic.
  */
@@ -102,7 +102,7 @@ export function AppShell({
   className,
 }: AppShellProps) {
   return (
-    <main className={className}>
+    <main className={["min-h-screen bg-[var(--color-surface-canvas)] text-[var(--color-text-primary)]", className].filter(Boolean).join(" ")}>
       <AppShellLayout
         toolbar={
           toolbar != null ? (

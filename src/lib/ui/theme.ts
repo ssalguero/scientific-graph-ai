@@ -213,7 +213,7 @@ export function getButtonVariant(variant: ButtonVariant): string {
     case "ghost":
       return sidebarNavItem;
     case "danger":
-      return `${actionBarBtn} bg-[var(--app-danger)] text-white`;
+      return `${actionBarBtn} bg-[var(--color-feedback-danger)] text-[var(--color-text-inverse)]`;
     case "actionPrimary":
       return actionBarBtnPrimary;
     case "actionSave":

@@ -4,9 +4,10 @@ Parallel Design System package for UX-3. Coexists with UX-2 (`src/lib/ui`, `src/
 
 ## Current microfase
 
-**UX-4.1 — Theme Runtime Host Integration** (COMPLETE).
+**UX-4.1 — Theme Runtime Host Integration** (COMPLETE).  
+**UX-I0 — Visual Modernization Foundation** (COMPLETE): app-owned legacy `--app-*` → `--color-*` bridge on the host; product chrome consumes certified Theme Runtime CSS variables without redesigning the Design System.
 
-`ThemeProvider` is mounted via app-owned [`src/app/theme-runtime-host.tsx`](../app/theme-runtime-host.tsx). The certified Provider source is **unchanged** (adapt the host, not the Provider). Product UI still paints with UX-2 `--app-*`; UX-3 `--color-*` coexist on the host without chrome consumers.
+`ThemeProvider` is mounted via app-owned [`src/app/theme-runtime-host.tsx`](../app/theme-runtime-host.tsx). The certified Provider source is **unchanged** (adapt the host, not the Provider).
 
 Theme contract remains `THEME_CONTRACT_VERSION = "3.1.3"`. Foundation Tokens remain at `TOKEN_CONTRACT_VERSION = "3.1.2"`.
 

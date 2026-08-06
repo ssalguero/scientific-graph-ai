@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
+/*
+ * UX-I0 — Global styles align with Theme Runtime host.
+ * Body no longer invents a parallel palette via prefers-color-scheme.
+ * Visual authority: certified Design System CSS vars on [data-theme].
+ */
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f172a;
 }
 
 @theme inline {
@@ -12,24 +18,27 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  height: 100%;
 }
 
 body {
+  margin: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   transition: background-color 200ms ease, color 200ms ease;
 }
 
-/* UX-4.1 — stretch certified ThemeProvider host without modifying Provider */
+/* UX-4.1 / UX-I0 — certified ThemeProvider host fills the viewport */
 body > [data-theme] {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 100%;
+  background: var(--color-surface-canvas);
+  color: var(--color-text-primary);
 }
