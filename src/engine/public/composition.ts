@@ -2,10 +2,12 @@
  * ENGINE Domain — Public composition bootstrap.
  * OWNERSHIP: Application API — thin entry to configure the default composition root.
  * ENGINE-9: App injects IndexedDB (or other) project repository before certified flows run.
+ * DATA-I7: Also ensures DATA public composition (`@/data`) is configured for ENGINE consumption.
  *
  * Repository is opaque here — no `@/lib/project` import on the public surface.
  */
 
+import { ensureDataConfigured } from "../coordination/data";
 import {
   composeEngine,
   setDefaultComposition,
@@ -27,6 +29,7 @@ export type ConfigureEngineOptions = {
  * Call once at app bootstrap before certified Product Flow entry points.
  */
 export function configureEngine(options: ConfigureEngineOptions = {}): void {
+  ensureDataConfigured();
   setDefaultComposition(
     composeEngine({
       adapterOptions: options.projectRepository

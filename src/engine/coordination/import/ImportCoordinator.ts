@@ -14,6 +14,7 @@ import type {
   ImportExecutionContext,
   ImportFileHandle,
 } from "./types";
+import { registerDatasetWithData } from "../data";
 
 export type ImportCoordinatorOptions = {
   readonly port: ImportPort;
@@ -64,6 +65,16 @@ export class ImportCoordinator {
       // Business outcome (unsupported format, etc.) — complete with error kind.
       // Invalid orchestration payloads throw above; port hard failures may throw.
       return result;
+    }
+
+    // DATA-I7: scientific identity authority via @/data (feedstock import science remains port).
+    try {
+      await registerDatasetWithData({
+        id: input.sourceId.trim(),
+        origin: "importDataset",
+      });
+    } catch {
+      // Best-effort: duplicate ids / lifecycle attach race must not fail import science path.
     }
 
     return result;

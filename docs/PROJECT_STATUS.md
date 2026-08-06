@@ -19,11 +19,11 @@ Release Target: **1.0**
 
 Current Phase:
 
-**ENGINE DOMAIN CERTIFIED**
+**AI DOMAIN — RELEASE CERTIFIED (AI-I10 Domain Certification COMPLETE)**
 
 Next Phase:
 
-**DATA DOMAIN PLANNING**
+**COLLAB Domain** (or next roadmap domain)
 
 ---
 
@@ -32,8 +32,8 @@ Next Phase:
 | Domain | Status |
 |---------|--------|
 | ENGINE | ✅ CERTIFIED |
-| DATA | 🔄 PLANNED |
-| AI | 🔄 PLANNED |
+| DATA | ✅ CERTIFIED |
+| AI | ✅ RELEASE CERTIFIED · Implementation Series CLOSED |
 | COLLAB | 🔄 PLANNED |
 | PLUGINS | 🔄 PLANNED |
 | PERFORMANCE | 🔄 PLANNED |
@@ -42,22 +42,20 @@ Next Phase:
 
 ## Latest Milestone
 
-ENGINE Domain successfully completed.
+AI Domain RELEASE CERTIFIED (AI-I10). Planning preserved; Implementation Series CLOSED; runtime unchanged; AI Optional preserved.
 
-Certification:
+AI Implementation:
 
-- Architecture: CERTIFIED
-- Governance: COMPLIANT
-- Validation: PASS
-- Production Readiness: APPROVED
+- AI-I0…AI-I9: COMPLETE
+- AI-I10 Certification: CERTIFIED (`src/ai/certification/`)
+- Runtime intelligence / assistants / prediction: NOT IMPLEMENTED (by design)
+- Next: COLLAB Domain (or next roadmap domain)
 
-Certification Baseline:
+Prior certified peers:
 
-Commit: `70caace`
-
-Next milestone:
-
-DATA Domain.
+- ENGINE Domain: RELEASE CERTIFIED
+- DATA Domain: RELEASE CERTIFIED
+- AI Planning (AI-P0…P11): RELEASE CERTIFIED
 
 
 
@@ -174,11 +172,13 @@ Architectural documentation is considered stable.
 
 # Implementation Status
 
-Implementation is prepared to resume.
+AI Domain implementation continues.
 
 Current objective:
 
-Architecture-driven implementation.
+COLLAB Domain (or next roadmap domain).
+
+AI Domain is RELEASE CERTIFIED. AI-I0…AI-I10 COMPLETE. Implementation Series CLOSED under Planning Finality.
 
 Future development shall follow:
 

@@ -1,27 +1,27 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-06 (completed and certified the ENGINE Domain)
+**Actualizado:** 2026-08-06 (AI Domain RELEASE CERTIFIED · AI-I10 COMPLETE)
 
 ---
 
 ## Current Project Status
 
-Scientific Graph AI has successfully completed and certified the ENGINE Domain.
+Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED.
 
 Current platform roadmap:
 
 | Domain | Status |
 |---------|--------|
 | ENGINE | ✅ CERTIFIED |
-| DATA | 🔄 PLANNED |
-| AI | 🔄 PLANNED |
+| DATA | ✅ CERTIFIED |
+| AI | ✅ RELEASE CERTIFIED · Implementation Series CLOSED |
 | COLLAB | 🔄 PLANNED |
 | PLUGINS | 🔄 PLANNED |
 | PERFORMANCE | 🔄 PLANNED |
 
-The ENGINE Domain now provides the certified Application Layer responsible for Product Flow orchestration, Workflow execution, Command orchestration, Lifecycle coordination and Boundary Enforcement.
+The AI Domain is certified under `src/ai/` as structural Intelligence Domain skeletons. No runtime intelligence, assistants, or prediction is implemented.
 
-Current development focus: DATA Domain.
+Current development focus: **COLLAB Domain** (or next roadmap domain).
 
 ---
 
