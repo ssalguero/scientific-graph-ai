@@ -1,6 +1,27 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-07-16 (cierre oficial PROD-2E)
+**Actualizado:** 2026-08-06 (completed and certified the ENGINE Domain)
+
+---
+
+## Current Project Status
+
+Scientific Graph AI has successfully completed and certified the ENGINE Domain.
+
+Current platform roadmap:
+
+| Domain | Status |
+|---------|--------|
+| ENGINE | ✅ CERTIFIED |
+| DATA | 🔄 PLANNED |
+| AI | 🔄 PLANNED |
+| COLLAB | 🔄 PLANNED |
+| PLUGINS | 🔄 PLANNED |
+| PERFORMANCE | 🔄 PLANNED |
+
+The ENGINE Domain now provides the certified Application Layer responsible for Product Flow orchestration, Workflow execution, Command orchestration, Lifecycle coordination and Boundary Enforcement.
+
+Current development focus: DATA Domain.
 
 ---
 
@@ -140,3 +161,4 @@ Candidatos posteriores (sin priorización operativa aquí): RC-1 · Version 1.0 
 ## Histórico de hitos cerrados
 
 SCI-55 → SCI-60 · SCI-58 v1 · **SCI-58 v2** · SCI-59 · ARCH-5 F1–F4 · PROD-1A · PROD-2A · **PROD-2B** (B1–B6) · **PROD-2C C1–C9** · **ARCH-6-DOC** · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 · UX-1A.1 LITE · DATA-3A · **QA-1** · **HOTFIX PDF-1/2/3** · **PROD-2D** (D0–D24) · **PROD-2E** (D25–D36)
+
