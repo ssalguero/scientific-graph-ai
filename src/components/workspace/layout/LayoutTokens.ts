@@ -1,26 +1,26 @@
 /**
  * UX-2.18 — Semantic layout spacing SSOT.
  * UX-2.26 — Expanded with compose primitives (STACK_GAPS / align / justify / …).
- * Density-equivalent mirror of UX-2.25 WORKSPACE_DENSITY_TOKENS (compose-only).
+ * UX-I3 — Mirrors WORKSPACE_DENSITY_TOKENS using Design System --spacing-*.
  * Layout package reads these keys only — no surface or density token imports.
  * Unidirectional parity: Density is authority; this file must match Density.
  */
 export const LAYOUT_TOKENS = {
   /** Gap between PanelLayout region children (matches composition md gap). */
-  panelGap: "gap-2",
+  panelGap: "gap-[var(--spacing-tight)]",
   /** Internal gap inside PanelHeaderRegion. */
-  headerGap: "gap-2",
+  headerGap: "gap-[var(--spacing-tight)]",
   /** Internal gap inside PanelToolbarRegion (matches composition md gap). */
-  toolbarGap: "gap-2",
+  toolbarGap: "gap-[var(--spacing-tight)]",
   /** Internal gap inside PanelContentRegion. */
-  contentGap: "gap-2",
+  contentGap: "gap-[var(--spacing-tight)]",
   /** Internal gap inside PanelFooterRegion. */
-  footerGap: "gap-2",
+  footerGap: "gap-[var(--spacing-tight)]",
   /** Region padding scale (matches composition section padding). Default usage: none. */
   regionPadding: {
     none: "",
     sm: "p-1.5",
-    md: "p-2.5",
+    md: "p-[var(--spacing-compact)]",
   },
   /** Empty region min-height — no visual footprint this phase. */
   emptyMinHeight: "min-h-0",
@@ -30,9 +30,9 @@ export const LAYOUT_TOKENS = {
     none: "",
     xs: "gap-1",
     sm: "gap-1.5",
-    md: "gap-2",
+    md: "gap-[var(--spacing-tight)]",
     lg: "gap-2.5",
-    xl: "gap-3",
+    xl: "gap-[var(--spacing-compact)]",
   },
   /** UX-2.26 — Cross-axis alignment (items-*). */
   align: {

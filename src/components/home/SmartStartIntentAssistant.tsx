@@ -38,7 +38,7 @@ export function SmartStartIntentAssistant({
 
   return (
     <div
-      className="w-full rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/50 p-3 text-left"
+      className="w-full rounded-[var(--radius-container)] border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/50 p-[var(--spacing-compact)] text-left"
       aria-label="Asistente de intención"
     >
       <label
@@ -72,7 +72,7 @@ export function SmartStartIntentAssistant({
 
       {recommendation ? (
         <div
-          className="mt-3 rounded-md border border-[var(--color-brand-primary)]/30 bg-[var(--color-brand-primary)]/5 px-3 py-2.5 space-y-2"
+          className="mt-3 rounded-[var(--radius-container)] border border-[var(--color-brand-primary)]/30 bg-[var(--color-brand-primary)]/5 px-[var(--spacing-compact)] py-2.5 space-y-[var(--spacing-tight)]"
           role="status"
         >
           <p className="text-sm font-semibold text-[var(--color-text-primary)]">

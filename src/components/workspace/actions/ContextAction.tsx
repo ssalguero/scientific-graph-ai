@@ -1,3 +1,4 @@
+import { DS_FOCUS_RING } from "@/lib/ui/focus-ring";
 import { UI_TOKENS } from "@/lib/ui/tokens";
 
 /**
@@ -26,7 +27,7 @@ export function ContextAction({
   return (
     <button
       type="button"
-      className={`${UI_TOKENS.button.outlineSm} cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30 disabled:cursor-not-allowed disabled:opacity-50`}
+      className={`${UI_TOKENS.button.outlineSm} cursor-pointer ${DS_FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-50`}
       aria-label={ariaLabel ?? label}
       disabled={disabled}
       onClick={onClick}

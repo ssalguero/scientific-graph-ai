@@ -1,3 +1,4 @@
+import { DS_FOCUS_RING, DS_MOTION_ENTER } from "@/lib/ui/focus-ring";
 import { ACTION_TOKENS } from "../toolbar/ACTION_TOKENS";
 import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
 
@@ -12,7 +13,7 @@ export type RevealButtonProps = {
 
 /**
  * UX-2.15 — Controlled button only. No internal state.
- * UX-2.21 — Gap / padding / type via ACTION + SURFACE tokens.
+ * UX-I5 — Certified focus ring + motion + typography.
  */
 export function RevealButton({
   expanded,
@@ -23,13 +24,16 @@ export function RevealButton({
   return (
     <button
       type="button"
-      className={`inline-flex cursor-pointer items-center transition-colors duration-150 hover:bg-[var(--color-surface-canvas)] hover:text-[var(--color-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30 ${ACTION_TOKENS.gap} ${ACTION_TOKENS.padding} ${ACTION_TOKENS.radius} text-[10px] font-medium ${SURFACE_TOKENS.tone.default}`}
+      className={`inline-flex cursor-pointer items-center ${DS_MOTION_ENTER} hover:bg-[var(--color-surface-canvas)] hover:text-[var(--color-text-primary)] ${DS_FOCUS_RING} ${ACTION_TOKENS.gap} ${ACTION_TOKENS.padding} ${ACTION_TOKENS.radius} text-[length:var(--typography-caption-xs-font-size)] font-medium ${SURFACE_TOKENS.tone.default}`}
       aria-expanded={expanded}
       aria-controls={controlsId}
       aria-label={label}
       onClick={onToggle}
     >
-      <span aria-hidden className="text-[10px]">
+      <span
+        aria-hidden
+        className="text-[length:var(--typography-caption-xs-font-size)]"
+      >
         {expanded ? "▾" : "▸"}
       </span>
       <span>{label}</span>

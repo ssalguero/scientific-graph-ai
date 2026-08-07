@@ -11,6 +11,8 @@ export type EmptyTitleProps = {
  */
 export function EmptyTitle({ children }: EmptyTitleProps) {
   return (
-    <p className="text-sm font-medium text-[var(--color-text-primary)]">{children}</p>
+    <p className="text-[length:var(--typography-body-sm-font-size)] font-medium leading-[var(--typography-body-sm-line-height)] text-[var(--color-text-primary)]">
+      {children}
+    </p>
   );
 }

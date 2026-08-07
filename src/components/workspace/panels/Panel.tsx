@@ -70,12 +70,12 @@ export function Panel({
         : "max-sm:hidden";
 
   const animatedClass = animated
-    ? "transition-[width,height] duration-200 ease-out"
+    ? "transition-[width,height] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)]"
     : "";
 
   const activeClass = isActive
-    ? "border-[var(--color-brand-primary)]/40 shadow-sm"
-    : "border-[var(--color-border-default)]";
+    ? "border-[var(--color-brand-primary)]/40 shadow-[var(--elevation-card)]"
+    : "border-[var(--color-border-default)] shadow-none";
 
   return (
     <section
@@ -86,7 +86,7 @@ export function Panel({
       data-panel-collapsed={collapsed ? "true" : "false"}
       aria-label={title}
       style={style}
-      className={`flex shrink-0 flex-col min-h-0 overflow-hidden border bg-[var(--color-surface-default)] transition-colors transition-shadow duration-200 ${activeClass} ${responsiveHide} ${animatedClass}`}
+      className={`flex shrink-0 flex-col min-h-0 overflow-hidden border bg-[var(--color-surface-default)] transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] ${activeClass} ${responsiveHide} ${animatedClass}`}
     >
       {children}
     </section>

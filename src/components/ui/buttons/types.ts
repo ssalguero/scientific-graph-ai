@@ -14,7 +14,7 @@ export { mergeClassNames };
 /** Size composition only — variants come from getButtonVariant. */
 export function getButtonSizeClassName(size: ButtonSize = "md"): string {
   if (size === "sm") {
-    return "h-7 px-2 text-xs";
+    return "h-7 px-[var(--spacing-tight)] text-[length:var(--typography-label-sm-font-size)]";
   }
   return "";
 }

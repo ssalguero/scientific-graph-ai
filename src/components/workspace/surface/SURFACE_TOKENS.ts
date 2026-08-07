@@ -1,20 +1,18 @@
 /**
  * UX-2.23 — Surface polish SSOT (compose-only).
- * Independent local map of Tailwind / Design System --color-* literals aligned to
- * WORKSPACE_DENSITY_TOKENS (UX-2.25 spacing authority).
- * MUST NOT import or re-export UI_TOKENS, surfaces SURFACE_TOKENS,
- * CONTENT_TOKENS, LAYOUT_TOKENS, WORKSPACE_DENSITY_TOKENS, or any other *_TOKENS object.
+ * UX-I3 — Design System --radius-* / --spacing-* aligned to WORKSPACE_DENSITY_TOKENS.
+ * MUST NOT import or re-export UI_TOKENS or other *_TOKENS objects.
  * Unidirectional parity: Density is authority; this file must match Density.
  */
 export const SURFACE_TOKENS = {
   /** Alias of surfaces radius.default / UI radius.md. */
-  panelRadius: "rounded-md",
+  panelRadius: "rounded-[var(--radius-container)]",
   /** Alias of surfaces padding.md / layout regionPadding.md. */
-  panelPadding: "p-2.5",
+  panelPadding: "p-[var(--spacing-compact)]",
   /** Header chrome min-height — align with compact control row. */
   headerHeight: "min-h-8",
   /** Alias of surfaces gap.md / layout panelGap. */
-  bodyGap: "gap-2",
+  bodyGap: "gap-[var(--spacing-tight)]",
   /** Alias of semantic FOOTER_HEIGHT — no footprint when empty. */
   footerHeight: "min-h-0",
   /**
@@ -36,5 +34,5 @@ export const SURFACE_TOKENS = {
    */
   normalSpacing: "p-0",
   /** Alias of surfaces padding.md. */
-  comfortableSpacing: "p-2.5",
+  comfortableSpacing: "p-[var(--spacing-compact)]",
 } as const;

@@ -5,6 +5,7 @@ import {
   type IntentRecommendation,
 } from "@/lib/smart-start";
 import { SmartStartIntentAssistant } from "@/components/home/SmartStartIntentAssistant";
+import { DS_FOCUS_RING, DS_MOTION_ENTER } from "@/lib/ui/focus-ring";
 import { card, panelHeadingSubtext } from "@/lib/ui/theme";
 
 type SmartStartScreenProps = {
@@ -20,7 +21,7 @@ export function SmartStartScreen({
 }: SmartStartScreenProps) {
   return (
     <section
-      className="rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-default)] p-3 space-y-3"
+      className="rounded-[var(--radius-container)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] p-[var(--spacing-compact)] space-y-[var(--spacing-compact)]"
       aria-label="Inicio guiado"
     >
       <div className="text-left">
@@ -39,7 +40,7 @@ export function SmartStartScreen({
             key={option.id}
             type="button"
             onClick={() => onSelect(option.id)}
-            className={`${card} text-left flex flex-col gap-1.5 p-3 hover:border-[var(--color-brand-primary)]/40 transition-colors duration-200`}
+            className={`${card} text-left flex flex-col gap-[var(--spacing-tight)] p-[var(--spacing-compact)] hover:border-[var(--color-brand-primary)]/40 ${DS_MOTION_ENTER} ${DS_FOCUS_RING}`}
           >
             <span className="text-lg" aria-hidden>
               {option.icon}
@@ -59,7 +60,7 @@ export function SmartStartScreen({
         <button
           type="button"
           onClick={onExpertMode}
-          className={`${card} text-left flex flex-col gap-1.5 p-3 border-dashed hover:border-[var(--color-text-muted)] transition-colors duration-200`}
+          className={`${card} text-left flex flex-col gap-[var(--spacing-tight)] p-[var(--spacing-compact)] border-dashed hover:border-[var(--color-text-muted)] ${DS_MOTION_ENTER} ${DS_FOCUS_RING}`}
         >
           <span className="text-lg" aria-hidden>
             🧪

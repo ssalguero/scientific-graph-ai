@@ -1,3 +1,5 @@
+import { DS_FOCUS_RING, DS_MOTION_FEEDBACK } from "@/lib/ui/focus-ring";
+
 import { ACTION_TOKENS } from "../toolbar/ACTION_TOKENS";
 import { SURFACE_TOKENS } from "../surfaces/SurfaceTokens";
 
@@ -40,7 +42,7 @@ export function PanelOverflowMenu({
     >
       <button
         type="button"
-        className={`inline-flex cursor-default items-center justify-center leading-none transition-[opacity,background-color] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30 disabled:cursor-not-allowed disabled:opacity-40 ${ACTION_TOKENS.iconSlot} ${ACTION_TOKENS.radius} ${SURFACE_TOKENS.mutedOpacity}`}
+        className={`inline-flex cursor-default items-center justify-center leading-none ${DS_MOTION_FEEDBACK} ${DS_FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-40 ${ACTION_TOKENS.iconSlot} ${ACTION_TOKENS.radius} ${SURFACE_TOKENS.mutedOpacity}`}
         aria-label="More actions"
         disabled={isDisabled}
         aria-busy={busy || undefined}

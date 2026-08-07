@@ -37,7 +37,7 @@ export function StatusDot({ state }: StatusDotProps) {
     <span
       role="status"
       aria-label={statusLabel(state)}
-      className={`inline-block size-1.5 shrink-0 rounded-full transition-[opacity,transform,background-color] duration-150 ${toneClass(state)}`}
+      className={`inline-block size-1.5 shrink-0 rounded-full transition-[opacity,transform,background-color] duration-[var(--motion-feedback-duration)] ease-[var(--motion-feedback-easing)] motion-reduce:transition-none ${toneClass(state)}`}
     />
   );
 }

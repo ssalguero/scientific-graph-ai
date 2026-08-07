@@ -94,8 +94,8 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
 
   const canvasActive = activePanelId === "canvas";
   const canvasActiveClass = canvasActive
-    ? "border-[var(--color-brand-primary)]/40 shadow-sm"
-    : "border-[var(--color-border-default)] shadow-sm";
+    ? "border-[var(--color-brand-primary)]/45 shadow-[var(--elevation-popover)] ring-1 ring-inset ring-[var(--color-brand-primary)]/20"
+    : "border-[var(--color-border-muted)] shadow-[var(--elevation-card)]";
 
   return (
     <div className="flex min-w-0 flex-col">
@@ -126,7 +126,7 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
           data-panel-id="canvas"
           data-panel-active={canvasActive ? "true" : "false"}
           onPointerDown={() => activate("canvas")}
-          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--color-surface-default)] transition-colors transition-shadow duration-200 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--color-border-default)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--color-border-default)_35%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
+          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--color-surface-floating)] transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--color-border-subtle)_55%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--color-border-subtle)_55%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
         >
           {canvasActive ? (
             <span

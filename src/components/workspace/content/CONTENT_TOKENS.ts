@@ -10,7 +10,7 @@ export const CONTENT_TOKENS = {
   /** Alias of SURFACE_TOKENS.groupGap / LAYOUT contentGap. */
   groupGap: {
     sm: "gap-1.5",
-    md: "gap-2",
+    md: "gap-[var(--spacing-tight)]",
   },
   /** ContentGroup root — flex column (composition groupGap supplies spacing). */
   groupRoot: "flex flex-col",
@@ -18,32 +18,33 @@ export const CONTENT_TOKENS = {
   rowRoot: "flex flex-row items-center",
   rowGap: {
     sm: "gap-1.5",
-    md: "gap-2",
+    md: "gap-[var(--spacing-tight)]",
   },
   rowDistribute: "justify-between",
   /** KeyValue — label/value pair (SEMANTIC muted + type scale). Layout via Inline. */
   keyValueRoot: "",
   keyValueLabel:
-    "text-[10px] font-medium text-[var(--color-text-muted)] opacity-70",
-  keyValueValue: "text-[10px] text-[var(--color-text-primary)]",
+    "text-[length:var(--typography-caption-xs-font-size)] font-medium text-[var(--color-text-muted)] opacity-70",
+  keyValueValue:
+    "text-[length:var(--typography-caption-xs-font-size)] text-[var(--color-text-primary)]",
   /**
    * Description — EmptyDescription vocabulary (max-w + text-xs + muted).
    * Alias of SEMANTIC_TOKENS.MUTED_TEXT + existing empty description scale.
    */
   description:
-    "max-w-[16rem] text-xs leading-relaxed text-[var(--color-text-muted)]",
+    "max-w-[16rem] text-[length:var(--typography-body-sm-font-size)] leading-[var(--typography-body-sm-line-height)] text-[var(--color-text-muted)]",
   /**
    * Notice variants — compose SEMANTIC infoRoot + StatusBadge Design System tones.
    * info mirrors SEMANTIC_TOKENS.infoRoot exactly (pixel parity).
    */
   notice: {
-    info: "border border-[var(--color-border-default)] p-1.5 text-[10px] text-[var(--color-text-muted)]",
+    info: "rounded-[var(--radius-container)] border border-[var(--color-border-default)] p-1.5 text-[length:var(--typography-caption-xs-font-size)] text-[var(--color-text-muted)]",
     warning:
-      "border border-[color-mix(in srgb, var(--color-feedback-warning) 35%, var(--color-border-default))] bg-[color-mix(in srgb, var(--color-feedback-warning) 16%, var(--color-surface-default))] p-1.5 text-[10px] text-[var(--color-feedback-warning)]",
+      "rounded-[var(--radius-container)] border border-[color-mix(in srgb, var(--color-feedback-warning) 35%, var(--color-border-default))] bg-[color-mix(in srgb, var(--color-feedback-warning) 16%, var(--color-surface-default))] p-1.5 text-[length:var(--typography-caption-xs-font-size)] text-[var(--color-feedback-warning)]",
     success:
-      "border border-[var(--color-feedback-success)]/35 bg-[color-mix(in srgb, var(--color-feedback-success) 16%, var(--color-surface-default))] p-1.5 text-[10px] text-[var(--color-feedback-success)]",
+      "rounded-[var(--radius-container)] border border-[var(--color-feedback-success)]/35 bg-[color-mix(in srgb, var(--color-feedback-success) 16%, var(--color-surface-default))] p-1.5 text-[length:var(--typography-caption-xs-font-size)] text-[var(--color-feedback-success)]",
     danger:
-      "border border-[var(--color-border-danger)] bg-[color-mix(in srgb, var(--color-feedback-danger) 14%, var(--color-surface-default))] p-1.5 text-[10px] text-[var(--color-feedback-danger)]",
+      "rounded-[var(--radius-container)] border border-[var(--color-border-danger)] bg-[color-mix(in srgb, var(--color-feedback-danger) 14%, var(--color-surface-default))] p-1.5 text-[length:var(--typography-caption-xs-font-size)] text-[var(--color-feedback-danger)]",
   },
   /**
    * Content EmptyState — title + description only (no icon / action).
@@ -51,12 +52,14 @@ export const CONTENT_TOKENS = {
    */
   emptyRoot: "",
   emptyGap: "gap-1.5",
-  emptyTitle: "text-sm font-medium text-[var(--color-text-primary)]",  /**
+  emptyTitle:
+    "text-[length:var(--typography-body-sm-font-size)] font-medium text-[var(--color-text-primary)]",
+  /**
    * DividerContent — SURFACE_TOKENS.divider vocabulary (not Toolbar divider).
    */
   divider: {
     base: "border-0 border-t border-[var(--color-border-default)]",
-    spacing: "my-2.5",
+    spacing: "my-[var(--spacing-compact)]",
     muted: "opacity-60",
   },
 } as const;

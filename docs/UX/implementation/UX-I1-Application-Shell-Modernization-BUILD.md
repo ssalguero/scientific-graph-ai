@@ -131,4 +131,4 @@ Modernize the complete Application Shell to consume the certified Design System.
 - Application Shell Modernization: **COMPLETE**  
 - Design System: **preserved** (consumption only)  
 - ENGINE / DATA / AI: **preserved**  
-- Next authorized phase: **UX-I2 — Shared Components Modernization**  
+- Next authorized phase: **UX-I3 — Workspace Modernization**  

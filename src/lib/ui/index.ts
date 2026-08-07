@@ -112,3 +112,9 @@ export {
 } from "./theme";
 
 export { UI_ICONS, getIcon, type UiIconName } from "./icons";
+
+export {
+  DS_FOCUS_RING,
+  DS_MOTION_FEEDBACK,
+  DS_MOTION_ENTER,
+} from "./focus-ring";

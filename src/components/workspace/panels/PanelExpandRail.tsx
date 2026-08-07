@@ -15,11 +15,11 @@ export type PanelExpandRailProps = {
 };
 
 const positionClass: Record<PanelPosition, string> = {
-  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--color-surface-default)] px-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--color-surface-canvas)]",
+  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--color-surface-default)] px-0.5 transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-canvas)]",
   right:
-    "max-md:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--color-surface-default)] px-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--color-surface-canvas)]",
+    "max-md:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--color-surface-default)] px-0.5 transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-canvas)]",
   bottom:
-    "flex shrink-0 items-center justify-center border bg-[var(--color-surface-default)] py-0.5 transition-colors transition-shadow duration-200 hover:bg-[var(--color-surface-canvas)]",
+    "flex shrink-0 items-center justify-center border bg-[var(--color-surface-default)] py-0.5 transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-canvas)]",
 };
 
 /**
@@ -34,7 +34,7 @@ export function PanelExpandRail({
   isActive = false,
 }: PanelExpandRailProps) {
   const activeClass = isActive
-    ? "border-[var(--color-brand-primary)]/40 shadow-sm"
+    ? "border-[var(--color-brand-primary)]/40 shadow-[var(--elevation-card)]"
     : "border-[var(--color-border-default)]";
 
   return (

@@ -30,7 +30,14 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  transition: background-color 200ms ease, color 200ms ease;
+  transition: background-color var(--motion-enter-duration, 200ms)
+    var(--motion-enter-easing, ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
 }
 
 /* UX-4.1 / UX-I0 — certified ThemeProvider host fills the viewport */
@@ -41,4 +48,29 @@ body > [data-theme] {
   min-height: 100%;
   background: var(--color-surface-canvas);
   color: var(--color-text-primary);
+}
+
+/* UX-I5 — skip link for keyboard navigation polish */
+.ux-skip-link {
+  position: absolute;
+  left: var(--spacing-compact, 0.75rem);
+  top: var(--spacing-compact, 0.75rem);
+  z-index: 100;
+  padding: var(--spacing-tight, 0.5rem) var(--spacing-compact, 0.75rem);
+  border-radius: var(--radius-control, 8px);
+  background: var(--color-surface-default, #fff);
+  color: var(--color-text-primary, #0f172a);
+  border: 1px solid var(--color-border-default, #e2e8f0);
+  box-shadow: var(--elevation-popover, 0 4px 8px rgba(0, 0, 0, 0.08));
+  transform: translateY(-200%);
+  transition: transform var(--motion-feedback-duration, 150ms)
+    var(--motion-feedback-easing, ease-out);
+}
+
+.ux-skip-link:focus {
+  transform: translateY(0);
+  outline: none;
+  box-shadow:
+    0 0 0 var(--focus-ring-width, 2px) var(--focus-ring-color, #2563eb),
+    var(--elevation-popover, 0 4px 8px rgba(0, 0, 0, 0.08));
 }

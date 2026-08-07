@@ -1,66 +1,77 @@
 /**
  * D48.2 — Design Tokens v2 · Token Consolidation (move-only).
- * Single source of truth for Tailwind class fragments + semantic compositions.
- * No new visual values; existing exports preserved for API Freeze.
+ * UX-I2 — Shared compositions consume certified Design System CSS variables
+ * (--color-*, --radius-*, --elevation-*, --spacing-*, --typography-*, --motion-*).
+ * UX-I5 — Focus rings + motion-reduce via shared polish helpers.
+ * No new visual values; public keys preserved for API Freeze.
  */
+
+import { DS_FOCUS_RING } from "./focus-ring";
 
 /* -------------------------------------------------------------------------- */
 /* Primitives                                                                 */
 /* -------------------------------------------------------------------------- */
 
 export const spacing = {
-  px1: "px-1",
+  px1: "px-[var(--spacing-micro)]",
   px15: "px-1.5",
-  px2: "px-2",
+  px2: "px-[var(--spacing-tight)]",
   px25: "px-2.5",
-  px3: "px-3",
-  px4: "px-4",
+  px3: "px-[var(--spacing-compact)]",
+  px4: "px-[var(--spacing-default)]",
   py05: "py-0.5",
-  py1: "py-1",
+  py1: "py-[var(--spacing-micro)]",
   py15: "py-1.5",
-  py2: "py-2",
+  py2: "py-[var(--spacing-tight)]",
   py25: "py-2.5",
-  p2: "p-2",
-  p3: "p-3",
-  gap2: "gap-2",
+  p2: "p-[var(--spacing-tight)]",
+  p3: "p-[var(--spacing-compact)]",
+  gap2: "gap-[var(--spacing-tight)]",
   spaceY05: "space-y-0.5",
   spaceY15: "space-y-1.5",
-  spaceY2: "space-y-2",
-  spaceY3: "space-y-3",
+  spaceY2: "space-y-[var(--spacing-tight)]",
+  spaceY3: "space-y-[var(--spacing-compact)]",
   my15: "my-1.5",
-  mb1: "mb-1",
+  mb1: "mb-[var(--spacing-micro)]",
   mb15: "mb-1.5",
   mt05: "mt-0.5",
-  mt1: "mt-1",
+  mt1: "mt-[var(--spacing-micro)]",
 } as const;
 
+/** Radius — certified Design System radius tokens only. */
 export const radius = {
-  md: "rounded-md",
-  lg: "rounded-lg",
-  xl: "rounded-xl",
-  full: "rounded-full",
+  md: "rounded-[var(--radius-container)]",
+  lg: "rounded-[var(--radius-control)]",
+  xl: "rounded-[var(--radius-control)]",
+  full: "rounded-[var(--radius-pill)]",
 } as const;
 
+/** Shadows — certified elevation CSS variables. */
 export const shadows = {
-  sm: "shadow-sm",
-  md: "shadow-md",
-  hoverMd: "hover:shadow-md",
-  hoverSm: "hover:shadow-sm",
-  hover: "hover:shadow",
+  sm: "shadow-[var(--elevation-card)]",
+  md: "shadow-[var(--elevation-popover)]",
+  hoverMd: "hover:shadow-[var(--elevation-popover)]",
+  hoverSm: "hover:shadow-[var(--elevation-card)]",
+  hover: "hover:shadow-[var(--elevation-card)]",
 } as const;
 
+/** Motion — certified motion duration / easing (+ reduced-motion). */
 export const transitions = {
-  colors200: "transition-colors duration-200",
-  colors300: "transition-colors duration-300",
-  all200: "transition-all duration-200",
-  transform200: "transition-transform duration-200",
-  colors: "transition-colors",
+  colors200:
+    "transition-colors duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] motion-reduce:transition-none",
+  colors300:
+    "transition-colors duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] motion-reduce:transition-none",
+  all200:
+    "transition-all duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] motion-reduce:transition-none",
+  transform200:
+    "transition-transform duration-[var(--motion-feedback-duration)] ease-[var(--motion-feedback-easing)] motion-reduce:transition-none",
+  colors: "transition-colors motion-reduce:transition-none",
 } as const;
 
 export const animation = {
   activeScale: "active:scale-[0.98]",
-  duration200: "duration-200",
-  duration300: "duration-300",
+  duration200: "duration-[var(--motion-enter-duration)]",
+  duration300: "duration-[var(--motion-enter-duration)]",
   gridCollapseOpen: "grid-rows-[1fr] opacity-100",
   gridCollapseClosed: "grid-rows-[0fr] opacity-0",
 } as const;
@@ -74,7 +85,7 @@ export const zIndex = {
   toast: "z-50",
 } as const;
 
-/** Elevation aliases — values derived from `shadows` (no duplicate literals). */
+/** Elevation aliases — Design System elevation vars (no duplicate literals). */
 export const elevation = {
   flat: "shadow-none",
   low: shadows.sm,
@@ -94,26 +105,28 @@ export const border = {
   bare: "border",
 } as const;
 
-/** Typography / label fragments previously duplicated in theme. */
+/** Typography — certified type sizes + Design System color. */
 export const typography = {
   panelHeading:
-    "text-sm sm:text-base font-semibold text-[var(--color-text-primary)] tracking-tight",
+    "text-[length:var(--typography-heading-sm-font-size)] font-semibold leading-[var(--typography-heading-sm-line-height)] text-[var(--color-text-primary)] tracking-tight",
   panelHeadingSubtext:
-    "text-xs sm:text-sm text-[var(--color-text-muted)] mt-0.5",
+    "text-[length:var(--typography-body-sm-font-size)] leading-[var(--typography-body-sm-line-height)] text-[var(--color-text-muted)] mt-[var(--spacing-micro)]",
   sectionLabel:
-    "text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5",
+    "text-[length:var(--typography-label-sm-font-size)] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-[var(--spacing-micro)]",
   subsectionHeading:
-    "text-xs sm:text-sm font-semibold text-[var(--color-text-primary)]",
+    "text-[length:var(--typography-body-sm-font-size)] font-semibold leading-[var(--typography-body-sm-line-height)] text-[var(--color-text-primary)]",
   fieldLabel:
-    "block text-[11px] font-medium text-[var(--color-text-primary)] mb-1",
+    "block text-[length:var(--typography-label-sm-font-size)] font-medium text-[var(--color-text-primary)] mb-[var(--spacing-micro)]",
   dataSemanticHint:
-    "text-[11px] sm:text-xs text-[var(--color-text-muted)] leading-snug",
+    "text-[length:var(--typography-caption-font-size)] leading-[var(--typography-caption-line-height)] text-[var(--color-text-muted)]",
   projectFileFieldLabel:
-    "block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]",
+    "block text-[length:var(--typography-label-sm-font-size)] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]",
   sidebarSectionLabel:
-    "text-[10px] font-semibold uppercase tracking-[0.09em] text-[var(--color-text-muted)]",
-  bodyXsSm: "text-xs sm:text-sm text-[var(--color-text-primary)]",
-  mutedXsSm: "text-xs sm:text-sm text-[var(--color-text-muted)]",
+    "text-[length:var(--typography-caption-xs-font-size)] font-semibold uppercase tracking-[0.09em] text-[var(--color-text-muted)]",
+  bodyXsSm:
+    "text-[length:var(--typography-body-sm-font-size)] leading-[var(--typography-body-sm-line-height)] text-[var(--color-text-primary)]",
+  mutedXsSm:
+    "text-[length:var(--typography-body-sm-font-size)] leading-[var(--typography-body-sm-line-height)] text-[var(--color-text-muted)]",
 } as const;
 
 /* -------------------------------------------------------------------------- */
@@ -133,8 +146,10 @@ export const layout = {
 /** Canonical workspace shell strings (D47 freeze values — unchanged). */
 export const workspace = {
   shell: "flex min-h-screen flex-col lg:flex-row",
-  mainColumn: "flex-1 min-w-0 overflow-auto",
-  inner: "w-full px-3 sm:px-4 lg:px-5 xl:px-6 py-2.5 sm:py-3 space-y-3",
+  mainColumn: "flex-1 min-w-0 overflow-auto bg-[var(--color-surface-canvas)]",
+  /** UX-I3 — Design System spacing; quieter chrome so canvas content leads. */
+  inner:
+    "w-full px-[var(--spacing-compact)] sm:px-[var(--spacing-default)] lg:px-[var(--spacing-medium)] py-[var(--spacing-compact)] space-y-[var(--spacing-compact)]",
 } as const;
 
 /* -------------------------------------------------------------------------- */
@@ -163,15 +178,15 @@ export const panel = {
   persistenceBadge:
     "inline-flex shrink-0 items-center rounded border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]",
   alertBase: `${radius.md} ${border.bare} ${spacing.px3} ${spacing.py2} text-xs sm:text-sm font-medium ${transitions.colors200}`,
-  inputField: `w-full h-8 ${border.default} ${radius.md} ${spacing.px2} text-xs text-[var(--color-text-primary)] bg-[var(--color-surface-default)] placeholder:text-[var(--color-text-muted)] ${transitions.colors200} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30 focus-visible:border-[var(--color-brand-primary)]`,
-  projectFileInputField: `w-full h-8 ${radius.md} ${border.default} bg-[var(--color-surface-default)] ${spacing.px2} ${spacing.py15} text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30`,
+  inputField: `w-full h-8 ${border.default} ${radius.md} ${spacing.px2} text-xs text-[var(--color-text-primary)] bg-[var(--color-surface-default)] placeholder:text-[var(--color-text-muted)] ${transitions.colors200} ${DS_FOCUS_RING} focus-visible:border-[var(--color-brand-primary)]`,
+  projectFileInputField: `w-full h-8 ${radius.md} ${border.default} bg-[var(--color-surface-default)] ${spacing.px2} ${spacing.py15} text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] ${DS_FOCUS_RING}`,
 } as const;
 
 export const button = {
-  primary: `inline-flex h-8 items-center justify-center font-semibold text-[var(--color-text-inverse)] text-xs ${spacing.px3} ${radius.md} bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] ${transitions.colors200}`,
-  outline: `inline-flex h-8 items-center justify-center ${border.default} bg-[var(--color-surface-default)] ${spacing.px25} ${radius.md} text-xs text-[var(--color-text-primary)] ${transitions.colors200} hover:bg-[var(--color-surface-canvas)] hover:border-[var(--color-text-muted)] disabled:opacity-50 disabled:cursor-not-allowed`,
-  outlineSm: `inline-flex h-7 items-center justify-center ${border.default} bg-[var(--color-surface-default)] ${spacing.px2} ${radius.md} text-xs text-[var(--color-text-primary)] ${transitions.colors200} hover:bg-[var(--color-surface-canvas)] hover:border-[var(--color-text-muted)]`,
-  actionBar: `inline-flex h-8 items-center justify-center ${radius.md} ${spacing.px25} text-xs font-semibold ${transitions.colors200} disabled:opacity-50 disabled:cursor-not-allowed`,
+  primary: `inline-flex h-8 items-center justify-center font-semibold text-[var(--color-text-inverse)] text-xs ${spacing.px3} ${radius.md} bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] ${transitions.colors200} ${DS_FOCUS_RING}`,
+  outline: `inline-flex h-8 items-center justify-center ${border.default} bg-[var(--color-surface-default)] ${spacing.px25} ${radius.md} text-xs text-[var(--color-text-primary)] ${transitions.colors200} hover:bg-[var(--color-surface-canvas)] hover:border-[var(--color-text-muted)] disabled:opacity-50 disabled:cursor-not-allowed ${DS_FOCUS_RING}`,
+  outlineSm: `inline-flex h-7 items-center justify-center ${border.default} bg-[var(--color-surface-default)] ${spacing.px2} ${radius.md} text-xs text-[var(--color-text-primary)] ${transitions.colors200} hover:bg-[var(--color-surface-canvas)] hover:border-[var(--color-text-muted)] ${DS_FOCUS_RING}`,
+  actionBar: `inline-flex h-8 items-center justify-center ${radius.md} ${spacing.px25} text-xs font-semibold ${transitions.colors200} disabled:opacity-50 disabled:cursor-not-allowed ${DS_FOCUS_RING}`,
   actionBarPrimary:
     "bg-[var(--color-feedback-success)] text-[var(--color-text-inverse)] hover:opacity-90 min-w-[7.5rem]",
   actionBarSave:
@@ -223,9 +238,9 @@ export const sidebar = {
   overlayClosed:
     "hidden pointer-events-none opacity-0 fixed inset-y-0 left-0",
   overlayBackdrop: `fixed inset-0 ${zIndex.sticky} bg-[var(--color-text-primary)]/40 opacity-100 pointer-events-auto ${transitions.colors200}`,
-  mobileTrigger: `fixed top-3 left-3 ${zIndex.dropdown} lg:hidden inline-flex items-center justify-center ${radius.md} ${border.default} bg-[var(--color-surface-default)] ${spacing.p2} text-[var(--color-text-primary)] ${shadows.sm} hover:bg-[var(--color-surface-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30 ${transitions.colors200}`,
+  mobileTrigger: `fixed top-3 left-3 ${zIndex.dropdown} lg:hidden inline-flex items-center justify-center ${radius.md} ${border.default} bg-[var(--color-surface-default)] ${spacing.p2} text-[var(--color-text-primary)] ${shadows.sm} hover:bg-[var(--color-surface-canvas)] ${DS_FOCUS_RING} ${transitions.colors200}`,
   header: `${spacing.px25} ${spacing.py2} ${border.bottom} flex items-center ${spacing.gap2}`,
-  collapseToggle: `inline-flex shrink-0 items-center justify-center ${radius.md} p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-canvas)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30 ${transitions.colors200}`,
+  collapseToggle: `inline-flex shrink-0 items-center justify-center ${radius.md} p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-canvas)] hover:text-[var(--color-text-primary)] ${DS_FOCUS_RING} ${transitions.colors200}`,
   sectionGap: `flex-1 overflow-y-auto ${spacing.px25} ${spacing.py2} space-y-2`,
   sectionGapCollapsed: `flex-1 overflow-y-auto overflow-x-hidden ${spacing.px15} ${spacing.py15} ${spacing.spaceY15}`,
   railHide: "hidden",
@@ -235,7 +250,7 @@ export const sidebar = {
   sectionHeader: `flex w-full items-center ${spacing.gap2} ${spacing.py1} text-left text-[10px] font-semibold uppercase tracking-[0.09em] text-[var(--color-text-primary)] ${transitions.colors200}`,
   sectionBody: `${spacing.spaceY05} pb-1 pt-0.5`,
   sectionLabel: typography.sidebarSectionLabel,
-  navItem: `flex w-full items-center justify-between gap-1.5 ${radius.md} ${spacing.px2} ${spacing.py1} text-left text-xs text-[var(--color-text-primary)] ${transitions.colors200} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30`,
+  navItem: `flex w-full items-center justify-between gap-1.5 ${radius.md} ${spacing.px2} ${spacing.py1} text-left text-xs text-[var(--color-text-primary)] ${transitions.colors200} ${DS_FOCUS_RING}`,
   navItemHover:
     "hover:bg-[var(--color-surface-canvas)] hover:text-[var(--color-text-primary)]",
   navItemActive:
@@ -267,8 +282,8 @@ export const toolbar = {
   sectionRight: `w-full ${spacing.spaceY15}`,
   group: `flex flex-wrap items-center gap-1.5`,
   groupCompact: `flex flex-wrap items-center ${spacing.px1} gap-1.5`,
-  action: `${button.outlineSm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30`,
-  actionActive: `${button.outlineSm} ${border.accentSoft} bg-[var(--color-brand-primary)]/10 text-[var(--color-text-primary)] ${shadows.sm} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30`,
+  action: `${button.outlineSm} ${DS_FOCUS_RING}`,
+  actionActive: `${button.outlineSm} ${border.accentSoft} bg-[var(--color-brand-primary)]/10 text-[var(--color-text-primary)] ${shadows.sm} ${DS_FOCUS_RING}`,
   actionDisabled: "opacity-50 cursor-not-allowed",
   overflow: "",
   height: "h-7",
@@ -296,9 +311,10 @@ export const inspector = {
   background: "bg-[var(--color-surface-default)]",
   panel: `${radius.lg} ${border.default} bg-[var(--color-surface-default)] ${shadows.sm}`,
   root: `fixed inset-y-0 right-0 flex shrink-0 flex-col border-l ${border.color} bg-[var(--color-surface-default)] ${elevation.low} ${zIndex.raised}`,
-  header: `flex shrink-0 items-center ${spacing.px3} ${spacing.py2} ${border.bottom}`,
+  header: `flex shrink-0 items-center ${spacing.px3} ${spacing.py2} ${border.bottom} bg-[var(--color-surface-default)]`,
   title: typography.subsectionHeading,
-  body: `flex-1 min-h-0 overflow-y-auto ${spacing.p3} ${spacing.spaceY2}`,
+  /** UX-I3 — Canvas-tinted body strengthens hierarchy vs chrome header. */
+  body: `flex-1 min-h-0 overflow-y-auto ${spacing.p3} ${spacing.spaceY2} bg-[var(--color-surface-canvas)]`,
   section: spacing.spaceY15,
   sectionHeader: typography.sectionLabel,
 } as const;

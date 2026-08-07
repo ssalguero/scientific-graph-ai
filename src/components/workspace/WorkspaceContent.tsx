@@ -40,15 +40,17 @@ export function WorkspaceContent({
             className={`min-w-0 flex flex-col ${WORKSPACE_DENSITY_TOKENS.iconGap}`}
           >
             <p className={SURFACE_TOKENS.metadata.root}>Project</p>
-            <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-base">
+            <h1 className="truncate text-[length:var(--typography-heading-sm-font-size)] font-semibold leading-[var(--typography-heading-sm-line-height)] tracking-tight text-[var(--color-text-primary)]">
               Scientific Graph AI
             </h1>
-            <p className={`truncate text-xs sm:text-sm ${SURFACE_TOKENS.tone.default}`}>
+            <p
+              className={`truncate text-[length:var(--typography-body-sm-font-size)] leading-[var(--typography-body-sm-line-height)] ${SURFACE_TOKENS.tone.default}`}
+            >
               Current Project
             </p>
           </div>
           <p
-            className={`shrink-0 text-xs font-medium sm:text-sm ${SURFACE_TOKENS.tone.default}`}
+            className={`shrink-0 text-[length:var(--typography-body-sm-font-size)] font-medium leading-[var(--typography-body-sm-line-height)] ${SURFACE_TOKENS.tone.default}`}
             aria-label="Workspace status"
           >
             Ready

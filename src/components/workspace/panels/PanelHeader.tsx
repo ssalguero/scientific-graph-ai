@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { DS_MOTION_ENTER } from "@/lib/ui/focus-ring";
 import { getIcon } from "@/lib/ui/icons";
 import { sidebarCollapseToggle } from "@/lib/ui/theme";
 
@@ -67,7 +68,7 @@ export function PanelHeader({
       align="center"
       justify="between"
       gap="none"
-      className={`relative flex-none border-b border-[var(--color-border-default)] transition-colors duration-150 hover:bg-[var(--color-surface-canvas)] ${LAYOUT_TOKENS.headerGap} ${LAYOUT_TOKENS.regionPadding.md} ${headerBg}`}
+      className={`relative flex-none border-b border-[var(--color-border-default)] ${DS_MOTION_ENTER} hover:bg-[var(--color-surface-canvas)] ${LAYOUT_TOKENS.headerGap} ${LAYOUT_TOKENS.regionPadding.md} ${headerBg}`}
     >
       {isActive ? (
         <span
@@ -78,7 +79,7 @@ export function PanelHeader({
       <Inline align="center" gap="sm" className="min-w-0">
         {status != null ? status : null}
         <p
-          className={`${SURFACE_TOKENS.metadata.root} transition-colors duration-150 ${titleColor}`}
+          className={`${SURFACE_TOKENS.metadata.root} ${DS_MOTION_ENTER} ${titleColor}`}
         >
           {title}
         </p>

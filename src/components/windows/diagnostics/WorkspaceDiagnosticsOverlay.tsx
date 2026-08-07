@@ -36,13 +36,13 @@ const OVERLAY_CHROME = {
   root: [
     "pointer-events-none fixed bottom-3 right-3 max-w-xs",
     UI_TOKENS.zIndex.toast,
-    UI_TOKENS.radius.md,
+    "rounded-[var(--radius-control)]",
     UI_TOKENS.border.default,
-    UI_TOKENS.shadow.md,
+    "shadow-[var(--elevation-dialog)]",
     "bg-[var(--color-surface-default)]",
     UI_TOKENS.spacing.p2,
     UI_TOKENS.spacing.spaceY15,
-    "text-[10px] text-[var(--color-text-primary)]",
+    "text-[length:var(--typography-caption-xs-font-size)] text-[var(--color-text-primary)]",
     UI_TOKENS.transition.colors200,
   ].join(" "),
   title: [

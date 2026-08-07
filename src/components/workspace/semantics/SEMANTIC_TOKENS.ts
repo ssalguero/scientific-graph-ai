@@ -6,9 +6,9 @@
  */
 export const SEMANTIC_TOKENS = {
   /** Alias of layout headerGap / surface gap.md. */
-  HEADER_GAP: "gap-2",
+  HEADER_GAP: "gap-[var(--spacing-tight)]",
   /** Alias of layout contentGap / surface gap.md. */
-  SECTION_GAP: "gap-2",
+  SECTION_GAP: "gap-[var(--spacing-tight)]",
   /** Alias of surface iconSlot size sm height. */
   STATUS_HEIGHT: "min-h-4",
   /** Alias of layout regionPadding.sm / surface padding.sm. */
@@ -20,7 +20,7 @@ export const SEMANTIC_TOKENS = {
   /** Alias of surface metadata muted text color. */
   MUTED_TEXT: "text-[var(--color-text-muted)]",
   /** Alias of surface iconSlot size sm. */
-  ICON_SIZE: "h-4 w-4 text-[10px]",
+  ICON_SIZE: "h-4 w-4 text-[length:var(--typography-caption-xs-font-size)]",
   /** Header row layout — UX-2.26 flex owned by Inline; retained for docs/parity. */
   headerRow: "",
   /** Header title column — UX-2.26 flex owned by Stack; retained for docs/parity. */
@@ -29,13 +29,14 @@ export const SEMANTIC_TOKENS = {
   headerTrailing: "ml-auto text-[var(--color-text-muted)]",
   /** Status row chrome — height + type (flex via Inline in SemanticStatus). */
   statusRow:
-    "min-h-4 text-[10px] font-medium text-[var(--color-text-muted)]",
+    "min-h-4 text-[length:var(--typography-caption-xs-font-size)] font-medium text-[var(--color-text-muted)]",
   /** Section micro-label — aliases surface metadata typography + LABEL_OPACITY. */
   label:
-    "text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--color-text-muted)] opacity-70",
+    "text-[length:var(--typography-caption-xs-font-size)] font-medium uppercase tracking-[0.08em] text-[var(--color-text-muted)] opacity-70",
   /** Neutral info container — aliases border + INFO_PADDING. */
   infoRoot:
-    "border border-[var(--color-border-default)] p-1.5 text-[10px] text-[var(--color-text-muted)]",
+    "rounded-[var(--radius-container)] border border-[var(--color-border-default)] p-1.5 text-[length:var(--typography-caption-xs-font-size)] text-[var(--color-text-muted)]",
   /** Footer shell chrome — height + type (flex via Inline in SemanticFooter). */
-  footerRoot: "min-h-0 text-[10px] text-[var(--color-text-muted)]",
+  footerRoot:
+    "min-h-0 text-[length:var(--typography-caption-xs-font-size)] text-[var(--color-text-muted)]",
 } as const;

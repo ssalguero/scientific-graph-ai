@@ -5,24 +5,24 @@
  */
 export const SURFACE_TOKENS = {
   radius: {
-    default: "rounded-md",
-    canvas: "rounded-lg",
+    default: "rounded-[var(--radius-container)]",
+    canvas: "rounded-[var(--radius-control)]",
   },
   padding: {
     none: "",
     sm: "p-1.5",
-    md: "p-2.5",
+    md: "p-[var(--spacing-tight)]",
   },
   gap: {
     sm: "gap-1.5",
-    md: "gap-2",
+    md: "gap-[var(--spacing-tight)]",
   },
   border: {
     default: "border border-[var(--color-border-default)]",
     none: "border-0",
   },
   mutedOpacity: "opacity-70",
-  elevated: "shadow-sm",
+  elevated: "shadow-[var(--elevation-card)]",
   variant: {
     default:
       "relative bg-[var(--color-surface-default)] text-[var(--color-text-primary)]",
@@ -37,22 +37,22 @@ export const SURFACE_TOKENS = {
   },
   tone: {
     default: "text-[var(--color-text-muted)]",
-    explorer: "text-sky-600 dark:text-sky-400",
-    inspector: "text-violet-600 dark:text-violet-400",
-    console: "text-emerald-600 dark:text-emerald-400",
+    explorer: "text-[var(--color-feedback-info)]",
+    inspector: "text-[var(--color-brand-primary)]",
+    console: "text-[var(--color-feedback-success)]",
   },
   accent: {
     base: "pointer-events-none absolute bg-current",
     position: {
       none: "hidden",
-      left: "inset-y-1 left-0 w-0.5 rounded-full",
-      top: "inset-x-1 top-0 h-0.5 rounded-full",
+      left: "inset-y-1 left-0 w-0.5 rounded-[var(--radius-pill)]",
+      top: "inset-x-1 top-0 h-0.5 rounded-[var(--radius-pill)]",
     },
     tone: {
       default: "text-[var(--color-brand-primary)]",
-      explorer: "text-sky-500/80",
-      inspector: "text-violet-500/80",
-      console: "text-emerald-500/80",
+      explorer: "text-[var(--color-feedback-info)]/80",
+      inspector: "text-[var(--color-brand-primary)]/80",
+      console: "text-[var(--color-feedback-success)]/80",
     },
   },
   divider: {
@@ -64,13 +64,13 @@ export const SURFACE_TOKENS = {
     muted: "opacity-60",
   },
   metadata: {
-    root: "text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--color-text-muted)]",
+    root: "text-[length:var(--typography-caption-xs-font-size)] font-medium uppercase tracking-[0.08em] text-[var(--color-text-muted)]",
   },
   iconSlot: {
     base: "inline-flex shrink-0 items-center justify-center",
     size: {
-      sm: "h-4 w-4 text-[10px]",
-      md: "h-5 w-5 text-xs",
+      sm: "h-4 w-4 text-[length:var(--typography-caption-xs-font-size)]",
+      md: "h-5 w-5 text-[length:var(--typography-label-sm-font-size)]",
     },
   },
   contentInset: "pl-2.5",
@@ -82,27 +82,27 @@ export const SURFACE_TOKENS = {
    */
   workspaceGap: {
     sm: "gap-1.5",
-    md: "gap-2",
+    md: "gap-[var(--spacing-tight)]",
   },
   sectionGap: {
     sm: "gap-1.5",
-    md: "gap-2",
+    md: "gap-[var(--spacing-tight)]",
   },
   groupGap: {
     sm: "gap-1.5",
-    md: "gap-2",
+    md: "gap-[var(--spacing-tight)]",
   },
   dividerColor: "border-0 border-t border-[var(--color-border-default)]",
   dividerMuted: "opacity-60",
   dividerInset: {
     none: "",
     sm: "mx-1.5",
-    md: "mx-2.5",
+    md: "mx-[var(--spacing-compact)]",
   },
   sectionPadding: {
     none: "",
     sm: "p-1.5",
-    md: "p-2.5",
+    md: "p-[var(--spacing-compact)]",
   },
   spacer: {
     none: "",

@@ -11,6 +11,10 @@ This series does **not** redefine the Design System (UX-1…UX-9 RELEASE / SERIE
 |-------|-------|--------|------|
 | **UX-I0** | Visual Modernization Foundation | **PLANNING CERTIFIED** · **BUILD IMPLEMENTED** · Foundation **COMPLETE** | [Planning](./UX-I0-Visual-Modernization-Foundation.md) · [Build](./UX-I0-Visual-Modernization-Foundation-BUILD.md) |
 | **UX-I1** | Application Shell Modernization | **BUILD IMPLEMENTED** · Shell **COMPLETE** | [Build](./UX-I1-Application-Shell-Modernization-BUILD.md) |
+| **UX-I2** | Shared Components Modernization | **BUILD IMPLEMENTED** · Shared **COMPLETE** | [Build](./UX-I2-Shared-Components-Modernization-BUILD.md) |
+| **UX-I3** | Workspace Modernization | **BUILD IMPLEMENTED** · Workspace **COMPLETE** | [Build](./UX-I3-Workspace-Modernization-BUILD.md) |
+| **UX-I4** | Interaction & Window Experience | **BUILD IMPLEMENTED** · Interaction **COMPLETE** | [Build](./UX-I4-Interaction-Window-Experience-BUILD.md) |
+| **UX-I5** | UX Polish, Accessibility & Certification | **BUILD IMPLEMENTED** · UX Modernization **COMPLETE** · **UX RELEASE CERTIFIED** | [Build](./UX-I5-UX-Polish-Accessibility-Certification-BUILD.md) · [Certification](../certification/CERTIFICATION.md) |
 
 ## Principles
 
@@ -21,4 +25,4 @@ This series does **not** redefine the Design System (UX-1…UX-9 RELEASE / SERIE
 
 ## Next
 
-**UX-I2 — Shared Components Modernization**
+**UX-II — Workspace Experience Evolution**

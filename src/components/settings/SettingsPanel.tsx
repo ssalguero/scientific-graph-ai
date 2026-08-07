@@ -16,12 +16,12 @@ export type SettingsPanelProps = {
   className?: string;
 };
 
-/** Local shell — denser padding/typography than contentPanel; retained (not 1:1). */
+/** UX-I2 — Shared settings form chrome consumes Design System CSS variables. */
 const panelClassName =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-2 text-xs text-[var(--app-text)]";
+  "rounded-[var(--radius-control)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-[var(--spacing-tight)] py-[var(--spacing-tight)] text-[length:var(--typography-body-sm-font-size)] text-[var(--color-text-primary)] shadow-[var(--elevation-card)]";
 
 const settingRowClassName =
-  "flex items-center justify-between gap-2 rounded-md border border-[var(--app-border)]/60 bg-[var(--app-surface-muted)]/40 px-2 py-1.5";
+  "flex items-center justify-between gap-[var(--spacing-tight)] rounded-[var(--radius-container)] border border-[var(--color-border-default)]/60 bg-[var(--color-surface-canvas)]/40 px-[var(--spacing-tight)] py-1.5";
 
 export function SettingsPanel({
   theme,
@@ -36,9 +36,12 @@ export function SettingsPanel({
       className={[panelClassName, className].filter(Boolean).join(" ")}
       aria-label="Configuración"
     >
-      <div className="space-y-2">
+      <div className="space-y-[var(--spacing-tight)]">
         <div className={settingRowClassName}>
-          <span className="text-xs text-[var(--app-text)]" id="settings-theme-label">
+          <span
+            className="text-[length:var(--typography-body-sm-font-size)] text-[var(--color-text-primary)]"
+            id="settings-theme-label"
+          >
             Tema oscuro
           </span>
           <label className={`${toggleShell} cursor-pointer shrink-0`}>
@@ -56,7 +59,7 @@ export function SettingsPanel({
           </label>
         </div>
         <div
-          className="flex items-center justify-between gap-2 px-0.5 text-[11px] text-[var(--app-text-muted)]"
+          className="flex items-center justify-between gap-[var(--spacing-tight)] px-0.5 text-[length:var(--typography-caption-font-size)] text-[var(--color-text-muted)]"
           aria-hidden
         >
           <span>☀ Claro</span>
@@ -65,7 +68,7 @@ export function SettingsPanel({
 
         <div className={settingRowClassName}>
           <span
-            className="text-xs text-[var(--app-text)]"
+            className="text-[length:var(--typography-body-sm-font-size)] text-[var(--color-text-primary)]"
             id="settings-hints-label"
           >
             Hints contextuales
@@ -84,14 +87,16 @@ export function SettingsPanel({
             <span className={toggleThumb} aria-hidden />
           </label>
         </div>
-        <p className="px-0.5 text-[11px] leading-snug text-[var(--app-text-muted)]">
+        <p className="px-0.5 text-[length:var(--typography-caption-font-size)] leading-[var(--typography-caption-line-height)] text-[var(--color-text-muted)]">
           Muestra u oculta avisos y badges de ayuda en el inspector de análisis.
         </p>
 
         <div className={settingRowClassName}>
-          <span className="text-xs text-[var(--app-text)]">Versión</span>
+          <span className="text-[length:var(--typography-body-sm-font-size)] text-[var(--color-text-primary)]">
+            Versión
+          </span>
           <span
-            className="text-[11px] font-medium text-[var(--app-text-muted)] tabular-nums"
+            className="text-[length:var(--typography-caption-font-size)] font-medium text-[var(--color-text-muted)] tabular-nums"
             aria-label={`Versión de la aplicación ${appVersion}`}
           >
             v{appVersion}

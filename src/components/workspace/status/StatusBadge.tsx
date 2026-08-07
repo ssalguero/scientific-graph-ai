@@ -39,7 +39,7 @@ export function StatusBadge({
   return (
     <span
       aria-label={ariaLabel}
-      className={`inline-flex shrink-0 items-center border text-[10px] font-medium uppercase tracking-[0.08em] transition-[opacity,background-color] duration-150 ${SURFACE_TOKENS.radius.default} ${SURFACE_TOKENS.padding.sm} ${toneClasses(tone)}`}
+      className={`inline-flex shrink-0 items-center border text-[length:var(--typography-caption-xs-font-size)] font-medium uppercase tracking-[0.08em] transition-[opacity,background-color] duration-[var(--motion-feedback-duration)] ease-[var(--motion-feedback-easing)] motion-reduce:transition-none ${SURFACE_TOKENS.radius.default} ${SURFACE_TOKENS.padding.sm} ${toneClasses(tone)}`}
     >
       {children}
     </span>

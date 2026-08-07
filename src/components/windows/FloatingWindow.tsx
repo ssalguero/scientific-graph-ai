@@ -81,16 +81,23 @@ import {
   FLOATING_WINDOW_RESIZE_EDGES,
   FloatingWindowResizeHandle,
 } from "./FloatingWindowResizeHandle";
+import {
+  INTERACTION_ELEVATION,
+  INTERACTION_FOCUS_RING,
+  INTERACTION_INDICATOR_SHELL,
+  INTERACTION_INDICATOR_STATUS_SHELL,
+  INTERACTION_MOTION,
+  INTERACTION_STATE,
+} from "./InteractionChromeTokens";
 
 /**
- * Presentational chrome composed from existing D48 / UI_TOKENS only.
+ * Presentational chrome composed from Design System CSS vars via InteractionChromeTokens.
  * Token Freeze — no hardcoded colors · no hex · no rgb/rgba · no new palette.
  * Geometry remains inline style (API Freeze).
  * Visual Priority Freeze: Active > Focused > Selected > Hover >
  *   Keyboard Navigation > Discoverability.
  * Clipboard · Palette · Undo / Redo chrome are additive · outside cascade.
- * UX-9.8 Visual System Consistency — shared indicator rhythm across domains.
- * UX-9.8 Chrome Density — header / badge spacing via UI_TOKENS only.
+ * UX-I4 — Interaction clarity · elevation hierarchy · focus ring · motion.
  * Animation Freeze — colors / opacity / transform / shadow only · no transition-all.
  */
 
@@ -118,61 +125,48 @@ function keyboardDirectionGlyph(
 }
 
 /** Shared indicator shell — Visual System Consistency Freeze. */
-const INDICATOR_SHELL = [
-  "inline-flex shrink-0 items-center h-4",
-  UI_TOKENS.spacing.px1,
-  "text-[8px] font-semibold uppercase tracking-wide leading-none",
-  UI_TOKENS.radius.md,
-  UI_TOKENS.shadow.sm,
-  UI_TOKENS.transition.colors200,
-].join(" ");
+const INDICATOR_SHELL = INTERACTION_INDICATOR_SHELL;
 
 /** Shared status / glyph shell — same height · radius · spacing · rhythm. */
-const INDICATOR_STATUS_SHELL = [
-  "inline-flex shrink-0 items-center h-4",
-  UI_TOKENS.spacing.px1,
-  "text-[8px] font-medium tracking-wide leading-none",
-  UI_TOKENS.radius.md,
-  UI_TOKENS.shadow.sm,
-  UI_TOKENS.transition.colors200,
-].join(" ");
+const INDICATOR_STATUS_SHELL = INTERACTION_INDICATOR_STATUS_SHELL;
 
 const FLOATING_WINDOW_CHROME = {
   rootBase: [
     "flex h-full flex-col overflow-hidden",
-    UI_TOKENS.radius.md,
-    UI_TOKENS.transition.colors200,
+    "rounded-[var(--radius-control)]",
+    INTERACTION_MOTION.feedback,
   ].join(" "),
   /** Highest priority — Workspace Active */
   rootActive: [
     UI_TOKENS.border.accentSoft,
-    "bg-[var(--color-surface-default)]",
-    UI_TOKENS.shadow.md,
+    INTERACTION_STATE.defaultSurface,
+    INTERACTION_ELEVATION.active,
   ].join(" "),
   /** Focused (when not Active) */
   rootFocused: [
-    "border border-[var(--color-brand-primary)]/25",
-    "bg-[var(--color-surface-default)]",
-    UI_TOKENS.shadow.sm,
+    "border border-[var(--focus-ring-color)]/35",
+    INTERACTION_STATE.defaultSurface,
+    INTERACTION_ELEVATION.focused,
+    "ring-1 ring-inset ring-[var(--focus-ring-color)]/25",
   ].join(" "),
   /** Selected (when not Active and not Focused) */
   rootSelected: [
     UI_TOKENS.border.default,
-    "bg-[var(--color-surface-default)]",
-    "ring-1 ring-inset ring-[var(--color-brand-primary)]/20",
-    UI_TOKENS.shadow.sm,
+    INTERACTION_STATE.defaultSurface,
+    INTERACTION_STATE.selectedRing,
+    INTERACTION_ELEVATION.selected,
   ].join(" "),
   /** Hover (when not Active / Focused / Selected) */
   rootHovered: [
     UI_TOKENS.border.default,
-    "bg-[var(--color-surface-default)]",
-    "ring-1 ring-inset ring-[var(--color-border-default)]",
-    UI_TOKENS.shadow.sm,
+    INTERACTION_STATE.defaultSurface,
+    "ring-1 ring-inset ring-[var(--color-border-muted)]",
+    INTERACTION_ELEVATION.hover,
   ].join(" "),
   rootInactive: [
     UI_TOKENS.border.default,
-    "bg-[var(--color-surface-canvas)]",
-    UI_TOKENS.shadow.sm,
+    INTERACTION_STATE.inactiveSurface,
+    INTERACTION_ELEVATION.inactive,
   ].join(" "),
   /** Chrome Density — consistent header height · padding · gaps via tokens */
   headerBase: [
@@ -181,46 +175,46 @@ const FLOATING_WINDOW_CHROME = {
     UI_TOKENS.spacing.px2,
     UI_TOKENS.border.bottom,
     "cursor-grab active:cursor-grabbing select-none",
-    UI_TOKENS.transition.colors200,
+    INTERACTION_MOTION.enter,
   ].join(" "),
-  headerActive: "bg-[var(--color-brand-primary)]/10",
-  headerFocused: "bg-[var(--color-brand-primary)]/5",
-  headerHovered: "bg-[var(--color-surface-default)]",
-  headerInactive: "bg-[var(--color-surface-canvas)]",
+  headerActive: INTERACTION_STATE.activeAccent,
+  headerFocused: INTERACTION_STATE.focusedAccent,
+  headerHovered: INTERACTION_STATE.defaultSurface,
+  headerInactive: INTERACTION_STATE.inactiveSurface,
   titleActive:
-    "min-w-0 truncate text-[11px] font-semibold tracking-tight text-[var(--color-text-primary)]",
+    "min-w-0 truncate text-[length:var(--typography-label-sm-font-size)] font-semibold tracking-tight text-[var(--color-text-primary)]",
   titleInactive:
-    "min-w-0 truncate text-[11px] font-medium tracking-tight text-[var(--color-text-muted)]",
+    "min-w-0 truncate text-[length:var(--typography-label-sm-font-size)] font-medium tracking-tight text-[var(--color-text-muted)]",
   accentActive: [
     "h-1.5 w-1.5 shrink-0",
     UI_TOKENS.radius.full,
     "bg-[var(--color-brand-primary)]",
-    UI_TOKENS.transition.colors200,
+    INTERACTION_MOTION.enter,
   ].join(" "),
   accentInactive: [
     "h-1.5 w-1.5 shrink-0",
     UI_TOKENS.radius.full,
-    "bg-[var(--color-border-default)]",
-    UI_TOKENS.transition.colors200,
+    "bg-[var(--color-border-muted)]",
+    INTERACTION_MOTION.enter,
   ].join(" "),
   focusBadge: [
     INDICATOR_SHELL,
-    "text-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10",
+    "text-[var(--focus-ring-color)] bg-[var(--focus-ring-color)]/10",
   ].join(" "),
   selectionBadge: [
     INDICATOR_SHELL,
     "text-[var(--color-text-muted)] bg-[var(--color-surface-canvas)]",
-    "ring-1 ring-inset ring-[var(--color-brand-primary)]/20",
+    INTERACTION_STATE.selectedRing,
   ].join(" "),
   hoverBadge: [
     INDICATOR_SHELL,
     "text-[var(--color-text-muted)] bg-[var(--color-surface-default)]",
-    "ring-1 ring-inset ring-[var(--color-border-default)]",
+    "ring-1 ring-inset ring-[var(--color-border-muted)]",
   ].join(" "),
   hoverOverlay: [
     "pointer-events-none absolute inset-0",
-    "ring-1 ring-inset ring-[var(--color-border-default)]/60",
-    UI_TOKENS.transition.colors200,
+    "ring-1 ring-inset ring-[var(--color-border-muted)]/70",
+    INTERACTION_MOTION.enter,
   ].join(" "),
   /** Keyboard Navigation — additive · never replaces Active / Focus / Hover */
   keyboardBadge: [
@@ -278,25 +272,26 @@ const FLOATING_WINDOW_CHROME = {
     UI_TOKENS.spacing.mt1,
     UI_TOKENS.spacing.px15,
     UI_TOKENS.spacing.py1,
-    "text-[10px]",
-    UI_TOKENS.radius.md,
-    UI_TOKENS.shadow.sm,
-    "bg-[var(--color-brand-primary)]/5 text-[var(--color-text-muted)]",
-    "ring-1 ring-inset ring-[var(--color-brand-primary)]/15",
-    UI_TOKENS.transition.colors200,
+    "text-[length:var(--typography-caption-xs-font-size)]",
+    "rounded-[var(--radius-container)]",
+    INTERACTION_ELEVATION.inactive,
+    INTERACTION_STATE.selectedSurface,
+    INTERACTION_STATE.selectedRing,
+    INTERACTION_MOTION.enter,
   ].join(" "),
   close: [
     "inline-flex h-5 w-5 shrink-0 items-center justify-center",
-    UI_TOKENS.radius.md,
-    "text-xs leading-none text-[var(--color-text-muted)]",
-    "hover:bg-[var(--color-surface-default)] hover:text-[var(--color-text-primary)]",
-    UI_TOKENS.transition.colors200,
+    "rounded-[var(--radius-container)]",
+    "text-[length:var(--typography-body-sm-font-size)] leading-none text-[var(--color-text-muted)]",
+    INTERACTION_STATE.hoverSurface,
+    INTERACTION_FOCUS_RING,
+    INTERACTION_MOTION.enter,
   ].join(" "),
   body: [
     "min-h-0 flex-1 overflow-auto",
     UI_TOKENS.spacing.p2,
-    "bg-[var(--color-surface-default)] text-xs text-[var(--color-text-primary)]",
-    UI_TOKENS.transition.colors200,
+    "bg-[var(--color-surface-default)] text-[length:var(--typography-body-sm-font-size)] text-[var(--color-text-primary)]",
+    INTERACTION_MOTION.enter,
   ].join(" "),
 } as const;
 
