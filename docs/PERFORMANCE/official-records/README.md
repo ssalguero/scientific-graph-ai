@@ -1,6 +1,6 @@
 # PERFORMANCE Official Records
 
-**Status:** ACTIVE (Planning Series open)  
+**Status:** ACTIVE (Planning Series open — Executive Layer)  
 **Planning Authority:** [`../PERFORMANCE-Planning-Charter.md`](../PERFORMANCE-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)
 
 This directory holds PERFORMANCE-P0…P11 Official Records.
@@ -13,7 +13,9 @@ This directory holds PERFORMANCE-P0…P11 Official Records.
 | [PERFORMANCE-P3-Component-Inventory.md](./PERFORMANCE-P3-Component-Inventory.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P4-Public-Contracts-and-Peer-Seam-Matrix.md](./PERFORMANCE-P4-Public-Contracts-and-Peer-Seam-Matrix.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P5-Lifecycle.md](./PERFORMANCE-P5-Lifecycle.md) | **RELEASE CERTIFIED / FROZEN** |
-| PERFORMANCE-P6…P11 | NOT AUTHORIZED / BLOCKED |
+| [PERFORMANCE-P6-Master-Implementation-Roadmap.md](./PERFORMANCE-P6-Master-Implementation-Roadmap.md) | **RELEASE CERTIFIED / FROZEN** |
+| PERFORMANCE-P7…P11 | NOT AUTHORIZED / BLOCKED |
 | PERFORMANCE-I0…I10 | LOCKED until P11 |
 
-**Constitutional Layer (P0–P5):** COMPLETE (planning)
+**Constitutional Layer (P0–P5):** COMPLETE / FROZEN  
+**Executive Layer:** OPEN at P6 (P7–P11 pending authorization)
