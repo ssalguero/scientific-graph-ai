@@ -8,5 +8,6 @@ This directory holds PERFORMANCE-P0…P11 Official Records.
 | Record | Status |
 |--------|--------|
 | [PERFORMANCE-P0-Identity-Boundary-Freeze.md](./PERFORMANCE-P0-Identity-Boundary-Freeze.md) | **RELEASE CERTIFIED / FROZEN** |
-| PERFORMANCE-P1…P11 | NOT AUTHORIZED / BLOCKED |
+| [PERFORMANCE-P1-Measurement-and-Optimization-Architecture.md](./PERFORMANCE-P1-Measurement-and-Optimization-Architecture.md) | **RELEASE CERTIFIED / FROZEN** |
+| PERFORMANCE-P2…P11 | NOT AUTHORIZED / BLOCKED |
 | PERFORMANCE-I0…I10 | LOCKED until P11 |
