@@ -16,8 +16,9 @@ This directory holds PERFORMANCE-P0…P11 Official Records.
 | [PERFORMANCE-P6-Master-Implementation-Roadmap.md](./PERFORMANCE-P6-Master-Implementation-Roadmap.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P7-Execution-Governance.md](./PERFORMANCE-P7-Execution-Governance.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P8-Validation-Strategy.md](./PERFORMANCE-P8-Validation-Strategy.md) | **RELEASE CERTIFIED / FROZEN** |
-| PERFORMANCE-P9…P11 | NOT AUTHORIZED / BLOCKED |
+| [PERFORMANCE-P9-Implementation-Strategy.md](./PERFORMANCE-P9-Implementation-Strategy.md) | **RELEASE CERTIFIED / FROZEN** |
+| PERFORMANCE-P10…P11 | NOT AUTHORIZED / BLOCKED |
 | PERFORMANCE-I0…I10 | LOCKED until P11 |
 
 **Constitutional Layer (P0–P5):** COMPLETE / FROZEN  
-**Executive Layer:** P6–P8 CERTIFIED; P9–P11 pending authorization
+**Executive Layer:** P6–P9 CERTIFIED; P10–P11 pending authorization
