@@ -14,8 +14,9 @@ This directory holds PERFORMANCE-P0…P11 Official Records.
 | [PERFORMANCE-P4-Public-Contracts-and-Peer-Seam-Matrix.md](./PERFORMANCE-P4-Public-Contracts-and-Peer-Seam-Matrix.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P5-Lifecycle.md](./PERFORMANCE-P5-Lifecycle.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P6-Master-Implementation-Roadmap.md](./PERFORMANCE-P6-Master-Implementation-Roadmap.md) | **RELEASE CERTIFIED / FROZEN** |
-| PERFORMANCE-P7…P11 | NOT AUTHORIZED / BLOCKED |
+| [PERFORMANCE-P7-Execution-Governance.md](./PERFORMANCE-P7-Execution-Governance.md) | **RELEASE CERTIFIED / FROZEN** |
+| PERFORMANCE-P8…P11 | NOT AUTHORIZED / BLOCKED |
 | PERFORMANCE-I0…I10 | LOCKED until P11 |
 
 **Constitutional Layer (P0–P5):** COMPLETE / FROZEN  
-**Executive Layer:** OPEN at P6 (P7–P11 pending authorization)
+**Executive Layer:** P6–P7 CERTIFIED; P8–P11 pending authorization
