@@ -1,0 +1,58 @@
+name: PERFORMANCE Gates
+
+# PERFORMANCE-I8 — CI wiring for C-GRD gate readiness only.
+# Does not run unrelated project workflows or peer domain CI.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/performance/**"
+      - "src/engine/index.ts"
+      - "src/data/index.ts"
+      - "src/ui/index.ts"
+      - "scripts/validate-performance-*.ts"
+      - "scripts/ci-performance-gates.ts"
+      - "docs/PERFORMANCE/implementation/**"
+      - "package.json"
+      - ".github/workflows/performance-gates.yml"
+  push:
+    paths:
+      - "src/performance/**"
+      - "src/engine/index.ts"
+      - "src/data/index.ts"
+      - "src/ui/index.ts"
+      - "scripts/validate-performance-*.ts"
+      - "scripts/ci-performance-gates.ts"
+      - "docs/PERFORMANCE/implementation/**"
+      - "package.json"
+      - ".github/workflows/performance-gates.yml"
+
+jobs:
+  performance-gates:
+    name: PERFORMANCE C-GRD gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Validate PERFORMANCE gates (behavioral)
+        run: npm run validate:performance-gates
+
+      - name: Validate PERFORMANCE integrity (I9)
+        run: npm run validate:performance-integrity
+
+      - name: Validate PERFORMANCE boundaries
+        run: npm run validate:performance-boundaries
+
+      - name: Run PERFORMANCE CI gate entry
+        run: npm run ci:performance-gates
