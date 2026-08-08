@@ -11,5 +11,6 @@ This directory holds PERFORMANCE-P0…P11 Official Records.
 | [PERFORMANCE-P1-Measurement-and-Optimization-Architecture.md](./PERFORMANCE-P1-Measurement-and-Optimization-Architecture.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P2-Functional-Model.md](./PERFORMANCE-P2-Functional-Model.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P3-Component-Inventory.md](./PERFORMANCE-P3-Component-Inventory.md) | **RELEASE CERTIFIED / FROZEN** |
-| PERFORMANCE-P4…P11 | NOT AUTHORIZED / BLOCKED |
+| [PERFORMANCE-P4-Public-Contracts-and-Peer-Seam-Matrix.md](./PERFORMANCE-P4-Public-Contracts-and-Peer-Seam-Matrix.md) | **RELEASE CERTIFIED / FROZEN** |
+| PERFORMANCE-P5…P11 | NOT AUTHORIZED / BLOCKED |
 | PERFORMANCE-I0…I10 | LOCKED until P11 |
