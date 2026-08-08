@@ -26,6 +26,15 @@
 | E-SRC | `src/release/` | Shared RELEASE package |
 | E-BOUND | `src/release/internal/boundary-policy.ts` | Import boundary policy |
 
+## Domain Architectural Closure
+
+| ID | Evidence | Role |
+|----|----------|------|
+| E-CLOSURE-OR | `docs/RELEASE/official-records/RELEASE-Domain-Closure.md` | Domain Closure Official Record |
+| E-CLOSURE-CERT | `docs/RELEASE/certification/RELEASE-Domain-Closure-Certification.md` | Domain Closure Certification decision |
+
 **Validation baselines (certification re-run):**  
 `npm run validate:release-p1` → **80/80 PASS**  
 `npm run validate:release-p2` → **44/44 PASS**
+
+**Note:** Domain Closure certification is evidence-only (docs). It does not add validators and does not authorize Global Release Certification.
