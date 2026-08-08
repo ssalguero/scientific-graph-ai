@@ -273,6 +273,8 @@
     "validate:plugins-diagnostics": "npx tsx scripts/validate-plugins-diagnostics.ts",
     "validate:plugins-integration": "npx tsx scripts/validate-plugins-integration.ts",
     "validate:plugins-certification": "npx tsx scripts/validate-plugins-certification.ts",
+    "validate:release-p1": "npx tsx scripts/validate-release-p1.ts",
+    "validate:release-p2": "npx tsx scripts/validate-release-p2.ts",
     "validate:engine-workflow-unit": "npx tsx scripts/validate-engine-workflow-unit.ts",
     "validate:engine-command-unit": "npx tsx scripts/validate-engine-command-unit.ts",
     "validate:engine-project-flows-unit": "npx tsx scripts/validate-engine-project-flows-unit.ts",
