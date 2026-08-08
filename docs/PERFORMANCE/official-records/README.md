@@ -1,6 +1,6 @@
 # PERFORMANCE Official Records
 
-**Status:** ACTIVE (Planning Series open — Executive Layer)  
+**Status:** **CLOSED** — Planning Series **RELEASE CERTIFIED / FROZEN**  
 **Planning Authority:** [`../PERFORMANCE-Planning-Charter.md`](../PERFORMANCE-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)
 
 This directory holds PERFORMANCE-P0…P11 Official Records.
@@ -18,8 +18,11 @@ This directory holds PERFORMANCE-P0…P11 Official Records.
 | [PERFORMANCE-P8-Validation-Strategy.md](./PERFORMANCE-P8-Validation-Strategy.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P9-Implementation-Strategy.md](./PERFORMANCE-P9-Implementation-Strategy.md) | **RELEASE CERTIFIED / FROZEN** |
 | [PERFORMANCE-P10-Hardening-Strategy.md](./PERFORMANCE-P10-Hardening-Strategy.md) | **RELEASE CERTIFIED / FROZEN** |
-| PERFORMANCE-P11 | NOT AUTHORIZED / BLOCKED |
-| PERFORMANCE-I0…I10 | LOCKED until P11 |
+| [PERFORMANCE-P11-Planning-Certification.md](./PERFORMANCE-P11-Planning-Certification.md) | **RELEASE CERTIFIED / FROZEN** |
+| PERFORMANCE-I0…I10 | **ELIGIBLE FOR SEPARATE IMPLEMENTATION AUTHORIZATION** |
 
 **Constitutional Layer (P0–P5):** COMPLETE / FROZEN  
-**Executive Layer:** P6–P10 CERTIFIED; P11 pending authorization
+**Executive Layer (P6–P10):** COMPLETE / FROZEN  
+**Planning Certification (P11):** COMPLETE / FROZEN  
+**Planning Series:** RELEASE CERTIFIED / FROZEN  
+**`src/performance/`:** FORBIDDEN until separate I-phase authorization
