@@ -18,6 +18,18 @@ export type { ProjectFileFeedback };
 
 type PendingDiscardAction = "new" | "open" | "local-open";
 
+const promptBannerClass =
+  "rounded-lg border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] px-3 py-2 text-xs text-[var(--app-warning-text)] space-y-2";
+
+const promptPrimaryBtnClass =
+  "rounded-md border border-[var(--app-warning-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]";
+
+const promptSecondaryBtnClass =
+  "rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]";
+
+const actionGroupLabelClass =
+  "block text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
+
 export type ProjectScientificFilePanelProps = {
   projectMetadata: ProjectMetadataV1;
   feedback: ProjectFileFeedback | null;
@@ -127,16 +139,20 @@ export function ProjectScientificFilePanel({
       : feedback?.kind === "warning"
         ? "text-[var(--app-warning-text)] bg-[var(--app-warning-bg)] border-[var(--app-warning-border)]"
         : feedback?.kind === "success"
-          ? "text-[var(--app-success-text)] bg-[var(--app-success-bg)] border-emerald-200"
+          ? "text-[var(--app-success-text)] bg-[var(--app-success-bg)] border-[var(--app-success)]"
           : "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)] border-[var(--app-border)]";
 
   const discardPrompt =
     pendingDiscard && sessionConflict.prompt ? sessionConflict.prompt : null;
 
-  const showAutosaveIndicator = autosaveIndicator.state !== "idle";
-
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
+      <p className="text-[11px] text-[var(--app-text-muted)]">
+        Proyecto y sesión aquí · importe y worksheet en la pestaña{" "}
+        <span className="font-medium text-[var(--app-text)]">Datos</span> ·
+        gráfico en{" "}
+        <span className="font-medium text-[var(--app-text)]">Resultados</span>.
+      </p>
       <div>
         <label htmlFor="scientific-project-name" className={fieldLabel}>
           Nombre del proyecto
@@ -149,13 +165,13 @@ export function ProjectScientificFilePanel({
           placeholder="Nombre del proyecto"
           className={`${inputField} mt-0.5`}
         />
-        {showAutosaveIndicator ? (
-          <p
-            className={`text-[11px] mt-0.5 font-medium ${autosaveIndicator.className}`}
-          >
-            {autosaveIndicator.label}
-          </p>
-        ) : null}
+        <p
+          className={`text-[11px] mt-1 font-medium ${autosaveIndicator.className}`}
+          role="status"
+          aria-live="polite"
+        >
+          {autosaveIndicator.label}
+        </p>
         {projectSizeMessage ? (
           <p className="text-[11px] text-[var(--app-warning-text)] mt-0.5">
             {projectSizeMessage}
@@ -164,20 +180,21 @@ export function ProjectScientificFilePanel({
       </div>
 
       {recoveryPrompt && recoveryPromptMessage ? (
-        <div className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-xs text-orange-900 space-y-2">
+        <div className={promptBannerClass} role="status" aria-live="polite">
+          <p className="font-semibold">Recuperación de borrador</p>
           <p>{recoveryPromptMessage}</p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => void onRestoreRecovery?.()}
-              className="rounded-md border border-orange-400 px-2 py-1 text-xs font-semibold hover:bg-orange-100/40"
+              className={promptPrimaryBtnClass}
             >
-              {formatPersistenceConflictResolutionLabel("LOAD_INCOMING")}
+              Recuperar borrador
             </button>
             <button
               type="button"
               onClick={onDismissRecovery}
-              className="rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]"
+              className={promptSecondaryBtnClass}
             >
               {formatPersistenceConflictResolutionLabel("KEEP_CURRENT")}
             </button>
@@ -186,7 +203,8 @@ export function ProjectScientificFilePanel({
       ) : null}
 
       {pendingFileOpenConflict?.view.prompt ? (
-        <div className="rounded-lg border border-amber-300 bg-[var(--app-warning-bg)] px-3 py-2 text-xs text-[var(--app-warning-text)] space-y-2">
+        <div className={promptBannerClass} role="status" aria-live="polite">
+          <p className="font-semibold">Conflicto al abrir archivo</p>
           <p>{pendingFileOpenConflict.view.prompt}</p>
           <div className="flex flex-wrap gap-2">
             {pendingFileOpenConflict.view.shouldBlock ? (
@@ -196,14 +214,14 @@ export function ProjectScientificFilePanel({
                   onClick={() =>
                     void onResolvePendingFileOpenConflict?.("DISCARD_AND_LOAD")
                   }
-                  className="rounded-md border border-amber-400 px-2 py-1 text-xs font-semibold hover:bg-amber-100/40"
+                  className={promptPrimaryBtnClass}
                 >
                   {formatPersistenceConflictResolutionLabel("DISCARD_AND_LOAD")}
                 </button>
                 <button
                   type="button"
                   onClick={() => onDismissPendingFileOpenConflict?.()}
-                  className="rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]"
+                  className={promptSecondaryBtnClass}
                 >
                   {formatPersistenceConflictResolutionLabel("CANCEL")}
                 </button>
@@ -215,14 +233,14 @@ export function ProjectScientificFilePanel({
                   onClick={() =>
                     void onResolvePendingFileOpenConflict?.("LOAD_INCOMING")
                   }
-                  className="rounded-md border border-amber-400 px-2 py-1 text-xs font-semibold hover:bg-amber-100/40"
+                  className={promptPrimaryBtnClass}
                 >
                   {formatPersistenceConflictResolutionLabel("LOAD_INCOMING")}
                 </button>
                 <button
                   type="button"
                   onClick={() => onDismissPendingFileOpenConflict?.()}
-                  className="rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]"
+                  className={promptSecondaryBtnClass}
                 >
                   {formatPersistenceConflictResolutionLabel("CANCEL")}
                 </button>
@@ -233,20 +251,21 @@ export function ProjectScientificFilePanel({
       ) : null}
 
       {discardPrompt ? (
-        <div className="rounded-lg border border-amber-300 bg-[var(--app-warning-bg)] px-3 py-2 text-xs text-[var(--app-warning-text)] space-y-2">
+        <div className={promptBannerClass} role="status" aria-live="polite">
+          <p className="font-semibold">Cambios sin guardar</p>
           <p>{discardPrompt}</p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={confirmDiscard}
-              className="rounded-md border border-amber-400 px-2 py-1 text-xs font-semibold hover:bg-amber-100/40"
+              className={promptPrimaryBtnClass}
             >
               {formatPersistenceConflictResolutionLabel("DISCARD_AND_LOAD")}
             </button>
             <button
               type="button"
               onClick={cancelDiscard}
-              className="rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]"
+              className={promptSecondaryBtnClass}
             >
               {formatPersistenceConflictResolutionLabel("CANCEL")}
             </button>
@@ -254,55 +273,62 @@ export function ProjectScientificFilePanel({
         </div>
       ) : null}
 
-      <div className="space-y-1">
-        <button type="button" onClick={requestNewProject} className={`w-full h-8 ${btnPrimary}`}>
-          Nuevo proyecto
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            onSaveProject(draftName.trim() || DEFAULT_PROJECT_NAME)
-          }
-          className={`w-full h-8 ${btnSave}`}
-        >
-          Guardar proyecto (.sgproj)
-        </button>
-        {onSaveLocalProject ? (
+      <div className="space-y-1.5">
+        <div className="space-y-1">
+          <span className={actionGroupLabelClass}>Crear / abrir</span>
+          <button type="button" onClick={requestNewProject} className={`w-full h-8 ${btnPrimary}`}>
+            Nuevo proyecto
+          </button>
+          {onOpenLocalLibrary ? (
+            <button
+              type="button"
+              onClick={() => void onOpenLocalLibrary()}
+              className={`w-full h-8 ${btnSecondary}`}
+            >
+              Proyectos locales
+            </button>
+          ) : null}
+          <button
+            ref={openProjectButtonRef}
+            type="button"
+            onClick={requestOpenProject}
+            className={`w-full h-8 ${btnSecondary}`}
+            title={`Abre un archivo ${PROJECT_FILE_EXTENSION} con sesión completa`}
+          >
+            Abrir proyecto
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={`${PROJECT_FILE_EXTENSION},application/vnd.scientific-graph-ai.project+json`}
+            className="hidden"
+            onChange={handleFileChange}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <span className={actionGroupLabelClass}>Guardar</span>
           <button
             type="button"
             onClick={() =>
-              void onSaveLocalProject(draftName.trim() || DEFAULT_PROJECT_NAME)
+              onSaveProject(draftName.trim() || DEFAULT_PROJECT_NAME)
             }
             className={`w-full h-8 ${btnSave}`}
           >
-            Guardar localmente
+            Guardar proyecto (.sgproj)
           </button>
-        ) : null}
-        {onOpenLocalLibrary ? (
-          <button
-            type="button"
-            onClick={() => void onOpenLocalLibrary()}
-            className={`w-full h-8 ${btnSecondary}`}
-          >
-            Proyectos locales
-          </button>
-        ) : null}
-        <button
-          ref={openProjectButtonRef}
-          type="button"
-          onClick={requestOpenProject}
-          className={`w-full h-8 ${btnSecondary}`}
-          title={`Abre un archivo ${PROJECT_FILE_EXTENSION} con sesión completa`}
-        >
-          Abrir proyecto
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={`${PROJECT_FILE_EXTENSION},application/vnd.scientific-graph-ai.project+json`}
-          className="hidden"
-          onChange={handleFileChange}
-        />
+          {onSaveLocalProject ? (
+            <button
+              type="button"
+              onClick={() =>
+                void onSaveLocalProject(draftName.trim() || DEFAULT_PROJECT_NAME)
+              }
+              className={`w-full h-8 ${btnSave}`}
+            >
+              Guardar localmente
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {feedback ? (

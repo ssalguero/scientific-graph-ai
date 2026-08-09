@@ -32,25 +32,29 @@ export function WorkspaceContent({
     <div className={`${WORKSPACE_TOKENS.mainColumn} h-full min-h-0`}>
       <div className={WORKSPACE_TOKENS.inner}>
         <DensityProvider>
+        {/*
+          P0.1 — AppShell/Workspace coherence: quieter workspace context strip.
+          Product brand hierarchy stays in AppShell Toolbar; strings frozen by UX-2.3.
+        */}
         <header
           data-workspace-header
-          className={`flex flex-wrap items-start justify-between border-b border-[var(--color-border-default)] ${WORKSPACE_DENSITY_TOKENS.sectionGap} ${WORKSPACE_DENSITY_TOKENS.headerGap}`}
+          className={`flex flex-wrap items-start justify-between rounded-[var(--radius-control)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-[var(--spacing-tight)] py-[var(--spacing-tight)] ${WORKSPACE_DENSITY_TOKENS.sectionGap} ${WORKSPACE_DENSITY_TOKENS.headerGap}`}
         >
           <div
             className={`min-w-0 flex flex-col ${WORKSPACE_DENSITY_TOKENS.iconGap}`}
           >
             <p className={SURFACE_TOKENS.metadata.root}>Project</p>
-            <h1 className="truncate text-[length:var(--typography-heading-sm-font-size)] font-semibold leading-[var(--typography-heading-sm-line-height)] tracking-tight text-[var(--color-text-primary)]">
+            <h1 className="truncate text-[length:var(--typography-label-sm-font-size)] font-semibold leading-[var(--typography-label-sm-line-height)] tracking-tight text-[var(--color-text-primary)]">
               Scientific Graph AI
             </h1>
             <p
-              className={`truncate text-[length:var(--typography-body-sm-font-size)] leading-[var(--typography-body-sm-line-height)] ${SURFACE_TOKENS.tone.default}`}
+              className={`truncate text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] ${SURFACE_TOKENS.tone.default}`}
             >
               Current Project
             </p>
           </div>
           <p
-            className={`shrink-0 text-[length:var(--typography-body-sm-font-size)] font-medium leading-[var(--typography-body-sm-line-height)] ${SURFACE_TOKENS.tone.default}`}
+            className={`shrink-0 text-[length:var(--typography-caption-xs-font-size)] font-medium leading-[var(--typography-caption-xs-line-height)] ${SURFACE_TOKENS.tone.default}`}
             aria-label="Workspace status"
           >
             Ready

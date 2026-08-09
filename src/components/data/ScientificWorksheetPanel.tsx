@@ -627,46 +627,62 @@ export function ScientificWorksheetPanel({
 
   if (series.length === 0) {
     return (
-      <p className={dataEmptyState}>
-        Importe un dataset para editarlo en la worksheet científica.
-      </p>
+      <div
+        className={`${dataEmptyState} text-center space-y-1`}
+        role="status"
+      >
+        <p className="text-xs font-medium text-[var(--app-text)]">
+          Worksheet sin datos
+        </p>
+        <p className="text-[11px] text-[var(--app-text-muted)]">
+          Importe un dataset experimental o active uno de la sesión para
+          editarlo aquí.
+        </p>
+      </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--app-text-muted)] rounded-md border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 px-2.5 py-1.5">
+      <div
+        className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--app-text-muted)] rounded-md border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 px-2.5 py-1.5"
+        role="status"
+        aria-label="Resumen de worksheet"
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)] w-full sm:w-auto sm:mr-1">
+          Worksheet
+        </span>
         <span>
           Filas:{" "}
-          <strong className="text-[var(--app-text)]">
+          <strong className="text-[var(--app-text)] tabular-nums">
             {statusSummary.rowCount}
           </strong>
         </span>
         <span>
           Columnas:{" "}
-          <strong className="text-[var(--app-text)]">
+          <strong className="text-[var(--app-text)] tabular-nums">
             {statusSummary.columnCount}
           </strong>
         </span>
         <span>
           Variables numéricas:{" "}
-          <strong className="text-[var(--app-text)]">
+          <strong className="text-[var(--app-text)] tabular-nums">
             {statusSummary.numericVariables}
           </strong>
         </span>
         <span>
           Variables categóricas:{" "}
-          <strong className="text-[var(--app-text)]">
+          <strong className="text-[var(--app-text)] tabular-nums">
             {statusSummary.categoricalVariables}
           </strong>
         </span>
         {modified ? (
-          <span className="inline-flex rounded-full border border-amber-300/70 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+          <span className="inline-flex rounded-full border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-warning-text)]">
             Modificado
           </span>
         ) : null}
         {clipboardMessage ? (
-          <span className="text-[10px] text-[var(--app-accent)]">
+          <span className="text-[10px] text-[var(--app-accent)]" role="status">
             {clipboardMessage}
           </span>
         ) : null}

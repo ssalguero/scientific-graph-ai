@@ -20,6 +20,7 @@ import {
   INITIAL_VISUAL_GRAPH_BUILDER_DRAFT,
   suggestDefaultYVariable,
   validateVisualGraphConfiguration,
+  VISUAL_GRAPH_TYPE_LABELS,
   type GraphSpecification,
   type VisualGraphBuilderDraft,
   type VisualGraphPreview,
@@ -46,11 +47,17 @@ type VisualGraphBuilderProps = {
   soonBadgeClassName: string;
 };
 
+const configSectionLabelClass =
+  "text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
+
+const configSectionClass =
+  "space-y-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3";
+
 export function VisualGraphBuilder({
   series,
   columnRegistry = {},
   onCreateGraph,
-  btnOutlineSm,
+  btnOutlineSm: _btnOutlineSm,
   btnPrimary,
   inputField,
   fieldLabel,
@@ -138,50 +145,81 @@ export function VisualGraphBuilder({
     });
   };
 
+  const selectedTypeLabel =
+    spec.graphType !== null ? VISUAL_GRAPH_TYPE_LABELS[spec.graphType] : null;
+
+  const showXyStyleControls =
+    spec.graphType === "scatter" ||
+    spec.graphType === "line" ||
+    spec.graphType === "bubble";
+
   if (series.length === 0) {
     return (
-      <p className={dataEmptyState}>
-        Importe o edite datos en la Worksheet para usar el Constructor Visual.
-      </p>
+      <div className={`${dataEmptyState} text-center space-y-1`} role="status">
+        <p className="text-xs font-medium text-[var(--app-text)]">
+          Constructor Visual sin datos
+        </p>
+        <p className="text-[11px] text-[var(--app-text-muted)]">
+          Importe o edite datos en la Worksheet para configurar un gráfico.
+        </p>
+      </div>
     );
   }
 
   return (
     <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_3fr]">
       <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)]">
+        <div className="border-b border-[var(--app-border)] px-4 py-3">
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Configuración
+          </p>
+          <p className="text-[11px] text-[var(--app-text-muted)]">
+            {selectedTypeLabel
+              ? `Tipo activo: ${selectedTypeLabel}`
+              : "Seleccione un tipo, asigne variables y cree el gráfico."}
+          </p>
+        </div>
+
         <div className="max-h-[70vh] space-y-3 overflow-y-auto p-4">
-          <GraphTypeSelector
-            value={spec.graphType}
-            onChange={(graphType) => updateSpec({ graphType })}
-            soonBadgeClassName={soonBadgeClassName}
-          />
+          <div className={configSectionClass}>
+            <p className={configSectionLabelClass}>Tipo</p>
+            <GraphTypeSelector
+              value={spec.graphType}
+              onChange={(graphType) => updateSpec({ graphType })}
+              soonBadgeClassName={soonBadgeClassName}
+            />
+          </div>
 
           {spec.graphType !== null ? (
-            <div>
-              <label className={fieldLabel} htmlFor="vgb-publication-preset">
-                Preset de publicación
-              </label>
-              <select
-                id="vgb-publication-preset"
-                value={publicationPresetId}
-                onChange={(event) =>
-                  setPublicationPresetId(event.target.value as PublicationPresetId)
-                }
-                className={inputField}
-              >
-                {PUBLICATION_PRESET_CATALOG.map((entry) => (
-                  <option key={entry.id} value={entry.id}>
-                    {entry.title}
-                  </option>
-                ))}
-              </select>
+            <div className={configSectionClass}>
+              <p className={configSectionLabelClass}>Publicación</p>
+              <div>
+                <label className={fieldLabel} htmlFor="vgb-publication-preset">
+                  Preset de publicación
+                </label>
+                <select
+                  id="vgb-publication-preset"
+                  value={publicationPresetId}
+                  onChange={(event) =>
+                    setPublicationPresetId(
+                      event.target.value as PublicationPresetId
+                    )
+                  }
+                  className={inputField}
+                >
+                  {PUBLICATION_PRESET_CATALOG.map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {entry.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           ) : null}
 
-          {(spec.graphType === "scatter" ||
-            spec.graphType === "line" ||
-            spec.graphType === "bubble") && (
-            <>
+          {showXyStyleControls ? (
+            <div className={configSectionClass}>
+              <p className={configSectionLabelClass}>Variables</p>
               <VariableSelector
                 label="Variable X"
                 value={spec.xVariable}
@@ -231,27 +269,35 @@ export function VisualGraphBuilder({
                 </>
               ) : null}
               {spec.graphType === "scatter" ? (
+                <VariableSelector
+                  label="Variable de grupo (opcional)"
+                  value={spec.groupVariable}
+                  variables={variables}
+                  onChange={(groupVariable) => updateSpec({ groupVariable })}
+                  allowEmpty
+                  inputClassName={inputField}
+                  fieldLabelClassName={fieldLabel}
+                />
+              ) : null}
+            </div>
+          ) : null}
+
+          {spec.graphType === "scatter" || spec.graphType === "line" ? (
+            <div className={configSectionClass}>
+              <p className={configSectionLabelClass}>Apariencia</p>
+              <div>
+                <label className={fieldLabel}>Color</label>
+                <input
+                  type="color"
+                  value={spec.color}
+                  onChange={(event) =>
+                    updateSpec({ color: event.target.value })
+                  }
+                  className="h-9 w-14 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)]"
+                />
+              </div>
+              {spec.graphType === "scatter" ? (
                 <>
-                  <VariableSelector
-                    label="Variable de grupo (opcional)"
-                    value={spec.groupVariable}
-                    variables={variables}
-                    onChange={(groupVariable) => updateSpec({ groupVariable })}
-                    allowEmpty
-                    inputClassName={inputField}
-                    fieldLabelClassName={fieldLabel}
-                  />
-                  <div>
-                    <label className={fieldLabel}>Color</label>
-                    <input
-                      type="color"
-                      value={spec.color}
-                      onChange={(event) =>
-                        updateSpec({ color: event.target.value })
-                      }
-                      className="h-9 w-14 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)]"
-                    />
-                  </div>
                   <div>
                     <label className={fieldLabel}>Tamaño puntos</label>
                     <input
@@ -274,7 +320,8 @@ export function VisualGraphBuilder({
                       onChange={(event) =>
                         updateSpec({
                           marker:
-                            event.target.value as VisualGraphSpecification["marker"],
+                            event.target
+                              .value as VisualGraphSpecification["marker"],
                         })
                       }
                       className={inputField}
@@ -286,63 +333,53 @@ export function VisualGraphBuilder({
                     </select>
                   </div>
                 </>
-              ) : spec.graphType === "line" ? (
+              ) : (
                 <>
                   <div>
-                    <label className={fieldLabel}>Color</label>
-                    <input
-                      type="color"
-                      value={spec.color}
+                    <label className={fieldLabel}>Línea</label>
+                    <select
+                      value={spec.lineStyle}
                       onChange={(event) =>
-                        updateSpec({ color: event.target.value })
+                        updateSpec({
+                          lineStyle:
+                            event.target
+                              .value as VisualGraphSpecification["lineStyle"],
+                        })
                       }
-                      className="h-9 w-14 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)]"
-                    />
+                      className={inputField}
+                    >
+                      <option value="solid">Sólida</option>
+                      <option value="dashed">Discontinua</option>
+                      <option value="dotted">Punteada</option>
+                    </select>
                   </div>
-                  <>
-                    <div>
-                      <label className={fieldLabel}>Línea</label>
-                      <select
-                        value={spec.lineStyle}
-                        onChange={(event) =>
-                          updateSpec({
-                            lineStyle:
-                              event.target.value as VisualGraphSpecification["lineStyle"],
-                          })
-                        }
-                        className={inputField}
-                      >
-                        <option value="solid">Sólida</option>
-                        <option value="dashed">Discontinua</option>
-                        <option value="dotted">Punteada</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={fieldLabel}>Marcadores</label>
-                      <select
-                        value={spec.marker}
-                        onChange={(event) =>
-                          updateSpec({
-                            marker:
-                              event.target.value as VisualGraphSpecification["marker"],
-                          })
-                        }
-                        className={inputField}
-                      >
-                        <option value="none">Ninguno</option>
-                        <option value="circle">Círculo</option>
-                        <option value="square">Cuadrado</option>
-                        <option value="diamond">Diamante</option>
-                      </select>
-                    </div>
-                  </>
+                  <div>
+                    <label className={fieldLabel}>Marcadores</label>
+                    <select
+                      value={spec.marker}
+                      onChange={(event) =>
+                        updateSpec({
+                          marker:
+                            event.target
+                              .value as VisualGraphSpecification["marker"],
+                        })
+                      }
+                      className={inputField}
+                    >
+                      <option value="none">Ninguno</option>
+                      <option value="circle">Círculo</option>
+                      <option value="square">Cuadrado</option>
+                      <option value="diamond">Diamante</option>
+                    </select>
+                  </div>
                 </>
-              ) : null}
-            </>
-          )}
+              )}
+            </div>
+          ) : null}
 
-          {spec.graphType === "histogram" && (
-            <>
+          {spec.graphType === "histogram" ? (
+            <div className={configSectionClass}>
+              <p className={configSectionLabelClass}>Variables</p>
               <VariableSelector
                 label="Variable"
                 value={spec.yVariable}
@@ -365,13 +402,14 @@ export function VisualGraphBuilder({
                   className={inputField}
                 />
               </div>
-            </>
-          )}
+            </div>
+          ) : null}
 
-          {(spec.graphType === "bar" ||
-            spec.graphType === "boxPlot" ||
-            spec.graphType === "violin") && (
-            <>
+          {spec.graphType === "bar" ||
+          spec.graphType === "boxPlot" ||
+          spec.graphType === "violin" ? (
+            <div className={configSectionClass}>
+              <p className={configSectionLabelClass}>Variables</p>
               <VariableSelector
                 label={spec.graphType === "bar" ? "Categoría" : "Grupo"}
                 value={spec.groupVariable}
@@ -397,7 +435,8 @@ export function VisualGraphBuilder({
                     value={spec.errorBars}
                     onChange={(event) =>
                       updateSpec({
-                        errorBars: event.target.value as VisualGraphSpecification["errorBars"],
+                        errorBars: event.target
+                          .value as VisualGraphSpecification["errorBars"],
                       })
                     }
                     className={inputField}
@@ -409,11 +448,12 @@ export function VisualGraphBuilder({
                   </select>
                 </div>
               ) : null}
-            </>
-          )}
+            </div>
+          ) : null}
 
-          {spec.graphType === "heatmap" && (
-            <>
+          {spec.graphType === "heatmap" ? (
+            <div className={configSectionClass}>
+              <p className={configSectionLabelClass}>Variables</p>
               <p className="text-xs text-[var(--app-text-muted)]">
                 Sin columnas X/Y se correlacionan todas las variables numéricas.
                 Con ambas, se acota el subconjunto al rango en el worksheet.
@@ -455,52 +495,50 @@ export function VisualGraphBuilder({
                     : null
                 }
               />
-            </>
-          )}
+            </div>
+          ) : null}
 
-          {spec.graphType === "pca" && (
-            <>
-              <div>
-                <p className={fieldLabel}>Variables PCA</p>
-                <p className="mb-2 text-xs text-[var(--app-text-muted)]">
-                  Seleccione al menos 2 columnas numéricas para el análisis.
-                </p>
-                <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3">
-                  {variables
-                    .filter((variable) => variable.numericCompatible)
-                    .map((variable) => {
-                      const selected = (spec.pcaVariables ?? []).includes(
-                        variable.seriesId
-                      );
+          {spec.graphType === "pca" ? (
+            <div className={configSectionClass}>
+              <p className={configSectionLabelClass}>Variables PCA</p>
+              <p className="text-xs text-[var(--app-text-muted)]">
+                Seleccione al menos 2 columnas numéricas para el análisis.
+              </p>
+              <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-3">
+                {variables
+                  .filter((variable) => variable.numericCompatible)
+                  .map((variable) => {
+                    const selected = (spec.pcaVariables ?? []).includes(
+                      variable.seriesId
+                    );
 
-                      return (
-                        <label
-                          key={`${variable.kind}-${variable.seriesId}`}
-                          className="flex cursor-pointer items-center gap-2 text-sm text-[var(--app-text)]"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={() => {
-                              const current = spec.pcaVariables ?? [];
-                              const next = selected
-                                ? current.filter(
-                                    (seriesId) => seriesId !== variable.seriesId
-                                  )
-                                : [...current, variable.seriesId];
-                              updateSpec({ pcaVariables: next });
-                            }}
-                            className="rounded border-[var(--app-border)]"
-                          />
-                          <span>
-                            {variable.label}
-                            {variable.badges.includes("fx") ? "  ƒx" : ""}
-                            {variable.badges.includes("transform") ? "  ⇄" : ""}
-                          </span>
-                        </label>
-                      );
-                    })}
-                </div>
+                    return (
+                      <label
+                        key={`${variable.kind}-${variable.seriesId}`}
+                        className="flex cursor-pointer items-center gap-2 text-sm text-[var(--app-text)]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => {
+                            const current = spec.pcaVariables ?? [];
+                            const next = selected
+                              ? current.filter(
+                                  (seriesId) => seriesId !== variable.seriesId
+                                )
+                              : [...current, variable.seriesId];
+                            updateSpec({ pcaVariables: next });
+                          }}
+                          className="rounded border-[var(--app-border)]"
+                        />
+                        <span>
+                          {variable.label}
+                          {variable.badges.includes("fx") ? "  ƒx" : ""}
+                          {variable.badges.includes("transform") ? "  ⇄" : ""}
+                        </span>
+                      </label>
+                    );
+                  })}
               </div>
               <label className="flex cursor-pointer items-center gap-2">
                 <input
@@ -513,40 +551,54 @@ export function VisualGraphBuilder({
                 />
                 <span className={fieldLabel}>Estandarizar variables</span>
               </label>
-            </>
-          )}
-
-          <div>
-            <label className={fieldLabel}>Título (opcional)</label>
-            <input
-              type="text"
-              value={spec.title ?? ""}
-              onChange={(event) => updateSpec({ title: event.target.value })}
-              placeholder="Gráfico experimental"
-              className={inputField}
-            />
-          </div>
-
-          <div>
-            <p className={fieldLabel}>Variables disponibles</p>
-            <VariableBadgeList variables={variables} />
-          </div>
-
-          {createError ? (
-            <p className="text-sm text-[var(--app-danger-text)]">{createError}</p>
+            </div>
           ) : null}
 
-          {!canCreateGraph && validation.ok === false ? (
-            <p className="text-xs text-[var(--app-text-muted)]">
-              Complete las variables requeridas para habilitar la creación.
-            </p>
-          ) : null}
+          <div className={configSectionClass}>
+            <p className={configSectionLabelClass}>Identidad</p>
+            <div>
+              <label className={fieldLabel}>Título (opcional)</label>
+              <input
+                type="text"
+                value={spec.title ?? ""}
+                onChange={(event) => updateSpec({ title: event.target.value })}
+                placeholder="Gráfico experimental"
+                className={inputField}
+              />
+            </div>
+            <div>
+              <p className={fieldLabel}>Variables disponibles</p>
+              <VariableBadgeList variables={variables} />
+            </div>
+          </div>
 
-          <div className="border-t border-[var(--app-border)] pt-4">
+          <div
+            className="space-y-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-3"
+            role="status"
+            aria-live="polite"
+          >
+            {createError ? (
+              <p className="text-sm text-[var(--app-danger-text)]">
+                {createError}
+              </p>
+            ) : null}
+            {!canCreateGraph && validation.ok === false ? (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                Complete las variables requeridas para habilitar la creación.
+              </p>
+            ) : canCreateGraph ? (
+              <p className="text-xs font-medium text-[var(--app-success-text)]">
+                Vista previa lista · puede crear el gráfico
+              </p>
+            ) : (
+              <p className="text-xs text-[var(--app-text-muted)]">
+                Configure el tipo y las variables para habilitar la creación.
+              </p>
+            )}
             <button
               type="button"
               data-testid="create-graph-button"
-              className={`${btnPrimary} w-full bg-[var(--app-accent)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`${btnPrimary} w-full bg-[var(--app-accent)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={handleCreateGraph}
               disabled={!canCreateGraph}
               aria-disabled={!canCreateGraph}
@@ -557,21 +609,31 @@ export function VisualGraphBuilder({
         </div>
       </div>
 
-      <GraphPreview
-        preview={preview}
-        errorMessage={previewError}
-        chartTokens={chartTokens}
-        lineStrokeDasharray={lineStrokeDasharray}
-        scatterStyle={
-          spec.graphType === "scatter"
-            ? {
-                color: spec.color,
-                markerSize: spec.markerSize,
-                marker: spec.marker,
-              }
-            : null
-        }
-      />
+      <div className="space-y-2">
+        <div>
+          <p className="text-sm font-semibold text-[var(--app-heading)]">
+            Vista previa
+          </p>
+          <p className="text-[11px] text-[var(--app-text-muted)]">
+            Se actualiza con la configuración actual del constructor.
+          </p>
+        </div>
+        <GraphPreview
+          preview={preview}
+          errorMessage={previewError}
+          chartTokens={chartTokens}
+          lineStrokeDasharray={lineStrokeDasharray}
+          scatterStyle={
+            spec.graphType === "scatter"
+              ? {
+                  color: spec.color,
+                  markerSize: spec.markerSize,
+                  marker: spec.marker,
+                }
+              : null
+          }
+        />
+      </div>
     </div>
   );
 }

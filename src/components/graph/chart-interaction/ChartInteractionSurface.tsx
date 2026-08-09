@@ -27,6 +27,7 @@ export function ChartInteractionSurface({
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseLeave}
+      aria-label="Área interactiva del gráfico principal"
     >
       {children}
     </div>

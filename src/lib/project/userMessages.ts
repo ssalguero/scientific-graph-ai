@@ -1,4 +1,5 @@
 import { PROJECT_FILE_EXTENSION, PROJECT_KIND } from "./constants";
+import type { LocalProjectStorageState } from "./domain/local-project";
 import type {
   PersistenceConflict,
   PersistenceConflictResolution,
@@ -157,6 +158,31 @@ export const formatLocalProjectIntegrityWarning = (): string =>
 
 export const formatLocalProjectRecoveryPrompt = (projectName: string): string =>
   `Hay un borrador más reciente de "${projectName}". ¿Desea recuperarlo?`;
+
+/** Presentation labels for existing LocalProjectStorageState values. */
+export const LOCAL_PROJECT_STORAGE_STATE_LABEL: Record<
+  LocalProjectStorageState,
+  string
+> = {
+  NORMAL: "Guardado",
+  DIRTY: "Cambios pendientes",
+  RECOVERABLE: "Recuperable",
+  CORRUPTED: "Corrupto",
+};
+
+/**
+ * Token-class presentation for existing LocalProjectStorageState values.
+ * Uses certified --app-* bridge tokens (no new Design System tokens).
+ */
+export const LOCAL_PROJECT_STORAGE_STATE_CLASS: Record<
+  LocalProjectStorageState,
+  string
+> = {
+  NORMAL: "text-[var(--app-success-text)]",
+  DIRTY: "text-[var(--app-warning-text)]",
+  RECOVERABLE: "text-[var(--app-warning-text)]",
+  CORRUPTED: "text-[var(--app-danger-text)]",
+};
 
 const AUTOSAVE_INDICATOR_MESSAGES: Record<AutosaveIndicatorState, string> = {
   idle: "Autoguardado inactivo",

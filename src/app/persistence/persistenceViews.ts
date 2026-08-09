@@ -32,9 +32,9 @@ const AUTOSAVE_INDICATOR_CLASS: Record<
   string
 > = {
   idle: "text-[var(--app-text-muted)]",
-  pending: "text-amber-700",
+  pending: "text-[var(--app-warning-text)]",
   saving: "text-[var(--app-accent)]",
-  saved: "text-emerald-700",
+  saved: "text-[var(--app-success-text)]",
   error: "text-[var(--app-danger-text)]",
 };
 

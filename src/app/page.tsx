@@ -63,7 +63,10 @@ import type {
   ProjectVisualGraphEntry,
   VisualGraphPreview,
 } from "@/lib/visualGraphBuilder";
-import { createProjectVisualGraphEntry } from "@/lib/visualGraphBuilder";
+import {
+  createProjectVisualGraphEntry,
+  VISUAL_GRAPH_TYPE_LABELS,
+} from "@/lib/visualGraphBuilder";
 import {
   SessionDatasetPanel,
 } from "@/components/data/SessionDatasetPanel";
@@ -571,6 +574,58 @@ function WorkspaceTab({
         ) : null}
       </span>
     </button>
+  );
+}
+
+/** P0.5 — presentation-only continuity between existing workspace surfaces. */
+type WorkflowContinuityAction = {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+};
+
+const workflowContinuityLinkClass =
+  "text-xs font-medium text-[var(--app-accent)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline";
+
+function WorkflowContinuityBar({
+  stepLabel,
+  contextLine,
+  actions = [],
+}: {
+  stepLabel: string;
+  contextLine: string;
+  actions?: WorkflowContinuityAction[];
+}) {
+  return (
+    <div
+      className="mb-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 px-3 py-2"
+      role="navigation"
+      aria-label="Continuidad del flujo de trabajo"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0 space-y-0.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+            {stepLabel}
+          </p>
+          <p className="text-xs text-[var(--app-text-muted)]">{contextLine}</p>
+        </div>
+        {actions.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {actions.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                onClick={action.onClick}
+                disabled={action.disabled}
+                className={workflowContinuityLinkClass}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -15270,6 +15325,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [experimentalImportError, setExperimentalImportError] = useState<
     string | null
   >(null);
+  const [isExperimentalImporting, setIsExperimentalImporting] = useState(false);
   const [lastImportReport, setLastImportReport] = useState<ImportReport | null>(
     null
   );
@@ -16025,6 +16081,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       registerAndActivateImportedDataset(mappedSeries, report, importedFileName);
     };
 
+    setIsExperimentalImporting(true);
+    setExperimentalImportError(null);
     try {
       ensureAppEngineConfigured();
       const response = await importDataset({
@@ -16083,6 +16141,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setExperimentalImportError(
         "No se pudo leer el archivo. Verifique el formato e intente nuevamente."
       );
+    } finally {
+      setIsExperimentalImporting(false);
     }
   };
 
@@ -19600,28 +19660,73 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       projectMetadata.name === DEFAULT_PROJECT_NAME
         ? "Proyecto sin título"
         : projectMetadata.name.trim();
-    parts.push(projectName);
+    parts.push(`Proyecto: ${projectName}`);
     if (currentDatasetInfo) {
-      parts.push(currentDatasetInfo.fileName);
       parts.push(
-        `${currentDatasetInfo.seriesCount} serie${currentDatasetInfo.seriesCount === 1 ? "" : "s"}`
+        `Dataset: ${currentDatasetInfo.fileName} (${currentDatasetInfo.seriesCount} serie${
+          currentDatasetInfo.seriesCount === 1 ? "" : "s"
+        })`
       );
     } else {
-      parts.push("sin dataset");
+      parts.push("Dataset: ninguno");
     }
     parts.push(
-      `${graphs.length} gráfico${graphs.length === 1 ? "" : "s"} en nube`
+      `Biblioteca: ${graphs.length} gráfico${graphs.length === 1 ? "" : "s"}`
     );
+    if (projectVisualGraphs.length > 0) {
+      parts.push(
+        `VGB: ${projectVisualGraphs.length} gráfico${
+          projectVisualGraphs.length === 1 ? "" : "s"
+        }`
+      );
+    }
     if (isProjectDirty) {
-      parts.push("cambios sin guardar");
+      parts.push("Estado: cambios sin guardar");
     }
     return parts.join(" · ");
   }, [
     projectMetadata.name,
     currentDatasetInfo,
     graphs.length,
+    projectVisualGraphs.length,
     isProjectDirty,
   ]);
+
+  const workspaceStepHint = useMemo(() => {
+    switch (activeWorkspaceSection) {
+      case "data":
+        return "Flujo: Datos → importe, worksheet o construcción de gráficos";
+      case "analysis":
+        return "Flujo: Análisis → ejes, escalas y módulos del gráfico activo";
+      case "results":
+        return "Flujo: Resultados → gráfico principal, leyenda y exportaciones";
+      case "reports":
+        return "Flujo: Reportes → documento científico del análisis actual";
+      default:
+        return null;
+    }
+  }, [activeWorkspaceSection]);
+
+  const workflowContextLine = useMemo(() => {
+    const datasetPart = currentDatasetInfo
+      ? currentDatasetInfo.fileName
+      : "sin dataset";
+    const seriesPart =
+      experimentalSeries.length > 0
+        ? `${experimentalSeries.length} serie${
+            experimentalSeries.length === 1 ? "" : "s"
+          }`
+        : "sin series";
+    const chartPart = hasChartContent
+      ? "gráfico con contenido"
+      : "gráfico vacío";
+    return `${datasetPart} · ${seriesPart} · ${chartPart}`;
+  }, [currentDatasetInfo, experimentalSeries.length, hasChartContent]);
+
+  const openDataView = (view: DataWorkspaceView) => {
+    setDataWorkspaceView(view);
+    selectWorkspaceSection("data");
+  };
 
   const requestResetProject = () => {
     if (
@@ -19652,16 +19757,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           <AdaptiveToolbar
             left={
               <>
-                <header className="pb-0.5">
-                  <h1 className="text-sm font-semibold text-[var(--app-heading)] tracking-tight">
+                {/*
+                  P0.1 — AppShell toolbar brand: Design System --color-* hierarchy
+                  (primary chrome brand; workspace header stays quieter).
+                */}
+                <header className="pb-[var(--spacing-micro)]">
+                  <h1 className="text-[length:var(--typography-heading-sm-font-size)] font-semibold leading-[var(--typography-heading-sm-line-height)] tracking-tight text-[var(--color-text-primary)]">
                     Scientific Graph AI
                   </h1>
                   {activeWorkspaceSection === "home" ? (
-                    <p className="text-[var(--app-text-muted)] mt-0.5 text-[11px] sm:text-xs">
+                    <p className="mt-[var(--spacing-micro)] text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)] sm:text-[length:var(--typography-body-sm-font-size)] sm:leading-[var(--typography-body-sm-line-height)]">
                       Elija cómo comenzar o entre al laboratorio completo.
                     </p>
                   ) : showWelcomeHint ? (
-                    <p className="text-[var(--app-text-muted)] mt-0.5 text-[11px] sm:text-xs">
+                    <p className="mt-[var(--spacing-micro)] text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)] sm:text-[length:var(--typography-body-sm-font-size)] sm:leading-[var(--typography-body-sm-line-height)]">
                       Importe datos experimentales o abra el constructor de curvas en
                       Datos.
                     </p>
@@ -19669,7 +19778,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </header>
 
                 <nav
-                  className="flex flex-wrap gap-1.5 border-b border-[var(--app-border)] pb-1.5"
+                  className="flex flex-wrap gap-1.5 border-b border-[var(--color-border-default)] pb-[var(--spacing-tight)]"
                   role="tablist"
                   aria-label="Workspace científico"
                 >
@@ -19709,9 +19818,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 ) : null}
 
                 {activeWorkspaceSection !== "home" ? (
-                  <p className="text-[11px] sm:text-xs text-[var(--app-text-muted)] leading-snug -mt-1">
-                    {workspaceSessionContext}
-                  </p>
+                  <div className="-mt-[var(--spacing-micro)] space-y-0.5 text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)] sm:text-[length:var(--typography-body-sm-font-size)] sm:leading-[var(--typography-body-sm-line-height)]">
+                    {workspaceStepHint ? (
+                      <p className="font-medium text-[var(--color-text-primary)]">
+                        {workspaceStepHint}
+                      </p>
+                    ) : null}
+                    <p>{workspaceSessionContext}</p>
+                  </div>
                 ) : null}
 
                 <LabUsageProfileSelector
@@ -19877,10 +19991,45 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             <h2 className={sectionLabel}>📁 Datos</h2>
             <p className={`${panelHeadingSubtext} -mt-2 mb-1`}>
               Importe datos experimentales, revise el archivo activo y configure
-              curvas matemáticas
+              curvas o el Constructor Visual
             </p>
+            <WorkflowContinuityBar
+              stepLabel="Datos · contexto activo"
+              contextLine={workflowContextLine}
+              actions={[
+                {
+                  label: "Ir a Análisis →",
+                  onClick: () => selectWorkspaceSection("analysis"),
+                  disabled: experimentalSeries.length === 0 && !hasChartContent,
+                },
+                {
+                  label: "Ver Resultados →",
+                  onClick: () => selectWorkspaceSection("results"),
+                },
+                ...(profileShowsDataWorkspaceView(
+                  "visual-builder",
+                  labUsageProfile
+                )
+                  ? [
+                      {
+                        label: "Constructor Visual",
+                        onClick: () => openDataView("visual-builder"),
+                        disabled: experimentalSeries.length === 0,
+                      },
+                    ]
+                  : []),
+                ...(profileShowsDataWorkspaceView("curves", labUsageProfile)
+                  ? [
+                      {
+                        label: "Constructor de curvas",
+                        onClick: () => openDataView("curves"),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
             <div
-              className="flex flex-wrap gap-1.5 mb-2"
+              className="mb-2 flex flex-wrap gap-1.5"
               role="tablist"
               aria-label="Vista de datos"
             >
@@ -19942,6 +20091,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             );
                             setExperimentalImportError(null);
                           }}
+                          disabled={isExperimentalImporting}
                           className={inputField}
                         >
                           {EXPERIMENTAL_DATA_SOURCES.map((source) => (
@@ -19960,11 +20110,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <button
                         type="button"
                         onClick={() => experimentalFileInputRef.current?.click()}
-                        disabled={!canImportExperimentalData}
+                        disabled={
+                          !canImportExperimentalData || isExperimentalImporting
+                        }
                         className={`${actionBarBtnPrimary} w-full lg:w-auto lg:min-w-[10rem] disabled:opacity-50 disabled:cursor-not-allowed`}
                         title="Importa CSV, Excel u otros formatos de datos experimentales"
+                        aria-busy={isExperimentalImporting}
                       >
-                        Importar datos experimentales
+                        {isExperimentalImporting
+                          ? "Importando…"
+                          : "Importar datos experimentales"}
                       </button>
 
                       <label
@@ -19977,6 +20132,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           onChange={(e) =>
                             setPreserveAnalysisConfiguration(e.target.checked)
                           }
+                          disabled={isExperimentalImporting}
                           className="h-3.5 w-3.5 rounded border-[var(--app-border)] text-[var(--app-accent)] focus:ring-[var(--app-accent)]/20"
                         />
                         Mantener configuración
@@ -19988,25 +20144,52 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         accept={experimentalFileAccept || undefined}
                         className="hidden"
                         onChange={handleExperimentalImport}
+                        disabled={isExperimentalImporting}
                       />
                     </div>
 
+                    {isExperimentalImporting ? (
+                      <p
+                        className="mt-2 text-xs font-medium text-[var(--app-accent)]"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        Leyendo archivo experimental…
+                      </p>
+                    ) : null}
+
                     {experimentalImportError && (
-                      <p className={`mt-2 ${alertError}`}>
+                      <p className={`mt-2 ${alertError}`} role="alert">
                         {experimentalImportError}
                       </p>
                     )}
 
                     {lastImportReport ? (
-                      <div className="mt-2">
+                      <div className="mt-2 space-y-2">
                         {!importReportHasIssues ? (
-                          <p className="text-xs text-[var(--app-text-muted)] mb-2">
+                          <p
+                            className="rounded-md border border-[var(--app-success)]/30 bg-[var(--app-success-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--app-success-text)]"
+                            role="status"
+                          >
                             Importación OK · {lastImportReport.importedPointCount}{" "}
                             puntos · cobertura{" "}
                             {Math.round(lastImportReport.coverageRatio * 100)}%
-                            {lastImportReport.auditPartial ? " · auditoría parcial" : ""}
+                            {lastImportReport.auditPartial
+                              ? " · auditoría parcial"
+                              : ""}
                           </p>
-                        ) : null}
+                        ) : (
+                          <p
+                            className="rounded-md border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--app-warning-text)]"
+                            role="status"
+                          >
+                            Importación con avisos ·{" "}
+                            {lastImportReport.importedPointCount} puntos ·{" "}
+                            {lastImportReport.errorCount +
+                              lastImportReport.warningCount}{" "}
+                            avisos
+                          </p>
+                        )}
                         <button
                           type="button"
                           onClick={() =>
@@ -20052,18 +20235,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </p>
                     <p>
                       <span className="font-semibold">Series:</span>{" "}
-                      {currentDatasetInfo.seriesCount}
+                      <span className="tabular-nums">
+                        {currentDatasetInfo.seriesCount}
+                      </span>
                     </p>
                     <p>
                       <span className="font-semibold">Observaciones:</span>{" "}
-                      {currentDatasetInfo.observationCount}
+                      <span className="tabular-nums">
+                        {currentDatasetInfo.observationCount}
+                      </span>
                     </p>
                   </div>
                 ) : (
-                  <p className={dataEmptyState}>
-                    No hay dataset experimental cargado. Use Importación de
-                    datos para comenzar.
-                  </p>
+                  <div
+                    className={`${dataEmptyState} text-center space-y-1`}
+                    role="status"
+                  >
+                    <p className="text-xs font-medium text-[var(--app-text)]">
+                      Sin dataset experimental activo
+                    </p>
+                    <p className="text-[11px] text-[var(--app-text-muted)]">
+                      Use Importación de datos experimentales para comenzar, o
+                      active un dataset de la sesión.
+                    </p>
+                  </div>
                 )}
               </div>
               </div>
@@ -20181,9 +20376,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         </ul>
                       )
                     ) : (
-                      <p className={dataEmptyState}>
-                        No hay series experimentales importadas.
-                      </p>
+                      <div
+                        className={`${dataEmptyState} text-center space-y-1`}
+                        role="status"
+                      >
+                        <p className="text-xs font-medium text-[var(--app-text)]">
+                          No hay series experimentales
+                        </p>
+                        <p className="text-[11px] text-[var(--app-text-muted)]">
+                          Aparecerán aquí tras importar o activar un dataset.
+                        </p>
+                      </div>
                     )}
               </NotebookSection>
 
@@ -20225,15 +20428,39 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </NotebookSection>
 
               {experimentalSeries.length > 0 ? (
-                <p className="text-xs text-[var(--app-text-muted)]">
-                  <button
-                    type="button"
-                    onClick={() => selectWorkspaceSection("analysis")}
-                    className="font-medium text-[var(--app-accent)] hover:underline"
-                  >
-                    Ir a Análisis (Esencial) →
-                  </button>
-                </p>
+                <div className="rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)]/30 px-3 py-2">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                    Siguiente paso sugerido
+                  </p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1">
+                    <button
+                      type="button"
+                      onClick={() => selectWorkspaceSection("analysis")}
+                      className={workflowContinuityLinkClass}
+                    >
+                      Ir a Análisis (ejes / escalas) →
+                    </button>
+                    {profileShowsDataWorkspaceView(
+                      "visual-builder",
+                      labUsageProfile
+                    ) ? (
+                      <button
+                        type="button"
+                        onClick={() => openDataView("visual-builder")}
+                        className={workflowContinuityLinkClass}
+                      >
+                        Abrir Constructor Visual →
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => selectWorkspaceSection("results")}
+                      className={workflowContinuityLinkClass}
+                    >
+                      Ver gráfico en Resultados →
+                    </button>
+                  </div>
+                </div>
               ) : null}
 
               {(hasEnoughSeriesForCorrelation || showCompareStepsBanner) &&
@@ -20354,7 +20581,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 badge={isEditing ? "Editando" : "Nuevo"}
               >
                 <div className="space-y-3">
-                  <div>
+                  <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                      Identidad del gráfico
+                    </p>
                     <label className={fieldLabel}>
                       Título
                     </label>
@@ -20367,104 +20597,125 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between gap-3">
-                    <p className={`${fieldLabel} mb-0`}>
-                      Curvas
-                    </p>
-                    <button
-                      type="button"
-                      onClick={addCurve}
-                      className="text-sm font-semibold text-[var(--app-accent)] hover:opacity-80 hover:underline"
-                    >
-                      + Agregar curva
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {curves.map((curve, idx) => (
-                      <div key={curve.id}>
-                        <div className="flex items-center justify-between gap-3 mb-2">
-                          <label className={`${fieldLabel} mb-0`}>
-                            Expresión {idx + 1}
-                          </label>
-                          <div className="flex items-center gap-3">
-                            <label className="inline-flex items-center gap-2 text-sm text-[var(--app-text-muted)] cursor-pointer">
-                              <input
-                                type="color"
-                                value={curve.color}
-                                onChange={(e) =>
-                                  updateCurveColor(curve.id, e.target.value)
-                                }
-                                className="h-9 w-12 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)] p-0.5"
-                                title="Color de la curva"
-                              />
-                              Color
-                            </label>
-                            {idx > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => removeCurve(curve.id)}
-                                className="text-sm font-semibold text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:underline"
-                                title="Eliminar curva"
-                              >
-                                Eliminar
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        <input
-                          ref={idx === 0 ? firstCurveExpressionRef : undefined}
-                          type="text"
-                          value={curve.expression}
-                          onFocus={() => setActiveCurveIndex(idx)}
-                          onChange={(e) => {
-                            updateCurveExpression(curve.id, e.target.value);
-                            setErrorMessage("");
-                          }}
-                          placeholder={
-                            idx === 0 ? "Ej: x^2 + 3*x + 1" : "Ej: sin(x)"
-                          }
-                          className={inputField}
-                        />
-                        {idx === activeCurveIndex &&
-                          activeCurveNaturalLanguagePreview && (
-                            <p className="mt-2 text-sm text-[var(--app-text)]">
-                              <span className="font-semibold">Interpretado como:</span>{" "}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  applyInterpretedExpression(
-                                    curve.id,
-                                    activeCurveNaturalLanguagePreview
-                                  )
-                                }
-                                className="font-mono text-[var(--app-accent)] cursor-pointer rounded px-1 -mx-1 transition-colors hover:bg-[var(--app-surface-muted)] hover:opacity-90"
-                                title="Usar esta expresión en el campo"
-                              >
-                                {activeCurveNaturalLanguagePreview}
-                              </button>
-                            </p>
-                          )}
+                  <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                          Expresiones y=f(x)
+                        </p>
+                        <p className={`${fieldLabel} mb-0 mt-0.5`}>
+                          Curvas ({curves.length})
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                      <button
+                        type="button"
+                        onClick={addCurve}
+                        className="text-sm font-semibold text-[var(--app-accent)] hover:opacity-80 hover:underline"
+                      >
+                        + Agregar curva
+                      </button>
+                    </div>
 
-                  <div className="space-y-2">
-                    <label className="inline-flex items-center gap-2.5 text-base text-[var(--app-text)] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={naturalLanguageEnabled}
-                        onChange={(e) =>
-                          setNaturalLanguageEnabled(e.target.checked)
-                        }
-                        className="h-4 w-4 rounded border-[var(--app-border)] text-[var(--app-accent)] focus:ring-[var(--app-accent)]/20"
-                      />
-                      Interpretar lenguaje natural
-                    </label>
-                    <p className="text-sm text-[var(--app-text-muted)]">
-                      Permite escribir expresiones como &apos;seno de x&apos;,
-                      &apos;x al cuadrado más 3&apos;, etc.
-                    </p>
+                    <div className="space-y-2">
+                      {curves.map((curve, idx) => (
+                        <div
+                          key={curve.id}
+                          className={`rounded-md border bg-[var(--app-surface)] p-2.5 ${
+                            idx === activeCurveIndex
+                              ? "border-[var(--app-accent)]"
+                              : "border-[var(--app-border)]"
+                          }`}
+                        >
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <label className={`${fieldLabel} mb-0`}>
+                              Expresión {idx + 1}
+                              {idx === activeCurveIndex ? (
+                                <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-accent)]">
+                                  Activa
+                                </span>
+                              ) : null}
+                            </label>
+                            <div className="flex items-center gap-3">
+                              <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--app-text-muted)]">
+                                <input
+                                  type="color"
+                                  value={curve.color}
+                                  onChange={(e) =>
+                                    updateCurveColor(curve.id, e.target.value)
+                                  }
+                                  className="h-9 w-12 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)] p-0.5"
+                                  title="Color de la curva"
+                                />
+                                Color
+                              </label>
+                              {idx > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeCurve(curve.id)}
+                                  className="text-sm font-semibold text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:underline"
+                                  title="Eliminar curva"
+                                >
+                                  Eliminar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <input
+                            ref={idx === 0 ? firstCurveExpressionRef : undefined}
+                            type="text"
+                            value={curve.expression}
+                            onFocus={() => setActiveCurveIndex(idx)}
+                            onChange={(e) => {
+                              updateCurveExpression(curve.id, e.target.value);
+                              setErrorMessage("");
+                            }}
+                            placeholder={
+                              idx === 0 ? "Ej: x^2 + 3*x + 1" : "Ej: sin(x)"
+                            }
+                            className={inputField}
+                          />
+                          {idx === activeCurveIndex &&
+                            activeCurveNaturalLanguagePreview && (
+                              <p className="mt-2 text-sm text-[var(--app-text)]">
+                                <span className="font-semibold">
+                                  Interpretado como:
+                                </span>{" "}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    applyInterpretedExpression(
+                                      curve.id,
+                                      activeCurveNaturalLanguagePreview
+                                    )
+                                  }
+                                  className="-mx-1 cursor-pointer rounded px-1 font-mono text-[var(--app-accent)] transition-colors hover:bg-[var(--app-surface-muted)] hover:opacity-90"
+                                  title="Usar esta expresión en el campo"
+                                >
+                                  {activeCurveNaturalLanguagePreview}
+                                </button>
+                              </p>
+                            )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-1 border-t border-[var(--app-border)] pt-2">
+                      <label className="inline-flex cursor-pointer items-center gap-2.5 text-base text-[var(--app-text)]">
+                        <input
+                          type="checkbox"
+                          checked={naturalLanguageEnabled}
+                          onChange={(e) =>
+                            setNaturalLanguageEnabled(e.target.checked)
+                          }
+                          className="h-4 w-4 rounded border-[var(--app-border)] text-[var(--app-accent)] focus:ring-[var(--app-accent)]/20"
+                        />
+                        Interpretar lenguaje natural
+                      </label>
+                      <p className="text-sm text-[var(--app-text-muted)]">
+                        Permite escribir expresiones como &apos;seno de x&apos;,
+                        &apos;x al cuadrado más 3&apos;, etc.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -20514,6 +20765,22 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     biblioteca en nube. Use Importar gráfico (JSON) solo para
                     configuraciones de curvas, no para CSV/Excel.
                   </p>
+                  {hasChartContent ? (
+                    <p className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => selectWorkspaceSection("results")}
+                        className={workflowContinuityLinkClass}
+                      >
+                        Ver gráfico principal en Resultados →
+                      </button>
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                      Tras Graficar, el canvas vive en Resultados junto a la
+                      leyenda y las exportaciones.
+                    </p>
+                  )}
 
                   {isEditing && selectedGraphId && (
                     <div
@@ -20599,9 +20866,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               <NotebookSection
                 title="Constructor Visual"
                 icon="📊"
-                subtitle="Diseñe gráficos desde las columnas de la Worksheet"
+                subtitle={
+                  currentDatasetInfo
+                    ? `Diseñe gráficos desde la Worksheet de ${currentDatasetInfo.fileName}`
+                    : "Diseñe gráficos desde las columnas de la Worksheet"
+                }
                 defaultOpen
               >
+                <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                  Crear gráfico guarda la vista previa en Resultados del dataset
+                  activo
+                  {experimentalSeries.length === 0
+                    ? ". Importe datos en Experimental para comenzar."
+                    : "."}
+                </p>
+                {experimentalSeries.length === 0 ? (
+                  <p className="mb-2">
+                    <button
+                      type="button"
+                      onClick={() => openDataView("experimental")}
+                      className={workflowContinuityLinkClass}
+                    >
+                      Ir a Importación experimental →
+                    </button>
+                  </p>
+                ) : null}
                 <VisualGraphBuilder
                   key={activeDatasetId ?? "no-dataset"}
                   series={experimentalSeries}
@@ -20637,9 +20926,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             <h2 className={sectionLabel}>🔬 Análisis</h2>
             <p className={`${panelHeadingSubtext} -mt-1 mb-2`}>
-              Inspector contextual: seleccione una categoría para ver sus
-              controles
+              Inspector contextual: ejes, escalas y módulos del gráfico — use
+              Resultados para ver el canvas
             </p>
+            <WorkflowContinuityBar
+              stepLabel="Análisis · controles del gráfico"
+              contextLine={workflowContextLine}
+              actions={[
+                {
+                  label: "← Datos",
+                  onClick: () => selectWorkspaceSection("data"),
+                },
+                {
+                  label: "Ver Resultados →",
+                  onClick: () => selectWorkspaceSection("results"),
+                },
+                ...(profileShowsDataWorkspaceView("curves", labUsageProfile)
+                  ? [
+                      {
+                        label: "Editar curvas",
+                        onClick: () => openDataView("curves"),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
             {showPublicationEntryBanner ? (
               <PublicationEntryBanner
                 canStartWorkflow={
@@ -20712,6 +21023,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   >
                   <div className={subsectionCard}>
                     <p className={subsectionHeading}>📏 Rango</p>
+                    <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                      Dominio X usado al graficar y muestrear curvas.
+                    </p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className={fieldLabel}>
@@ -20742,6 +21056,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                   <div className={subsectionCard}>
                     <p className={subsectionHeading}>📊 Ejes</p>
+                    <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                      Ajuste automático y eje secundario para series experimentales.
+                    </p>
                     <div className="space-y-3">
                       <label className={toggleLabel}>
                         <span className="flex-1 min-w-0">
@@ -20781,6 +21098,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                   <div className={subsectionCard}>
                     <p className={subsectionHeading}>📐 Escalas</p>
+                    <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                      Lineal o logarítmica; avisos aparecen en Resultados si hay
+                      valores incompatibles.
+                    </p>
                     <div>
                       <label
                         htmlFor="axis-scale-mode-select"
@@ -22759,6 +23080,39 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             aria-hidden={activeWorkspaceSection !== "results"}
           >
             <h2 className={`${sectionLabel} mb-2`}>📈 Resultados</h2>
+            <WorkflowContinuityBar
+              stepLabel="Resultados · gráfico y exportaciones"
+              contextLine={workflowContextLine}
+              actions={[
+                {
+                  label: "← Datos",
+                  onClick: () => selectWorkspaceSection("data"),
+                },
+                {
+                  label: "← Análisis (ejes)",
+                  onClick: () => selectWorkspaceSection("analysis"),
+                },
+                ...(profileShowsDataWorkspaceView(
+                  "visual-builder",
+                  labUsageProfile
+                )
+                  ? [
+                      {
+                        label: "Constructor Visual",
+                        onClick: () => openDataView("visual-builder"),
+                      },
+                    ]
+                  : []),
+                ...(profileShowsDataWorkspaceView("curves", labUsageProfile)
+                  ? [
+                      {
+                        label: "Constructor de curvas",
+                        onClick: () => openDataView("curves"),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
             {projectVisualGraphs.length > 0 ? (
               <div className="mb-3 space-y-2">
                 <NotebookSection
@@ -22785,10 +23139,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               {entry.preview.title}
                             </p>
                             <p className="text-xs text-[var(--app-text-muted)]">
-                              {entry.graphSpec.graphType} ·{" "}
-                              {new Date(entry.createdAt).toLocaleString()}
+                              {VISUAL_GRAPH_TYPE_LABELS[entry.graphSpec.graphType]}{" "}
+                              · {new Date(entry.createdAt).toLocaleString()}
                             </p>
                           </div>
+                          <span className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]">
+                            {VISUAL_GRAPH_TYPE_LABELS[entry.graphSpec.graphType]}
+                          </span>
                         </div>
                         <GraphPreview
                           preview={entry.preview}
@@ -22858,15 +23215,28 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             <NotebookSection
               title="Gráfico principal"
               icon="📈"
-              subtitle={`Escala actual: ${getAxisScaleModeLabel(axisScaleMode)}`}
+              subtitle={`Escala: ${getAxisScaleModeLabel(axisScaleMode)}${
+                hasChartContent
+                  ? ` · ${activeCurves.length} curva${
+                      activeCurves.length === 1 ? "" : "s"
+                    } · ${visibleExperimentalSeries.length} serie${
+                      visibleExperimentalSeries.length === 1 ? "" : "s"
+                    }`
+                  : " · sin contenido graficado"
+              }`}
               defaultOpen
             >
-            <div className="flex flex-wrap items-center justify-end gap-2 mb-2">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] text-[var(--app-text-muted)]">
+                {hasChartContent
+                  ? "Arrastre el área del gráfico para desplazar la vista."
+                  : "Graficar curvas o importar series para poblar el canvas."}
+              </p>
               <button
                 type="button"
                 onClick={interaction.resetVisibleRange}
                 disabled={!hasChartContent}
-                className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`${btnOutline} disabled:cursor-not-allowed disabled:opacity-50`}
               >
                 Restablecer vista
               </button>
@@ -22886,40 +23256,55 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 onToggleLegend={toggleLegendVisibility}
               />
 
-              <ChartInteractionSurface surfaceProps={interaction.surfaceProps}>
-                <MainComposedChart
-                  data={composedChartData}
-                  chartTheme={chartTheme}
-                  usesLogX={usesLogX}
-                  usesLogY={usesLogY}
-                  useDualYAxis={useDualYAxis}
-                  xAxisDomain={xAxisDomain}
-                  mathYAxisDomainForChart={mathYAxisDomainForChart}
-                  experimentalYAxisDomainForChart={experimentalYAxisDomainForChart}
-                  yAxisDomainForChart={yAxisDomainForChart}
-                  activeCurves={activeCurves}
-                  derivativeCurves={derivativeCurves}
-                  integralCurves={integralCurves}
-                  visibleExperimentalSeries={visibleExperimentalSeries}
-                  errorBarSeries={errorBarSeries}
-                  regressionCurves={regressionCurves}
-                  hiddenLegendKeys={hiddenLegendKeys}
-                  showErrorBars={showErrorBars}
-                  showIntersections={showIntersections}
-                  showCriticalPoints={showCriticalPoints}
-                  showRoots={showRoots}
-                  showOutliers={showOutliers}
-                  intersectionChartPoints={intersectionChartPoints}
-                  criticalMaxChartPoints={criticalMaxChartPoints}
-                  criticalMinChartPoints={criticalMinChartPoints}
-                  rootChartPoints={rootChartPoints}
-                  outlierChartPoints={outlierChartPoints}
-                  outlierMethod={outlierMethod}
-                  formatStat={formatExperimentalStat}
-                  formatOutlierScore={formatOutlierScore}
-                  getOutlierMethodLabel={getOutlierMethodLabel}
-                />
-              </ChartInteractionSurface>
+              {!hasChartContent ? (
+                <div
+                  className={`${emptyState} flex min-h-[360px] flex-col items-center justify-center gap-1 text-center sm:min-h-[400px]`}
+                  role="status"
+                >
+                  <p className="text-sm font-medium text-[var(--app-text)]">
+                    No hay gráfico para mostrar
+                  </p>
+                  <p className="text-xs text-[var(--app-text-muted)]">
+                    Use &quot;Graficar&quot; en el Constructor de curvas o importe
+                    series experimentales.
+                  </p>
+                </div>
+              ) : (
+                <ChartInteractionSurface surfaceProps={interaction.surfaceProps}>
+                  <MainComposedChart
+                    data={composedChartData}
+                    chartTheme={chartTheme}
+                    usesLogX={usesLogX}
+                    usesLogY={usesLogY}
+                    useDualYAxis={useDualYAxis}
+                    xAxisDomain={xAxisDomain}
+                    mathYAxisDomainForChart={mathYAxisDomainForChart}
+                    experimentalYAxisDomainForChart={experimentalYAxisDomainForChart}
+                    yAxisDomainForChart={yAxisDomainForChart}
+                    activeCurves={activeCurves}
+                    derivativeCurves={derivativeCurves}
+                    integralCurves={integralCurves}
+                    visibleExperimentalSeries={visibleExperimentalSeries}
+                    errorBarSeries={errorBarSeries}
+                    regressionCurves={regressionCurves}
+                    hiddenLegendKeys={hiddenLegendKeys}
+                    showErrorBars={showErrorBars}
+                    showIntersections={showIntersections}
+                    showCriticalPoints={showCriticalPoints}
+                    showRoots={showRoots}
+                    showOutliers={showOutliers}
+                    intersectionChartPoints={intersectionChartPoints}
+                    criticalMaxChartPoints={criticalMaxChartPoints}
+                    criticalMinChartPoints={criticalMinChartPoints}
+                    rootChartPoints={rootChartPoints}
+                    outlierChartPoints={outlierChartPoints}
+                    outlierMethod={outlierMethod}
+                    formatStat={formatExperimentalStat}
+                    formatOutlierScore={formatOutlierScore}
+                    getOutlierMethodLabel={getOutlierMethodLabel}
+                  />
+                </ChartInteractionSurface>
+              )}
 
               {showPCA && (
                 <div className={`${contentPanel} mt-4`}>
@@ -26537,96 +26922,118 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     className="mb-2"
                   />
                 ) : null}
-                <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--app-text-muted)]">
-                  <label className="inline-flex items-center gap-1.5">
-                    <span>PNG DPI</span>
-                    <select
-                      value={chartExportPixelRatio}
-                      disabled={!hasChartContent}
-                      onChange={(event) =>
-                        setChartExportPixelRatio(
-                          resolveChartExportPixelRatio(Number(event.target.value))
-                        )
-                      }
-                      className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[var(--app-text)]"
-                      title="pixelRatio de captura PNG (≥ 2)"
-                    >
-                      {CHART_EXPORT_PIXEL_RATIO_PRESETS.map((ratio) => (
-                        <option key={ratio} value={ratio}>
-                          {ratio}x
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="inline-flex items-center gap-1.5">
-                    <span>sampleStep</span>
-                    <select
-                      value={chartExportSampleStep}
-                      disabled={!hasChartContent}
-                      onChange={(event) =>
-                        setChartExportSampleStep(
-                          resolveChartExportSampleStep(Number(event.target.value))
-                        )
-                      }
-                      className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[var(--app-text)]"
-                      title="Muestreo de curvas al exportar PNG/SVG (superficie export; no altera GRAPH)"
-                    >
-                      {CHART_EXPORT_SAMPLE_STEP_PRESETS.map((step) => (
-                        <option key={step} value={step}>
-                          {step}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
-                  <div className={actionBarGroup}>
-                    <button
-                      type="button"
-                      onClick={exportChartPng}
-                      disabled={!hasChartContent}
-                      title="Exportar PNG"
-                      className={actionBarBtnExport}
-                    >
-                      PNG
-                    </button>
-                    <button
-                      type="button"
-                      onClick={exportChartSvg}
-                      disabled={!hasChartContent}
-                      title="Exportar SVG"
-                      className={actionBarBtnExport}
-                    >
-                      SVG
-                    </button>
-                    <button
-                      type="button"
-                      onClick={exportChartJson}
-                      title="Exportar JSON"
-                      className={actionBarBtnExport}
-                    >
-                      JSON
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void handleExportScientificReportPdf();
-                      }}
-                      disabled={scientificReportPdfExporting}
-                      title="Exportar reporte científico en PDF"
-                      className={`${actionBarBtnExport} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {scientificReportPdfExporting
-                        ? "Exportando PDF..."
-                        : "📄 Exportar PDF"}
-                    </button>
+                <div className="space-y-3">
+                  <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                      Exportar gráfico
+                    </p>
+                    <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--app-text-muted)]">
+                      <label className="inline-flex items-center gap-1.5">
+                        <span>PNG DPI</span>
+                        <select
+                          value={chartExportPixelRatio}
+                          disabled={!hasChartContent}
+                          onChange={(event) =>
+                            setChartExportPixelRatio(
+                              resolveChartExportPixelRatio(
+                                Number(event.target.value)
+                              )
+                            )
+                          }
+                          className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[var(--app-text)]"
+                          title="pixelRatio de captura PNG (≥ 2)"
+                        >
+                          {CHART_EXPORT_PIXEL_RATIO_PRESETS.map((ratio) => (
+                            <option key={ratio} value={ratio}>
+                              {ratio}x
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="inline-flex items-center gap-1.5">
+                        <span>sampleStep</span>
+                        <select
+                          value={chartExportSampleStep}
+                          disabled={!hasChartContent}
+                          onChange={(event) =>
+                            setChartExportSampleStep(
+                              resolveChartExportSampleStep(
+                                Number(event.target.value)
+                              )
+                            )
+                          }
+                          className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[var(--app-text)]"
+                          title="Muestreo de curvas al exportar PNG/SVG (superficie export; no altera GRAPH)"
+                        >
+                          {CHART_EXPORT_SAMPLE_STEP_PRESETS.map((step) => (
+                            <option key={step} value={step}>
+                              {step}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    {!hasChartContent ? (
+                      <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                        PNG/SVG requieren contenido en el gráfico principal.
+                      </p>
+                    ) : null}
+                    <div className={actionBarGroup}>
+                      <button
+                        type="button"
+                        onClick={exportChartPng}
+                        disabled={!hasChartContent}
+                        title="Exportar PNG"
+                        className={actionBarBtnExport}
+                      >
+                        PNG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={exportChartSvg}
+                        disabled={!hasChartContent}
+                        title="Exportar SVG"
+                        className={actionBarBtnExport}
+                      >
+                        SVG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={exportChartJson}
+                        title="Exportar JSON"
+                        className={actionBarBtnExport}
+                      >
+                        JSON
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                      Exportar documento
+                    </p>
+                    <div className={actionBarGroup}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleExportScientificReportPdf();
+                        }}
+                        disabled={scientificReportPdfExporting}
+                        title="Exportar reporte científico en PDF"
+                        className={`${actionBarBtnExport} disabled:cursor-not-allowed disabled:opacity-50`}
+                      >
+                        {scientificReportPdfExporting
+                          ? "Exportando PDF..."
+                          : "📄 Exportar PDF"}
+                      </button>
+                    </div>
+                    {scientificReportPdfMessage && (
+                      <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                        {scientificReportPdfMessage}
+                      </p>
+                    )}
                   </div>
                 </div>
-                {scientificReportPdfMessage && (
-                  <p className="text-xs text-[var(--app-text-muted)] mt-2">
-                    {scientificReportPdfMessage}
-                  </p>
-                )}
               </NotebookSection>
 
               {profileShowsReportsCopyPanel(labUsageProfile) ? (

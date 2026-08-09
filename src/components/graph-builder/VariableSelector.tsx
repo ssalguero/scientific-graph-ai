@@ -38,6 +38,7 @@ export function VariableSelector({
           onChange(event.target.value.length > 0 ? event.target.value : null)
         }
         className={inputClassName}
+        aria-invalid={Boolean(errorMessage)}
       >
         {allowEmpty ? <option value="">—</option> : null}
         {options.map((variable) => (
@@ -56,7 +57,7 @@ export function VariableSelector({
         ))}
       </select>
       {errorMessage ? (
-        <p className="mt-1 text-xs text-[var(--app-danger-text)]">
+        <p className="mt-1 text-xs text-[var(--app-danger-text)]" role="alert">
           {errorMessage}
         </p>
       ) : null}

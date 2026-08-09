@@ -42,9 +42,13 @@ const stepLabel: Record<WizardStep, string> = {
 const inputClass =
   "w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-sm text-[var(--app-text)]";
 const btnPrimary =
-  "rounded-lg bg-[var(--app-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50";
+  "rounded-lg bg-[var(--app-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-text-inverse,#fff)] disabled:opacity-50";
 const btnSecondary =
-  "rounded-lg border border-[var(--app-border)] px-4 py-2 text-sm font-semibold text-[var(--app-text)]";
+  "rounded-lg border border-[var(--app-border)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] hover:bg-[var(--app-surface-muted)]";
+const stepActiveClass =
+  "bg-[var(--app-accent)] text-[var(--color-text-inverse,#fff)]";
+const stepIdleClass =
+  "bg-[var(--app-surface-muted)] text-[var(--app-text-muted)] border border-[var(--app-border)]";
 
 export function WorkbookImportWizard({
   open,
@@ -159,10 +163,9 @@ export function WorkbookImportWizard({
               <span
                 key={step}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  index === stepIndex
-                    ? "bg-[var(--app-accent)] text-white"
-                    : "bg-[var(--app-surface-muted)] text-[var(--app-text-muted)]"
+                  index === stepIndex ? stepActiveClass : stepIdleClass
                 }`}
+                aria-current={index === stepIndex ? "step" : undefined}
               >
                 {index + 1}. {stepLabel[step]}
               </span>
@@ -402,7 +405,9 @@ export function WorkbookImportWizard({
                 onDiscardedRowSelect={setHighlightedRowIndex}
               />
               {submitError && (
-                <p className="text-sm text-[var(--app-danger-text)]">{submitError}</p>
+                <p className="text-sm text-[var(--app-danger-text)]" role="alert">
+                  {submitError}
+                </p>
               )}
             </div>
           )}

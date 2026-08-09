@@ -22,6 +22,9 @@ export const LEGACY_APP_TOKEN_BRIDGE = {
   "--app-heading": "var(--color-text-primary)",
   /* Brand / feedback */
   "--app-accent": "var(--color-brand-primary)",
+  /* Soft brand wash for import selection / region preview (consumes existing brand token). */
+  "--app-accent-soft":
+    "color-mix(in srgb, var(--color-brand-primary) 14%, var(--color-surface-default))",
   "--app-success": "var(--color-feedback-success)",
   "--app-warning": "var(--color-feedback-warning)",
   "--app-danger": "var(--color-feedback-danger)",

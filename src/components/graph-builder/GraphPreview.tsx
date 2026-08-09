@@ -19,6 +19,7 @@ import type {
   VisualGraphMarkerStyle,
   VisualGraphPreview,
 } from "@/lib/visualGraphBuilder";
+import { VISUAL_GRAPH_TYPE_LABELS } from "@/lib/visualGraphBuilder";
 
 import { HeatmapPreview } from "./HeatmapPreview";
 import { BubblePreview } from "./BubblePreview";
@@ -135,16 +136,30 @@ export function GraphPreview({
 }: GraphPreviewProps) {
   if (errorMessage) {
     return (
-      <div className="flex h-full min-h-[320px] items-center justify-center rounded-xl border border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] p-4 text-sm text-[var(--app-danger-text)]">
-        {errorMessage}
+      <div
+        className="flex h-full min-h-[320px] flex-col items-center justify-center gap-1 rounded-xl border border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] p-4 text-center"
+        role="alert"
+      >
+        <p className="text-sm font-medium text-[var(--app-danger-text)]">
+          Vista previa no disponible
+        </p>
+        <p className="text-xs text-[var(--app-danger-text)]">{errorMessage}</p>
       </div>
     );
   }
 
   if (!preview) {
     return (
-      <div className="flex h-full min-h-[320px] items-center justify-center rounded-xl border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] p-4 text-sm text-[var(--app-text-muted)]">
-        Configure el gráfico para ver la vista previa.
+      <div
+        className="flex h-full min-h-[320px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] p-4 text-center"
+        role="status"
+      >
+        <p className="text-sm font-medium text-[var(--app-text)]">
+          Sin vista previa
+        </p>
+        <p className="text-xs text-[var(--app-text-muted)]">
+          Configure el tipo y las variables del gráfico para verla aquí.
+        </p>
       </div>
     );
   }
@@ -158,17 +173,24 @@ export function GraphPreview({
 
   return (
     <div className="flex h-full min-h-[320px] flex-col rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-3">
-      <div className="mb-2">
-        <p className="text-sm font-semibold text-[var(--app-heading)]">
-          {preview.title}
-        </p>
-        <p className="text-xs text-[var(--app-text-muted)]">
-          {preview.xLabel}
-          {preview.yLabel ? ` · ${preview.yLabel}` : ""}
-        </p>
+      <div className="mb-3 border-b border-[var(--app-border)] pb-2">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--app-heading)]">
+              {preview.title}
+            </p>
+            <p className="text-xs text-[var(--app-text-muted)]">
+              {preview.xLabel}
+              {preview.yLabel ? ` · ${preview.yLabel}` : ""}
+            </p>
+          </div>
+          <span className="shrink-0 rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]">
+            {VISUAL_GRAPH_TYPE_LABELS[preview.graphType]}
+          </span>
+        </div>
       </div>
 
-      <div className="w-full" style={chartSurfaceStyle}>
+      <div className="min-h-0 w-full flex-1" style={chartSurfaceStyle}>
         {preview.graphType === "scatter" ? (
           <ScatterPreview
             data={preview.scatterPoints}

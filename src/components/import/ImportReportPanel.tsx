@@ -16,7 +16,7 @@ const severityClass: Record<ValidationSeverity, string> = {
 const severityBadge: Record<ValidationSeverity, string> = {
   error: "bg-[var(--app-danger-bg)] text-[var(--app-danger-text)] border-[var(--app-danger-border)]",
   warning:
-    "bg-[var(--app-surface-muted)] text-[var(--app-warning-text)] border-[var(--app-border)]",
+    "bg-[var(--app-warning-bg)] text-[var(--app-warning-text)] border-[var(--app-warning-border)]",
   info: "bg-[var(--app-surface-muted)] text-[var(--app-text-muted)] border-[var(--app-border)]",
 };
 
@@ -27,13 +27,34 @@ export function ImportReportPanel({ report }: ImportReportPanelProps) {
     warning: report.warningCount,
     info: issues.filter((issue) => issue.severity === "info").length,
   };
+  const hasErrors = issueSummary.error > 0;
+  const hasWarnings = issueSummary.warning > 0;
 
   return (
-    <div className="mt-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-4 py-3 space-y-3">
+    <div
+      className="mt-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-4 py-3 space-y-3"
+      role="region"
+      aria-label="Informe de importación"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium text-[var(--app-heading)]">
-          Informe de importación
-        </p>
+        <div className="min-w-0 space-y-0.5">
+          <p className="text-sm font-medium text-[var(--app-heading)]">
+            Informe de importación
+          </p>
+          {hasErrors ? (
+            <p className="text-[11px] font-medium text-[var(--app-danger-text)]">
+              Hay errores de validación en este informe
+            </p>
+          ) : hasWarnings ? (
+            <p className="text-[11px] font-medium text-[var(--app-warning-text)]">
+              Hay avisos de validación en este informe
+            </p>
+          ) : (
+            <p className="text-[11px] font-medium text-[var(--app-success-text)]">
+              Importación sin avisos de validación
+            </p>
+          )}
+        </div>
         <span className="rounded-full border border-[var(--app-border)] px-2 py-0.5 text-xs text-[var(--app-text-muted)]">
           {report.importMode === "fast-path" ? "Directa" : "Asistente"} ·{" "}
           {report.version ?? "v1"}

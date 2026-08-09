@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  LOCAL_PROJECT_STORAGE_STATE_CLASS,
+  LOCAL_PROJECT_STORAGE_STATE_LABEL,
+} from "@/lib/project/userMessages";
+import { projectFileBtnPrimary } from "@/lib/ui/theme";
+
 export type RecentProjectsPanelProps = {
   projects: readonly {
     id: string;
@@ -15,33 +21,19 @@ export type RecentProjectsPanelProps = {
   className?: string;
 };
 
-type RecentProjectStorageState = RecentProjectsPanelProps["projects"][number]["storageState"];
-
 const panelClassName =
   "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-2 text-xs text-[var(--app-text)]";
 
 const itemClassName =
   "flex items-start justify-between gap-2 rounded-md border border-[var(--app-border)]/60 bg-[var(--app-surface-muted)]/40 px-2 py-1.5";
 
-const btnOpenClassName =
-  "shrink-0 rounded-lg bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 transition-colors";
+const btnOpenClassName = `shrink-0 ${projectFileBtnPrimary}`;
 
 const btnLinkClassName =
   "text-[11px] font-medium text-[var(--app-accent)] hover:underline";
 
-const storageStateLabel: Record<RecentProjectStorageState, string> = {
-  NORMAL: "Guardado",
-  DIRTY: "Cambios pendientes",
-  RECOVERABLE: "Recuperable",
-  CORRUPTED: "Corrupto",
-};
-
-const storageStateClass: Record<RecentProjectStorageState, string> = {
-  NORMAL: "text-emerald-700",
-  DIRTY: "text-amber-700",
-  RECOVERABLE: "text-orange-700",
-  CORRUPTED: "text-red-700",
-};
+const activeBadgeClass =
+  "inline-flex shrink-0 rounded border border-[var(--app-accent)]/40 bg-[var(--app-accent)]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--app-accent)]";
 
 const formatLastAccessedAt = (iso: string): string => {
   const date = new Date(iso);
@@ -69,8 +61,12 @@ export function RecentProjectsPanel({
   return (
     <section
       className={[panelClassName, className].filter(Boolean).join(" ")}
-      aria-label="Historial de proyectos recientes"
+      aria-label="Proyectos recientes"
     >
+      <p className="px-0.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+        Proyectos recientes
+      </p>
+
       {isLoading ? (
         <p
           className="px-0.5 text-[11px] text-[var(--app-text-muted)]"
@@ -82,7 +78,7 @@ export function RecentProjectsPanel({
 
       {loadError ? (
         <p
-          className="px-0.5 text-[11px] text-[var(--app-danger-text)]"
+          className="rounded-md border border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] px-2 py-1.5 text-[11px] text-[var(--app-danger-text)]"
           role="alert"
         >
           {loadError}
@@ -90,31 +86,53 @@ export function RecentProjectsPanel({
       ) : null}
 
       {showEmpty ? (
-        <p
-          className="px-0.5 text-[11px] text-[var(--app-text-muted)]"
+        <div
+          className="rounded-md border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 px-2 py-2 space-y-1"
           role="status"
         >
-          No hay proyectos recientes en la biblioteca local.
-        </p>
+          <p className="text-[11px] font-medium text-[var(--app-text)]">
+            No hay proyectos recientes
+          </p>
+          <p className="text-[10px] text-[var(--app-text-muted)]">
+            Guarde un proyecto localmente o abra la biblioteca completa.
+          </p>
+          {onOpenLibrary ? (
+            <button
+              type="button"
+              className={btnLinkClassName}
+              onClick={onOpenLibrary}
+            >
+              Ver biblioteca completa
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
       {projects.length > 0 ? (
         <ul className="max-h-48 overflow-y-auto space-y-1.5 pr-0.5" role="list">
           {projects.map((project) => {
             const isActive = project.id === activeProjectId;
+            const isRecoverable = project.storageState === "RECOVERABLE";
             return (
               <li
                 key={project.id}
                 className={`${itemClassName}${
                   isActive
                     ? " border-[var(--app-accent)] bg-[var(--app-accent)]/5"
-                    : ""
+                    : isRecoverable
+                      ? " border-[var(--app-warning-border)] bg-[var(--app-warning-bg)]/40"
+                      : ""
                 }`}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-[var(--app-text)] leading-snug break-words">
-                    {project.name}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="text-xs font-medium text-[var(--app-text)] leading-snug break-words">
+                      {project.name}
+                    </p>
+                    {isActive ? (
+                      <span className={activeBadgeClass}>Activo</span>
+                    ) : null}
+                  </div>
                   <time
                     className="mt-0.5 block text-[10px] text-[var(--app-text-muted)]"
                     dateTime={project.lastAccessedAt}
@@ -122,9 +140,9 @@ export function RecentProjectsPanel({
                     Último acceso: {formatLastAccessedAt(project.lastAccessedAt)}
                   </time>
                   <p
-                    className={`mt-0.5 text-[10px] font-medium ${storageStateClass[project.storageState]}`}
+                    className={`mt-0.5 text-[10px] font-medium ${LOCAL_PROJECT_STORAGE_STATE_CLASS[project.storageState]}`}
                   >
-                    {storageStateLabel[project.storageState]}
+                    {LOCAL_PROJECT_STORAGE_STATE_LABEL[project.storageState]}
                   </p>
                 </div>
                 <button
@@ -141,7 +159,7 @@ export function RecentProjectsPanel({
         </ul>
       ) : null}
 
-      {onOpenLibrary ? (
+      {onOpenLibrary && !showEmpty ? (
         <div className="mt-2 border-t border-[var(--app-border)]/60 pt-2">
           <button
             type="button"
