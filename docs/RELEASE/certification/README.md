@@ -22,6 +22,7 @@
 **Version Identity (current):** **1.0.0** (VERSION-DECISION-001)  
 **Live Release Context:** **RC-DECISION-002** · ESTABLISHED WITH EXPLICIT OPEN ITEMS · baseline **`cace282…`**  
 **Global Release Certification / Decision Execution (GRC-2):** **EXECUTED** — **CERTIFIED WITH EXPLICIT WARNINGS** (GRC-DECISION-002)  
+**RELEASE Series (Amend and Re-certify / 1.0.0):** **CLOSED** — see [`../official-records/RELEASE-1.0.0-Series-Closure.md`](../official-records/RELEASE-1.0.0-Series-Closure.md)  
 **Historical GRC-001:** **PRESERVED** for baseline `66d43cc…`  
 **P3–P11:** **NOT CREATED / NOT AUTHORIZED**  
 **Product Release (deployment/publication):** NOT AUTHORIZED  
