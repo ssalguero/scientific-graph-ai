@@ -1,6 +1,6 @@
 # RELEASE Official Records
 
-**Status:** Planning Series — P0/P1/P2 certified · **Domain Architecture CLOSED** · **Live Release Context:** RC-DECISION-002 **ESTABLISHED WITH EXPLICIT OPEN ITEMS** · **GRC-2 AUTHORIZED** (GRC-AUTH-002) · **GRC-2 NOT YET EXECUTED** · Historical GRC-001 **PRESERVED**  
+**Status:** Planning Series — P0/P1/P2 certified · **Domain Architecture CLOSED** · **Live Release Context:** RC-DECISION-002 · **GRC-2 EXECUTED — CERTIFIED WITH EXPLICIT WARNINGS** (GRC-DECISION-002) · Historical GRC-001 **PRESERVED**  
 **Planning Authority:** [`../RELEASE-Planning-Charter.md`](../RELEASE-Planning-Charter.md) (**RELEASE CERTIFIED / FROZEN**)
 
 This directory holds RELEASE Official Records. **No P3–P11 ladder** is defined or authorized.
@@ -15,12 +15,14 @@ This directory holds RELEASE Official Records. **No P3–P11 ladder** is defined
 | [RELEASE-Domain-Closure.md](./RELEASE-Domain-Closure.md) | **ARCHITECTURE CLOSED** (historical body retains closure-time “Version Identity: NOT SELECTED”; not rewritten) |
 | [RC-DECISION-001-Release-Context-Establishment.md](./RC-DECISION-001-Release-Context-Establishment.md) | **HISTORICAL** · Release Context for baseline `66d43cc…` · **superseded for live GRC pin use** by RC-DECISION-002 · body **not rewritten** |
 | [RC-DECISION-002-Release-Context-Supersession.md](./RC-DECISION-002-Release-Context-Supersession.md) | **DECIDED / IN FORCE** · **LIVE** Release Context **ESTABLISHED WITH EXPLICIT OPEN ITEMS** for Version Identity **1.0.0** · baseline **`cace2820fa2f2a24c608eedf13f827b635198a0b`** |
-| [GRC-AUTH-002-Global-Release-Certification-Authorization.md](./GRC-AUTH-002-Global-Release-Certification-Authorization.md) | **DECIDED / IN FORCE** · **GRC-2 AUTHORIZED** · certification **NOT EXECUTED** by this record |
+| [GRC-AUTH-002-Global-Release-Certification-Authorization.md](./GRC-AUTH-002-Global-Release-Certification-Authorization.md) | **DECIDED / IN FORCE** · **GRC-2 AUTHORIZED** |
 | [RELEASE-1.0.0-Release-Plan.md](./RELEASE-1.0.0-Release-Plan.md) | **HISTORICAL** — GRC-001 execution Release Plan for **1.0.0** on baseline `66d43cc…` |
+| [RELEASE-1.0.0-GRC2-Release-Plan.md](./RELEASE-1.0.0-GRC2-Release-Plan.md) | **ISSUED** — GRC-2 execution Release Plan for **1.0.0** on baseline `cace282…` |
 | [GRC-DECISION-001-Final-Decision-Record.md](./GRC-DECISION-001-Final-Decision-Record.md) | **HISTORICAL** · **DECIDED / IN FORCE** for baseline `66d43cc…` · **CERTIFIED WITH EXPLICIT WARNINGS** · does **not** certify baseline `cace282…` |
+| [GRC-DECISION-002-Final-Decision-Record.md](./GRC-DECISION-002-Final-Decision-Record.md) | **DECIDED / IN FORCE** — Final Decision (GRC-2) · **CERTIFIED WITH EXPLICIT WARNINGS** · baseline **`cace282…`** |
 | Version Identity (current) | **SELECTED** via PRODUCT [VERSION-DECISION-001](../../PRODUCT/official-records/VERSION-DECISION-001-Version-Identity-Decision.md) — **1.0.0** / display **v1.0** |
 | Live Release Context baseline | **`cace2820fa2f2a24c608eedf13f827b635198a0b`** (RC-DECISION-002) |
-| Global Release Certification / Decision Execution (GRC-2) | **AUTHORIZED** via GRC-AUTH-002 · **NOT YET EXECUTED** (awaits RP-3) |
+| Global Release Certification / Decision Execution (GRC-2) | **EXECUTED** — see GRC-DECISION-002 + GRC-2 certification pack (**CERTIFIED WITH EXPLICIT WARNINGS**) |
 | Historical GRC-1.0.0 (GRC-DECISION-001) | **EXECUTED** on `66d43cc…` — **CERTIFIED WITH EXPLICIT WARNINGS** — preserved |
 | P3–P11 | **NOT CREATED / NOT AUTHORIZED** |
 | RELEASE-I\* | **LOCKED** (if later authorized — until Planning Certification) |
@@ -28,9 +30,9 @@ This directory holds RELEASE Official Records. **No P3–P11 ladder** is defined
 **Product Release (deployment/publication):** NOT AUTHORIZED  
 **Production Release:** NOT AUTHORIZED  
 **Release Candidate:** NOT AUTHORIZED  
-**Evidence Binding (amended context / RC-002):** **NOT ESTABLISHED**  
-**Evidence Binding (historical GRC-1.0.0):** **ESTABLISHED FOR GRC-1.0.0** only (see historical certification Evidence Index; does not transfer to `cace282…`)  
-**Peers:** IMMUTABLE under RELEASE Planning (consumed as inputs; not re-certified) · COLLAB I0–I10 **in-scope evaluable** under RC-002 · **not** globally RELEASE CERTIFIED by RC-002  
+**Evidence Binding (amended context / RC-002 / GRC-2):** **ESTABLISHED FOR GRC-2 / 1.0.0**  
+**Evidence Binding (historical GRC-1.0.0):** **ESTABLISHED FOR GRC-1.0.0** only (does not transfer as substitute for GRC-2)  
+**Peers:** IMMUTABLE under RELEASE Planning (consumed as inputs; not re-certified) · COLLAB I0–I10 **evaluated** under GRC-2 as peer evidence  
 **ROADMAP / PROJECT_STATUS sync:** DEFERRED
 
-**Note:** Domain Closure Official Record and certification artifacts are preserved as historical architecture-closure evidence. Their in-body “Version Identity: NOT SELECTED” language reflects status **at closure**. Current Version Identity is governed by VERSION-DECISION-001. **Live** Release Context is governed by **RC-DECISION-002**. **GRC-2** is **authorized** by **GRC-AUTH-002** and remains **not executed** until RP-3. Historical RC-DECISION-001 and GRC-DECISION-001 remain authoritative for their own baseline only — without rewriting those historical certifications.
+**Note:** Domain Closure Official Record and certification artifacts are preserved as historical architecture-closure evidence. Their in-body “Version Identity: NOT SELECTED” language reflects status **at closure**. Current Version Identity is governed by VERSION-DECISION-001. **Live** Release Context is governed by **RC-DECISION-002**. **Live** Global Release Certification result for baseline `cace282…` is governed by **GRC-DECISION-002**. Historical RC-DECISION-001 and GRC-DECISION-001 remain authoritative for their own baseline only — without rewriting those historical certifications.
