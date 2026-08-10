@@ -3,7 +3,7 @@
 **Artifact:** Production Readiness Issues Registry  
 **Date:** 2026-08-10  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)  
-**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**, **PP5**, **PP6**)  
+**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**, **PP5**, **PP6**, **PP7**)  
 **Status:** **IN FORCE**
 
 ---
@@ -41,7 +41,7 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 | **FR-02** | Operational `package.json` **0.1.0** ≠ VI **1.0.0** | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 | PP8 must **reconfirm** before any package sync; sync remains NOT AUTHORIZED until PP11 |
 | **FR-03** | No Git tag for 1.0.0 | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 / PP11 | PP8/PP11 must **reconfirm** before tag; tag remains NOT AUTHORIZED until PP11 |
 | **FR-04** | No live full GRC validator re-run inside GRC-2 | CLOSED AS ACCEPTED | **CLOSED** | PP1 | Fresh PP1 evidence: build + tsc + release-p1/p2 + production-boundaries + performance-gates — **not** a GRC reopen |
-| **FR-05** | Security/Safety dedicated evidence gap | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP7 | Security & configuration readiness corpus; `.env.example` gap noted in PP1 |
+| **FR-05** | Security/Safety dedicated evidence gap | HANDED OFF — OPEN OUTSIDE PRS | **CLOSED** | PP7 | Closed by [`PP7-Security-and-Configuration-Readiness.md`](./PP7-Security-and-Configuration-Readiness.md): `validate:ux-9.8` PASS + secret/config inspection + `.env.example` + Official Record evidence pack |
 | **FR-06** | UX-10 non-blocking follow-ups | HANDED OFF — FUTURE WORK BOUNDARY | **DEFERRED** | PP6 (watch complete) | PP6 watch complete — no production blocker; follow-ups remain Future Work Boundary ([`PP6-UX-and-Interaction-Readiness.md`](./PP6-UX-and-Interaction-Readiness.md)) |
 | **FR-07** | PLUGINS execution/loading deferred | HANDED OFF — FUTURE WORK BOUNDARY | **OUT OF SCOPE** | — | Separate Planning Charter required if pursued |
 | **FR-08** | COLLAB realtime / CRDT deferred | HANDED OFF — FUTURE WORK BOUNDARY | **OUT OF SCOPE** | — | Separate Planning Charter required if pursued |
@@ -53,18 +53,18 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 ---
 
-## Disposition counts (post-PP6)
+## Disposition counts (post-PP7)
 
-PP6 UX & Interaction Readiness completed the **FR-06** watch: disposition remains **DEFERRED** (no production blocker). FR-01 / FR-05 remain **REQUIRED BEFORE RELEASE**. In-gate `PP6-B1` / `PP6-B2` fully fixed — no new `PP-ISS-###`.
+PP7 Security & Configuration Readiness reclassified **FR-05** to **CLOSED**. FR-01 remains **REQUIRED BEFORE RELEASE**. In-gate `PP7-B1` / `PP7-B2` fully fixed — no new `PP-ISS-###`.
 
 | Classification | Count | IDs |
 |----------------|-------|-----|
 | **BLOCKER** | 0 | — |
-| **REQUIRED BEFORE RELEASE** | 2 | FR-01, FR-05 |
+| **REQUIRED BEFORE RELEASE** | 1 | FR-01 |
 | **ACCEPTED RISK** | 5 | FR-02, FR-03, FR-11, PP-ISS-001, PP-ISS-002 |
 | **DEFERRED** | 1 | FR-06 |
 | **OUT OF SCOPE** | 2 | FR-07, FR-08 |
-| **CLOSED** | 3 | FR-04, FR-09, FR-10 |
+| **CLOSED** | 4 | FR-04, FR-05, FR-09, FR-10 |
 | **Total** | **13** | FR-01…FR-11 + PP-ISS-001…002 |
 
 ---
@@ -85,5 +85,6 @@ PP6 UX & Interaction Readiness completed the **FR-06** watch: disposition remain
 - Approved PP default dispositions: Post-PRS / Production Readiness Plan (PP0 freeze input)
 - PP5 FR-09 closure: [`./PP5-Performance-Readiness.md`](./PP5-Performance-Readiness.md)
 - PP6 FR-06 watch: [`./PP6-UX-and-Interaction-Readiness.md`](./PP6-UX-and-Interaction-Readiness.md)
+- PP7 FR-05 closure: [`./PP7-Security-and-Configuration-Readiness.md`](./PP7-Security-and-Configuration-Readiness.md)
 
 **End of PP Issues Registry**

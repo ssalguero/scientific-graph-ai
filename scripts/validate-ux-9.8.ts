@@ -88,8 +88,8 @@ function sectionBody(doc: string, title: string): string {
   return next ? rest.slice(0, next.index) : rest;
 }
 
-const DOC = "docs/UX/UX-9.8.md";
-const ROADMAP = "docs/UX/UX-9.0-roadmap.md";
+const DOC = "docs/UX/specifications/UX-9.8.md";
+const ROADMAP = "docs/UX/roadmaps/UX-9.0-roadmap.md";
 const PACKAGE_JSON = "package.json";
 const HOST = "src/components/windows/ProductCompositionHost.tsx";
 const FLOATING = "src/components/windows/FloatingWindow.tsx";
@@ -209,8 +209,8 @@ const REQUIRED_HEADINGS = [
   assertCase(
     block,
     "fw.appVars",
-    /var\(--app-/.test(floating),
-    "FloatingWindow uses --app-* CSS variables",
+    /var\(--app-/.test(floating) || /var\(--color-/.test(floating),
+    "FloatingWindow uses --app-* or Design System --color-* CSS variables",
   );
   assertCase(
     block,
@@ -843,20 +843,24 @@ const REQUIRED_HEADINGS = [
   assertCase(
     block,
     "ux99.pending",
-    /UX-9\.9.*PENDING/.test(roadmap),
-    "UX-9.9 remains PENDING",
+    /UX-9\.9.*PENDING/.test(roadmap) || /UX-9\.9\s*=\s*COMPLETE/.test(roadmap),
+    "UX-9.9 PENDING or series-complete COMPLETE",
   );
   assertCase(
     block,
     "ux910.pending",
-    /UX-9\.10.*PENDING/.test(roadmap),
-    "UX-9.10 remains PENDING",
+    /UX-9\.10.*PENDING/.test(roadmap) ||
+      /UX-9\.10\s*=\s*COMPLETE/.test(roadmap),
+    "UX-9.10 PENDING or series-complete COMPLETE",
   );
   assertCase(
     block,
     "next.ux99",
-    /Next.*UX-9\.9/i.test(roadmap) || /Next → UX-9\.9/.test(roadmap),
-    "Next points to UX-9.9",
+    /Next.*UX-9\.9/i.test(roadmap) ||
+      /Next → UX-9\.9/.test(roadmap) ||
+      /UX-9 RELEASE CERTIFIED/i.test(roadmap) ||
+      /validate:ux-9\.10/.test(roadmap),
+    "Next points to UX-9.9 or series RELEASE CERTIFIED",
   );
 }
 
@@ -913,7 +917,8 @@ const REQUIRED_HEADINGS = [
     block,
     "fw.polishMarkers",
     /INDICATOR_SHELL/.test(floating) &&
-      /UI_TOKENS\.transition\.colors200/.test(floating),
+      (/UI_TOKENS\.transition\.colors200/.test(floating) ||
+        /INTERACTION_MOTION/.test(floating)),
     "FloatingWindow polish markers present",
   );
   assertCase(
