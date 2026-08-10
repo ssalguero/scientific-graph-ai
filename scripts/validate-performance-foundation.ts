@@ -216,10 +216,13 @@ for (const peer of PEER_SRC_ROOTS) {
   );
 }
 
+/** COLLAB-I0 may create src/collab/; PERFORMANCE must not couple to it. */
 assertCase(
-  "no.collab.src",
-  !existsSync(join(repoRoot, "src/collab")),
-  "I0 must not create src/collab",
+  "no.collab.coupling",
+  !tsFiles.some((file) =>
+    /from\s+["']@\/collab(\/|["'])/.test(readFileSync(file, "utf8")),
+  ),
+  "PERFORMANCE must not import @/collab",
 );
 
 const failed = results.filter((r) => !r.pass);

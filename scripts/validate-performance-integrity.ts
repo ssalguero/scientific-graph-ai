@@ -69,7 +69,6 @@ const FORBIDDEN_DIRS = [
   "src/performance/validation",
   "src/performance/optimization",
   "src/performance/benchmarks",
-  "src/collab",
 ];
 
 const FORBIDDEN_FUTURE = [
@@ -91,6 +90,14 @@ for (const rel of FORBIDDEN_DIRS) {
     existsSync(join(repoRoot, rel)) ? "forbidden" : "absent",
   );
 }
+
+assertCase(
+  "no.collab.coupling",
+  !collectTsFiles(performanceDir).some((file) =>
+    /from\s+["']@\/collab(\/|["'])/.test(readFileSync(file, "utf8")),
+  ),
+  "PERFORMANCE must not import @/collab",
+);
 
 assertCase(
   "id.phase",

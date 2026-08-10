@@ -158,7 +158,14 @@ for (const file of perfFiles) {
   }
 }
 
-assertCase("no.collab", !existsSync(join(repoRoot, "src/collab")), "absent");
+/** COLLAB-I0 may present src/collab/; PERFORMANCE boundary forbids @/collab imports. */
+assertCase(
+  "no.collab.coupling",
+  !collectTsFiles(performanceDir).some((file) =>
+    /from\s+["']@\/collab(\/|["'])/.test(readFileSync(file, "utf8")),
+  ),
+  "PERFORMANCE must not import @/collab",
+);
 
 const peerRoots = ["engine", "data", "ai", "ui", "plugins"] as const;
 for (const peer of peerRoots) {

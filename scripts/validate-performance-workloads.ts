@@ -260,7 +260,13 @@ assertCase(
 );
 
 assertCase("ts.count", tsFiles.length <= 90, `found ${tsFiles.length}`);
-assertCase("no.collab", !existsSync(join(repoRoot, "src/collab")), "no src/collab");
+assertCase(
+  "no.collab.coupling",
+  !tsFiles.some((file) =>
+    /from\s+["']@\/collab(\/|["'])/.test(readFileSync(file, "utf8")),
+  ),
+  "PERFORMANCE must not import @/collab",
+);
 for (const peer of ["src/engine", "src/data", "src/ai", "src/ui", "src/plugins"]) {
   assertCase(`peer.${peer}`, existsSync(join(repoRoot, peer)), "present");
 }

@@ -250,6 +250,7 @@
     "validate:ai-hardening": "npx tsx scripts/validate-ai-hardening.ts",
     "validate:ai-certification": "npx tsx scripts/validate-ai-certification.ts",
     "validate:ai": "npx tsx scripts/validate-ai.ts",
+    "validate:collab-foundation": "npx tsx scripts/validate-collab-foundation.ts",
     "validate:performance-foundation": "npx tsx scripts/validate-performance-foundation.ts",
     "validate:performance-measurement-core": "npx tsx scripts/validate-performance-measurement-core.ts",
     "validate:performance-instrumentation": "npx tsx scripts/validate-performance-instrumentation.ts",
