@@ -3,7 +3,7 @@
 **Artifact:** Production Readiness Issues Registry  
 **Date:** 2026-08-10  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)  
-**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**)  
+**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**)  
 **Status:** **IN FORCE**
 
 ---
@@ -53,9 +53,9 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 ---
 
-## Disposition counts (post-PP3)
+## Disposition counts (post-PP4)
 
-PP3 Data & Persistence Readiness did **not** reclassify FR-01 / FR-05 / FR-09 (remain **REQUIRED BEFORE RELEASE**). No new `PP-ISS-###`. No in-gate `PP3-B#` (all binding validators PASS on first run).
+PP4 Reliability & Recovery Readiness did **not** reclassify FR-01 / FR-05 / FR-09 (remain **REQUIRED BEFORE RELEASE**). No new `PP-ISS-###`. No in-gate `PP4-B#` (all binding validators PASS on first run).
 
 | Classification | Count | IDs |
 |----------------|-------|-----|

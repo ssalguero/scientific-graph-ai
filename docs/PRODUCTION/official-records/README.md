@@ -1,6 +1,6 @@
 # PRODUCTION Official Records
 
-**Status:** **OPEN** — Production Readiness (PP) · **PP3 PASS · IN FORCE**  
+**Status:** **OPEN** — Production Readiness (PP) · **PP4 PASS · IN FORCE**  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)
 
 This directory holds Production Readiness Official Records (PP0…PP11) and the Issues Registry.
@@ -29,9 +29,9 @@ PRS certification cites: [`../../PRS/certification/PRS-RELEASE-CERTIFIED.md`](..
 | [PP1-Build-and-Repository-Readiness.md](./PP1-Build-and-Repository-Readiness.md) | **PP1 PASS · IN FORCE** |
 | [PP2-Functional-Readiness.md](./PP2-Functional-Readiness.md) | **PP2 PASS · IN FORCE** |
 | [PP3-Data-and-Persistence-Readiness.md](./PP3-Data-and-Persistence-Readiness.md) | **PP3 PASS · IN FORCE** |
-| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (updated PP3) |
-| PP4 — Reliability & Recovery Readiness | **UNLOCKED / NOT EXECUTED** |
-| PP5 — Performance Readiness | **LOCKED** |
+| [PP4-Reliability-and-Recovery-Readiness.md](./PP4-Reliability-and-Recovery-Readiness.md) | **PP4 PASS · IN FORCE** |
+| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (updated PP4) |
+| PP5 — Performance Readiness | **UNLOCKED / NOT EXECUTED** |
 | PP6 — UX & Interaction Readiness | **LOCKED** |
 | PP7 — Security & Configuration Readiness | **LOCKED** |
 | PP8 — Deployment & Release Readiness | **LOCKED** |
@@ -48,9 +48,10 @@ PP0 PASS
   → PP1 PASS
     → PP2 PASS
       → PP3 PASS
-        → PP4 … PP9 (sequential PASS required)
-          → PP10 binary: PRODUCTION READY | NOT PRODUCTION READY
-            → PP11 only if PRODUCTION READY
+        → PP4 PASS
+          → PP5 … PP9 (sequential PASS required)
+            → PP10 binary: PRODUCTION READY | NOT PRODUCTION READY
+              → PP11 only if PRODUCTION READY
 ```
 
 Rules:
@@ -66,8 +67,8 @@ Rules:
 
 | Field | Value |
 |-------|--------|
-| Current gate completed | **PP3 PASS** |
-| Next authorized step | **PP4 only** (Reliability & Recovery Readiness) |
+| Current gate completed | **PP4 PASS** |
+| Next authorized step | **PP5 only** (Performance Readiness) |
 | Production Authorization | **NOT AUTHORIZED** |
 
 **End of PRODUCTION Official Records index**
