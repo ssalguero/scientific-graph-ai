@@ -3,7 +3,7 @@
 **Artifact:** Production Readiness Issues Registry  
 **Date:** 2026-08-10  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)  
-**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**)  
+**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**, **PP5**)  
 **Status:** **IN FORCE**
 
 ---
@@ -45,7 +45,7 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 | **FR-06** | UX-10 non-blocking follow-ups | HANDED OFF — FUTURE WORK BOUNDARY | **DEFERRED** | PP6 (watch) | Remains Future Work Boundary unless PP6 evidences a production blocker |
 | **FR-07** | PLUGINS execution/loading deferred | HANDED OFF — FUTURE WORK BOUNDARY | **OUT OF SCOPE** | — | Separate Planning Charter required if pursued |
 | **FR-08** | COLLAB realtime / CRDT deferred | HANDED OFF — FUTURE WORK BOUNDARY | **OUT OF SCOPE** | — | Separate Planning Charter required if pursued |
-| **FR-09** | PERFORMANCE cert-pack / conditionality gap | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP5 | Performance readiness evidence completeness |
+| **FR-09** | PERFORMANCE cert-pack / conditionality gap | HANDED OFF — OPEN OUTSIDE PRS | **CLOSED** | PP5 | Closed by [`PP5-Performance-Readiness.md`](./PP5-Performance-Readiness.md): CI validators PASS + I10 pack cite; conditionality remains disclosed |
 | **FR-10** | ROADMAP / PROJECT_STATUS sync | CLOSED WITH P3 EVIDENCE | **CLOSED** | PP0 | PRS alignment complete; PP0 updates live banners for PP series start only |
 | **FR-11** | Domain-scoped peer certifications (not unconditional global reissue) | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP9 | Disclosed observation; preserved |
 | **PP-ISS-001** | ESLint: 132 errors / 102 warnings; default heap OOM without elevated `NODE_OPTIONS` | Discovered PP1 | **ACCEPTED RISK** | PP9 | Does not block `next build`; full lint cleanup out of PP1 scope |
@@ -53,18 +53,18 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 ---
 
-## Disposition counts (post-PP4)
+## Disposition counts (post-PP5)
 
-PP4 Reliability & Recovery Readiness did **not** reclassify FR-01 / FR-05 / FR-09 (remain **REQUIRED BEFORE RELEASE**). No new `PP-ISS-###`. No in-gate `PP4-B#` (all binding validators PASS on first run).
+PP5 Performance Readiness reclassified **FR-09** to **CLOSED**. FR-01 / FR-05 remain **REQUIRED BEFORE RELEASE**. No new `PP-ISS-###`. No in-gate `PP5-B#`.
 
 | Classification | Count | IDs |
 |----------------|-------|-----|
 | **BLOCKER** | 0 | — |
-| **REQUIRED BEFORE RELEASE** | 3 | FR-01, FR-05, FR-09 |
+| **REQUIRED BEFORE RELEASE** | 2 | FR-01, FR-05 |
 | **ACCEPTED RISK** | 5 | FR-02, FR-03, FR-11, PP-ISS-001, PP-ISS-002 |
 | **DEFERRED** | 1 | FR-06 |
 | **OUT OF SCOPE** | 2 | FR-07, FR-08 |
-| **CLOSED** | 2 | FR-04, FR-10 |
+| **CLOSED** | 3 | FR-04, FR-09, FR-10 |
 | **Total** | **13** | FR-01…FR-11 + PP-ISS-001…002 |
 
 ---
@@ -83,5 +83,6 @@ PP4 Reliability & Recovery Readiness did **not** reclassify FR-01 / FR-05 / FR-0
 - PRS-P3 final FR table: [`../../PRS/official-records/PRS-P3-Closure-Evidence-State-Consistency-and-Program-Closure.md`](../../PRS/official-records/PRS-P3-Closure-Evidence-State-Consistency-and-Program-Closure.md)
 - PRS CLOSED: [`../../PRS/certification/PRS-CLOSED.md`](../../PRS/certification/PRS-CLOSED.md)
 - Approved PP default dispositions: Post-PRS / Production Readiness Plan (PP0 freeze input)
+- PP5 FR-09 closure: [`./PP5-Performance-Readiness.md`](./PP5-Performance-Readiness.md)
 
 **End of PP Issues Registry**

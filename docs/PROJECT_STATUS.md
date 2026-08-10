@@ -26,18 +26,18 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | PRS | **RELEASE-CERTIFIED** · **CLOSED** |
 | PRS-P0 | **NOT APPLICABLE** |
 | Next program | **Production Readiness (PP)** |
-| Current PP gate | **PP4 PASS · IN FORCE** |
-| Next authorized PP step | **PP5 only** |
+| Current PP gate | **PP5 PASS · IN FORCE** |
+| Next authorized PP step | **PP6 only** |
 | PP10 | Sole **Production Approval** gate (**PRODUCTION READY** \| **NOT PRODUCTION READY**) |
 | PP11 | Sole **Release Transition** stage |
 | Production / Lovable / publish / tag / package sync | **NOT AUTHORIZED** |
 | Operational `package.json` | `0.1.0` (disclosed warning; ≠ Version Identity) |
 
-Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/`. PP4 = reliability & recovery readiness under PRODUCTION Planning Charter — **not** Product Release.
+Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/`. PP5 = performance readiness / FR-09 under PRODUCTION Planning Charter — **not** Product Release.
 
 **Future Work Boundary:** UX-10 · PLUGINS loading · COLLAB realtime/CRDT — **OUT OF SCOPE** / **DEFERRED** under PP Issues Registry; separate Planning Charter required if pursued as product work.
 
-**PP Issues Registry (live):** REQUIRED BEFORE RELEASE = FR-01, FR-05, FR-09; ACCEPTED RISK includes FR-02/03/11 + PP-ISS-001 (eslint debt) + PP-ISS-002 (undeclared tsx); FR-04/FR-10 = **CLOSED**. See `docs/PRODUCTION/official-records/PP-Issues-Registry.md`.
+**PP Issues Registry (live):** REQUIRED BEFORE RELEASE = FR-01, FR-05; FR-09 = **CLOSED** (PP5); ACCEPTED RISK includes FR-02/03/11 + PP-ISS-001 (eslint debt) + PP-ISS-002 (undeclared tsx); FR-04/FR-10 = **CLOSED**. See `docs/PRODUCTION/official-records/PP-Issues-Registry.md`.
 
 ---
 
@@ -49,11 +49,11 @@ Version Identity: **1.0.0** / display **v1.0**
 
 Current governance phase:
 
-**Production Readiness (PP)** — **PP4 PASS · IN FORCE** (PRS remains **RELEASE-CERTIFIED** · **CLOSED**)
+**Production Readiness (PP)** — **PP5 PASS · IN FORCE** (PRS remains **RELEASE-CERTIFIED** · **CLOSED**)
 
 Next authorized step:
 
-**PP5 — Performance Readiness** only
+**PP6 — UX & Interaction Readiness** only
 
 Production Authorization:
 
@@ -70,16 +70,16 @@ Production Authorization:
 | AI | ✅ RELEASE CERTIFIED · Implementation Series CLOSED |
 | COLLAB | Peer-certified / realtime deferred (Future Work Boundary) |
 | PLUGINS | Peer-certified / loading deferred (Future Work Boundary) |
-| PERFORMANCE | Planning certified / conditionality + cert-pack gap disclosed |
+| PERFORMANCE | ✅ RELEASE CERTIFIED (I10 pack cited; conditionality disclosed; FR-09 CLOSED) |
 | RELEASE | Series **CLOSED** · GRC-002 **IN FORCE** |
 | PRS | **RELEASE-CERTIFIED** · **CLOSED** |
-| PRODUCTION (PP) | **OPEN** · **PP4 PASS** · next = **PP5** |
+| PRODUCTION (PP) | **OPEN** · **PP5 PASS** · next = **PP6** |
 
 ---
 
 ## Latest Milestone
 
-Global Release Certification (GRC-2) **CERTIFIED WITH EXPLICIT WARNINGS** on baseline `cace2820…`; RELEASE Series **CLOSED**; PRS **RELEASE-CERTIFIED** / **CLOSED**; Production Readiness Charter **RELEASE CERTIFIED / FROZEN**; **PP0 PASS**; **PP1 PASS**; **PP2 PASS**; **PP3 PASS**; **PP4 PASS**.
+Global Release Certification (GRC-2) **CERTIFIED WITH EXPLICIT WARNINGS** on baseline `cace2820…`; RELEASE Series **CLOSED**; PRS **RELEASE-CERTIFIED** / **CLOSED**; Production Readiness Charter **RELEASE CERTIFIED / FROZEN**; **PP0 PASS**; **PP1 PASS**; **PP2 PASS**; **PP3 PASS**; **PP4 PASS**; **PP5 PASS** (FR-09 CLOSED).
 
 AI Domain RELEASE CERTIFIED (AI-I10) remains a prior peer milestone. Planning preserved; Implementation Series CLOSED; runtime unchanged; AI Optional preserved.
 
@@ -88,7 +88,7 @@ AI Implementation:
 - AI-I0…AI-I9: COMPLETE
 - AI-I10 Certification: CERTIFIED (`src/ai/certification/`)
 - Runtime intelligence / assistants / prediction: NOT IMPLEMENTED (by design)
-- Next authorized program step: **PP5** (not a new AI product series)
+- Next authorized program step: **PP6** (not a new AI product series)
 
 Prior certified peers:
 
