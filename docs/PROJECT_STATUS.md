@@ -10,20 +10,44 @@ Its objective is to summarize the current architectural maturity, documentation 
 
 Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout the lifetime of the project.
 
+**PRS-P3 alignment (2026-08-10):** the live certification/governance truth below supersedes stale “next phase = COLLAB” operational language for Global Release / PRS purposes. Historical sections remain context.
+
 ---
+
+## Certified authority status (live)
+
+| Element | Value |
+|---------|--------|
+| Product | Scientific Graph AI |
+| Version Identity | **1.0.0** / display **v1.0** (VERSION-DECISION-001) |
+| Global Release Certification | **CERTIFIED WITH EXPLICIT WARNINGS** — GRC-DECISION-002 **IN FORCE** |
+| Certified baseline | `cace2820fa2f2a24c608eedf13f827b635198a0b` |
+| RELEASE Series | **CLOSED** |
+| PRS | **RELEASE-CERTIFIED** · **CLOSED** |
+| Production / Lovable / publish / tag / package sync | **NOT AUTHORIZED** |
+| Operational `package.json` | `0.1.0` (disclosed warning; ≠ Version Identity) |
+
+Authority: `docs/RELEASE/official-records/` · `docs/PRS/`. Alignment = documentation consistency under PRS-P3 (FR-10) — **not** Product Release.
+
+**Future Work Boundary:** UX-10 · PLUGINS loading · COLLAB realtime/CRDT — separate Planning Charter required if pursued.
+
+**External OPEN (outside PRS):** ENGINE cert-path gap · Security/Safety evidence gap · PERFORMANCE cert-pack gap.
+
+---
+
 # Current Project Status
 
 ## Overall Status
 
-Release Target: **1.0**
+Version Identity: **1.0.0** / display **v1.0**
 
-Current Phase:
+Current governance phase:
 
-**AI DOMAIN — RELEASE CERTIFIED (AI-I10 Domain Certification COMPLETE)**
+**PRS CLOSED** — Post-Release Stage **RELEASE-CERTIFIED** (P0–P3 IN FORCE)
 
-Next Phase:
+Next product implementation series:
 
-**COLLAB Domain** (or next roadmap domain)
+**NOT AUTHORIZED / NOT PLANNED by PRS** (separate Planning Charter required)
 
 ---
 
@@ -31,25 +55,29 @@ Next Phase:
 
 | Domain | Status |
 |---------|--------|
-| ENGINE | ✅ CERTIFIED |
+| ENGINE | ✅ CERTIFIED (cert-path gap disclosed) |
 | DATA | ✅ CERTIFIED |
 | AI | ✅ RELEASE CERTIFIED · Implementation Series CLOSED |
-| COLLAB | 🔄 PLANNED |
-| PLUGINS | 🔄 PLANNED |
-| PERFORMANCE | 🔄 PLANNED |
+| COLLAB | Peer-certified / realtime deferred (Future Work Boundary) |
+| PLUGINS | Peer-certified / loading deferred (Future Work Boundary) |
+| PERFORMANCE | Planning certified / conditionality + cert-pack gap disclosed |
+| RELEASE | Series **CLOSED** · GRC-002 **IN FORCE** |
+| PRS | **RELEASE-CERTIFIED** · **CLOSED** |
 
 ---
 
 ## Latest Milestone
 
-AI Domain RELEASE CERTIFIED (AI-I10). Planning preserved; Implementation Series CLOSED; runtime unchanged; AI Optional preserved.
+Global Release Certification (GRC-2) **CERTIFIED WITH EXPLICIT WARNINGS** on baseline `cace2820…`; RELEASE Series **CLOSED**; PRS **RELEASE-CERTIFIED** / **CLOSED**.
+
+AI Domain RELEASE CERTIFIED (AI-I10) remains a prior peer milestone. Planning preserved; Implementation Series CLOSED; runtime unchanged; AI Optional preserved.
 
 AI Implementation:
 
 - AI-I0…AI-I9: COMPLETE
 - AI-I10 Certification: CERTIFIED (`src/ai/certification/`)
 - Runtime intelligence / assistants / prediction: NOT IMPLEMENTED (by design)
-- Next: COLLAB Domain (or next roadmap domain)
+- Next product series: **NOT PLANNED by PRS**
 
 Prior certified peers:
 

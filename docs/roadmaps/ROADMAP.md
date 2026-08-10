@@ -1,27 +1,45 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-06 (AI Domain RELEASE CERTIFIED · AI-I10 COMPLETE)
+**Actualizado:** 2026-08-10 (PRS-P3 documentation alignment to certified RELEASE/PRS truth)
 
 ---
 
-## Current Project Status
+## Certified authority status (live)
 
-Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED.
+| Element | Value |
+|---------|--------|
+| Product | Scientific Graph AI |
+| Version Identity | **1.0.0** / display **v1.0** |
+| Global Release Certification | **CERTIFIED WITH EXPLICIT WARNINGS** — GRC-DECISION-002 **IN FORCE** |
+| Certified baseline | `cace2820fa2f2a24c608eedf13f827b635198a0b` |
+| RELEASE Series | **CLOSED** |
+| PRS | **RELEASE-CERTIFIED** · **CLOSED** |
+| Production / Lovable / publish / tag / package sync | **NOT AUTHORIZED** |
 
-Current platform roadmap:
+Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`. This alignment is **documentation consistency** under PRS-P3 (FR-10) — **not** Product Release and **not** a new product implementation series.
+
+**Future Work Boundary (pointers only):** UX-10 follow-ups · PLUGINS execution/loading deferred · COLLAB realtime/CRDT deferred — require a **separate** Planning Charter if pursued. PRS does not pre-plan those series.
+
+---
+
+## Current Project Status (historical domain snapshot)
+
+Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above).
+
+Domain snapshot (peer certifications; not a next-series plan):
 
 | Domain | Status |
 |---------|--------|
-| ENGINE | ✅ CERTIFIED |
+| ENGINE | ✅ CERTIFIED (cert-path gap remains disclosed warning) |
 | DATA | ✅ CERTIFIED |
 | AI | ✅ RELEASE CERTIFIED · Implementation Series CLOSED |
-| COLLAB | 🔄 PLANNED |
-| PLUGINS | 🔄 PLANNED |
-| PERFORMANCE | 🔄 PLANNED |
+| COLLAB | Peer-certified / realtime deferred (Future Work Boundary) |
+| PLUGINS | Peer-certified / loading deferred (Future Work Boundary) |
+| PERFORMANCE | Planning certified / conditionality + cert-pack gap disclosed |
 
 The AI Domain is certified under `src/ai/` as structural Intelligence Domain skeletons. No runtime intelligence, assistants, or prediction is implemented.
 
-Current development focus: **COLLAB Domain** (or next roadmap domain).
+**Next product implementation series:** **NOT PLANNED by PRS** — requires separate Planning Charter / Decision Authority.
 
 ---
 
