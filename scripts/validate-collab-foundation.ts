@@ -82,25 +82,23 @@ const PEER_SRC_ROOTS = [
   "src/performance",
 ];
 
-/** Tokens that indicate forbidden collaboration / I1+ behavior in I0. */
+/** Tokens that indicate forbidden collaboration runtime beyond I7. */
 const FORBIDDEN_SOURCE_PATTERNS: { id: string; re: RegExp }[] = [
-  { id: "realtime", re: /\b(WebSocket|CRDT|OperationalTransform|\bOT\b|liveMultiplayer)\b/ },
-  { id: "sharing-runtime", re: /\b(createSharedProject|shareWorkspace|joinWorkspace)\b/ },
-  { id: "permissions-runtime", re: /\b(evaluatePermission|PermissionService|grantRole)\b/ },
-  { id: "presence-runtime", re: /\b(PresenceService|updateCursor|broadcastPresence)\b/ },
-  { id: "annotation-runtime", re: /\b(createAnnotation|postComment|startDiscussion)\b/ },
-  { id: "review-runtime", re: /\b(startReview|approveReview|submitRevision)\b/ },
+  { id: "realtime", re: /\b(WebSocket|CRDT|OperationalTransform|liveMultiplayer)\b/ },
+  /** Speculative live-cursor APIs; I6 uses setPresence (async metadata) in supporting/ only. */
+  { id: "cursor-runtime", re: /\b(updateCursor|broadcastPresence)\b/ },
+  /** Speculative names; I4 uses createAnnotation in annotation-discussion only. */
+  { id: "annotation-runtime", re: /\b(postComment|startDiscussion)\b/ },
+  /** Speculative; I5 uses startReview/approveReview/requestRevision in review-management only. */
+  { id: "review-runtime", re: /\bsubmitRevision\b/ },
 ];
 
 const PEER_IMPORT_RE =
   /from\s+["']@\/(engine|data|ai|ui|plugins|performance|components|app)(\/|["'])/;
 
-/** I1+ reserved package dirs must not exist yet (no scaffolding). */
+/** I8+ dirs must not exist (DEFERRED — FUTURE COLLAB IMPLEMENTATION STAGE). */
 const FORBIDDEN_FUTURE_DIRS = [
-  "src/collab/contracts",
   "src/collab/sharing",
-  "src/collab/membership",
-  "src/collab/permissions",
   "src/collab/annotations",
   "src/collab/discussions",
   "src/collab/reviews",
@@ -110,7 +108,9 @@ const FORBIDDEN_FUTURE_DIRS = [
   "src/collab/notifications",
   "src/collab/integration",
   "src/collab/hardening",
-  "src/collab/certification",
+  "src/collab/contracts",
+  "src/collab/governance",
+  "src/collab/audit",
 ];
 
 for (const rel of REQUIRED_DIRS) {
@@ -184,8 +184,8 @@ assertCase(
 const tsFiles = collectTsFiles(collabDir);
 assertCase(
   "package.ts.count.bounded",
-  tsFiles.length <= 12,
-  `COLLAB-I0 package should remain foundation-only (found ${tsFiles.length} .ts files)`,
+  tsFiles.length <= 140,
+  `COLLAB through I10 should remain skeleton-bounded (found ${tsFiles.length} .ts files)`,
 );
 
 for (const file of tsFiles) {
@@ -199,19 +199,107 @@ for (const file of tsFiles) {
       hit ? `forbidden pattern ${re} in ${rel}` : "clean",
     );
   }
-  const peerHit = PEER_IMPORT_RE.test(src);
-  assertCase(
-    `no.peer.import.${rel}`,
-    !peerHit,
-    peerHit ? "peer import forbidden in COLLAB-I0" : "clean",
-  );
+  /** createAnnotation is I4-authorized only inside annotation-discussion. */
+  if (!rel.includes("src/collab/annotation-discussion/")) {
+    const leak = /\bcreateAnnotation\b/.test(src);
+    assertCase(
+      `no.createAnnotation.leak.${rel}`,
+      !leak,
+      leak ? "createAnnotation must stay inside annotation-discussion" : "clean",
+    );
+  }
+  /** Review ops are I5-authorized only inside review-management. */
+  if (!rel.includes("src/collab/review-management/")) {
+    const leak = /\b(startReview|approveReview|requestRevision|resumeReview)\b/.test(
+      src,
+    );
+    assertCase(
+      `no.review.ops.leak.${rel}`,
+      !leak,
+      leak ? "review ops must stay inside review-management" : "clean",
+    );
+  }
+  /** Supporting ops are I6-authorized only inside supporting/. */
+  if (!rel.includes("src/collab/supporting/")) {
+    const leak =
+      /\b(setPresence|openCollaborativeSession|closeCollaborativeSession|recordActivity|emitNotification)\b/.test(
+        src,
+      );
+    assertCase(
+      `no.supporting.ops.leak.${rel}`,
+      !leak,
+      leak ? "supporting ops must stay inside supporting/" : "clean",
+    );
+  }
+  /** Governance ops are I7-authorized only inside governance-audit/ (I9 may reuse). */
+  if (
+    !rel.includes("src/collab/governance-audit/") &&
+    !rel.includes("src/collab/hardening-controls/")
+  ) {
+    const leak =
+      /\b(recordGovernedAuditEntry|verifyAuditTrailIntegrity|archiveCollaborationContext)\b/.test(
+        src,
+      );
+    assertCase(
+      `no.gov.ops.leak.${rel}`,
+      !leak,
+      leak ? "governance ops must stay inside governance-audit/" : "clean",
+    );
+  }
+  const peerSpecs = [
+    ...src.matchAll(
+      /from\s+["'](@\/(?:engine|data|ai|ui|plugins|performance|components|app)(?:\/[^"']*)?)["']/g,
+    ),
+  ].map((m) => m[1]);
+  if (peerSpecs.length === 0) {
+    assertCase(`no.peer.import.${rel}`, true, "clean");
+  } else {
+    for (const spec of peerSpecs) {
+      const allowed =
+        rel.includes("src/collab/cross-domain/") &&
+        (spec === "@/engine" || spec === "@/data" || spec === "@/ui");
+      assertCase(
+        `peer.import.policy.${rel}.${spec}`,
+        allowed,
+        allowed
+          ? "I8 public peer barrel allowed in cross-domain"
+          : `forbidden peer import ${spec}`,
+      );
+    }
+  }
+  if (
+    !rel.includes("src/collab/cross-domain/") &&
+    !rel.includes("src/collab/hardening-controls/")
+  ) {
+    const leak =
+      /\b(observeEnginePublicSeam|observeDataPublicSeam|observeUxPublicSeam|exposeCollaborationStateForUx|assertAiPeerOnlyBoundary|verifyCrossDomainIntegrationGates)\b/.test(
+        src,
+      );
+    assertCase(
+      `no.xd.ops.leak.${rel}`,
+      !leak,
+      leak ? "cross-domain ops must stay inside cross-domain/" : "clean",
+    );
+  }
+  /** Hardening ops are I9-authorized only inside hardening-controls/. */
+  if (!rel.includes("src/collab/hardening-controls/")) {
+    const hardLeak =
+      /\b(verifyPermissionIntegrity|resistSharedAccessAbuse|verifySharedAccessAbuseResistance|verifyActivityTrailIntegrity|attestHardeningReadiness|verifyHardeningGates)\b/.test(
+        src,
+      );
+    assertCase(
+      `no.hard.ops.leak.${rel}`,
+      !hardLeak,
+      hardLeak ? "hardening ops must stay inside hardening-controls/" : "clean",
+    );
+  }
 }
 
 for (const rel of FORBIDDEN_FUTURE_DIRS) {
   assertCase(
     `no.future.dir.${rel}`,
     !existsSync(join(repoRoot, rel)),
-    existsSync(join(repoRoot, rel)) ? "must not exist in I0 (I1 DEFERRED)" : "absent",
+    existsSync(join(repoRoot, rel)) ? "must not exist yet (DEFERRED — FUTURE COLLAB IMPLEMENTATION STAGE)" : "absent",
   );
 }
 

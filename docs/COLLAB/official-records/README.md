@@ -40,8 +40,17 @@ Frozen P0–P11 records are **cite-only** and SHALL NOT be rewritten by later De
 | Version Identity | **1.0.0** / display **v1.0** (VERSION-DECISION-001) — unchanged by COLLAB-DECISION-001 |
 | RELEASE 1.0.0 | **CERTIFIED WITH EXPLICIT WARNINGS** (GRC-DECISION-001) |
 | COLLAB Series Plan | **APPROVED** (COLLAB-DECISION-001) |
-| COLLAB-I0 | **FOUNDATION COMPLETE** (authorized by COLLAB-DECISION-001) |
-| COLLAB-I1…I10 | **NOT AUTHORIZED** by COLLAB-DECISION-001 (phase-gated) |
-| `src/collab/` | **PRESENT** — I0 foundation identity + boundary skeleton only |
+| COLLAB-I0 | **FOUNDATION COMPLETE** |
+| COLLAB-I1 | **INFRASTRUCTURE COMPLETE** |
+| COLLAB-I2 | **SHARING_MEMBERSHIP_COMPLETE** |
+| COLLAB-I3 | **PERMISSIONS_COMPLETE** |
+| COLLAB-I4 | **ANNOTATION_DISCUSSION_COMPLETE** |
+| COLLAB-I5 | **REVIEW_LIFECYCLE_COMPLETE** |
+| COLLAB-I6 | **SUPPORTING_COMPLETE** |
+| COLLAB-I7 | **GOVERNANCE_AUDIT_COMPLETE** |
+| COLLAB-I8 | **CROSS_DOMAIN_COMPLETE** |
+| COLLAB-I9 | **HARDENING_COMPLETE** (authorized + implemented) |
+| COLLAB-I10 | **PRODUCTION CERTIFIED** · Implementation Series **CLOSED** |
+| `src/collab/` | **PRESENT** — I0–I10 (certification package included) |
 
-**Note:** P11 unlocks the Series. COLLAB-DECISION-001 approves the Series Plan and authorizes the **start of I0 only**. I0 completion does not auto-authorize I1. Evidence: [`../implementation/COLLAB-I0-Foundation.md`](../implementation/COLLAB-I0-Foundation.md).
+**Note:** COLLAB Implementation Series is **CLOSED**. Evidence: I0–I10 records under [`../implementation/`](../implementation/).

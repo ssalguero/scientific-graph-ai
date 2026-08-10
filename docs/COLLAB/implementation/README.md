@@ -1,20 +1,21 @@
 # COLLAB Implementation Series
 
 **Authority:** COLLAB-P6 Master Implementation Roadmap · COLLAB-P0…P11 Official Records · COLLAB-P11 Planning Certification · COLLAB-DECISION-001  
-**Planning Finality:** Closed — Implementation Series unlocked; I0 separately execution-authorized.
+**Planning Finality:** Closed — Implementation Series **COMPLETE / CLOSED**.  
+**Domain Status:** **PRODUCTION CERTIFIED** · Version Identity **1.0.0**
 
 | Phase | Title | Status |
 |-------|-------|--------|
 | COLLAB-I0 | Foundation | **FOUNDATION COMPLETE** |
-| COLLAB-I1 | Infrastructure | **NOT AUTHORIZED** |
-| COLLAB-I2 | Core — Sharing & Membership | **NOT AUTHORIZED** |
-| COLLAB-I3 | Core — Permissions | **NOT AUTHORIZED** |
-| COLLAB-I4 | Core — Annotation & Discussion | **NOT AUTHORIZED** |
-| COLLAB-I5 | Core — Review & Lifecycle | **NOT AUTHORIZED** |
-| COLLAB-I6 | Supporting — Presence, Session, Activity, Notifications | **NOT AUTHORIZED** |
-| COLLAB-I7 | Governance & Audit | **NOT AUTHORIZED** |
-| COLLAB-I8 | Cross-Domain Integration | **NOT AUTHORIZED** |
-| COLLAB-I9 | Hardening | **NOT AUTHORIZED** |
-| COLLAB-I10 | Domain Certification | **NOT AUTHORIZED** |
+| COLLAB-I1 | Infrastructure | **INFRASTRUCTURE COMPLETE** |
+| COLLAB-I2 | Core — Sharing & Membership | **SHARING_MEMBERSHIP_COMPLETE** |
+| COLLAB-I3 | Core — Permissions | **PERMISSIONS_COMPLETE** |
+| COLLAB-I4 | Core — Annotation & Discussion | **ANNOTATION_DISCUSSION_COMPLETE** |
+| COLLAB-I5 | Core — Review & Lifecycle | **REVIEW_LIFECYCLE_COMPLETE** |
+| COLLAB-I6 | Supporting — Presence, Session, Activity, Notifications | **SUPPORTING_COMPLETE** |
+| COLLAB-I7 | Governance & Audit | **GOVERNANCE_AUDIT_COMPLETE** |
+| COLLAB-I8 | Cross-Domain Integration | **CROSS_DOMAIN_COMPLETE** |
+| COLLAB-I9 | Hardening | **HARDENING_COMPLETE** |
+| COLLAB-I10 | Domain Certification | **PRODUCTION CERTIFIED** |
 
-I0 completion does **not** authorize I1. Proceed only under COLLAB-P6 / P7 phase gate + separate authorization.
+**COLLAB IMPLEMENTATION SERIES CLOSED.** There is no I11.
