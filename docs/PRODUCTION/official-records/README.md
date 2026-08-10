@@ -1,6 +1,6 @@
 # PRODUCTION Official Records
 
-**Status:** **OPEN** — Production Readiness (PP) · **PP1 PASS · IN FORCE**  
+**Status:** **OPEN** — Production Readiness (PP) · **PP2 PASS · IN FORCE**  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)
 
 This directory holds Production Readiness Official Records (PP0…PP11) and the Issues Registry.
@@ -27,9 +27,9 @@ PRS certification cites: [`../../PRS/certification/PRS-RELEASE-CERTIFIED.md`](..
 |--------|--------|
 | [PP0-Post-PRS-Baseline.md](./PP0-Post-PRS-Baseline.md) | **PP0 PASS · IN FORCE** |
 | [PP1-Build-and-Repository-Readiness.md](./PP1-Build-and-Repository-Readiness.md) | **PP1 PASS · IN FORCE** |
-| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (updated PP1) |
-| PP2 — Functional Readiness | **UNLOCKED / NOT EXECUTED** |
-| PP3 — Data & Persistence Readiness | **LOCKED** |
+| [PP2-Functional-Readiness.md](./PP2-Functional-Readiness.md) | **PP2 PASS · IN FORCE** |
+| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (updated PP2) |
+| PP3 — Data & Persistence Readiness | **UNLOCKED / NOT EXECUTED** |
 | PP4 — Reliability & Recovery Readiness | **LOCKED** |
 | PP5 — Performance Readiness | **LOCKED** |
 | PP6 — UX & Interaction Readiness | **LOCKED** |
@@ -46,9 +46,10 @@ PRS certification cites: [`../../PRS/certification/PRS-RELEASE-CERTIFIED.md`](..
 ```text
 PP0 PASS
   → PP1 PASS
-    → PP2 … PP9 (sequential PASS required)
-      → PP10 binary: PRODUCTION READY | NOT PRODUCTION READY
-        → PP11 only if PRODUCTION READY
+    → PP2 PASS
+      → PP3 … PP9 (sequential PASS required)
+        → PP10 binary: PRODUCTION READY | NOT PRODUCTION READY
+          → PP11 only if PRODUCTION READY
 ```
 
 Rules:
@@ -64,8 +65,8 @@ Rules:
 
 | Field | Value |
 |-------|--------|
-| Current gate completed | **PP1 PASS** |
-| Next authorized step | **PP2 only** (Functional Readiness) |
+| Current gate completed | **PP2 PASS** |
+| Next authorized step | **PP3 only** (Data & Persistence Readiness) |
 | Production Authorization | **NOT AUTHORIZED** |
 
 **End of PRODUCTION Official Records index**

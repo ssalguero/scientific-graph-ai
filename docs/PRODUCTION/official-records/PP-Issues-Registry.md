@@ -3,7 +3,7 @@
 **Artifact:** Production Readiness Issues Registry  
 **Date:** 2026-08-10  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)  
-**Seed phase:** **PP0** (updated at **PP1**)  
+**Seed phase:** **PP0** (updated at **PP1**, **PP2**)  
 **Status:** **IN FORCE**
 
 ---
@@ -37,7 +37,7 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 | ID | Title | PRS final treatment (cite only) | PP disposition (seed) | Target gate | Notes |
 |----|-------|----------------------------------|------------------------|-------------|-------|
-| **FR-01** | ENGINE certification-path gap (`src/engine/certification/CERTIFICATION.md` missing) | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP9 | PP1 confirmed not a build blocker; remains open for evidence completeness |
+| **FR-01** | ENGINE certification-path gap (`src/engine/certification/CERTIFICATION.md` missing) | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP9 | PP1/PP2 confirmed not a build/functional blocker (`validate:engine` PASS); remains open for evidence completeness |
 | **FR-02** | Operational `package.json` **0.1.0** ≠ VI **1.0.0** | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 | PP8 must **reconfirm** before any package sync; sync remains NOT AUTHORIZED until PP11 |
 | **FR-03** | No Git tag for 1.0.0 | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 / PP11 | PP8/PP11 must **reconfirm** before tag; tag remains NOT AUTHORIZED until PP11 |
 | **FR-04** | No live full GRC validator re-run inside GRC-2 | CLOSED AS ACCEPTED | **CLOSED** | PP1 | Fresh PP1 evidence: build + tsc + release-p1/p2 + production-boundaries + performance-gates — **not** a GRC reopen |
@@ -53,7 +53,9 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 ---
 
-## Disposition counts (post-PP1)
+## Disposition counts (post-PP2)
+
+PP2 Functional Readiness did **not** reclassify FR-01 / FR-05 / FR-09 (remain **REQUIRED BEFORE RELEASE**). No new `PP-ISS-###`. PP2-B1 (validator false positive on boundary-policy string catalogs) was fixed in-gate and does not open a registry row.
 
 | Classification | Count | IDs |
 |----------------|-------|-----|
@@ -82,4 +84,4 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 - PRS CLOSED: [`../../PRS/certification/PRS-CLOSED.md`](../../PRS/certification/PRS-CLOSED.md)
 - Approved PP default dispositions: Post-PRS / Production Readiness Plan (PP0 freeze input)
 
-**End of PP Issues Registry (PP0 seed)**
+**End of PP Issues Registry**

@@ -252,20 +252,25 @@ assertCase(
 
 /* —— 3. Outside ENGINE must not import internals —— */
 
-const internalPathNeedles = [
-  "@/engine/internal",
-  "@/engine/business",
-  "@/engine/coordination",
-  "@/engine/orchestration",
-  "@/engine/flows",
-  "@/engine/diagnostics",
-  "src/engine/internal",
-  "src/engine/business",
-  "src/engine/coordination",
-  "src/engine/orchestration",
-  "src/engine/flows",
-  "src/engine/diagnostics",
-] as const;
+const isForbiddenEngineInternalImport = (spec: string): boolean => {
+  if (
+    /^@\/engine\/(internal|business|coordination|orchestration|flows|diagnostics)(\/|$)/.test(
+      spec
+    )
+  ) {
+    return true;
+  }
+  if (
+    /(?:^|\/)src\/engine\/(internal|business|coordination|orchestration|flows|diagnostics)(\/|$)/.test(
+      spec
+    )
+  ) {
+    return true;
+  }
+  return /(?:^|\/)engine\/(internal|business|coordination|orchestration|flows|diagnostics)(\/|$)/.test(
+    spec
+  );
+};
 
 const outsideEngineFiles = collectTsFiles(srcDir).filter((abs) => {
   const rel = toPosix(relative(srcDir, abs));
@@ -274,19 +279,11 @@ const outsideEngineFiles = collectTsFiles(srcDir).filter((abs) => {
 
 const externalInternalHits: string[] = [];
 for (const abs of outsideEngineFiles) {
-  const raw = readFileSync(abs, "utf8");
-  for (const needle of internalPathNeedles) {
-    if (raw.includes(needle)) {
-      externalInternalHits.push(`${relFromRepo(abs)} → ${needle}`);
+  const code = stripComments(readFileSync(abs, "utf8"));
+  for (const spec of extractFromSpecifiers(code)) {
+    if (isForbiddenEngineInternalImport(spec)) {
+      externalInternalHits.push(`${relFromRepo(abs)} → ${spec}`);
     }
-  }
-  // Relative deep imports into engine internals
-  if (
-    /from\s+["'][^"']*engine\/(internal|business|coordination|orchestration|flows|diagnostics)\//.test(
-      raw
-    )
-  ) {
-    externalInternalHits.push(`${relFromRepo(abs)} → relative engine internal`);
   }
 }
 

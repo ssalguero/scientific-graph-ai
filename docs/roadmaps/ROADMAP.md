@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-10 (PP1 — Build & Repository Readiness PASS; PRS remains CLOSED)
+**Actualizado:** 2026-08-10 (PP2 — Functional Readiness PASS; PRS remains CLOSED)
 
 ---
 
@@ -16,13 +16,13 @@
 | PRS | **RELEASE-CERTIFIED** · **CLOSED** |
 | PRS-P0 | **NOT APPLICABLE** |
 | Next program | **Production Readiness (PP)** |
-| Current PP gate | **PP1 PASS · IN FORCE** |
-| Next authorized PP step | **PP2 only** |
+| Current PP gate | **PP2 PASS · IN FORCE** |
+| Next authorized PP step | **PP3 only** |
 | PP10 | Sole **Production Approval** gate |
 | PP11 | Sole **Release Transition** stage |
 | Production / Lovable / publish / tag / package sync | **NOT AUTHORIZED** |
 
-Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`. PP1 certifies build & repository readiness — **not** Product Release. Historical PRS certification status is unchanged (**CLOSED**).
+Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`. PP2 certifies functional readiness (core flows) — **not** Product Release. Historical PRS certification status is unchanged (**CLOSED**).
 
 **Future Work Boundary (pointers only):** UX-10 follow-ups · PLUGINS execution/loading deferred · COLLAB realtime/CRDT deferred — classified **DEFERRED** / **OUT OF SCOPE** in the PP Issues Registry; require a **separate** Planning Charter if pursued as product work.
 
@@ -30,7 +30,7 @@ Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION
 
 ## Current Project Status (historical domain snapshot)
 
-Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Active program: **Production Readiness (PP)** at **PP1 PASS**.
+Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Active program: **Production Readiness (PP)** at **PP2 PASS**.
 
 Domain snapshot (peer certifications; not a next-series plan):
 
@@ -42,11 +42,11 @@ Domain snapshot (peer certifications; not a next-series plan):
 | COLLAB | Peer-certified / realtime deferred (Future Work Boundary) |
 | PLUGINS | Peer-certified / loading deferred (Future Work Boundary) |
 | PERFORMANCE | Planning certified / conditionality + cert-pack gap disclosed |
-| PRODUCTION (PP) | **OPEN** · **PP1 PASS** · next = **PP2** |
+| PRODUCTION (PP) | **OPEN** · **PP2 PASS** · next = **PP3** |
 
 The AI Domain is certified under `src/ai/` as structural Intelligence Domain skeletons. No runtime intelligence, assistants, or prediction is implemented.
 
-**Next authorized step:** **PP2 — Functional Readiness** only. Production remains **NOT AUTHORIZED** until PP10.
+**Next authorized step:** **PP3 — Data & Persistence Readiness** only. Production remains **NOT AUTHORIZED** until PP10.
 
 ---
 
