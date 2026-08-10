@@ -20,9 +20,9 @@ It is the authoritative location for those governance artifacts.
 **Version Selection Authority:** ESTABLISHED  
 **Version Identity:** ESTABLISHED — **1.0.0**  
 **Display / Release Label:** v1.0  
-**Release Context:** NOT ESTABLISHED  
-**Evidence Binding:** NOT ESTABLISHED  
-**Global Release Certification:** NOT EXECUTED  
+**Release Context:** **ESTABLISHED WITH EXPLICIT OPEN ITEMS** — see [`RC-DECISION-001`](../../RELEASE/official-records/RC-DECISION-001-Release-Context-Establishment.md) (RELEASE Official Records; not rewritten here)  
+**Evidence Binding:** **ESTABLISHED FOR GRC-1.0.0** — see RELEASE [`RELEASE-1.0.0-Evidence-Index`](../../RELEASE/certification/RELEASE-1.0.0-Evidence-Index.md)  
+**Global Release Certification:** **EXECUTED** — **CERTIFIED WITH EXPLICIT WARNINGS** ([`GRC-DECISION-001`](../../RELEASE/official-records/GRC-DECISION-001-Final-Decision-Record.md))  
 **Lovable:** NOT EXECUTED  
 
-**UX-10:** CERTIFIED / CLOSED WITH NON-BLOCKING FOLLOW-UPS (historical certification preserved; not reopened by PI-DECISION-001, VAF-DECISION-001, or VERSION-DECISION-001)
+**UX-10:** CERTIFIED / CLOSED WITH NON-BLOCKING FOLLOW-UPS (historical certification preserved; not reopened by PI-DECISION-001, VAF-DECISION-001, VERSION-DECISION-001, or RC-DECISION-001)
