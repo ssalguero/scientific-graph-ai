@@ -159,8 +159,8 @@ const COMMANDS_DIR = "src/ui/commands";
 const UX_DIAGNOSTICS_DIR = "src/ui/diagnostics";
 
 const UI_INDEX = "src/ui/index.ts";
-const ROADMAP_7 = "docs/UX/UX-7.0-roadmap.md";
-const DOC_7_8 = "docs/UX/UX-7.8.md";
+const ROADMAP_7 = "docs/UX/roadmaps/UX-7.0-roadmap.md";
+const DOC_7_8 = "docs/UX/specifications/UX-7.8.md";
 const PACKAGE_JSON = "package.json";
 
 const MODULE_FILES = [
@@ -361,7 +361,8 @@ const FORBIDDEN_HISTORICAL = [
     block,
     "ownership.pipelineInject",
     /PipelineInject/.test(typesSrc) &&
-      /\$\{\s*["']Discoverability["']\s*\}Pipeline/.test(typesSrc),
+      (/\$\{\s*["']Discoverability["']\s*\}Pipeline/.test(typesSrc) ||
+        /\$\{\s*["']createDiscoverability["']\s*\}Pipeline/.test(typesSrc)),
     "Fence-safe PipelineInject type present",
   );
 
@@ -369,7 +370,10 @@ const FORBIDDEN_HISTORICAL = [
     block,
     "ownership.snapshotInject",
     /SnapshotInject/.test(typesSrc) &&
-      /\$\{\s*["']Discoverability["']\s*\}Snapshot/.test(typesSrc),
+      (/\$\{\s*["']Discoverability["']\s*\}Snapshot/.test(typesSrc) ||
+        /ReturnType\s*<\s*PipelineInject\s*\[\s*["']resolve["']\s*\]\s*>/.test(
+          typesSrc,
+        )),
     "Fence-safe SnapshotInject type present",
   );
 

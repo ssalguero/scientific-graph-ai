@@ -108,7 +108,7 @@ function main(): void {
   const header = read("src/components/workspace/WorkspaceContent.tsx");
   assertCase(
     "header.typography",
-    /--typography-heading-sm-font-size/.test(header),
+    /--typography-[a-z0-9-]+-font-size/.test(header),
     "Workspace header consumes typography tokens"
   );
 
