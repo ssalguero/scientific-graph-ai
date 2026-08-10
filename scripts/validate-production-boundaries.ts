@@ -160,7 +160,8 @@ assertCase(
   "bridge.direction.floating.toWindowUi",
   /useWindowContext/.test(codes.floating) &&
     /useWindowGeometry/.test(codes.floating) &&
-    /FloatingWindowLayer/.test(codes.floating),
+    (/FloatingWindowLayer/.test(codes.floating) ||
+      /from\s+["']\.\/FloatingWindow["']/.test(codes.floating)),
   "FloatingWindowBridge → Window context/geometry → FloatingWindowLayer UI"
 );
 

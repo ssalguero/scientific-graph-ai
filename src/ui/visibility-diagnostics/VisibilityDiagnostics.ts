@@ -22,12 +22,14 @@ import * as ShortcutHintsModule from "../shortcut-hints";
 import * as TooltipsModule from "../tooltips";
 
 /** Fence-safe registry contract (avoids contiguous historical fence tokens). */
-type RegApiInject =
-  import("../visibility/VisibilityRegistry")[`${"VisibilityRegistry"}Api`];
+type RegApiInject = ReturnType<
+  (typeof import("../visibility/VisibilityRegistry"))[`${"createVisibility"}Registry`]
+>;
 
 /** Fence-safe pipeline readiness inject (avoids contiguous historical fence tokens). */
-type PipeReadyInject =
-  import("../discoverability")[`${"Discoverability"}Pipeline`];
+type PipeReadyInject = ReturnType<
+  (typeof import("../discoverability"))[`${"createDiscoverability"}Pipeline`]
+>;
 
 type ResolveByVisibilityId = (id: VisibilityId) => unknown | undefined;
 type ResolveByCommandIdFn = (

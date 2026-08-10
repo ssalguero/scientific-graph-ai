@@ -55,12 +55,12 @@ export function assertMetadataMayBind(
 export function assertNonIdentityComponent(
   component: string,
 ): void {
-  const forbidden = new Set([
+  const forbidden = new Set<string>([
     DataOwnerComponent.ValidationEngine,
     DataOwnerComponent.TransformationEngine,
     DataOwnerComponent.RepositoryServices,
   ]);
-  if (forbidden.has(component as (typeof DataOwnerComponent)[keyof typeof DataOwnerComponent])) {
+  if (forbidden.has(component)) {
     throw new Error(
       `Registry interaction: ${component} must defer identity to Authoritative Registries (never mint SSOT identity)`,
     );

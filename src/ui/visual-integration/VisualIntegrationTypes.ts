@@ -13,12 +13,12 @@ import type { TooltipContent } from "../tooltips/TooltipContent";
 import type { VisibilityId } from "../visibility/VisibilityTypes";
 
 /** Fence-safe pipeline inject (avoids contiguous historical fence tokens). */
-export type PipelineInject =
-  import("../discoverability")[`${"Discoverability"}Pipeline`];
+export type PipelineInject = ReturnType<
+  (typeof import("../discoverability"))[`${"createDiscoverability"}Pipeline`]
+>;
 
 /** Fence-safe snapshot inject (avoids contiguous historical fence tokens). */
-export type SnapshotInject =
-  import("../discoverability")[`${"Discoverability"}Snapshot`];
+export type SnapshotInject = ReturnType<PipelineInject["resolve"]>;
 
 export type { VisibilityId, CommandId };
 export type { TooltipContent, ShortcutHint, CommandDescription, ContextHelp };

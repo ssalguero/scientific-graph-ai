@@ -168,7 +168,7 @@ const blocked = evaluateGateReadiness(gate, {
 });
 assertCase(
   "gate.blocked",
-  blocked.outcome === "BLOCKED" && blocked.outcome !== "PASS",
+  blocked.outcome === "BLOCKED",
   `outcome=${blocked.outcome}`,
 );
 
@@ -184,7 +184,7 @@ const inconclus = evaluateGateReadiness(gate, {
 });
 assertCase(
   "gate.inconclusive",
-  inconclus.outcome === "INCONCLUSIVE" && inconclus.outcome !== "PASS",
+  inconclus.outcome === "INCONCLUSIVE",
   `outcome=${inconclus.outcome}`,
 );
 

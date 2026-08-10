@@ -1,6 +1,6 @@
 # PRODUCTION Official Records
 
-**Status:** **OPEN** — Production Readiness (PP) · **PP0 PASS · IN FORCE**  
+**Status:** **OPEN** — Production Readiness (PP) · **PP1 PASS · IN FORCE**  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)
 
 This directory holds Production Readiness Official Records (PP0…PP11) and the Issues Registry.
@@ -26,9 +26,9 @@ PRS certification cites: [`../../PRS/certification/PRS-RELEASE-CERTIFIED.md`](..
 | Record | Status |
 |--------|--------|
 | [PP0-Post-PRS-Baseline.md](./PP0-Post-PRS-Baseline.md) | **PP0 PASS · IN FORCE** |
-| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (PP0 seed) |
-| PP1 — Build & Repository Readiness | **UNLOCKED / NOT EXECUTED** |
-| PP2 — Functional Readiness | **LOCKED** |
+| [PP1-Build-and-Repository-Readiness.md](./PP1-Build-and-Repository-Readiness.md) | **PP1 PASS · IN FORCE** |
+| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (updated PP1) |
+| PP2 — Functional Readiness | **UNLOCKED / NOT EXECUTED** |
 | PP3 — Data & Persistence Readiness | **LOCKED** |
 | PP4 — Reliability & Recovery Readiness | **LOCKED** |
 | PP5 — Performance Readiness | **LOCKED** |
@@ -45,9 +45,10 @@ PRS certification cites: [`../../PRS/certification/PRS-RELEASE-CERTIFIED.md`](..
 
 ```text
 PP0 PASS
-  → PP1 … PP9 (sequential PASS required)
-    → PP10 binary: PRODUCTION READY | NOT PRODUCTION READY
-      → PP11 only if PRODUCTION READY
+  → PP1 PASS
+    → PP2 … PP9 (sequential PASS required)
+      → PP10 binary: PRODUCTION READY | NOT PRODUCTION READY
+        → PP11 only if PRODUCTION READY
 ```
 
 Rules:
@@ -63,8 +64,8 @@ Rules:
 
 | Field | Value |
 |-------|--------|
-| Current gate completed | **PP0 PASS** |
-| Next authorized step | **PP1 only** |
+| Current gate completed | **PP1 PASS** |
+| Next authorized step | **PP2 only** (Functional Readiness) |
 | Production Authorization | **NOT AUTHORIZED** |
 
 **End of PRODUCTION Official Records index**

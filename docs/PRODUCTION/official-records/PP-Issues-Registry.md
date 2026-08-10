@@ -3,8 +3,8 @@
 **Artifact:** Production Readiness Issues Registry  
 **Date:** 2026-08-10  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)  
-**Seed phase:** **PP0**  
-**Status:** **IN FORCE** (seed frozen at PP0; dispositions may advance only under unlocked PP gates)
+**Seed phase:** **PP0** (updated at **PP1**)  
+**Status:** **IN FORCE**
 
 ---
 
@@ -37,31 +37,33 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 | ID | Title | PRS final treatment (cite only) | PP disposition (seed) | Target gate | Notes |
 |----|-------|----------------------------------|------------------------|-------------|-------|
-| **FR-01** | ENGINE certification-path gap (`src/engine/certification/CERTIFICATION.md` missing) | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP1 / PP9 | May be reclassified to **ACCEPTED RISK** only after PP1/PP9 evidence review; not silent |
+| **FR-01** | ENGINE certification-path gap (`src/engine/certification/CERTIFICATION.md` missing) | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP9 | PP1 confirmed not a build blocker; remains open for evidence completeness |
 | **FR-02** | Operational `package.json` **0.1.0** ≠ VI **1.0.0** | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 | PP8 must **reconfirm** before any package sync; sync remains NOT AUTHORIZED until PP11 |
 | **FR-03** | No Git tag for 1.0.0 | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 / PP11 | PP8/PP11 must **reconfirm** before tag; tag remains NOT AUTHORIZED until PP11 |
-| **FR-04** | No live full GRC validator re-run inside GRC-2 | CLOSED AS ACCEPTED | **REQUIRED BEFORE RELEASE** | PP1 | Fresh umbrella readiness evidence under PP1 — **not** a GRC reopen |
-| **FR-05** | Security/Safety dedicated evidence gap | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP7 | Security & configuration readiness corpus |
+| **FR-04** | No live full GRC validator re-run inside GRC-2 | CLOSED AS ACCEPTED | **CLOSED** | PP1 | Fresh PP1 evidence: build + tsc + release-p1/p2 + production-boundaries + performance-gates — **not** a GRC reopen |
+| **FR-05** | Security/Safety dedicated evidence gap | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP7 | Security & configuration readiness corpus; `.env.example` gap noted in PP1 |
 | **FR-06** | UX-10 non-blocking follow-ups | HANDED OFF — FUTURE WORK BOUNDARY | **DEFERRED** | PP6 (watch) | Remains Future Work Boundary unless PP6 evidences a production blocker |
 | **FR-07** | PLUGINS execution/loading deferred | HANDED OFF — FUTURE WORK BOUNDARY | **OUT OF SCOPE** | — | Separate Planning Charter required if pursued |
 | **FR-08** | COLLAB realtime / CRDT deferred | HANDED OFF — FUTURE WORK BOUNDARY | **OUT OF SCOPE** | — | Separate Planning Charter required if pursued |
 | **FR-09** | PERFORMANCE cert-pack / conditionality gap | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP5 | Performance readiness evidence completeness |
 | **FR-10** | ROADMAP / PROJECT_STATUS sync | CLOSED WITH P3 EVIDENCE | **CLOSED** | PP0 | PRS alignment complete; PP0 updates live banners for PP series start only |
 | **FR-11** | Domain-scoped peer certifications (not unconditional global reissue) | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP9 | Disclosed observation; preserved |
+| **PP-ISS-001** | ESLint: 132 errors / 102 warnings; default heap OOM without elevated `NODE_OPTIONS` | Discovered PP1 | **ACCEPTED RISK** | PP9 | Does not block `next build`; full lint cleanup out of PP1 scope |
+| **PP-ISS-002** | `tsx` used by validators but not declared in package.json (extraneous / npx) | Discovered PP1 | **ACCEPTED RISK** | PP8 | Validators passed under current install; lockfile-clean `npm ci` drops local extraneous copy |
 
 ---
 
-## Disposition counts (PP0 seed)
+## Disposition counts (post-PP1)
 
 | Classification | Count | IDs |
 |----------------|-------|-----|
 | **BLOCKER** | 0 | — |
-| **REQUIRED BEFORE RELEASE** | 4 | FR-01, FR-04, FR-05, FR-09 |
-| **ACCEPTED RISK** | 3 | FR-02, FR-03, FR-11 |
+| **REQUIRED BEFORE RELEASE** | 3 | FR-01, FR-05, FR-09 |
+| **ACCEPTED RISK** | 5 | FR-02, FR-03, FR-11, PP-ISS-001, PP-ISS-002 |
 | **DEFERRED** | 1 | FR-06 |
 | **OUT OF SCOPE** | 2 | FR-07, FR-08 |
-| **CLOSED** | 1 | FR-10 |
-| **Total** | **11** | FR-01…FR-11 |
+| **CLOSED** | 2 | FR-04, FR-10 |
+| **Total** | **13** | FR-01…FR-11 + PP-ISS-001…002 |
 
 ---
 
