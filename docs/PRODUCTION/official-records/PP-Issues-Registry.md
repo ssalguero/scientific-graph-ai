@@ -3,7 +3,7 @@
 **Artifact:** Production Readiness Issues Registry  
 **Date:** 2026-08-10  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)  
-**Seed phase:** **PP0** (updated at **PP1**, **PP2**)  
+**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**)  
 **Status:** **IN FORCE**
 
 ---
@@ -53,9 +53,9 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 ---
 
-## Disposition counts (post-PP2)
+## Disposition counts (post-PP3)
 
-PP2 Functional Readiness did **not** reclassify FR-01 / FR-05 / FR-09 (remain **REQUIRED BEFORE RELEASE**). No new `PP-ISS-###`. PP2-B1 (validator false positive on boundary-policy string catalogs) was fixed in-gate and does not open a registry row.
+PP3 Data & Persistence Readiness did **not** reclassify FR-01 / FR-05 / FR-09 (remain **REQUIRED BEFORE RELEASE**). No new `PP-ISS-###`. No in-gate `PP3-B#` (all binding validators PASS on first run).
 
 | Classification | Count | IDs |
 |----------------|-------|-----|
