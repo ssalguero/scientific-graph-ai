@@ -3,7 +3,7 @@
 **Artifact:** Production Readiness Issues Registry  
 **Date:** 2026-08-10  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)  
-**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**, **PP5**, **PP6**, **PP7**, **PP8**, **PP9**)  
+**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**, **PP5**, **PP6**, **PP7**, **PP8**, **PP9**, **PP10**)  
 **Status:** **IN FORCE**
 
 ---
@@ -53,9 +53,9 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 ---
 
-## Disposition counts (post-PP9)
+## Disposition counts (post-PP10)
 
-PP9 Documentation & Evidence / ENGINE Certification Readiness closed **FR-01** (pack path present + cited). Reconfirmed **PP-ISS-001** and **FR-11** as **ACCEPTED RISK** (no lint cleanup). No in-gate `PP9-B#`. No new `PP-ISS-###`. **REQUIRED BEFORE RELEASE** count is now **0**.
+PP10 Production Readiness Certification audited the registry under Charter §10: **BLOCKER = 0**, **REQUIRED BEFORE RELEASE = 0**, all issues classified. Open **ACCEPTED RISK** / **DEFERRED** / **OUT OF SCOPE** preserved explicit (not converted to blockers). Binary result **PRODUCTION READY**. No `PP10-B#`. No new `PP-ISS-###`.
 
 | Classification | Count | IDs |
 |----------------|-------|-----|
@@ -88,5 +88,6 @@ PP9 Documentation & Evidence / ENGINE Certification Readiness closed **FR-01** (
 - PP7 FR-05 closure: [`./PP7-Security-and-Configuration-Readiness.md`](./PP7-Security-and-Configuration-Readiness.md)
 - PP8 FR-02 / FR-03 / PP-ISS-002 reconfirm: [`./PP8-Deployment-and-Release-Readiness.md`](./PP8-Deployment-and-Release-Readiness.md)
 - PP9 FR-01 closure + PP-ISS-001 / FR-11 reconfirm: [`./PP9-Documentation-and-ENGINE-Certification-Readiness.md`](./PP9-Documentation-and-ENGINE-Certification-Readiness.md)
+- PP10 Production Approval (**PRODUCTION READY**): [`./PP10-Production-Readiness-Certification.md`](./PP10-Production-Readiness-Certification.md)
 
 **End of PP Issues Registry**

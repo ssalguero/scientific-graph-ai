@@ -1,6 +1,6 @@
 # PRODUCTION Official Records
 
-**Status:** **OPEN** — Production Readiness (PP) · **PP9 PASS · IN FORCE**  
+**Status:** **OPEN** — Production Readiness (PP) · **PP10 PASS · IN FORCE** · **PRODUCTION READY**  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)
 
 This directory holds Production Readiness Official Records (PP0…PP11) and the Issues Registry.
@@ -15,7 +15,8 @@ This directory holds Production Readiness Official Records (PP0…PP11) and the 
 | PRS-P0 | **NOT APPLICABLE** |
 | GRC-DECISION-002 | **IN FORCE** |
 | Certified baseline | `cace2820fa2f2a24c608eedf13f827b635198a0b` |
-| Production / Lovable / publish / tag / package sync | **NOT AUTHORIZED** |
+| Production Approval | **GRANTED** (PP10 **PRODUCTION READY**) |
+| Production / Lovable / publish / tag / package sync | **NOT AUTHORIZED** until PP11 execution |
 
 PRS certification cites: [`../../PRS/certification/PRS-RELEASE-CERTIFIED.md`](../../PRS/certification/PRS-RELEASE-CERTIFIED.md) · [`../../PRS/certification/PRS-CLOSED.md`](../../PRS/certification/PRS-CLOSED.md)
 
@@ -35,9 +36,9 @@ PRS certification cites: [`../../PRS/certification/PRS-RELEASE-CERTIFIED.md`](..
 | [PP7-Security-and-Configuration-Readiness.md](./PP7-Security-and-Configuration-Readiness.md) | **PP7 PASS · IN FORCE** |
 | [PP8-Deployment-and-Release-Readiness.md](./PP8-Deployment-and-Release-Readiness.md) | **PP8 PASS · IN FORCE** |
 | [PP9-Documentation-and-ENGINE-Certification-Readiness.md](./PP9-Documentation-and-ENGINE-Certification-Readiness.md) | **PP9 PASS · IN FORCE** |
-| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (updated PP9) |
-| PP10 — Production Readiness Certification | **UNLOCKED / NOT EXECUTED** (sole Production Approval gate) |
-| PP11 — Release Transition | **LOCKED** (sole Release Transition stage) |
+| [PP10-Production-Readiness-Certification.md](./PP10-Production-Readiness-Certification.md) | **PP10 PASS · IN FORCE** · **PRODUCTION READY** |
+| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (updated PP10) |
+| PP11 — Release Transition | **UNLOCKED / NOT EXECUTED** (sole Release Transition stage) |
 
 ---
 
@@ -54,8 +55,8 @@ PP0 PASS
               → PP7 PASS
                 → PP8 PASS
                   → PP9 PASS
-                    → PP10 binary: PRODUCTION READY | NOT PRODUCTION READY
-                      → PP11 only if PRODUCTION READY
+                    → PP10 PASS · **PRODUCTION READY**
+                      → PP11 only (Release Transition)
 ```
 
 Rules:
@@ -71,8 +72,9 @@ Rules:
 
 | Field | Value |
 |-------|--------|
-| Current gate completed | **PP9 PASS** |
-| Next authorized step | **PP10 only** (Production Approval) |
-| Production Authorization | **NOT AUTHORIZED** |
+| Current gate completed | **PP10 PASS** · **PRODUCTION READY** |
+| Next authorized step | **PP11 only** (Release Transition) |
+| Production Approval | **GRANTED** |
+| Production Deployment / Lovable / publish / tag / package sync | **NOT EXECUTED** / **NOT AUTHORIZED** until PP11 |
 
 **End of PRODUCTION Official Records index**
