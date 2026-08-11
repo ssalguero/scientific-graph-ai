@@ -10,13 +10,18 @@ import { applyVisibilityKeys } from "@/lib/scientific/visibility/state";
 import type { VisibilityState } from "@/lib/scientific/visibility/types";
 
 import { applyGuidedWorkflowToggles } from "../apply";
-import { buildEvaluatePublicationWorkflowSteps } from "../templates";
+import {
+  buildCompareGroupsWorkflowSteps,
+  buildEvaluatePublicationWorkflowSteps,
+} from "../templates";
+import { buildGuidedWorkflowPlan } from "../plan";
 import type { GuidedWorkflowToggleKey, GuidedWorkflowToggleSetters } from "../toggles";
 import {
   captureWorkflowVisibilitySnapshot,
   restoreWorkflowVisibilitySnapshot,
   type WorkflowVisibilitySnapshot,
 } from "../snapshot";
+import type { GuidedWorkflowContext } from "../context";
 
 const createMutableWorkflowState = (
   initial: VisibilityState = createDefaultVisibilityState()
@@ -143,6 +148,57 @@ export const runWorkflowVisibilitySnapshotCaseSuite = (): CaseResult[] => {
     "W9.manualMidWorkflow.discardedOnRestore",
     snapshotsEqual(readWorkflowToggleValues(w9State), w9Initial) &&
       w9State.showPublicationDashboard === w9Initial.showPublicationDashboard
+  );
+
+  // SPE-1.1 — compare-groups results → Reports / Scientific Report bridge
+  const compareSteps = buildCompareGroupsWorkflowSteps();
+  const compareLast = compareSteps[compareSteps.length - 1]!;
+  assertCase(
+    "SPE11.compareGroups.lastStep.reportsTab",
+    compareLast.id === "report" && compareLast.workspaceTab === "reports"
+  );
+  assertCase(
+    "SPE11.compareGroups.lastStep.enablesScientificReport",
+    compareLast.toggles.includes("showScientificReport")
+  );
+  assertCase(
+    "SPE11.compareGroups.reviewThenReport",
+    compareSteps.some((step) => step.id === "review-results") &&
+      compareSteps.findIndex((step) => step.id === "review-results") <
+        compareSteps.findIndex((step) => step.id === "report")
+  );
+
+  const evaluateSteps = buildEvaluatePublicationWorkflowSteps();
+  const evaluateLast = evaluateSteps[evaluateSteps.length - 1]!;
+  assertCase(
+    "SPE11.evaluatePublication.lastStep.reportsPreserved",
+    evaluateLast.workspaceTab === "reports" &&
+      evaluateLast.toggles.includes("showScientificReport")
+  );
+
+  const guidedCtx: GuidedWorkflowContext = {
+    seriesCount: 2,
+    totalObservations: 10,
+    canonicalNormalityAssessment: {
+      seriesAssessments: [],
+      globalConclusion: [],
+      warnings: [],
+    },
+  };
+  const comparePlan = buildGuidedWorkflowPlan("compare-groups", guidedCtx);
+  assertCase(
+    "SPE11.compareGroups.planEndsAtReport",
+    comparePlan !== null &&
+      comparePlan.steps[comparePlan.steps.length - 1]?.id === "report" &&
+      comparePlan.steps[comparePlan.steps.length - 1]?.workspaceTab === "reports"
+  );
+
+  const { state: bridgeState, setters: bridgeSetters } =
+    createMutableWorkflowState(defaults);
+  applyGuidedWorkflowToggles(compareLast.toggles, bridgeSetters);
+  assertCase(
+    "SPE11.compareGroups.applyReportToggle",
+    bridgeState.showScientificReport === true
   );
 
   return results;

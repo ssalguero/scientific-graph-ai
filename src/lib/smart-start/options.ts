@@ -14,7 +14,7 @@ export const SMART_START_OPTIONS: SmartStartOption[] = [
     icon: "📥",
     title: "Analizar un dataset",
     description:
-      "Importe CSV, Excel, TXT u ODS para análisis científico descriptivo e inferencial.",
+      "Importe CSV, Excel, TXT u ODS y luego use el workflow «Comparar grupos» hacia resultados e Informes.",
     actionLabel: "Ir a importación",
   },
   {

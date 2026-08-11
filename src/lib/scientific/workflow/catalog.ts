@@ -25,7 +25,7 @@ export const GUIDED_WORKFLOW_TEMPLATE_CATALOG: GuidedWorkflowCatalogEntry[] =
       id: "compare-groups",
       title: "Comparar grupos",
       description:
-        "Descriptiva, normalidad, inferencia recomendada, effect size e interpretación.",
+        "Descriptiva, normalidad, inferencia recomendada, effect size, interpretación y reporte científico en Informes.",
     },
     {
       id: "explore-structure",

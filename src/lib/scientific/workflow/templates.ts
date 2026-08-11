@@ -60,10 +60,19 @@ export const buildCompareGroupsWorkflowSteps = (): GuidedWorkflowStep[] => [
     id: "review-results",
     title: "Revisión de resultados",
     explanation:
-      "Confirme paneles inferenciales y de effect size antes de exportar o continuar en modo experto.",
+      "Confirme paneles inferenciales y de effect size. El siguiente paso abre Informes con el reporte científico.",
     workspaceTab: "results",
     toggles: [],
     navigateAfterApply: false,
+  },
+  {
+    id: "report",
+    title: "Reporte científico",
+    explanation:
+      "Active el reporte científico en Informes para revisar el documento integrado y continuar hacia la exportación (PDF / figura).",
+    workspaceTab: "reports",
+    inspectorSection: "advisor",
+    toggles: ["showScientificReport"],
   },
 ];
 

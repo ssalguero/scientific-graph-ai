@@ -17547,7 +17547,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       return null;
     }
     if (guidedWorkflowSession.status === "completed") {
-      return "data";
+      const lastStep =
+        activeGuidedWorkflowPlan.steps[
+          activeGuidedWorkflowPlan.steps.length - 1
+        ];
+      return lastStep?.workspaceTab ?? "data";
     }
     const step =
       activeGuidedWorkflowPlan.steps[guidedWorkflowSession.currentStepIndex];

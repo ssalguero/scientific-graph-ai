@@ -1,6 +1,6 @@
 import { runWorkflowVisibilitySnapshotCaseSuite } from "../src/lib/scientific/workflow/__tests__/workflow-visibility-snapshot.cases";
 
-const MIN_CASE_COUNT = 9;
+const MIN_CASE_COUNT = 15;
 
 const results = runWorkflowVisibilitySnapshotCaseSuite();
 
