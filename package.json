@@ -29,6 +29,7 @@
     "validate:export2-pdf-toggle-unit": "npx tsx scripts/validate-export2-pdf-toggle-unit.ts",
     "validate:export2-d44-3-testing": "npx tsx scripts/validate-export2-d44-3-testing.ts",
     "validate:spe-12-pack-lite-unit": "npx tsx scripts/validate-spe-12-pack-lite-unit.ts",
+    "validate:spe-1v-umbrella": "node scripts/validate-spe-1v-umbrella.mjs",
     "validate:ui-architecture": "npx tsx scripts/validate-ui-architecture.ts",
     "validate:ui-button-panel-smoke": "npx tsx scripts/validate-ui-button-panel-smoke.tsx",
     "validate:ui-sidebar-architecture": "npx tsx scripts/validate-ui-sidebar-architecture.ts",
