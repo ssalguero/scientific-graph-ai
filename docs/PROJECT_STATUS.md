@@ -10,7 +10,7 @@ Its objective is to summarize the current architectural maturity, documentation 
 
 Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout the lifetime of the project.
 
-**PRV-1 closure (2026-08-10):** Post-Release Verification **PRV-1 CLOSED · HANDOFF RECORDED**. Live truth below. PP0…PP11 remain **COMPLETE**. Historical sections remain context. PRS remains **CLOSED**. Next Development Cycle = **TBD / SEPARATELY CHARTERED**.
+**SDC-1 closure (2026-08-11):** Scientific Delivery Continuity **SDC-1 CERTIFIED / CLOSED**. Live truth below. PP0…PP11 remain **COMPLETE**. PRV-1 remains **CLOSED · HANDOFF RECORDED**. PRS remains **CLOSED**. Product **eligible for v1.1** — bump / deploy / Lovable = separate Owner decisions (not executed).
 
 ---
 
@@ -21,7 +21,7 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | Product | Scientific Graph AI |
 | Version Identity | **1.0.0** / display **v1.0** (VERSION-DECISION-001) |
 | Current Release | **v1.0.0** — **RELEASED / VERIFIED** (PP11) |
-| Release checkpoint | `f38cc6ff31c9ec77ae1edca79890df6f041366d2` (`main` aligned) |
+| Release checkpoint | `f38cc6ff31c9ec77ae1edca79890df6f041366d2` (release identity; tags untouched) |
 | Global Release Certification | **CERTIFIED WITH EXPLICIT WARNINGS** — GRC-DECISION-002 **IN FORCE** |
 | Certified baseline (GRC) | `cace2820fa2f2a24c608eedf13f827b635198a0b` |
 | RELEASE Series | **CLOSED** |
@@ -30,7 +30,9 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | Previous program | **Production Readiness (PP)** — **PP0…PP11 COMPLETE** |
 | Post-Release (PRV-1) | **CLOSED · HANDOFF RECORDED** |
 | Current PRV phase | **PRV-1.4 PASS** — Findings Freeze + Next-Cycle Handoff |
-| Next program | **TBD / SEPARATELY CHARTERED** (see `docs/PRV/official-records/PRV-DECISION-001-Next-Cycle-Handoff.md`) |
+| Post-PRV program (SDC-1) | **CERTIFIED / CLOSED** — Continuity without rebuild |
+| SDC eligibility | **eligible for v1.1** (bump **NOT EXECUTED**) |
+| Next program | **NOT AUTOMATICALLY AUTHORIZED** — Publication / Visibility Readiness = separate Owner decision |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** (**PRODUCTION READY**) |
@@ -39,13 +41,13 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | Repository Release | **COMPLETED** / **VERIFIED** |
 | DEPLOY / MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
 | Operational `package.json` | **1.0.0** (aligned with Version Identity; FR-02 **CLOSED**) |
-| Git tags | **1.0.0** + **v1.0** (FR-03 **CLOSED**) |
+| Git tags | **1.0.0** + **v1.0** (FR-03 **CLOSED**; untouched by SDC-1) |
 
-Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/` · `docs/PRV/`. PP11 = Repository Release Transition under PRODUCTION Planning Charter — deploy/marketplace/Lovable publish not executed. Post-Release continuity = **PRV-1** (≠ reopen PRS).
+Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/` · `docs/PRV/` · `docs/SDC/`. PP11 = Repository Release Transition — deploy/marketplace/Lovable publish not executed. Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump.
 
-**Future Work Boundary:** UX-10 · PLUGINS loading · COLLAB realtime/CRDT — **OUT OF SCOPE** / **DEFERRED** under PP Issues Registry; separate Planning Charter required if pursued as product work.
+**Future Work Boundary:** UX-10 · PLUGINS loading · COLLAB realtime/CRDT — **OUT OF SCOPE** / **DEFERRED** under PP Issues Registry; OBS-1 / UXC-1 / AIR-1 / DEP-1 / EXPORT-3 = pointers only — **NOT AUTHORIZED BY SDC-1**. Separate Planning Charter required if pursued.
 
-**PP Issues Registry (live):** REQUIRED BEFORE RELEASE = none; BLOCKER = none; FR-01/02/03/04/05/09/10 = **CLOSED**; FR-06 = **DEFERRED**; ACCEPTED RISK = FR-11 + PP-ISS-001/002; FR-07/08 = **OUT OF SCOPE**. See `docs/PRODUCTION/official-records/PP-Issues-Registry.md`.
+**PP Issues Registry (live):** REQUIRED BEFORE RELEASE = none; BLOCKER = none; FR-01/02/03/04/05/09/10 = **CLOSED**; FR-06 = **DEFERRED**; ACCEPTED RISK = FR-11 + PP-ISS-001 (+ PP-ISS-002 historically; D1 tooling resolved under SDC-1.E pending series checkpoint); FR-07/08 = **OUT OF SCOPE**. See `docs/PRODUCTION/official-records/PP-Issues-Registry.md` (PP body not amended by SDC).
 
 ---
 
@@ -57,11 +59,11 @@ Version Identity: **1.0.0** / display **v1.0**
 
 Current governance phase:
 
-**PRV-1 CLOSED · HANDOFF RECORDED** — awaiting Owner final checkpoint / separately chartered Next Development Cycle
+**SDC-1 CERTIFIED / CLOSED** — scientific delivery continuity certified; **eligible for v1.1** (bump deferred); Publication / Visibility Readiness = separate Owner decision
 
 Previous Post-Release:
 
-**PRV-1** — Post-Release Verification & Baseline Continuity (**PRV-1.0…PRV-1.4 PASS**)
+**PRV-1** — Post-Release Verification & Baseline Continuity (**PRV-1.0…PRV-1.4 PASS** · **CLOSED · HANDOFF RECORDED**)
 
 Previous program:
 
@@ -71,9 +73,13 @@ Next authorized PP step:
 
 **None** — PP0…PP11 certified
 
-Next Development Cycle:
+Post-PRV continuity series:
 
-**TBD / SEPARATELY CHARTERED** — [`PRV-DECISION-001`](./PRV/official-records/PRV-DECISION-001-Next-Cycle-Handoff.md)
+**SDC-1 CLOSED** — [`SDC-1 Official Record`](./SDC/official-records/SDC-1-Scientific-Delivery-Continuity.md)
+
+Next program:
+
+**NOT AUTOMATICALLY AUTHORIZED** — awaiting Owner decision on Publication / Visibility Readiness (≠ auto-start OBS-1 / DEP-1 / AIR-1)
 
 Production Approval:
 
@@ -89,7 +95,7 @@ Deploy / marketplace / Lovable publish:
 
 Operational version:
 
-**1.0.0** (tags **1.0.0** + **v1.0**)
+**1.0.0** (tags **1.0.0** + **v1.0**; SDC did **not** bump)
 
 ---
 
@@ -107,6 +113,7 @@ Operational version:
 | PRS | **RELEASE-CERTIFIED** · **CLOSED** |
 | PRODUCTION (PP) | **COMPLETE** · **PP11 PASS** · repository **RELEASE VERIFIED** |
 | PRV (Post-Release) | **PRV-1 CLOSED · HANDOFF RECORDED** |
+| SDC (Delivery Continuity) | **SDC-1 CERTIFIED / CLOSED** · eligible for v1.1 (bump deferred) |
 
 ---
 
@@ -121,7 +128,7 @@ AI Implementation:
 - AI-I0…AI-I9: COMPLETE
 - AI-I10 Certification: CERTIFIED (`src/ai/certification/`)
 - Runtime intelligence / assistants / prediction: NOT IMPLEMENTED (by design)
-- Next authorized program step: **TBD / SEPARATELY CHARTERED** (PRV-1 closed; Future Work Boundary / product cycles require separate Charter)
+- Next authorized program step: **NOT AUTOMATICALLY AUTHORIZED** (SDC-1 CLOSED; Publication / Visibility Readiness = separate Owner decision; Future Work Boundary requires separate Charter)
 
 Prior certified peers:
 

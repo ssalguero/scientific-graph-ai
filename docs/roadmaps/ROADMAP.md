@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-10 (PRV-1 CLOSED · HANDOFF RECORDED; `main` = `v1.0.0` / `f38cc6f`; Next Development Cycle = TBD / SEPARATELY CHARTERED)
+**Actualizado:** 2026-08-11 (SDC-1 CERTIFIED / CLOSED; `v1.0.0` identity intact; eligible for v1.1 — bump deferred; Publication / Visibility = separate Owner decision)
 
 ---
 
@@ -11,7 +11,7 @@
 | Product | Scientific Graph AI |
 | Version Identity | **1.0.0** / display **v1.0** |
 | Current Release | **v1.0.0** — **RELEASED / VERIFIED** (PP11) |
-| Release checkpoint | `f38cc6f` (`main` / `origin/main` aligned) |
+| Release checkpoint | `f38cc6f` (release identity; tags untouched by SDC) |
 | Global Release Certification | **CERTIFIED WITH EXPLICIT WARNINGS** — GRC-DECISION-002 **IN FORCE** |
 | Certified baseline (GRC) | `cace2820fa2f2a24c608eedf13f827b635198a0b` |
 | RELEASE Series | **CLOSED** |
@@ -20,7 +20,9 @@
 | Previous program | **Production Readiness (PP)** — **PP0…PP11 COMPLETE** |
 | Post-Release (PRV-1) | **CLOSED · HANDOFF RECORDED** |
 | Current PRV phase | **PRV-1.4 PASS** |
-| Next program | **TBD / SEPARATELY CHARTERED** (`PRV-DECISION-001`) |
+| Post-PRV program (SDC-1) | **CERTIFIED / CLOSED** |
+| SDC eligibility | **eligible for v1.1** (bump **NOT EXECUTED**) |
+| Next program | **NOT AUTOMATICALLY AUTHORIZED** — Publication / Visibility Readiness = separate Owner decision |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
@@ -31,7 +33,7 @@
 | Git tags | **1.0.0** + **v1.0** |
 | DEPLOY / MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
 
-Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`. PP11 completes Repository Release Transition — not hosted deploy. Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS).
+Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`; `docs/SDC/`. PP11 completes Repository Release Transition — not hosted deploy. Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump.
 
 **High-level bridge:**
 
@@ -42,16 +44,18 @@ POST-RELEASE
    ↓
 PRV-1 CLOSED
    ↓
-Next Development Cycle (TBD / SEPARATELY CHARTERED)
+SDC-1 CERTIFIED / CLOSED
+   ↓
+Publication / Visibility Readiness (separate Owner decision)
 ```
 
-**Future Work Boundary (pointers only):** UX-10 follow-ups · PLUGINS execution/loading deferred · COLLAB realtime/CRDT deferred — classified **DEFERRED** / **OUT OF SCOPE** in the PP Issues Registry; require a **separate** Planning Charter if pursued as product work.
+**Future Work Boundary (pointers only):** UX-10 follow-ups · PLUGINS execution/loading deferred · COLLAB realtime/CRDT deferred — classified **DEFERRED** / **OUT OF SCOPE** in the PP Issues Registry; OBS-1 / UXC-1 / AIR-1 / DEP-1 / EXPORT-3 = **NOT AUTHORIZED BY SDC-1**; require a **separate** Planning Charter if pursued as product work.
 
 ---
 
 ## Current Project Status (historical domain snapshot)
 
-Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Production Readiness (PP) is **COMPLETE** at **PP11 PASS** (repository RELEASE VERIFIED). Post-Release **PRV-1** is **CLOSED · HANDOFF RECORDED**. Next Development Cycle = **TBD / SEPARATELY CHARTERED**.
+Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Production Readiness (PP) is **COMPLETE** at **PP11 PASS** (repository RELEASE VERIFIED). Post-Release **PRV-1** is **CLOSED · HANDOFF RECORDED**. Post-PRV **SDC-1** is **CERTIFIED / CLOSED** (Continuity; eligible for v1.1 — bump deferred). Next program is **NOT AUTOMATICALLY AUTHORIZED**.
 
 Domain snapshot (peer certifications; not a next-series plan):
 
@@ -65,11 +69,13 @@ Domain snapshot (peer certifications; not a next-series plan):
 | PERFORMANCE | ✅ RELEASE CERTIFIED (I10 cited; conditionality disclosed; FR-09 CLOSED) |
 | PRODUCTION (PP) | **COMPLETE** · **PP11 PASS** · repository **RELEASE VERIFIED** |
 | PRV (Post-Release) | **PRV-1 CLOSED · HANDOFF RECORDED** |
+| SDC (Delivery Continuity) | **SDC-1 CERTIFIED / CLOSED** |
 
 The AI Domain is certified under `src/ai/` as structural Intelligence Domain skeletons. No runtime intelligence, assistants, or prediction is implemented.
 
 **Next authorized PP step:** **None**. Deploy / marketplace / Lovable publish remain **NOT EXECUTED — EVIDENCE GAP**.
-**Next Development Cycle:** **TBD / SEPARATELY CHARTERED** — see `docs/PRV/official-records/PRV-DECISION-001-Next-Cycle-Handoff.md`.
+**SDC-1:** **CERTIFIED / CLOSED** — see `docs/SDC/official-records/SDC-1-Scientific-Delivery-Continuity.md`.
+**Next Owner attention:** Publication / Visibility Readiness path — **separate decision** (does not auto-authorize OBS-1 / DEP-1 / AIR-1).
 
 ---
 
