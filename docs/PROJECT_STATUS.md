@@ -10,7 +10,7 @@ Its objective is to summarize the current architectural maturity, documentation 
 
 Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout the lifetime of the project.
 
-**DEP-2 closure (2026-08-11):** Hosted Deployment Execution **DEP-2 CERTIFIED / CLOSED** (with disclosures). **DEPLOY EXECUTED · EVIDENCE CLOSED** (deploy-only). Host **Vercel Production**; revision tags **`1.0.0` / `v1.0`** (`f38cc6f…`); **DEP-DECISION-001 Option B IN FORCE**. **G6 OUT OF SCOPE** · cloud readiness **NOT CERTIFIED** · RLS **UNVERIFIED / DEFERRED**. DEP-1 remains **FROZEN / IN FORCE**. SDC-1 remains **CERTIFIED / CLOSED**. PP0…PP11 remain **COMPLETE**. PRV-1 remains **CLOSED · HANDOFF RECORDED**. PRS remains **CLOSED**. Product **eligible for v1.1** — bump / Lovable / marketplace / Option C = separate Owner decisions (not executed).
+**UXC-1 planning freeze (2026-08-11):** UX Continuity **UXC-1 PLANNING FROZEN / IN FORCE**. **UXC-1.X NOT GRANTED** · **UXC-1.1 NOT AUTHORIZED**. Recommended version line **v1.1.x** (bump **NOT EXECUTED**). DEP-2 remains **CERTIFIED / CLOSED** · DEPLOY **EXECUTED · EVIDENCE CLOSED** (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED). DEP-1 **FROZEN / IN FORCE** · DEP-DECISION-001 **IN FORCE**. SDC-1 **CERTIFIED / CLOSED**. PP0…PP11 **COMPLETE**. PRV-1 **CLOSED · HANDOFF RECORDED**. PRS **CLOSED**. UX-10 certification **not reopened** (cite-only). Marketplace / Lovable / Option C = separate Owner decisions.
 
 ---
 
@@ -36,7 +36,11 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | DEP-2 | **CERTIFIED / CLOSED** (with disclosures) — see DEP-2 Official Record |
 | Next authorized DEP step | **None** — DEP-2 closed; Option C / cloud-RLS / marketplace / Lovable = separate Owner decisions |
 | DEP host / revision / profile | **Vercel** · tags **`1.0.0` / `v1.0`** (`f38cc6f…`) · Option B Production env · G6 **OUT** |
-| Next program | **NOT AUTOMATICALLY AUTHORIZED** — marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions |
+| UXC program (UXC-1) | **PLANNING FROZEN / IN FORCE** — see [`docs/UXC/`](./UXC/) |
+| UXC-1.X Execution Authorization | **NOT GRANTED** |
+| Next authorized UXC step | **None** until UXC-1.X — **UXC-1.1 NOT AUTHORIZED** |
+| Recommended version line (UXC) | **v1.1.x** (acknowledged; bump **NOT EXECUTED**) |
+| Next program | **UXC-1** (planning frozen; BUILD not authorized) — marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** (**PRODUCTION READY**) |
@@ -48,9 +52,9 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | Operational `package.json` | **1.0.0** (aligned with Version Identity; FR-02 **CLOSED**) |
 | Git tags | **1.0.0** + **v1.0** (FR-03 **CLOSED**; untouched by SDC-1 / DEP-1) |
 
-Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/` · `docs/PRV/` · `docs/SDC/` · `docs/DEP/`. PP11 historical certificate remains cite-only (repository release). Live DEPLOY evidence closed under **DEP-2** with disclosures. Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes deployment planning; DEP-2 certifies hosted execution of frozen **1.0.0**.
+Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/` · `docs/PRV/` · `docs/SDC/` · `docs/DEP/` · `docs/UXC/`. PP11 historical certificate remains cite-only (repository release). Live DEPLOY evidence closed under **DEP-2** with disclosures. Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes deployment planning; DEP-2 certifies hosted execution of frozen **1.0.0**. **UXC-1** is separately Owner-frozen for Continuity planning (≠ authorized by SDC-1; ≠ BUILD until UXC-1.X).
 
-**Future Work Boundary:** UX-10 · PLUGINS loading · COLLAB realtime/CRDT — **OUT OF SCOPE** / **DEFERRED** under PP Issues Registry; OBS-1 / UXC-1 / AIR-1 / EXPORT-3 = pointers only — **NOT AUTHORIZED BY SDC-1**. **DEP-1** is **FROZEN / IN FORCE** under separate Owner charter (not by SDC-1). Cloud-enabled / Supabase RLS = future separately governed gate.
+**Future Work Boundary:** UX-10 follow-ups remain FR-06 **DEFERRED** pending UXC execution disposition; PLUGINS loading · COLLAB realtime/CRDT — **OUT OF SCOPE** / **DEFERRED** under PP Issues Registry; OBS-1 / AIR-1 / EXPORT-3 = pointers only — **NOT AUTHORIZED BY SDC-1** / **NOT AUTHORIZED BY UXC-1**. **UXC-1** Planning **FROZEN** under separate Owner charter; **UXC-1.1 NOT AUTHORIZED**. Cloud-enabled / Supabase RLS = future separately governed gate.
 
 **PP Issues Registry (live):** REQUIRED BEFORE RELEASE = none; BLOCKER = none; FR-01/02/03/04/05/09/10 = **CLOSED**; FR-06 = **DEFERRED**; ACCEPTED RISK = FR-11 + PP-ISS-001 (+ PP-ISS-002 historically; D1 tooling resolved under SDC-1.E pending series checkpoint); FR-07/08 = **OUT OF SCOPE**. See `docs/PRODUCTION/official-records/PP-Issues-Registry.md` (PP body not amended by SDC).
 
@@ -63,6 +67,10 @@ Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/`
 Version Identity: **1.0.0** / display **v1.0**
 
 Current governance phase:
+
+**UXC-1 PLANNING FROZEN / IN FORCE** — UX Continuity Charter frozen; **UXC-1.X NOT GRANTED** · **UXC-1.1 NOT AUTHORIZED**
+
+Previous deployment:
 
 **DEP-2 CERTIFIED / CLOSED** — Hosted Deployment Execution closed (Option B; G6 OUT; cloud NOT CERTIFIED; RLS DEFERRED); **DEPLOY EXECUTED · EVIDENCE CLOSED**
 
@@ -90,9 +98,13 @@ DEP freeze record:
 
 **DEP-1 FROZEN** — [`DEP-1 Official Record`](./DEP/official-records/DEP-1-Deployment-Execution-Planning-Freeze.md) · Charter [`DEP-Planning-Charter.md`](./DEP/DEP-Planning-Charter.md)
 
+UXC freeze record:
+
+**UXC-1 FROZEN** — [`UXC-1 Planning Freeze`](./UXC/official-records/UXC-1-Planning-Freeze.md) · Charter [`UXC-Planning-Charter.md`](./UXC/UXC-Planning-Charter.md)
+
 Next authorized phase:
 
-**None automatic** — DEP-2 closed. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions — see [`DEP-2 Official Record`](./DEP/official-records/DEP-2-Hosted-Deployment-Execution.md)
+**None for BUILD** — await **UXC-1.X**. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions — see [`UXC-1 Planning Freeze`](./UXC/official-records/UXC-1-Planning-Freeze.md)
 
 Production Approval:
 
@@ -132,6 +144,7 @@ Operational version:
 | PRV (Post-Release) | **PRV-1 CLOSED · HANDOFF RECORDED** |
 | SDC (Delivery Continuity) | **SDC-1 CERTIFIED / CLOSED** · eligible for v1.1 (bump deferred) |
 | DEP (Deployment Execution) | **DEP-1 FROZEN / IN FORCE** · **DEP-2 CERTIFIED / CLOSED** · DEPLOY **EXECUTED · EVIDENCE CLOSED** (disclosures) |
+| UXC (UX Continuity) | **UXC-1 PLANNING FROZEN / IN FORCE** · **UXC-1.X NOT GRANTED** · **UXC-1.1 NOT AUTHORIZED** |
 
 ---
 
@@ -146,7 +159,7 @@ AI Implementation:
 - AI-I0…AI-I9: COMPLETE
 - AI-I10 Certification: CERTIFIED (`src/ai/certification/`)
 - Runtime intelligence / assistants / prediction: NOT IMPLEMENTED (by design)
-- Next authorized program step: **NOT AUTOMATICALLY AUTHORIZED** (DEP-2 CLOSED; marketplace/Lovable/Option C/v1.1 = separate Owner decisions)
+- Next authorized program step: **UXC-1 planning frozen**; BUILD **NOT AUTHORIZED** until UXC-1.X (marketplace/Lovable/Option C/v1.1 bump = separate Owner decisions)
 
 Prior certified peers:
 

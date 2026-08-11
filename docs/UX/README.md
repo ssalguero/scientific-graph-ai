@@ -9,8 +9,10 @@ This directory contains the official User Experience documentation for Scientifi
 - specifications/ — Functional UX specifications.
 - reference/ — Design references and conventions.
 - implementation/ — UX Implementation Series (Visual Modernization; Design System consumption).
-- certification/ — UX Release Certification package (UX-I5).
+- certification/ — UX Release Certification package (UX-I5 / UX-10 cite-only).
 - archive/ — Historical UX documentation.
+
+Post-v1 Continuity (does **not** reopen UX-10): [`../UXC/UXC-Planning-Charter.md`](../UXC/UXC-Planning-Charter.md) — **UXC-1 PLANNING FROZEN / IN FORCE**; BUILD **NOT AUTHORIZED** until UXC-1.X.
 
 ## Implementation Series
 
