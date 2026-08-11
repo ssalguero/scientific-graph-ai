@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-11 (SPE-1 PLANNING FREEZE — MATERIALIZED; BUILD NOT STARTED; UXC-1 CERTIFIED / CLOSED; tip 605e235; DEP-2 CERTIFIED / CLOSED; v1.1.x recommended — bump NOT EXECUTED)
+**Actualizado:** 2026-08-11 (SPE-1.E PASS; SPE-1.1 BUILD NOT STARTED; SPE-1.0 freeze aff8bff; UXC-1 CLOSED; tip 605e235; v1.1.x recommended — bump NOT EXECUTED)
 
 ---
 
@@ -32,11 +32,12 @@
 | UXC-1.V | **PASS** |
 | Next authorized UXC step | **None** — series closed |
 | Recommended version line (UXC) | **v1.1.x** (acknowledged; bump **NOT EXECUTED**) |
-| SPE program (SPE-1) | **PLANNING FREEZE — MATERIALIZED** — see `docs/SPE/official-records/SPE-1-Planning-Freeze.md` |
+| SPE program (SPE-1) | **IN PROGRESS** — SPE-1.0 freeze · **SPE-1.E PASS** — see `docs/SPE/official-records/SPE-1-E-Entry-Hygiene.md` |
 | SPE Planning Charter | **IN FORCE / FROZEN** — `docs/SPE/SPE-Planning-Charter.md` |
-| SPE-1 BUILD | **NOT STARTED** |
-| Next authorized SPE step | **None until Owner authorizes SPE-1.E BUILD** |
-| Next program | **SPE-1 — Scientific Product Expansion** (Option B) — planning frozen; BUILD not started |
+| SPE-1.E | **PASS** (SPE-critical floor; empty remediation) |
+| SPE-1.1 BUILD | **NOT STARTED** |
+| Next authorized SPE step | **None until Owner authorizes SPE-1.1 BUILD** |
+| Next program | **SPE-1 — Scientific Product Expansion** (Option B) — SPE-1.E PASS; SPE-1.1 not started |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
@@ -48,7 +49,7 @@
 | DEPLOY | **EXECUTED · EVIDENCE CLOSED** (DEP-2; with disclosures) |
 | MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
 
-Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`; `docs/SDC/`; `docs/DEP/`; `docs/UXC/`; `docs/SPE/`. PP11 historical certificate remains cite-only. Live DEPLOY evidence closed under **DEP-2** (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED). Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes planning; DEP-2 certifies hosted execution of frozen **1.0.0**. **UXC-1 CERTIFIED / CLOSED** (non-arch Continuity; ≠ UX-10 reopen; bump **NOT EXECUTED**). **SPE-1 PLANNING FREEZE — MATERIALIZED** (BUILD not started).
+Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`; `docs/SDC/`; `docs/DEP/`; `docs/UXC/`; `docs/SPE/`. PP11 historical certificate remains cite-only. Live DEPLOY evidence closed under **DEP-2** (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED). Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes planning; DEP-2 certifies hosted execution of frozen **1.0.0**. **UXC-1 CERTIFIED / CLOSED** (non-arch Continuity; ≠ UX-10 reopen; bump **NOT EXECUTED**). **SPE-1.E PASS** (SPE-1.1 BUILD not started).
 
 **High-level bridge:**
 
@@ -67,7 +68,9 @@ DEP-2 CERTIFIED / CLOSED (DEPLOY evidence closed with disclosures)
    ↓
 UXC-1 CERTIFIED / CLOSED
    ↓
-SPE-1 PLANNING FREEZE — MATERIALIZED (BUILD NOT STARTED)
+SPE-1.0 PLANNING FREEZE — MATERIALIZED
+   ↓
+SPE-1.E PASS (SPE-critical floor; SPE-1.1 NOT STARTED)
 ```
 
 ---
@@ -77,16 +80,17 @@ SPE-1 PLANNING FREEZE — MATERIALIZED (BUILD NOT STARTED)
 ```text
 POST-UXC LIVING ROADMAP
 SPE-1 — Scientific Product Expansion
-    STATUS: PLANNING FREEZE / READY FOR OWNER AUTHORIZATION (SPE-1.E)
+    STATUS: SPE-1.E PASS / READY FOR OWNER AUTHORIZATION (SPE-1.1)
     CHARTER: docs/SPE/SPE-Planning-Charter.md (IN FORCE / FROZEN)
     FREEZE:  docs/SPE/official-records/SPE-1-Planning-Freeze.md
-    BUILD:   NOT STARTED
+    SPE-1.E: docs/SPE/official-records/SPE-1-E-Entry-Hygiene.md (PASS)
+    SPE-1.1 BUILD: NOT STARTED
 ```
 
 | Track | Status |
 |-------|--------|
-| **SPE-1** | **NEXT** — Planning Freeze materialized; BUILD requires Owner authorization |
-| OBS-1 residual | Queued peer (not SPE main scope) |
+| **SPE-1** | **IN PROGRESS** — SPE-1.E PASS; SPE-1.1 requires Owner authorization |
+| OBS-1 residual | Queued peer (not SPE main scope; not absorbed by SPE-1.E) |
 | AIR-1 | Later |
 | ARCH-U | Deferred |
 | Full EXPORT-3 ZIP | Deferred beyond Pack Lite |
@@ -119,7 +123,7 @@ Domain snapshot (peer certifications; not a next-series plan):
 | SDC (Delivery Continuity) | **SDC-1 CERTIFIED / CLOSED** |
 | DEP (Deployment Execution) | **DEP-1 FROZEN / IN FORCE** · **DEP-2 CERTIFIED / CLOSED** · DEPLOY **EXECUTED · EVIDENCE CLOSED** (disclosures) |
 | UXC (UX Continuity) | **UXC-1 CERTIFIED / CLOSED** |
-| SPE (Scientific Product Expansion) | **SPE-1 PLANNING FREEZE — MATERIALIZED** · BUILD **NOT STARTED** |
+| SPE (Scientific Product Expansion) | **SPE-1.E PASS** · SPE-1.1 BUILD **NOT STARTED** |
 
 The AI Domain is certified under `src/ai/` as structural Intelligence Domain skeletons. No runtime intelligence, assistants, or prediction is implemented.
 
@@ -127,8 +131,8 @@ The AI Domain is certified under `src/ai/` as structural Intelligence Domain ske
 **SDC-1:** **CERTIFIED / CLOSED** — see `docs/SDC/official-records/SDC-1-Scientific-Delivery-Continuity.md`.
 **DEP-2:** **CERTIFIED / CLOSED** — see `docs/DEP/official-records/DEP-2-Hosted-Deployment-Execution.md`.
 **UXC-1:** **CERTIFIED / CLOSED** — see `docs/UXC/official-records/UXC-1-UX-Continuity-Certification.md`.
-**SPE-1:** **PLANNING FREEZE — MATERIALIZED** — see `docs/SPE/official-records/SPE-1-Planning-Freeze.md`.
-**Next BUILD:** None until Owner authorizes **SPE-1.E**. OBS-1 residual · ARCH-U deferred. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions.
+**SPE-1:** **SPE-1.E PASS** — see `docs/SPE/official-records/SPE-1-E-Entry-Hygiene.md`.
+**Next BUILD:** None until Owner authorizes **SPE-1.1**. OBS-1 residual · ARCH-U deferred. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions.
 
 ---
 
@@ -262,7 +266,7 @@ Sincronización de README, ROADMAP, README técnico y referencias de estado con 
 
 | Series | Descripción |
 |--------|-------------|
-| **SPE-1** | Scientific Product Expansion — Planning Freeze **MATERIALIZED**; BUILD **NOT STARTED**; Owner authorization required for SPE-1.E |
+| **SPE-1** | Scientific Product Expansion — **SPE-1.E PASS**; SPE-1.1 BUILD **NOT STARTED**; Owner authorization required for SPE-1.1 |
 
 | Historical (not living next) | Descripción |
 |------------------------------|-------------|
@@ -272,4 +276,4 @@ Sincronización de README, ROADMAP, README técnico y referencias de estado con 
 
 ## Histórico de hitos cerrados
 
-SCI-55 → SCI-60 · SCI-58 v1 · **SCI-58 v2** · SCI-59 · ARCH-5 F1–F4 · PROD-1A · PROD-2A · **PROD-2B** (B1–B6) · **PROD-2C C1–C9** · **ARCH-6-DOC** · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 · UX-1A.1 LITE · DATA-3A · **QA-1** · **HOTFIX PDF-1/2/3** · **PROD-2D** (D0–D24) · **PROD-2E** (D25–D36) · **RELEASE / PP / PRV / SDC / DEP / UXC-1** · **SPE-1.0 Planning Freeze**
+SCI-55 → SCI-60 · SCI-58 v1 · **SCI-58 v2** · SCI-59 · ARCH-5 F1–F4 · PROD-1A · PROD-2A · **PROD-2B** (B1–B6) · **PROD-2C C1–C9** · **ARCH-6-DOC** · HOTFIX-SCI-EXPERIMENTAL-VIEWPORT-1 · UX-1A.1 LITE · DATA-3A · **QA-1** · **HOTFIX PDF-1/2/3** · **PROD-2D** (D0–D24) · **PROD-2E** (D25–D36) · **RELEASE / PP / PRV / SDC / DEP / UXC-1** · **SPE-1.0 Planning Freeze** · **SPE-1.E Entry Hygiene PASS**
