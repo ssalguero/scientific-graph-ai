@@ -10,7 +10,7 @@ Its objective is to summarize the current architectural maturity, documentation 
 
 Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout the lifetime of the project.
 
-**SDC-1 closure (2026-08-11):** Scientific Delivery Continuity **SDC-1 CERTIFIED / CLOSED**. Live truth below. PP0…PP11 remain **COMPLETE**. PRV-1 remains **CLOSED · HANDOFF RECORDED**. PRS remains **CLOSED**. Product **eligible for v1.1** — bump / deploy / Lovable = separate Owner decisions (not executed).
+**DEP-2 closure (2026-08-11):** Hosted Deployment Execution **DEP-2 CERTIFIED / CLOSED** (with disclosures). **DEPLOY EXECUTED · EVIDENCE CLOSED** (deploy-only). Host **Vercel Production**; revision tags **`1.0.0` / `v1.0`** (`f38cc6f…`); **DEP-DECISION-001 Option B IN FORCE**. **G6 OUT OF SCOPE** · cloud readiness **NOT CERTIFIED** · RLS **UNVERIFIED / DEFERRED**. DEP-1 remains **FROZEN / IN FORCE**. SDC-1 remains **CERTIFIED / CLOSED**. PP0…PP11 remain **COMPLETE**. PRV-1 remains **CLOSED · HANDOFF RECORDED**. PRS remains **CLOSED**. Product **eligible for v1.1** — bump / Lovable / marketplace / Option C = separate Owner decisions (not executed).
 
 ---
 
@@ -32,20 +32,25 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | Current PRV phase | **PRV-1.4 PASS** — Findings Freeze + Next-Cycle Handoff |
 | Post-PRV program (SDC-1) | **CERTIFIED / CLOSED** — Continuity without rebuild |
 | SDC eligibility | **eligible for v1.1** (bump **NOT EXECUTED**) |
-| Next program | **NOT AUTOMATICALLY AUTHORIZED** — Publication / Visibility Readiness = separate Owner decision |
+| DEP program (DEP-1) | **FROZEN / IN FORCE** — Owner OD-1…OD-5 recorded |
+| DEP-2 | **CERTIFIED / CLOSED** (with disclosures) — see DEP-2 Official Record |
+| Next authorized DEP step | **None** — DEP-2 closed; Option C / cloud-RLS / marketplace / Lovable = separate Owner decisions |
+| DEP host / revision / profile | **Vercel** · tags **`1.0.0` / `v1.0`** (`f38cc6f…`) · Option B Production env · G6 **OUT** |
+| Next program | **NOT AUTOMATICALLY AUTHORIZED** — marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** (**PRODUCTION READY**) |
 | PP11 | **PASS** — Repository Release Transition |
 | Production Approval | **GRANTED** |
 | Repository Release | **COMPLETED** / **VERIFIED** |
-| DEPLOY / MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
+| DEPLOY | **EXECUTED · EVIDENCE CLOSED** (DEP-2; with disclosures — G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED) |
+| MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
 | Operational `package.json` | **1.0.0** (aligned with Version Identity; FR-02 **CLOSED**) |
-| Git tags | **1.0.0** + **v1.0** (FR-03 **CLOSED**; untouched by SDC-1) |
+| Git tags | **1.0.0** + **v1.0** (FR-03 **CLOSED**; untouched by SDC-1 / DEP-1) |
 
-Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/` · `docs/PRV/` · `docs/SDC/`. PP11 = Repository Release Transition — deploy/marketplace/Lovable publish not executed. Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump.
+Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/` · `docs/PRV/` · `docs/SDC/` · `docs/DEP/`. PP11 historical certificate remains cite-only (repository release). Live DEPLOY evidence closed under **DEP-2** with disclosures. Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes deployment planning; DEP-2 certifies hosted execution of frozen **1.0.0**.
 
-**Future Work Boundary:** UX-10 · PLUGINS loading · COLLAB realtime/CRDT — **OUT OF SCOPE** / **DEFERRED** under PP Issues Registry; OBS-1 / UXC-1 / AIR-1 / DEP-1 / EXPORT-3 = pointers only — **NOT AUTHORIZED BY SDC-1**. Separate Planning Charter required if pursued.
+**Future Work Boundary:** UX-10 · PLUGINS loading · COLLAB realtime/CRDT — **OUT OF SCOPE** / **DEFERRED** under PP Issues Registry; OBS-1 / UXC-1 / AIR-1 / EXPORT-3 = pointers only — **NOT AUTHORIZED BY SDC-1**. **DEP-1** is **FROZEN / IN FORCE** under separate Owner charter (not by SDC-1). Cloud-enabled / Supabase RLS = future separately governed gate.
 
 **PP Issues Registry (live):** REQUIRED BEFORE RELEASE = none; BLOCKER = none; FR-01/02/03/04/05/09/10 = **CLOSED**; FR-06 = **DEFERRED**; ACCEPTED RISK = FR-11 + PP-ISS-001 (+ PP-ISS-002 historically; D1 tooling resolved under SDC-1.E pending series checkpoint); FR-07/08 = **OUT OF SCOPE**. See `docs/PRODUCTION/official-records/PP-Issues-Registry.md` (PP body not amended by SDC).
 
@@ -59,7 +64,11 @@ Version Identity: **1.0.0** / display **v1.0**
 
 Current governance phase:
 
-**SDC-1 CERTIFIED / CLOSED** — scientific delivery continuity certified; **eligible for v1.1** (bump deferred); Publication / Visibility Readiness = separate Owner decision
+**DEP-2 CERTIFIED / CLOSED** — Hosted Deployment Execution closed (Option B; G6 OUT; cloud NOT CERTIFIED; RLS DEFERRED); **DEPLOY EXECUTED · EVIDENCE CLOSED**
+
+Previous continuity:
+
+**SDC-1 CERTIFIED / CLOSED** — scientific delivery continuity certified; **eligible for v1.1** (bump deferred)
 
 Previous Post-Release:
 
@@ -77,9 +86,13 @@ Post-PRV continuity series:
 
 **SDC-1 CLOSED** — [`SDC-1 Official Record`](./SDC/official-records/SDC-1-Scientific-Delivery-Continuity.md)
 
-Next program:
+DEP freeze record:
 
-**NOT AUTOMATICALLY AUTHORIZED** — awaiting Owner decision on Publication / Visibility Readiness (≠ auto-start OBS-1 / DEP-1 / AIR-1)
+**DEP-1 FROZEN** — [`DEP-1 Official Record`](./DEP/official-records/DEP-1-Deployment-Execution-Planning-Freeze.md) · Charter [`DEP-Planning-Charter.md`](./DEP/DEP-Planning-Charter.md)
+
+Next authorized phase:
+
+**None automatic** — DEP-2 closed. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions — see [`DEP-2 Official Record`](./DEP/official-records/DEP-2-Hosted-Deployment-Execution.md)
 
 Production Approval:
 
@@ -89,13 +102,17 @@ Repository Release:
 
 **COMPLETED** / **VERIFIED** (PP11)
 
-Deploy / marketplace / Lovable publish:
+Deploy:
+
+**EXECUTED · EVIDENCE CLOSED** (DEP-2; with disclosures)
+
+Marketplace / Lovable publish:
 
 **NOT EXECUTED — EVIDENCE GAP**
 
 Operational version:
 
-**1.0.0** (tags **1.0.0** + **v1.0**; SDC did **not** bump)
+**1.0.0** (tags **1.0.0** + **v1.0**; SDC/DEP did **not** bump or retag)
 
 ---
 
@@ -114,6 +131,7 @@ Operational version:
 | PRODUCTION (PP) | **COMPLETE** · **PP11 PASS** · repository **RELEASE VERIFIED** |
 | PRV (Post-Release) | **PRV-1 CLOSED · HANDOFF RECORDED** |
 | SDC (Delivery Continuity) | **SDC-1 CERTIFIED / CLOSED** · eligible for v1.1 (bump deferred) |
+| DEP (Deployment Execution) | **DEP-1 FROZEN / IN FORCE** · **DEP-2 CERTIFIED / CLOSED** · DEPLOY **EXECUTED · EVIDENCE CLOSED** (disclosures) |
 
 ---
 
@@ -128,7 +146,7 @@ AI Implementation:
 - AI-I0…AI-I9: COMPLETE
 - AI-I10 Certification: CERTIFIED (`src/ai/certification/`)
 - Runtime intelligence / assistants / prediction: NOT IMPLEMENTED (by design)
-- Next authorized program step: **NOT AUTOMATICALLY AUTHORIZED** (SDC-1 CLOSED; Publication / Visibility Readiness = separate Owner decision; Future Work Boundary requires separate Charter)
+- Next authorized program step: **NOT AUTOMATICALLY AUTHORIZED** (DEP-2 CLOSED; marketplace/Lovable/Option C/v1.1 = separate Owner decisions)
 
 Prior certified peers:
 

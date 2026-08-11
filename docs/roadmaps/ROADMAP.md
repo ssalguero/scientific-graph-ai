@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-11 (SDC-1 CERTIFIED / CLOSED; `v1.0.0` identity intact; eligible for v1.1 — bump deferred; Publication / Visibility = separate Owner decision)
+**Actualizado:** 2026-08-11 (DEP-2 CERTIFIED / CLOSED; DEPLOY EXECUTED · EVIDENCE CLOSED with disclosures; DEP-1 FROZEN; Option B IN FORCE)
 
 ---
 
@@ -22,7 +22,12 @@
 | Current PRV phase | **PRV-1.4 PASS** |
 | Post-PRV program (SDC-1) | **CERTIFIED / CLOSED** |
 | SDC eligibility | **eligible for v1.1** (bump **NOT EXECUTED**) |
-| Next program | **NOT AUTOMATICALLY AUTHORIZED** — Publication / Visibility Readiness = separate Owner decision |
+| DEP program (DEP-1) | **FROZEN / IN FORCE** |
+| DEP-2 | **CERTIFIED / CLOSED** (with disclosures) |
+| DEP-DECISION-001 | **IN FORCE** (Option B) |
+| Next authorized DEP step | **None** — Option C / cloud-RLS / marketplace / Lovable = separate Owner decisions |
+| DEP host / revision / profile | **Vercel** · tags **`1.0.0` / `v1.0`** (`f38cc6f…`) · Option B · G6 **OUT** |
+| Next program | **NOT AUTOMATICALLY AUTHORIZED** — marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
@@ -31,9 +36,10 @@
 | Repository Release | **COMPLETED** / **VERIFIED** |
 | Operational `package.json` | **1.0.0** |
 | Git tags | **1.0.0** + **v1.0** |
-| DEPLOY / MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
+| DEPLOY | **EXECUTED · EVIDENCE CLOSED** (DEP-2; with disclosures) |
+| MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
 
-Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`; `docs/SDC/`. PP11 completes Repository Release Transition — not hosted deploy. Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump.
+Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`; `docs/SDC/`; `docs/DEP/`. PP11 historical certificate remains cite-only. Live DEPLOY evidence closed under **DEP-2** (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED). Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes planning; DEP-2 certifies hosted execution of frozen **1.0.0**.
 
 **High-level bridge:**
 
@@ -46,16 +52,18 @@ PRV-1 CLOSED
    ↓
 SDC-1 CERTIFIED / CLOSED
    ↓
-Publication / Visibility Readiness (separate Owner decision)
+DEP-1 FROZEN / IN FORCE
+   ↓
+DEP-2 CERTIFIED / CLOSED (DEPLOY evidence closed with disclosures)
 ```
 
-**Future Work Boundary (pointers only):** UX-10 follow-ups · PLUGINS execution/loading deferred · COLLAB realtime/CRDT deferred — classified **DEFERRED** / **OUT OF SCOPE** in the PP Issues Registry; OBS-1 / UXC-1 / AIR-1 / DEP-1 / EXPORT-3 = **NOT AUTHORIZED BY SDC-1**; require a **separate** Planning Charter if pursued as product work.
+**Future Work Boundary (pointers only):** UX-10 follow-ups · PLUGINS execution/loading deferred · COLLAB realtime/CRDT deferred — classified **DEFERRED** / **OUT OF SCOPE** in the PP Issues Registry; OBS-1 / UXC-1 / AIR-1 / EXPORT-3 = **NOT AUTHORIZED BY SDC-1**; **DEP-1** separately Owner-frozen (`docs/DEP/`). Cloud-enabled / Supabase RLS = future separately governed gate.
 
 ---
 
 ## Current Project Status (historical domain snapshot)
 
-Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Production Readiness (PP) is **COMPLETE** at **PP11 PASS** (repository RELEASE VERIFIED). Post-Release **PRV-1** is **CLOSED · HANDOFF RECORDED**. Post-PRV **SDC-1** is **CERTIFIED / CLOSED** (Continuity; eligible for v1.1 — bump deferred). Next program is **NOT AUTOMATICALLY AUTHORIZED**.
+Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Production Readiness (PP) is **COMPLETE** at **PP11 PASS** (repository RELEASE VERIFIED). Post-Release **PRV-1** is **CLOSED · HANDOFF RECORDED**. Post-PRV **SDC-1** is **CERTIFIED / CLOSED** (Continuity; eligible for v1.1 — bump deferred). **DEP-1** is **FROZEN / IN FORCE**; **DEP-2** is **CERTIFIED / CLOSED**; DEPLOY evidence **CLOSED** (with disclosures).
 
 Domain snapshot (peer certifications; not a next-series plan):
 
@@ -70,12 +78,14 @@ Domain snapshot (peer certifications; not a next-series plan):
 | PRODUCTION (PP) | **COMPLETE** · **PP11 PASS** · repository **RELEASE VERIFIED** |
 | PRV (Post-Release) | **PRV-1 CLOSED · HANDOFF RECORDED** |
 | SDC (Delivery Continuity) | **SDC-1 CERTIFIED / CLOSED** |
+| DEP (Deployment Execution) | **DEP-1 FROZEN / IN FORCE** · **DEP-2 CERTIFIED / CLOSED** · DEPLOY **EXECUTED · EVIDENCE CLOSED** (disclosures) |
 
 The AI Domain is certified under `src/ai/` as structural Intelligence Domain skeletons. No runtime intelligence, assistants, or prediction is implemented.
 
-**Next authorized PP step:** **None**. Deploy / marketplace / Lovable publish remain **NOT EXECUTED — EVIDENCE GAP**.
+**Next authorized PP step:** **None**. Marketplace / Lovable publish remain **NOT EXECUTED — EVIDENCE GAP**.
 **SDC-1:** **CERTIFIED / CLOSED** — see `docs/SDC/official-records/SDC-1-Scientific-Delivery-Continuity.md`.
-**Next Owner attention:** Publication / Visibility Readiness path — **separate decision** (does not auto-authorize OBS-1 / DEP-1 / AIR-1).
+**DEP-2:** **CERTIFIED / CLOSED** — see `docs/DEP/official-records/DEP-2-Hosted-Deployment-Execution.md`.
+**Next:** No automatic DEP step — marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions.
 
 ---
 
