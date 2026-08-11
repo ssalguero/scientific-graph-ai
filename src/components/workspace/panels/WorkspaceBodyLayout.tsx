@@ -126,6 +126,12 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
           data-panel-id="canvas"
           data-panel-active={canvasActive ? "true" : "false"}
           onPointerDown={() => activate("canvas")}
+          aria-label="Workspace · Canvas — área principal de trabajo"
+          title={
+            canvasActive
+              ? "Canvas activo del Workspace"
+              : "Canvas del Workspace — haga clic para activarlo"
+          }
           className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--color-surface-floating)] transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--color-border-subtle)_55%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--color-border-subtle)_55%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
         >
           {canvasActive ? (
@@ -167,11 +173,19 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
                 <PanelToolbarRegion>
                   <PanelToolbar>
                     <HintGroup>
-                      <Hint variant="tip">Drag files here.</Hint>
-                      <Hint variant="tip">Double-click a series to edit.</Hint>
+                      <Hint variant="tip">
+                        Canvas central del Workspace. Explorer a la izquierda;
+                        Inspector a la derecha.
+                      </Hint>
+                      <Hint variant="tip">
+                        Si un panel está oculto, use el borde lateral para
+                        expandirlo de nuevo.
+                      </Hint>
                     </HintGroup>
                     <ToolbarSpacer />
-                    <StatusChip>Synced</StatusChip>
+                    <StatusChip>
+                      {canvasActive ? "Canvas activo" : "Workspace"}
+                    </StatusChip>
                   </PanelToolbar>
                 </PanelToolbarRegion>
                 <SurfaceBody>

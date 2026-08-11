@@ -34,15 +34,15 @@ export const PRODUCT_COMMAND_DEFINITIONS: readonly ProductCommandDefinition[] =
   Object.freeze([
     Object.freeze({
       id: asCommandId("product.open-clipboard"),
-      label: "Open Clipboard",
+      label: "Abrir portapapeles",
     }),
     Object.freeze({
       id: asCommandId("product.show-diagnostics"),
-      label: "Show Diagnostics",
+      label: "Mostrar diagnósticos",
     }),
     Object.freeze({
       id: asCommandId("product.focus-workspace"),
-      label: "Focus Workspace",
+      label: "Enfocar Workspace",
     }),
   ]);
 

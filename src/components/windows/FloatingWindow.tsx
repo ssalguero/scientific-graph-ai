@@ -533,14 +533,16 @@ export function FloatingWindow({
             <span
               className={FLOATING_WINDOW_CHROME.focusBadge}
               data-focus-badge="true"
+              title="Esta ventana tiene el foco de teclado"
             >
-              Focus
+              Enfoque
             </span>
           ) : null}
           {isSelected ? (
             <span
               className={FLOATING_WINDOW_CHROME.selectionBadge}
               data-selection-badge="true"
+              title="Ventana seleccionada"
             >
               Sel
             </span>
@@ -549,6 +551,7 @@ export function FloatingWindow({
             <span
               className={FLOATING_WINDOW_CHROME.hoverBadge}
               data-hover-badge="true"
+              title="Puntero sobre esta ventana"
             >
               Hover
             </span>
@@ -701,7 +704,8 @@ export function FloatingWindow({
         </div>
         <button
           type="button"
-          aria-label="Close window"
+          aria-label="Cerrar ventana flotante"
+          title="Cerrar esta ventana (no elimina el Workspace principal)"
           className={FLOATING_WINDOW_CHROME.close}
         >
           ×

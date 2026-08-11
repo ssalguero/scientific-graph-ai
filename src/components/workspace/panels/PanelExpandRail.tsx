@@ -56,6 +56,7 @@ export function PanelExpandRail({
         className={`${sidebarCollapseToggle} cursor-pointer`}
         aria-expanded={false}
         aria-label={label}
+        title={label}
         onClick={onExpand}
       >
         {getIcon("expand")}
@@ -75,7 +76,7 @@ export function LeftExpandRail({
   return (
     <PanelExpandRail
       position="left"
-      label="Expand Explorer"
+      label="Expandir Explorer — volver a mostrar el panel izquierdo"
       onExpand={onExpand}
       isActive={isActive}
     />
@@ -93,7 +94,7 @@ export function RightExpandRail({
   return (
     <PanelExpandRail
       position="right"
-      label="Expand Inspector"
+      label="Expandir Inspector — volver a mostrar el panel derecho"
       onExpand={onExpand}
       isActive={isActive}
     />
@@ -111,7 +112,7 @@ export function BottomExpandRail({
   return (
     <PanelExpandRail
       position="bottom"
-      label="Expand Console"
+      label="Expandir Consola — volver a mostrar el panel inferior"
       onExpand={onExpand}
       isActive={isActive}
     />

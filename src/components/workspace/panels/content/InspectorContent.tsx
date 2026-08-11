@@ -96,6 +96,10 @@ export const InspectorContent = memo(function InspectorContent() {
                   }
                 />
                 <SemanticStatus />
+                <p className="px-[var(--spacing-tight)] pb-[var(--spacing-tight)] text-[11px] leading-snug text-[var(--color-text-muted)]">
+                  Inspector (panel derecho): propiedades del elemento activo.
+                  Si está oculto, use el borde derecho para expandirlo.
+                </p>
               </PanelHeaderRegion>
             </SurfaceHeader>
             <SurfaceBody>

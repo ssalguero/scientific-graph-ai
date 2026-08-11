@@ -139,12 +139,12 @@ function WorkspaceActivationSeed() {
 
     api.create({
       id: SEED_WINDOW_A,
-      title: "Workspace A",
+      title: "Ventana Workspace A",
       visible: true,
     });
     api.create({
       id: SEED_WINDOW_B,
-      title: "Workspace B",
+      title: "Ventana Workspace B",
       visible: true,
     });
 
