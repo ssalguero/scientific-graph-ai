@@ -13,20 +13,23 @@
 
 ## Verdict
 
-UXC Planning converts post–DEP-2 roadmap reassessment into Owner-frozen decisions that authorize **planning freeze** for **UXC-1 — UX Continuity (non-arch)** without authorizing BUILD until a separate **UXC-1.X Execution Authorization**.
+UXC Planning remains the frozen planning authority for UX Continuity. Series **UXC-1** is **CERTIFIED / CLOSED** under the Official Record below. Charter freeze history is preserved; this live verdict reflects series closure.
 
 Constitutional motto:
 
 > **Continuity of discoverability without architecture reopen.**
 
 ```text
-UXC-1 PLANNING FROZEN / IN FORCE
-  ≠ UXC-1.1 BUILD authorized
+UXC-1 CERTIFIED / CLOSED
   ≠ UX-10 certification reopen
   ≠ ARCH-U / D47 / Session contract / Recharts unfreeze
   ≠ Option C / cloud G6 / RLS / Lovable / version bump
   ≠ reopen PP0–PP11 / Production Approval / Repository Release / PRV / RELEASE / SDC-1 / DEP-2
+  ≠ OBS-1 · ARCH-U · UXC-2
 ```
+
+**Series closure (authority):** [`official-records/UXC-1-UX-Continuity-Certification.md`](./official-records/UXC-1-UX-Continuity-Certification.md) — **UXC-1 CERTIFIED / CLOSED** (2026-08-11).  
+**Planning freeze (historical):** [`official-records/UXC-1-Planning-Freeze.md`](./official-records/UXC-1-Planning-Freeze.md) — preserved cite-only.
 
 ---
 
@@ -135,15 +138,15 @@ FORBIDDEN without separate Decision Record:
 ```text
 DOMAIN: UX
   └── SERIES: UXC-1 — UX Continuity (non-arch)
-        ├── UXC-1.0  Plan Freeze / Charter          ★ FROZEN (this Charter + Official Record)
-        ├── UXC-1.1  Discoverability Continuity     NOT AUTHORIZED (await UXC-1.X)
-        ├── UXC-1.2  Recovery Continuity            NOT AUTHORIZED
-        ├── UXC-1.3  Interaction Continuity         NOT AUTHORIZED
-        ├── UXC-1.V  Validation Umbrella + Smoke    NOT AUTHORIZED
-        └── UXC-1.C  Series Certification           NOT AUTHORIZED
+        ├── UXC-1.0  Plan Freeze / Charter          ★ FROZEN
+        ├── UXC-1.1  Discoverability Continuity     ★ PASS · d0e3954
+        ├── UXC-1.2  Recovery Continuity            ★ PASS · 73136c7
+        ├── UXC-1.3  Interaction Continuity         ★ PASS · 836a015
+        ├── UXC-1.V  Validation Umbrella + Smoke    ★ PASS
+        └── UXC-1.C  Series Certification           ★ CERTIFIED / CLOSED
 ```
 
-Suggested build order **after** UXC-1.X: `1.1 → 1.2 → 1.3 → V → C`.
+Build order executed: `1.1 → 1.2 → 1.3 → V → C`.
 
 ---
 
@@ -176,22 +179,24 @@ OBS-1 · Marketplace / Lovable · Option C / cloud + RLS · AIR-1 · PLE-1 · PE
 | Gate | Status |
 |------|--------|
 | **UXC-1.0** Owner selects UXC-1 as official next series | **PASS** |
-| **UXC-1.C** Planning Charter FROZEN / IN FORCE | **PASS** |
+| **UXC-1.C (Plan)** Planning Charter FROZEN / IN FORCE | **PASS** |
 | **UXC-1.S** Scope triage FROZEN / IN FORCE | **PASS** |
 | **UXC-1.A** Architecture fence FROZEN | **PASS** |
 | **UXC-1.G** Governance fence FROZEN | **PASS** |
-| **UXC-1.V** Validation strategy FROZEN | **PASS** |
-| **UXC-1.X** Execution Authorization | **NOT GRANTED** |
+| **UXC-1.V** Validation strategy FROZEN · umbrella PASS | **PASS** |
+| **UXC-1.X** Execution Authorization (1.1 / 1.2 / 1.3) | **PASS** (Owner-granted phases completed) |
+| **UXC-1.C (Series)** Series Certification | **PASS — CERTIFIED / CLOSED** |
 
 ```text
-NO BUILD before UXC-1.X
-UXC-1.1 — NOT AUTHORIZED
+UXC-1 CERTIFIED / CLOSED
+See official-records/UXC-1-UX-Continuity-Certification.md
 ```
 
 ---
 
 ## 13. Certification Status
 
-This Charter is **IN FORCE / FROZEN** upon Owner freeze recorded in [`official-records/UXC-1-Planning-Freeze.md`](./official-records/UXC-1-Planning-Freeze.md).
+This Charter remains **IN FORCE / FROZEN** as Planning Authority.  
+Series **UXC-1** is **CERTIFIED / CLOSED** under [`official-records/UXC-1-UX-Continuity-Certification.md`](./official-records/UXC-1-UX-Continuity-Certification.md).
 
 **End of UXC Planning Charter**

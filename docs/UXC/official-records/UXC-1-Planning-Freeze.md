@@ -6,8 +6,9 @@
 **Series / Phase:** UXC-1 (Planning Freeze)  
 **Date:** 2026-08-11  
 **Nature:** Planning freeze only — **NO BUILD · NO SOURCE CHANGES · NO DEPLOY · NO VERSION BUMP · NO RETAG**  
-**Status:** **FROZEN / IN FORCE**  
-**Planning Authority:** [`../UXC-Planning-Charter.md`](../UXC-Planning-Charter.md) (**IN FORCE / FROZEN**)
+**Status:** **FROZEN / IN FORCE** (planning artifact preserved)  
+**Planning Authority:** [`../UXC-Planning-Charter.md`](../UXC-Planning-Charter.md) (**IN FORCE / FROZEN**)  
+**Series disposition (cite only; do not rewrite this freeze body):** [`UXC-1-UX-Continuity-Certification.md`](./UXC-1-UX-Continuity-Certification.md) — **UXC-1 CERTIFIED / CLOSED**
 
 **Prerequisites (cite only; not reopened):**
 

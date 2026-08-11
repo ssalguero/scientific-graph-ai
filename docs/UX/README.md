@@ -12,7 +12,7 @@ This directory contains the official User Experience documentation for Scientifi
 - certification/ — UX Release Certification package (UX-I5 / UX-10 cite-only).
 - archive/ — Historical UX documentation.
 
-Post-v1 Continuity (does **not** reopen UX-10): [`../UXC/UXC-Planning-Charter.md`](../UXC/UXC-Planning-Charter.md) — **UXC-1 PLANNING FROZEN / IN FORCE**; BUILD **NOT AUTHORIZED** until UXC-1.X.
+Post-v1 Continuity (does **not** reopen UX-10): [`../UXC/official-records/UXC-1-UX-Continuity-Certification.md`](../UXC/official-records/UXC-1-UX-Continuity-Certification.md) — **UXC-1 CERTIFIED / CLOSED**.
 
 ## Implementation Series
 

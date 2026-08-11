@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-11 (UXC-1 PLANNING FROZEN / IN FORCE; UXC-1.X NOT GRANTED; UXC-1.1 NOT AUTHORIZED; DEP-2 CERTIFIED / CLOSED; DEPLOY EXECUTED · EVIDENCE CLOSED with disclosures)
+**Actualizado:** 2026-08-11 (UXC-1 CERTIFIED / CLOSED; tip 836a015; DEP-2 CERTIFIED / CLOSED; DEPLOY EXECUTED · EVIDENCE CLOSED with disclosures; v1.1.x recommended — bump NOT EXECUTED)
 
 ---
 
@@ -27,11 +27,12 @@
 | DEP-DECISION-001 | **IN FORCE** (Option B) |
 | Next authorized DEP step | **None** — Option C / cloud-RLS / marketplace / Lovable = separate Owner decisions |
 | DEP host / revision / profile | **Vercel** · tags **`1.0.0` / `v1.0`** (`f38cc6f…`) · Option B · G6 **OUT** |
-| UXC program (UXC-1) | **PLANNING FROZEN / IN FORCE** |
-| UXC-1.X Execution Authorization | **NOT GRANTED** |
-| Next authorized UXC step | **None** until UXC-1.X — **UXC-1.1 NOT AUTHORIZED** |
+| UXC program (UXC-1) | **CERTIFIED / CLOSED** — see `docs/UXC/official-records/UXC-1-UX-Continuity-Certification.md` |
+| UXC tip | `836a015` (series close; planning tip `b75fa84`) |
+| UXC-1.V | **PASS** |
+| Next authorized UXC step | **None** — series closed |
 | Recommended version line (UXC) | **v1.1.x** (acknowledged; bump **NOT EXECUTED**) |
-| Next program | **UXC-1** (planning frozen; BUILD not authorized) — marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions |
+| Next program | **NOT AUTOMATICALLY AUTHORIZED** — OBS-1 queued · ARCH-U deferred · marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
@@ -43,7 +44,7 @@
 | DEPLOY | **EXECUTED · EVIDENCE CLOSED** (DEP-2; with disclosures) |
 | MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
 
-Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`; `docs/SDC/`; `docs/DEP/`; `docs/UXC/`. PP11 historical certificate remains cite-only. Live DEPLOY evidence closed under **DEP-2** (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED). Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes planning; DEP-2 certifies hosted execution of frozen **1.0.0**. **UXC-1** Planning **FROZEN / IN FORCE** under separate Owner charter; **UXC-1.1 NOT AUTHORIZED** until UXC-1.X.
+Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`; `docs/SDC/`; `docs/DEP/`; `docs/UXC/`. PP11 historical certificate remains cite-only. Live DEPLOY evidence closed under **DEP-2** (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED). Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes planning; DEP-2 certifies hosted execution of frozen **1.0.0**. **UXC-1 CERTIFIED / CLOSED** (non-arch Continuity; ≠ UX-10 reopen; bump **NOT EXECUTED**).
 
 **High-level bridge:**
 
@@ -60,16 +61,16 @@ DEP-1 FROZEN / IN FORCE
    ↓
 DEP-2 CERTIFIED / CLOSED (DEPLOY evidence closed with disclosures)
    ↓
-UXC-1 PLANNING FROZEN / IN FORCE (BUILD NOT AUTHORIZED)
+UXC-1 CERTIFIED / CLOSED
 ```
 
-**Future Work Boundary (pointers only):** FR-06 remains **DEFERRED** pending UXC execution disposition; PLUGINS execution/loading deferred · COLLAB realtime/CRDT deferred — classified **DEFERRED** / **OUT OF SCOPE** in the PP Issues Registry; OBS-1 / AIR-1 / EXPORT-3 = **NOT AUTHORIZED BY SDC-1** / **NOT AUTHORIZED BY UXC-1**; **UXC-1** separately Owner-frozen (`docs/UXC/`); Cloud-enabled / Supabase RLS = future separately governed gate.
+**Future Work Boundary (pointers only):** FR-06 historically **DEFERRED** in PP body — UXC-1 closed applicable non-arch Continuity items under UXC Official Record (not all FR-06 items); PLUGINS execution/loading deferred · COLLAB realtime/CRDT deferred — classified **DEFERRED** / **OUT OF SCOPE** in the PP Issues Registry; OBS-1 queued · ARCH-U deferred · AIR-1 / EXPORT-3 = **NOT AUTHORIZED BY SDC-1** / **NOT AUTHORIZED BY UXC-1**; Cloud-enabled / Supabase RLS = future separately governed gate.
 
 ---
 
 ## Current Project Status (historical domain snapshot)
 
-Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Production Readiness (PP) is **COMPLETE** at **PP11 PASS** (repository RELEASE VERIFIED). Post-Release **PRV-1** is **CLOSED · HANDOFF RECORDED**. Post-PRV **SDC-1** is **CERTIFIED / CLOSED** (Continuity; eligible for v1.1 — bump deferred). **DEP-1** is **FROZEN / IN FORCE**; **DEP-2** is **CERTIFIED / CLOSED**; DEPLOY evidence **CLOSED** (with disclosures). **UXC-1** is **PLANNING FROZEN / IN FORCE**; **UXC-1.X NOT GRANTED**; **UXC-1.1 NOT AUTHORIZED**.
+Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Production Readiness (PP) is **COMPLETE** at **PP11 PASS** (repository RELEASE VERIFIED). Post-Release **PRV-1** is **CLOSED · HANDOFF RECORDED**. Post-PRV **SDC-1** is **CERTIFIED / CLOSED** (Continuity; eligible for v1.1 — bump deferred). **DEP-1** is **FROZEN / IN FORCE**; **DEP-2** is **CERTIFIED / CLOSED**; DEPLOY evidence **CLOSED** (with disclosures). **UXC-1** is **CERTIFIED / CLOSED** (tip `836a015`; bump **NOT EXECUTED**).
 
 Domain snapshot (peer certifications; not a next-series plan):
 
@@ -85,15 +86,15 @@ Domain snapshot (peer certifications; not a next-series plan):
 | PRV (Post-Release) | **PRV-1 CLOSED · HANDOFF RECORDED** |
 | SDC (Delivery Continuity) | **SDC-1 CERTIFIED / CLOSED** |
 | DEP (Deployment Execution) | **DEP-1 FROZEN / IN FORCE** · **DEP-2 CERTIFIED / CLOSED** · DEPLOY **EXECUTED · EVIDENCE CLOSED** (disclosures) |
-| UXC (UX Continuity) | **UXC-1 PLANNING FROZEN / IN FORCE** · **UXC-1.X NOT GRANTED** · **UXC-1.1 NOT AUTHORIZED** |
+| UXC (UX Continuity) | **UXC-1 CERTIFIED / CLOSED** |
 
 The AI Domain is certified under `src/ai/` as structural Intelligence Domain skeletons. No runtime intelligence, assistants, or prediction is implemented.
 
 **Next authorized PP step:** **None**. Marketplace / Lovable publish remain **NOT EXECUTED — EVIDENCE GAP**.
 **SDC-1:** **CERTIFIED / CLOSED** — see `docs/SDC/official-records/SDC-1-Scientific-Delivery-Continuity.md`.
 **DEP-2:** **CERTIFIED / CLOSED** — see `docs/DEP/official-records/DEP-2-Hosted-Deployment-Execution.md`.
-**UXC-1:** **PLANNING FROZEN / IN FORCE** — see `docs/UXC/official-records/UXC-1-Planning-Freeze.md`. **UXC-1.1 NOT AUTHORIZED** until UXC-1.X.
-**Next BUILD:** None — await UXC-1.X. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions.
+**UXC-1:** **CERTIFIED / CLOSED** — see `docs/UXC/official-records/UXC-1-UX-Continuity-Certification.md`.
+**Next BUILD:** None automatically — OBS-1 queued · ARCH-U deferred. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions.
 
 ---
 
