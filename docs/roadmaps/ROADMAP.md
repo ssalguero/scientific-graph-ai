@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-10 (PP10 — Production Readiness Certification PASS · PRODUCTION READY; Production Approval GRANTED; deploy/tag/sync NOT EXECUTED; PRS remains CLOSED)
+**Actualizado:** 2026-08-10 (PP11 — Repository Release Transition PASS; package 1.0.0; tags 1.0.0+v1.0; FR-02/03 CLOSED; deploy/marketplace/Lovable publish NOT EXECUTED; PRS remains CLOSED)
 
 ---
 
@@ -16,14 +16,17 @@
 | PRS | **RELEASE-CERTIFIED** · **CLOSED** |
 | PRS-P0 | **NOT APPLICABLE** |
 | Next program | **Production Readiness (PP)** |
-| Current PP gate | **PP10 PASS · IN FORCE** · **PRODUCTION READY** |
-| Next authorized PP step | **PP11 only** |
+| Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
+| Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
-| PP11 | Sole **Release Transition** stage — **UNLOCKED / NOT EXECUTED** |
+| PP11 | **PASS** — Repository Release Transition |
 | Production Approval | **GRANTED** |
-| Production / Lovable / publish / tag / package sync | **NOT AUTHORIZED** until PP11 execution |
+| Repository Release | **COMPLETED** / **VERIFIED** |
+| Operational `package.json` | **1.0.0** |
+| Git tags | **1.0.0** + **v1.0** |
+| DEPLOY / MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
 
-Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`. PP10 certifies Production Approval (**PRODUCTION READY**) — **not** Release Transition or deploy. Historical PRS certification status is unchanged (**CLOSED**).
+Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`. PP11 completes Repository Release Transition — not hosted deploy. Historical PRS certification status is unchanged (**CLOSED**).
 
 **Future Work Boundary (pointers only):** UX-10 follow-ups · PLUGINS execution/loading deferred · COLLAB realtime/CRDT deferred — classified **DEFERRED** / **OUT OF SCOPE** in the PP Issues Registry; require a **separate** Planning Charter if pursued as product work.
 
@@ -31,7 +34,7 @@ Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION
 
 ## Current Project Status (historical domain snapshot)
 
-Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Active program: **Production Readiness (PP)** at **PP10 PASS · PRODUCTION READY**.
+Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Active program: **Production Readiness (PP)** **COMPLETE** at **PP11 PASS** (repository RELEASE VERIFIED).
 
 Domain snapshot (peer certifications; not a next-series plan):
 
@@ -43,11 +46,11 @@ Domain snapshot (peer certifications; not a next-series plan):
 | COLLAB | Peer-certified / realtime deferred (Future Work Boundary) |
 | PLUGINS | Peer-certified / loading deferred (Future Work Boundary) |
 | PERFORMANCE | ✅ RELEASE CERTIFIED (I10 cited; conditionality disclosed; FR-09 CLOSED) |
-| PRODUCTION (PP) | **OPEN** · **PP10 PASS** · **PRODUCTION READY** · next = **PP11** |
+| PRODUCTION (PP) | **COMPLETE** · **PP11 PASS** · repository **RELEASE VERIFIED** |
 
 The AI Domain is certified under `src/ai/` as structural Intelligence Domain skeletons. No runtime intelligence, assistants, or prediction is implemented.
 
-**Next authorized step:** **PP11 — Release Transition** only. Production Approval is **GRANTED**; deploy / publish / tag / package sync remain **NOT EXECUTED** until PP11.
+**Next authorized PP step:** **None**. Deploy / marketplace / Lovable publish remain **NOT EXECUTED — EVIDENCE GAP**.
 
 ---
 

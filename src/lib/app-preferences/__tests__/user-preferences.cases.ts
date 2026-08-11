@@ -104,7 +104,7 @@ export const runUserPreferencesCases = (assertCase: AssertCase): void => {
   );
   assertCase(
     "version.appDisplayVersion.planParity",
-    APP_DISPLAY_VERSION === "0.1.0"
+    APP_DISPLAY_VERSION === "v1.0"
   );
 };
 

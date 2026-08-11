@@ -3,7 +3,7 @@
 **Artifact:** Production Readiness Issues Registry  
 **Date:** 2026-08-10  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)  
-**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**, **PP5**, **PP6**, **PP7**, **PP8**, **PP9**, **PP10**)  
+**Seed phase:** **PP0** (updated through **PP11**)  
 **Status:** **IN FORCE**
 
 ---
@@ -38,8 +38,8 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 | ID | Title | PRS final treatment (cite only) | PP disposition (seed) | Target gate | Notes |
 |----|-------|----------------------------------|------------------------|-------------|-------|
 | **FR-01** | ENGINE certification-path gap (`src/engine/certification/CERTIFICATION.md` missing) | HANDED OFF — OPEN OUTSIDE PRS | **CLOSED** | PP9 | Closed by [`PP9-Documentation-and-ENGINE-Certification-Readiness.md`](./PP9-Documentation-and-ENGINE-Certification-Readiness.md): pack path present + cited; `validate:engine` PASS; consumes existing ENGINE RELEASE CERTIFIED evidence only |
-| **FR-02** | Operational `package.json` **0.1.0** ≠ VI **1.0.0** | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 (reconfirm complete) | PP8 reconfirm — still `0.1.0` ≠ VI `1.0.0`; sync remains NOT AUTHORIZED until PP11 ([`PP8-Deployment-and-Release-Readiness.md`](./PP8-Deployment-and-Release-Readiness.md)) |
-| **FR-03** | No Git tag for 1.0.0 | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 / PP11 (PP8 reconfirm complete) | PP8 reconfirm — no `1.0.0`/`v1.0`/`v1.0.0` tags; tag remains NOT AUTHORIZED until PP11 |
+| **FR-02** | Operational `package.json` **0.1.0** ≠ VI **1.0.0** | CLOSED AS ACCEPTED | **CLOSED** | PP11 | Closed by [`PP11-Release-Transition.md`](./PP11-Release-Transition.md): `package.json` / lock / ops strings → **1.0.0** / display **v1.0** |
+| **FR-03** | No Git tag for 1.0.0 | CLOSED AS ACCEPTED | **CLOSED** | PP11 | Closed by [`PP11-Release-Transition.md`](./PP11-Release-Transition.md): annotated tags **1.0.0** + **v1.0** on PP11 release checkpoint |
 | **FR-04** | No live full GRC validator re-run inside GRC-2 | CLOSED AS ACCEPTED | **CLOSED** | PP1 | Fresh PP1 evidence: build + tsc + release-p1/p2 + production-boundaries + performance-gates — **not** a GRC reopen |
 | **FR-05** | Security/Safety dedicated evidence gap | HANDED OFF — OPEN OUTSIDE PRS | **CLOSED** | PP7 | Closed by [`PP7-Security-and-Configuration-Readiness.md`](./PP7-Security-and-Configuration-Readiness.md): `validate:ux-9.8` PASS + secret/config inspection + `.env.example` + Official Record evidence pack |
 | **FR-06** | UX-10 non-blocking follow-ups | HANDED OFF — FUTURE WORK BOUNDARY | **DEFERRED** | PP6 (watch complete) | PP6 watch complete — no production blocker; follow-ups remain Future Work Boundary ([`PP6-UX-and-Interaction-Readiness.md`](./PP6-UX-and-Interaction-Readiness.md)) |
@@ -53,18 +53,18 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 ---
 
-## Disposition counts (post-PP10)
+## Disposition counts (post-PP11)
 
-PP10 Production Readiness Certification audited the registry under Charter §10: **BLOCKER = 0**, **REQUIRED BEFORE RELEASE = 0**, all issues classified. Open **ACCEPTED RISK** / **DEFERRED** / **OUT OF SCOPE** preserved explicit (not converted to blockers). Binary result **PRODUCTION READY**. No `PP10-B#`. No new `PP-ISS-###`.
+PP11 Repository Release Transition closed **FR-02** (version sync) and **FR-03** (tags `1.0.0` + `v1.0` on release checkpoint). Deploy / marketplace / Lovable publish remain **NOT EXECUTED — EVIDENCE GAP** (not blockers under chosen scope). No `PP11-B#`. No new `PP-ISS-###`.
 
 | Classification | Count | IDs |
 |----------------|-------|-----|
 | **BLOCKER** | 0 | — |
 | **REQUIRED BEFORE RELEASE** | 0 | — |
-| **ACCEPTED RISK** | 5 | FR-02, FR-03, FR-11, PP-ISS-001, PP-ISS-002 |
+| **ACCEPTED RISK** | 3 | FR-11, PP-ISS-001, PP-ISS-002 |
 | **DEFERRED** | 1 | FR-06 |
 | **OUT OF SCOPE** | 2 | FR-07, FR-08 |
-| **CLOSED** | 5 | FR-01, FR-04, FR-05, FR-09, FR-10 |
+| **CLOSED** | 7 | FR-01, FR-02, FR-03, FR-04, FR-05, FR-09, FR-10 |
 | **Total** | **13** | FR-01…FR-11 + PP-ISS-001…002 |
 
 ---
@@ -89,5 +89,6 @@ PP10 Production Readiness Certification audited the registry under Charter §10:
 - PP8 FR-02 / FR-03 / PP-ISS-002 reconfirm: [`./PP8-Deployment-and-Release-Readiness.md`](./PP8-Deployment-and-Release-Readiness.md)
 - PP9 FR-01 closure + PP-ISS-001 / FR-11 reconfirm: [`./PP9-Documentation-and-ENGINE-Certification-Readiness.md`](./PP9-Documentation-and-ENGINE-Certification-Readiness.md)
 - PP10 Production Approval (**PRODUCTION READY**): [`./PP10-Production-Readiness-Certification.md`](./PP10-Production-Readiness-Certification.md)
+- PP11 Repository Release Transition (FR-02 / FR-03 CLOSED): [`./PP11-Release-Transition.md`](./PP11-Release-Transition.md)
 
 **End of PP Issues Registry**
