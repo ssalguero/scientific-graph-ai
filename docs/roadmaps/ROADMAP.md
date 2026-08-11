@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-11 (SPE-1.V PASS; SPE-1.C BUILD NOT STARTED; SPE-1.2 af57303; SPE-1.1 b352705; UXC-1 CLOSED; v1.1.x recommended — bump NOT EXECUTED; Commercial Layout debt preserved)
+**Actualizado:** 2026-08-11 (SPE-1 CERTIFIED / CLOSED; SPE-1.V 831dec1; SPE-1.2 af57303; SPE-1.1 b352705; UXC-1 CLOSED; v1.1.x recommended — bump NOT EXECUTED; Commercial Layout debt preserved; CTR NOT YET)
 
 ---
 
@@ -32,15 +32,15 @@
 | UXC-1.V | **PASS** |
 | Next authorized UXC step | **None** — series closed |
 | Recommended version line (UXC) | **v1.1.x** (acknowledged; bump **NOT EXECUTED**) |
-| SPE program (SPE-1) | **IN PROGRESS** — SPE-1.0 · SPE-1.E · SPE-1.1 · SPE-1.2 · **SPE-1.V PASS** — see `docs/SPE/official-records/SPE-1.V-Validation-Evidence.md` |
+| SPE program (SPE-1) | **CERTIFIED / CLOSED** — see `docs/SPE/official-records/SPE-1-Series-Closure.md` |
 | SPE Planning Charter | **IN FORCE / FROZEN** — `docs/SPE/SPE-Planning-Charter.md` |
 | SPE-1.E | **PASS** |
 | SPE-1.1 | **PASS** (compare-groups → Reports bridge) |
 | SPE-1.2 | **PASS** (Publication Pack Lite) |
 | SPE-1.V | **PASS** (Validation Umbrella + Evidence) |
-| SPE-1.C BUILD | **NOT STARTED** |
-| Next authorized SPE step | **None until Owner authorizes SPE-1.C** |
-| Next program | **SPE-1 — Scientific Product Expansion** (Option B) — SPE-1.V PASS; SPE-1.C not started |
+| SPE-1.C | **PASS** (Series Certification) |
+| Next authorized SPE step | **None** — series closed |
+| Next program | **Commercial Readiness Preparation** — Gap Assessment (RD-V02 Layout/Product Face · first-time UX · packaging · Owner CTR declare); **Commercial Test Ready = NOT YET** |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
@@ -52,7 +52,7 @@
 | DEPLOY | **EXECUTED · EVIDENCE CLOSED** (DEP-2; with disclosures) |
 | MARKETPLACE / LOVABLE PUBLISH | **NOT EXECUTED — EVIDENCE GAP** |
 
-Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`; `docs/SDC/`; `docs/DEP/`; `docs/UXC/`; `docs/SPE/`. PP11 historical certificate remains cite-only. Live DEPLOY evidence closed under **DEP-2** (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED). Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes planning; DEP-2 certifies hosted execution of frozen **1.0.0**. **UXC-1 CERTIFIED / CLOSED** (non-arch Continuity; ≠ UX-10 reopen; bump **NOT EXECUTED**). **SPE-1.V PASS** (SPE-1.C BUILD not started). Commercial Test Ready ≠ SPE-1 functional PASS alone.
+Authority cites: `docs/RELEASE/official-records/`; `docs/PRS/`; `docs/PRODUCTION/`; `docs/PRV/`; `docs/SDC/`; `docs/DEP/`; `docs/UXC/`; `docs/SPE/`. PP11 historical certificate remains cite-only. Live DEPLOY evidence closed under **DEP-2** (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED). Historical PRS certification status is unchanged (**CLOSED**). Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes planning; DEP-2 certifies hosted execution of frozen **1.0.0**. **UXC-1 CERTIFIED / CLOSED** (non-arch Continuity; ≠ UX-10 reopen; bump **NOT EXECUTED**). **SPE-1 CERTIFIED / CLOSED**. Commercial Test Ready ≠ SPE-1 CERTIFIED / CLOSED.
 
 **High-level bridge:**
 
@@ -79,7 +79,11 @@ SPE-1.1 PASS (compare-groups → Reports bridge)
    ↓
 SPE-1.2 PASS (Publication Pack Lite)
    ↓
-SPE-1.V PASS (Validation Umbrella; SPE-1.C NOT STARTED)
+SPE-1.V PASS (Validation Umbrella)
+   ↓
+SPE-1.C PASS → SPE-1 CERTIFIED / CLOSED
+   ↓
+Commercial Readiness Preparation (CTR NOT YET)
 ```
 
 ---
@@ -89,19 +93,21 @@ SPE-1.V PASS (Validation Umbrella; SPE-1.C NOT STARTED)
 ```text
 POST-UXC LIVING ROADMAP
 SPE-1 — Scientific Product Expansion
-    STATUS: SPE-1.V PASS / READY FOR OWNER AUTHORIZATION (SPE-1.C)
+    STATUS: CERTIFIED / CLOSED
     CHARTER: docs/SPE/SPE-Planning-Charter.md (IN FORCE / FROZEN)
     FREEZE:  docs/SPE/official-records/SPE-1-Planning-Freeze.md
     SPE-1.E: docs/SPE/official-records/SPE-1-E-Entry-Hygiene.md (PASS)
     SPE-1.1: docs/SPE/official-records/SPE-1.1-Analysis-Workflow-Productization.md (PASS)
     SPE-1.2: docs/SPE/official-records/SPE-1.2-Publication-Pack-Lite.md (PASS)
     SPE-1.V: docs/SPE/official-records/SPE-1.V-Validation-Evidence.md (PASS)
-    SPE-1.C BUILD: NOT STARTED
+    SPE-1.C: docs/SPE/official-records/SPE-1-Series-Closure.md (CERTIFIED / CLOSED)
+NEXT: Commercial Readiness Preparation (CTR NOT YET)
 ```
 
 | Track | Status |
 |-------|--------|
-| **SPE-1** | **IN PROGRESS** — SPE-1.V PASS; SPE-1.C requires Owner authorization |
+| **SPE-1** | **CERTIFIED / CLOSED** |
+| Commercial Readiness | **NOT YET** — Gap Assessment next (RD-V02 Layout/Product Face) |
 | OBS-1 residual | Queued peer (not SPE main scope; not absorbed by SPE-1.E) |
 | AIR-1 | Later |
 | ARCH-U | Deferred |
@@ -118,7 +124,7 @@ SPE-1 — Scientific Product Expansion
 
 ## Current Project Status (historical domain snapshot)
 
-Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Production Readiness (PP) is **COMPLETE** at **PP11 PASS** (repository RELEASE VERIFIED). Post-Release **PRV-1** is **CLOSED · HANDOFF RECORDED**. Post-PRV **SDC-1** is **CERTIFIED / CLOSED** (Continuity; eligible for v1.1 — bump deferred). **DEP-1** is **FROZEN / IN FORCE**; **DEP-2** is **CERTIFIED / CLOSED**; DEPLOY evidence **CLOSED** (with disclosures). **UXC-1** is **CERTIFIED / CLOSED** (tip `836a015`; certify `605e235`; bump **NOT EXECUTED**). **SPE-1** is **IN PROGRESS** — **SPE-1.V PASS**; SPE-1.C BUILD not started.
+Scientific Graph AI has RELEASE CERTIFIED the ENGINE Domain, RELEASE CERTIFIED the DATA Domain, and RELEASE CERTIFIED the AI Domain (Planning AI-P0…AI-P11 + Implementation AI-I0…AI-I10). AI Implementation Series is CLOSED. Live Global Release Certification for baseline `cace282…` is GRC-DECISION-002 (see certified authority status above). PRS is **CLOSED**. Production Readiness (PP) is **COMPLETE** at **PP11 PASS** (repository RELEASE VERIFIED). Post-Release **PRV-1** is **CLOSED · HANDOFF RECORDED**. Post-PRV **SDC-1** is **CERTIFIED / CLOSED** (Continuity; eligible for v1.1 — bump deferred). **DEP-1** is **FROZEN / IN FORCE**; **DEP-2** is **CERTIFIED / CLOSED**; DEPLOY evidence **CLOSED** (with disclosures). **UXC-1** is **CERTIFIED / CLOSED** (tip `836a015`; certify `605e235`; bump **NOT EXECUTED**). **SPE-1** is **CERTIFIED / CLOSED**.
 
 Domain snapshot (peer certifications; not a next-series plan):
 
@@ -135,7 +141,7 @@ Domain snapshot (peer certifications; not a next-series plan):
 | SDC (Delivery Continuity) | **SDC-1 CERTIFIED / CLOSED** |
 | DEP (Deployment Execution) | **DEP-1 FROZEN / IN FORCE** · **DEP-2 CERTIFIED / CLOSED** · DEPLOY **EXECUTED · EVIDENCE CLOSED** (disclosures) |
 | UXC (UX Continuity) | **UXC-1 CERTIFIED / CLOSED** |
-| SPE (Scientific Product Expansion) | **SPE-1.V PASS** · SPE-1.C BUILD **NOT STARTED** |
+| SPE (Scientific Product Expansion) | **SPE-1 CERTIFIED / CLOSED** |
 
 The AI Domain is certified under `src/ai/` as structural Intelligence Domain skeletons. No runtime intelligence, assistants, or prediction is implemented.
 
@@ -143,8 +149,8 @@ The AI Domain is certified under `src/ai/` as structural Intelligence Domain ske
 **SDC-1:** **CERTIFIED / CLOSED** — see `docs/SDC/official-records/SDC-1-Scientific-Delivery-Continuity.md`.
 **DEP-2:** **CERTIFIED / CLOSED** — see `docs/DEP/official-records/DEP-2-Hosted-Deployment-Execution.md`.
 **UXC-1:** **CERTIFIED / CLOSED** — see `docs/UXC/official-records/UXC-1-UX-Continuity-Certification.md`.
-**SPE-1:** **SPE-1.V PASS** — see `docs/SPE/official-records/SPE-1.V-Validation-Evidence.md`.
-**Next BUILD:** None until Owner authorizes **SPE-1.C** (series certification). Layout/Product Face = Commercial Readiness dependency. OBS-1 residual · ARCH-U deferred. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions.
+**SPE-1:** **CERTIFIED / CLOSED** — see `docs/SPE/official-records/SPE-1-Series-Closure.md`.
+**Next:** **Commercial Readiness Preparation** (Gap Assessment). Layout/Product Face = Commercial Readiness dependency (RD-V02). OBS-1 residual · ARCH-U deferred. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions. **Commercial Test Ready = NOT YET**.
 
 ---
 
@@ -165,7 +171,7 @@ The AI Domain is certified under `src/ai/` as structural Intelligence Domain ske
 | **PROD-2C** — Worksheet + Visual Graph Builder persistence | **COMPLETED** |
 | **PROD-2D** — UX profesional + arquitectura transversal | **CLOSED** (2026-07-09) |
 | **PROD-2E** — Motor gráfico profesional | **CLOSED** (2026-07-16) |
-| **Living next series (post-UXC)** | **SPE-1** — Planning Freeze materialized · BUILD not started |
+| **Living next series (post-UXC)** | **Commercial Readiness Preparation** — SPE-1 CERTIFIED / CLOSED; CTR NOT YET |
 | Historical PROD-3 pointer | **RETIRED as living next** — archive / SDC Continuity; not SPE-1 reopen of PROD-3 |
 
 Referencia de estado detallado (histórico):
@@ -278,7 +284,8 @@ Sincronización de README, ROADMAP, README técnico y referencias de estado con 
 
 | Series | Descripción |
 |--------|-------------|
-| **SPE-1** | Scientific Product Expansion — **SPE-1.V PASS**; SPE-1.C BUILD **NOT STARTED**; Owner authorization required for SPE-1.C; Commercial Layout debt preserved |
+| **Commercial Readiness Preparation** | Gap Assessment — Layout/Product Face (RD-V02) · first-time UX · packaging · Owner CTR declare; **Commercial Test Ready = NOT YET** |
+| **SPE-1** (closed) | Scientific Product Expansion — **CERTIFIED / CLOSED** — `docs/SPE/official-records/SPE-1-Series-Closure.md` |
 
 | Historical (not living next) | Descripción |
 |------------------------------|-------------|
