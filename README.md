@@ -4,6 +4,25 @@ Editor científico web (Next.js) para importar datos experimentales, analizarlos
 
 ---
 
+## Estado de release (live)
+
+| Elemento | Valor |
+|----------|--------|
+| Release | **v1.0.0** — **RELEASED / VERIFIED** (PP11 Repository Release Transition) |
+| Tags | `1.0.0` + `v1.0` → `f38cc6f` |
+| `main` / `origin/main` | Alineados al baseline de release |
+| PP0…PP11 | **COMPLETE** |
+| PRS | **RELEASE-CERTIFIED · CLOSED** |
+| RELEASE Series | **CLOSED** |
+| Post-Release | **PRV-1 CLOSED · HANDOFF RECORDED** |
+| Next Development Cycle | **TBD / SEPARATELY CHARTERED** |
+
+Autoridad operativa: [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) · [`docs/roadmaps/ROADMAP.md`](./docs/roadmaps/ROADMAP.md) · [`docs/PRV/official-records/`](./docs/PRV/official-records/).
+
+**Próxima acción:** checkpoint final de **PRV-1** → charter separado del Next Development Cycle. Candidatos históricos de producto (p. ej. **PROD-3**) no son la acción inmediata post-`v1.0.0` sin Decision Record / Charter propio.
+
+---
+
 ## Quick Start
 
 ```bash
@@ -24,8 +43,10 @@ Variables opcionales para gates E2E y baselines (valores por defecto apuntan a r
 
 | Documento | Contenido |
 |-----------|-----------|
-| [`ROADMAP.md`](./ROADMAP.md) | Hitos del proyecto; PROD-2E CLOSED → siguiente **PROD-3** |
-| [`MASTER_ROADMAP_V1.md`](./MASTER_ROADMAP_V1.md) | SSOT estratégico (fases PROD-2D → Version 1.0) |
+| [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) | Estado operativo live (release / Post-Release) |
+| [`docs/roadmaps/ROADMAP.md`](./docs/roadmaps/ROADMAP.md) | Roadmap live + histórico; Post-Release **PRV-1** |
+| [`docs/PRV/official-records/`](./docs/PRV/official-records/) | Official Records Post-Release (**PRV-1**) |
+| [`docs/roadmaps/archive/MASTER_ROADMAP_V1.md`](./docs/roadmaps/archive/MASTER_ROADMAP_V1.md) | SSOT estratégico histórico (fases PROD-2D → Version 1.0) |
 | [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) | Acta cierre PROD-2D (D0–D24) — **CLOSED** |
 | [`PROJECT_STATUS_PROD_2E.md`](./PROJECT_STATUS_PROD_2E.md) | Acta cierre PROD-2E (D25–D36) — **CLOSED** |
 | [`PROJECT_PLAN_PROD_2E.md`](./PROJECT_PLAN_PROD_2E.md) | Plan operativo PROD-2E (congelado · cierre D36) |
@@ -41,7 +62,7 @@ Variables opcionales para gates E2E y baselines (valores por defecto apuntan a r
 
 ---
 
-## Estado actual
+## Estado actual (histórico de épicas PROD)
 
 | Bloque | Estado |
 |--------|--------|
@@ -51,9 +72,9 @@ Variables opcionales para gates E2E y baselines (valores por defecto apuntan a r
 | PROD-2C — Worksheet + Visual Graph persistence | **COMPLETED** |
 | **PROD-2D** — UX profesional + arquitectura transversal | **CLOSED** (2026-07-09) |
 | **PROD-2E** — Motor gráfico profesional | **CLOSED** (2026-07-16) |
-| **Siguiente épica** | **PROD-3** — Exportación, importación y cierre funcional |
+| **PROD-3** (histórico / futuro candidato) | Exportación, importación y cierre funcional — **no** es la acción inmediata post-release; ver handoff **PRV-1** |
 
-Actas de cierre: [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md) · [`PROJECT_STATUS_PROD_2E.md`](./PROJECT_STATUS_PROD_2E.md).
+Actas de cierre históricas: ver `docs/archive/project status/`. Live status: [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md).
 
 ---
 
@@ -82,6 +103,8 @@ Gates adicionales por microetapa: [`src/lib/project/README.md`](./src/lib/projec
 
 ## Roadmap
 
-Ver [`ROADMAP.md`](./ROADMAP.md) y [`MASTER_ROADMAP_V1.md`](./MASTER_ROADMAP_V1.md) §3.1.
+Ver [`docs/roadmaps/ROADMAP.md`](./docs/roadmaps/ROADMAP.md) (live) y el archivo histórico [`docs/roadmaps/archive/MASTER_ROADMAP_V1.md`](./docs/roadmaps/archive/MASTER_ROADMAP_V1.md).
 
-**Próxima acción recomendada:** iniciar **PROD-3** — ver [`PROJECT_PLAN_PROD_3.md`](./PROJECT_PLAN_PROD_3.md) (dependencia: PROD-2E CLOSED).
+**Próxima acción recomendada (live):** checkpoint final de **PRV-1** (`CLOSED · HANDOFF RECORDED`) → charter separado del **Next Development Cycle** — [`docs/PRV/official-records/`](./docs/PRV/official-records/).
+**Next Development Cycle:** **TBD / SEPARATELY CHARTERED** — [`PRV-DECISION-001`](./docs/PRV/official-records/PRV-DECISION-001-Next-Cycle-Handoff.md).
+**Candidato histórico de producto (no autorizado por PRV-1):** **PROD-3** — Exportación, importación y cierre funcional.
