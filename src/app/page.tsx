@@ -381,6 +381,13 @@ import {
   shouldIncludePdfExportBlock,
 } from "@/lib/scientific/report/pdf-section-filter";
 import { prepareScientificReportPdfLine } from "@/lib/scientific/report/pdf-text";
+import {
+  PUBLICATION_PACK_LITE_MESSAGES,
+  PUBLICATION_PACK_LITE_SEMANTICS,
+  PUBLICATION_PACK_LITE_TITLE,
+  publicationPackLiteStatusMessage,
+  resolvePublicationPackLiteStatus,
+} from "@/lib/scientific/report/publication-pack-lite";
 import { resolvePdfSectionsForState } from "@/lib/scientific/visibility";
 import type { VisibilityState } from "@/lib/scientific/visibility";
 import {
@@ -15222,6 +15229,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [scientificReportPdfMessage, setScientificReportPdfMessage] = useState<
     string | null
   >(null);
+  const [publicationPackLiteExporting, setPublicationPackLiteExporting] =
+    useState(false);
+  const [publicationPackLiteMessage, setPublicationPackLiteMessage] = useState<
+    string | null
+  >(null);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -15889,13 +15901,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     URL.revokeObjectURL(url);
   };
 
-  const handleExportScientificReportPdf = async () => {
+  const handleExportScientificReportPdf = async (): Promise<boolean> => {
     if (!scientificReport) {
       setScientificReportPdfMessage(
         "No hay reporte disponible para exportar."
       );
       window.setTimeout(() => setScientificReportPdfMessage(null), 4000);
-      return;
+      return false;
     }
 
     setScientificReportPdfExporting(true);
@@ -15930,12 +15942,56 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         allowedPdfSectionIds,
       });
       setScientificReportPdfMessage("PDF descargado correctamente.");
+      return true;
     } catch (error) {
       console.error("Error al exportar PDF científico:", error);
       setScientificReportPdfMessage("Error al generar el PDF.");
+      return false;
     } finally {
       setScientificReportPdfExporting(false);
       window.setTimeout(() => setScientificReportPdfMessage(null), 4000);
+    }
+  };
+
+  const downloadPublicationPackLite = async () => {
+    const chartReady =
+      chartData.length > 0 || experimentalSeries.length > 0;
+    const packStatus = resolvePublicationPackLiteStatus({
+      hasScientificReport: Boolean(scientificReport),
+      hasChartContent: chartReady,
+    });
+
+    if (packStatus === "blocked-no-report") {
+      setPublicationPackLiteMessage(
+        publicationPackLiteStatusMessage(packStatus)
+      );
+      window.setTimeout(() => setPublicationPackLiteMessage(null), 4000);
+      return;
+    }
+
+    setPublicationPackLiteExporting(true);
+    setPublicationPackLiteMessage(PUBLICATION_PACK_LITE_MESSAGES.exporting);
+
+    try {
+      const pdfOk = await handleExportScientificReportPdf();
+      if (!pdfOk) {
+        setPublicationPackLiteMessage(PUBLICATION_PACK_LITE_MESSAGES.error);
+        return;
+      }
+
+      if (packStatus === "ready") {
+        await exportChartPng();
+      }
+
+      setPublicationPackLiteMessage(
+        publicationPackLiteStatusMessage(packStatus)
+      );
+    } catch (error) {
+      console.error("Error al descargar Pack Lite:", error);
+      setPublicationPackLiteMessage(PUBLICATION_PACK_LITE_MESSAGES.error);
+    } finally {
+      setPublicationPackLiteExporting(false);
+      window.setTimeout(() => setPublicationPackLiteMessage(null), 5000);
     }
   };
 
@@ -16032,6 +16088,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setScientificAssistantCopied(false);
     setScientificReportPdfExporting(false);
     setScientificReportPdfMessage(null);
+    setPublicationPackLiteExporting(false);
+    setPublicationPackLiteMessage(null);
     setHiddenLegendKeys([]);
     setRegressionModel("none");
   };
@@ -16045,6 +16103,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setScientificAssistantCopied(false);
     setScientificReportPdfExporting(false);
     setScientificReportPdfMessage(null);
+    setPublicationPackLiteExporting(false);
+    setPublicationPackLiteMessage(null);
     setErrorMessage("");
     setMathWarning(null);
     setRangeWarning([]);
@@ -26928,8 +26988,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               <NotebookSection
                 title="Exportaciones"
                 icon="📤"
-                subtitle="Gráfico y documento científico"
-                defaultOpen={false}
+                subtitle="Pack de publicación y exportaciones individuales"
+                defaultOpen={Boolean(scientificReport)}
               >
                 {scientificReport ? (
                   <PdfExportVisibilityBanner
@@ -26939,9 +26999,42 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   />
                 ) : null}
                 <div className="space-y-3">
+                  <div className="rounded-lg border border-[var(--color-brand-primary)]/30 bg-[var(--app-surface-muted)]/40 p-3">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                      {PUBLICATION_PACK_LITE_TITLE}
+                    </p>
+                    <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                      {PUBLICATION_PACK_LITE_SEMANTICS}
+                    </p>
+                    <div className={actionBarGroup}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void downloadPublicationPackLite();
+                        }}
+                        disabled={
+                          publicationPackLiteExporting ||
+                          scientificReportPdfExporting ||
+                          !scientificReport
+                        }
+                        title={PUBLICATION_PACK_LITE_SEMANTICS}
+                        className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-50`}
+                      >
+                        {publicationPackLiteExporting
+                          ? "Descargando Pack Lite..."
+                          : "Descargar Pack Lite"}
+                      </button>
+                    </div>
+                    {publicationPackLiteMessage ? (
+                      <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                        {publicationPackLiteMessage}
+                      </p>
+                    ) : null}
+                  </div>
+
                   <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3">
                     <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
-                      Exportar gráfico
+                      Exportaciones individuales · gráfico
                     </p>
                     <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--app-text-muted)]">
                       <label className="inline-flex items-center gap-1.5">
@@ -27026,7 +27119,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                   <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3">
                     <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
-                      Exportar documento
+                      Exportaciones individuales · documento
                     </p>
                     <div className={actionBarGroup}>
                       <button
@@ -27034,7 +27127,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         onClick={() => {
                           void handleExportScientificReportPdf();
                         }}
-                        disabled={scientificReportPdfExporting}
+                        disabled={
+                          scientificReportPdfExporting ||
+                          publicationPackLiteExporting
+                        }
                         title="Exportar reporte científico en PDF"
                         className={`${actionBarBtnExport} disabled:cursor-not-allowed disabled:opacity-50`}
                       >

@@ -47,8 +47,8 @@ export function GuidedWorkflowPanel({
       {session.status === "completed" ? (
         <p className="text-sm text-[var(--color-text-primary)]">
           Workflow &quot;{plan.templateTitle}&quot; completado. El reporte
-          científico queda listo en Informes para exportación (PDF / figura
-          companion). Puede continuar en modo experto.
+          científico queda listo en Informes para el Pack de publicación
+          (Lite): PDF + figura companion PNG. Puede continuar en modo experto.
         </p>
       ) : currentStep ? (
         <>
