@@ -419,7 +419,8 @@ export function Sidebar({
             hint={
               <RailLabel>
                 <SidebarGroupHint>
-                  Archivo .sgproj con dataset, análisis y curvas. Distinto de la
+                  Archivo .sgproj o biblioteca «Proyectos locales» (recuperar
+                  proyectos guardados en este navegador). Distinto de la
                   biblioteca de gráficos en nube.
                 </SidebarGroupHint>
               </RailLabel>
@@ -435,6 +436,16 @@ export function Sidebar({
             >
               {!effectiveRailCollapsed ? (
                 <ProjectScientificFilePanel {...projectFilePanelProps} />
+              ) : projectFilePanelProps.onOpenLocalLibrary ? (
+                <SidebarItem
+                  icon="library"
+                  label="Proyectos locales"
+                  title="Recuperar proyectos guardados en este navegador (biblioteca local)"
+                  onClick={() =>
+                    void projectFilePanelProps.onOpenLocalLibrary?.()
+                  }
+                  active={localProjectsPanelProps.isOpen}
+                />
               ) : null}
               <SidebarItem
                 icon="activity"
@@ -451,9 +462,7 @@ export function Sidebar({
                   className="mt-1"
                 />
               ) : null}
-              {!effectiveRailCollapsed ? (
-                <LocalProjectsPanel {...localProjectsPanelProps} />
-              ) : null}
+              <LocalProjectsPanel {...localProjectsPanelProps} />
             </div>
             <button
               type="button"

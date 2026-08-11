@@ -275,7 +275,11 @@ export function ProjectScientificFilePanel({
 
       <div className="space-y-1.5">
         <div className="space-y-1">
-          <span className={actionGroupLabelClass}>Crear / abrir</span>
+          <span className={actionGroupLabelClass}>Crear / abrir / recuperar</span>
+          <p className="text-[11px] leading-snug text-[var(--app-text-muted)]">
+            «Proyectos locales» recupera lo guardado en este navegador. «Abrir
+            proyecto» carga un archivo {PROJECT_FILE_EXTENSION} del disco.
+          </p>
           <button type="button" onClick={requestNewProject} className={`w-full h-8 ${btnPrimary}`}>
             Nuevo proyecto
           </button>
@@ -284,6 +288,8 @@ export function ProjectScientificFilePanel({
               type="button"
               onClick={() => void onOpenLocalLibrary()}
               className={`w-full h-8 ${btnSecondary}`}
+              title="Abre la biblioteca local de este navegador para recuperar o abrir un proyecto guardado aquí."
+              aria-label="Proyectos locales — recuperar proyectos de este navegador"
             >
               Proyectos locales
             </button>
@@ -293,7 +299,7 @@ export function ProjectScientificFilePanel({
             type="button"
             onClick={requestOpenProject}
             className={`w-full h-8 ${btnSecondary}`}
-            title={`Abre un archivo ${PROJECT_FILE_EXTENSION} con sesión completa`}
+            title={`Abre un archivo ${PROJECT_FILE_EXTENSION} desde el disco (sesión completa)`}
           >
             Abrir proyecto
           </button>
@@ -324,6 +330,7 @@ export function ProjectScientificFilePanel({
                 void onSaveLocalProject(draftName.trim() || DEFAULT_PROJECT_NAME)
               }
               className={`w-full h-8 ${btnSave}`}
+              title="Guarda el proyecto en la biblioteca local de este navegador (Proyectos locales)."
             >
               Guardar localmente
             </button>

@@ -84,7 +84,8 @@ export function LocalProjectsPanel({
               Proyectos locales
             </h2>
             <p className="text-[11px] text-[var(--app-text-muted)]">
-              Biblioteca offline (IndexedDB)
+              Recupere o abra proyectos guardados en este navegador. Distinto de
+              «Abrir proyecto» (.sgproj desde disco).
             </p>
           </div>
           <div className="flex gap-2">
@@ -120,11 +121,11 @@ export function LocalProjectsPanel({
               role="status"
             >
               <p className="text-xs font-medium text-[var(--app-text)]">
-                No hay proyectos guardados localmente
+                No hay proyectos guardados en este navegador
               </p>
               <p className="text-[11px] text-[var(--app-text-muted)]">
-                Use &quot;Guardar localmente&quot; en el panel de proyecto para
-                crear el primero en esta biblioteca.
+                Use «Guardar localmente» en el panel Proyecto para crear el
+                primero aquí. Luego podrá recuperarlo desde esta biblioteca.
               </p>
             </div>
           ) : null}
@@ -192,8 +193,18 @@ export function LocalProjectsPanel({
                       type="button"
                       className={btnPrimary}
                       onClick={() => onOpen(project.id)}
+                      title={
+                        isRecoverable
+                          ? "Recupera y abre este proyecto en el workspace"
+                          : "Abre este proyecto local en el workspace"
+                      }
+                      aria-label={
+                        isRecoverable
+                          ? `Recuperar y abrir ${project.name}`
+                          : `Abrir proyecto ${project.name}`
+                      }
                     >
-                      Abrir
+                      {isRecoverable ? "Recuperar" : "Abrir"}
                     </button>
                     <button
                       type="button"

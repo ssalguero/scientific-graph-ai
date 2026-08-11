@@ -44,9 +44,9 @@ export const SMART_START_OPTIONS: SmartStartOption[] = [
   {
     id: "open-project",
     icon: "📁",
-    title: "Abrir proyecto existente",
+    title: "Abrir o recuperar proyecto",
     description:
-      "Recupere un archivo .sgproj con dataset, análisis y curvas guardados.",
-    actionLabel: "Usar panel de proyecto",
+      "Use «Proyectos locales» para recuperar lo guardado en este navegador, o «Abrir proyecto» para un archivo .sgproj.",
+    actionLabel: "Ir al panel Proyecto",
   },
 ];
