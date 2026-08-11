@@ -430,7 +430,7 @@ export function VisualGraphBuilder({
               />
               {spec.graphType === "bar" ? (
                 <div>
-                  <label className={fieldLabel}>Error Bars</label>
+                  <label className={fieldLabel}>Barras de error</label>
                   <select
                     value={spec.errorBars}
                     onChange={(event) =>

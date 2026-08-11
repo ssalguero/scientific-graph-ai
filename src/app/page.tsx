@@ -463,7 +463,7 @@ const DATA_WORKSPACE_VIEWS: {
   label: string;
 }[] = [
   { id: "experimental", label: "Experimental" },
-  { id: "curves", label: "Curvas y=f(x)" },
+  { id: "curves", label: "Constructor y=f(x)" },
   { id: "advanced", label: "Avanzado" },
   { id: "visual-builder", label: "📊 Constructor Visual" },
 ];
@@ -19771,8 +19771,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </p>
                   ) : showWelcomeHint ? (
                     <p className="mt-[var(--spacing-micro)] text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)] sm:text-[length:var(--typography-body-sm-font-size)] sm:leading-[var(--typography-body-sm-line-height)]">
-                      Importe datos experimentales o abra el constructor de curvas en
-                      Datos.
+                      En Datos, use la pestaña «Constructor y=f(x)» para crear un
+                      gráfico, o «Experimental» para importar un dataset.
                     </p>
                   ) : null}
                 </header>
@@ -19990,8 +19990,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             <h2 className={sectionLabel}>📁 Datos</h2>
             <p className={`${panelHeadingSubtext} -mt-2 mb-1`}>
-              Importe datos experimentales, revise el archivo activo y configure
-              curvas o el Constructor Visual
+              Empiece por una pestaña: Experimental (importar dataset), Constructor
+              y=f(x) (expresiones), o Constructor Visual (gráficos desde
+              worksheet).
             </p>
             <WorkflowContinuityBar
               stepLabel="Datos · contexto activo"
@@ -20569,7 +20570,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               <NotebookSection
                 title="Constructor de curvas"
                 icon="📐"
-                subtitle="Expresiones y=f(x). No importa ni guarda datos experimentales"
+                subtitle="Flujo: título → expresión y=f(x) → gráfico. No importa datasets experimentales"
                 open={dataSectionOpen.constructor}
                 onOpenChange={(open) =>
                   setDataSectionOpen((previous) => ({
@@ -20581,6 +20582,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 badge={isEditing ? "Editando" : "Nuevo"}
               >
                 <div className="space-y-3">
+                  <p className="text-[11px] leading-snug text-[var(--app-text-muted)]">
+                    Escriba una expresión (ej.{" "}
+                    <span className="font-mono text-[var(--app-heading)]">
+                      x^2
+                    </span>
+                    ). Use «Agregar expresión» para más curvas en este gráfico.
+                    «Nuevo gráfico» en la barra lateral reinicia el constructor;
+                    no agrega una expresión.
+                  </p>
                   <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3">
                     <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
                       Identidad del gráfico
@@ -20611,8 +20621,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         type="button"
                         onClick={addCurve}
                         className="text-sm font-semibold text-[var(--app-accent)] hover:opacity-80 hover:underline"
+                        title="Añade otra expresión y=f(x) al gráfico actual. No reinicia el constructor."
+                        aria-label="Agregar expresión al gráfico actual"
                       >
-                        + Agregar curva
+                        + Agregar expresión
                       </button>
                     </div>
 

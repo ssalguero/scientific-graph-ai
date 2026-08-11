@@ -100,7 +100,7 @@ const markup = renderToStaticMarkup(
 const checks = {
   rendersAside: markup.includes("<aside"),
   dashboardTitle: markup.includes("Dashboard Científico"),
-  newCurve: markup.includes("Nueva curva"),
+  newCurve: markup.includes("Nuevo gráfico"),
   labelVisualization: markup.includes("Visualización"),
   labelProject: markup.includes("Proyecto"),
   labelScientific: markup.includes("Científico"),

@@ -344,8 +344,9 @@ export function Sidebar({
             hint={
               <RailLabel>
                 <SidebarGroupHint>
-                  Gráfico y=f(x) en biblioteca en nube. No incluye dataset ni
-                  proyecto .sgproj.
+                  Constructor local y=f(x) + biblioteca en nube. «Nuevo gráfico»
+                  reinicia el constructor (no agrega una expresión). Dataset y
+                  .sgproj van en Datos / Proyecto.
                 </SidebarGroupHint>
               </RailLabel>
             }
@@ -354,10 +355,10 @@ export function Sidebar({
               type="button"
               onClick={onNewCurve}
               className={sidebarBtnPrimary}
-              title="Vacía el constructor de curvas. No borra datos experimentales ni proyecto."
-              aria-label="Nueva curva"
+              title="Reinicia el constructor: gráfico y=f(x) vacío. No agrega una expresión al gráfico actual. No borra datos experimentales ni proyecto."
+              aria-label="Nuevo gráfico — reinicia el constructor"
             >
-              {effectiveRailCollapsed ? getIcon("add") : "+ Nueva curva"}
+              {effectiveRailCollapsed ? getIcon("add") : "+ Nuevo gráfico"}
             </button>
             <button
               type="button"

@@ -37,8 +37,9 @@ export const SMART_START_OPTIONS: SmartStartOption[] = [
     id: "math-graph",
     icon: "📐",
     title: "Crear gráfico matemático",
-    description: "Trabaje con expresiones y=f(x) en el constructor de curvas.",
-    actionLabel: "Abrir constructor",
+    description:
+      "Abre Datos → Constructor y=f(x) para escribir expresiones (ej. x^2) y ver el gráfico.",
+    actionLabel: "Abrir constructor y=f(x)",
   },
   {
     id: "open-project",
