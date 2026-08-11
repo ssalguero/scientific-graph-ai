@@ -1,6 +1,6 @@
 # PRODUCTION Official Records
 
-**Status:** **OPEN** — Production Readiness (PP) · **PP7 PASS · IN FORCE**  
+**Status:** **OPEN** — Production Readiness (PP) · **PP8 PASS · IN FORCE**  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)
 
 This directory holds Production Readiness Official Records (PP0…PP11) and the Issues Registry.
@@ -33,9 +33,9 @@ PRS certification cites: [`../../PRS/certification/PRS-RELEASE-CERTIFIED.md`](..
 | [PP5-Performance-Readiness.md](./PP5-Performance-Readiness.md) | **PP5 PASS · IN FORCE** |
 | [PP6-UX-and-Interaction-Readiness.md](./PP6-UX-and-Interaction-Readiness.md) | **PP6 PASS · IN FORCE** |
 | [PP7-Security-and-Configuration-Readiness.md](./PP7-Security-and-Configuration-Readiness.md) | **PP7 PASS · IN FORCE** |
-| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (updated PP7) |
-| PP8 — Deployment & Release Readiness | **UNLOCKED / NOT EXECUTED** |
-| PP9 — Documentation & Evidence | **LOCKED** |
+| [PP8-Deployment-and-Release-Readiness.md](./PP8-Deployment-and-Release-Readiness.md) | **PP8 PASS · IN FORCE** |
+| [PP-Issues-Registry.md](./PP-Issues-Registry.md) | **IN FORCE** (updated PP8) |
+| PP9 — Documentation & Evidence | **UNLOCKED / NOT EXECUTED** |
 | PP10 — Production Readiness Certification | **LOCKED** (sole Production Approval gate) |
 | PP11 — Release Transition | **LOCKED** (sole Release Transition stage) |
 
@@ -52,9 +52,10 @@ PP0 PASS
           → PP5 PASS
             → PP6 PASS
               → PP7 PASS
-                → PP8 … PP9 (sequential PASS required)
-                  → PP10 binary: PRODUCTION READY | NOT PRODUCTION READY
-                    → PP11 only if PRODUCTION READY
+                → PP8 PASS
+                  → PP9 (sequential PASS required)
+                    → PP10 binary: PRODUCTION READY | NOT PRODUCTION READY
+                      → PP11 only if PRODUCTION READY
 ```
 
 Rules:
@@ -70,8 +71,8 @@ Rules:
 
 | Field | Value |
 |-------|--------|
-| Current gate completed | **PP7 PASS** |
-| Next authorized step | **PP8 only** (Deployment & Release Readiness) |
+| Current gate completed | **PP8 PASS** |
+| Next authorized step | **PP9 only** (Documentation & Evidence) |
 | Production Authorization | **NOT AUTHORIZED** |
 
 **End of PRODUCTION Official Records index**
