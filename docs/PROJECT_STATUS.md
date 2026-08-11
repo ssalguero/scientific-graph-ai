@@ -26,18 +26,18 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | PRS | **RELEASE-CERTIFIED** · **CLOSED** |
 | PRS-P0 | **NOT APPLICABLE** |
 | Next program | **Production Readiness (PP)** |
-| Current PP gate | **PP8 PASS · IN FORCE** |
-| Next authorized PP step | **PP9 only** |
+| Current PP gate | **PP9 PASS · IN FORCE** |
+| Next authorized PP step | **PP10 only** |
 | PP10 | Sole **Production Approval** gate (**PRODUCTION READY** \| **NOT PRODUCTION READY**) |
 | PP11 | Sole **Release Transition** stage |
 | Production / Lovable / publish / tag / package sync | **NOT AUTHORIZED** |
 | Operational `package.json` | `0.1.0` (disclosed warning; ≠ Version Identity) |
 
-Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/`. PP8 = deployment & release readiness (RC procedure) under PRODUCTION Planning Charter — **not** Product Release.
+Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/`. PP9 = documentation & evidence / ENGINE certification readiness under PRODUCTION Planning Charter — **not** Production Approval.
 
 **Future Work Boundary:** UX-10 · PLUGINS loading · COLLAB realtime/CRDT — **OUT OF SCOPE** / **DEFERRED** under PP Issues Registry; separate Planning Charter required if pursued as product work.
 
-**PP Issues Registry (live):** REQUIRED BEFORE RELEASE = FR-01; FR-05 = **CLOSED** (PP7); FR-09 = **CLOSED** (PP5); FR-06 = **DEFERRED**; ACCEPTED RISK includes FR-02/03 (PP8 reconfirm) / FR-11 / PP-ISS-001 / PP-ISS-002 (PP8 reconfirm); FR-04/FR-10 = **CLOSED**. See `docs/PRODUCTION/official-records/PP-Issues-Registry.md`.
+**PP Issues Registry (live):** REQUIRED BEFORE RELEASE = none (FR-01 **CLOSED** in PP9); FR-05 = **CLOSED** (PP7); FR-09 = **CLOSED** (PP5); FR-06 = **DEFERRED**; ACCEPTED RISK includes FR-02/03 (PP8 reconfirm) / FR-11 (PP9 reconfirm) / PP-ISS-001 (PP9 reconfirm) / PP-ISS-002 (PP8 reconfirm); FR-04/FR-10 = **CLOSED**. See `docs/PRODUCTION/official-records/PP-Issues-Registry.md`.
 
 ---
 
@@ -49,11 +49,11 @@ Version Identity: **1.0.0** / display **v1.0**
 
 Current governance phase:
 
-**Production Readiness (PP)** — **PP8 PASS · IN FORCE** (PRS remains **RELEASE-CERTIFIED** · **CLOSED**)
+**Production Readiness (PP)** — **PP9 PASS · IN FORCE** (PRS remains **RELEASE-CERTIFIED** · **CLOSED**)
 
 Next authorized step:
 
-**PP9 — Documentation & Evidence** only
+**PP10 — Production Readiness Certification** only
 
 Production Authorization:
 
@@ -65,7 +65,7 @@ Production Authorization:
 
 | Domain | Status |
 |---------|--------|
-| ENGINE | ✅ CERTIFIED (cert-path gap disclosed) |
+| ENGINE | ✅ CERTIFIED (FR-01 cert-path **CLOSED** — PP9) |
 | DATA | ✅ CERTIFIED |
 | AI | ✅ RELEASE CERTIFIED · Implementation Series CLOSED |
 | COLLAB | Peer-certified / realtime deferred (Future Work Boundary) |
@@ -73,13 +73,13 @@ Production Authorization:
 | PERFORMANCE | ✅ RELEASE CERTIFIED (I10 pack cited; conditionality disclosed; FR-09 CLOSED) |
 | RELEASE | Series **CLOSED** · GRC-002 **IN FORCE** |
 | PRS | **RELEASE-CERTIFIED** · **CLOSED** |
-| PRODUCTION (PP) | **OPEN** · **PP8 PASS** · next = **PP9** |
+| PRODUCTION (PP) | **OPEN** · **PP9 PASS** · next = **PP10** |
 
 ---
 
 ## Latest Milestone
 
-Global Release Certification (GRC-2) **CERTIFIED WITH EXPLICIT WARNINGS** on baseline `cace2820…`; RELEASE Series **CLOSED**; PRS **RELEASE-CERTIFIED** / **CLOSED**; Production Readiness Charter **RELEASE CERTIFIED / FROZEN**; **PP0 PASS**; **PP1 PASS**; **PP2 PASS**; **PP3 PASS**; **PP4 PASS**; **PP5 PASS** (FR-09 CLOSED); **PP6 PASS** (FR-06 watch complete · remains DEFERRED); **PP7 PASS** (FR-05 CLOSED); **PP8 PASS** (FR-02/03/PP-ISS-002 reconfirm · ACCEPTED RISK).
+Global Release Certification (GRC-2) **CERTIFIED WITH EXPLICIT WARNINGS** on baseline `cace2820…`; RELEASE Series **CLOSED**; PRS **RELEASE-CERTIFIED** / **CLOSED**; Production Readiness Charter **RELEASE CERTIFIED / FROZEN**; **PP0 PASS**; **PP1 PASS**; **PP2 PASS**; **PP3 PASS**; **PP4 PASS**; **PP5 PASS** (FR-09 CLOSED); **PP6 PASS** (FR-06 watch complete · remains DEFERRED); **PP7 PASS** (FR-05 CLOSED); **PP8 PASS** (FR-02/03/PP-ISS-002 reconfirm · ACCEPTED RISK); **PP9 PASS** (FR-01 CLOSED · PP-ISS-001/FR-11 reconfirm · ACCEPTED RISK).
 
 AI Domain RELEASE CERTIFIED (AI-I10) remains a prior peer milestone. Planning preserved; Implementation Series CLOSED; runtime unchanged; AI Optional preserved.
 
@@ -88,7 +88,7 @@ AI Implementation:
 - AI-I0…AI-I9: COMPLETE
 - AI-I10 Certification: CERTIFIED (`src/ai/certification/`)
 - Runtime intelligence / assistants / prediction: NOT IMPLEMENTED (by design)
-- Next authorized program step: **PP9** (not a new AI product series)
+- Next authorized program step: **PP10** (not a new AI product series)
 
 Prior certified peers:
 

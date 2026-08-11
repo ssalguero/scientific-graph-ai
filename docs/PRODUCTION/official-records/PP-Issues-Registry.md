@@ -3,7 +3,7 @@
 **Artifact:** Production Readiness Issues Registry  
 **Date:** 2026-08-10  
 **Planning Authority:** [`../PRODUCTION-Planning-Charter.md`](../PRODUCTION-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)  
-**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**, **PP5**, **PP6**, **PP7**, **PP8**)  
+**Seed phase:** **PP0** (updated at **PP1**, **PP2**, **PP3**, **PP4**, **PP5**, **PP6**, **PP7**, **PP8**, **PP9**)  
 **Status:** **IN FORCE**
 
 ---
@@ -37,7 +37,7 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 
 | ID | Title | PRS final treatment (cite only) | PP disposition (seed) | Target gate | Notes |
 |----|-------|----------------------------------|------------------------|-------------|-------|
-| **FR-01** | ENGINE certification-path gap (`src/engine/certification/CERTIFICATION.md` missing) | HANDED OFF — OPEN OUTSIDE PRS | **REQUIRED BEFORE RELEASE** | PP9 | PP1/PP2 confirmed not a build/functional blocker (`validate:engine` PASS); remains open for evidence completeness |
+| **FR-01** | ENGINE certification-path gap (`src/engine/certification/CERTIFICATION.md` missing) | HANDED OFF — OPEN OUTSIDE PRS | **CLOSED** | PP9 | Closed by [`PP9-Documentation-and-ENGINE-Certification-Readiness.md`](./PP9-Documentation-and-ENGINE-Certification-Readiness.md): pack path present + cited; `validate:engine` PASS; consumes existing ENGINE RELEASE CERTIFIED evidence only |
 | **FR-02** | Operational `package.json` **0.1.0** ≠ VI **1.0.0** | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 (reconfirm complete) | PP8 reconfirm — still `0.1.0` ≠ VI `1.0.0`; sync remains NOT AUTHORIZED until PP11 ([`PP8-Deployment-and-Release-Readiness.md`](./PP8-Deployment-and-Release-Readiness.md)) |
 | **FR-03** | No Git tag for 1.0.0 | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP8 / PP11 (PP8 reconfirm complete) | PP8 reconfirm — no `1.0.0`/`v1.0`/`v1.0.0` tags; tag remains NOT AUTHORIZED until PP11 |
 | **FR-04** | No live full GRC validator re-run inside GRC-2 | CLOSED AS ACCEPTED | **CLOSED** | PP1 | Fresh PP1 evidence: build + tsc + release-p1/p2 + production-boundaries + performance-gates — **not** a GRC reopen |
@@ -47,24 +47,24 @@ PRS FR treatment (historical) ≠ PP disposition (live for Production Readiness)
 | **FR-08** | COLLAB realtime / CRDT deferred | HANDED OFF — FUTURE WORK BOUNDARY | **OUT OF SCOPE** | — | Separate Planning Charter required if pursued |
 | **FR-09** | PERFORMANCE cert-pack / conditionality gap | HANDED OFF — OPEN OUTSIDE PRS | **CLOSED** | PP5 | Closed by [`PP5-Performance-Readiness.md`](./PP5-Performance-Readiness.md): CI validators PASS + I10 pack cite; conditionality remains disclosed |
 | **FR-10** | ROADMAP / PROJECT_STATUS sync | CLOSED WITH P3 EVIDENCE | **CLOSED** | PP0 | PRS alignment complete; PP0 updates live banners for PP series start only |
-| **FR-11** | Domain-scoped peer certifications (not unconditional global reissue) | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP9 | Disclosed observation; preserved |
-| **PP-ISS-001** | ESLint: 132 errors / 102 warnings; default heap OOM without elevated `NODE_OPTIONS` | Discovered PP1 | **ACCEPTED RISK** | PP9 | Does not block `next build`; full lint cleanup out of PP1 scope |
+| **FR-11** | Domain-scoped peer certifications (not unconditional global reissue) | CLOSED AS ACCEPTED | **ACCEPTED RISK** | PP9 (reconfirm complete) | PP9 reconfirm — disclosed observation preserved; not unconditional global reissue ([`PP9-Documentation-and-ENGINE-Certification-Readiness.md`](./PP9-Documentation-and-ENGINE-Certification-Readiness.md)) |
+| **PP-ISS-001** | ESLint: 132 errors / 102 warnings; default heap OOM without elevated `NODE_OPTIONS` | Discovered PP1 | **ACCEPTED RISK** | PP9 (reconfirm complete) | PP9 reconfirm — does not block `next build`; not CI-gated; no lint cleanup series ([`PP9-Documentation-and-ENGINE-Certification-Readiness.md`](./PP9-Documentation-and-ENGINE-Certification-Readiness.md)) |
 | **PP-ISS-002** | `tsx` used by validators but not declared in package.json (extraneous / npx) | Discovered PP1 | **ACCEPTED RISK** | PP8 (reconfirm complete) | PP8 reconfirm — undeclared; not in lockfile; release validators PASS via `npx tsx`; declare not required for PP8 PASS |
 
 ---
 
-## Disposition counts (post-PP8)
+## Disposition counts (post-PP9)
 
-PP8 Deployment & Release Readiness reconfirmed **FR-02**, **FR-03**, and **PP-ISS-002** as **ACCEPTED RISK** (no sync/tag/`tsx` declare). FR-01 remains **REQUIRED BEFORE RELEASE**. No in-gate `PP8-B#`. No new `PP-ISS-###`.
+PP9 Documentation & Evidence / ENGINE Certification Readiness closed **FR-01** (pack path present + cited). Reconfirmed **PP-ISS-001** and **FR-11** as **ACCEPTED RISK** (no lint cleanup). No in-gate `PP9-B#`. No new `PP-ISS-###`. **REQUIRED BEFORE RELEASE** count is now **0**.
 
 | Classification | Count | IDs |
 |----------------|-------|-----|
 | **BLOCKER** | 0 | — |
-| **REQUIRED BEFORE RELEASE** | 1 | FR-01 |
+| **REQUIRED BEFORE RELEASE** | 0 | — |
 | **ACCEPTED RISK** | 5 | FR-02, FR-03, FR-11, PP-ISS-001, PP-ISS-002 |
 | **DEFERRED** | 1 | FR-06 |
 | **OUT OF SCOPE** | 2 | FR-07, FR-08 |
-| **CLOSED** | 4 | FR-04, FR-05, FR-09, FR-10 |
+| **CLOSED** | 5 | FR-01, FR-04, FR-05, FR-09, FR-10 |
 | **Total** | **13** | FR-01…FR-11 + PP-ISS-001…002 |
 
 ---
@@ -87,5 +87,6 @@ PP8 Deployment & Release Readiness reconfirmed **FR-02**, **FR-03**, and **PP-IS
 - PP6 FR-06 watch: [`./PP6-UX-and-Interaction-Readiness.md`](./PP6-UX-and-Interaction-Readiness.md)
 - PP7 FR-05 closure: [`./PP7-Security-and-Configuration-Readiness.md`](./PP7-Security-and-Configuration-Readiness.md)
 - PP8 FR-02 / FR-03 / PP-ISS-002 reconfirm: [`./PP8-Deployment-and-Release-Readiness.md`](./PP8-Deployment-and-Release-Readiness.md)
+- PP9 FR-01 closure + PP-ISS-001 / FR-11 reconfirm: [`./PP9-Documentation-and-ENGINE-Certification-Readiness.md`](./PP9-Documentation-and-ENGINE-Certification-Readiness.md)
 
 **End of PP Issues Registry**
