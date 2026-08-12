@@ -166,6 +166,7 @@ import {
 import { ProductCompositionHost } from "@/components/windows";
 import { SessionProvider, SessionBridge } from "@/components/session";
 import { AdaptiveToolbar } from "@/components/toolbar";
+import { ThemeModeSync } from "./theme-mode-sync";
 import {
   Inspector,
   InspectorPanel,
@@ -561,8 +562,8 @@ function WorkspaceTab({
       onClick={() => onSelect(section)}
       className={
         isActive
-          ? "rounded-lg border border-[var(--app-accent)] bg-[var(--app-accent)] px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition-colors"
-          : `${btnOutline} px-2.5 py-1.5 text-xs sm:text-sm font-medium`
+          ? "relative rounded-none border-0 border-b-2 border-[var(--color-brand-primary)] bg-transparent px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] transition-colors"
+          : "relative rounded-none border-0 border-b-2 border-transparent bg-transparent px-2.5 py-1.5 text-xs sm:text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
       }
     >
       <span className="inline-flex items-center gap-2">
@@ -571,8 +572,8 @@ function WorkspaceTab({
           <span
             className={
               isActive
-                ? "rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none"
-                : "rounded-full bg-[var(--app-accent)]/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[var(--app-accent)]"
+                ? "rounded-full bg-[var(--color-brand-primary)]/15 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[var(--color-brand-primary)]"
+                : "rounded-full bg-[var(--color-brand-primary)]/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[var(--color-brand-primary)]"
             }
             aria-label={`${badge} análisis activos`}
           >
@@ -589,10 +590,18 @@ type WorkflowContinuityAction = {
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  /** CRP-6.1 — one dominant CTA when set; others stay tertiary links. */
+  prominence?: "primary" | "secondary" | "tertiary";
 };
 
 const workflowContinuityLinkClass =
-  "text-xs font-medium text-[var(--app-accent)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline";
+  "text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-brand-primary)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline";
+
+const workflowContinuityPrimaryClass =
+  "inline-flex h-7 items-center justify-center rounded-[var(--radius-container)] bg-[var(--color-brand-primary)] px-2.5 text-xs font-semibold text-[var(--color-text-inverse)] hover:bg-[var(--color-brand-hover)] disabled:cursor-not-allowed disabled:opacity-50";
+
+const workflowContinuitySecondaryClass =
+  "inline-flex h-7 items-center justify-center rounded-[var(--radius-container)] border border-[var(--color-border-default)] bg-transparent px-2.5 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-brand-primary)]/40 disabled:cursor-not-allowed disabled:opacity-50";
 
 function WorkflowContinuityBar({
   stepLabel,
@@ -605,30 +614,39 @@ function WorkflowContinuityBar({
 }) {
   return (
     <div
-      className="mb-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 px-3 py-2"
+      className="mb-2 rounded-[var(--radius-container)] border border-[var(--color-border-default)]/80 bg-[var(--color-surface-default)]/60 px-3 py-2"
       role="navigation"
       aria-label="Continuidad del flujo de trabajo"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 space-y-0.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
             {stepLabel}
           </p>
-          <p className="text-xs text-[var(--app-text-muted)]">{contextLine}</p>
+          <p className="text-xs text-[var(--color-text-muted)]">{contextLine}</p>
         </div>
         {actions.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            {actions.map((action) => (
-              <button
-                key={action.label}
-                type="button"
-                onClick={action.onClick}
-                disabled={action.disabled}
-                className={workflowContinuityLinkClass}
-              >
-                {action.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            {actions.map((action) => {
+              const prominence = action.prominence ?? "tertiary";
+              const className =
+                prominence === "primary"
+                  ? workflowContinuityPrimaryClass
+                  : prominence === "secondary"
+                    ? workflowContinuitySecondaryClass
+                    : workflowContinuityLinkClass;
+              return (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={action.onClick}
+                  disabled={action.disabled}
+                  className={className}
+                >
+                  {action.label}
+                </button>
+              );
+            })}
           </div>
         ) : null}
       </div>
@@ -19717,59 +19735,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     );
   }, [lastImportReport]);
 
+  /**
+   * CRP-6.2 — Header carries minimal project identity only.
+   * Dataset / library / save / VGB belong in stage or sidebar support — not a
+   * permanent header information wall.
+   */
   const workspaceSessionContext = useMemo(() => {
-    const parts: string[] = [];
     const projectName =
       projectMetadata.name.trim() === "" ||
       projectMetadata.name === DEFAULT_PROJECT_NAME
         ? "Proyecto sin título"
         : projectMetadata.name.trim();
-    parts.push(`Proyecto: ${projectName}`);
-    if (currentDatasetInfo) {
-      parts.push(
-        `Dataset: ${currentDatasetInfo.fileName} (${currentDatasetInfo.seriesCount} serie${
-          currentDatasetInfo.seriesCount === 1 ? "" : "s"
-        })`
-      );
-    } else {
-      parts.push("Dataset: ninguno");
-    }
-    parts.push(
-      `Biblioteca: ${graphs.length} gráfico${graphs.length === 1 ? "" : "s"}`
-    );
-    if (projectVisualGraphs.length > 0) {
-      parts.push(
-        `VGB: ${projectVisualGraphs.length} gráfico${
-          projectVisualGraphs.length === 1 ? "" : "s"
-        }`
-      );
-    }
-    if (isProjectDirty) {
-      parts.push("Estado: cambios sin guardar");
-    }
-    return parts.join(" · ");
-  }, [
-    projectMetadata.name,
-    currentDatasetInfo,
-    graphs.length,
-    projectVisualGraphs.length,
-    isProjectDirty,
-  ]);
-
-  const workspaceStepHint = useMemo(() => {
-    switch (activeWorkspaceSection) {
-      case "data":
-        return "Flujo: Datos → importe, worksheet o construcción de gráficos";
-      case "analysis":
-        return "Flujo: Análisis → ejes, escalas y módulos del gráfico activo";
-      case "results":
-        return "Flujo: Resultados → gráfico principal, leyenda y exportaciones";
-      case "reports":
-        return "Flujo: Reportes → documento científico del análisis actual";
-      default:
-        return null;
-    }
-  }, [activeWorkspaceSection]);
+    return projectName;
+  }, [projectMetadata.name]);
 
   const workflowContextLine = useMemo(() => {
     const datasetPart = currentDatasetInfo
@@ -19804,17 +19782,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     handleNewProject();
   };
 
-  const showWelcomeHint =
-    !showSmartStartScreen &&
-    !isEditing &&
-    activeWorkspaceSection === "data" &&
-    !hasChartContent &&
-    !currentDatasetInfo;
+  // CRP-6.1 — instructional copy lives in Smart Start / stage content (compact header).
 
   // D54.3 — Orchestration only: assemble domain/chrome slots.
   // Shell layout authority lives in WorkspaceLayout → LayoutEngine (not page).
   // page does not resolve LayoutTree, regions, or shell geometry.
   return (
+    <>
+    <ThemeModeSync themeMode={themeMode} />
     <WorkspaceLayout
       themeMode={themeMode}
       toolbar={
@@ -19825,24 +19800,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   P0.1 — AppShell toolbar brand: Design System --color-* hierarchy
                   (primary chrome brand; workspace header stays quieter).
                 */}
-                <header className="pb-[var(--spacing-micro)]">
-                  <h1 className="text-[length:var(--typography-heading-sm-font-size)] font-semibold leading-[var(--typography-heading-sm-line-height)] tracking-tight text-[var(--color-text-primary)]">
+                <header className="flex flex-wrap items-baseline gap-x-[var(--spacing-compact)] gap-y-[var(--spacing-micro)] pb-[var(--spacing-micro)]">
+                  <h1 className="text-[length:var(--typography-section-font-size)] font-semibold leading-[var(--typography-section-line-height)] tracking-tight text-[var(--color-text-primary)]">
                     Scientific Graph AI
                   </h1>
-                  {activeWorkspaceSection === "home" ? (
-                    <p className="mt-[var(--spacing-micro)] text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)] sm:text-[length:var(--typography-body-sm-font-size)] sm:leading-[var(--typography-body-sm-line-height)]">
-                      Elija cómo comenzar o entre al laboratorio completo.
-                    </p>
-                  ) : showWelcomeHint ? (
-                    <p className="mt-[var(--spacing-micro)] text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)] sm:text-[length:var(--typography-body-sm-font-size)] sm:leading-[var(--typography-body-sm-line-height)]">
-                      En Datos, use la pestaña «Constructor y=f(x)» para crear un
-                      gráfico, o «Experimental» para importar un dataset.
-                    </p>
-                  ) : null}
+                  <p className="min-w-0 truncate text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)]">
+                    {workspaceSessionContext}
+                  </p>
                 </header>
 
                 <nav
-                  className="flex flex-wrap gap-1.5 border-b border-[var(--color-border-default)] pb-[var(--spacing-tight)]"
+                  className="flex flex-wrap gap-x-0.5 gap-y-0 border-b border-[var(--color-border-default)]"
                   role="tablist"
                   aria-label="Workspace científico"
                 >
@@ -19881,22 +19849,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 ) : null}
 
-                {activeWorkspaceSection !== "home" ? (
-                  <div className="-mt-[var(--spacing-micro)] space-y-0.5 text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)] sm:text-[length:var(--typography-body-sm-font-size)] sm:leading-[var(--typography-body-sm-line-height)]">
-                    {workspaceStepHint ? (
-                      <p className="font-medium text-[var(--color-text-primary)]">
-                        {workspaceStepHint}
-                      </p>
-                    ) : null}
-                    <p>{workspaceSessionContext}</p>
-                  </div>
-                ) : null}
-
-                <LabUsageProfileSelector
-                  value={labUsageProfile}
-                  onChange={setLabUsageProfile}
-                  persistenceBadgeClassName={persistenceBadge}
-                />
+                {/*
+                  CRP-6.2 / CRP-6.2.1 — Lab profile is expert utility chrome, not
+                  journey context. Further demoted (no band chrome) so it cannot
+                  compete with brand → tabs → workspace hierarchy.
+                */}
+                <div className="opacity-30 max-w-[14rem] scale-90 origin-left pointer-events-auto">
+                  <LabUsageProfileSelector
+                    value={labUsageProfile}
+                    onChange={setLabUsageProfile}
+                    persistenceBadgeClassName={persistenceBadge}
+                  />
+                </div>
               </>
             }
           />
@@ -23157,7 +23121,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             <h2 className={`${sectionLabel} mb-2`}>📈 Resultados</h2>
             <WorkflowContinuityBar
-              stepLabel="Resultados · gráfico y exportaciones"
+              stepLabel="Resultados · modelo, métricas y paso a Pack"
               contextLine={workflowContextLine}
               actions={[
                 {
@@ -23167,6 +23131,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {
                   label: "← Análisis (ejes)",
                   onClick: () => selectWorkspaceSection("analysis"),
+                },
+                {
+                  label: "Generar reporte",
+                  onClick: () => selectWorkspaceSection("reports"),
+                  prominence: "primary",
+                },
+                {
+                  label: "Ir a Reportes · Pack",
+                  onClick: () => selectWorkspaceSection("reports"),
+                  prominence: "secondary",
                 },
                 ...(profileShowsDataWorkspaceView(
                   "visual-builder",
@@ -26922,9 +26896,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               activeWorkspaceSection !== "reports" || !isReportsModuleEnabled
             }
           >
-            <h2 className={sectionLabel}>📄 Reportes</h2>
-            <p className={`${panelHeadingSubtext} -mt-1 mb-2`}>
-              Exportaciones, reporte científico y copia de análisis
+            <h2 className={`${sectionLabel} tracking-tight`}>📄 Reportes y Pack</h2>
+            <p className={`${panelHeadingSubtext} !mt-0 mb-3 max-w-3xl`}>
+              Configuración del reporte, Pack de publicación, exportación PDF y
+              vista previa del resultado reproducible
             </p>
             {guidedWorkflowHostTab === "reports" &&
               showGuidedWorkflowPanel &&
@@ -27280,6 +27255,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         </WorkspacePanels>
       }
     />
+    </>
   );
 }
 

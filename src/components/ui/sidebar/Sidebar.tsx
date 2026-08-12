@@ -18,7 +18,6 @@ import { mergeClassNames } from "../classNames";
 import { SidebarFooter } from "./SidebarFooter";
 import {
   SidebarGroup,
-  SidebarGroupHint,
   SidebarGroupLabel,
 } from "./SidebarGroup";
 import {
@@ -290,7 +289,7 @@ export function Sidebar({
             <span
               className="text-sm leading-none"
               aria-hidden
-              title="Dashboard Científico"
+              title="Proyecto"
             >
               {getIcon("dashboard")}
             </span>
@@ -298,7 +297,7 @@ export function Sidebar({
             <h2
               className={`${panelHeading} !text-xs !font-semibold min-w-0 flex-1 truncate tracking-tight`}
             >
-              {getIcon("dashboard")} Dashboard Científico
+              {getIcon("dashboard")} Proyecto
             </h2>
           )}
           {isMobile ? (
@@ -336,93 +335,12 @@ export function Sidebar({
           <SidebarGroup
             label={
               <RailLabel>
-                <SidebarGroupLabel badge="NUBE" badgeTitle="Biblioteca en nube">
-                  Visualización
-                </SidebarGroupLabel>
-              </RailLabel>
-            }
-            hint={
-              <RailLabel>
-                <SidebarGroupHint>
-                  Constructor local y=f(x) + biblioteca en nube. «Nuevo gráfico»
-                  reinicia el constructor (no agrega una expresión). Dataset y
-                  .sgproj van en Datos / Proyecto.
-                </SidebarGroupHint>
-              </RailLabel>
-            }
-          >
-            <button
-              type="button"
-              onClick={onNewCurve}
-              className={sidebarBtnPrimary}
-              title="Reinicia el constructor: gráfico y=f(x) vacío. No agrega una expresión al gráfico actual. No borra datos experimentales ni proyecto."
-              aria-label="Nuevo gráfico — reinicia el constructor"
-            >
-              {effectiveRailCollapsed ? getIcon("add") : "+ Nuevo gráfico"}
-            </button>
-            <button
-              type="button"
-              onClick={onClearCurves}
-              className={sidebarBtnSecondary}
-              title="Vacía las expresiones del constructor. No borra datos experimentales ni proyecto."
-              aria-label="Vaciar curvas"
-            >
-              {effectiveRailCollapsed ? getIcon("remove") : "Vaciar curvas"}
-            </button>
-            <SidebarItem
-              icon="library"
-              label={`Biblioteca (${graphs.length})`}
-              onClick={onToggleGraphLibrary}
-              showCaret
-              expanded={graphLibraryOpen}
-              active={graphLibraryOpen}
-            />
-            {graphLibraryOpen && !effectiveRailCollapsed ? (
-              <div className="space-y-1 max-h-36 overflow-y-auto pr-0.5">
-                {graphs.length === 0 ? (
-                  <p className="text-[11px] text-[var(--color-text-muted)] px-1">
-                    Sin gráficos guardados en nube.
-                  </p>
-                ) : (
-                  graphs.map((graph, index) => (
-                    <button
-                      key={graph.id}
-                      type="button"
-                      onClick={() => onLoadGraph(graph)}
-                      className={`w-full text-left border rounded-md px-2 py-1 text-xs ${UI_TOKENS.transition.colors200} ${
-                        selectedGraphId === graph.id
-                          ? sidebarGraphItemActive
-                          : sidebarGraphItemIdle
-                      }`}
-                    >
-                      <span className="line-clamp-2">{graphLabels[index]}</span>
-                    </button>
-                  ))
-                )}
-              </div>
-            ) : null}
-          </SidebarGroup>
-
-          <div className={sidebarDivider} />
-
-          <SidebarGroup
-            label={
-              <RailLabel>
                 <SidebarGroupLabel
                   badge=".SGPROJ"
                   badgeTitle="Archivo de proyecto"
                 >
                   Proyecto
                 </SidebarGroupLabel>
-              </RailLabel>
-            }
-            hint={
-              <RailLabel>
-                <SidebarGroupHint>
-                  Archivo .sgproj o biblioteca «Proyectos locales» (recuperar
-                  proyectos guardados en este navegador). Distinto de la
-                  biblioteca de gráficos en nube.
-                </SidebarGroupHint>
               </RailLabel>
             }
           >
@@ -504,6 +422,24 @@ export function Sidebar({
             }
           >
             <SidebarSection title="Análisis" icon="advisor" defaultOpen={false}>
+              <button
+                type="button"
+                onClick={onNewCurve}
+                className={sidebarBtnPrimary}
+                title="Reinicia el constructor: gráfico y=f(x) vacío. No agrega una expresión al gráfico actual. No borra datos experimentales ni proyecto."
+                aria-label="Nuevo gráfico — reinicia el constructor"
+              >
+                {effectiveRailCollapsed ? getIcon("add") : "+ Nuevo gráfico"}
+              </button>
+              <button
+                type="button"
+                onClick={onClearCurves}
+                className={sidebarBtnSecondary}
+                title="Vacía las expresiones del constructor. No borra datos experimentales ni proyecto."
+                aria-label="Vaciar curvas"
+              >
+                {effectiveRailCollapsed ? getIcon("remove") : "Vaciar curvas"}
+              </button>
               {isAssistantEnabled ? (
                 <SidebarItem
                   icon="advisor"
@@ -546,6 +482,38 @@ export function Sidebar({
                 onClick={onOpenFunctionLibrary}
               />
               <SidebarItem
+                icon="library"
+                label={`Biblioteca de gráficos (${graphs.length})`}
+                onClick={onToggleGraphLibrary}
+                showCaret
+                expanded={graphLibraryOpen}
+                active={graphLibraryOpen}
+              />
+              {graphLibraryOpen && !effectiveRailCollapsed ? (
+                <div className="space-y-1 max-h-36 overflow-y-auto pr-0.5">
+                  {graphs.length === 0 ? (
+                    <p className="text-[11px] text-[var(--color-text-muted)] px-1">
+                      Sin gráficos guardados en nube.
+                    </p>
+                  ) : (
+                    graphs.map((graph, index) => (
+                      <button
+                        key={graph.id}
+                        type="button"
+                        onClick={() => onLoadGraph(graph)}
+                        className={`w-full text-left border rounded-md px-2 py-1 text-xs ${UI_TOKENS.transition.colors200} ${
+                          selectedGraphId === graph.id
+                            ? sidebarGraphItemActive
+                            : sidebarGraphItemIdle
+                        }`}
+                      >
+                        <span className="line-clamp-2">{graphLabels[index]}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              ) : null}
+              <SidebarItem
                 icon="history"
                 label="Historial"
                 onClick={onToggleRecentProjects}
@@ -568,7 +536,7 @@ export function Sidebar({
                 effectiveRailCollapsed ? sidebarRailSectionWrap : undefined
               }
             >
-              <SidebarSection title="Ajustes" icon="settings" defaultOpen>
+              <SidebarSection title="Ajustes" icon="settings" defaultOpen={false}>
                 <SidebarItem
                   icon="settings"
                   label="Configuración"

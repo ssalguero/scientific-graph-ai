@@ -21,12 +21,12 @@ export function LabUsageProfileSelector({
 
   return (
     <div
-      className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 py-1.5 px-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/60"
+      className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-1.5 py-0.5 px-1"
       role="group"
       aria-label="Modo de laboratorio"
     >
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-[11px] sm:text-xs font-semibold text-[var(--app-heading)]">
+        <span className="text-[11px] sm:text-xs font-medium text-[var(--color-text-muted)]">
           Modo:
         </span>
         {value === "expert" ? (
@@ -39,7 +39,7 @@ export function LabUsageProfileSelector({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         {LAB_USAGE_PROFILE_ORDER.map((profileId) => {
           const meta = LAB_USAGE_PROFILE_META[profileId];
           const inputId = `lab-usage-profile-${profileId}`;
@@ -47,7 +47,7 @@ export function LabUsageProfileSelector({
             <label
               key={profileId}
               htmlFor={inputId}
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-[var(--app-text)] cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] cursor-pointer"
             >
               <input
                 id={inputId}
@@ -56,7 +56,7 @@ export function LabUsageProfileSelector({
                 value={profileId}
                 checked={value === profileId}
                 onChange={() => onChange(profileId)}
-                className="h-3.5 w-3.5 border-[var(--app-border)] text-[var(--app-accent)] focus:ring-[var(--app-accent)]/20"
+                className="h-3 w-3 border-[var(--color-border-default)] text-[var(--color-brand-primary)] focus:ring-[var(--color-brand-primary)]/20"
               />
               {meta.label}
             </label>
@@ -64,7 +64,7 @@ export function LabUsageProfileSelector({
         })}
       </div>
 
-      <span className="text-[11px] text-[var(--app-text-muted)] sm:ml-auto">
+      <span className="text-[10px] text-[var(--color-text-muted)] sm:ml-auto">
         {activeMeta.hint}
       </span>
     </div>

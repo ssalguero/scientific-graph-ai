@@ -67,12 +67,12 @@ export function LeftPanel({
           }
           actions={
             <ContextActions
-              actions={[{ label: "New", ariaLabel: "New series" }]}
+              actions={[]}
             />
           }
           overflow={
             <PanelOverflowMenu
-              items={[{ label: "Import", ariaLabel: "Import series" }]}
+              items={[]}
             />
           }
         />

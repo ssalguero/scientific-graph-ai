@@ -1,7 +1,8 @@
 import type { UserPreferences } from "./types";
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
-  theme: "light",
+  // CRP-6.1 — E0 commercial face is dark graphite; light remains selectable.
+  theme: "dark",
   showContextualHints: true,
 };
 

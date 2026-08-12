@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { useActivePanel } from "../focus";
 import { PanelOverflowMenu } from "../disclosure";
-import { PanelStatus, StatusBadge, StatusChip } from "../status";
+import { PanelStatus, StatusBadge } from "../status";
 import { Panel } from "./Panel";
 import { focusRailAfterCollapse } from "./PanelExpandRail";
 import { PanelBody } from "./PanelBody";
@@ -59,18 +59,11 @@ export function BottomPanel({
           collapsed={collapsed}
           onToggle={handleToggle}
           isActive={isActive}
-          status={<PanelStatus state="success" />}
+          status={<PanelStatus state="empty" />}
           badge={
-            <StatusBadge aria-label="Console ready" tone="success">
-              Ready
-            </StatusBadge>
+            <StatusBadge aria-label="Console is empty">Empty</StatusBadge>
           }
-          chips={
-            <>
-              <StatusChip>Warnings</StatusChip>
-              <StatusChip>Errors</StatusChip>
-            </>
-          }
+          chips={null}
           overflow={<PanelOverflowMenu items={[]} disabled />}
         />
         <PanelBody>{children}</PanelBody>

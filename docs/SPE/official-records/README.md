@@ -31,4 +31,4 @@ SPE-1 ≠ SemVer bump · deploy (separate Owner decisions)
 
 **Authority cites:** SPE Planning Charter · UXC-1 Official Record · SDC / DEP / PROJECT_STATUS / ROADMAP (cite only)
 
-**Next:** Commercial Readiness Preparation / Gap Assessment — not CTR declare.
+**Next:** Commercial Readiness Preparation — **OPEN** ([`docs/CRP/official-records/`](../../CRP/official-records/)) · CRP-0…6 PASS · **CRP-6.1 Phase 1 PASS** · **CRP-6.2 Phase 2 PASS** · next **Owner-authorized Phase 3** — not CTR declare. SPE-1 remains **CERTIFIED / CLOSED**.

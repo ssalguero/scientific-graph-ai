@@ -1,4 +1,7 @@
-import { createDefaultUserPreferences } from "./defaults";
+import {
+  createDefaultUserPreferences,
+  DEFAULT_USER_PREFERENCES,
+} from "./defaults";
 import type { ThemeMode, UserPreferences } from "./types";
 
 export const parseThemeMode = (value: unknown): ThemeMode => {
@@ -8,7 +11,7 @@ export const parseThemeMode = (value: unknown): ThemeMode => {
   if (value === "light") {
     return "light";
   }
-  return "light";
+  return DEFAULT_USER_PREFERENCES.theme;
 };
 
 export const parseShowContextualHints = (value: unknown): boolean => {

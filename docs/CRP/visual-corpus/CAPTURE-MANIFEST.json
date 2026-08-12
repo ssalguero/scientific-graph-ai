@@ -1,0 +1,158 @@
+{
+  "capturedAt": "2026-08-12T01:31:44.650Z",
+  "url": "http://localhost:3000",
+  "shots": [
+    {
+      "id": "VC-01",
+      "file": "cold-start/VC-01-cold-start-inicio.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-02",
+      "file": "cold-start/VC-02-smart-start-detail.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-03",
+      "file": "navigation/VC-03-toolbar-tabs.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-04",
+      "file": "navigation/VC-04-sidebar-expanded.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-05",
+      "file": "scaffold/VC-05-explorer-inspector-console.png",
+      "tab": "Inicio",
+      "viewport": "1440x1100",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-06",
+      "file": "seeds/VC-06-seed-windows.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-07",
+      "file": "journey/VC-07-datos-empty.png",
+      "tab": "Datos",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-08",
+      "file": "journey/VC-08-analisis.png",
+      "tab": "Análisis",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-09",
+      "file": "journey/VC-09-resultados-empty.png",
+      "tab": "Resultados",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-10",
+      "file": "journey/VC-10-reportes-pack.png",
+      "tab": "Reportes",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-11",
+      "file": "chrome/VC-11-statusbar-region.png",
+      "tab": "Inicio",
+      "viewport": "1440x1100",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-12a",
+      "file": "responsive/VC-12a-width-1440.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-12b",
+      "file": "responsive/VC-12b-width-1280.png",
+      "tab": "Inicio",
+      "viewport": "1280x800",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-13",
+      "file": "chrome/VC-13-dual-header.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-14",
+      "file": "seeds/VC-14-floating-window-chrome.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-15",
+      "file": "false-affordances/VC-15-false-affordances.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-16",
+      "file": "responsive/VC-16-sidebar-collapsed.png",
+      "tab": "Inicio",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-17",
+      "file": "navigation/VC-17-sidebar-menu-groups.png",
+      "tab": "Datos",
+      "viewport": "1440x900",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    },
+    {
+      "id": "VC-18",
+      "file": "scaffold/VC-18-planningmode-panels.png",
+      "tab": "Datos",
+      "viewport": "1440x1100",
+      "capturedAt": "2026-08-12T01:31:44.650Z",
+      "url": "http://localhost:3000"
+    }
+  ]
+}

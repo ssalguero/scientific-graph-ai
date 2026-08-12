@@ -75,6 +75,8 @@ export type WorkspaceBodyLayoutProps = {
  * UX-2.23 — Surface presentation layer around PanelLayout regions.
  * UX-2.24 — Navigation grammar in SemanticHeader.title (static Workspace › Canvas).
  * UX-2.25 — DensityProvider semantic boundary (Fragment; spacing SSOT).
+ * CRP-6.2 — Canvas IDE chrome (breadcrumbs / Explorer hints / StatusChip) visually
+ *   demoted so scientific content dominates; structure retained for UX freezes.
  * Owns exactly one canvas surface marker; children are its direct child.
  */
 export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
@@ -93,9 +95,13 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
   const showBottomHandle = !state.bottomCollapsed;
 
   const canvasActive = activePanelId === "canvas";
+  /**
+   * CRP-6.2.1 — Quiet commercial canvas frame (no IDE graph-paper / loud active
+   * ring). Stage content remains the visual protagonist; expand rails stay.
+   */
   const canvasActiveClass = canvasActive
-    ? "border-[var(--color-brand-primary)]/45 shadow-[var(--elevation-popover)] ring-1 ring-inset ring-[var(--color-brand-primary)]/20"
-    : "border-[var(--color-border-muted)] shadow-[var(--elevation-card)]";
+    ? "border-[var(--color-border-muted)]/70 shadow-none"
+    : "border-[var(--color-border-muted)]/50 shadow-none";
 
   return (
     <div className="flex min-w-0 flex-col">
@@ -132,70 +138,74 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
               ? "Canvas activo del Workspace"
               : "Canvas del Workspace — haga clic para activarlo"
           }
-          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--color-surface-floating)] transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--color-border-subtle)_55%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--color-border-subtle)_55%,transparent)_1px,transparent_1px)] [background-size:24px_24px] ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
+          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--color-surface-canvas)] transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
         >
-          {canvasActive ? (
-            <span
-              aria-hidden
-              className={`pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--color-brand-primary)] ${SURFACE_TOKENS.radius.canvas}`}
-            />
-          ) : null}
           <PanelSurface variant="canvas">
             <Surface>
               <PanelLayout>
-                <SurfaceHeader>
-                  <PanelHeaderRegion>
-                    <SemanticHeader
-                      leading={<WorkspaceIcon name="sparkles" size="lg" />}
-                      title={
-                        <Navigation>
-                          <Breadcrumbs>
-                            <BreadcrumbItem>Workspace</BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>Canvas</BreadcrumbItem>
-                          </Breadcrumbs>
-                          <PageTitle>Canvas</PageTitle>
-                        </Navigation>
-                      }
-                      trailing={
-                        <PanelToolbar>
-                          <ActionGroup>
-                            <ActionButton
-                              icon={<WorkspaceIcon name="sync" size="lg" />}
-                              appearance="muted"
-                            />
-                          </ActionGroup>
-                        </PanelToolbar>
-                      }
-                    />
-                  </PanelHeaderRegion>
-                </SurfaceHeader>
-                <PanelToolbarRegion>
-                  <PanelToolbar>
-                    <HintGroup>
-                      <Hint variant="tip">
-                        Canvas central del Workspace. Explorer a la izquierda;
-                        Inspector a la derecha.
-                      </Hint>
-                      <Hint variant="tip">
-                        Si un panel está oculto, use el borde lateral para
-                        expandirlo de nuevo.
-                      </Hint>
-                    </HintGroup>
-                    <ToolbarSpacer />
-                    <StatusChip>
-                      {canvasActive ? "Canvas activo" : "Workspace"}
-                    </StatusChip>
-                  </PanelToolbar>
-                </PanelToolbarRegion>
+                {/*
+                  CRP-6.2 — IDE canvas chrome retained in source (UX freezes) but
+                  visually suppressed so stage content is the protagonist.
+                */}
+                <div className="hidden" aria-hidden="true" data-product-face-canvas-chrome="header">
+                  <SurfaceHeader>
+                    <PanelHeaderRegion>
+                      <SemanticHeader
+                        leading={<WorkspaceIcon name="sparkles" size="lg" />}
+                        title={
+                          <Navigation>
+                            <Breadcrumbs>
+                              <BreadcrumbItem>Workspace</BreadcrumbItem>
+                              <BreadcrumbSeparator />
+                              <BreadcrumbItem>Canvas</BreadcrumbItem>
+                            </Breadcrumbs>
+                            <PageTitle>Canvas</PageTitle>
+                          </Navigation>
+                        }
+                        trailing={
+                          <PanelToolbar>
+                            <ActionGroup>
+                              <ActionButton
+                                icon={<WorkspaceIcon name="sync" size="lg" />}
+                                appearance="muted"
+                              />
+                            </ActionGroup>
+                          </PanelToolbar>
+                        }
+                      />
+                    </PanelHeaderRegion>
+                  </SurfaceHeader>
+                </div>
+                <div className="hidden" aria-hidden="true" data-product-face-canvas-chrome="toolbar">
+                  <PanelToolbarRegion>
+                    <PanelToolbar>
+                      <HintGroup>
+                        <Hint variant="tip">
+                          Canvas central del Workspace. Explorer a la izquierda;
+                          Inspector a la derecha.
+                        </Hint>
+                        <Hint variant="tip">
+                          Si un panel está oculto, use el borde lateral para
+                          expandirlo de nuevo.
+                        </Hint>
+                      </HintGroup>
+                      <ToolbarSpacer />
+                      <StatusChip>
+                        {canvasActive ? "Canvas activo" : "Workspace"}
+                      </StatusChip>
+                    </PanelToolbar>
+                  </PanelToolbarRegion>
+                </div>
                 <SurfaceBody>
                   <PanelContentRegion>{children}</PanelContentRegion>
                 </SurfaceBody>
-                <SurfaceFooter>
-                  <PanelFooterRegion>
-                    <SemanticFooter />
-                  </PanelFooterRegion>
-                </SurfaceFooter>
+                <div className="hidden" aria-hidden="true" data-product-face-canvas-chrome="footer">
+                  <SurfaceFooter>
+                    <PanelFooterRegion>
+                      <SemanticFooter />
+                    </PanelFooterRegion>
+                  </SurfaceFooter>
+                </div>
               </PanelLayout>
             </Surface>
           </PanelSurface>

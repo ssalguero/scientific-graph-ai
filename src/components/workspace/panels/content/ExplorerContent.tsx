@@ -2,8 +2,6 @@
 
 import { memo, useState } from "react";
 
-import { UI_TOKENS } from "@/lib/ui/tokens";
-
 import { WorkspaceGroup } from "../../composition";
 import { ContentGroup } from "../../content";
 import { DensityProvider } from "../../density";
@@ -39,7 +37,7 @@ import {
   SurfaceHeader,
 } from "../../surface";
 import { PanelAccent, PanelSurface, SURFACE_TOKENS } from "../../surfaces";
-import { ActionButton, ActionGroup, PanelToolbar } from "../../toolbar";
+import { ActionGroup, PanelToolbar } from "../../toolbar";
 import { EmptyState } from "../empty";
 import { PanelContentSection } from "./PanelContentSection";
 
@@ -88,18 +86,7 @@ export const ExplorerContent = memo(function ExplorerContent() {
                   }
                   trailing={
                     <PanelToolbar>
-                      <ActionGroup>
-                        <ActionButton
-                          icon={<WorkspaceIcon name="add" size="lg" />}
-                          appearance="muted"
-                        >
-                          Add
-                        </ActionButton>
-                        <ActionButton
-                          icon={<WorkspaceIcon name="search" size="lg" />}
-                          appearance="muted"
-                        />
-                      </ActionGroup>
+                      <ActionGroup />
                     </PanelToolbar>
                   }
                 />
@@ -117,16 +104,7 @@ export const ExplorerContent = memo(function ExplorerContent() {
                           <EmptyState
                             icon={<WorkspaceIcon name="project" size="lg" />}
                             title="No series"
-                            description="Create your first data series."
-                            action={
-                              <button
-                                type="button"
-                                className={`${UI_TOKENS.button.outlineSm}`}
-                                aria-label="New series"
-                              >
-                                New Series
-                              </button>
-                            }
+                            description="Series appear when you import data or build a graph in the scientific workspace."
                           />
                         </PanelContentSection>
                       </DisclosureSection>

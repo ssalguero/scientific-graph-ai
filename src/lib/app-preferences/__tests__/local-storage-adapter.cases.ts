@@ -55,7 +55,7 @@ export const runLocalStorageAdapterCases = (assertCase: AssertCase): void => {
   const defaultPrefs = readUserPreferences(defaultStorage);
   assertCase(
     "adapter.read.themeDefault",
-    defaultPrefs.theme === "light" && defaultPrefs.showContextualHints === true
+    defaultPrefs.theme === "dark" && defaultPrefs.showContextualHints === true
   );
 
   const writeStorage = createMockStorage();

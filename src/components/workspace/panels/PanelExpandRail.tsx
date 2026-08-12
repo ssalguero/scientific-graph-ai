@@ -14,12 +14,13 @@ export type PanelExpandRailProps = {
   isActive?: boolean;
 };
 
+/** CRP-6.2.1 — Expand rails stay available but visually quieter vs workspace. */
 const positionClass: Record<PanelPosition, string> = {
-  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--color-surface-default)] px-0.5 transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-canvas)]",
+  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border-0 bg-transparent px-0.5 opacity-35 hover:opacity-90 transition-[colors,opacity] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-default)]/60",
   right:
-    "max-md:hidden flex shrink-0 flex-col items-center justify-center border bg-[var(--color-surface-default)] px-0.5 transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-canvas)]",
+    "max-md:hidden flex shrink-0 flex-col items-center justify-center border-0 bg-transparent px-0.5 opacity-35 hover:opacity-90 transition-[colors,opacity] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-default)]/60",
   bottom:
-    "flex shrink-0 items-center justify-center border bg-[var(--color-surface-default)] py-0.5 transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-canvas)]",
+    "flex shrink-0 items-center justify-center border-0 bg-transparent py-0.5 opacity-35 hover:opacity-90 transition-[colors,opacity] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-default)]/60",
 };
 
 /**
@@ -34,8 +35,8 @@ export function PanelExpandRail({
   isActive = false,
 }: PanelExpandRailProps) {
   const activeClass = isActive
-    ? "border-[var(--color-brand-primary)]/40 shadow-[var(--elevation-card)]"
-    : "border-[var(--color-border-default)]";
+    ? "text-[var(--color-text-muted)]"
+    : "text-[var(--color-text-muted)]/80";
 
   return (
     <div
@@ -44,12 +45,6 @@ export function PanelExpandRail({
       data-panel-id={position}
       data-panel-active={isActive ? "true" : "false"}
     >
-      {isActive ? (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--color-brand-primary)]"
-        />
-      ) : null}
       <button
         type="button"
         data-panel-expand={position}

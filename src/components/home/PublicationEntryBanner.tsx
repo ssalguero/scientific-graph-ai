@@ -22,11 +22,12 @@ export function PublicationEntryBanner({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-            Evaluar publicación (SCI-59 → SCI-56 / SCI-60)
+            Evaluar para publicar
           </p>
           <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Workflow guiado hacia dashboards metodológicos y de preparación
-            editorial. Resalte los toggles SCI-56 y SCI-60 abajo.
+            editorial. Use los paneles de publicación abajo cuando estén
+            disponibles.
           </p>
         </div>
         <button
@@ -41,7 +42,7 @@ export function PublicationEntryBanner({
       <div className="flex flex-wrap gap-2 mt-3">
         {canStartWorkflow ? (
           <button type="button" onClick={onStartWorkflow} className={btnPrimary}>
-            Iniciar workflow
+            Iniciar evaluación
           </button>
         ) : (
           <button type="button" onClick={onGoToImport} className={btnPrimary}>

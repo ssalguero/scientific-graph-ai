@@ -23,6 +23,13 @@ import type { WorkspaceContentProps } from "./types";
  * UX-2.25 — Density tokens for header spacing (hardcoded padding/stack gaps removed).
  * UX-4.4 — Toolbar detached; AdaptiveToolbar lives in AppShell Toolbar Region.
  * UX-4.5 — Composition fill (h-full min-h-0); Workspace owns scroll.
+ * CRP-6.1 — Product Face: sole brand lives in AppShell toolbar; UX-2.3 frozen
+ *   dual-brand / Ready theater retained in source for freeze validators but
+ *   visually suppressed (GREEN presentation).
+ * CRP-6.1 fidelity — product-face context strip demoted (sr-only); project
+ *   context remains in AppShell header to avoid competing chrome bands.
+ * CRP-6.2 — PlanningMode / PanelState commercial defaults collapse IDE scaffold
+ *   (Explorer / Inspector / Console); infrastructure retained via expand rails.
  * Move-only infrastructure: no state, hooks, or domain logic.
  */
 export function WorkspaceContent({
@@ -33,12 +40,15 @@ export function WorkspaceContent({
       <div className={WORKSPACE_TOKENS.inner}>
         <DensityProvider>
         {/*
-          P0.1 — AppShell/Workspace coherence: quieter workspace context strip.
-          Product brand hierarchy stays in AppShell Toolbar; strings frozen by UX-2.3.
+          UX-2.3 freeze strings retained below. Visually suppressed for commercial
+          Product Face (CRP-6.1) — brand hierarchy is AppShell toolbar only.
         */}
         <header
           data-workspace-header
-          className={`flex flex-wrap items-start justify-between rounded-[var(--radius-control)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-[var(--spacing-tight)] py-[var(--spacing-tight)] ${WORKSPACE_DENSITY_TOKENS.sectionGap} ${WORKSPACE_DENSITY_TOKENS.headerGap}`}
+          className="hidden"
+          style={{ display: "none" }}
+          aria-hidden="true"
+          hidden
         >
           <div
             className={`min-w-0 flex flex-col ${WORKSPACE_DENSITY_TOKENS.iconGap}`}
@@ -60,6 +70,20 @@ export function WorkspaceContent({
             Ready
           </p>
         </header>
+        <div
+          data-product-face-context
+          className="sr-only"
+          aria-hidden="true"
+        >
+          <div className="min-w-0">
+            <p className={SURFACE_TOKENS.metadata.root}>Proyecto</p>
+            <p
+              className={`truncate text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] ${SURFACE_TOKENS.tone.default}`}
+            >
+              Contexto del espacio de trabajo
+            </p>
+          </div>
+        </div>
         </DensityProvider>
         <WorkspaceModeProvider>
           <PanelProvider initialState={PlanningMode.apply()}>

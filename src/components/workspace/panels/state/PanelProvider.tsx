@@ -32,8 +32,38 @@ export function PanelProvider({
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setState(load());
+    const stored = load();
+    /**
+     * CRP-6.2.1 — E0 layout fidelity.
+     * PlanningMode / DEFAULT_PANEL_STATE set commercial L/R/B collapsed, but
+     * UX-2.8 hydration previously replaced that with pre-E0 persisted
+     * fully-expanded scaffold (Explorer/Inspector/Console open), squeezing
+     * the workspace. Migrate that legacy signature once: keep sizes, apply
+     * commercial collapse. Selective expand still persists afterward.
+     */
+    const commercialCollapsedIntent =
+      initialState != null &&
+      initialState.leftCollapsed &&
+      initialState.rightCollapsed &&
+      initialState.bottomCollapsed;
+    const preCommercialFullyExpanded =
+      !stored.leftCollapsed &&
+      !stored.rightCollapsed &&
+      !stored.bottomCollapsed;
+
+    if (commercialCollapsedIntent && preCommercialFullyExpanded) {
+      setState({
+        ...stored,
+        leftCollapsed: true,
+        rightCollapsed: true,
+        bottomCollapsed: true,
+      });
+    } else {
+      setState(stored);
+    }
     setHydrated(true);
+    // initialState is PlanningMode commercial seed; read once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once
   }, []);
 
   useEffect(() => {

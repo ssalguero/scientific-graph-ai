@@ -139,8 +139,10 @@ export const typography = {
  * Legacy `--app-*` references elsewhere resolve via ThemeRuntimeHost bridge.
  */
 export const layout = {
+  // CRP-6.1 — shell uses theme-resolved canvas/primary (ThemeProvider syncs light/dark).
+  // Inverse hack removed: it inverted when data-theme tokens actually switched.
   appShellLight: `bg-[var(--color-surface-canvas)] text-[var(--color-text-primary)] ${transitions.colors200}`,
-  appShellDark: `bg-[var(--color-surface-inverse)] text-[var(--color-text-inverse)] ${transitions.colors200}`,
+  appShellDark: `bg-[var(--color-surface-canvas)] text-[var(--color-text-primary)] ${transitions.colors200}`,
 } as const;
 
 /** Canonical workspace shell strings (D47 freeze values — unchanged). */
@@ -188,14 +190,14 @@ export const button = {
   outlineSm: `inline-flex h-7 items-center justify-center ${border.default} bg-[var(--color-surface-default)] ${spacing.px2} ${radius.md} text-xs text-[var(--color-text-primary)] ${transitions.colors200} hover:bg-[var(--color-surface-canvas)] hover:border-[var(--color-text-muted)] ${DS_FOCUS_RING}`,
   actionBar: `inline-flex h-8 items-center justify-center ${radius.md} ${spacing.px25} text-xs font-semibold ${transitions.colors200} disabled:opacity-50 disabled:cursor-not-allowed ${DS_FOCUS_RING}`,
   actionBarPrimary:
-    "bg-[var(--color-feedback-success)] text-[var(--color-text-inverse)] hover:opacity-90 min-w-[7.5rem]",
+    "bg-[var(--color-brand-primary)] text-[var(--color-text-inverse)] hover:bg-[var(--color-brand-hover)] min-w-[7.5rem]",
   actionBarSave:
     "border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)] text-[var(--color-text-inverse)] hover:bg-[var(--color-brand-hover)] min-w-[7.5rem]",
   actionBarGroup: `flex flex-wrap items-center ${spacing.gap2}`,
   actionBarDivider:
     "hidden sm:block h-7 w-px shrink-0 bg-[var(--color-border-default)]",
-  projectPrimary: `${radius.md} bg-[var(--color-feedback-success)] ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-semibold text-[var(--color-text-inverse)] hover:opacity-90 ${transitions.colors}`,
-  projectSave: `${radius.md} border border-[var(--color-feedback-success)] bg-[var(--color-feedback-success)] ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-semibold text-[var(--color-text-inverse)] hover:opacity-90 ${transitions.colors}`,
+  projectPrimary: `${radius.md} bg-[var(--color-brand-primary)] ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-semibold text-[var(--color-text-inverse)] hover:bg-[var(--color-brand-hover)] ${transitions.colors}`,
+  projectSave: `${radius.md} border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)] ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-semibold text-[var(--color-text-inverse)] hover:bg-[var(--color-brand-hover)] ${transitions.colors}`,
   projectSecondary: `${radius.md} ${border.default} bg-[var(--color-surface-default)] ${spacing.px25} ${spacing.py15} text-xs sm:text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-canvas)] ${transitions.colors}`,
   toggleInput: "peer sr-only",
   toggleShell: `relative inline-flex h-5 w-9 shrink-0 items-center ${radius.full}`,
@@ -223,7 +225,8 @@ const sidebarWidthTablet = "w-[240px] max-w-[240px]";
 const sidebarWidthCollapsed = "w-16 max-w-[4rem]";
 /** UX-1.1 — denser panel chrome; color transitions only (Design System motion direction). */
 const sidebarShellChrome = `shrink-0 bg-[var(--color-surface-default)] ${border.right} flex-col min-h-screen ${transitions.colors200}`;
-const sidebarShellExpanded = `hidden lg:flex ${sidebarWidthTablet} xl:w-[280px] xl:max-w-[280px] ${sidebarShellChrome}`;
+/** CRP-6.2 — subordinate Proyecto rail; keep 240px so workspace remains protagonist. */
+const sidebarShellExpanded = `hidden lg:flex ${sidebarWidthTablet} ${sidebarShellChrome}`;
 const sidebarShellCollapsed = `hidden lg:flex ${sidebarWidthCollapsed} ${sidebarShellChrome} overflow-hidden`;
 
 export const sidebar = {

@@ -22,11 +22,11 @@ export const runUserPreferencesCases = (assertCase: AssertCase): void => {
   );
   assertCase(
     "domain.parseThemeMode.invalid",
-    parseThemeMode("invalid") === "light"
+    parseThemeMode("invalid") === "dark"
   );
   assertCase(
     "domain.parseThemeMode.absent",
-    parseThemeMode(undefined) === "light"
+    parseThemeMode(undefined) === "dark"
   );
 
   assertCase(
@@ -50,16 +50,16 @@ export const runUserPreferencesCases = (assertCase: AssertCase): void => {
 
   assertCase(
     "domain.defaultUserPreferences.values",
-    DEFAULT_USER_PREFERENCES.theme === "light" &&
+    DEFAULT_USER_PREFERENCES.theme === "dark" &&
       DEFAULT_USER_PREFERENCES.showContextualHints === true
   );
 
   const first = createDefaultUserPreferences();
   const second = createDefaultUserPreferences();
-  first.theme = "dark";
+  first.theme = "light";
   assertCase(
     "domain.createDefaultUserPreferences.newCopy",
-    second.theme === "light" && first !== second
+    second.theme === "dark" && first !== second
   );
 
   const base = createDefaultUserPreferences();
@@ -93,7 +93,7 @@ export const runUserPreferencesCases = (assertCase: AssertCase): void => {
   assertCase(
     "domain.validateUserPreferences.invalidValues",
     validateUserPreferences({ theme: "bad", showContextualHints: "bad" })
-      .theme === "light" &&
+      .theme === "dark" &&
       validateUserPreferences({ theme: "bad", showContextualHints: "bad" })
         .showContextualHints === true
   );

@@ -13,14 +13,18 @@ const LEFT_WIDTH = Math.round(REF_WIDTH * 0.25);
 const RIGHT_WIDTH = Math.round(REF_WIDTH * 0.25);
 const BOTTOM_HEIGHT = Math.round(REF_HEIGHT * 0.2);
 
+/**
+ * CRP-6.2 — Commercial Product Face defaults: IDE scaffold collapsed.
+ * Widths remain UX-2.10 synced (280 / 280 / 240). Panels stay available via expand rails.
+ */
 export const PlanningMode: WorkspaceMode = {
   id: "planning",
   title: "Planning",
   apply(): PanelState {
     return {
-      leftCollapsed: false,
-      rightCollapsed: false,
-      bottomCollapsed: false,
+      leftCollapsed: true,
+      rightCollapsed: true,
+      bottomCollapsed: true,
       leftWidth: LEFT_WIDTH,
       rightWidth: RIGHT_WIDTH,
       bottomHeight: BOTTOM_HEIGHT,

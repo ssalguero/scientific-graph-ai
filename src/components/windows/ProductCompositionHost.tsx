@@ -119,8 +119,18 @@ const SEED_HOVER_CONTENT = "ux-9.3-seed-content";
 const SEED_CLIPBOARD_TEXT = "UX-9.5 clipboard";
 
 /**
+ * CRP-6.2 — Commercial Product Face keeps demo seeds OFF by default.
+ * Opt-in for infrastructure / demo profiles: NEXT_PUBLIC_WORKSPACE_SEEDS=1.
+ * Window / Dock models unchanged; seed utility retained.
+ */
+function isCommercialWorkspaceSeedGated(): boolean {
+  return process.env.NEXT_PUBLIC_WORKSPACE_SEEDS !== "1";
+}
+
+/**
  * Temporary integration utility only.
  * Disabled automatically when any product (or prior) windows exist.
+ * CRP-6.2 — early-return on commercial face (seeds OFF unless env opt-in).
  */
 function WorkspaceActivationSeed() {
   const { state, api } = useWindowContext();
@@ -129,6 +139,11 @@ function WorkspaceActivationSeed() {
 
   useEffect(() => {
     if (seededRef.current) {
+      return;
+    }
+    // CRP-6.2 — commercial / default face: no demo Workspace A/B windows
+    if (isCommercialWorkspaceSeedGated()) {
+      seededRef.current = true;
       return;
     }
     // Activation Seed Freeze — product windows present → NO-OP

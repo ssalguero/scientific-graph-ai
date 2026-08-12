@@ -18,7 +18,7 @@ import { legacyAppTokenBridgeStyle } from "./legacy-app-token-bridge";
  */
 export function ThemeRuntimeHost({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider defaultTheme="dark">
       <>
         <a href="#main-content" className="ux-skip-link">
           Skip to main content

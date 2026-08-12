@@ -10,7 +10,7 @@ Its objective is to summarize the current architectural maturity, documentation 
 
 Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout the lifetime of the project.
 
-**SPE-1 CERTIFIED / CLOSED (2026-08-11):** Series closed — see [`docs/SPE/official-records/SPE-1-Series-Closure.md`](./SPE/official-records/SPE-1-Series-Closure.md). Prior: SPE-1.V `831dec1` · SPE-1.2 `af57303` · SPE-1.1 `b352705` · SPE-1.E `66b6005` · SPE-1.0 `aff8bff` · UXC-1 `605e235`. Recommended version line **v1.1.x** (bump **NOT EXECUTED**). OBS-1 residual · ARCH-U deferred · Commercial Layout/Product Face debt preserved (RD-V02 — Commercial Gate dependency). **SPE-1 CERTIFIED / CLOSED ≠ Commercial Test Ready**.
+**CRP OPEN (2026-08-12):** Commercial Readiness Preparation — [`CRP-6.2 Phase 2 PASS`](./CRP/official-records/CRP-6-2-Layout-IA-Infrastructure-Convergence.md) · CRP-6.1 Phase 1 + Visual Fidelity PASS · CRP-6 PASS · **E0 ACCEPT / Visual Target FROZEN** · Layout/IA/infrastructure convergence in `src/**`. Next: **Owner-authorized Phase 3**. **SPE-1 CERTIFIED / CLOSED**. SemVer **1.0.0**. ARCH-U **NOT ACTIVE**. **CTR = NOT YET**. Lovable = **VISUAL REFERENCE**.
 
 ---
 
@@ -49,7 +49,8 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | SPE-1.V | **PASS** (Validation Umbrella + Evidence) |
 | SPE-1.C | **PASS** (Series Certification) |
 | Next authorized SPE step | **None** — series closed |
-| Next program | **Commercial Readiness Preparation** — Gap Assessment (RD-V02 Layout/Product Face · first-time UX · packaging · Owner CTR declare) · OBS-1 residual · ARCH-U deferred · marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions · **Commercial Test Ready = NOT YET** |
+| CRP program | **OPEN** — [`docs/CRP/official-records/`](./CRP/official-records/) · CRP-0…6 **PASS** · **CRP-6.1 Phase 1 PASS** · **CRP-6.2 Phase 2 PASS** · next Owner-authorized Phase 3 |
+| Next program | **Commercial Readiness Preparation** — E0 frozen · Phase 2 layout/IA done · Phase 3 pending authorization · **CTR = NOT YET** |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** (**PRODUCTION READY**) |
@@ -61,7 +62,7 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | Operational `package.json` | **1.0.0** (aligned with Version Identity; FR-02 **CLOSED**) |
 | Git tags | **1.0.0** + **v1.0** (FR-03 **CLOSED**; untouched by SDC-1 / DEP-1) |
 
-Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/` · `docs/PRV/` · `docs/SDC/` · `docs/DEP/` · `docs/UXC/` · `docs/SPE/`. PP11 historical certificate remains cite-only (repository release). Live DEPLOY evidence closed under **DEP-2** with disclosures. Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes deployment planning; DEP-2 certifies hosted execution of frozen **1.0.0**. **UXC-1 CERTIFIED / CLOSED** (non-arch Continuity; ≠ UX-10 reopen; bump **NOT EXECUTED**). **SPE-1 CERTIFIED / CLOSED**. Commercial Test Ready ≠ SPE-1 CERTIFIED / CLOSED.
+Authority: `docs/RELEASE/official-records/` · `docs/PRS/` · `docs/PRODUCTION/` · `docs/PRV/` · `docs/SDC/` · `docs/DEP/` · `docs/UXC/` · `docs/SPE/` · `docs/CRP/`. PP11 historical certificate remains cite-only (repository release). Live DEPLOY evidence closed under **DEP-2** with disclosures. Post-Release continuity = **PRV-1** (≠ reopen PRS). SDC-1 certifies scientific delivery continuity without version bump. DEP-1 freezes deployment planning; DEP-2 certifies hosted execution of frozen **1.0.0**. **UXC-1 CERTIFIED / CLOSED** (non-arch Continuity; ≠ UX-10 reopen; bump **NOT EXECUTED**). **SPE-1 CERTIFIED / CLOSED**. **CRP OPEN** (CRP-0/1 PASS). Commercial Test Ready ≠ SPE-1 CERTIFIED / CLOSED.
 
 **Future Work Boundary:** FR-06 residual / architectural items remain Future Work (UX-10 #1/#2/#3/#5/#6/#7/#8/#9; ARCH-U); PLUGINS loading · COLLAB realtime/CRDT — **OUT OF SCOPE** / **DEFERRED** under PP Issues Registry; OBS-1 residual / AIR-1 / full EXPORT-3 ZIP = pointers only — **NOT AUTHORIZED BY SDC-1** / **NOT AUTHORIZED BY UXC-1** / **NOT STARTED BY SPE-1.0**. Cloud-enabled / Supabase RLS = future separately governed gate.
 
@@ -77,7 +78,7 @@ Version Identity: **1.0.0** / display **v1.0**
 
 Current governance phase:
 
-**SPE-1 CERTIFIED / CLOSED** — Series Certification complete; Commercial Test Ready **NOT YET**
+**CRP OPEN** — CRP-0…5.2 PASS; SPE-1 **CERTIFIED / CLOSED**; Commercial Test Ready **NOT YET**
 
 Previous SPE hygiene:
 
@@ -139,7 +140,7 @@ SPE planning / hygiene records:
 
 Next authorized phase:
 
-**Commercial Readiness Preparation** — Gap Assessment (Layout/Product Face RD-V02 · first-time UX · packaging · Owner CTR declare). OBS-1 residual · ARCH-U deferred. Marketplace / Lovable / Option C / v1.1 bump = separate Owner decisions — see [`SPE-1 Series Closure`](./SPE/official-records/SPE-1-Series-Closure.md). **Commercial Test Ready = NOT YET**
+**Commercial Readiness Preparation — OPEN** (CRP-0…6 PASS · **CRP-6.1 Phase 1 PASS** · next Owner-authorized Phase 2). See [`CRP-6.1`](./CRP/official-records/CRP-6-1-Product-Face-Foundation.md). **CTR = NOT YET**
 
 Production Approval:
 
@@ -195,7 +196,7 @@ AI Implementation:
 - AI-I0…AI-I9: COMPLETE
 - AI-I10 Certification: CERTIFIED (`src/ai/certification/`)
 - Runtime intelligence / assistants / prediction: NOT IMPLEMENTED (by design)
-- Next authorized program step: **Commercial Readiness Preparation** — SPE-1 **CERTIFIED / CLOSED**. Layout/Product Face = Commercial Gate dependency (RD-V02). OBS-1 residual · ARCH-U deferred · marketplace/Lovable/Option C/v1.1 bump = separate Owner decisions · **Commercial Test Ready = NOT YET**
+- Next authorized program step: **Owner-authorized Product Face Implementation Phase 2** — CRP **OPEN** (CRP-0…6 PASS · **CRP-6.1 Phase 1 PASS**). **CTR = NOT YET** · Lovable = **VISUAL REFERENCE**
 
 Prior certified peers:
 
@@ -233,7 +234,8 @@ ESTABLISHED
 
 Implementation Status
 
-SPE-1 CERTIFIED / CLOSED — next: Commercial Readiness Preparation
+CRP OPEN (CRP-0…6 PASS · CRP-6.1 Phase 1 PASS) — next: Owner-authorized Product Face Implementation Phase 2
+SPE-1 CERTIFIED / CLOSED (untouched)
 
 Release Target
 
@@ -322,7 +324,7 @@ AI Domain is RELEASE CERTIFIED. AI-I0…AI-I10 COMPLETE. Implementation Series C
 
 **Current objective (living):**
 
-**SPE-1 CERTIFIED / CLOSED** — see [`SPE-1 Series Closure`](./SPE/official-records/SPE-1-Series-Closure.md). Next living objective: **Commercial Readiness Preparation**. Commercial Test Ready requires Layout/Product Face before Commercial Gate (RD-V02).
+**Commercial Readiness Preparation — OPEN** — see [`CRP-6.1 Product Face Foundation`](./CRP/official-records/CRP-6-1-Product-Face-Foundation.md). SPE-1 remains CLOSED. Next: **Owner-authorized Product Face Implementation Phase 2**. ARCH-U NOT ACTIVE; Lovable = VISUAL REFERENCE.
 
 Future development shall follow:
 
@@ -354,11 +356,11 @@ Release
 
 Immediate priorities include:
 
-1. Execute **Commercial Readiness Gap Assessment** (Layout/Product Face RD-V02 · first-time UX · packaging).
-2. Preserve SPE-1 Charter / certified history (no silent SPE reopen).
-3. Preserve architectural boundaries; do **not** declare Commercial Test Ready while Layout/Product Face debt blocks first-time discovery.
-4. Maintain documentation synchronization with live tip.
-5. Do **not** treat historical PROD-3, UXC-2, OBS-1, AIR-1, or ARCH-U as automatic next without Owner authorization.
+1. Review [`CRP-6.1`](./CRP/official-records/CRP-6-1-Product-Face-Foundation.md); then explicitly authorize **Product Face Implementation Phase 2** (YELLOW infrastructure suppression only).
+2. Do **not** expand into Window/Dock/Layout, Session, engines, or ARCH-U; honor CRP-4 fences.
+3. Preserve SPE-1 CLOSED; SemVer 1.0.0; ARCH-U NOT ACTIVE; CTR NOT YET.
+4. Validate against CRP-5.2 corpus (before) + E0 freeze (desired); known `validate:workspace-architecture` FAIL 22/26 remains pre-existing.
+5. On risk escalation → Plan B / Plan C per CRP-5.3.
 
 ---
 
@@ -400,7 +402,7 @@ SPE-1.C Series Certification (**PASS** · **SPE-1 CERTIFIED / CLOSED**)
 
 ↓
 
-Commercial Readiness Preparation (Layout / Product Face obligatory)
+Commercial Readiness Preparation — OPEN (CRP-0…6 PASS · CRP-6.1 Phase 1 PASS · next Owner-authorized Phase 2)
 
 ↓
 
@@ -438,4 +440,4 @@ The project is considered on track when:
 
 Scientific Graph AI has completed its architectural foundation, Release 1.0, hosted deployment (DEP-2), and UX Continuity (UXC-1).
 
-The living next program is **Commercial Readiness Preparation**. **SPE-1 CERTIFIED / CLOSED**. Commercial Test Ready remains gated on Layout / Product Face / first-time-user journey (RD-V02) and Owner declaration — not on SPE series close alone.
+The living program is **Commercial Readiness Preparation — OPEN** (CRP-0…6 PASS · **CRP-6.1 Phase 1 PASS**). Next: Owner-authorized Product Face Implementation Phase 2. **SPE-1 CERTIFIED / CLOSED**. CTR **NOT YET**. Lovable = **VISUAL REFERENCE**.

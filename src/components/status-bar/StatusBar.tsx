@@ -17,6 +17,9 @@ import { StatusBarLayout } from "./StatusBarLayout";
  * - The StatusBar public API is intentionally minimal.
  *   Additional props require a future additive API change.
  *
+ * CRP-6.2 — Empty StatusBar presentation is visually suppressed (no status theater).
+ * Infrastructure and AppShell status region remain; do not delete.
+ *
  * Public API (FROZEN):
  *   children?: ReactNode
  *   className?: string
