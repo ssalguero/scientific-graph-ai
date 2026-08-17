@@ -12,6 +12,7 @@ import { RecentProjectsPanel } from "@/components/history";
 import { SettingsPanel } from "@/components/settings";
 import { LocalProjectsPanel } from "@/app/LocalProjectsPanel";
 import { ProjectScientificFilePanel } from "@/app/ProjectScientificFilePanel";
+import { PROJECT_FILE_EXTENSION } from "@/lib/project";
 import { getIcon, type UiIconName } from "@/lib/ui/icons";
 import { UI_TOKENS } from "@/lib/ui/tokens";
 import { mergeClassNames } from "../classNames";
@@ -49,13 +50,16 @@ const {
   sectionGapCollapsed: sidebarSectionGapCollapsed,
   shellCollapsed: sidebarShellCollapsed,
   shellExpanded: sidebarShellExpanded,
+  shellHidden: sidebarShellHidden,
   soonBadge: sidebarSoonBadge,
   widthDesktop: sidebarWidthDesktop,
 } = UI_TOKENS.sidebar;
-/** Additive chrome props (D46.3) — optional; do not break SidebarProps callers. */
+/** Additive chrome props (D46.3 / CRP-6.3) — optional; do not break SidebarProps callers. */
 type SidebarChromeProps = {
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  /** CRP-6.3 — zero-width presentation; region remains mounted. */
+  chromeSuppressed?: boolean;
 };
 
 /** Below `lg` — mobile drawer viewport (matches theme shells). */
@@ -132,6 +136,7 @@ function RailLabel({ children }: { children: ReactNode }) {
 
 export function Sidebar({
   className,
+  workspaceSection = "home",
   onNewCurve,
   onClearCurves,
   graphLibraryOpen,
@@ -164,13 +169,30 @@ export function Sidebar({
   settingsPanelProps,
   collapsed: collapsedProp,
   onCollapsedChange,
+  chromeSuppressed = false,
 }: SidebarProps & SidebarChromeProps) {
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [projectMoreOpen, setProjectMoreOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const asideRef = useRef<HTMLElement>(null);
   const overlayWasOpenRef = useRef(false);
+
+  const isHome = workspaceSection === "home";
+  const showCientifico =
+    workspaceSection === "analysis" || workspaceSection === "results";
+  const showAnalisisTools =
+    workspaceSection === "analysis" ||
+    workspaceSection === "results" ||
+    workspaceSection === "reports";
+  const showRecursos = workspaceSection === "data";
+  const showAjustes = !isHome;
+
+  const hasRecoveryOrConflict = Boolean(
+    projectFilePanelProps.recoveryPrompt ||
+      projectFilePanelProps.pendingFileOpenConflict
+  );
 
   const railCollapsed = collapsedProp ?? uncontrolledCollapsed;
 
@@ -227,6 +249,12 @@ export function Sidebar({
     }
   }, [overlayOpen, isMobile]);
 
+  useEffect(() => {
+    if (projectActivityOpen) {
+      setProjectMoreOpen(true);
+    }
+  }, [projectActivityOpen]);
+
   /** Mobile drawer always expanded; rail only on lg+. */
   const effectiveRailCollapsed = isMobile ? false : railCollapsed;
 
@@ -234,9 +262,11 @@ export function Sidebar({
     ? overlayOpen
       ? mergeClassNames(sidebarOverlayOpen, sidebarWidthDesktop)
       : sidebarOverlayClosed
-    : effectiveRailCollapsed
-      ? sidebarShellCollapsed
-      : sidebarShellExpanded;
+    : chromeSuppressed
+      ? sidebarShellHidden
+      : effectiveRailCollapsed
+        ? sidebarShellCollapsed
+        : sidebarShellExpanded;
 
   const bodyGap = effectiveRailCollapsed
     ? sidebarSectionGapCollapsed
@@ -244,7 +274,7 @@ export function Sidebar({
 
   return (
     <SidebarRailCollapsedContext.Provider value={effectiveRailCollapsed}>
-      {isMobile && !overlayOpen ? (
+      {isMobile && !overlayOpen && !chromeSuppressed ? (
         <button
           ref={triggerRef}
           type="button"
@@ -276,8 +306,11 @@ export function Sidebar({
           className
         )}
         data-rail={effectiveRailCollapsed ? "collapsed" : "expanded"}
+        data-chrome-suppressed={chromeSuppressed ? "true" : undefined}
         data-mobile-overlay={isMobile && overlayOpen ? "open" : undefined}
-        aria-hidden={isMobile && !overlayOpen ? true : undefined}
+        aria-hidden={
+          chromeSuppressed || (isMobile && !overlayOpen) ? true : undefined
+        }
       >
         <div
           className={mergeClassNames(
@@ -336,8 +369,8 @@ export function Sidebar({
             label={
               <RailLabel>
                 <SidebarGroupLabel
-                  badge=".SGPROJ"
-                  badgeTitle="Archivo de proyecto"
+                  badge="Archivo"
+                  badgeTitle={`Formato de archivo ${PROJECT_FILE_EXTENSION}`}
                 >
                   Proyecto
                 </SidebarGroupLabel>
@@ -354,58 +387,102 @@ export function Sidebar({
             >
               {!effectiveRailCollapsed ? (
                 <ProjectScientificFilePanel {...projectFilePanelProps} />
-              ) : projectFilePanelProps.onOpenLocalLibrary ? (
-                <SidebarItem
-                  icon="library"
-                  label="Proyectos locales"
-                  title="Recuperar proyectos guardados en este navegador (biblioteca local)"
-                  onClick={() =>
-                    void projectFilePanelProps.onOpenLocalLibrary?.()
-                  }
-                  active={localProjectsPanelProps.isOpen}
-                />
+              ) : (
+                <>
+                  <SidebarItem
+                    icon="open"
+                    label="Abrir"
+                    title="Abrir proyecto"
+                    onClick={() =>
+                      projectFilePanelProps.openProjectButtonRef?.current?.click()
+                    }
+                  />
+                  {projectFilePanelProps.onOpenLocalLibrary ? (
+                    <SidebarItem
+                      icon="library"
+                      label="Proyectos locales"
+                      title="Recuperar proyectos guardados en este navegador (biblioteca local)"
+                      onClick={() =>
+                        void projectFilePanelProps.onOpenLocalLibrary?.()
+                      }
+                      active={localProjectsPanelProps.isOpen}
+                    />
+                  ) : null}
+                  {hasRecoveryOrConflict ? (
+                    <SidebarItem
+                      icon="activity"
+                      label="Recuperación"
+                      title="Hay recuperación o conflicto de proyecto — expandir barra"
+                      onClick={() => setRailCollapsed(false)}
+                    />
+                  ) : null}
+                </>
+              )}
+              {!effectiveRailCollapsed ? (
+                <button
+                  type="button"
+                  onClick={() => setProjectMoreOpen((open) => !open)}
+                  className={`${sidebarBtnSecondary} mt-1.5`}
+                  aria-expanded={projectMoreOpen}
+                >
+                  {projectMoreOpen
+                    ? "Ocultar actividad y restablecer"
+                    : "Actividad y restablecer"}
+                </button>
               ) : null}
-              <SidebarItem
-                icon="activity"
-                label="Actividad del proyecto"
-                onClick={onToggleProjectActivity}
-                showCaret
-                expanded={projectActivityOpen}
-                active={projectActivityOpen}
-                className={effectiveRailCollapsed ? undefined : "mt-1.5"}
-              />
-              {projectActivityOpen && !effectiveRailCollapsed ? (
-                <HistoryPanel
-                  entries={projectHistoryEntries}
-                  className="mt-1"
-                />
-              ) : null}
+              {(projectMoreOpen ||
+                (effectiveRailCollapsed && !isHome)) && (
+                <>
+                  <SidebarItem
+                    icon="activity"
+                    label="Actividad del proyecto"
+                    onClick={onToggleProjectActivity}
+                    showCaret
+                    expanded={projectActivityOpen}
+                    active={projectActivityOpen}
+                    className={effectiveRailCollapsed ? undefined : "mt-1"}
+                  />
+                  {projectActivityOpen && !effectiveRailCollapsed ? (
+                    <HistoryPanel
+                      entries={projectHistoryEntries}
+                      className="mt-1"
+                    />
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={onResetProject}
+                    className={sidebarBtnSecondary}
+                    title="Reinicia la sesión completa (igual que Nuevo proyecto): datos, análisis y curvas."
+                    aria-label="Restablecer proyecto"
+                  >
+                    {effectiveRailCollapsed
+                      ? getIcon("remove")
+                      : "Restablecer proyecto"}
+                  </button>
+                </>
+              )}
               <LocalProjectsPanel {...localProjectsPanelProps} />
             </div>
-            <button
-              type="button"
-              onClick={onResetProject}
-              className={sidebarBtnSecondary}
-              title="Reinicia la sesión completa (igual que Nuevo proyecto): datos, análisis y curvas."
-              aria-label="Restablecer proyecto"
-            >
-              {effectiveRailCollapsed
-                ? getIcon("remove")
-                : "Restablecer proyecto"}
-            </button>
           </SidebarGroup>
 
-          <div className={sidebarDivider} />
+          {showCientifico || showAnalisisTools || showRecursos || showAjustes ? (
+            <div className={sidebarDivider} />
+          ) : null}
 
+          {showCientifico ? (
           <div
             className={
               effectiveRailCollapsed ? sidebarRailSectionWrap : undefined
             }
           >
-            <SidebarSection title="Científico" icon="modules" defaultOpen={false}>
+            <SidebarSection
+              title="Científico"
+              icon="modules"
+              defaultOpen={workspaceSection === "analysis"}
+            >
               {!effectiveRailCollapsed ? (
                 <p className="text-[11px] text-[var(--color-text-muted)] mb-1">
-                  Módulos activos: {activeModuleCount} de {modulesTotal}
+                  Módulos opcionales · {activeModuleCount}/{modulesTotal} activos
                 </p>
               ) : null}
               <div className="space-y-1">
@@ -415,13 +492,22 @@ export function Sidebar({
               </div>
             </SidebarSection>
           </div>
+          ) : null}
 
+          {showAnalisisTools ? (
           <div
             className={
               effectiveRailCollapsed ? sidebarRailSectionWrap : undefined
             }
           >
-            <SidebarSection title="Análisis" icon="advisor" defaultOpen={false}>
+            <SidebarSection
+              title="Análisis"
+              icon="advisor"
+              defaultOpen={
+                workspaceSection === "analysis" ||
+                workspaceSection === "reports"
+              }
+            >
               <button
                 type="button"
                 onClick={onNewCurve}
@@ -469,7 +555,9 @@ export function Sidebar({
               )}
             </SidebarSection>
           </div>
+          ) : null}
 
+          {showRecursos ? (
           <div
             className={
               effectiveRailCollapsed ? sidebarRailSectionWrap : undefined
@@ -529,7 +617,9 @@ export function Sidebar({
               ) : null}
             </SidebarSection>
           </div>
+          ) : null}
 
+          {showAjustes ? (
           <SidebarFooter>
             <div
               className={
@@ -551,6 +641,7 @@ export function Sidebar({
               </SidebarSection>
             </div>
           </SidebarFooter>
+          ) : null}
         </div>
       </aside>
     </SidebarRailCollapsedContext.Provider>

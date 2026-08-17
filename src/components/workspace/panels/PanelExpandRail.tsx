@@ -16,11 +16,11 @@ export type PanelExpandRailProps = {
 
 /** CRP-6.2.1 — Expand rails stay available but visually quieter vs workspace. */
 const positionClass: Record<PanelPosition, string> = {
-  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border-0 bg-transparent px-0.5 opacity-35 hover:opacity-90 transition-[colors,opacity] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-default)]/60",
+  left: "max-sm:hidden flex shrink-0 flex-col items-center justify-center border-0 bg-transparent px-0.5 opacity-35 hover:opacity-90 transition-[colors,opacity,width,max-width] duration-[var(--motion-feedback-duration)] ease-[var(--motion-feedback-easing)] motion-reduce:transition-none hover:bg-[var(--color-surface-default)]/60",
   right:
-    "max-md:hidden flex shrink-0 flex-col items-center justify-center border-0 bg-transparent px-0.5 opacity-35 hover:opacity-90 transition-[colors,opacity] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-default)]/60",
+    "max-md:hidden flex shrink-0 flex-col items-center justify-center border-0 bg-transparent px-0.5 opacity-35 hover:opacity-90 transition-[colors,opacity,width,max-width] duration-[var(--motion-feedback-duration)] ease-[var(--motion-feedback-easing)] motion-reduce:transition-none hover:bg-[var(--color-surface-default)]/60",
   bottom:
-    "flex shrink-0 items-center justify-center border-0 bg-transparent py-0.5 opacity-35 hover:opacity-90 transition-[colors,opacity] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] hover:bg-[var(--color-surface-default)]/60",
+    "flex shrink-0 items-center justify-center border-0 bg-transparent py-0.5 opacity-35 hover:opacity-90 transition-[colors,opacity,height,max-height] duration-[var(--motion-feedback-duration)] ease-[var(--motion-feedback-easing)] motion-reduce:transition-none hover:bg-[var(--color-surface-default)]/60",
 };
 
 /**

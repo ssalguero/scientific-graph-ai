@@ -645,73 +645,12 @@ export function ScientificWorksheetPanel({
   return (
     <div className="space-y-2">
       <div
-        className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--app-text-muted)] rounded-md border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 px-2.5 py-1.5"
-        role="status"
-        aria-label="Resumen de worksheet"
-      >
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)] w-full sm:w-auto sm:mr-1">
-          Worksheet
-        </span>
-        <span>
-          Filas:{" "}
-          <strong className="text-[var(--app-text)] tabular-nums">
-            {statusSummary.rowCount}
-          </strong>
-        </span>
-        <span>
-          Columnas:{" "}
-          <strong className="text-[var(--app-text)] tabular-nums">
-            {statusSummary.columnCount}
-          </strong>
-        </span>
-        <span>
-          Variables numéricas:{" "}
-          <strong className="text-[var(--app-text)] tabular-nums">
-            {statusSummary.numericVariables}
-          </strong>
-        </span>
-        <span>
-          Variables categóricas:{" "}
-          <strong className="text-[var(--app-text)] tabular-nums">
-            {statusSummary.categoricalVariables}
-          </strong>
-        </span>
-        {modified ? (
-          <span className="inline-flex rounded-full border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-warning-text)]">
-            Modificado
-          </span>
-        ) : null}
-        {clipboardMessage ? (
-          <span className="text-[10px] text-[var(--app-accent)]" role="status">
-            {clipboardMessage}
-          </span>
-        ) : null}
-      </div>
-
-      {auxiliaryColumns.length > 0 ? (
-        <div className="rounded-md border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 px-2.5 py-2 space-y-2">
-          <p className="text-xs font-semibold text-[var(--app-heading)]">
-            Columnas auxiliares importadas
-          </p>
-          {auxiliaryColumns.map((column) => (
-            <div key={column.id} className="text-xs text-[var(--app-text-muted)]">
-              <span className="font-medium text-[var(--app-text)]">
-                {column.label}
-              </span>{" "}
-              ({column.role === "replicate" ? "Réplica" : column.role === "group" ? "Grupo" : "Condición"}) ·{" "}
-              {Object.keys(column.valuesByRowIndex).length} valores
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      <div
         ref={tableRef}
         tabIndex={0}
         onCopy={handleTableCopy}
         onPaste={handleTablePaste}
         onKeyDown={handleTableKeyDown}
-        className="overflow-x-auto max-h-[28rem] overflow-y-auto rounded-lg border border-[var(--app-border)] focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/30"
+        className="overflow-x-auto rounded-lg border border-[var(--app-border)] focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/30"
         aria-label="Worksheet científica"
       >
         <table className="min-w-full text-xs sm:text-sm border-collapse">
@@ -1110,6 +1049,43 @@ export function ScientificWorksheetPanel({
           Click en ID/encabezado para seleccionar
         </p>
       </div>
+
+      <p
+        className="text-[11px] text-[var(--app-text-muted)]"
+        role="status"
+        aria-label="Resumen de worksheet"
+      >
+        {statusSummary.rowCount} filas · {statusSummary.columnCount} columnas ·{" "}
+        {statusSummary.numericVariables} numéricas
+        {statusSummary.categoricalVariables > 0
+          ? ` · ${statusSummary.categoricalVariables} categóricas`
+          : ""}
+        {modified ? " · modificado" : ""}
+        {clipboardMessage ? ` · ${clipboardMessage}` : ""}
+      </p>
+
+      {auxiliaryColumns.length > 0 ? (
+        <details className="text-xs text-[var(--app-text-muted)]">
+          <summary className="cursor-pointer font-medium text-[var(--app-text)]">
+            Columnas auxiliares ({auxiliaryColumns.length})
+          </summary>
+          <div className="mt-1 space-y-1">
+            {auxiliaryColumns.map((column) => (
+              <div key={column.id}>
+                <span className="font-medium text-[var(--app-text)]">
+                  {column.label}
+                </span>{" "}
+                ({column.role === "replicate"
+                  ? "Réplica"
+                  : column.role === "group"
+                    ? "Grupo"
+                    : "Condición"}
+                ) · {Object.keys(column.valuesByRowIndex).length} valores
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
 
       <WorksheetFormulaBuilderModal
         open={formulaBuilder !== null}

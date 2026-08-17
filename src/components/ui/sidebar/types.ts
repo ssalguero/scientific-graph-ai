@@ -20,8 +20,18 @@ export type SidebarModuleEntry = {
   onToggle: () => void;
 };
 
+export type SidebarWorkspaceSection =
+  | "home"
+  | "data"
+  | "analysis"
+  | "results"
+  | "reports";
+
 export type SidebarProps = {
   className?: string;
+
+  /** CRP-6.2.2 E1 — journey section for contextual tool groups. */
+  workspaceSection?: SidebarWorkspaceSection;
 
   onNewCurve: () => void;
   onClearCurves: () => void;

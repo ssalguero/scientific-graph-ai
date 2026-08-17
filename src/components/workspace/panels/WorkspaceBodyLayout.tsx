@@ -104,8 +104,8 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
     : "border-[var(--color-border-muted)]/50 shadow-none";
 
   return (
-    <div className="flex min-w-0 flex-col">
-      <div className="flex min-w-0 flex-col sm:flex-row">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col sm:flex-row">
         {state.leftCollapsed ? (
           <div className="contents" onPointerDown={() => activate("left")}>
             <LeftExpandRail
@@ -138,7 +138,7 @@ export function WorkspaceBodyLayout({ children }: WorkspaceBodyLayoutProps) {
               ? "Canvas activo del Workspace"
               : "Canvas del Workspace — haga clic para activarlo"
           }
-          className={`relative min-w-0 flex-1 overflow-hidden border bg-[var(--color-surface-canvas)] transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
+          className={`relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border bg-[var(--color-surface-canvas)] transition-[colors,box-shadow,border-color] duration-[var(--motion-feedback-duration)] ease-[var(--motion-feedback-easing)] motion-reduce:transition-none ${SURFACE_TOKENS.radius.canvas} ${WORKSPACE_DENSITY_TOKENS.panelPadding} ${canvasActiveClass}`}
         >
           <PanelSurface variant="canvas">
             <Surface>

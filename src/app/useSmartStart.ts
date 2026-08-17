@@ -65,6 +65,8 @@ export type UseSmartStartParams = {
   setShowMultiDatasetComparison: (show: boolean) => void;
   setHighlightPublicationDashboards: (highlight: boolean) => void;
   setHighlightProjectPanel: (highlight: boolean) => void;
+  setImportDestinationActive: (active: boolean) => void;
+  importarDestinationRef: RefObject<HTMLDivElement | null>;
   startGuidedWorkflow: (templateId: GuidedWorkflowTemplateId) => void;
 };
 
@@ -96,6 +98,8 @@ export function useSmartStart(params: UseSmartStartParams) {
     setShowMultiDatasetComparison,
     setHighlightPublicationDashboards,
     setHighlightProjectPanel,
+    setImportDestinationActive,
+    importarDestinationRef,
     startGuidedWorkflow,
   } = params;
 
@@ -108,6 +112,7 @@ export function useSmartStart(params: UseSmartStartParams) {
 
   useEffect(() => {
     setSmartStartDismissed(false);
+    setImportDestinationActive(false);
   }, [projectId]);
 
   useEffect(() => {
@@ -116,7 +121,7 @@ export function useSmartStart(params: UseSmartStartParams) {
     const timer = window.setTimeout(() => {
       switch (smartStartNavIntent) {
         case "analyze-dataset":
-          dataImportSectionRef.current?.scrollIntoView({
+          importarDestinationRef.current?.scrollIntoView({
             behavior: "smooth",
             block: "start",
           });
@@ -136,12 +141,7 @@ export function useSmartStart(params: UseSmartStartParams) {
           });
           firstCurveExpressionRef.current?.focus();
           break;
-        case "open-project":
-          projectPanelRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-          });
-          openProjectButtonRef.current?.focus();
+        case "analyze-workspace":
           break;
         default:
           break;
@@ -175,12 +175,14 @@ export function useSmartStart(params: UseSmartStartParams) {
   const handleSmartStartExpertMode = () => {
     setLabUsageProfile("expert");
     setSmartStartDismissed(true);
+    setImportDestinationActive(false);
     setActiveWorkspaceSection("data");
     setDataWorkspaceView("advanced");
     setStatisticsDashboardsOpen(true);
     setExpertModeToastVisible(true);
   };
   const selectWorkspaceSection = (section: WorkspaceSection) => {
+    setImportDestinationActive(false);
     if (section === "home") {
       setSmartStartDismissed(false);
       setActiveWorkspaceSection("home");
@@ -189,11 +191,28 @@ export function useSmartStart(params: UseSmartStartParams) {
     setSmartStartDismissed(true);
     setActiveWorkspaceSection(section);
   };
+  const handleOpenProjectFromIntent = () => {
+    setImportDestinationActive(false);
+    setHighlightProjectPanel(true);
+    setSmartStartDismissed(false);
+    window.setTimeout(() => {
+      projectPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+      openProjectButtonRef.current?.focus();
+    }, 150);
+  };
   const handleSmartStartSelect = (optionId: string) => {
+    if (optionId === "expert-mode") {
+      handleSmartStartExpertMode();
+      return;
+    }
     setSmartStartDismissed(true);
     setShowPublicationEntryBanner(false);
     setHighlightPublicationDashboards(false);
     setHighlightProjectPanel(false);
+    setImportDestinationActive(false);
     switch (optionId) {
       case "analyze-dataset":
         setActiveWorkspaceSection("data");
@@ -204,6 +223,7 @@ export function useSmartStart(params: UseSmartStartParams) {
           import: true,
           multiDataset: false,
         });
+        setImportDestinationActive(true);
         setSmartStartNavIntent("analyze-dataset");
         break;
       case "compare-datasets":
@@ -218,7 +238,36 @@ export function useSmartStart(params: UseSmartStartParams) {
           import: false,
           multiDataset: true,
         });
+        {
+          const comparePlan = buildGuidedWorkflowPlan(
+            "compare-groups",
+            guidedWorkflowContext
+          );
+          if (comparePlan) {
+            startGuidedWorkflow("compare-groups");
+          }
+        }
         setSmartStartNavIntent("compare-datasets");
+        break;
+      case "math-graph":
+        if (labUsageProfile === "basic") {
+          setLabUsageProfile("standard");
+        }
+        setActiveWorkspaceSection("data");
+        setDataWorkspaceView("curves");
+        setControlPanelTab("graph");
+        setShowCompareStepsBanner(false);
+        setDataSectionOpen({
+          constructor: true,
+          import: false,
+          multiDataset: false,
+        });
+        setSmartStartNavIntent("math-graph");
+        break;
+      case "analyze-workspace":
+        setActiveWorkspaceSection("analysis");
+        setShowCompareStepsBanner(false);
+        setSmartStartNavIntent("analyze-workspace");
         break;
       case "evaluate-publication": {
         setActiveWorkspaceSection("analysis");
@@ -238,24 +287,8 @@ export function useSmartStart(params: UseSmartStartParams) {
         setSmartStartNavIntent("evaluate-publication");
         break;
       }
-      case "math-graph":
-        if (labUsageProfile === "basic") {
-          setLabUsageProfile("standard");
-        }
-        setActiveWorkspaceSection("data");
-        setDataWorkspaceView("curves");
-        setControlPanelTab("graph");
-        setShowCompareStepsBanner(false);
-        setDataSectionOpen({
-          constructor: true,
-          import: false,
-          multiDataset: false,
-        });
-        setSmartStartNavIntent("math-graph");
-        break;
-      case "open-project":
-        setHighlightProjectPanel(true);
-        setSmartStartNavIntent("open-project");
+      case "expert-mode":
+        handleSmartStartExpertMode();
         break;
       default:
         break;
@@ -265,8 +298,8 @@ export function useSmartStart(params: UseSmartStartParams) {
     recommendation: IntentRecommendation
   ) => {
     setLabUsageProfile(recommendation.recommendedProfile);
-    if (recommendation.intentId === "expert-mode") {
-      handleSmartStartExpertMode();
+    if (recommendation.intentId === "open-project") {
+      handleOpenProjectFromIntent();
       return;
     }
     handleSmartStartSelect(recommendation.intentId);
@@ -274,11 +307,13 @@ export function useSmartStart(params: UseSmartStartParams) {
   const handlePublicationEntryGoToImport = () => {
     setShowPublicationEntryBanner(false);
     setActiveWorkspaceSection("data");
+    setDataWorkspaceView("experimental");
     setDataSectionOpen({
       constructor: false,
       import: true,
       multiDataset: false,
     });
+    setImportDestinationActive(true);
     setSmartStartNavIntent("analyze-dataset");
   };
   const handlePublicationEntryStartWorkflow = () => {

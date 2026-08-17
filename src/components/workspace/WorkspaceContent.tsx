@@ -36,8 +36,11 @@ export function WorkspaceContent({
   workspace,
 }: WorkspaceContentProps) {
   return (
-    <div className={`${WORKSPACE_TOKENS.mainColumn} h-full min-h-0`}>
-      <div className={WORKSPACE_TOKENS.inner}>
+    <div
+      className={`${WORKSPACE_TOKENS.mainColumn} h-full min-h-0`}
+      data-workspace-main
+    >
+      <div className={`${WORKSPACE_TOKENS.inner} flex h-full min-h-0 flex-1 flex-col`}>
         <DensityProvider>
         {/*
           UX-2.3 freeze strings retained below. Visually suppressed for commercial

@@ -25,9 +25,8 @@ export function PublicationEntryBanner({
             Evaluar para publicar
           </p>
           <p className="text-xs text-[var(--color-text-muted)] mt-1">
-            Workflow guiado hacia dashboards metodológicos y de preparación
-            editorial. Use los paneles de publicación abajo cuando estén
-            disponibles.
+            Complete los pasos hacia el reporte científico. Importe datos si aún
+            no hay evidencia suficiente para iniciar la evaluación.
           </p>
         </div>
         <button

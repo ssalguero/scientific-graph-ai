@@ -2,58 +2,54 @@ import type { SmartStartCardOptionId } from "./types";
 
 export type SmartStartOption = {
   id: SmartStartCardOptionId;
-  icon: string;
   title: string;
   description: string;
   actionLabel: string;
-  /** Product Face hierarchy hint — presentation only (CRP-6.1). */
+  /** Product Face hierarchy hint — presentation only (CRP-6.1 / 6.3). */
   prominence?: "primary" | "secondary" | "supporting";
 };
 
 export const SMART_START_OPTIONS: SmartStartOption[] = [
   {
     id: "analyze-dataset",
-    icon: "📥",
-    title: "Importar datos",
-    description:
-      "Importe CSV, Excel, TXT u ODS y continúe hacia análisis, resultados e informes.",
-    actionLabel: "Ir a importación",
+    title: "Importar / Datos",
+    description: "Incorpora tus datos para comenzar.",
+    actionLabel: "Empezar con datos",
     prominence: "primary",
   },
   {
     id: "compare-datasets",
-    icon: "📊",
-    title: "Comparar datasets",
-    description:
-      "Compare dos conjuntos de datos (perfiles A y B) para contraste científico.",
-    actionLabel: "Abrir comparación A/B",
-    prominence: "secondary",
-  },
-  {
-    id: "evaluate-publication",
-    icon: "📰",
-    title: "Evaluar para publicar",
-    description:
-      "Prepare la evidencia y la calidad del análisis antes de generar el reporte o Pack.",
-    actionLabel: "Iniciar evaluación",
+    title: "Comparar",
+    description: "Compara grupos, conjuntos o resultados.",
+    actionLabel: "Abrir comparación",
     prominence: "secondary",
   },
   {
     id: "math-graph",
-    icon: "📐",
-    title: "Crear gráfico matemático",
-    description:
-      "Abra Datos → Constructor y=f(x) para escribir expresiones (por ejemplo x^2) y ver el gráfico.",
-    actionLabel: "Abrir constructor y=f(x)",
+    title: "Crear gráfico",
+    description: "Crea y explora visualizaciones.",
+    actionLabel: "Abrir constructor",
     prominence: "secondary",
   },
   {
-    id: "open-project",
-    icon: "📁",
-    title: "Abrir proyecto reciente",
-    description:
-      "Recupere un proyecto guardado en este navegador o abra un archivo .sgproj.",
-    actionLabel: "Ir al panel Proyecto",
+    id: "analyze-workspace",
+    title: "Analizar",
+    description: "Analiza tus datos y encuentra patrones.",
+    actionLabel: "Ir a Análisis",
+    prominence: "secondary",
+  },
+  {
+    id: "evaluate-publication",
+    title: "Evaluar / Publicar",
+    description: "Revisa, valida y prepara tus resultados.",
+    actionLabel: "Iniciar evaluación",
+    prominence: "secondary",
+  },
+  {
+    id: "expert-mode",
+    title: "Avanzado",
+    description: "Accede a herramientas y opciones avanzadas.",
+    actionLabel: "Abrir avanzado",
     prominence: "supporting",
   },
 ];

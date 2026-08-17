@@ -1,102 +1,141 @@
 "use client";
 
+import type { IntentRecommendation } from "@/lib/smart-start";
 import {
-  SMART_START_OPTIONS,
-  type IntentRecommendation,
-} from "@/lib/smart-start";
+  capabilityAccentBridgeStyle,
+  capabilityAccentCssVar,
+} from "@/lib/smart-start/capability-accents";
+import { CAPABILITY_IDENTITY } from "@/lib/smart-start/capability-identity";
 import { SmartStartIntentAssistant } from "@/components/home/SmartStartIntentAssistant";
-import { DS_FOCUS_RING, DS_MOTION_ENTER } from "@/lib/ui/focus-ring";
-import { card, panelHeadingSubtext } from "@/lib/ui/theme";
+import { WorkspaceIcon } from "@/components/workspace/iconography/WorkspaceIcon";
+import { DS_FOCUS_RING, DS_MOTION_FEEDBACK } from "@/lib/ui/focus-ring";
 
 type SmartStartScreenProps = {
   onSelect: (optionId: string) => void;
-  onExpertMode: () => void;
+  onExpertMode?: () => void;
   onStartRecommendation: (recommendation: IntentRecommendation) => void;
 };
 
-function cardClassForProminence(
-  prominence: "primary" | "secondary" | "supporting" | undefined
-): string {
-  if (prominence === "primary") {
-    return `${card} text-left flex flex-col gap-[var(--spacing-tight)] p-[var(--spacing-default)] border-[var(--color-brand-primary)]/45 bg-[var(--color-brand-primary)]/8 hover:border-[var(--color-brand-primary)] ${DS_MOTION_ENTER} ${DS_FOCUS_RING}`;
-  }
-  if (prominence === "supporting") {
-    return `${card} text-left flex flex-col gap-[var(--spacing-tight)] p-[var(--spacing-compact)] opacity-90 hover:border-[var(--color-brand-primary)]/30 ${DS_MOTION_ENTER} ${DS_FOCUS_RING}`;
-  }
-  return `${card} text-left flex flex-col gap-[var(--spacing-tight)] p-[var(--spacing-compact)] hover:border-[var(--color-brand-primary)]/40 ${DS_MOTION_ENTER} ${DS_FOCUS_RING}`;
-}
-
+/**
+ * CRP-6.3.x FINAL — optically centered Home: heading + objective + labeled launcher.
+ */
 export function SmartStartScreen({
   onSelect,
-  onExpertMode,
   onStartRecommendation,
 }: SmartStartScreenProps) {
   return (
     <section
-      className="mx-auto w-full max-w-5xl rounded-[var(--radius-container)] border border-[var(--color-border-default)]/70 bg-[var(--color-surface-default)] p-[var(--spacing-default)] sm:p-[var(--spacing-medium)] space-y-[var(--spacing-default)]"
-      aria-label="Inicio guiado"
+      className="flex h-full min-h-0 w-full flex-1 flex-col items-center justify-center px-[var(--spacing-default)]"
+      aria-label="Inicio"
+      style={capabilityAccentBridgeStyle}
+      data-home-launcher
     >
-      <div className="text-left space-y-[var(--spacing-tight)]">
-        <h2 className="text-[length:var(--typography-heading-sm-font-size)] font-semibold leading-[var(--typography-heading-sm-line-height)] text-[var(--color-text-primary)] tracking-tight">
-          ¿Qué desea hacer hoy?
-        </h2>
-        <p className={`${panelHeadingSubtext} !mt-0 max-w-2xl`}>
-          Comience por importar datos o elija otra entrada. El laboratorio
-          completo permanece disponible como opción secundaria.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[var(--spacing-compact)]">
-        {SMART_START_OPTIONS.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => onSelect(option.id)}
-            className={cardClassForProminence(option.prominence)}
+      <div className="flex w-full flex-col items-center text-center">
+        <div className="flex w-full max-w-[42rem] flex-col items-center">
+          <h2
+            className={[
+              "inline-block max-w-full text-[48px] font-semibold leading-tight tracking-tight",
+              "bg-clip-text text-transparent [-webkit-text-fill-color:transparent]",
+            ].join(" ")}
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, #ec4899 0%, #c026d3 42%, #a855f7 100%)",
+              backgroundSize: "100% 100%",
+            }}
           >
-            <span className="text-lg" aria-hidden>
-              {option.icon}
-            </span>
-            <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-              {option.title}
-            </span>
-            <span className="text-xs text-[var(--color-text-muted)] leading-snug flex-1">
-              {option.description}
-            </span>
-            <span
-              className={`text-xs font-semibold pt-0.5 ${
-                option.prominence === "primary"
-                  ? "text-[var(--color-brand-primary)]"
-                  : "text-[var(--color-brand-primary)]"
-              }`}
-            >
-              {option.actionLabel} →
-            </span>
-          </button>
-        ))}
+            ¿Qué deseas hacer hoy?
+          </h2>
 
-        <button
-          type="button"
-          onClick={onExpertMode}
-          className={`${card} text-left flex flex-col gap-[var(--spacing-tight)] p-[var(--spacing-compact)] border-dashed opacity-70 hover:opacity-100 hover:border-[var(--color-text-muted)] ${DS_MOTION_ENTER} ${DS_FOCUS_RING}`}
+          <div className="mt-7 w-full">
+            <SmartStartIntentAssistant
+              onStartRecommendation={onStartRecommendation}
+            />
+          </div>
+        </div>
+
+        <ul
+          className="mt-11 flex w-max max-w-full list-none flex-nowrap items-start justify-center gap-8 m-0 p-0"
+          aria-label="Capacidades"
         >
-          <span className="text-lg" aria-hidden>
-            🧪
-          </span>
-          <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-            Modo experto
-          </span>
-          <span className="text-xs text-[var(--color-text-muted)] leading-snug flex-1">
-            Acceda al laboratorio completo sin el flujo guiado inicial
-            (configuración avanzada).
-          </span>
-          <span className="text-xs font-semibold text-[var(--color-text-muted)] pt-0.5">
-            Entrar al laboratorio completo →
-          </span>
-        </button>
-      </div>
+          {CAPABILITY_IDENTITY.map((capability) => {
+            const accentVar = capabilityAccentCssVar(capability.accent);
+            const tipId = `capability-tip-${capability.id}`;
+            const isAdvanced = capability.id === "expert-mode";
+            const label = capability.launcherTitle;
 
-      <SmartStartIntentAssistant onStartRecommendation={onStartRecommendation} />
+            return (
+              <li
+                key={capability.id}
+                className="group relative flex w-[9rem] shrink-0 flex-col items-center"
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelect(capability.id)}
+                  className={[
+                    "relative flex h-[9rem] w-[9rem] cursor-pointer items-center justify-center",
+                    "rounded-2xl",
+                    "border bg-[var(--color-surface-default)]",
+                    isAdvanced
+                      ? "border-[var(--color-border-muted)]/70 opacity-60 hover:opacity-100"
+                      : "border-transparent",
+                    DS_FOCUS_RING,
+                    DS_MOTION_FEEDBACK,
+                  ].join(" ")}
+                  style={
+                    isAdvanced
+                      ? { color: accentVar }
+                      : {
+                          color: accentVar,
+                          backgroundColor: `color-mix(in srgb, ${accentVar} 14%, var(--color-surface-default))`,
+                          borderColor: `color-mix(in srgb, ${accentVar} 38%, transparent)`,
+                        }
+                  }
+                  aria-label={`${label}. ${capability.description}`}
+                  aria-describedby={tipId}
+                >
+                  <span
+                    className={[
+                      "inline-flex items-center justify-center [&_svg]:size-[68px]",
+                      "transition-transform duration-[var(--motion-feedback-duration)] ease-[var(--motion-feedback-easing)] motion-reduce:transition-none",
+                      "group-hover:scale-[1.04] group-focus-within:scale-[1.04]",
+                    ].join(" ")}
+                  >
+                    <WorkspaceIcon name={capability.icon} size="lg" />
+                  </span>
+                </button>
+
+                <span
+                  className={[
+                    "mt-3 max-w-[9rem] text-[length:var(--typography-body-sm-font-size)] font-semibold leading-snug tracking-tight",
+                    isAdvanced
+                      ? "text-[var(--color-text-muted)]"
+                      : "text-[var(--color-text-primary)]",
+                  ].join(" ")}
+                >
+                  {label}
+                </span>
+
+                <span
+                  id={tipId}
+                  role="tooltip"
+                  className={[
+                    "pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-max max-w-[14rem] -translate-x-1/2",
+                    "rounded-lg border border-[var(--color-border-default)]/70",
+                    "bg-[var(--color-surface-default)] px-3 py-2 text-left shadow-md",
+                    "text-xs leading-snug text-[var(--color-text-muted)]",
+                    "opacity-0 translate-y-0.5",
+                    "transition-[opacity,transform] duration-[var(--motion-feedback-duration)] ease-[var(--motion-feedback-easing)] motion-reduce:transition-none",
+                    "group-hover:opacity-100 group-hover:translate-y-0",
+                    "group-focus-within:opacity-100 group-focus-within:translate-y-0",
+                  ].join(" ")}
+                >
+                  {capability.description}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </section>
   );
 }

@@ -85,6 +85,7 @@ import {
 } from "@/lib/project/visual-graph-session-ui";
 import { ScientificMultiDatasetComparisonDashboard } from "@/components/comparison/ScientificMultiDatasetComparisonDashboard";
 import { ImportReportPanel } from "@/components/import/ImportReportPanel";
+import { ImportarDestination } from "@/components/import/ImportarDestination";
 import { WorkbookImportWizard } from "@/components/import/WorkbookImportWizard";
 import type { ProjectMetadataV1 } from "@/lib/project";
 import { DEFAULT_PROJECT_NAME } from "@/lib/project";
@@ -562,8 +563,8 @@ function WorkspaceTab({
       onClick={() => onSelect(section)}
       className={
         isActive
-          ? "relative rounded-none border-0 border-b-2 border-[var(--color-brand-primary)] bg-transparent px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] transition-colors"
-          : "relative rounded-none border-0 border-b-2 border-transparent bg-transparent px-2.5 py-1.5 text-xs sm:text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+          ? "relative rounded-none border-0 border-b-2 border-[var(--color-brand-primary)] bg-transparent px-3 py-2.5 text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] transition-colors"
+          : "relative rounded-none border-0 border-b-2 border-transparent bg-transparent px-3 py-2.5 text-xs sm:text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
       }
     >
       <span className="inline-flex items-center gap-2">
@@ -623,7 +624,9 @@ function WorkflowContinuityBar({
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
             {stepLabel}
           </p>
-          <p className="text-xs text-[var(--color-text-muted)]">{contextLine}</p>
+          {contextLine ? (
+            <p className="text-xs text-[var(--color-text-muted)]">{contextLine}</p>
+          ) : null}
         </div>
         {actions.length > 0 ? (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -15260,8 +15263,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [functionSearch, setFunctionSearch] = useState("");
   const [activeWorkspaceSection, setActiveWorkspaceSection] =
     useState<WorkspaceSection>("home");
+  const [sidebarRailCollapsed, setSidebarRailCollapsed] = useState(true);
   const [dataWorkspaceView, setDataWorkspaceView] =
     useState<DataWorkspaceView>("experimental");
+  const [importDestinationActive, setImportDestinationActive] = useState(false);
+  const importarDestinationRef = useRef<HTMLDivElement | null>(null);
   const [sidebarGraphLibraryOpen, setSidebarGraphLibraryOpen] = useState(false);
   const [projectActivityPanelOpen, setProjectActivityPanelOpen] = useState(false);
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
@@ -15352,6 +15358,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   >([]);
   const [selectedDataSourceId, setSelectedDataSourceId] =
     useState<ExperimentalDataSourceId>(DEFAULT_EXPERIMENTAL_DATA_SOURCE_ID);
+  useEffect(() => {
+    if (!importDestinationActive) return;
+    const source = getExperimentalDataSource(selectedDataSourceId);
+    if (!source?.enabled) {
+      setSelectedDataSourceId(DEFAULT_EXPERIMENTAL_DATA_SOURCE_ID);
+    }
+  }, [importDestinationActive, selectedDataSourceId]);
   const [experimentalImportError, setExperimentalImportError] = useState<
     string | null
   >(null);
@@ -15445,6 +15458,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       }));
     }
   }, [title, curves, dataSectionOpen.constructor]);
+
+  // CRP-6.2.2 Screen 2 — import card open when empty; collapse after a dataset is active.
+  const datosImportDatasetKey = currentDatasetInfo
+    ? `${currentDatasetInfo.fileName}::${currentDatasetInfo.importedAt}`
+    : null;
+  const datosImportDatasetKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (datosImportDatasetKey === datosImportDatasetKeyRef.current) return;
+    datosImportDatasetKeyRef.current = datosImportDatasetKey;
+    setDataSectionOpen((previous) => ({
+      ...previous,
+      import: datosImportDatasetKey === null,
+    }));
+  }, [datosImportDatasetKey]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -17867,6 +17894,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setHighlightPublicationDashboards,
     setHighlightProjectPanel,
     startGuidedWorkflow,
+    setImportDestinationActive,
+    importarDestinationRef,
   });
   const cancelGuidedWorkflow = () => {
     const cancelledTemplateId = guidedWorkflowSession.templateId;
@@ -19782,6 +19811,159 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     handleNewProject();
   };
 
+  // CRP-6.3 — Home suppresses sidebar chrome (zero-width); reveal for recovery/project.
+  const homeNeedsProjectAttention =
+    Boolean(recoveryPrompt) ||
+    Boolean(pendingFileOpenConflict) ||
+    highlightProjectPanel;
+  const isHomeShell = activeWorkspaceSection === "home";
+  const isImportarShell =
+    importDestinationActive && activeWorkspaceSection === "data";
+  const isDatosShell =
+    activeWorkspaceSection === "data" && !importDestinationActive;
+  const isAnalysisShell = activeWorkspaceSection === "analysis";
+  const isResultsShell = activeWorkspaceSection === "results";
+  const isReportsShell =
+    activeWorkspaceSection === "reports" && isReportsModuleEnabled;
+  const sidebarChromeSuppressed =
+    (isHomeShell && !homeNeedsProjectAttention) || isImportarShell;
+
+  // CRP-6.3.x — presentation hook for Home IDE chrome / scroll suppressions (CSS).
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isHomeShell) {
+      root.setAttribute("data-crp-home-shell", "true");
+    } else {
+      root.removeAttribute("data-crp-home-shell");
+    }
+    return () => {
+      root.removeAttribute("data-crp-home-shell");
+    };
+  }, [isHomeShell]);
+
+  // CRP-6.4.D.1 / D.4 — Importar presentation-only chrome suppress (not Home shell).
+  useEffect(() => {
+    const root = document.documentElement;
+    const canvas = document.querySelector("[data-workspace-canvas]");
+    if (isImportarShell) {
+      root.setAttribute("data-crp-importar-shell", "true");
+      if (canvas?.getAttribute("title")) {
+        canvas.setAttribute("data-importar-restored-title", canvas.getAttribute("title") ?? "");
+        canvas.removeAttribute("title");
+      }
+    } else {
+      root.removeAttribute("data-crp-importar-shell");
+      const restored = canvas?.getAttribute("data-importar-restored-title");
+      if (canvas && restored) {
+        canvas.setAttribute("title", restored);
+        canvas.removeAttribute("data-importar-restored-title");
+      }
+    }
+    return () => {
+      root.removeAttribute("data-crp-importar-shell");
+      const restored = canvas?.getAttribute("data-importar-restored-title");
+      if (canvas && restored) {
+        canvas.setAttribute("title", restored);
+        canvas.removeAttribute("data-importar-restored-title");
+      }
+    };
+  }, [isImportarShell]);
+
+  // CRP-6.2.2 Screen 2 — Datos presentation-only IDE suppress (not Home, not Importar).
+  useEffect(() => {
+    const root = document.documentElement;
+    const canvas = document.querySelector("[data-workspace-canvas]");
+    if (isDatosShell) {
+      root.setAttribute("data-crp-datos-shell", "true");
+      if (canvas?.getAttribute("title")) {
+        canvas.setAttribute(
+          "data-datos-restored-title",
+          canvas.getAttribute("title") ?? ""
+        );
+        canvas.removeAttribute("title");
+      }
+    } else {
+      root.removeAttribute("data-crp-datos-shell");
+      if (!isImportarShell) {
+        const restored = canvas?.getAttribute("data-datos-restored-title");
+        if (canvas && restored) {
+          canvas.setAttribute("title", restored);
+          canvas.removeAttribute("data-datos-restored-title");
+        }
+      }
+    }
+    return () => {
+      root.removeAttribute("data-crp-datos-shell");
+      if (!isImportarShell) {
+        const restored = canvas?.getAttribute("data-datos-restored-title");
+        if (canvas && restored) {
+          canvas.setAttribute("title", restored);
+          canvas.removeAttribute("data-datos-restored-title");
+        }
+      }
+    };
+  }, [isDatosShell, isImportarShell]);
+
+  // CRP-6.3 Phase 1 — presentation-only IDE silence on Análisis / Resultados / Reportes.
+  // Same contract as Datos: infrastructure stays mounted; not researcher-facing. No recovery UI.
+  useEffect(() => {
+    const root = document.documentElement;
+    const canvas = document.querySelector("[data-workspace-canvas]");
+    const restoreKey = "data-crp-journey-restored-title";
+    const clearJourneyShellAttrs = () => {
+      root.removeAttribute("data-crp-analysis-shell");
+      root.removeAttribute("data-crp-results-shell");
+      root.removeAttribute("data-crp-reports-shell");
+    };
+    const restoreCanvasTitle = () => {
+      if (isDatosShell || isImportarShell) return;
+      const restored = canvas?.getAttribute(restoreKey);
+      if (canvas && restored) {
+        canvas.setAttribute("title", restored);
+        canvas.removeAttribute(restoreKey);
+      }
+    };
+
+    clearJourneyShellAttrs();
+    if (isAnalysisShell) {
+      root.setAttribute("data-crp-analysis-shell", "true");
+    } else if (isResultsShell) {
+      root.setAttribute("data-crp-results-shell", "true");
+    } else if (isReportsShell) {
+      root.setAttribute("data-crp-reports-shell", "true");
+    }
+
+    if (isAnalysisShell || isResultsShell || isReportsShell) {
+      if (canvas?.getAttribute("title")) {
+        canvas.setAttribute(restoreKey, canvas.getAttribute("title") ?? "");
+        canvas.removeAttribute("title");
+      }
+    } else {
+      restoreCanvasTitle();
+    }
+
+    return () => {
+      clearJourneyShellAttrs();
+      restoreCanvasTitle();
+    };
+  }, [
+    isAnalysisShell,
+    isResultsShell,
+    isReportsShell,
+    isDatosShell,
+    isImportarShell,
+  ]);
+
+  useEffect(() => {
+    if (isHomeShell) {
+      setSidebarRailCollapsed(!homeNeedsProjectAttention);
+    } else if (isImportarShell) {
+      setSidebarRailCollapsed(true);
+    } else {
+      setSidebarRailCollapsed(false);
+    }
+  }, [isHomeShell, isImportarShell, homeNeedsProjectAttention]);
+
   // CRP-6.1 — instructional copy lives in Smart Start / stage content (compact header).
 
   // D54.3 — Orchestration only: assemble domain/chrome slots.
@@ -19797,16 +19979,55 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             left={
               <>
                 {/*
-                  P0.1 — AppShell toolbar brand: Design System --color-* hierarchy
-                  (primary chrome brand; workspace header stays quieter).
+                  CRP-6.3.x calibration — brand lockup + auth on one header band.
+                  icon.png is existing product mark only; Owner may omit if teal clashes.
                 */}
-                <header className="flex flex-wrap items-baseline gap-x-[var(--spacing-compact)] gap-y-[var(--spacing-micro)] pb-[var(--spacing-micro)]">
-                  <h1 className="text-[length:var(--typography-section-font-size)] font-semibold leading-[var(--typography-section-line-height)] tracking-tight text-[var(--color-text-primary)]">
-                    Scientific Graph AI
-                  </h1>
-                  <p className="min-w-0 truncate text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)]">
-                    {workspaceSessionContext}
-                  </p>
+                <header className="flex w-full flex-wrap items-center justify-between gap-x-[var(--spacing-default)] gap-y-[var(--spacing-tight)] border-b border-[var(--color-border-default)] py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {/*
+                      Existing product mark (src/app/icon.png → /icon.png).
+                      Teal mark kept only for Owner fit check vs pink/violet Home.
+                    */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/icon.png"
+                      alt=""
+                      width={28}
+                      height={28}
+                      className="size-7 shrink-0 rounded-sm object-cover"
+                      data-brand-mark
+                      aria-hidden
+                    />
+                    <h1 className="text-[length:var(--typography-heading-md-font-size)] font-semibold leading-[var(--typography-heading-md-line-height)] tracking-tight text-[var(--color-text-primary)]">
+                      Scientific Graph AI
+                    </h1>
+                    {!isHomeShell ? (
+                      <p
+                        className="min-w-0 truncate text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)]"
+                        data-workspace-session-context=""
+                      >
+                        {workspaceSessionContext}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div
+                    className="flex shrink-0 flex-wrap items-center justify-end gap-2 pr-[var(--spacing-tight)]"
+                    data-auth-shell-slot
+                    aria-label="Cuenta"
+                  >
+                    <button
+                      type="button"
+                      className={`${btnOutlineSm} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
+                    >
+                      Iniciar sesión
+                    </button>
+                    <button
+                      type="button"
+                      className={`${btnPrimary} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
+                    >
+                      Registrarse
+                    </button>
+                  </div>
                 </header>
 
                 <nav
@@ -19849,24 +20070,28 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 ) : null}
 
-                {/*
-                  CRP-6.2 / CRP-6.2.1 — Lab profile is expert utility chrome, not
-                  journey context. Further demoted (no band chrome) so it cannot
-                  compete with brand → tabs → workspace hierarchy.
-                */}
-                <div className="opacity-30 max-w-[14rem] scale-90 origin-left pointer-events-auto">
-                  <LabUsageProfileSelector
-                    value={labUsageProfile}
-                    onChange={setLabUsageProfile}
-                    persistenceBadgeClassName={persistenceBadge}
-                  />
-                </div>
+                {!isHomeShell ? (
+                  <div
+                    className="opacity-30 max-w-[14rem] scale-90 origin-left pointer-events-auto"
+                    data-lab-profile-chrome
+                  >
+                    <LabUsageProfileSelector
+                      value={labUsageProfile}
+                      onChange={setLabUsageProfile}
+                      persistenceBadgeClassName={persistenceBadge}
+                    />
+                  </div>
+                ) : null}
               </>
             }
           />
       }
       sidebar={
       <Sidebar
+        workspaceSection={activeWorkspaceSection}
+        collapsed={sidebarRailCollapsed}
+        onCollapsedChange={setSidebarRailCollapsed}
+        chromeSuppressed={sidebarChromeSuppressed}
         onNewCurve={newGraph}
         onClearCurves={clearGraph}
         graphLibraryOpen={sidebarGraphLibraryOpen}
@@ -19956,6 +20181,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         onOpenReports={() => setActiveWorkspaceSection("reports")}
         onOpenFunctionLibrary={() => {
           setActiveWorkspaceSection("data");
+          setDataWorkspaceView("advanced");
           setControlPanelTab("library");
         }}
         recentProjectsOpen={recentProjectsPanelOpen}
@@ -19998,15 +20224,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         workspace={
           <>
           <section
-            className={activeWorkspaceSection === "home" ? "" : "hidden"}
+            className={
+              activeWorkspaceSection === "home"
+                ? "flex h-full min-h-0 flex-1 flex-col"
+                : "hidden"
+            }
             aria-hidden={activeWorkspaceSection !== "home"}
+            data-home-stage
           >
-            <h2 className={`${sectionLabel} mb-1 text-[10px] tracking-[0.09em]`}>
-              🏠 Inicio
-            </h2>
             <SmartStartScreen
               onSelect={handleSmartStartSelect}
-              onExpertMode={handleSmartStartExpertMode}
               onStartRecommendation={handleIntentRecommendationStart}
             />
           </section>
@@ -20016,45 +20243,45 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             className={activeWorkspaceSection === "data" ? "" : "hidden"}
             aria-hidden={activeWorkspaceSection !== "data"}
           >
-            <h2 className={sectionLabel}>📁 Datos</h2>
-            <p className={`${panelHeadingSubtext} -mt-2 mb-1`}>
-              Empiece por una pestaña: Experimental (importar dataset), Constructor
-              y=f(x) (expresiones), o Constructor Visual (gráficos desde
-              worksheet).
-            </p>
+            {importDestinationActive ? (
+              <div ref={importarDestinationRef}>
+                <ImportarDestination
+                  selectedDataSourceId={selectedDataSourceId}
+                  onSourceChange={(sourceId) => {
+                    setSelectedDataSourceId(sourceId);
+                    setExperimentalImportError(null);
+                  }}
+                  canImport={canImportExperimentalData}
+                  isImporting={isExperimentalImporting}
+                  importError={experimentalImportError}
+                  lastImportReport={lastImportReport}
+                  importReportHasIssues={importReportHasIssues}
+                  currentDatasetInfo={currentDatasetInfo}
+                  experimentalSeries={experimentalSeries}
+                  onImportFile={handleExperimentalImport}
+                  onContinueToDatos={() => selectWorkspaceSection("data")}
+                  workbookWizard={workbookImportWizard}
+                  onCloseWizard={() =>
+                    setWorkbookImportWizard({ open: false, analysis: null })
+                  }
+                  onWizardComplete={handleWorkbookImportComplete}
+                />
+              </div>
+            ) : (
+            <>
+            <h2 className="sr-only">Datos</h2>
             <WorkflowContinuityBar
-              stepLabel="Datos · contexto activo"
-              contextLine={workflowContextLine}
+              stepLabel={
+                currentDatasetInfo?.fileName ?? "Sin dataset experimental"
+              }
+              contextLine=""
               actions={[
                 {
-                  label: "Ir a Análisis →",
+                  label: "Continuar a Análisis →",
                   onClick: () => selectWorkspaceSection("analysis"),
                   disabled: experimentalSeries.length === 0 && !hasChartContent,
+                  prominence: "primary",
                 },
-                {
-                  label: "Ver Resultados →",
-                  onClick: () => selectWorkspaceSection("results"),
-                },
-                ...(profileShowsDataWorkspaceView(
-                  "visual-builder",
-                  labUsageProfile
-                )
-                  ? [
-                      {
-                        label: "Constructor Visual",
-                        onClick: () => openDataView("visual-builder"),
-                        disabled: experimentalSeries.length === 0,
-                      },
-                    ]
-                  : []),
-                ...(profileShowsDataWorkspaceView("curves", labUsageProfile)
-                  ? [
-                      {
-                        label: "Constructor de curvas",
-                        onClick: () => openDataView("curves"),
-                      },
-                    ]
-                  : []),
               ]}
             />
             <div
@@ -20081,19 +20308,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </div>
             <div className="space-y-2">
               {dataWorkspaceView === "experimental" ? (
-              <>
+              <div className="flex flex-col">
               {showCompareStepsBanner && profileShowsMultiDataset(labUsageProfile) ? (
+                <div className="order-[1] mb-2">
                 <CompareStepsBanner
                   slotAReady={comparisonSlots.A.profile !== null}
                   slotBReady={comparisonSlots.B.profile !== null}
                   onDismiss={dismissCompareStepsBanner}
                 />
+                </div>
               ) : null}
+              <div className={currentDatasetInfo ? "order-[20] mb-2" : "order-[10] mb-2"}>
               <NotebookSection
-                title="Importación de datos experimentales"
+                title={
+                  currentDatasetInfo
+                    ? "Importar o cambiar archivo"
+                    : "Importar datos experimentales"
+                }
                 icon="📥"
-                subtitle="CSV, TXT, Excel (.xlsx/.xls), ODS — no confundir con gráfico JSON"
-                open={dataSectionOpen.import}
+                subtitle={
+                  currentDatasetInfo
+                    ? undefined
+                    : "CSV, TXT, Excel (.xlsx/.xls), ODS"
+                }
+                open={!currentDatasetInfo ? true : dataSectionOpen.import}
                 onOpenChange={(open) =>
                   setDataSectionOpen((previous) => ({
                     ...previous,
@@ -20239,29 +20477,42 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </div>
                     ) : null}
               </NotebookSection>
+              </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              <div className={dataDatasetCard}>
-                <p className={subsectionHeading}>
-                  📄 Archivo de datos activo{" "}
-                  <span className={persistenceBadge} title="Sesión actual">
-                    SESIÓN
-                  </span>
-                </p>
-                <p className={dataSemanticHint}>
-                  Metadatos del último import experimental. Las series aparecen
-                  abajo.
-                </p>
-                {currentDatasetInfo ? (
+              <div
+                data-datos-worksheet=""
+                className={
+                  showCompareStepsBanner
+                    ? "order-[6] mb-2"
+                    : currentDatasetInfo
+                      ? "order-[5] mb-2"
+                      : "order-[12] mb-2"
+                }
+              >
+                <ScientificWorksheetPanel
+                  series={experimentalSeries}
+                  modified={worksheetModified}
+                  onSeriesChange={handleWorksheetSeriesChange}
+                  onWorksheetPayloadChange={handleWorksheetPayloadChange}
+                  auxiliaryColumns={activeAuxiliaryColumns}
+                  initialColumnRegistry={activeColumnRegistry}
+                  btnOutlineSm={btnOutlineSm}
+                  btnPrimary={btnPrimary}
+                  inputField={inputField}
+                  fieldLabel={fieldLabel}
+                  dataEmptyState={dataEmptyState}
+                />
+              </div>
+
+              {currentDatasetInfo ? (
+                <div className="order-[21] mb-2">
+                <NotebookSection
+                  title="Archivo activo"
+                  subtitle={currentDatasetInfo.importedAt}
+                  defaultOpen={false}
+                  badge={`${currentDatasetInfo.observationCount} obs.`}
+                >
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-[var(--app-text)]">
-                    <p className="col-span-2 sm:col-span-1">
-                      <span className="font-semibold">Nombre:</span>{" "}
-                      {currentDatasetInfo.fileName}
-                    </p>
-                    <p className="col-span-2 sm:col-span-1">
-                      <span className="font-semibold">Importado:</span>{" "}
-                      {currentDatasetInfo.importedAt}
-                    </p>
                     <p>
                       <span className="font-semibold">Series:</span>{" "}
                       <span className="tabular-nums">
@@ -20275,33 +20526,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </span>
                     </p>
                   </div>
-                ) : (
-                  <div
-                    className={`${dataEmptyState} text-center space-y-1`}
-                    role="status"
-                  >
-                    <p className="text-xs font-medium text-[var(--app-text)]">
-                      Sin dataset experimental activo
-                    </p>
-                    <p className="text-[11px] text-[var(--app-text-muted)]">
-                      Use Importación de datos experimentales para comenzar, o
-                      active un dataset de la sesión.
-                    </p>
-                  </div>
-                )}
-              </div>
-              </div>
+                </NotebookSection>
+                </div>
+              ) : null}
 
+              {sessionDatasets.length > 0 ? (
+              <div className={currentDatasetInfo ? "order-[22] mb-2" : "order-[11] mb-2"}>
               <NotebookSection
-                title={`Datasets en sesión (${sessionDatasets.length})`}
+                title="Datasets en sesión"
                 icon="📚"
-                subtitle="Workbook de la sesión: importe, active y envíe a slots sin reimportar"
-                defaultOpen={sessionDatasets.length > 0}
-                badge={
-                  sessionDatasets.length > 0
-                    ? String(sessionDatasets.length)
-                    : undefined
-                }
+                subtitle="Active o envíe a slots sin reimportar"
+                defaultOpen={!currentDatasetInfo}
+                badge={String(sessionDatasets.length)}
               >
                 <SessionDatasetPanel
                   datasets={sessionDatasets}
@@ -20318,27 +20554,22 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   persistenceBadge={persistenceBadge}
                 />
               </NotebookSection>
+              </div>
+              ) : null}
 
+              {experimentalSeries.length > 0 ? (
+              <div className="order-[23] mb-2">
               <NotebookSection
                 title="Series del dataset"
                 icon="📊"
-                subtitle={
-                  experimentalSeries.length > 0
-                    ? `${experimentalSeries.length} series · ${experimentalSeries.reduce(
-                        (total, series) => total + series.points.length,
-                        0
-                      )} puntos del archivo activo`
-                    : "Columnas/series parseadas del archivo de datos activo"
-                }
-                defaultOpen={experimentalSeries.length > 0}
-                badge={
-                  experimentalSeries.length > 0
-                    ? String(experimentalSeries.length)
-                    : undefined
-                }
+                subtitle={`${experimentalSeries.length} series · ${experimentalSeries.reduce(
+                  (total, series) => total + series.points.length,
+                  0
+                )} puntos`}
+                defaultOpen={false}
+                badge={String(experimentalSeries.length)}
               >
-                    {experimentalSeries.length > 0 ? (
-                      experimentalSeries.length > 3 ? (
+                    {experimentalSeries.length > 3 ? (
                         <div className="overflow-x-auto -mx-1 px-1">
                           <table className="w-full text-xs sm:text-sm">
                             <thead>
@@ -20403,101 +20634,22 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             </li>
                           ))}
                         </ul>
-                      )
-                    ) : (
-                      <div
-                        className={`${dataEmptyState} text-center space-y-1`}
-                        role="status"
-                      >
-                        <p className="text-xs font-medium text-[var(--app-text)]">
-                          No hay series experimentales
-                        </p>
-                        <p className="text-[11px] text-[var(--app-text-muted)]">
-                          Aparecerán aquí tras importar o activar un dataset.
-                        </p>
-                      </div>
-                    )}
+                      )}
               </NotebookSection>
-
-              <NotebookSection
-                title="Worksheet científica"
-                icon="🧮"
-                subtitle={
-                  experimentalSeries.length > 0
-                    ? "Edite observaciones, columnas y filas del dataset activo"
-                    : "Tabla editable del dataset importado"
-                }
-                defaultOpen={experimentalSeries.length > 0}
-                badge={
-                  worksheetModified
-                    ? "Modificado"
-                    : experimentalSeries.length > 0
-                      ? String(
-                          experimentalSeries.reduce(
-                            (total, item) => total + item.points.length,
-                            0
-                          )
-                        )
-                      : undefined
-                }
-              >
-                <ScientificWorksheetPanel
-                  series={experimentalSeries}
-                  modified={worksheetModified}
-                  onSeriesChange={handleWorksheetSeriesChange}
-                  onWorksheetPayloadChange={handleWorksheetPayloadChange}
-                  auxiliaryColumns={activeAuxiliaryColumns}
-                  initialColumnRegistry={activeColumnRegistry}
-                  btnOutlineSm={btnOutlineSm}
-                  btnPrimary={btnPrimary}
-                  inputField={inputField}
-                  fieldLabel={fieldLabel}
-                  dataEmptyState={dataEmptyState}
-                />
-              </NotebookSection>
-
-              {experimentalSeries.length > 0 ? (
-                <div className="rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)]/30 px-3 py-2">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
-                    Siguiente paso sugerido
-                  </p>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1">
-                    <button
-                      type="button"
-                      onClick={() => selectWorkspaceSection("analysis")}
-                      className={workflowContinuityLinkClass}
-                    >
-                      Ir a Análisis (ejes / escalas) →
-                    </button>
-                    {profileShowsDataWorkspaceView(
-                      "visual-builder",
-                      labUsageProfile
-                    ) ? (
-                      <button
-                        type="button"
-                        onClick={() => openDataView("visual-builder")}
-                        className={workflowContinuityLinkClass}
-                      >
-                        Abrir Constructor Visual →
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => selectWorkspaceSection("results")}
-                      className={workflowContinuityLinkClass}
-                    >
-                      Ver gráfico en Resultados →
-                    </button>
-                  </div>
-                </div>
+              </div>
               ) : null}
 
               {(hasEnoughSeriesForCorrelation || showCompareStepsBanner) &&
                 profileShowsMultiDataset(labUsageProfile) && (
+                <div
+                  className={
+                    showCompareStepsBanner ? "order-[2] mb-2" : "order-[30] mb-2"
+                  }
+                >
                 <NotebookSection
-                  title="Multi-Dataset Comparison"
+                  title="Comparar datasets"
                   icon="📊"
-                  subtitle="Capture perfiles analíticos en Slot A y Slot B"
+                  subtitle="Captura Slot A y Slot B aquí. La revisión de la comparación está en Resultados."
                   open={dataSectionOpen.multiDataset}
                   onOpenChange={(open) =>
                     setDataSectionOpen((previous) => ({
@@ -20507,11 +20659,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   }
                   sectionRef={dataMultiDatasetSectionRef}
                 >
-                  <p className="text-xs text-[var(--app-text-muted)] mb-2">
-                    Dataset activo:{" "}
-                    {currentDatasetInfo?.fileName ?? "sin importar"}. Los slots
-                    conservan snapshots aunque importe otro archivo.
-                  </p>
                   {(["A", "B"] as ComparisonSlotId[]).map((slotId) => {
                     const slot = comparisonSlots[slotId];
                     const profile = slot.profile;
@@ -20588,10 +20735,22 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </div>
                     );
                   })}
+                  {hasEnoughDataForMultiDatasetComparison ? (
+                    <p className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => selectWorkspaceSection("results")}
+                        className={workflowContinuityLinkClass}
+                      >
+                        Ver comparación en Resultados
+                      </button>
+                    </p>
+                  ) : null}
                 </NotebookSection>
+                </div>
               )}
 
-              </>
+              </div>
               ) : null}
 
               {dataWorkspaceView === "curves" ? (
@@ -20958,6 +21117,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 />
               )}
             </div>
+            </>
+            )}
           </section>
 
           <section
@@ -20966,11 +21127,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             <h2 className={sectionLabel}>🔬 Análisis</h2>
             <p className={`${panelHeadingSubtext} -mt-1 mb-2`}>
-              Inspector contextual: ejes, escalas y módulos del gráfico — use
-              Resultados para ver el canvas
+              Controles del análisis actual. El gráfico dominante está en
+              Resultados.
             </p>
             <WorkflowContinuityBar
-              stepLabel="Análisis · controles del gráfico"
+              stepLabel="Ahora · Análisis"
               contextLine={workflowContextLine}
               actions={[
                 {
@@ -20978,17 +21139,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   onClick: () => selectWorkspaceSection("data"),
                 },
                 {
-                  label: "Ver Resultados →",
+                  label: "Ver gráfico / Resultados →",
                   onClick: () => selectWorkspaceSection("results"),
+                  prominence: "primary",
                 },
-                ...(profileShowsDataWorkspaceView("curves", labUsageProfile)
-                  ? [
-                      {
-                        label: "Editar curvas",
-                        onClick: () => openDataView("curves"),
-                      },
-                    ]
-                  : []),
               ]}
             />
             {showPublicationEntryBanner ? (
@@ -21017,10 +21171,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   />
                 </div>
               )}
-            <div className={`${card} w-full`}>
+            <div className={`${card} w-full`} data-workspace-surface="analysis-controls">
               <div className="flex flex-col gap-3 lg:flex-row">
                 <nav
-                  className="w-full shrink-0 space-y-1 lg:w-[30%] xl:w-[35%]"
+                  className="w-full shrink-0 space-y-1 lg:w-[22%] xl:w-[20%]"
                   role="tablist"
                   aria-label="Categorías del inspector"
                 >
@@ -23121,46 +23275,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             <h2 className={`${sectionLabel} mb-2`}>📈 Resultados</h2>
             <WorkflowContinuityBar
-              stepLabel="Resultados · modelo, métricas y paso a Pack"
+              stepLabel="Ahora · Resultados"
               contextLine={workflowContextLine}
               actions={[
                 {
-                  label: "← Datos",
-                  onClick: () => selectWorkspaceSection("data"),
-                },
-                {
-                  label: "← Análisis (ejes)",
+                  label: "← Análisis",
                   onClick: () => selectWorkspaceSection("analysis"),
                 },
                 {
-                  label: "Generar reporte",
+                  label: "Ir a Reportes",
                   onClick: () => selectWorkspaceSection("reports"),
                   prominence: "primary",
                 },
-                {
-                  label: "Ir a Reportes · Pack",
-                  onClick: () => selectWorkspaceSection("reports"),
-                  prominence: "secondary",
-                },
-                ...(profileShowsDataWorkspaceView(
-                  "visual-builder",
-                  labUsageProfile
-                )
-                  ? [
-                      {
-                        label: "Constructor Visual",
-                        onClick: () => openDataView("visual-builder"),
-                      },
-                    ]
-                  : []),
-                ...(profileShowsDataWorkspaceView("curves", labUsageProfile)
-                  ? [
-                      {
-                        label: "Constructor de curvas",
-                        onClick: () => openDataView("curves"),
-                      },
-                    ]
-                  : []),
               ]}
             />
             {projectVisualGraphs.length > 0 ? (
@@ -23308,7 +23434,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
               {!hasChartContent ? (
                 <div
-                  className={`${emptyState} flex min-h-[360px] flex-col items-center justify-center gap-1 text-center sm:min-h-[400px]`}
+                  className={`${emptyState} flex min-h-[440px] flex-col items-center justify-center gap-1 text-center sm:min-h-[480px]`}
                   role="status"
                 >
                   <p className="text-sm font-medium text-[var(--app-text)]">
@@ -26898,9 +27024,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             <h2 className={`${sectionLabel} tracking-tight`}>📄 Reportes y Pack</h2>
             <p className={`${panelHeadingSubtext} !mt-0 mb-3 max-w-3xl`}>
-              Configuración del reporte, Pack de publicación, exportación PDF y
-              vista previa del resultado reproducible
+              Obtenga el reporte científico y el Pack de publicación.
             </p>
+            <WorkflowContinuityBar
+              stepLabel="Ahora · Reportes"
+              contextLine=""
+              actions={[
+                {
+                  label: "← Resultados",
+                  onClick: () => selectWorkspaceSection("results"),
+                  prominence: "secondary",
+                },
+              ]}
+            />
             {guidedWorkflowHostTab === "reports" &&
               showGuidedWorkflowPanel &&
               activeGuidedWorkflowPlan && (
@@ -27247,7 +27383,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             />
           ) : null}
 
-          {expertModeToastVisible ? (
+          {expertModeToastVisible && !isHomeShell ? (
             <LabExpertModeToast
               onDismiss={() => setExpertModeToastVisible(false)}
             />

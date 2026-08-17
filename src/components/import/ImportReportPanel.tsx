@@ -5,6 +5,9 @@ import { formatImportReportLines } from "@/lib/import";
 
 type ImportReportPanelProps = {
   report: ImportReport;
+  /** Default `legacy` keeps Datos unchanged. `destination` is Importar drawer chrome. */
+  variant?: "legacy" | "destination";
+  seriesCount?: number;
 };
 
 const severityClass: Record<ValidationSeverity, string> = {
@@ -20,7 +23,239 @@ const severityBadge: Record<ValidationSeverity, string> = {
   info: "bg-[var(--app-surface-muted)] text-[var(--app-text-muted)] border-[var(--app-border)]",
 };
 
-export function ImportReportPanel({ report }: ImportReportPanelProps) {
+function DestinationImportReport({
+  report,
+  seriesCount,
+}: {
+  report: ImportReport;
+  seriesCount?: number;
+}) {
+  const issues = [...report.errors, ...report.warnings];
+  const issueSummary = report.issueSummary ?? {
+    error: report.errorCount,
+    warning: report.warningCount,
+    info: issues.filter((issue) => issue.severity === "info").length,
+  };
+  const importModeLabel =
+    report.importMode === "fast-path" ? "Importación directa" : "Asistente";
+  const sectionTitle =
+    "text-[length:var(--typography-body-lg-font-size)] font-semibold text-[var(--color-text-primary)]";
+  const muted =
+    "text-[length:var(--typography-body-font-size)] text-[var(--color-text-muted)]";
+  const primaryText =
+    "text-[length:var(--typography-body-lg-font-size)] font-semibold text-[var(--color-text-primary)]";
+  const headingValue =
+    "mt-1 text-[length:var(--typography-heading-sm-font-size)] font-semibold tabular-nums text-[var(--color-text-primary)]";
+
+  const stacked = (label: string, value: string | number) => (
+    <div className="space-y-0.5">
+      <p className={muted}>{label}</p>
+      <p className={primaryText}>{value}</p>
+    </div>
+  );
+
+  const summaryMetric = (
+    label: string,
+    value: string | number,
+    tone?: "warning" | "error"
+  ) => (
+    <div className="min-w-[5.5rem] text-center">
+      <p className={muted}>{label}</p>
+      <p
+        className={
+          tone === "warning"
+            ? "mt-1 text-[length:var(--typography-heading-sm-font-size)] font-semibold tabular-nums text-[var(--color-feedback-warning)]"
+            : tone === "error"
+              ? "mt-1 text-[length:var(--typography-heading-sm-font-size)] font-semibold tabular-nums text-[var(--color-feedback-danger)]"
+              : headingValue
+        }
+      >
+        {value}
+      </p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-8 text-left" role="region" aria-label="Detalle del informe">
+      <section className="space-y-3" aria-label="Resumen">
+        <h3 className={sectionTitle}>Resumen</h3>
+        <div
+          className="flex w-full flex-wrap items-start justify-start gap-x-6 gap-y-3 rounded-2xl px-4 py-3"
+          style={{
+            backgroundColor:
+              "color-mix(in srgb, var(--color-capability-pink, #ec4899) 8%, var(--color-surface-default, #0f172a))",
+          }}
+        >
+          {summaryMetric("Puntos importados", report.importedPointCount)}
+          {summaryMetric(
+            "Series",
+            typeof seriesCount === "number" ? seriesCount : "—"
+          )}
+          {summaryMetric("Cobertura", `${Math.round(report.coverageRatio * 100)}%`)}
+          {summaryMetric(
+            "Advertencias",
+            issueSummary.warning,
+            issueSummary.warning > 0 ? "warning" : undefined
+          )}
+          {summaryMetric(
+            "Errores",
+            issueSummary.error,
+            issueSummary.error > 0 ? "error" : undefined
+          )}
+        </div>
+        {report.executiveSummary ? (
+          <p className="text-[length:var(--typography-body-lg-font-size)] leading-[var(--typography-body-lg-line-height)] text-[var(--color-text-muted)]">
+            {report.executiveSummary}
+          </p>
+        ) : null}
+      </section>
+
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+        <section className="space-y-3" aria-label="Origen">
+          <h3 className={sectionTitle}>Origen</h3>
+          {stacked("Archivo", report.fileName)}
+          {stacked("Hoja", report.selectedSheet)}
+          {stacked("Modo", importModeLabel)}
+          {report.unimportedSheetCount > 0
+            ? stacked("Hojas no importadas", report.unimportedSheetCount)
+            : null}
+        </section>
+        <section className="space-y-3" aria-label="Columnas">
+          <h3 className={sectionTitle}>Columnas</h3>
+          {stacked(
+            "Columna X",
+            `${report.selectedColumns.xLabel} (col ${report.selectedColumns.xIndex + 1})`
+          )}
+          {stacked(
+            "Columna Y",
+            `${report.selectedColumns.yLabel} (col ${report.selectedColumns.yIndex + 1})`
+          )}
+          {report.stats.xMin !== null && report.stats.xMax !== null
+            ? stacked("Rango X", `${report.stats.xMin} → ${report.stats.xMax}`)
+            : null}
+          {report.stats.yMin !== null && report.stats.yMax !== null
+            ? stacked("Rango Y", `${report.stats.yMin} → ${report.stats.yMax}`)
+            : null}
+        </section>
+      </div>
+
+      <section className="space-y-3" aria-label="Validación">
+        <h3 className={sectionTitle}>Validación</h3>
+        <div className="flex w-full flex-wrap items-start gap-x-8 gap-y-3">
+          {stacked("Reglas evaluadas", report.ruleCatalog?.length ?? 0)}
+          {stacked("Filas descartadas", report.discardedPointCount)}
+          {stacked("Informativos", issueSummary.info)}
+          <div className="space-y-0.5">
+            <p className={muted}>Advertencias</p>
+            <p
+              className={
+                issueSummary.warning > 0
+                  ? "text-[length:var(--typography-body-lg-font-size)] font-semibold text-[var(--color-feedback-warning)]"
+                  : primaryText
+              }
+            >
+              {issueSummary.warning}
+            </p>
+          </div>
+          <div className="space-y-0.5">
+            <p className={muted}>Errores</p>
+            <p
+              className={
+                issueSummary.error > 0
+                  ? "text-[length:var(--typography-body-lg-font-size)] font-semibold text-[var(--color-feedback-danger)]"
+                  : primaryText
+              }
+            >
+              {issueSummary.error}
+            </p>
+          </div>
+        </div>
+        {issues.length > 0 ? (
+          <ul className="space-y-3 pt-1">
+            {issues.map((issue) => (
+              <li key={`${issue.code}-${issue.message}`} className="space-y-1">
+                <p className="text-[length:var(--typography-body-lg-font-size)] text-[var(--color-text-primary)]">
+                  {issue.message}
+                </p>
+                <p className={muted}>{issue.code}</p>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
+      <section className="space-y-2" aria-label="Auditoría">
+        <h3 className={sectionTitle}>Auditoría</h3>
+        <details className="group">
+          <summary
+            className={[
+              "cursor-pointer list-none text-[length:var(--typography-body-lg-font-size)] font-medium",
+              "text-[var(--color-text-muted)]",
+              "[&::-webkit-details-marker]:hidden",
+            ].join(" ")}
+          >
+            Detalles técnicos disponibles
+          </summary>
+          <div className="mt-3 space-y-3">
+            {report.reproducibility ? (
+              <p className={muted}>
+                Hoja {report.reproducibility.sheetName}; X col{" "}
+                {report.reproducibility.selectedColumns.xIndex + 1}; Y col{" "}
+                {report.reproducibility.selectedColumns.yIndex + 1}; hojas no
+                importadas {report.reproducibility.unimportedSheetCount}.
+              </p>
+            ) : null}
+            {report.audit && report.audit.reasonCounts.length > 0
+              ? report.audit.reasonCounts.map((item) =>
+                  stacked(item.label, item.count)
+                )
+              : null}
+            {report.audit?.sampledDiscardedRows.map((row) => (
+              <p key={row.rowIndex} className={muted}>
+                Fila {row.rowIndex + 1}: {row.reason}
+              </p>
+            ))}
+            {report.audit?.truncated ? (
+              <p className={muted}>
+                Muestra limitada a {report.audit.sampleLimit} filas de{" "}
+                {report.audit.totalDiscardedRows} descartadas.
+              </p>
+            ) : null}
+            {report.auditPartial ? (
+              <p className={muted}>Auditoría parcial</p>
+            ) : null}
+            {report.stats.duplicatePointCount > 0 ? (
+              <p className={muted}>
+                Pares duplicados detectados: {report.stats.duplicatePointCount}
+              </p>
+            ) : null}
+            <p className={muted}>
+              {[
+                report.importMode === "fast-path" ? "Directa" : "Asistente",
+                report.version ?? "v1",
+                report.ruleCatalogVersion
+                  ? `reglas ${report.ruleCatalogVersion}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </div>
+        </details>
+      </section>
+    </div>
+  );
+}
+
+export function ImportReportPanel({
+  report,
+  variant = "legacy",
+  seriesCount,
+}: ImportReportPanelProps) {
+  if (variant === "destination") {
+    return <DestinationImportReport report={report} seriesCount={seriesCount} />;
+  }
+
   const issues = [...report.errors, ...report.warnings];
   const issueSummary = report.issueSummary ?? {
     error: report.errorCount,

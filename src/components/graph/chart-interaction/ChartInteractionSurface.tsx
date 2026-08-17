@@ -10,7 +10,7 @@ type ChartInteractionSurfaceProps = {
 };
 
 const CHART_INTERACTION_SURFACE_CLASS_NAME =
-  "w-full min-h-[360px] h-[min(42vh,480px)] sm:min-h-[400px] sm:h-[min(48vh,520px)] max-h-[520px] select-none cursor-grab active:cursor-grabbing";
+  "w-full min-h-[440px] h-[min(62vh,680px)] sm:min-h-[480px] sm:h-[min(68vh,720px)] max-h-[720px] select-none cursor-grab active:cursor-grabbing";
 
 export function ChartInteractionSurface({
   surfaceProps,

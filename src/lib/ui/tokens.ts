@@ -223,19 +223,24 @@ export const buttonComposed = {
 const sidebarWidthDesktop = "w-[280px] max-w-[280px]";
 const sidebarWidthTablet = "w-[240px] max-w-[240px]";
 const sidebarWidthCollapsed = "w-16 max-w-[4rem]";
+/** CRP-6.3 — presentation suppress (AppShell sidebar region stays mounted). */
+const sidebarWidthHidden = "w-0 max-w-0 min-w-0";
 /** UX-1.1 — denser panel chrome; color transitions only (Design System motion direction). */
 const sidebarShellChrome = `shrink-0 bg-[var(--color-surface-default)] ${border.right} flex-col min-h-screen ${transitions.colors200}`;
 /** CRP-6.2 — subordinate Proyecto rail; keep 240px so workspace remains protagonist. */
-const sidebarShellExpanded = `hidden lg:flex ${sidebarWidthTablet} ${sidebarShellChrome}`;
-const sidebarShellCollapsed = `hidden lg:flex ${sidebarWidthCollapsed} ${sidebarShellChrome} overflow-hidden`;
+const sidebarShellExpanded = `hidden lg:flex ${sidebarWidthTablet} ${sidebarShellChrome} ${transitions.all200}`;
+const sidebarShellCollapsed = `hidden lg:flex ${sidebarWidthCollapsed} ${sidebarShellChrome} overflow-hidden ${transitions.all200}`;
+const sidebarShellHidden = `hidden lg:flex ${sidebarWidthHidden} overflow-hidden border-0 opacity-0 pointer-events-none ${transitions.all200}`;
 
 export const sidebar = {
   divider: `${border.top} my-1.5`,
   widthDesktop: sidebarWidthDesktop,
   widthTablet: sidebarWidthTablet,
   widthCollapsed: sidebarWidthCollapsed,
+  widthHidden: sidebarWidthHidden,
   shellExpanded: sidebarShellExpanded,
   shellCollapsed: sidebarShellCollapsed,
+  shellHidden: sidebarShellHidden,
   shell: sidebarShellExpanded,
   overlayOpen: `fixed inset-y-0 left-0 ${zIndex.modal} flex flex-col bg-[var(--color-surface-default)] ${border.right} ${elevation.medium} opacity-100 pointer-events-auto ${transitions.colors200}`,
   overlayClosed:

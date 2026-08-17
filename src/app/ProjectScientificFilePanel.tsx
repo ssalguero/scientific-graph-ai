@@ -12,7 +12,7 @@ import { formatPersistenceConflictResolutionLabel } from "@/lib/project/userMess
 import type { PendingFileOpenConflict } from "./persistence";
 import type { AutosaveIndicatorView, PersistenceConflictView } from "./persistence/types";
 import type { ProjectFileFeedback } from "./projectFileActions";
-import { btnPrimary, btnSave, btnSecondary, fieldLabel, inputField } from "./projectFileUiStyles";
+import { btnSave, btnSecondary, fieldLabel, inputField } from "./projectFileUiStyles";
 
 export type { ProjectFileFeedback };
 
@@ -26,9 +26,6 @@ const promptPrimaryBtnClass =
 
 const promptSecondaryBtnClass =
   "rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]";
-
-const actionGroupLabelClass =
-  "block text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
 
 export type ProjectScientificFilePanelProps = {
   projectMetadata: ProjectMetadataV1;
@@ -84,6 +81,7 @@ export function ProjectScientificFilePanel({
   const [pendingDiscard, setPendingDiscard] = useState<PendingDiscardAction | null>(
     null
   );
+  const [moreOpen, setMoreOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const openAfterDiscardRef = useRef(false);
 
@@ -145,17 +143,13 @@ export function ProjectScientificFilePanel({
   const discardPrompt =
     pendingDiscard && sessionConflict.prompt ? sessionConflict.prompt : null;
 
+  const resolvedName = draftName.trim() || DEFAULT_PROJECT_NAME;
+
   return (
     <div className="space-y-2">
-      <p className="text-[11px] text-[var(--app-text-muted)]">
-        Proyecto y sesión aquí · importe y worksheet en la pestaña{" "}
-        <span className="font-medium text-[var(--app-text)]">Datos</span> ·
-        gráfico en{" "}
-        <span className="font-medium text-[var(--app-text)]">Resultados</span>.
-      </p>
       <div>
         <label htmlFor="scientific-project-name" className={fieldLabel}>
-          Nombre del proyecto
+          Mi proyecto
         </label>
         <input
           id="scientific-project-name"
@@ -273,69 +267,74 @@ export function ProjectScientificFilePanel({
         </div>
       ) : null}
 
-      <div className="space-y-1.5">
-        <div className="space-y-1">
-          <span className={actionGroupLabelClass}>Crear / abrir / recuperar</span>
-          <p className="text-[11px] leading-snug text-[var(--app-text-muted)]">
-            «Proyectos locales» recupera lo guardado en este navegador. «Abrir
-            proyecto» carga un archivo {PROJECT_FILE_EXTENSION} del disco.
-          </p>
-          <button type="button" onClick={requestNewProject} className={`w-full h-8 ${btnPrimary}`}>
-            Nuevo proyecto
-          </button>
-          {onOpenLocalLibrary ? (
-            <button
-              type="button"
-              onClick={() => void onOpenLocalLibrary()}
-              className={`w-full h-8 ${btnSecondary}`}
-              title="Abre la biblioteca local de este navegador para recuperar o abrir un proyecto guardado aquí."
-              aria-label="Proyectos locales — recuperar proyectos de este navegador"
-            >
-              Proyectos locales
-            </button>
-          ) : null}
-          <button
-            ref={openProjectButtonRef}
-            type="button"
-            onClick={requestOpenProject}
-            className={`w-full h-8 ${btnSecondary}`}
-            title={`Abre un archivo ${PROJECT_FILE_EXTENSION} desde el disco (sesión completa)`}
-          >
-            Abrir proyecto
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={`${PROJECT_FILE_EXTENSION},application/vnd.scientific-graph-ai.project+json`}
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </div>
+      <div className="space-y-1">
+        <button type="button" onClick={requestNewProject} className={`w-full h-8 ${btnSecondary}`}>
+          Nuevo
+        </button>
+        <button
+          ref={openProjectButtonRef}
+          type="button"
+          onClick={requestOpenProject}
+          className={`w-full h-8 ${btnSecondary}`}
+          title={`Abrir archivo de proyecto ${PROJECT_FILE_EXTENSION}`}
+        >
+          Abrir
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={`${PROJECT_FILE_EXTENSION},application/vnd.scientific-graph-ai.project+json`}
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <button
+          type="button"
+          onClick={() => onSaveProject(resolvedName)}
+          className={`w-full h-8 ${btnSave}`}
+          title={`Guardar como archivo ${PROJECT_FILE_EXTENSION}`}
+        >
+          Guardar
+        </button>
+      </div>
 
-        <div className="space-y-1">
-          <span className={actionGroupLabelClass}>Guardar</span>
-          <button
-            type="button"
-            onClick={() =>
-              onSaveProject(draftName.trim() || DEFAULT_PROJECT_NAME)
-            }
-            className={`w-full h-8 ${btnSave}`}
-          >
-            Guardar proyecto (.sgproj)
-          </button>
-          {onSaveLocalProject ? (
-            <button
-              type="button"
-              onClick={() =>
-                void onSaveLocalProject(draftName.trim() || DEFAULT_PROJECT_NAME)
-              }
-              className={`w-full h-8 ${btnSave}`}
-              title="Guarda el proyecto en la biblioteca local de este navegador (Proyectos locales)."
-            >
-              Guardar localmente
-            </button>
-          ) : null}
-        </div>
+      <div className="space-y-1">
+        <button
+          type="button"
+          onClick={() => setMoreOpen((open) => !open)}
+          className={`w-full h-8 ${btnSecondary}`}
+          aria-expanded={moreOpen}
+        >
+          {moreOpen ? "Menos opciones" : "Más opciones"}
+        </button>
+        {moreOpen ? (
+          <div className="space-y-1 rounded-md border border-[var(--app-border)]/70 bg-[var(--app-surface-muted)]/40 p-1.5">
+            <p className="px-1 text-[10px] leading-snug text-[var(--app-text-muted)]">
+              Archivo del proyecto ({PROJECT_FILE_EXTENSION}): biblioteca local
+              del navegador o disco.
+            </p>
+            {onOpenLocalLibrary ? (
+              <button
+                type="button"
+                onClick={() => void onOpenLocalLibrary()}
+                className={`w-full h-8 ${btnSecondary}`}
+                title="Abre la biblioteca local de este navegador para recuperar o abrir un proyecto guardado aquí."
+                aria-label="Proyectos locales — recuperar proyectos de este navegador"
+              >
+                Proyectos locales
+              </button>
+            ) : null}
+            {onSaveLocalProject ? (
+              <button
+                type="button"
+                onClick={() => void onSaveLocalProject(resolvedName)}
+                className={`w-full h-8 ${btnSave}`}
+                title="Guarda el proyecto en la biblioteca local de este navegador (Proyectos locales)."
+              >
+                Guardar localmente
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {feedback ? (

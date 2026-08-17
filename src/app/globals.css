@@ -74,3 +74,439 @@ body > [data-theme] {
     0 0 0 var(--focus-ring-width, 2px) var(--focus-ring-color, #2563eb),
     var(--elevation-popover, 0 4px 8px rgba(0, 0, 0, 0.08));
 }
+
+/*
+ * CRP-6.3.x — Home shell presentation + fill contract.
+ * Infrastructure remains mounted; presentation only.
+ * Height fill for BodyLayout root/row/canvas lives in TSX; CSS only
+ * completes Home-specific ancestors of [data-home-stage].
+ */
+
+/* Hide expand rails completely (presentation). */
+html[data-crp-home-shell="true"] [data-panel-expand-host],
+html[data-crp-home-shell="true"] [data-panel-expand],
+html[data-crp-home-shell="true"] button[aria-label^="Expandir Explorer"],
+html[data-crp-home-shell="true"] button[aria-label^="Expandir Inspector"],
+html[data-crp-home-shell="true"] button[aria-label^="Expandir Consola"],
+html[data-crp-home-shell="true"] button[aria-label="Expand Explorer"],
+html[data-crp-home-shell="true"] button[aria-label="Expand Inspector"],
+html[data-crp-home-shell="true"] button[aria-label="Expand Console"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Sidebar chrome residual (lg:flex shellHidden still mounts). */
+html[data-crp-home-shell="true"] #app-sidebar,
+html[data-crp-home-shell="true"] aside[data-chrome-suppressed="true"],
+html[data-crp-home-shell="true"] button[aria-label="Expandir barra lateral"],
+html[data-crp-home-shell="true"] button[aria-label="Abrir barra lateral"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-home-shell="true"] [data-workspace-panel] {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-home-shell="true"] [data-workspace-main] {
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  flex: 1 1 auto !important;
+}
+
+html[data-crp-home-shell="true"] [data-workspace-main] > div {
+  padding: 0 !important;
+  margin: 0 !important;
+  gap: 0 !important;
+  row-gap: 0 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+html[data-crp-home-shell="true"] [data-workspace-canvas] {
+  border: 0 !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  align-self: stretch !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/*
+ * Fill only ancestors of the Home stage (Surface / PanelLayout / SurfaceBody /
+ * PanelContentRegion). Does not restyle capability tiles or other workspace
+ * screens.
+ */
+html[data-crp-home-shell="true"] [data-workspace-canvas] *:has([data-home-stage]) {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Collapse residual lab/profile presentation footprint on Home. */
+html[data-crp-home-shell="true"] [aria-label="Perfil de uso"],
+html[data-crp-home-shell="true"] [aria-label="Modo de laboratorio"],
+html[data-crp-home-shell="true"] [data-lab-profile-chrome] {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+html[data-crp-home-shell="true"] [data-home-stage] {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+html[data-crp-home-shell="true"] [data-home-launcher] {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/*
+ * CRP-6.4.D.1 — Importar destination chrome suppress (presentation only).
+ * Does not reuse data-crp-home-shell. Does not change Home scroll contract.
+ */
+html[data-crp-importar-shell="true"] [data-panel-expand-host],
+html[data-crp-importar-shell="true"] [data-panel-expand],
+html[data-crp-importar-shell="true"] button[aria-label^="Expandir Explorer"],
+html[data-crp-importar-shell="true"] button[aria-label^="Expandir Inspector"],
+html[data-crp-importar-shell="true"] button[aria-label^="Expandir Consola"],
+html[data-crp-importar-shell="true"] button[aria-label="Expand Explorer"],
+html[data-crp-importar-shell="true"] button[aria-label="Expand Inspector"],
+html[data-crp-importar-shell="true"] button[aria-label="Expand Console"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-importar-shell="true"] #app-sidebar,
+html[data-crp-importar-shell="true"] aside[data-chrome-suppressed="true"],
+html[data-crp-importar-shell="true"] button[aria-label="Expandir barra lateral"],
+html[data-crp-importar-shell="true"] button[aria-label="Abrir barra lateral"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-importar-shell="true"] [data-workspace-panel] {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-importar-shell="true"] [data-auth-shell-slot],
+html[data-crp-importar-shell="true"] [data-workspace-session-context],
+html[data-crp-importar-shell="true"] [aria-label="Perfil de uso"],
+html[data-crp-importar-shell="true"] [aria-label="Modo de laboratorio"],
+html[data-crp-importar-shell="true"] [data-lab-profile-chrome] {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-importar-shell="true"] [data-workspace-canvas] {
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+html[data-crp-importar-shell="true"] [data-workspace-canvas] *:has([data-importar-destination]) {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  align-items: stretch !important;
+}
+
+html[data-crp-importar-shell="true"] [data-workspace-canvas] *:has(> [data-importar-destination]) {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+/*
+ * CRP-6.2.2 Screen 2 — Datos shell (presentation only).
+ * Suppress IDE rails/panels/canvas framing. Do NOT hide #app-sidebar.
+ * Does not apply on Importar (data-crp-importar-shell) or Home.
+ */
+html[data-crp-datos-shell="true"] [data-panel-expand-host],
+html[data-crp-datos-shell="true"] [data-panel-expand],
+html[data-crp-datos-shell="true"] button[aria-label^="Expandir Explorer"],
+html[data-crp-datos-shell="true"] button[aria-label^="Expandir Inspector"],
+html[data-crp-datos-shell="true"] button[aria-label^="Expandir Consola"],
+html[data-crp-datos-shell="true"] button[aria-label="Expand Explorer"],
+html[data-crp-datos-shell="true"] button[aria-label="Expand Inspector"],
+html[data-crp-datos-shell="true"] button[aria-label="Expand Console"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-datos-shell="true"] [data-workspace-panel] {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  border: 0 !important;
+}
+
+html[data-crp-datos-shell="true"] [data-workspace-canvas] {
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+}
+
+/*
+ * CRP-6.3 Phase 1 — Análisis / Resultados / Reportes.
+ * Same presentation-only contract as Datos. Separate blocks: the CSS pipeline
+ * dropped grouped selectors for panels/canvas when combined with Datos.
+ */
+html[data-crp-analysis-shell="true"] [data-panel-expand-host],
+html[data-crp-analysis-shell="true"] [data-panel-expand],
+html[data-crp-analysis-shell="true"] button[aria-label^="Expandir Explorer"],
+html[data-crp-analysis-shell="true"] button[aria-label^="Expandir Inspector"],
+html[data-crp-analysis-shell="true"] button[aria-label^="Expandir Consola"],
+html[data-crp-analysis-shell="true"] button[aria-label="Expand Explorer"],
+html[data-crp-analysis-shell="true"] button[aria-label="Expand Inspector"],
+html[data-crp-analysis-shell="true"] button[aria-label="Expand Console"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-analysis-shell="true"] [data-workspace-panel] {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  border: 0 !important;
+}
+
+html[data-crp-analysis-shell="true"] [data-workspace-canvas] {
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+}
+
+html[data-crp-results-shell="true"] [data-panel-expand-host],
+html[data-crp-results-shell="true"] [data-panel-expand],
+html[data-crp-results-shell="true"] button[aria-label^="Expandir Explorer"],
+html[data-crp-results-shell="true"] button[aria-label^="Expandir Inspector"],
+html[data-crp-results-shell="true"] button[aria-label^="Expandir Consola"],
+html[data-crp-results-shell="true"] button[aria-label="Expand Explorer"],
+html[data-crp-results-shell="true"] button[aria-label="Expand Inspector"],
+html[data-crp-results-shell="true"] button[aria-label="Expand Console"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-results-shell="true"] [data-workspace-panel] {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  border: 0 !important;
+}
+
+html[data-crp-results-shell="true"] [data-workspace-canvas] {
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+}
+
+html[data-crp-reports-shell="true"] [data-panel-expand-host],
+html[data-crp-reports-shell="true"] [data-panel-expand],
+html[data-crp-reports-shell="true"] button[aria-label^="Expandir Explorer"],
+html[data-crp-reports-shell="true"] button[aria-label^="Expandir Inspector"],
+html[data-crp-reports-shell="true"] button[aria-label^="Expandir Consola"],
+html[data-crp-reports-shell="true"] button[aria-label="Expand Explorer"],
+html[data-crp-reports-shell="true"] button[aria-label="Expand Inspector"],
+html[data-crp-reports-shell="true"] button[aria-label="Expand Console"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  visibility: hidden !important;
+}
+
+html[data-crp-reports-shell="true"] [data-workspace-panel] {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  border: 0 !important;
+}
+
+html[data-crp-reports-shell="true"] [data-workspace-canvas] {
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+}

@@ -31,7 +31,7 @@ export function GuidedWorkflowPanel({
       <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
         <div>
           <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-            🧭 Guided Scientific Workflow
+            Camino científico
           </p>
           <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
             {progressLabel}
@@ -39,16 +39,15 @@ export function GuidedWorkflowPanel({
         </div>
         {session.status === "active" ? (
           <button type="button" onClick={onCancel} className={btnOutlineSm}>
-            Cancelar workflow
+            Cancelar camino
           </button>
         ) : null}
       </div>
 
       {session.status === "completed" ? (
         <p className="text-sm text-[var(--color-text-primary)]">
-          Workflow &quot;{plan.templateTitle}&quot; completado. El reporte
-          científico queda listo en Informes para el Pack de publicación
-          (Lite): PDF + figura companion PNG. Puede continuar en modo experto.
+          Camino &quot;{plan.templateTitle}&quot; completado. El reporte
+          científico queda listo en Reportes para el Pack de publicación.
         </p>
       ) : currentStep ? (
         <>
