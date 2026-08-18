@@ -7,7 +7,7 @@
 
 This directory is the official CRP **index and history**. It is **not** a second roadmap.
 
-**Living next (“what is next”):** [`docs/roadmaps/ROADMAP.md`](../../roadmaps/ROADMAP.md) only.
+**Living next (“what is next”):** [`docs/roadmaps/ROADMAP.md`](../../roadmaps/ROADMAP.md) only (**POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**). Plan: [`../../roadmaps/POST-CTR-ROADMAP.md`](../../roadmaps/POST-CTR-ROADMAP.md).
 
 ```text
 CRP ≠ reopen SPE-1 / UXC-1 / SDC-1 / DEP-2 / PP / RELEASE

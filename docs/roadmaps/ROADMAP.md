@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-18 (this file is the **sole living SSOT** for “what is next”; CRP OPEN as index; Owner Gate **ACCEPTED WITH DISCLOSURES**; `PRODUCT 1.0 — COMMERCIAL TEST READY`; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; SemVer 1.0.0)
+**Actualizado:** 2026-08-18 (this file is the **sole living SSOT** for “what is next”; CRP OPEN as index; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; `PRODUCT 1.0 — COMMERCIAL TEST READY`; **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**; SemVer 1.0.0)
 
 ---
 
@@ -42,7 +42,7 @@
 | Next authorized SPE step | **None** — series closed |
 | CRP program | **OPEN** — `docs/CRP/official-records/` · CRP-0…6 **PASS** · CRP-6.2.2 Screen 2 **CLOSED** · CRP-6.3 Home **PASS** · CRP-6.3.x **FINAL** · CRP-6.3-SHELL **CLOSED** |
 | CTR (Commercial Test Ready) | **CTR DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES** — `PRODUCT 1.0 — COMMERCIAL TEST READY` — Owner Gate **ACCEPTED WITH DISCLOSURES** — `docs/CRP/official-records/CRP-CTR-Declaration.md` |
-| Next program | **Living next authored only here:** **Post-CTR planning / reorganization** (documentary; no product domain). CTR **DECLARED**. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational, not an implementation series. CRP-6.4 = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. |
+| Next program | **Living next authored only here:** **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**. Plan: `docs/roadmaps/POST-CTR-ROADMAP.md`. SPE-1.C **EXTERNAL COMMERCIAL TEST** = operational (not an implementation series). No product series OPEN. CRP-6.4 = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
@@ -85,56 +85,71 @@ SPE-1.V PASS (Validation Umbrella)
    ↓
 SPE-1.C PASS → SPE-1 CERTIFIED / CLOSED
    ↓
-Commercial Readiness Preparation OPEN (records closed through CRP-6.3-SHELL as indexed · PLAN+BUILD+Product Face COMPLETE · Owner Gate ACCEPTED WITH DISCLOSURES · CTR DECLARED · CTR CERTIFIED WITH EXPLICIT DISCLOSURES)
+Commercial Readiness Preparation OPEN (records closed through CRP-6.3-SHELL as indexed · CTR DECLARED · CTR CERTIFIED WITH EXPLICIT DISCLOSURES)
+   ↓
+POST-CTR ROADMAP REORGANIZED / NEXT SERIES PENDING OWNER DECISION
 ```
 
 ---
 
-## POST-UXC LIVING ROADMAP
+## POST-CTR LIVING ROADMAP
 
 ```text
-POST-UXC LIVING ROADMAP
+POST-CTR LIVING ROADMAP
 THIS FILE = SOLE LIVING SSOT FOR “WHAT IS NEXT”
-SPE-1 — Scientific Product Expansion
-    STATUS: CERTIFIED / CLOSED
-    CHARTER: docs/SPE/SPE-Planning-Charter.md (IN FORCE / FROZEN)
-    FREEZE:  docs/SPE/official-records/SPE-1-Planning-Freeze.md
-    SPE-1.E: docs/SPE/official-records/SPE-1-E-Entry-Hygiene.md (PASS)
-    SPE-1.1: docs/SPE/official-records/SPE-1.1-Analysis-Workflow-Productization.md (PASS)
-    SPE-1.2: docs/SPE/official-records/SPE-1.2-Publication-Pack-Lite.md (PASS)
-    SPE-1.V: docs/SPE/official-records/SPE-1.V-Validation-Evidence.md (PASS)
-    SPE-1.C: docs/SPE/official-records/SPE-1-Series-Closure.md (CERTIFIED / CLOSED)
-CRP:     docs/CRP/official-records/ (OPEN — index/history only)
-CLOSED (cite official records; code tip 02ff1cc):
-    CRP-6.2.2 Screen 2 / Datos
-    CRP-6.3 Home / Product Face
-    CRP-6.3.x Home Visual Refinement
-    CRP-6.3-SHELL Workspace Shell (Phase 1 + Phase 2)
-Phase 3 (sidebar Análisis / Nuevo gráfico / Vaciar curvas) = OPTIONAL / BLOCKED / NOT DEBT
+PLAN ARTIFACT: docs/roadmaps/POST-CTR-ROADMAP.md
+
+CERTIFIED BASELINE
+    Scientific Graph AI 1.0.0
+    CTR DECLARED
+    CTR CERTIFIED WITH EXPLICIT DISCLOSURES
+    PRODUCT 1.0 — COMMERCIAL TEST READY
+    SPE-1 CERTIFIED / CLOSED
+    Product Face / CRP execution closed through CRP-6.3-SHELL
+    DEP-2 CERTIFIED / CLOSED (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED)
+
+POST-CTR
+    Roadmap reorganized (this file + POST-CTR-ROADMAP.md)
+    EXTERNAL COMMERCIAL TEST = operational (SPE-1.C; not a series)
+    Product development = planning only until Owner selects a series
+
+DEFERRED (protected — not debt by listing)
+    AIR-1 · Cloud · RLS · G6 · Auth implementation
+    ARCH-U · D71 · Phase 3 · CRP-6.4 implementation
+    COLLAB realtime · PLUGINS loading · EXPORT-3
+    marketplace / Lovable · v1.1 bump
+
+CANDIDATES (not OPEN · not EXECUTION READY)
+    Scientific productization successor (needs new charter; ≠ SPE-1 reopen)
+    DATA / Import destination (CRP-6.4 remains PLAN ONLY)
+    ENGINE evolution · PERFORMANCE hardening · RELEASE/1.0.x packaging
+    ≠ Análisis / Resultados / Avanzadas as series names
+
+NEXT SERIES
+    PENDING OWNER DECISION
+    ≠ OPEN · ≠ EXECUTION READY
+
+CRP: docs/CRP/official-records/ (OPEN — index/history only)
+Phase 3 = OPTIONAL / BLOCKED / NOT DEBT
 CRP-6.4 Importar architecture = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION
-ENGINE · DATA · AI · COLLAB · PLUGINS · PERFORMANCE · PRODUCTION/RELEASE · SPE · CRP = UNRANKED
-CTR = DECLARED
-CTR CERTIFIED WITH EXPLICIT DISCLOSURES = IN FORCE
-PLAN CTR Readiness Assessment = COMPLETE
-CTR Entry Certification = COMPLETE
-Product Face Review = COMPLETE
-CTR Owner Gate = ACCEPTED WITH DISCLOSURES
-PRODUCT 1.0 — COMMERCIAL TEST READY
-CTR DECLARATION = COMPLETE
-NEXT: Post-CTR planning / reorganization (documentary; no product domain)
+ENGINE · DATA · AI · COLLAB · PLUGINS · PERFORMANCE · RELEASE = restored as domain vision; not ranked for execution
+NEXT: POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION
 ```
 
 | Track | Status |
 |-------|--------|
 | **SPE-1** | **CERTIFIED / CLOSED** |
-| **CRP** | **OPEN** — historical CRP-0…6 PASS; Screen 2 / Home / 6.3.x / 6.3-SHELL **closed** as recorded; living next is **not** Phase 3 and **not** CRP-6.4 implementation |
-| Commercial Readiness / CTR | **CTR DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES** — Owner Gate **ACCEPTED WITH DISCLOSURES** · `PRODUCT 1.0 — COMMERCIAL TEST READY` · see `docs/CRP/official-records/CRP-CTR-Declaration.md` |
+| **CTR** | **DECLARED** · **CERTIFIED WITH EXPLICIT DISCLOSURES** — `docs/CRP/official-records/CRP-CTR-Declaration.md` |
+| **CRP** | **OPEN** as index — historical CRP-0…6 PASS; Screen 2 / Home / 6.3.x / 6.3-SHELL **closed**; **not** Phase 3; **not** CRP-6.4 implementation |
+| **Post-CTR roadmap** | **REORGANIZED** — `docs/roadmaps/POST-CTR-ROADMAP.md` · **NEXT SERIES PENDING OWNER DECISION** |
+| **EXTERNAL COMMERCIAL TEST** | Operational (SPE-1.C) — **not** an implementation series |
+| ENGINE · DATA · AI · COLLAB · PLUGINS · PERFORMANCE · RELEASE | Certified 1.0 baseline restored as **domain vision**; not ranked for execution |
 | OBS-1 residual | Queued peer (not SPE main scope; not absorbed by SPE-1.E) |
-| AIR-1 | Later |
-| ARCH-U | Deferred |
+| AIR-1 | **DEFERRED / NOT CERTIFIED** |
+| ARCH-U | Deferred · **NOT ACTIVE** |
 | Full EXPORT-3 ZIP | Deferred beyond Pack Lite |
 | COLLAB realtime / PLUGINS loading | OUT / Future Work |
-| Marketplace / Lovable / Option C / RLS / G6 | Owner decisions |
+| Marketplace / Lovable / Option C / RLS / G6 | Owner decisions · Cloud **NOT CERTIFIED** |
 | v1.1.x bump | Separate Owner decision (not automatic) |
 | Historical PROD-3 as living next epic | **RETIRED** (archive / historical only; SDC Continuity superseded living reopen) |
 | UXC-2 | **Not invented** — UXC-1 closed |
@@ -171,7 +186,7 @@ The AI Domain is certified under `src/ai/` as structural Intelligence Domain ske
 **DEP-2:** **CERTIFIED / CLOSED** — see `docs/DEP/official-records/DEP-2-Hosted-Deployment-Execution.md`.
 **UXC-1:** **CERTIFIED / CLOSED** — see `docs/UXC/official-records/UXC-1-UX-Continuity-Certification.md`.
 **SPE-1:** **CERTIFIED / CLOSED** — see `docs/SPE/official-records/SPE-1-Series-Closure.md`.
-**Living next (this file only):** **Post-CTR planning / reorganization**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. Owner Gate **ACCEPTED WITH DISCLOSURES**. `PRODUCT 1.0 — COMMERCIAL TEST READY`. No product domain selected. SPE-1.C **EXTERNAL COMMERCIAL TEST** is operational (not an implementation series). Phase 3 = OPTIONAL / BLOCKED / NOT DEBT. CRP-6.4 = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. E0 FROZEN. ARCH-U NOT ACTIVE. Plan B = ACTIVE FALLBACK. Plan C = ACTIVE CTR FLOOR (not activated). Lovable = **VISUAL REFERENCE**. Official CRP index: `docs/CRP/official-records/`.
+**Living next (this file only):** **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**. Plan artifact: `docs/roadmaps/POST-CTR-ROADMAP.md`. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. `PRODUCT 1.0 — COMMERCIAL TEST READY`. SPE-1.C **EXTERNAL COMMERCIAL TEST** is operational (not an implementation series). No product series OPEN. Phase 3 = OPTIONAL / BLOCKED / NOT DEBT. CRP-6.4 = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. E0 FROZEN. ARCH-U NOT ACTIVE. Plan B = ACTIVE FALLBACK. Plan C = ACTIVE CTR FLOOR (not activated). Lovable = **VISUAL REFERENCE**. Official CRP index: `docs/CRP/official-records/`.
 
 ---
 
@@ -192,7 +207,7 @@ The AI Domain is certified under `src/ai/` as structural Intelligence Domain ske
 | **PROD-2C** — Worksheet + Visual Graph Builder persistence | **COMPLETED** |
 | **PROD-2D** — UX profesional + arquitectura transversal | **CLOSED** (2026-07-09) |
 | **PROD-2E** — Motor gráfico profesional | **CLOSED** (2026-07-16) |
-| **Living next series (post-UXC)** | **Commercial Readiness Preparation — OPEN** (index); CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; living next = **Post-CTR planning / reorganization** |
+| **Living next series (post-UXC)** | **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**; CRP remains **OPEN** as index; CTR **DECLARED** |
 | Historical PROD-3 pointer | **RETIRED as living next** — archive / SDC Continuity; not SPE-1 reopen of PROD-3 |
 
 Referencia de estado detallado (histórico):
@@ -231,7 +246,7 @@ Referencia de estado detallado (histórico):
 Gate oficial: `npm run validate:prod2d-gate`  
 Documentación de cierre: [`PROJECT_STATUS_PROD_2D.md`](./PROJECT_STATUS_PROD_2D.md)
 
-**Handoff histórico (cite-only):** PROD-3 was the post-PROD-2D pointer; **living next series is now SPE-1** (see POST-UXC LIVING ROADMAP). Historical PROD-3 is not reopened as a living epic.
+**Handoff histórico (cite-only):** PROD-3 was the post-PROD-2D pointer; SPE-1 then became the living series and is now **CERTIFIED / CLOSED**. Current living next: **POST-CTR LIVING ROADMAP**. Historical PROD-3 is not reopened as a living epic.
 
 ---
 
@@ -307,10 +322,10 @@ Sincronización de README, ROADMAP, README técnico y referencias de estado con 
 
 | Series | Descripción |
 |--------|-------------|
-| **Living next** | **Post-CTR planning / reorganization** — documentary; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; no product domain selected |
-| **Commercial Readiness Preparation** | **OPEN** (program) — historical records closed through CRP-6.3-SHELL as indexed; Phase 3 OPTIONAL / BLOCKED / NOT DEBT; CRP-6.4 PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION |
+| **Living next** | **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION** — `docs/roadmaps/POST-CTR-ROADMAP.md`; no product series OPEN |
+| **Commercial Readiness Preparation** | **OPEN** (index) — historical records closed through CRP-6.3-SHELL; Phase 3 OPTIONAL / BLOCKED / NOT DEBT; CRP-6.4 PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION |
 | **SPE-1** (closed) | Scientific Product Expansion — **CERTIFIED / CLOSED** — `docs/SPE/official-records/SPE-1-Series-Closure.md` |
-| ENGINE · DATA · AI · COLLAB · PLUGINS · PERFORMANCE · PRODUCTION/RELEASE · SPE · CRP | **UNRANKED** — no product domain selected |
+| ENGINE · DATA · AI · COLLAB · PLUGINS · PERFORMANCE · RELEASE | **Domain vision restored** — certified 1.0 baseline; **not** ranked for execution until Owner selects a series |
 
 | Historical (not living next) | Descripción |
 |------------------------------|-------------|

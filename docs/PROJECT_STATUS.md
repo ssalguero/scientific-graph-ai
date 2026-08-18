@@ -10,7 +10,7 @@ Its objective is to summarize the current architectural maturity, documentation 
 
 Unlike MASTER_ROADMAP_V2, this document is a **current-status snapshot**. It may cite [`docs/roadmaps/ROADMAP.md`](./roadmaps/ROADMAP.md). It must **not** author a competing living “next”.
 
-**CRP OPEN (snapshot 2026-08-18):** Commercial Readiness Preparation — CRP-0…6 PASS · CRP-6.2.2 Screen 2 **CLOSED** · CRP-6.3 Home / Product Face **PASS** · CRP-6.3.x **FINAL** · CRP-6.3-SHELL **CLOSED**. CRP-6.4 = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. **SPE-1 CERTIFIED / CLOSED**. SemVer **1.0.0**. ARCH-U **NOT ACTIVE**. Owner Gate **ACCEPTED WITH DISCLOSURES**. **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. Lovable = **VISUAL REFERENCE**. **Living next:** [`ROADMAP.md`](./roadmaps/ROADMAP.md) — **Post-CTR planning / reorganization**.
+**CRP OPEN (snapshot 2026-08-18):** Commercial Readiness Preparation — CRP-0…6 PASS · CRP-6.2.2 Screen 2 **CLOSED** · CRP-6.3 Home / Product Face **PASS** · CRP-6.3.x **FINAL** · CRP-6.3-SHELL **CLOSED**. CRP-6.4 = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. **SPE-1 CERTIFIED / CLOSED**. SemVer **1.0.0**. ARCH-U **NOT ACTIVE**. **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. Lovable = **VISUAL REFERENCE**. **Living next:** [`ROADMAP.md`](./roadmaps/ROADMAP.md) — **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**.
 
 ---
 
@@ -51,7 +51,7 @@ Unlike MASTER_ROADMAP_V2, this document is a **current-status snapshot**. It may
 | Next authorized SPE step | **None** — series closed |
 | CRP program | **OPEN** — [`docs/CRP/official-records/`](./CRP/official-records/) · CRP-0…6 **PASS** · CRP-6.2.2 Screen 2 **CLOSED** · CRP-6.3 Home **PASS** · CRP-6.3.x **FINAL** · CRP-6.3-SHELL **CLOSED** |
 | CTR (Commercial Test Ready) | **CTR DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES** — `PRODUCT 1.0 — COMMERCIAL TEST READY` — Owner Gate **ACCEPTED WITH DISCLOSURES** — [`CRP-CTR-Declaration.md`](./CRP/official-records/CRP-CTR-Declaration.md) |
-| Next program | See living [`ROADMAP.md`](./roadmaps/ROADMAP.md) — **Post-CTR planning / reorganization**. CTR **DECLARED**. This snapshot does not author next. |
+| Next program | See living [`ROADMAP.md`](./roadmaps/ROADMAP.md) — **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**. CTR **DECLARED**. This snapshot does not author next. |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** (**PRODUCTION READY**) |
@@ -141,7 +141,7 @@ SPE planning / hygiene records:
 
 Next authorized phase:
 
-**Commercial Readiness Preparation — OPEN** (historical CRP-0…6 PASS · Screen 2 / Home / 6.3.x / 6.3-SHELL closed as indexed). See [`CRP official records`](./CRP/official-records/). **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. **Living next:** [`ROADMAP.md`](./roadmaps/ROADMAP.md).
+**Commercial Readiness Preparation — OPEN** (historical CRP-0…6 PASS · Screen 2 / Home / 6.3.x / 6.3-SHELL closed as indexed). See [`CRP official records`](./CRP/official-records/). **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED**. **Living next:** [`ROADMAP.md`](./roadmaps/ROADMAP.md) — **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**.
 
 Production Approval:
 
@@ -215,7 +215,7 @@ Scientific Graph AI
 
 Current Phase
 
-**SPE-1 CERTIFIED / CLOSED** (`PRODUCT 1.0 — COMMERCIAL TEST READY` · Owner Gate ACCEPTED WITH DISCLOSURES)
+**CTR DECLARED** (`PRODUCT 1.0 — COMMERCIAL TEST READY` · **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**)
 
 Project Status
 
@@ -236,7 +236,7 @@ ESTABLISHED
 Implementation Status
 
 CRP OPEN (historical CRP-0…6 PASS · Screen 2 / Home / 6.3.x / 6.3-SHELL closed as recorded)
-Living next: docs/roadmaps/ROADMAP.md (Post-CTR planning / reorganization; CTR DECLARED · CTR CERTIFIED WITH EXPLICIT DISCLOSURES)
+Living next: docs/roadmaps/ROADMAP.md (POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION)
 SPE-1 CERTIFIED / CLOSED (untouched)
 
 Release Target
@@ -326,7 +326,7 @@ AI Domain is RELEASE CERTIFIED. AI-I0…AI-I10 COMPLETE. Implementation Series C
 
 **Current objective (snapshot):**
 
-**Commercial Readiness Preparation — OPEN** — see [`CRP official records`](./CRP/official-records/). SPE-1 remains CLOSED. **Living next:** [`ROADMAP.md`](./roadmaps/ROADMAP.md) (**Post-CTR planning / reorganization**). ARCH-U NOT ACTIVE; Lovable = VISUAL REFERENCE. **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED**.
+**Commercial Readiness Preparation — OPEN** — see [`CRP official records`](./CRP/official-records/). SPE-1 remains CLOSED. **Living next:** [`ROADMAP.md`](./roadmaps/ROADMAP.md) (**POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**). ARCH-U NOT ACTIVE; Lovable = VISUAL REFERENCE. **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED**.
 
 Future development shall follow:
 
@@ -356,7 +356,7 @@ Release
 
 # Current Priorities
 
-This snapshot does **not** author living next. See [`docs/roadmaps/ROADMAP.md`](./roadmaps/ROADMAP.md) (**Post-CTR planning / reorganization**; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**).
+This snapshot does **not** author living next. See [`docs/roadmaps/ROADMAP.md`](./roadmaps/ROADMAP.md) (**POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**).
 
 Standing fences (not a next-work ranking):
 
@@ -410,7 +410,7 @@ Commercial Readiness Preparation — OPEN (historical CRP-0…6 PASS · Screen 2
 
 ↓
 
-Living next: Post-CTR planning / reorganization (see docs/roadmaps/ROADMAP.md; PRODUCT 1.0 — COMMERCIAL TEST READY; CTR DECLARED · CTR CERTIFIED WITH EXPLICIT DISCLOSURES)
+Living next: POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION (see docs/roadmaps/ROADMAP.md; docs/roadmaps/POST-CTR-ROADMAP.md)
 
 ↓
 
@@ -444,4 +444,4 @@ The project is considered on track when:
 
 Scientific Graph AI has completed its architectural foundation, Release 1.0, hosted deployment (DEP-2), and UX Continuity (UXC-1).
 
-The CRP program is **OPEN** (historical CRP-0…6 PASS · Screen 2 / Home / 6.3.x / 6.3-SHELL closed as recorded). **Living next** is authored only in [`ROADMAP.md`](./roadmaps/ROADMAP.md): **Post-CTR planning / reorganization**. **SPE-1 CERTIFIED / CLOSED**. Owner Gate **ACCEPTED WITH DISCLOSURES**. **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. Lovable = **VISUAL REFERENCE**.
+The CRP program is **OPEN** (historical CRP-0…6 PASS · Screen 2 / Home / 6.3.x / 6.3-SHELL closed as recorded). **Living next** is authored only in [`ROADMAP.md`](./roadmaps/ROADMAP.md): **POST-CTR ROADMAP — REORGANIZED / NEXT SERIES PENDING OWNER DECISION**. **SPE-1 CERTIFIED / CLOSED**. **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. Lovable = **VISUAL REFERENCE**.
