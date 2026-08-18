@@ -8,9 +8,9 @@ PROJECT_STATUS provides the official high-level status of Scientific Graph AI.
 
 Its objective is to summarize the current architectural maturity, documentation baseline, implementation status and immediate development priorities.
 
-Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout the lifetime of the project.
+Unlike MASTER_ROADMAP_V2, this document is a **current-status snapshot**. It may cite [`docs/roadmaps/ROADMAP.md`](./roadmaps/ROADMAP.md). It must **not** author a competing living “next”.
 
-**CRP OPEN (2026-08-12):** Commercial Readiness Preparation — [`CRP-6.2 Phase 2 PASS`](./CRP/official-records/CRP-6-2-Layout-IA-Infrastructure-Convergence.md) · CRP-6.1 Phase 1 + Visual Fidelity PASS · CRP-6 PASS · **E0 ACCEPT / Visual Target FROZEN** · Layout/IA/infrastructure convergence in `src/**`. Next: **Owner-authorized Phase 3**. **SPE-1 CERTIFIED / CLOSED**. SemVer **1.0.0**. ARCH-U **NOT ACTIVE**. **CTR = NOT YET**. Lovable = **VISUAL REFERENCE**.
+**CRP OPEN (snapshot 2026-08-18):** Commercial Readiness Preparation — CRP-0…6 PASS · CRP-6.2.2 Screen 2 **CLOSED** · CRP-6.3 Home / Product Face **PASS** · CRP-6.3.x **FINAL** · CRP-6.3-SHELL **CLOSED**. CRP-6.4 = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. **SPE-1 CERTIFIED / CLOSED**. SemVer **1.0.0**. ARCH-U **NOT ACTIVE**. Owner Gate **ACCEPTED WITH DISCLOSURES**. **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. Lovable = **VISUAL REFERENCE**. **Living next:** [`ROADMAP.md`](./roadmaps/ROADMAP.md) — **Post-CTR planning / reorganization**.
 
 ---
 
@@ -49,8 +49,9 @@ Unlike MASTER_ROADMAP_V2, this document is operational and evolves throughout th
 | SPE-1.V | **PASS** (Validation Umbrella + Evidence) |
 | SPE-1.C | **PASS** (Series Certification) |
 | Next authorized SPE step | **None** — series closed |
-| CRP program | **OPEN** — [`docs/CRP/official-records/`](./CRP/official-records/) · CRP-0…6 **PASS** · **CRP-6.1 Phase 1 PASS** · **CRP-6.2 Phase 2 PASS** · next Owner-authorized Phase 3 |
-| Next program | **Commercial Readiness Preparation** — E0 frozen · Phase 2 layout/IA done · Phase 3 pending authorization · **CTR = NOT YET** |
+| CRP program | **OPEN** — [`docs/CRP/official-records/`](./CRP/official-records/) · CRP-0…6 **PASS** · CRP-6.2.2 Screen 2 **CLOSED** · CRP-6.3 Home **PASS** · CRP-6.3.x **FINAL** · CRP-6.3-SHELL **CLOSED** |
+| CTR (Commercial Test Ready) | **CTR DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES** — `PRODUCT 1.0 — COMMERCIAL TEST READY` — Owner Gate **ACCEPTED WITH DISCLOSURES** — [`CRP-CTR-Declaration.md`](./CRP/official-records/CRP-CTR-Declaration.md) |
+| Next program | See living [`ROADMAP.md`](./roadmaps/ROADMAP.md) — **Post-CTR planning / reorganization**. CTR **DECLARED**. This snapshot does not author next. |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** (**PRODUCTION READY**) |
@@ -78,7 +79,7 @@ Version Identity: **1.0.0** / display **v1.0**
 
 Current governance phase:
 
-**CRP OPEN** — CRP-0…5.2 PASS; SPE-1 **CERTIFIED / CLOSED**; Commercial Test Ready **NOT YET**
+**CRP OPEN** — CRP-0…6 PASS · Product Face closed as indexed; SPE-1 **CERTIFIED / CLOSED**; **PRODUCT 1.0 — COMMERCIAL TEST READY** · Owner Gate **ACCEPTED WITH DISCLOSURES**
 
 Previous SPE hygiene:
 
@@ -140,7 +141,7 @@ SPE planning / hygiene records:
 
 Next authorized phase:
 
-**Commercial Readiness Preparation — OPEN** (CRP-0…6 PASS · **CRP-6.1 Phase 1 PASS** · next Owner-authorized Phase 2). See [`CRP-6.1`](./CRP/official-records/CRP-6-1-Product-Face-Foundation.md). **CTR = NOT YET**
+**Commercial Readiness Preparation — OPEN** (historical CRP-0…6 PASS · Screen 2 / Home / 6.3.x / 6.3-SHELL closed as indexed). See [`CRP official records`](./CRP/official-records/). **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. **Living next:** [`ROADMAP.md`](./roadmaps/ROADMAP.md).
 
 Production Approval:
 
@@ -196,7 +197,7 @@ AI Implementation:
 - AI-I0…AI-I9: COMPLETE
 - AI-I10 Certification: CERTIFIED (`src/ai/certification/`)
 - Runtime intelligence / assistants / prediction: NOT IMPLEMENTED (by design)
-- Next authorized program step: **Owner-authorized Product Face Implementation Phase 2** — CRP **OPEN** (CRP-0…6 PASS · **CRP-6.1 Phase 1 PASS**). **CTR = NOT YET** · Lovable = **VISUAL REFERENCE**
+- Next authorized program step: **None in this snapshot** — see living [`ROADMAP.md`](./roadmaps/ROADMAP.md). CRP **OPEN**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES** · Lovable = **VISUAL REFERENCE**
 
 Prior certified peers:
 
@@ -214,7 +215,7 @@ Scientific Graph AI
 
 Current Phase
 
-**SPE-1 CERTIFIED / CLOSED** (Commercial Test Ready = NOT YET)
+**SPE-1 CERTIFIED / CLOSED** (`PRODUCT 1.0 — COMMERCIAL TEST READY` · Owner Gate ACCEPTED WITH DISCLOSURES)
 
 Project Status
 
@@ -234,7 +235,8 @@ ESTABLISHED
 
 Implementation Status
 
-CRP OPEN (CRP-0…6 PASS · CRP-6.1 Phase 1 PASS) — next: Owner-authorized Product Face Implementation Phase 2
+CRP OPEN (historical CRP-0…6 PASS · Screen 2 / Home / 6.3.x / 6.3-SHELL closed as recorded)
+Living next: docs/roadmaps/ROADMAP.md (Post-CTR planning / reorganization; CTR DECLARED · CTR CERTIFIED WITH EXPLICIT DISCLOSURES)
 SPE-1 CERTIFIED / CLOSED (untouched)
 
 Release Target
@@ -322,9 +324,9 @@ Architectural documentation is considered stable.
 
 AI Domain is RELEASE CERTIFIED. AI-I0…AI-I10 COMPLETE. Implementation Series CLOSED under Planning Finality. Runtime intelligence remains NOT IMPLEMENTED (AIR-1 later).
 
-**Current objective (living):**
+**Current objective (snapshot):**
 
-**Commercial Readiness Preparation — OPEN** — see [`CRP-6.1 Product Face Foundation`](./CRP/official-records/CRP-6-1-Product-Face-Foundation.md). SPE-1 remains CLOSED. Next: **Owner-authorized Product Face Implementation Phase 2**. ARCH-U NOT ACTIVE; Lovable = VISUAL REFERENCE.
+**Commercial Readiness Preparation — OPEN** — see [`CRP official records`](./CRP/official-records/). SPE-1 remains CLOSED. **Living next:** [`ROADMAP.md`](./roadmaps/ROADMAP.md) (**Post-CTR planning / reorganization**). ARCH-U NOT ACTIVE; Lovable = VISUAL REFERENCE. **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED**.
 
 Future development shall follow:
 
@@ -354,13 +356,15 @@ Release
 
 # Current Priorities
 
-Immediate priorities include:
+This snapshot does **not** author living next. See [`docs/roadmaps/ROADMAP.md`](./roadmaps/ROADMAP.md) (**Post-CTR planning / reorganization**; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**).
 
-1. Review [`CRP-6.1`](./CRP/official-records/CRP-6-1-Product-Face-Foundation.md); then explicitly authorize **Product Face Implementation Phase 2** (YELLOW infrastructure suppression only).
-2. Do **not** expand into Window/Dock/Layout, Session, engines, or ARCH-U; honor CRP-4 fences.
-3. Preserve SPE-1 CLOSED; SemVer 1.0.0; ARCH-U NOT ACTIVE; CTR NOT YET.
-4. Validate against CRP-5.2 corpus (before) + E0 freeze (desired); known `validate:workspace-architecture` FAIL 22/26 remains pre-existing.
-5. On risk escalation → Plan B / Plan C per CRP-5.3.
+Standing fences (not a next-work ranking):
+
+1. Do **not** expand into Window/Dock/Layout, Session, engines, or ARCH-U; honor CRP-4 fences.
+2. Preserve SPE-1 CLOSED; SemVer 1.0.0; ARCH-U NOT ACTIVE; Owner Gate **ACCEPTED WITH DISCLOSURES**; do **not** treat Auth/cloud copy/Beta as cloud or AIR-1 certification.
+3. Known `validate:workspace-architecture` FAIL 22/26 remains pre-existing **CLASS A / DEFERRED** (CTR assessment — not a new phase).
+4. On risk escalation → Plan B / Plan C per CRP-5.3 (historical path selection).
+5. CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. Phase 3 remains OPTIONAL / BLOCKED / NOT DEBT.
 
 ---
 
@@ -402,11 +406,11 @@ SPE-1.C Series Certification (**PASS** · **SPE-1 CERTIFIED / CLOSED**)
 
 ↓
 
-Commercial Readiness Preparation — OPEN (CRP-0…6 PASS · CRP-6.1 Phase 1 PASS · next Owner-authorized Phase 2)
+Commercial Readiness Preparation — OPEN (historical CRP-0…6 PASS · Screen 2 / Home / 6.3.x / 6.3-SHELL closed as recorded)
 
 ↓
 
-Owner declare: COMMERCIAL TEST READY (separate gate)
+Living next: Post-CTR planning / reorganization (see docs/roadmaps/ROADMAP.md; PRODUCT 1.0 — COMMERCIAL TEST READY; CTR DECLARED · CTR CERTIFIED WITH EXPLICIT DISCLOSURES)
 
 ↓
 
@@ -440,4 +444,4 @@ The project is considered on track when:
 
 Scientific Graph AI has completed its architectural foundation, Release 1.0, hosted deployment (DEP-2), and UX Continuity (UXC-1).
 
-The living program is **Commercial Readiness Preparation — OPEN** (CRP-0…6 PASS · **CRP-6.1 Phase 1 PASS**). Next: Owner-authorized Product Face Implementation Phase 2. **SPE-1 CERTIFIED / CLOSED**. CTR **NOT YET**. Lovable = **VISUAL REFERENCE**.
+The CRP program is **OPEN** (historical CRP-0…6 PASS · Screen 2 / Home / 6.3.x / 6.3-SHELL closed as recorded). **Living next** is authored only in [`ROADMAP.md`](./roadmaps/ROADMAP.md): **Post-CTR planning / reorganization**. **SPE-1 CERTIFIED / CLOSED**. Owner Gate **ACCEPTED WITH DISCLOSURES**. **PRODUCT 1.0 — COMMERCIAL TEST READY**. CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**. Lovable = **VISUAL REFERENCE**.

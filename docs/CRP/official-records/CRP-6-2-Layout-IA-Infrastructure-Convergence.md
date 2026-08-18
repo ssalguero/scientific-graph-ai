@@ -233,3 +233,5 @@ Implemented in `ProductCompositionHost` → `WorkspaceActivationSeed`:
 Product Face is materially closer to frozen E0 organization: journey ownership clear, sidebar support-only, workspace protagonist, infrastructure non-dominant, seeds off, repetition demoted.
 
 **STOP.** Do not start Phase 3 · do not declare CTR · do not bump SemVer · do not reopen SPE-1 · do not activate ARCH-U without explicit Owner authorization.
+
+> **Superseded as living next (2026-08-17):** The STOP / “await Phase 3” statement above is preserved as the historical Phase 2 gate. It is **not** the current living next. Living next is authored only in [`docs/roadmaps/ROADMAP.md`](../../roadmaps/ROADMAP.md). Phase 3 is classified there as OPTIONAL / BLOCKED / NOT DEBT.
