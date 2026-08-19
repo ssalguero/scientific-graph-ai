@@ -108,6 +108,7 @@ import {
   generateDerivativePoints,
   generateIntegralPoints,
   generateMathExpressionPoints,
+  getNumericalAreaDisclosureLines,
   mergeYMetricsWithExperimental,
   normalizeImportedGraph,
   resolveNaturalLanguageExpression,
@@ -213,6 +214,8 @@ import { getSampleMeanAndStdDev } from "@/lib/scientific/shared/stats";
 import {
   appendCanonicalNormalityFindings,
   buildCanonicalNormalityAssessment,
+  buildScientificReportNormalityContent,
+  doesCanonicalAssessmentSupportNormality,
   getCanonicalNormalityReportLines,
   getCanonicalNormalityScore,
   getCanonicalNormalitySeriesFooterText,
@@ -220,6 +223,7 @@ import {
   getNormalityConfidenceLabel,
   getNormalityConsensusConclusionLabel,
   getNormalityConsensusEmoji,
+  resolveStatisticalRecommendedTest,
   type CanonicalNormalityAssessment,
   type NormalityClassification,
   type NormalityConfidence,
@@ -11214,7 +11218,8 @@ const getStatisticalAdvisorConfidenceLabel = (
 const buildStatisticalRecommendation = (
   series: ExperimentalSeries[],
   normalityAnalyses: NormalityAnalysis[],
-  correlationRequested: boolean
+  correlationRequested: boolean,
+  canonicalNormalityAssessment: CanonicalNormalityAssessment | null
 ): StatisticalRecommendation | null => {
   const groupCount = series.length;
   const totalSampleSize = series.reduce(
@@ -11229,14 +11234,14 @@ const buildStatisticalRecommendation = (
     seriesNames.includes(item.seriesName)
   );
 
-  const allNormal =
+  const sci11AllNormal =
     relevantNormality.length === groupCount &&
     relevantNormality.every(
       (item) =>
         item.classification === "normal" ||
         item.classification === "approximately-normal"
     );
-  const anyNonNormal = relevantNormality.some(
+  const sci11AnyNonNormal = relevantNormality.some(
     (item) =>
       item.classification === "non-normal" || item.classification === null
   );
@@ -11255,7 +11260,13 @@ const buildStatisticalRecommendation = (
     assumptionsFailed.push("Número suficiente de grupos");
   }
 
-  if (allNormal && !anyNonNormal) {
+  const canonicalNormalityDecisionPassed =
+    canonicalNormalityAssessment &&
+    canonicalNormalityAssessment.seriesAssessments.length > 0
+      ? doesCanonicalAssessmentSupportNormality(canonicalNormalityAssessment)
+      : sci11AllNormal && !sci11AnyNonNormal;
+
+  if (canonicalNormalityDecisionPassed) {
     assumptionsPassed.push("Normalidad");
   } else {
     assumptionsFailed.push("Normalidad no cumplida");
@@ -11268,53 +11279,30 @@ const buildStatisticalRecommendation = (
     warnings.push("Las muestras son pequeñas.");
   }
 
-  if (anyNonNormal) {
-    warnings.push("Una serie presenta distribución no normal.");
+  if (!canonicalNormalityDecisionPassed) {
+    warnings.push(
+      "La evaluación integrada de normalidad no respalda el supuesto paramétrico."
+    );
   }
 
   if (confidence === "low") {
     warnings.push("Los resultados deben interpretarse con cautela.");
   }
 
-  let recommendedTest = "";
+  const resolvedRecommendation = resolveStatisticalRecommendedTest({
+    groupCount,
+    correlationRequested,
+    canonicalNormalityPassed: canonicalNormalityDecisionPassed,
+  });
 
-  if (correlationRequested && groupCount >= 2) {
-    recommendedTest = allNormal && !anyNonNormal ? "Pearson" : "Spearman";
-    reasoning.push(
-      allNormal && !anyNonNormal
-        ? "Se recomienda Pearson porque se solicitó correlación y las series visibles cumplen supuestos de normalidad."
-        : "Se recomienda Spearman porque se solicitó correlación y una o más series no cumplen normalidad."
-    );
-  } else if (groupCount === 2) {
-    if (allNormal && !anyNonNormal) {
-      recommendedTest = "t-Test";
-      reasoning.push(
-        "Se recomienda t-Test porque existen dos grupos visibles y ambos presentan distribución compatible con la normalidad."
-      );
-    } else {
-      recommendedTest = "Mann-Whitney U";
-      reasoning.push(
-        "Se recomienda Mann-Whitney debido a que una o más series no cumplen supuestos de normalidad."
-      );
-    }
-  } else if (groupCount >= 3) {
-    if (allNormal && !anyNonNormal) {
-      recommendedTest = "ANOVA";
-      reasoning.push(
-        `Se recomienda utilizar ANOVA porque existen ${groupCount} grupos visibles y todos presentan una distribución aproximadamente normal.`
-      );
-    } else {
-      recommendedTest = "Kruskal-Wallis";
-      reasoning.push(
-        `Se recomienda Kruskal-Wallis porque existen ${groupCount} grupos visibles y al menos una serie no cumple normalidad.`
-      );
-    }
-  } else {
+  if (!resolvedRecommendation) {
     return null;
   }
 
+  reasoning.push(resolvedRecommendation.reasoning);
+
   return {
-    recommendedTest,
+    recommendedTest: resolvedRecommendation.recommendedTest,
     confidence,
     reasoning,
     assumptionsPassed,
@@ -11615,6 +11603,7 @@ const generateScientificReport = (input: {
   series: ExperimentalSeries[];
   experimentalStatistics: ExperimentalStatistics[];
   normalityAnalyses: NormalityAnalysis[];
+  canonicalNormalityAssessment: CanonicalNormalityAssessment;
   qqPlotAnalyses: QQPlotAnalysis[];
   violinPlotAnalyses: ViolinPlotAnalysis[];
   correlationHeatmap: HeatmapAnalysis | null;
@@ -11709,54 +11698,17 @@ const generateScientificReport = (input: {
 
   sections.push({ title: "Descripción de datos", content: dataLines });
 
-  const normalityLines: string[] = [];
-  if (input.normalityAnalyses.length === 0) {
-    normalityLines.push("No hay series disponibles para evaluar normalidad.");
-  } else {
-    const allNormal = input.normalityAnalyses.every(
-      (analysis) =>
-        analysis.classification === "normal" ||
-        analysis.classification === "approximately-normal"
-    );
-    const anyNonNormal = input.normalityAnalyses.some(
-      (analysis) =>
-        analysis.classification === "non-normal" || analysis.classification === null
-    );
-
-    if (allNormal && !anyNonNormal) {
-      normalityLines.push(
-        "Las distribuciones fueron compatibles con normalidad."
-      );
-      summaryLines.push(
-        "Las distribuciones fueron compatibles con normalidad."
-      );
-    } else {
-      normalityLines.push(
-        "Al menos una serie no cumple supuestos de normalidad."
-      );
-      summaryLines.push(
-        "Se detectaron desviaciones respecto a la normalidad en una o más series."
-      );
-    }
-
-    input.normalityAnalyses.forEach((analysis) => {
-      normalityLines.push(
-        `"${analysis.seriesName}" (N=${analysis.sampleSize}): ${getNormalityClassificationLabel(analysis.classification)} (confianza ${getNormalityConfidenceLabel(analysis.confidence)}).`
-      );
-    });
-  }
-
-  sections.push({ title: "Normalidad", content: normalityLines });
+  const normalityContent = buildScientificReportNormalityContent(
+    input.canonicalNormalityAssessment,
+    input.normalityAnalyses
+  );
+  normalityContent.summaryLines.forEach((line) => summaryLines.push(line));
+  sections.push({ title: "Normalidad", content: normalityContent.sectionLines });
 
   sections.push({
     title: "Evaluación integrada de normalidad",
     content: getCanonicalNormalityReportLines(
-      buildCanonicalNormalityAssessment(
-        input.normalityAnalyses,
-        input.qqPlotAnalyses,
-        input.violinPlotAnalyses,
-        input.kernelDensityAnalyses
-      )
+      input.canonicalNormalityAssessment
     ),
   });
 
@@ -12168,12 +12120,7 @@ const generateScientificReport = (input: {
     postHocComparisons: input.postHocComparisons,
     mannWhitneyResult: input.mannWhitneyResult,
     kruskalWallisResult: input.kruskalWallisResult,
-    normalityConsensus: buildCanonicalNormalityAssessment(
-      input.normalityAnalyses,
-      input.qqPlotAnalyses,
-      input.violinPlotAnalyses,
-      input.kernelDensityAnalyses
-    ).seriesAssessments,
+    normalityConsensus: input.canonicalNormalityAssessment.seriesAssessments,
   });
   if (effectSizePowerAnalysis) {
     sections.push({
@@ -13340,14 +13287,6 @@ const generateScientificAssistantReport = (input: {
   const hasNonNormal = input.normalityAnalyses.some(
     (analysis) => analysis.classification === "non-normal"
   );
-  const allNormal =
-    input.normalityAnalyses.length > 0 &&
-    input.normalityAnalyses.every(
-      (analysis) =>
-        analysis.classification === "normal" ||
-        analysis.classification === "approximately-normal"
-    ) &&
-    !hasNonNormal;
   const hasStrongQQNormal =
     input.qqPlotAnalyses.length > 0 &&
     input.qqPlotAnalyses.every(
@@ -13386,6 +13325,9 @@ const generateScientificAssistantReport = (input: {
     input.kernelDensityAnalyses
   );
   const normalityConsensus = canonicalNormalityAssessment.seriesAssessments;
+  const reportFacingSupportsNormality = doesCanonicalAssessmentSupportNormality(
+    canonicalNormalityAssessment
+  );
   const allConsensusNormal =
     normalityConsensus.length > 0 &&
     normalityConsensus.every((consensus) => consensus.conclusion === "normal");
@@ -13486,7 +13428,7 @@ const generateScientificAssistantReport = (input: {
   }
   if (
     !input.statisticalRecommendation &&
-    allNormal &&
+    reportFacingSupportsNormality &&
     !hasOutliers &&
     !hasSmallSamples
   ) {
@@ -13494,7 +13436,7 @@ const generateScientificAssistantReport = (input: {
   }
   if (
     hasStrongQQNormal &&
-    allNormal &&
+    reportFacingSupportsNormality &&
     !hasOutliers &&
     confidenceLevel === "medium"
   ) {
@@ -13509,7 +13451,7 @@ const generateScientificAssistantReport = (input: {
   if (
     hasStrongQQNormal &&
     allViolinSymmetric &&
-    allNormal &&
+    reportFacingSupportsNormality &&
     !hasOutliers &&
     confidenceLevel === "medium"
   ) {
@@ -13548,7 +13490,7 @@ const generateScientificAssistantReport = (input: {
   }
   if (
     heatmapStrongPositivePairs > 0 &&
-    allNormal &&
+    reportFacingSupportsNormality &&
     hasStrongQQNormal &&
     confidenceLevel === "medium"
   ) {
@@ -13864,13 +13806,13 @@ const generateScientificAssistantReport = (input: {
     pushWorkflowStep("Utilizar Kruskal-Wallis para comparar múltiples grupos.");
   } else if (recommendedTest === "Pearson" || recommendedTest === "Spearman") {
     pushWorkflowStep(`Aplicar correlación de ${recommendedTest}.`);
-  } else if (allNormal && seriesCount >= 3) {
+  } else if (reportFacingSupportsNormality && seriesCount >= 3) {
     pushWorkflowStep("Utilizar ANOVA para comparar tres o más grupos.");
-  } else if (allNormal && seriesCount === 2) {
+  } else if (reportFacingSupportsNormality && seriesCount === 2) {
     pushWorkflowStep("Utilizar t-Test para comparar dos grupos.");
-  } else if (hasNonNormal && seriesCount >= 3) {
+  } else if (!reportFacingSupportsNormality && seriesCount >= 3) {
     pushWorkflowStep("Utilizar Kruskal-Wallis como alternativa no paramétrica.");
-  } else if (hasNonNormal && seriesCount === 2) {
+  } else if (!reportFacingSupportsNormality && seriesCount === 2) {
     pushWorkflowStep("Utilizar Mann-Whitney como alternativa no paramétrica.");
   }
 
@@ -17552,9 +17494,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       buildStatisticalRecommendation(
         visibleExperimentalSeries,
         normalityAnalyses,
-        showCorrelation
+        showCorrelation,
+        canonicalNormalityAssessment
       ),
-    [visibleExperimentalSeries, normalityAnalyses, showCorrelation]
+    [visibleExperimentalSeries, normalityAnalyses, showCorrelation, canonicalNormalityAssessment]
   );
   const publicationDashboardAnalysis = useMemo(
     () =>
@@ -18307,6 +18250,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         series: visibleExperimentalSeries,
         experimentalStatistics,
         normalityAnalyses,
+        canonicalNormalityAssessment,
         qqPlotAnalyses,
         violinPlotAnalyses,
         correlationHeatmap,
@@ -18362,6 +18306,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       visibleExperimentalSeries,
       experimentalStatistics,
       normalityAnalyses,
+      canonicalNormalityAssessment,
       qqPlotAnalyses,
       violinPlotAnalyses,
       correlationHeatmap,
@@ -20739,7 +20684,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <p className="mt-2">
                       <button
                         type="button"
-                        onClick={() => selectWorkspaceSection("results")}
+                        onClick={() => {
+                          setShowMultiDatasetComparison(true);
+                          selectWorkspaceSection("results");
+                        }}
                         className={workflowContinuityLinkClass}
                       >
                         Ver comparación en Resultados
@@ -23631,7 +23579,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       {visibleMinX.toFixed(4)}, {visibleMaxX.toFixed(4)}]
                     </p>
                     <p className="mt-1">
-                      <span className="font-semibold">Área:</span>{" "}
+                      <span className="font-semibold">Área (aproximación numérica):</span>{" "}
                       {item.area.toFixed(4)}
                     </p>
                   </div>
@@ -23642,6 +23590,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         No hay datos suficientes para calcular áreas.
                       </p>
                     )}
+                    {curveAreaResults.length > 0 ? (
+                      <div className={`mt-2 text-sm ${resultsTextCard}`}>
+                        {getNumericalAreaDisclosureLines().map((line) => (
+                          <p key={line} className="mt-1 first:mt-0">
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 )}
 

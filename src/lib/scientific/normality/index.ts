@@ -17,6 +17,15 @@ export type {
 } from "./input-types";
 
 export { buildCanonicalNormalityAssessment } from "./build";
+export {
+  buildReportFacingNormalityGlobalConclusion,
+  doesCanonicalAssessmentSupportNormality,
+  isCanonicalConclusionSupportiveOfNormality,
+} from "./decision";
+export {
+  resolveStatisticalRecommendedTest,
+  type StatisticalRecommendedTest,
+} from "./recommendation";
 export { getCanonicalNormalityScore } from "./scoring";
 
 export {
@@ -28,7 +37,10 @@ export {
 
 export {
   appendCanonicalNormalityFindings,
+  buildScientificReportNormalityContent,
   getCanonicalNormalityFindingLine,
   getCanonicalNormalityReportLines,
   getCanonicalNormalitySeriesFooterText,
+  LEGACY_SCI11_REPORT_FACING_COMPATIBLE_PHRASE,
 } from "./reporting";
+export type { ReportFacingSci11Diagnostic } from "./reporting";

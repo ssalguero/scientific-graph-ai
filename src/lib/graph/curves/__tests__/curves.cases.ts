@@ -1,4 +1,4 @@
-import { CURVE_SAMPLE_STEP } from "../constants";
+import { CURVE_SAMPLE_STEP, INTERSECTION_DEDUP_X } from "../constants";
 import {
   evaluateExpression,
   expressionsAreEquivalent,
@@ -26,7 +26,7 @@ import {
   computeYMetrics,
   resolveYAxisDomainFromMetrics,
 } from "../metrics";
-import { formatRangeWarning, getKnownFunctionWarning } from "../warnings";
+import { formatRangeWarning, getKnownFunctionWarning, getNumericalAreaDisclosureLines } from "../warnings";
 import {
   createAssertCase,
   type CaseResult,
@@ -134,6 +134,32 @@ export const runCurvesCaseSuite = (): CaseResult[] => {
     calculateAreaUnderCurve(areaPoints, 0, 2) === 2
   );
 
+  const xSquaredAreaPoints = generateMathExpressionPoints("x^2", -10, 10);
+  assertCase(
+    "cc04.area.xSquared.trapezoid-667.5-unchanged",
+    calculateAreaUnderCurve(xSquaredAreaPoints, -10, 10) === 667.5
+  );
+
+  const areaDisclosure = getNumericalAreaDisclosureLines();
+  const areaDisclosureText = areaDisclosure.join(" ");
+  assertCase(
+    "cc04.area.disclosure.numerical-not-exact",
+    areaDisclosureText.includes("aproximación numérica") &&
+      areaDisclosureText.includes("no el valor exacto")
+  );
+  assertCase(
+    "cc04.area.disclosure.trapezoidal-method",
+    areaDisclosureText.includes("trapezoidal")
+  );
+  assertCase(
+    "cc04.area.disclosure.sample-step",
+    areaDisclosureText.includes("h = 0.5")
+  );
+  assertCase(
+    "cc04.area.disclosure.symbolic-independent",
+    areaDisclosureText.includes("antiderivada simbólica")
+  );
+
   // --- analysis ---
 
   const chartData = [
@@ -204,6 +230,101 @@ export const runCurvesCaseSuite = (): CaseResult[] => {
     "analysis.identicalCurvesMessage",
     identical.intersections.length === 0 &&
       identical.identicalPairMessage != null
+  );
+
+  const chartFromExpressions = (expressions: string[], minX: number, maxX: number) => {
+    const rows = new Map<number, Record<string, number>>();
+    expressions.forEach((expression, idx) => {
+      for (const point of generateMathExpressionPoints(expression, minX, maxX)) {
+        const row = rows.get(point.x) ?? { x: point.x };
+        row[`y${idx + 1}`] = point.y;
+        rows.set(point.x, row);
+      }
+    });
+    return [...rows.values()].sort((a, b) => a.x - b.x);
+  };
+
+  const pairXs = (
+    items: { curveA: string; curveB: string; x: number }[],
+    a: string,
+    b: string
+  ) =>
+    items
+      .filter(
+        (item) =>
+          (item.curveA === a && item.curveB === b) ||
+          (item.curveA === b && item.curveB === a)
+      )
+      .map((item) => item.x);
+
+  const pairHasX = (xs: number[], expected: number) =>
+    xs.some((x) => approx(x, expected, 1e-3));
+
+  const x2_3x = calculateCurveIntersections(
+    chartFromExpressions(["x^2", "3*x"], -10, 10),
+    [
+      { idx: 0, expression: "x^2" },
+      { idx: 1, expression: "3*x" },
+    ],
+    -10,
+    10
+  );
+  const x2_3xXs = pairXs(x2_3x.intersections, "x^2", "3*x");
+  assertCase(
+    "cc05.intersections.single-pair.x2-3x",
+    pairHasX(x2_3xXs, 0) && pairHasX(x2_3xXs, 3)
+  );
+
+  const threeCurveResult = calculateCurveIntersections(
+    chartFromExpressions(["x^2", "2*x", "3*x"], -10, 10),
+    [
+      { idx: 0, expression: "x^2" },
+      { idx: 1, expression: "2*x" },
+      { idx: 2, expression: "3*x" },
+    ],
+    -10,
+    10
+  );
+  const x2_2xXs = pairXs(threeCurveResult.intersections, "x^2", "2*x");
+  const x2_3xThreeXs = pairXs(threeCurveResult.intersections, "x^2", "3*x");
+  const twoX_3xXs = pairXs(threeCurveResult.intersections, "2*x", "3*x");
+  assertCase(
+    "cc05.intersections.three-curves.pair-values",
+    pairHasX(x2_2xXs, 0) &&
+      pairHasX(x2_2xXs, 2) &&
+      pairHasX(x2_3xThreeXs, 0) &&
+      pairHasX(x2_3xThreeXs, 3) &&
+      pairHasX(twoX_3xXs, 0)
+  );
+  assertCase(
+    "cc05.intersections.shared-x.preserved-per-pair",
+    pairHasX(x2_2xXs, 0) &&
+      pairHasX(x2_3xThreeXs, 0) &&
+      pairHasX(twoX_3xXs, 0)
+  );
+
+  const samePairNearDuplicates = calculateCurveIntersections(
+    [
+      { x: 0, y1: 0, y2: 0 },
+      { x: 0.0004, y1: 0.1, y2: 0 },
+      { x: 0.0008, y1: -0.1, y2: 0 },
+    ],
+    [
+      { idx: 0, expression: "near-a" },
+      { idx: 1, expression: "near-b" },
+    ],
+    0,
+    0.0008
+  );
+  const samePairXs = pairXs(
+    samePairNearDuplicates.intersections,
+    "near-a",
+    "near-b"
+  );
+  assertCase(
+    "cc05.intersections.same-pair.dedup-tolerance",
+    samePairXs.length === 1 &&
+      samePairXs.every((x) => Math.abs(x - samePairXs[0]) < INTERSECTION_DEDUP_X)
   );
 
   // --- warnings ---

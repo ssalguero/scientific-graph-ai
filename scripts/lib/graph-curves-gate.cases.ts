@@ -52,6 +52,7 @@ const FROZEN_CURVES_BARREL_API: Record<string, string[]> = {
     "generateDerivativePoints",
     "generateIntegralPoints",
     "generateMathExpressionPoints",
+    "getNumericalAreaDisclosureLines",
     "mergeYMetricsWithExperimental",
     "normalizeImportedGraph",
     "resolveNaturalLanguageExpression",

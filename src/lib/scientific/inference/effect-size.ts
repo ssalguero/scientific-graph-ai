@@ -1,4 +1,7 @@
-import type { NormalityConsensus } from "@/lib/scientific/normality";
+import {
+  isCanonicalConclusionSupportiveOfNormality,
+  type NormalityConsensus,
+} from "@/lib/scientific/normality";
 import {
   deduplicateTextLines,
   pushUniqueTextLine,
@@ -471,8 +474,7 @@ export const buildEffectSizePowerAnalysis = (input: {
   const prefersNonParametric =
     input.normalityConsensus.some(
       (consensus) =>
-        consensus.conclusion === "non-normal" ||
-        consensus.conclusion === "contradictory"
+        !isCanonicalConclusionSupportiveOfNormality(consensus.conclusion)
     ) &&
     (input.mannWhitneyResult !== null || input.kruskalWallisResult !== null);
   if (prefersNonParametric) {

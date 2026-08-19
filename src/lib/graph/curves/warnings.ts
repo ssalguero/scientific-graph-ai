@@ -3,6 +3,7 @@ import {
   KNOWN_FUNCTION_PATTERNS,
   KNOWN_FUNCTION_WARNINGS,
   RANGE_DISCARD_THRESHOLD,
+  CURVE_SAMPLE_STEP,
 } from "./constants";
 
 export const formatMathWarning = (discardedCount: number) =>
@@ -47,3 +48,10 @@ export const formatRangeWarning = (
 
   return warnings.length > 0 ? warnings : [GENERIC_RANGE_WARNING];
 };
+
+export const getNumericalAreaDisclosureLines = (): string[] => [
+  "El área mostrada es una aproximación numérica, no el valor exacto de la integral definida.",
+  "Método: regla trapezoidal compuesta.",
+  `Paso de muestreo h = ${CURVE_SAMPLE_STEP}.`,
+  "La antiderivada simbólica, cuando está disponible, es un resultado analítico independiente.",
+];

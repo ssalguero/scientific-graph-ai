@@ -38,4 +38,4 @@ export {
   mergeYMetricsWithExperimental,
   resolveYAxisDomainFromMetrics,
 } from "./metrics";
-export { formatRangeWarning } from "./warnings";
+export { formatRangeWarning, getNumericalAreaDisclosureLines } from "./warnings";

@@ -14,6 +14,7 @@ import {
   isQQInterpretationUnfavorable,
   isViolinShapeSkewed,
 } from "./rules";
+import { buildReportFacingNormalityGlobalConclusion } from "./decision";
 import type { CanonicalNormalityAssessment, NormalityConsensus } from "./types";
 
 const buildCanonicalNormalityAssessmentForSeries = (
@@ -202,35 +203,8 @@ export const buildCanonicalNormalityAssessment = (
     )
   );
 
-  const contradictoryCount = seriesAssessments.filter(
-    (assessment) => assessment.conclusion === "contradictory"
-  ).length;
-  const normalCount = seriesAssessments.filter(
-    (assessment) => assessment.conclusion === "normal"
-  ).length;
-  const nonNormalCount = seriesAssessments.filter(
-    (assessment) => assessment.conclusion === "non-normal"
-  ).length;
-
-  const globalConclusion: string[] = [];
-
-  if (normalCount === seriesAssessments.length) {
-    globalConclusion.push(
-      "La evaluación integrada (SCI-11, SCI-21, SCI-22 y SCI-26) es coherente con normalidad en todas las series."
-    );
-  } else if (contradictoryCount > 0) {
-    globalConclusion.push(
-      `Se detectaron ${contradictoryCount} serie(s) con señales contradictorias entre normalidad estadística y diagnósticos visuales.`
-    );
-  } else if (nonNormalCount === seriesAssessments.length) {
-    globalConclusion.push(
-      "La evaluación integrada indica que ninguna serie cumple de forma consistente el supuesto de normalidad."
-    );
-  } else {
-    globalConclusion.push(
-      "La evaluación integrada muestra señales mixtas de normalidad entre series y métodos."
-    );
-  }
+  const globalConclusion =
+    buildReportFacingNormalityGlobalConclusion(seriesAssessments);
 
   const warnings: string[] = [];
   seriesAssessments

@@ -1,9 +1,48 @@
 import { pushUniqueTextLine } from "@/lib/scientific/shared/text";
 import {
+  getNormalityClassificationLabel,
   getNormalityConfidenceLabel,
   getNormalityConsensusConclusionLabel,
 } from "./labels";
-import type { CanonicalNormalityAssessment, NormalityConsensus } from "./types";
+import type { NormalityClassification } from "./input-types";
+import type {
+  CanonicalNormalityAssessment,
+  NormalityConfidence,
+  NormalityConsensus,
+} from "./types";
+
+export const LEGACY_SCI11_REPORT_FACING_COMPATIBLE_PHRASE =
+  "Las distribuciones fueron compatibles con normalidad.";
+
+export type ReportFacingSci11Diagnostic = {
+  seriesName: string;
+  sampleSize: number;
+  classification: NormalityClassification | null;
+  confidence: NormalityConfidence;
+};
+
+export const buildScientificReportNormalityContent = (
+  assessment: CanonicalNormalityAssessment,
+  sci11Diagnostics: ReportFacingSci11Diagnostic[]
+): { summaryLines: string[]; sectionLines: string[] } => {
+  if (assessment.seriesAssessments.length === 0) {
+    return {
+      summaryLines: [],
+      sectionLines: ["No hay series disponibles para evaluar normalidad."],
+    };
+  }
+
+  const decisionLines = [...assessment.globalConclusion];
+  const sectionLines = [...decisionLines];
+
+  sci11Diagnostics.forEach((analysis) => {
+    sectionLines.push(
+      `"${analysis.seriesName}" (N=${analysis.sampleSize}): SCI-11 ${getNormalityClassificationLabel(analysis.classification)} (confianza ${getNormalityConfidenceLabel(analysis.confidence)}).`
+    );
+  });
+
+  return { summaryLines: decisionLines, sectionLines };
+};
 
 export const getCanonicalNormalityReportLines = (
   assessment: CanonicalNormalityAssessment

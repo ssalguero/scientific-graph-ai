@@ -35,12 +35,21 @@ const interpolateIntersectionX = (
   return x0 + t * (x1 - x0);
 };
 
+const sameUnorderedCurvePair = (
+  a: CurveIntersection,
+  b: CurveIntersection
+): boolean =>
+  (a.curveA === b.curveA && a.curveB === b.curveB) ||
+  (a.curveA === b.curveB && a.curveB === b.curveA);
+
 const dedupeIntersections = (items: CurveIntersection[]): CurveIntersection[] => {
   const deduped: CurveIntersection[] = [];
 
   for (const item of items) {
     const isDuplicate = deduped.some(
-      (existing) => Math.abs(existing.x - item.x) < INTERSECTION_DEDUP_X
+      (existing) =>
+        sameUnorderedCurvePair(existing, item) &&
+        Math.abs(existing.x - item.x) < INTERSECTION_DEDUP_X
     );
     if (!isDuplicate) {
       deduped.push(item);

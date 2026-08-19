@@ -1,3 +1,4 @@
+import { isCanonicalConclusionSupportiveOfNormality } from "@/lib/scientific/normality";
 import type { GuidedWorkflowContext } from "./context";
 import type { GuidedWorkflowToggleKey } from "./toggles";
 
@@ -7,15 +8,11 @@ export const resolveInferentialWorkflowToggles = (
   const assessments = ctx.canonicalNormalityAssessment.seriesAssessments;
   const allNormal =
     assessments.length > 0 &&
-    assessments.every(
-      (item) =>
-        item.conclusion === "normal" || item.conclusion === "probably-normal"
+    assessments.every((item) =>
+      isCanonicalConclusionSupportiveOfNormality(item.conclusion)
     );
   const anyNonNormal = assessments.some(
-    (item) =>
-      item.conclusion === "non-normal" ||
-      item.conclusion === "questionable" ||
-      item.conclusion === "contradictory"
+    (item) => !isCanonicalConclusionSupportiveOfNormality(item.conclusion)
   );
 
   if (allNormal && !anyNonNormal) {
