@@ -49,9 +49,21 @@ export const formatRangeWarning = (
   return warnings.length > 0 ? warnings : [GENERIC_RANGE_WARNING];
 };
 
-export const getNumericalAreaDisclosureLines = (): string[] => [
-  "El área mostrada es una aproximación numérica, no el valor exacto de la integral definida.",
-  "Método: regla trapezoidal compuesta.",
-  `Paso de muestreo h = ${CURVE_SAMPLE_STEP}.`,
-  "La antiderivada simbólica, cuando está disponible, es un resultado analítico independiente.",
-];
+export const getNumericalAreaDisclosureLines = (
+  samplePointCount?: number
+): string[] => {
+  const lines = [
+    "El área mostrada es una aproximación numérica, no el valor exacto de la integral definida.",
+    "Método: regla trapezoidal compuesta.",
+    `Paso de muestreo h = ${CURVE_SAMPLE_STEP}.`,
+  ];
+  if (samplePointCount != null && samplePointCount >= 2) {
+    lines.push(
+      `Muestras utilizadas: ${samplePointCount} puntos (${samplePointCount - 1} paneles trapezoidales).`
+    );
+  }
+  lines.push(
+    "La antiderivada simbólica, cuando está disponible, es un resultado analítico independiente y no es el valor de área mostrado."
+  );
+  return lines;
+};

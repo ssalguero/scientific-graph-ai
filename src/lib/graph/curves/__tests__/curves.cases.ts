@@ -159,6 +159,19 @@ export const runCurvesCaseSuite = (): CaseResult[] => {
     "cc04.area.disclosure.symbolic-independent",
     areaDisclosureText.includes("antiderivada simbólica")
   );
+  const xSquaredDisclosure = getNumericalAreaDisclosureLines(
+    xSquaredAreaPoints.length
+  ).join(" ");
+  assertCase(
+    "cc04.area.disclosure.sample-count-adjacent-contract",
+    xSquaredDisclosure.includes(
+      `Muestras utilizadas: ${xSquaredAreaPoints.length} puntos`
+    ) &&
+      xSquaredDisclosure.includes(
+        `${xSquaredAreaPoints.length - 1} paneles trapezoidales`
+      ) &&
+      xSquaredDisclosure.includes("no es el valor de área mostrado")
+  );
 
   // --- analysis ---
 

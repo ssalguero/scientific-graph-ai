@@ -23,7 +23,16 @@ export {
   isCanonicalConclusionSupportiveOfNormality,
 } from "./decision";
 export {
+  formatAdvisorRecommendedTestAsPrimary,
+  formatAdvisorRecommendedTestLine,
+  formatPublicationAdvisorRecommendation,
+  isCorrelationRecommendedTest,
+  resolveSeriesAnalysisRecommendationCopy,
+  resolveStatisticalAdvisorConfidence,
   resolveStatisticalRecommendedTest,
+  type ResolvedStatisticalRecommendation,
+  type StatisticalAdvisorConfidence,
+  type StatisticalRecommendationScope,
   type StatisticalRecommendedTest,
 } from "./recommendation";
 export { getCanonicalNormalityScore } from "./scoring";

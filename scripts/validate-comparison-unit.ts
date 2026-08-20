@@ -23,7 +23,7 @@ runReportCases(assertCase);
 const pageSource = readFileSync(join(process.cwd(), "src/app/page.tsx"), "utf8");
 const comparisonCtaIndex = pageSource.indexOf("Ver comparación en Resultados");
 const comparisonCtaWindow = pageSource.slice(
-  Math.max(0, comparisonCtaIndex - 500),
+  Math.max(0, comparisonCtaIndex - 700),
   comparisonCtaIndex
 );
 const chartCtaIndex = pageSource.indexOf("Ver gráfico principal en Resultados");
@@ -44,6 +44,15 @@ assertCase(
 assertCase(
   "cc03.cta.activates-results-workspace",
   comparisonCtaWindow.includes('selectWorkspaceSection("results")')
+);
+assertCase(
+  "cc03.cta.requests-focus-on-existing-surface",
+  comparisonCtaWindow.includes("pendingComparisonResultsFocusRef.current = true")
+);
+assertCase(
+  "cc03.dashboard.focus-target-id",
+  pageSource.includes('id="scientific-multi-dataset-comparison-dashboard"') &&
+    pageSource.includes("node.scrollIntoView")
 );
 assertCase(
   "cc03.chart-cta.does-not-enable-comparison",

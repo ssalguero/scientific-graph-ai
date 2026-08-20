@@ -216,6 +216,8 @@ import {
   buildCanonicalNormalityAssessment,
   buildScientificReportNormalityContent,
   doesCanonicalAssessmentSupportNormality,
+  formatAdvisorRecommendedTestAsPrimary,
+  formatAdvisorRecommendedTestLine,
   getCanonicalNormalityReportLines,
   getCanonicalNormalityScore,
   getCanonicalNormalitySeriesFooterText,
@@ -223,8 +225,12 @@ import {
   getNormalityConfidenceLabel,
   getNormalityConsensusConclusionLabel,
   getNormalityConsensusEmoji,
+  isCorrelationRecommendedTest,
+  resolveSeriesAnalysisRecommendationCopy,
+  resolveStatisticalAdvisorConfidence,
   resolveStatisticalRecommendedTest,
   type CanonicalNormalityAssessment,
+  type StatisticalRecommendationScope,
   type NormalityClassification,
   type NormalityConfidence,
   type NormalityConsensus,
@@ -10951,21 +10957,6 @@ const getNormalityClassificationBadge = (
   return "🔴 Distribución no normal";
 };
 
-const getNormalityRecommendation = (
-  classification: NormalityClassification | null
-) => {
-  if (classification === null) {
-    return "No hay variabilidad suficiente para evaluar la normalidad.";
-  }
-  if (classification === "normal") {
-    return "Los datos son compatibles con análisis paramétricos.";
-  }
-  if (classification === "approximately-normal") {
-    return "Los datos podrían utilizar análisis paramétricos con precaución.";
-  }
-  return "Se recomiendan pruebas no paramétricas.";
-};
-
 const analyzeSeriesNormality = (
   series: ExperimentalSeries
 ): NormalityAnalysis => {
@@ -11191,6 +11182,7 @@ type StatisticalRecommendationConfidence = "high" | "medium" | "low";
 
 type StatisticalRecommendation = {
   recommendedTest: string;
+  scope: StatisticalRecommendationScope;
   confidence: StatisticalRecommendationConfidence;
   reasoning: string[];
   assumptionsPassed: string[];
@@ -11217,7 +11209,7 @@ const getStatisticalAdvisorConfidenceLabel = (
 
 const buildStatisticalRecommendation = (
   series: ExperimentalSeries[],
-  normalityAnalyses: NormalityAnalysis[],
+  _sci11NormalityAnalyses: NormalityAnalysis[],
   correlationRequested: boolean,
   canonicalNormalityAssessment: CanonicalNormalityAssessment | null
 ): StatisticalRecommendation | null => {
@@ -11229,25 +11221,8 @@ const buildStatisticalRecommendation = (
 
   if (groupCount === 0 || totalSampleSize === 0) return null;
 
-  const seriesNames = series.map((item) => item.name);
-  const relevantNormality = normalityAnalyses.filter((item) =>
-    seriesNames.includes(item.seriesName)
-  );
-
-  const sci11AllNormal =
-    relevantNormality.length === groupCount &&
-    relevantNormality.every(
-      (item) =>
-        item.classification === "normal" ||
-        item.classification === "approximately-normal"
-    );
-  const sci11AnyNonNormal = relevantNormality.some(
-    (item) =>
-      item.classification === "non-normal" || item.classification === null
-  );
-
   const confidence: StatisticalRecommendationConfidence =
-    totalSampleSize >= 30 ? "high" : totalSampleSize >= 15 ? "medium" : "low";
+    resolveStatisticalAdvisorConfidence(totalSampleSize);
 
   const assumptionsPassed: string[] = [];
   const assumptionsFailed: string[] = [];
@@ -11261,10 +11236,9 @@ const buildStatisticalRecommendation = (
   }
 
   const canonicalNormalityDecisionPassed =
-    canonicalNormalityAssessment &&
-    canonicalNormalityAssessment.seriesAssessments.length > 0
-      ? doesCanonicalAssessmentSupportNormality(canonicalNormalityAssessment)
-      : sci11AllNormal && !sci11AnyNonNormal;
+    canonicalNormalityAssessment != null &&
+    canonicalNormalityAssessment.seriesAssessments.length > 0 &&
+    doesCanonicalAssessmentSupportNormality(canonicalNormalityAssessment);
 
   if (canonicalNormalityDecisionPassed) {
     assumptionsPassed.push("Normalidad");
@@ -11303,6 +11277,7 @@ const buildStatisticalRecommendation = (
 
   return {
     recommendedTest: resolvedRecommendation.recommendedTest,
+    scope: resolvedRecommendation.scope,
     confidence,
     reasoning,
     assumptionsPassed,
@@ -11374,7 +11349,9 @@ const buildAdvisorPdfSectionLines = (
   }
 
   const lines = [
-    `Prueba recomendada: ${recommendation.recommendedTest}`,
+    isCorrelationRecommendedTest(recommendation.recommendedTest)
+      ? `Recomendación de correlación: ${recommendation.recommendedTest}`
+      : `Prueba recomendada (inferencia de grupos): ${recommendation.recommendedTest}`,
     `Nivel de confianza: ${getStatisticalAdvisorConfidenceLabel(recommendation.confidence)}`,
   ];
 
@@ -12137,10 +12114,17 @@ const generateScientificReport = (input: {
   const recommendationLines: string[] = [];
   if (input.statisticalRecommendation) {
     recommendationLines.push(
-      `Prueba recomendada por el Advisor: ${input.statisticalRecommendation.recommendedTest} (confianza ${getStatisticalAdvisorConfidenceLabel(input.statisticalRecommendation.confidence)}).`
+      formatAdvisorRecommendedTestLine(
+        input.statisticalRecommendation.recommendedTest,
+        getStatisticalAdvisorConfidenceLabel(
+          input.statisticalRecommendation.confidence
+        )
+      )
     );
     summaryLines.push(
-      `El Advisor Estadístico recomienda utilizar ${input.statisticalRecommendation.recommendedTest} como análisis principal.`
+      formatAdvisorRecommendedTestAsPrimary(
+        input.statisticalRecommendation.recommendedTest
+      )
     );
     input.statisticalRecommendation.reasoning.forEach((reason) =>
       recommendationLines.push(reason)
@@ -13097,12 +13081,16 @@ const generateScientificInterpretation = (input: {
         "Se recomienda Kruskal-Wallis debido a la falta de normalidad."
       );
     } else if (recommendedTest === "Pearson") {
-      recommendations.push("Se recomienda correlación de Pearson.");
+      recommendations.push(
+        "Recomendación de correlación: Pearson. No es la recomendación primaria de inferencia de grupos."
+      );
     } else if (recommendedTest === "Spearman") {
-      recommendations.push("Se recomienda correlación de Spearman.");
+      recommendations.push(
+        "Recomendación de correlación: Spearman. No es la recomendación primaria de inferencia de grupos."
+      );
     } else {
       recommendations.push(
-        `Se recomienda ${recommendedTest} como análisis principal.`
+        `Se recomienda ${recommendedTest} como análisis principal de inferencia de grupos.`
       );
     }
 
@@ -15157,6 +15145,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   >(createEmptyComparisonSlots);
   const [showMultiDatasetComparison, setShowMultiDatasetComparison] =
     useState(false);
+  const pendingComparisonResultsFocusRef = useRef(false);
   const [showHierarchicalClustering, setShowHierarchicalClustering] =
     useState(false);
   const [showTTest, setShowTTest] = useState(false);
@@ -15205,6 +15194,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [functionSearch, setFunctionSearch] = useState("");
   const [activeWorkspaceSection, setActiveWorkspaceSection] =
     useState<WorkspaceSection>("home");
+  useEffect(() => {
+    if (!pendingComparisonResultsFocusRef.current) return;
+    if (!showMultiDatasetComparison) return;
+    if (activeWorkspaceSection !== "results") return;
+    const node = document.getElementById(
+      "scientific-multi-dataset-comparison-dashboard"
+    );
+    if (!node) return;
+    pendingComparisonResultsFocusRef.current = false;
+    node.scrollIntoView({ behavior: "smooth", block: "start" });
+    node.focus();
+  }, [showMultiDatasetComparison, activeWorkspaceSection]);
   const [sidebarRailCollapsed, setSidebarRailCollapsed] = useState(true);
   const [dataWorkspaceView, setDataWorkspaceView] =
     useState<DataWorkspaceView>("experimental");
@@ -16680,11 +16681,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           id: curve.idx,
           expression: curve.expression,
           area,
+          samplePointCount: points.length,
         };
       })
       .filter(
-        (item): item is { id: number; expression: string; area: number } =>
-          item.area !== null
+        (
+          item
+        ): item is {
+          id: number;
+          expression: string;
+          area: number;
+          samplePointCount: number;
+        } => item.area !== null
       );
   }, [showIntegral, visibleActiveCurves, visibleMinX, visibleMaxX]);
   const intersectionAnalysis = useMemo(() => {
@@ -20685,6 +20693,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <button
                         type="button"
                         onClick={() => {
+                          pendingComparisonResultsFocusRef.current = true;
                           setShowMultiDatasetComparison(true);
                           selectWorkspaceSection("results");
                         }}
@@ -23582,6 +23591,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <span className="font-semibold">Área (aproximación numérica):</span>{" "}
                       {item.area.toFixed(4)}
                     </p>
+                    <div className={`mt-2 text-sm ${resultsTextCard}`}>
+                      {getNumericalAreaDisclosureLines(item.samplePointCount).map(
+                        (line) => (
+                          <p key={line} className="mt-1 first:mt-0">
+                            {line}
+                          </p>
+                        )
+                      )}
+                    </div>
                   </div>
                 ))}
                     </div>
@@ -23590,15 +23608,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         No hay datos suficientes para calcular áreas.
                       </p>
                     )}
-                    {curveAreaResults.length > 0 ? (
-                      <div className={`mt-2 text-sm ${resultsTextCard}`}>
-                        {getNumericalAreaDisclosureLines().map((line) => (
-                          <p key={line} className="mt-1 first:mt-0">
-                            {line}
-                          </p>
-                        ))}
-                      </div>
-                    ) : null}
                   </div>
                 )}
 
@@ -24372,8 +24381,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               )}
 
                               <p className={`mt-2 text-sm ${resultsTextCard}`}>
-                                {getNormalityRecommendation(
-                                  analysis.classification
+                                {resolveSeriesAnalysisRecommendationCopy(
+                                  canonicalNormalityBySeriesName.get(
+                                    analysis.seriesName
+                                  )?.conclusion
                                 )}
                               </p>
                               {getCanonicalNormalitySeriesFooterText(
@@ -25745,7 +25756,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </div>
 
                 {showMultiDatasetComparison && (
-                  <div className={`${resultsSubsectionCard} ${resultsPanelFull}`}>
+                  <div
+                    id="scientific-multi-dataset-comparison-dashboard"
+                    tabIndex={-1}
+                    className={`${resultsSubsectionCard} ${resultsPanelFull}`}
+                  >
                     <p className={subsectionHeading}>
                       📊 Multi-Dataset Comparison Dashboard
                     </p>
@@ -26481,7 +26496,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className={contentPanel}>
                         <p>
                           <span className="font-semibold">
-                            Prueba recomendada:
+                            {statisticalRecommendation.scope === "correlation"
+                              ? "Recomendación de correlación:"
+                              : "Prueba recomendada (inferencia de grupos):"}
                           </span>{" "}
                           {statisticalRecommendation.recommendedTest}
                         </p>

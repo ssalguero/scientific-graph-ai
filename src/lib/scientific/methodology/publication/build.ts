@@ -1,5 +1,6 @@
 import type { EffectSizePowerAnalysis } from "@/lib/scientific/inference";
 import type { CanonicalNormalityAssessment } from "@/lib/scientific/normality";
+import { formatPublicationAdvisorRecommendation } from "@/lib/scientific/normality";
 import type { EvidenceStrengthEngineAnalysis } from "@/lib/scientific/methodology/evidence";
 import type { MethodologicalDashboardAnalysis } from "@/lib/scientific/methodology/summary";
 import type { PublicationReadinessAnalyzerAnalysis } from "@/lib/scientific/methodology/readiness";
@@ -320,7 +321,7 @@ const buildPublicationDashboardRecommendations = (input: {
   if (input.recommendedTest) {
     pushUniqueTextLine(
       recommendations,
-      `Utilizar ${input.recommendedTest} como análisis principal, según el Advisor Estadístico.`
+      formatPublicationAdvisorRecommendation(input.recommendedTest)
     );
   }
 

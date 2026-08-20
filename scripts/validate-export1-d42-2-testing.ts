@@ -84,6 +84,15 @@ check(
   pageSrc.includes("exportChartJson") && pageSrc.includes("GraphJsonExport")
 );
 check(
+  "page JSON export uses Blob download contract",
+  pageSrc.includes("exportChartJson") &&
+    pageSrc.includes('type: "application/json"') &&
+    pageSrc.includes("URL.createObjectURL") &&
+    pageSrc.includes('getChartExportFileName(title, "json")') &&
+    pageSrc.includes("link.download") &&
+    pageSrc.includes("link.click()")
+);
+check(
   "page export UI controls present",
   pageSrc.includes("chartExportPixelRatio") &&
     pageSrc.includes("chartExportSampleStep") &&

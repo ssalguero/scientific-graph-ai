@@ -7,7 +7,12 @@ import {
   buildCanonicalNormalityAssessment,
   buildScientificReportNormalityContent,
   doesCanonicalAssessmentSupportNormality,
+  formatAdvisorRecommendedTestAsPrimary,
+  formatAdvisorRecommendedTestLine,
+  isCorrelationRecommendedTest,
   LEGACY_SCI11_REPORT_FACING_COMPATIBLE_PHRASE,
+  resolveSeriesAnalysisRecommendationCopy,
+  resolveStatisticalAdvisorConfidence,
   resolveStatisticalRecommendedTest,
 } from "@/lib/scientific/normality";
 
@@ -284,6 +289,87 @@ export const runReportFacingNormalityDecisionCaseSuite = (): CaseResult[] => {
   assertCase(
     "cc02.general.two-groups.t-test",
     twoGroupParametric?.recommendedTest === "t-Test"
+  );
+
+  const questionableCopy = resolveSeriesAnalysisRecommendationCopy(
+    "questionable"
+  );
+  const contradictoryCopy = resolveSeriesAnalysisRecommendationCopy(
+    "contradictory"
+  );
+  const missingCanonicalCopy = resolveSeriesAnalysisRecommendationCopy(
+    undefined
+  );
+  const normalCopy = resolveSeriesAnalysisRecommendationCopy("normal");
+  const probablyNormalCopy =
+    resolveSeriesAnalysisRecommendationCopy("probably-normal");
+
+  assertCase(
+    "cc01.residual.questionable.no-parametric-recommendation",
+    !questionableCopy.includes("análisis paramétricos") &&
+      questionableCopy.includes("no paramétricas")
+  );
+  assertCase(
+    "cc01.residual.contradictory.no-parametric-recommendation",
+    !contradictoryCopy.includes("análisis paramétricos") &&
+      contradictoryCopy.includes("no paramétricas")
+  );
+  assertCase(
+    "cc01.residual.missing-canonical.no-parametric-recommendation",
+    missingCanonicalCopy.includes("evaluación integrada") &&
+      !missingCanonicalCopy.includes("compatibles con análisis paramétricos")
+  );
+  assertCase(
+    "cc01.residual.supportive-normal.parametric-allowed",
+    normalCopy.includes("compatibles con análisis paramétricos")
+  );
+  assertCase(
+    "cc01.residual.supportive-probably-normal.parametric-with-caution",
+    probablyNormalCopy.includes("paramétricos") &&
+      probablyNormalCopy.includes("precaución")
+  );
+
+  assertCase(
+    "cc02.residual.auditor-correlation.scope-is-correlation",
+    auditorMethodWithCorrelation?.scope === "correlation"
+  );
+  assertCase(
+    "cc02.residual.auditor-correlation.not-primary-pearson",
+    auditorMethodWithCorrelation?.recommendedTest !== "Pearson" &&
+      !formatAdvisorRecommendedTestAsPrimary("Spearman").includes(
+        "análisis principal"
+      )
+  );
+  assertCase(
+    "cc02.residual.pearson-when-supportive.scoped-not-primary-general",
+    supportivePearson?.scope === "correlation" &&
+      supportivePearson.recommendedTest === "Pearson" &&
+      formatAdvisorRecommendedTestAsPrimary("Pearson").includes("correlación") &&
+      !formatAdvisorRecommendedTestAsPrimary("Pearson").includes(
+        "análisis principal"
+      )
+  );
+  assertCase(
+    "cc02.residual.group-inference.distinct-from-correlation",
+    supportiveAnova?.scope === "group-inference" &&
+      formatAdvisorRecommendedTestLine("ANOVA", "Media").includes(
+        "inferencia de grupos"
+      ) &&
+      formatAdvisorRecommendedTestLine("Pearson", "Media").includes(
+        "correlación"
+      )
+  );
+  assertCase(
+    "cc02.residual.confidence-n-rule",
+    resolveStatisticalAdvisorConfidence(14) === "low" &&
+      resolveStatisticalAdvisorConfidence(15) === "medium" &&
+      resolveStatisticalAdvisorConfidence(29) === "medium" &&
+      resolveStatisticalAdvisorConfidence(30) === "high"
+  );
+  assertCase(
+    "cc02.residual.pearson-is-correlation-test",
+    isCorrelationRecommendedTest("Pearson") &&
+      !isCorrelationRecommendedTest("ANOVA")
   );
 
   return results;

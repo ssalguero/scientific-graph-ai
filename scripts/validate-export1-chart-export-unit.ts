@@ -80,5 +80,40 @@ check(
   "getChartExportFileName png",
   getChartExportFileName("Demo Chart", "png") === "grafico-Demo-Chart.png"
 );
+check(
+  "getChartExportFileName json",
+  getChartExportFileName("Demo Chart", "json") === "grafico-Demo-Chart.json"
+);
+
+const jsonExportContract: {
+  title: string;
+  expression: string;
+  curves: { expression: string; color: string }[];
+  min_x: number;
+  max_x: number;
+  auto_scale_y: boolean;
+  color: string;
+} = {
+  title: "Demo Chart",
+  expression: "x^2",
+  curves: [{ expression: "x^2", color: "#2563eb" }],
+  min_x: -10,
+  max_x: 10,
+  auto_scale_y: true,
+  color: "blue",
+};
+const parsedJsonExport = JSON.parse(
+  JSON.stringify(jsonExportContract, null, 2)
+) as typeof jsonExportContract;
+check(
+  "GraphJsonExport payload round-trip fields",
+  parsedJsonExport.title === "Demo Chart" &&
+    parsedJsonExport.expression === "x^2" &&
+    parsedJsonExport.curves.length === 1 &&
+    parsedJsonExport.min_x === -10 &&
+    parsedJsonExport.max_x === 10 &&
+    typeof parsedJsonExport.auto_scale_y === "boolean" &&
+    typeof parsedJsonExport.color === "string"
+);
 
 console.log(`\nvalidate-export1-chart-export-unit: ${passed} checks PASS`);
