@@ -12,8 +12,9 @@ import {
 import type { ExperimentalSeries } from "@/lib/experimentalData";
 import type { ImportAuxiliaryColumn } from "@/lib/import/types";
 import {
-  applyWorksheetModelUpdate,
+  applyWorksheetModelUpdatePreservingEmptyRows,
   buildColumnRegistryFromImportAuxiliary,
+  experimentalSeriesPointsEqual,
   cloneColumnMetadata,
   createDefaultColumnRegistry,
   createFormulaColumnMetadata,
@@ -67,6 +68,7 @@ type ScientificWorksheetPanelProps = {
   inputField: string;
   fieldLabel: string;
   dataEmptyState: string;
+  datasetResetKey?: string | null;
 };
 
 type EditingCell = {
@@ -105,8 +107,13 @@ export function ScientificWorksheetPanel({
   inputField,
   fieldLabel,
   dataEmptyState,
+  datasetResetKey = null,
 }: ScientificWorksheetPanelProps) {
-  const baseModel = useMemo(() => seriesToWorksheet(series), [series]);
+  const [emptyRowXs, setEmptyRowXs] = useState<number[]>([]);
+  const baseModel = useMemo(
+    () => seriesToWorksheet(series, emptyRowXs),
+    [series, emptyRowXs]
+  );
   const tableRef = useRef<HTMLDivElement>(null);
   const skipEditCommitRef = useRef(false);
   const [sortColumn, setSortColumn] = useState<WorksheetSortColumn | null>(
@@ -134,6 +141,10 @@ export function ScientificWorksheetPanel({
     null
   );
   const [columnHistory, setColumnHistory] = useState<ColumnHistoryState>(null);
+
+  useEffect(() => {
+    setEmptyRowXs([]);
+  }, [datasetResetKey]);
 
   useEffect(() => {
     if (initialColumnRegistry && Object.keys(initialColumnRegistry).length > 0) {
@@ -165,10 +176,42 @@ export function ScientificWorksheetPanel({
     [baseModel, columnRegistry]
   );
 
-  const commitSeriesUpdate = (
-    updater: Parameters<typeof applyWorksheetModelUpdate>[1]
+  const applyPreservingUpdate = (
+    updater: Parameters<typeof applyWorksheetModelUpdatePreservingEmptyRows>[1]
   ) => {
-    onSeriesChange(applyWorksheetModelUpdate(series, updater));
+    const previousExtraXs = emptyRowXs;
+    const result = applyWorksheetModelUpdatePreservingEmptyRows(
+      series,
+      updater,
+      previousExtraXs
+    );
+    setEmptyRowXs(result.extraXs);
+    return { ...result, previousExtraXs };
+  };
+
+  const extraXsChanged = (previous: readonly number[], next: readonly number[]) => {
+    if (previous.length !== next.length) {
+      return true;
+    }
+    const sortedPrevious = [...previous].sort((left, right) => left - right);
+    const sortedNext = [...next].sort((left, right) => left - right);
+    return sortedPrevious.some((value, index) => value !== sortedNext[index]);
+  };
+
+  const commitSeriesUpdate = (
+    updater: Parameters<typeof applyWorksheetModelUpdatePreservingEmptyRows>[1]
+  ) => {
+    const result = applyPreservingUpdate(updater);
+    if (!experimentalSeriesPointsEqual(series, result.series)) {
+      onSeriesChange(result.series);
+      return;
+    }
+    if (extraXsChanged(result.previousExtraXs, result.extraXs)) {
+      onWorksheetPayloadChange?.({
+        columnRegistry,
+        modified: true,
+      });
+    }
   };
 
   const commitColumnRegistryChange = (nextRegistry: WorksheetColumnRegistry) => {
@@ -275,10 +318,11 @@ export function ScientificWorksheetPanel({
 
   const handleDuplicateColumn = (seriesId: string) => {
     const sourceMeta = columnRegistry[seriesId] ?? DEFAULT_COLUMN_METADATA;
-    const nextSeries = applyWorksheetModelUpdate(series, (model) =>
+    const result = applyPreservingUpdate((model) =>
       duplicateWorksheetColumn(model, seriesId)
     );
-    const nextModel = seriesToWorksheet(nextSeries);
+    const nextSeries = result.series;
+    const nextModel = seriesToWorksheet(nextSeries, result.extraXs);
     const previousIds = new Set(baseModel.columns.map((column) => column.seriesId));
     const duplicatedColumn = nextModel.columns.find(
       (column) => !previousIds.has(column.seriesId)
@@ -339,12 +383,12 @@ export function ScientificWorksheetPanel({
     const sourceMeta = columnRegistry[seriesId] ?? DEFAULT_COLUMN_METADATA;
     const previousIds = new Set(baseModel.columns.map((column) => column.seriesId));
 
-    const nextSeries = applyWorksheetModelUpdate(series, (model) => {
+    const result = applyPreservingUpdate((model) => {
       const nextModel = transformWorksheetColumn(model, seriesId, transform);
       return nextModel ?? model;
     });
-
-    const nextModel = seriesToWorksheet(nextSeries);
+    const nextSeries = result.series;
+    const nextModel = seriesToWorksheet(nextSeries, result.extraXs);
     const transformedColumn = nextModel.columns.find(
       (column) => !previousIds.has(column.seriesId)
     );
@@ -420,7 +464,7 @@ export function ScientificWorksheetPanel({
     let createdTransform: WorksheetColumnTransform | null = null;
     let createdSeriesId: string | null = null;
 
-    const nextSeries = applyWorksheetModelUpdate(series, (model) => {
+    const updateResult = applyPreservingUpdate((model) => {
       const result = createFormulaWorksheetColumn(
         model,
         columnLabel,
@@ -435,6 +479,7 @@ export function ScientificWorksheetPanel({
       createdSeriesId = result.seriesId;
       return result.model;
     });
+    const nextSeries = updateResult.series;
 
     if (creationError) {
       setFormulaBuilderError(creationError);
@@ -446,7 +491,7 @@ export function ScientificWorksheetPanel({
       return;
     }
 
-    const nextModel = seriesToWorksheet(nextSeries);
+    const nextModel = seriesToWorksheet(nextSeries, updateResult.extraXs);
     const formulaColumn = nextModel.columns.find(
       (column) => column.seriesId === createdSeriesId
     );
@@ -572,13 +617,19 @@ export function ScientificWorksheetPanel({
     setEditingCell(null);
 
     let pasteChanged = false;
-    onSeriesChange(
-      applyWorksheetModelUpdate(series, (model) => {
-        const result = pasteTabularDataIntoModel(model, grid, pasteAnchor);
-        pasteChanged = result.changed;
-        return result.model;
-      })
-    );
+    const pasteResult = applyPreservingUpdate((model) => {
+      const result = pasteTabularDataIntoModel(model, grid, pasteAnchor);
+      pasteChanged = result.changed;
+      return result.model;
+    });
+    if (!experimentalSeriesPointsEqual(series, pasteResult.series)) {
+      onSeriesChange(pasteResult.series);
+    } else if (extraXsChanged(pasteResult.previousExtraXs, pasteResult.extraXs)) {
+      onWorksheetPayloadChange?.({
+        columnRegistry,
+        modified: true,
+      });
+    }
 
     if (!pasteChanged) {
       skipEditCommitRef.current = false;

@@ -1,6 +1,7 @@
 import type { ExperimentalSeries } from "../src/lib/experimentalData";
 import {
   applyWorksheetModelUpdate,
+  applyWorksheetModelUpdatePreservingEmptyRows,
   deleteWorksheetColumn,
   duplicateWorksheetColumn,
   formatWorksheetSelectionAsTsv,
@@ -87,6 +88,94 @@ const addedRow = applyWorksheetModelUpdate(sampleSeries, (current) => ({
 results.push({
   id: "add.row",
   pass: addedRow[0]?.points.length === 3,
+});
+
+const emptyAdd = applyWorksheetModelUpdatePreservingEmptyRows(
+  sampleSeries,
+  (current) => ({
+    ...current,
+    rows: [
+      ...current.rows,
+      {
+        rowKey: "empty-row",
+        x: 3,
+        values: { s1: null, s2: null },
+      },
+    ],
+  })
+);
+results.push({
+  id: "add.row.empty.survives",
+  pass:
+    emptyAdd.series[0]?.points.length === 2 &&
+    emptyAdd.series[1]?.points.length === 2 &&
+    emptyAdd.extraXs.length === 1 &&
+    emptyAdd.extraXs[0] === 3 &&
+    seriesToWorksheet(emptyAdd.series, emptyAdd.extraXs).rows.length === 3,
+});
+
+const secondEmptyAdd = applyWorksheetModelUpdatePreservingEmptyRows(
+  emptyAdd.series,
+  (current) => ({
+    ...current,
+    rows: [
+      ...current.rows,
+      {
+        rowKey: "empty-row-2",
+        x: 4,
+        values: { s1: null, s2: null },
+      },
+    ],
+  }),
+  emptyAdd.extraXs
+);
+results.push({
+  id: "add.row.empty.second",
+  pass:
+    secondEmptyAdd.extraXs.length === 2 &&
+    secondEmptyAdd.extraXs.includes(3) &&
+    secondEmptyAdd.extraXs.includes(4) &&
+    secondEmptyAdd.series[0]?.points.length === 2,
+});
+
+const filledEmptyRow = applyWorksheetModelUpdatePreservingEmptyRows(
+  emptyAdd.series,
+  (current) => ({
+    ...current,
+    rows: current.rows.map((row) =>
+      row.x === 3
+        ? { ...row, values: { ...row.values, s1: 14 } }
+        : row
+    ),
+  }),
+  emptyAdd.extraXs
+);
+results.push({
+  id: "add.row.empty.then.fill",
+  pass:
+    filledEmptyRow.extraXs.length === 0 &&
+    filledEmptyRow.series[0]?.points.some(
+      (point) => point.x === 3 && point.y === 14
+    ) === true &&
+    filledEmptyRow.series[1]?.points.some((point) => point.x === 3) === false &&
+    sampleSeries[0]?.points.length === 2,
+});
+
+const deletedEmptyRow = applyWorksheetModelUpdatePreservingEmptyRows(
+  emptyAdd.series,
+  (current) => ({
+    ...current,
+    rows: current.rows.filter((row) => row.x !== 3),
+  }),
+  emptyAdd.extraXs
+);
+results.push({
+  id: "add.row.empty.then.delete",
+  pass:
+    deletedEmptyRow.extraXs.length === 0 &&
+    deletedEmptyRow.series[0]?.points.length === 2 &&
+    seriesToWorksheet(deletedEmptyRow.series, deletedEmptyRow.extraXs).rows
+      .length === 2,
 });
 
 const insertedColumn = insertWorksheetColumn(model);

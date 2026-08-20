@@ -122,16 +122,35 @@ export function cloneColumnMetadata(
   };
 }
 
-export function seriesToWorksheet(series: ExperimentalSeries[]): WorksheetModel {
-  if (series.length === 0) {
-    return { xColumnLabel: "X", columns: [], rows: [] };
-  }
-
+export function seriesToWorksheet(
+  series: ExperimentalSeries[],
+  extraXs: readonly number[] = []
+): WorksheetModel {
   const xValues = new Set<number>();
   for (const item of series) {
     for (const point of item.points) {
-      xValues.add(point.x);
+      if (Number.isFinite(point.x)) {
+        xValues.add(point.x);
+      }
     }
+  }
+  for (const extraX of extraXs) {
+    if (Number.isFinite(extraX)) {
+      xValues.add(extraX);
+    }
+  }
+
+  if (series.length === 0) {
+    const sortedEmpty = Array.from(xValues).sort((left, right) => left - right);
+    return {
+      xColumnLabel: "X",
+      columns: [],
+      rows: sortedEmpty.map((x, index) => ({
+        rowKey: `ws-row-${index}-${x}`,
+        x,
+        values: {},
+      })),
+    };
   }
 
   const sortedX = Array.from(xValues).sort((left, right) => left - right);
@@ -1009,13 +1028,66 @@ export function formatWorksheetSelectionAsTsv(
     .join("\n");
 }
 
+export function listEmptyWorksheetXs(model: WorksheetModel): number[] {
+  return model.rows
+    .filter((row) => {
+      if (!Number.isFinite(row.x)) {
+        return false;
+      }
+      if (model.columns.length === 0) {
+        return true;
+      }
+      return model.columns.every((column) => {
+        const y = row.values[column.seriesId];
+        return y === null || !Number.isFinite(y);
+      });
+    })
+    .map((row) => row.x);
+}
+
+export function experimentalSeriesPointsEqual(
+  left: ExperimentalSeries[],
+  right: ExperimentalSeries[]
+): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  return left.every((item, index) => {
+    const other = right[index];
+    if (!other || item.id !== other.id || item.points.length !== other.points.length) {
+      return false;
+    }
+    return item.points.every(
+      (point, pointIndex) =>
+        point.x === other.points[pointIndex]?.x &&
+        point.y === other.points[pointIndex]?.y
+    );
+  });
+}
+
+export function applyWorksheetModelUpdatePreservingEmptyRows(
+  previousSeries: ExperimentalSeries[],
+  updater: (model: WorksheetModel) => WorksheetModel,
+  extraXs: readonly number[] = []
+): { series: ExperimentalSeries[]; extraXs: number[] } {
+  const current = seriesToWorksheet(previousSeries, extraXs);
+  const nextModel = updater(current);
+  return {
+    series: worksheetToSeries(nextModel, previousSeries),
+    extraXs: listEmptyWorksheetXs(nextModel),
+  };
+}
+
 export function applyWorksheetModelUpdate(
   previousSeries: ExperimentalSeries[],
-  updater: (model: WorksheetModel) => WorksheetModel
+  updater: (model: WorksheetModel) => WorksheetModel,
+  extraXs: readonly number[] = []
 ): ExperimentalSeries[] {
-  const current = seriesToWorksheet(previousSeries);
-  const nextModel = updater(current);
-  return worksheetToSeries(nextModel, previousSeries);
+  return applyWorksheetModelUpdatePreservingEmptyRows(
+    previousSeries,
+    updater,
+    extraXs
+  ).series;
 }
 
 export const WORKSHEET_COLUMN_TYPE_LABELS: Record<WorksheetColumnType, string> =

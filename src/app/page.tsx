@@ -56,6 +56,7 @@ import {
   type WorksheetColumnRegistry,
 } from "@/lib/experimentalWorksheet";
 import { ScientificWorksheetPanel } from "@/components/data/ScientificWorksheetPanel";
+import { GUEST_AUTH_UNAVAILABLE_NOTICE } from "@/lib/guestAuthUnavailable";
 import { VisualGraphBuilder } from "@/components/graph-builder/VisualGraphBuilder";
 import { GraphPreview } from "@/components/graph-builder/GraphPreview";
 import type {
@@ -15134,6 +15135,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     useState(false);
   const [highlightProjectPanel, setHighlightProjectPanel] = useState(false);
   const [graphSaveToast, setGraphSaveToast] = useState<string | null>(null);
+  const [guestAuthNoticeAt, setGuestAuthNoticeAt] = useState<number | null>(
+    null
+  );
   const dataConstructorSectionRef = useRef<HTMLDivElement>(null);
   const dataImportSectionRef = useRef<HTMLDivElement>(null);
   const dataMultiDatasetSectionRef = useRef<HTMLDivElement>(null);
@@ -15389,6 +15393,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     const timer = window.setTimeout(() => setGraphSaveToast(null), 4500);
     return () => window.clearTimeout(timer);
   }, [graphSaveToast]);
+
+  useEffect(() => {
+    if (guestAuthNoticeAt === null) return;
+    const timer = window.setTimeout(() => setGuestAuthNoticeAt(null), 4500);
+    return () => window.clearTimeout(timer);
+  }, [guestAuthNoticeAt]);
 
   useEffect(() => {
     const hasConstructorContent =
@@ -19971,12 +19981,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <button
                       type="button"
                       className={`${btnOutlineSm} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
+                      onClick={() => setGuestAuthNoticeAt(Date.now())}
                     >
                       Iniciar sesión
                     </button>
                     <button
                       type="button"
                       className={`${btnPrimary} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
+                      onClick={() => setGuestAuthNoticeAt(Date.now())}
                     >
                       Registrarse
                     </button>
@@ -20454,6 +20466,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   inputField={inputField}
                   fieldLabel={fieldLabel}
                   dataEmptyState={dataEmptyState}
+                  datasetResetKey={activeDatasetId}
                 />
               </div>
 
@@ -27355,6 +27368,28 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               title={graphSaveToast}
               onDismiss={() => setGraphSaveToast(null)}
             />
+          ) : null}
+
+          {guestAuthNoticeAt !== null ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 max-w-md w-[calc(100%-2rem)] rounded-lg border border-[var(--color-border-default)] bg-[var(--app-surface)] px-4 py-3 shadow-lg"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm text-[var(--color-text-primary)]">
+                  {GUEST_AUTH_UNAVAILABLE_NOTICE}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setGuestAuthNoticeAt(null)}
+                  className="shrink-0 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-heading)]"
+                  aria-label="Cerrar notificación"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
           ) : null}
 
           {expertModeToastVisible && !isHomeShell ? (
