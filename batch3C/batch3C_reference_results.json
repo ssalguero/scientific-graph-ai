@@ -1,0 +1,176 @@
+{
+  "package": "batch3C",
+  "status": "NOT VALIDATED",
+  "independence": {
+    "nodeOnly": true,
+    "srcImports": false,
+    "scipy": false,
+    "sklearn": false,
+    "network": false
+  },
+  "provenance": {
+    "profiles_four": {
+      "provenance": "reconstructed from locked Batch 2A/2C/3A contract (A=[0,0,0,0]; B,C,D integer profiles; Unix LF). No live locked copy on disk.",
+      "sourcePath": null
+    },
+    "cohend_groups": {
+      "provenance": "reconstructed from locked Batch 2A generate_oracles.mjs arrays (Group_A/Group_B n=6). No live locked copy on disk.",
+      "sourcePath": null
+    }
+  },
+  "datasets": {
+    "profiles_four": {
+      "sha256": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9",
+      "lockedSha256": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9",
+      "shaMatchLocked": true,
+      "bytes": 52
+    },
+    "cohend_groups": {
+      "sha256": "E9D0004AE3C21C8063A1CDDC9B001AA394E77B5FD86DFB44698E9B1A3918188B",
+      "bytes": 79
+    }
+  },
+  "closedEngineInputsOnly": {
+    "note": "Not Batch 3C validation outputs. Independent recomputation of closed contracts used as inputs.",
+    "cohensD": 6.675747810011058,
+    "hedgesG": 6.162228747702515,
+    "tStatistic": 11.562734385455817,
+    "mannWhitneyU": 0,
+    "mannWhitneyZ": -2.8823067684915684,
+    "kruskalWallisH": 1.516544117647065
+  },
+  "cases": {
+    "T3-006": {
+      "metric": "MW r",
+      "value": 0.8320502943378437,
+      "display": "0.83",
+      "inputs": {
+        "zScore": -2.8823067684915684,
+        "nA": 6,
+        "nB": 6,
+        "uStatistic": 0
+      }
+    },
+    "T3-007": {
+      "metric": "Cliff Delta magnitude",
+      "value": 1,
+      "display": "1.00",
+      "inputs": {
+        "uStatistic": 0,
+        "nA": 6,
+        "nB": 6
+      }
+    },
+    "T3-008": {
+      "metric": "KW epsilon^2",
+      "value": 0.101102941176471,
+      "display": "0.101",
+      "inputs": {
+        "hStatistic": 1.516544117647065,
+        "N": 16,
+        "groupCount": 4
+      }
+    },
+    "T3-009": {
+      "metric": "Cohen d 95% z-CI",
+      "cohensD": 6.675747810011058,
+      "seD": 1.479943816823061,
+      "z": 1.959964,
+      "lower": 3.775111207015264,
+      "upper": 9.576384413006851,
+      "display": "IC95% [3.78, 9.58]"
+    },
+    "T3-010": {
+      "metric": "Mean-difference 95% t-CI",
+      "meanDifference": 3.3166666666666664,
+      "se": 0.2868410322422121,
+      "df": 10,
+      "tCritical": 2.228,
+      "lower": 2.6775848468310177,
+      "upper": 3.955748486502315,
+      "display": "IC95% [2.68, 3.96]"
+    },
+    "T3-011": {
+      "metric": "Tukey pair CI",
+      "qCritical": 3.314,
+      "pairs": [
+        {
+          "seriesA": "A",
+          "seriesB": "B",
+          "delta": -0.25,
+          "se": 0.45069390943299864,
+          "lower": -1.7435996158609575,
+          "upper": 1.2435996158609575,
+          "display": "IC95% [-1.74, 1.24]",
+          "deltaDisplay": "-0.25"
+        },
+        {
+          "seriesA": "A",
+          "seriesB": "C",
+          "delta": -0.5,
+          "se": 0.45069390943299864,
+          "lower": -1.9935996158609575,
+          "upper": 0.9935996158609575,
+          "display": "IC95% [-1.99, 0.99]",
+          "deltaDisplay": "-0.50"
+        },
+        {
+          "seriesA": "A",
+          "seriesB": "D",
+          "delta": -1,
+          "se": 0.45069390943299864,
+          "lower": -2.4935996158609575,
+          "upper": 0.49359961586095746,
+          "display": "IC95% [-2.49, 0.49]",
+          "deltaDisplay": "-1.00"
+        },
+        {
+          "seriesA": "B",
+          "seriesB": "C",
+          "delta": -0.25,
+          "se": 0.45069390943299864,
+          "lower": -1.7435996158609575,
+          "upper": 1.2435996158609575,
+          "display": "IC95% [-1.74, 1.24]",
+          "deltaDisplay": "-0.25"
+        },
+        {
+          "seriesA": "B",
+          "seriesB": "D",
+          "delta": -0.75,
+          "se": 0.45069390943299864,
+          "lower": -2.2435996158609575,
+          "upper": 0.7435996158609575,
+          "display": "IC95% [-2.24, 0.74]",
+          "deltaDisplay": "-0.75"
+        },
+        {
+          "seriesA": "C",
+          "seriesB": "D",
+          "delta": -0.5,
+          "se": 0.45069390943299864,
+          "lower": -1.9935996158609575,
+          "upper": 0.9935996158609575,
+          "display": "IC95% [-1.99, 0.99]",
+          "deltaDisplay": "-0.50"
+        }
+      ]
+    },
+    "T3-012": {
+      "metric": "Observed power (t-path)",
+      "tStatistic": 11.562734385455817,
+      "zAlpha": 1.959964,
+      "power": 1,
+      "displayPercent": "100.0"
+    },
+    "T3-013": {
+      "metric": "Prospective n per group (g-path)",
+      "hedgesG": 6.162228747702515,
+      "es": 6.162228747702515,
+      "zAlpha": 1.959964,
+      "z80": 0.841621,
+      "n": 1,
+      "display": "1"
+    }
+  }
+}

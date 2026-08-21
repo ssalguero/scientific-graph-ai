@@ -1,0 +1,2 @@
+ID,Method,Dataset,IndependentOracle,MathematicalModel,PrimaryObservables,AcceptanceTolerance,DomainRequirements,OracleMethod,Status
+T3-018,ANOVA Eta² / Omega²,profiles_four.csv,yes,"η²=SSB/SST (SST>0 else 0); ω²=max(0,(SSB−dfB×MSW)/(SST+MSW))",η²=0.18324607329842932 display=0.183; ω²_raw=-0.0196078431372549 (negative); ω²_Production=0 display=0.000,5e-4 vs 3 decimal display,one-way ANOVA; k=4 groups as Y series; N=16; A constant; SST>0; not partial η²,Independent one-way SS; Node-only; Production floor on ω²,NOT VALIDATED

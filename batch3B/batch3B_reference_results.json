@@ -1,0 +1,193 @@
+{
+  "batch": "3B",
+  "package": "T3 curve-fit regression (quadratic / exponential / logarithmic / power)",
+  "generator": "batch3B/generate_oracles.mjs",
+  "oracleIndependence": "No src/ imports. No calculateQuadraticRegression / Exponential / Logarithmic / Power / Linear. No solveLinearSystem3x3. No page.tsx. No sklearn. No SciPy. No network. Independent OLS and independent 3×3 Gaussian elimination.",
+  "methodology": "This package validates the current Production curve-fitting contract. It is not a textbook nonlinear least-squares oracle. Fitting for exponential and power is OLS in log-transformed estimation space. R² is calculated on original y scale for every model.",
+  "r2Scale": "original y",
+  "notIterativeNLS": true,
+  "dataset": {
+    "file": "kde_x_y_compatible.csv",
+    "intendedSource": "batch2A_closure/datasets/kde_x_y_compatible.csv",
+    "lockedSourceSha256": "A00BE9DCC8E21C90F3D20E6014FC525F9AEDAEB9D6FD6176C5B9C659EE4F75C7",
+    "destinationSha256": "A00BE9DCC8E21C90F3D20E6014FC525F9AEDAEB9D6FD6176C5B9C659EE4F75C7",
+    "sha256MatchLockedSource": true,
+    "header": "x,y",
+    "n": 12,
+    "xPositive": true,
+    "yPositive": true,
+    "explicitFivePointZeroPreserved": true
+  },
+  "tolerance": {
+    "parametersAndR2Abs": 0.0005,
+    "displayDecimals": 4
+  },
+  "methods": {
+    "T3-002": {
+      "method": "Quadratic polynomial OLS",
+      "mathematicalModel": "y = a*x^2 + b*x + c",
+      "estimationSpace": "original (linear in a,b,c)",
+      "r2OnOriginalY": true,
+      "domain": {
+        "nMin": 3
+      },
+      "values": {
+        "a": -0.0028971028971037233,
+        "b": 0.30759240759241857,
+        "c": 3.140909090909064,
+        "r2": 0.9450772724708092,
+        "ssRes": 0.6061638361638355,
+        "ssTot": 11.036666666666665
+      },
+      "display": {
+        "a": "-0.0029",
+        "b": "0.3076",
+        "c": "3.1409",
+        "r2": "0.9451",
+        "equation": "y = -0.0029x² + 0.3076x + 3.1409"
+      },
+      "fittedValues": [
+        3.445604395604379,
+        3.7445054945054865,
+        4.037612387612386,
+        4.324925074925079,
+        4.606443556443564,
+        4.882167832167841,
+        5.152097902097911,
+        5.416233766233774,
+        5.67457542457543,
+        5.927122877122877,
+        6.173876123876118,
+        6.414835164835151
+      ]
+    },
+    "T3-003": {
+      "method": "Exponential transformed OLS",
+      "mathematicalModel": "y = a * exp(b*x)",
+      "estimationSpace": "ln(y) = alpha + beta*x; a=exp(alpha); b=beta",
+      "r2OnOriginalY": true,
+      "domain": {
+        "yGreaterThanZero": true,
+        "nMin": 2
+      },
+      "values": {
+        "a": 3.3885330599836596,
+        "b": 0.05629241396913926,
+        "alpha": 1.2203971020710516,
+        "r2": 0.932522657770607,
+        "ssRes": 0.7447249337383998,
+        "ssTot": 11.036666666666665
+      },
+      "display": {
+        "a": "3.3885",
+        "b": "0.0563",
+        "r2": "0.9325",
+        "equation": "3.3885 · e^(0.0563x)"
+      },
+      "fittedValues": [
+        3.5847527940526693,
+        3.7923350213765925,
+        4.011937709685231,
+        4.244256927636041,
+        4.490029051123989,
+        4.75003309735216,
+        5.0250931940613635,
+        5.316081191745372,
+        5.623919427131683,
+        5.9495836466871035,
+        6.294106099414745,
+        6.658578808745564
+      ]
+    },
+    "T3-004": {
+      "method": "Logarithmic transformed OLS",
+      "mathematicalModel": "y = alpha + beta*ln(x)",
+      "estimationSpace": "y on ln(x)",
+      "r2OnOriginalY": true,
+      "domain": {
+        "xGreaterThanZero": true,
+        "nMin": 2
+      },
+      "values": {
+        "intercept": 2.8741588393966775,
+        "slope": 1.2663142196594372,
+        "r2": 0.91304780983864,
+        "ssRes": 0.9596623387475429,
+        "ssTot": 11.036666666666665
+      },
+      "display": {
+        "intercept": "2.8742",
+        "slope": "1.2663",
+        "r2": "0.9130",
+        "equation": "2.8742 + 1.2663·ln(x)"
+      },
+      "fittedValues": [
+        2.8741588393966775,
+        3.7519009704565836,
+        4.265347202429703,
+        4.62964310151649,
+        4.912212953570979,
+        5.143089333489609,
+        5.338292531325036,
+        5.507385232576396,
+        5.656535565462729,
+        5.789955084630885,
+        5.910647720595399,
+        6.020831464549516
+      ]
+    },
+    "T3-005": {
+      "method": "Power transformed OLS",
+      "mathematicalModel": "y = a * x^b",
+      "estimationSpace": "ln(y) = alpha + beta*ln(x); a=exp(alpha); b=beta",
+      "r2OnOriginalY": true,
+      "domain": {
+        "xGreaterThanZero": true,
+        "yGreaterThanZero": true,
+        "nMin": 2
+      },
+      "values": {
+        "a": 3.087742090440118,
+        "b": 0.27549072487156123,
+        "alpha": 1.1274401087393509,
+        "r2": 0.9387670406463463,
+        "ssRes": 0.6758077613998243,
+        "ssTot": 11.036666666666665
+      },
+      "display": {
+        "a": "3.0877",
+        "b": "0.2755",
+        "r2": "0.9388",
+        "equation": "3.0877 · x^0.2755"
+      },
+      "fittedValues": [
+        3.087742090440118,
+        3.7374207256165835,
+        4.1791070716625045,
+        4.523795469678421,
+        4.810616882390567,
+        5.05841515473722,
+        5.277857855643563,
+        5.475627967495373,
+        5.656215903035527,
+        5.822798249540595,
+        5.977712774443473,
+        6.122734698801599
+      ]
+    }
+  },
+  "informationalOnly": {
+    "linearOlsAlreadyClosedAsB2C002": {
+      "slope": 0.26993006993006985,
+      "intercept": 3.22878787878788,
+      "r2": 0.9440622802145001,
+      "note": "NOT a T3-002..005 closure case. B2C-002 CLOSED."
+    },
+    "productionStyleBestModel": {
+      "model": "quadratic",
+      "r2": 0.9450772724708092,
+      "note": "chooseBestRegressionModel analogue. Informational only. NOT a T3 closure case."
+    }
+  },
+  "caveats": "Do not compare these oracles to SciPy curve_fit / iterative NLS. Exponential and power use log-space OLS. Linear OLS must not be reopened."
+}

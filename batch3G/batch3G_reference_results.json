@@ -1,0 +1,189 @@
+{
+  "batchId": "batch3G",
+  "generatedAt": "independent-oracle-freeze",
+  "independence": "Node-only oracle. No src imports, no Production helpers, no SciPy/sklearn/pingouin, no network. IQR detector recomputed from raw {x,y} cells.",
+  "provenance": {
+    "dataset": {
+      "provenance": "copied from C:\\Users\\Santiago Salseguero\\Documents\\GitHub\\scientific-graph-ai\\batch3F\\datasets\\profiles_four.csv",
+      "sourcePath": "C:\\Users\\Santiago Salseguero\\Documents\\GitHub\\scientific-graph-ai\\batch3F\\datasets\\profiles_four.csv",
+      "sha": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9"
+    },
+    "scientificId": "T3-020",
+    "graphEditorPath": "Graph Editor → Mostrar outliers → Método IQR",
+    "note": "Independent reference freeze. NOT Production validation. Not T3-019 Box Plot. Not z-score detector."
+  },
+  "formulas": {
+    "eligibility": "Number.isFinite(x) AND Number.isFinite(y); series-wise; no pooling",
+    "quantile": "position=(n-1)*q; linear interpolate floor/ceil (R-7 / Excel PERCENTILE-style)",
+    "iqr": "IQR = Q3 − Q1; IQR===0 → []",
+    "fences": "lower=Q1−1.5*IQR; upper=Q3+1.5*IQR; inliers inclusive",
+    "scoreUpper": "(y − upperFence) / IQR",
+    "scoreLower": "(lowerFence − y) / IQR",
+    "scoreAlwaysPositive": true
+  },
+  "dataset": {
+    "file": "profiles_four.csv",
+    "header": "obs,A,B,C,D",
+    "nObservations": 4,
+    "nColumns": 5,
+    "xColumn": "obs",
+    "sha256Source": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9",
+    "sha256Destination": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9",
+    "sha256Locked": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9",
+    "shaMatchLocked": true
+  },
+  "cases": [
+    {
+      "id": "T3-020",
+      "method": "Graph Editor IQR Outlier Detector",
+      "dataset": "profiles_four.csv",
+      "independentOracle": true,
+      "productionStatus": "NOT VALIDATED",
+      "exposedContract": {
+        "method": "IQR",
+        "perSeries": {
+          "A": {
+            "seriesName": "A",
+            "method": "IQR",
+            "count": 0,
+            "flagged": []
+          },
+          "B": {
+            "seriesName": "B",
+            "method": "IQR",
+            "count": 1,
+            "flagged": [
+              {
+                "x": 1,
+                "y": 1,
+                "score": 1.5
+              }
+            ]
+          },
+          "C": {
+            "seriesName": "C",
+            "method": "IQR",
+            "count": 1,
+            "flagged": [
+              {
+                "x": 2,
+                "y": 2,
+                "score": 1.5
+              }
+            ]
+          },
+          "D": {
+            "seriesName": "D",
+            "method": "IQR",
+            "count": 0,
+            "flagged": []
+          }
+        },
+        "perSeriesCounts": {
+          "A": 0,
+          "B": 1,
+          "C": 1,
+          "D": 0
+        },
+        "totalCount": 2
+      },
+      "display": {
+        "precision": 4,
+        "counts": "integer",
+        "perSeries": {
+          "A": {
+            "seriesName": "A",
+            "method": "IQR",
+            "count": 0,
+            "flagged": []
+          },
+          "B": {
+            "seriesName": "B",
+            "method": "IQR",
+            "count": 1,
+            "flagged": [
+              {
+                "x": "1.0000",
+                "y": "1.0000",
+                "score": "1.5000"
+              }
+            ]
+          },
+          "C": {
+            "seriesName": "C",
+            "method": "IQR",
+            "count": 1,
+            "flagged": [
+              {
+                "x": "2.0000",
+                "y": "2.0000",
+                "score": "1.5000"
+              }
+            ]
+          },
+          "D": {
+            "seriesName": "D",
+            "method": "IQR",
+            "count": 0,
+            "flagged": []
+          }
+        }
+      },
+      "internalNonContract": {
+        "note": "Q1/Q3/IQR/fences are NOT T3-020 Browser observables.",
+        "A": {
+          "nEligible": 4,
+          "q1": 0,
+          "q3": 0,
+          "iqr": 0,
+          "lowerFence": 0,
+          "upperFence": 0,
+          "note": "IQR=0 → empty outlier set"
+        },
+        "B": {
+          "nEligible": 4,
+          "q1": 0,
+          "q3": 0.25,
+          "iqr": 0.25,
+          "lowerFence": -0.375,
+          "upperFence": 0.625,
+          "note": "Q1/Q3/IQR/fences are INTERNAL / NON-CONTRACT for T3-020"
+        },
+        "C": {
+          "nEligible": 4,
+          "q1": 0,
+          "q3": 0.5,
+          "iqr": 0.5,
+          "lowerFence": -0.75,
+          "upperFence": 1.25,
+          "note": "Q1/Q3/IQR/fences are INTERNAL / NON-CONTRACT for T3-020"
+        },
+        "D": {
+          "nEligible": 4,
+          "q1": 0,
+          "q3": 1.5,
+          "iqr": 1.5,
+          "lowerFence": -2.25,
+          "upperFence": 3.75,
+          "note": "Q1/Q3/IQR/fences are INTERNAL / NON-CONTRACT for T3-020"
+        }
+      }
+    }
+  ],
+  "invariants": {
+    "shaMatch": true,
+    "finiteEligibleXY": true,
+    "flaggedFromEligible": true,
+    "flaggedStrictlyOutside": true,
+    "nonFlaggedInclusiveInside": true,
+    "iqrNonNegative": true,
+    "iqrZeroNoOutliers": true,
+    "scorePositive": true,
+    "scoreFormula": true,
+    "countsMatch": true,
+    "totalEqualsSum": true,
+    "noNaN": true,
+    "noInfinity": true,
+    "status": "PASS"
+  }
+}

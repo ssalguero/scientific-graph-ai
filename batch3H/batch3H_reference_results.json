@@ -1,0 +1,125 @@
+{
+  "batchId": "batch3H",
+  "generatedAt": "independent-oracle-freeze",
+  "independence": "Node-only oracle. No src imports, no Production helpers, no SciPy/sklearn/pingouin, no network. Sample mean/SD and signed z recomputed from raw {x,y} cells.",
+  "provenance": {
+    "scientificId": "T3-021",
+    "engine": "Graph Editor Z-score Outlier Detector",
+    "productionFunction": "calculateZScoreOutliers",
+    "graphEditorPath": "Graph Editor → Mostrar outliers → Método Z-Score",
+    "note": "Independent reference freeze. NOT Production validation. Not T3-019. Not T3-020 IQR. Not worksheet zscore transform."
+  },
+  "formulas": {
+    "eligibility": "Number.isFinite(x) AND Number.isFinite(y); series-wise; no pooling; no grouping",
+    "mean": "mean = (1/n) Σ y",
+    "sampleSd": "s = sqrt( Σ(y-mean)² / (n-1) ). Variance on this Spike series is 1/11; s = 1/sqrt(11).",
+    "z": "z = (y - mean) / s  (signed)",
+    "outlierRule": "outlier iff Math.abs(z) > 3; |z| = 3 is an inlier",
+    "nLessThan2": "[]",
+    "sdZero": "[]"
+  },
+  "dataset": {
+    "file": "zscore_spike.csv",
+    "header": "obs,Spike,Zeros",
+    "nDataRows": 11,
+    "sha256": "73CD060B1CBB2E19918627C4402DECBF1F5205048AE263F79AF23A80D699E3B9",
+    "lineEndings": "LF",
+    "encoding": "UTF-8"
+  },
+  "cases": [
+    {
+      "id": "T3-021",
+      "method": "Graph Editor Z-score Outlier Detector",
+      "dataset": "zscore_spike.csv",
+      "independentOracle": true,
+      "productionStatus": "NOT VALIDATED",
+      "exposedContract": {
+        "method": "Z-Score",
+        "perSeries": {
+          "Spike": {
+            "seriesName": "Spike",
+            "method": "Z-Score",
+            "count": 1,
+            "flagged": [
+              {
+                "x": 1,
+                "y": 1,
+                "score": 3.0151134457776365
+              }
+            ]
+          },
+          "Zeros": {
+            "seriesName": "Zeros",
+            "method": "Z-Score",
+            "count": 0,
+            "flagged": []
+          }
+        },
+        "perSeriesCounts": {
+          "Spike": 1,
+          "Zeros": 0
+        },
+        "derivedTotalAuxiliaryOnly": 1
+      },
+      "display": {
+        "precision": 4,
+        "Spike": {
+          "seriesName": "Spike",
+          "method": "Z-Score",
+          "count": 1,
+          "flagged": [
+            {
+              "x": "1.0000",
+              "y": "1.0000",
+              "score": "3.0151"
+            }
+          ]
+        },
+        "Zeros": {
+          "seriesName": "Zeros",
+          "method": "Z-Score",
+          "count": 0,
+          "flagged": []
+        }
+      },
+      "internalNonContract": {
+        "note": "mean, SD, threshold, inlier z, Results total count are NOT required T3-021 Results observables.",
+        "threshold": 3,
+        "Spike": {
+          "nEligible": 11,
+          "mean": 0.09090909090909091,
+          "sampleSd": 0.3015113445777636,
+          "variance": 0.09090909090909087,
+          "threshold": 3,
+          "note": "mean/SD/threshold are INTERNAL / NON-CONTRACT for T3-021"
+        },
+        "Zeros": {
+          "nEligible": 11,
+          "mean": 0,
+          "sampleSd": 0,
+          "variance": 0,
+          "threshold": 3,
+          "note": "SD === 0 → []"
+        }
+      }
+    }
+  ],
+  "invariants": {
+    "header": "obs,Spike,Zeros",
+    "nDataRows": 11,
+    "allFiniteXY": true,
+    "spikeN": 11,
+    "spikeSdPositive": true,
+    "spikeExactlyOneOutlier": true,
+    "spikeOutlierIdentity": "x=1,y=1",
+    "spikeScorePositive": true,
+    "spikeScoreGt3": true,
+    "zerosSdZero": true,
+    "zerosCountZero": true,
+    "flaggedFromEligible": true,
+    "thresholdAbsZGt3": true,
+    "displayFourDecimals": true,
+    "noNaN": true,
+    "status": "PASS"
+  }
+}

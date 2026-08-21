@@ -1,0 +1,169 @@
+{
+  "package": "batch3D",
+  "status": "NOT VALIDATED",
+  "independence": {
+    "nodeOnly": true,
+    "srcImports": false,
+    "scipy": false,
+    "sklearn": false,
+    "network": false
+  },
+  "provenance": {
+    "profiles_four": {
+      "provenance": "copied from C:\\Users\\Santiago Salseguero\\Documents\\GitHub\\scientific-graph-ai\\batch3C\\datasets\\profiles_four.csv",
+      "sha": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9"
+    },
+    "cohend_groups": {
+      "provenance": "copied from C:\\Users\\Santiago Salseguero\\Documents\\GitHub\\scientific-graph-ai\\batch3C\\datasets\\cohend_groups.csv",
+      "sha": "E9D0004AE3C21C8063A1CDDC9B001AA394E77B5FD86DFB44698E9B1A3918188B"
+    }
+  },
+  "datasets": {
+    "profiles_four": {
+      "sha256": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9",
+      "lockedSha256": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9",
+      "shaMatchLocked": true,
+      "bytes": 52
+    },
+    "cohend_groups": {
+      "sha256": "E9D0004AE3C21C8063A1CDDC9B001AA394E77B5FD86DFB44698E9B1A3918188B",
+      "lockedSha256": "E9D0004AE3C21C8063A1CDDC9B001AA394E77B5FD86DFB44698E9B1A3918188B",
+      "shaMatchLocked": true,
+      "bytes": 79
+    }
+  },
+  "cases": {
+    "T3-014": {
+      "dataset": "profiles_four.csv",
+      "z": 1.96,
+      "note": "Series A is documented zero-width CI (SD=0). B/C/D are non-degenerate.",
+      "entries": {
+        "A": {
+          "seriesName": "A",
+          "n": 4,
+          "mean": 0,
+          "sd": 0,
+          "se": 0,
+          "lower": 0,
+          "upper": 0,
+          "degenerate": true,
+          "display": {
+            "mean": "0.0000",
+            "sd": "0.0000",
+            "se": "0.0000",
+            "lower": "0.0000",
+            "upper": "0.0000"
+          }
+        },
+        "B": {
+          "seriesName": "B",
+          "n": 4,
+          "mean": 0.25,
+          "sd": 0.5,
+          "se": 0.25,
+          "lower": -0.24,
+          "upper": 0.74,
+          "degenerate": false,
+          "display": {
+            "mean": "0.2500",
+            "sd": "0.5000",
+            "se": "0.2500",
+            "lower": "-0.2400",
+            "upper": "0.7400"
+          }
+        },
+        "C": {
+          "seriesName": "C",
+          "n": 4,
+          "mean": 0.5,
+          "sd": 1,
+          "se": 0.5,
+          "lower": -0.48,
+          "upper": 1.48,
+          "degenerate": false,
+          "display": {
+            "mean": "0.5000",
+            "sd": "1.0000",
+            "se": "0.5000",
+            "lower": "-0.4800",
+            "upper": "1.4800"
+          }
+        },
+        "D": {
+          "seriesName": "D",
+          "n": 4,
+          "mean": 1,
+          "sd": 1.4142135623730951,
+          "se": 0.7071067811865476,
+          "lower": -0.3859292911256331,
+          "upper": 2.385929291125633,
+          "degenerate": false,
+          "display": {
+            "mean": "1.0000",
+            "sd": "1.4142",
+            "se": "0.7071",
+            "lower": "-0.3859",
+            "upper": "2.3859"
+          }
+        }
+      }
+    },
+    "T3-015": {
+      "dataset": "cohend_groups.csv",
+      "graphType": "bar",
+      "yVariable": "Group_A",
+      "groupVariable": null,
+      "category": "Todos",
+      "n": 6,
+      "value": 12.666666666666666,
+      "error": 0.44021287779638824,
+      "display": {
+        "value": "12.6667",
+        "error": "0.4402"
+      },
+      "note": "Half-width only. Not [lower, upper]."
+    },
+    "T3-016": {
+      "dataset": "cohend_groups.csv",
+      "Group_A": {
+        "n": 6,
+        "r": 0.9908814588265856,
+        "display": "0.9909"
+      },
+      "Group_B": {
+        "n": 6,
+        "r": 0.9911900062286877,
+        "display": "0.9912"
+      }
+    },
+    "T3-017": {
+      "dataset": "cohend_groups.csv",
+      "Group_A": {
+        "n": 6,
+        "mean": 12.666666666666666,
+        "m2": 0.25222222222222235,
+        "m3": 0.0359259259259263,
+        "m4": 0.12344074074074086,
+        "skewness": 0.2836174503312683,
+        "excessKurtosis": -1.0595975081992666,
+        "display": {
+          "skewness": "0.2836",
+          "excessKurtosis": "-1.0596"
+        }
+      },
+      "Group_B": {
+        "n": 6,
+        "mean": 9.35,
+        "m2": 0.15916666666666654,
+        "m3": 0.013500000000000262,
+        "m4": 0.048322916666666604,
+        "skewness": 0.21259624363158283,
+        "excessKurtosis": -1.0925687344096922,
+        "display": {
+          "skewness": "0.2126",
+          "excessKurtosis": "-1.0926"
+        }
+      }
+    }
+  }
+}

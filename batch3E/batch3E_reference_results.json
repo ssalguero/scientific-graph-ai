@@ -1,0 +1,119 @@
+{
+  "batchId": "batch3E",
+  "generatedAt": "independent-oracle-freeze",
+  "independence": "Node-only oracle. No src imports, no Production helpers, no SciPy/sklearn/pingouin, no network. ANOVA SS recomputed from raw CSV cells.",
+  "provenance": {
+    "dataset": {
+      "provenance": "copied from C:\\Users\\Santiago Salseguero\\Documents\\GitHub\\scientific-graph-ai\\batch3D\\datasets\\profiles_four.csv",
+      "sourcePath": "C:\\Users\\Santiago Salseguero\\Documents\\GitHub\\scientific-graph-ai\\batch3D\\datasets\\profiles_four.csv",
+      "sha": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9"
+    },
+    "scientificId": "T3-018",
+    "graphEditorPath": "Inferencia → Mostrar ANOVA → Effect Size & Power",
+    "note": "This JSON is a reference oracle freeze. It is NOT Production validation and does NOT certify Production."
+  },
+  "formulas": {
+    "etaSquared": "η² = SSB / SST when SST > 0; else 0. Not partial η². Not generalized η².",
+    "omegaSquaredRaw": "ω²_raw = (SSB − dfB × MSW) / (SST + MSW)",
+    "omegaSquaredProduction": "ω²_Production = max(0, ω²_raw). omegaSquaredRaw is negative on this dataset; Production applies floor 0.",
+    "ssb": "SSB = Σ n_g (mean_g − grandMean)²",
+    "ssw": "SSW = Σ_g Σ_i (y_gi − mean_g)²",
+    "sst": "SST = Σ (y − grandMean)²",
+    "dfB": "dfB = k − 1",
+    "dfW": "dfW = N − k",
+    "msw": "MSW = SSW / dfW"
+  },
+  "dataset": {
+    "file": "profiles_four.csv",
+    "header": "obs,A,B,C,D",
+    "nObservations": 4,
+    "nColumns": 5,
+    "sha256": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9",
+    "sha256Locked": "F93DB5349399B525ECA77232A783ED0E4A0A4D192B942628D8B8C085894430D9",
+    "shaMatchLocked": true,
+    "seriesAsGroups": {
+      "A": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "B": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "C": [
+        0,
+        2,
+        0,
+        0
+      ],
+      "D": [
+        0,
+        0,
+        3,
+        1
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "T3-018",
+      "method": "ANOVA Eta² / Omega²",
+      "dataset": "profiles_four.csv",
+      "independentOracle": true,
+      "productionStatus": "NOT VALIDATED",
+      "fullPrecision": {
+        "groupMeans": {
+          "A": 0,
+          "B": 0.25,
+          "C": 0.5,
+          "D": 1
+        },
+        "grandMean": 0.4375,
+        "ssb": 2.1875,
+        "ssw": 9.75,
+        "sst": 11.9375,
+        "dfB": 3,
+        "dfW": 12,
+        "msw": 0.8125,
+        "etaSquared": 0.18324607329842932,
+        "omegaSquaredRaw": -0.0196078431372549,
+        "omegaSquaredProduction": 0
+      },
+      "display": {
+        "precision": 3,
+        "etaSquared": "0.183",
+        "omegaSquaredProduction": "0.000"
+      },
+      "notes": {
+        "omegaSquaredRawIsNegative": true,
+        "productionAppliesFloorZero": true
+      }
+    }
+  ],
+  "invariants": {
+    "header": "obs,A,B,C,D",
+    "nObservations": 4,
+    "A_constant": true,
+    "BCD_nonConstant": true,
+    "allFinite": true,
+    "ssbFinite": true,
+    "sswFinite": true,
+    "sstFinite": true,
+    "sstNonNegative": true,
+    "dfB": 3,
+    "dfW": 12,
+    "mswFinite": true,
+    "etaInUnitInterval": true,
+    "omegaRawFinite": true,
+    "omegaProductionNonNegative": true,
+    "displayThreeDecimals": true,
+    "noNaN": true,
+    "noInfinity": true,
+    "ssbPlusSswEqualsSst": true,
+    "status": "PASS"
+  }
+}

@@ -1,0 +1,5 @@
+ID,Method,Dataset,MathematicalModel,PrimaryObservables,AcceptanceTolerance,DomainRequirements,OracleMethod,Status
+T3-002,Quadratic polynomial OLS,kde_x_y_compatible.csv,y = a*x^2 + b*x + c,a=-0.0028971028971037233; b=0.30759240759241857; c=3.140909090909064; r2=0.9450772724708092,5e-4 vs 4 decimal display,n>=3; no sign restriction,Independent 3x3 OLS; R² on original y,NOT VALIDATED
+T3-003,Exponential transformed OLS,kde_x_y_compatible.csv,y = a*exp(b*x),a=3.3885330599836596; b=0.05629241396913926; r2=0.932522657770607,5e-4 vs 4 decimal display,n>=2; y>0,OLS of ln(y) on x; a=exp(alpha); R² on original y,NOT VALIDATED
+T3-004,Logarithmic transformed OLS,kde_x_y_compatible.csv,y = alpha + beta*ln(x),intercept=2.8741588393966775; slope=1.2663142196594372; r2=0.91304780983864,5e-4 vs 4 decimal display,n>=2; x>0,OLS of y on ln(x); R² on original y,NOT VALIDATED
+T3-005,Power transformed OLS,kde_x_y_compatible.csv,y = a*x^b,a=3.087742090440118; b=0.27549072487156123; r2=0.9387670406463463,5e-4 vs 4 decimal display,n>=2; x>0; y>0,OLS of ln(y) on ln(x); a=exp(alpha); R² on original y,NOT VALIDATED
