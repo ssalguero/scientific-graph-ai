@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-21 (this file is the **sole living SSOT** for “what is next”; CRP OPEN as index; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; `PRODUCT 1.0 — COMMERCIAL TEST READY`; Product Reorganization Baseline **FROZEN**; **NEXT AUTHORIZED SERIES = PR0-A → PR6-A**; implementation entry **PR0-A**; SemVer 1.0.0)
+**Actualizado:** 2026-08-21 (this file is the **sole living SSOT** for “what is next”; CRP OPEN as index; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; `PRODUCT 1.0 — COMMERCIAL TEST READY`; Product Reorganization Baseline **FROZEN**; **NEXT AUTHORIZED SERIES = PR0-A → PR6-A**; PR0-A **IMPLEMENTED — READY FOR CERTIFICATION**; SemVer 1.0.0)
 
 ---
 
@@ -42,7 +42,7 @@
 | Next authorized SPE step | **None** — series closed |
 | CRP program | **OPEN** — `docs/CRP/official-records/` · CRP-0…6 **PASS** · CRP-6.2.2 Screen 2 **CLOSED** · CRP-6.3 Home **PASS** · CRP-6.3.x **FINAL** · CRP-6.3-SHELL **CLOSED** |
 | CTR (Commercial Test Ready) | **CTR DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES** — `PRODUCT 1.0 — COMMERCIAL TEST READY` — Owner Gate **ACCEPTED WITH DISCLOSURES** — `docs/CRP/official-records/CRP-CTR-Declaration.md` |
-| Next program | **Product Reorganization implementation series PR0-A → PR6-A AUTHORIZED**. Entry: **PR0-A — Contract, Ownership, and Regression Baseline**. Detailed authority: `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. |
+| Next program | **Product Reorganization implementation series PR0-A → PR6-A AUTHORIZED**. Current: **PR0-A IMPLEMENTED — READY FOR CERTIFICATION**; PR1 not started. Detailed authority: `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
@@ -132,14 +132,15 @@ DEFERRED (protected — not debt by listing)
 NEXT SERIES
     PR0-A → PR6-A
     AUTHORIZED
-    IMPLEMENTATION NOT YET PERFORMED
+    PR0-A IMPLEMENTED — READY FOR CERTIFICATION
+    PR1 NOT STARTED
 
 CRP: docs/CRP/official-records/ (OPEN — index/history only)
 Phase 3 = OPTIONAL / BLOCKED / NOT DEBT
 CRP-6.4 Importar architecture = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION
 ENGINE · DATA · SCIENTIFIC · UX · PROJECT · PERFORMANCE · RELEASE = governed by the detailed phase/contract route
 AI · COLLAB · PLUGINS = deferred except explicit disposition/evidence
-NEXT: PR0-A — CONTRACT, OWNERSHIP, AND REGRESSION BASELINE
+NEXT: PR0-A CERTIFICATION — THEN PR1
 ```
 
 | Track | Status |
@@ -148,7 +149,7 @@ NEXT: PR0-A — CONTRACT, OWNERSHIP, AND REGRESSION BASELINE
 | **CTR** | **DECLARED** · **CERTIFIED WITH EXPLICIT DISCLOSURES** — `docs/CRP/official-records/CRP-CTR-Declaration.md` |
 | **CRP** | **OPEN** as index — historical CRP-0…6 PASS; Screen 2 / Home / 6.3.x / 6.3-SHELL **closed**; **not** Phase 3; **not** CRP-6.4 implementation |
 | **Post-CTR roadmap** | Historical plan preserved at `docs/roadmaps/POST-CTR-ROADMAP.md`; superseded as living-next authority by Product Reorganization |
-| **Product Reorganization** | Baseline **FROZEN** · PD-01–PD-07 **CLOSED** · route **PR0-A → PR6-A AUTHORIZED** · `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md` |
+| **Product Reorganization** | Baseline **FROZEN** · PD-01–PD-07 **CLOSED** · route **PR0-A → PR6-A AUTHORIZED** · PR0-A **IMPLEMENTED — READY FOR CERTIFICATION** · `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md` |
 | **EXTERNAL COMMERCIAL TEST** | Operational (SPE-1.C) — **not** an implementation series |
 | ENGINE · DATA · Scientific · UX · Project · PERFORMANCE · RELEASE | Supporting domains governed by the authorized PR0-A→PR6-A route |
 | AI · COLLAB · PLUGINS | Existing baseline preserved; runtime expansion remains deferred |
@@ -194,7 +195,7 @@ The AI Domain is certified under `src/ai/` as structural Intelligence Domain ske
 **DEP-2:** **CERTIFIED / CLOSED** — see `docs/DEP/official-records/DEP-2-Hosted-Deployment-Execution.md`.
 **UXC-1:** **CERTIFIED / CLOSED** — see `docs/UXC/official-records/UXC-1-UX-Continuity-Certification.md`.
 **SPE-1:** **CERTIFIED / CLOSED** — see `docs/SPE/official-records/SPE-1-Series-Closure.md`.
-**Living next (this file only):** Product Reorganization implementation **PR0-A → PR6-A AUTHORIZED**; entry **PR0-A**. Authority: `docs/PRODUCT/official-records/PRODUCT-REORGANIZATION-BASELINE.md` and `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. CTR remains **DECLARED / CERTIFIED WITH EXPLICIT DISCLOSURES** and `PRODUCT 1.0 — COMMERCIAL TEST READY`. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). Phase 3 remains OPTIONAL / BLOCKED / NOT DEBT. CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. ARCH-U remains NOT ACTIVE. Lovable remains **VISUAL REFERENCE**. Official CRP index: `docs/CRP/official-records/`.
+**Living next (this file only):** Product Reorganization implementation **PR0-A → PR6-A AUTHORIZED**; PR0-A **IMPLEMENTED — READY FOR CERTIFICATION**; PR1 not started. Authority: `docs/PRODUCT/official-records/PRODUCT-REORGANIZATION-BASELINE.md`, `docs/PRODUCT/official-records/PR0-A-CONTRACT-OWNERSHIP-REGRESSION-BASELINE.md` and `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. CTR remains **DECLARED / CERTIFIED WITH EXPLICIT DISCLOSURES** and `PRODUCT 1.0 — COMMERCIAL TEST READY`. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). Phase 3 remains OPTIONAL / BLOCKED / NOT DEBT. CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. ARCH-U remains NOT ACTIVE. Lovable remains **VISUAL REFERENCE**. Official CRP index: `docs/CRP/official-records/`.
 
 ---
 
@@ -215,7 +216,7 @@ The AI Domain is certified under `src/ai/` as structural Intelligence Domain ske
 | **PROD-2C** — Worksheet + Visual Graph Builder persistence | **COMPLETED** |
 | **PROD-2D** — UX profesional + arquitectura transversal | **CLOSED** (2026-07-09) |
 | **PROD-2E** — Motor gráfico profesional | **CLOSED** (2026-07-16) |
-| **Living next series** | **Product Reorganization PR0-A → PR6-A AUTHORIZED**; entry **PR0-A**; CRP remains **OPEN** as index; CTR remains **DECLARED / CERTIFIED WITH EXPLICIT DISCLOSURES** |
+| **Living next series** | **Product Reorganization PR0-A → PR6-A AUTHORIZED**; PR0-A **IMPLEMENTED — READY FOR CERTIFICATION**; PR1 not started; CRP remains **OPEN** as index; CTR remains **DECLARED / CERTIFIED WITH EXPLICIT DISCLOSURES** |
 | Historical PROD-3 pointer | **RETIRED as living next** — archive / SDC Continuity; not SPE-1 reopen of PROD-3 |
 
 Referencia de estado detallado (histórico):
@@ -330,7 +331,7 @@ Sincronización de README, ROADMAP, README técnico y referencias de estado con 
 
 | Series | Descripción |
 |--------|-------------|
-| **Living next** | **Product Reorganization PR0-A → PR6-A AUTHORIZED** — `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`; implementation entry **PR0-A** |
+| **Living next** | **Product Reorganization PR0-A → PR6-A AUTHORIZED** — `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`; PR0-A **IMPLEMENTED — READY FOR CERTIFICATION**; PR1 not started |
 | **Commercial Readiness Preparation** | **OPEN** (index) — historical records closed through CRP-6.3-SHELL; Phase 3 OPTIONAL / BLOCKED / NOT DEBT; CRP-6.4 PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION |
 | **SPE-1** (closed) | Scientific Product Expansion — **CERTIFIED / CLOSED** — `docs/SPE/official-records/SPE-1-Series-Closure.md` |
 | ENGINE · DATA · Scientific · UX · Project · PERFORMANCE · RELEASE | Supporting domains governed by PR0-A→PR6-A; runtime AI, COLLAB and PLUGINS remain deferred |
