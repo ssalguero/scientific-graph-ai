@@ -1,9 +1,9 @@
 # PRODUCT Official Records
 
-**Status:** Product Identity **DECIDED / CERTIFIED** · **IN FORCE**  
+**Status:** Product Identity **DECIDED / CERTIFIED** · Product Reorganization Baseline **FROZEN** · PD-01–PD-07 **CLOSED** · Detailed Roadmap **AUTHORIZED**
 **Decision Authority:** PROJECT OWNER / PRODUCT GOVERNANCE AUTHORITY
 
-This directory holds whole-product Product Identity, Version Authority / Format, and Version Identity Official Records.  
+This directory holds whole-product Product Identity, Version Authority / Format, Version Identity and Product Reorganization Official Records.
 It is the authoritative location for those governance artifacts.
 
 | Record | Status |
@@ -11,6 +11,22 @@ It is the authoritative location for those governance artifacts.
 | [PI-DECISION-001-Product-Identity-Decision.md](./PI-DECISION-001-Product-Identity-Decision.md) | **DECIDED / CERTIFIED** · **IN FORCE** |
 | [VAF-DECISION-001-Version-Authority-Format-Decision.md](./VAF-DECISION-001-Version-Authority-Format-Decision.md) | **DECIDED / CERTIFIED** · **IN FORCE** |
 | [VERSION-DECISION-001-Version-Identity-Decision.md](./VERSION-DECISION-001-Version-Identity-Decision.md) | **DECIDED / CERTIFIED** · **IN FORCE** |
+| [PRODUCT-REORGANIZATION-BASELINE.md](./PRODUCT-REORGANIZATION-BASELINE.md) | **FROZEN / IN FORCE** |
+| [PRODUCT-DECISION-REGISTER-PD-01-PD-07.md](./PRODUCT-DECISION-REGISTER-PD-01-PD-07.md) | **PD-01–PD-07 CLOSED / IN FORCE** |
+| [PRODUCT-INVENTORY-DECISION-SUPERSESSION.md](./PRODUCT-INVENTORY-DECISION-SUPERSESSION.md) | **INVENTORY §O–P SUPERSEDED PROSPECTIVELY / HISTORY PRESERVED** |
+| [FINAL-ROADMAP-CERTIFICATION.md](./FINAL-ROADMAP-CERTIFICATION.md) | **CERTIFIED AFTER CORRECTIONS** |
+
+Implementation authority:
+
+- [Detailed Product Reorganization Implementation Roadmap](../../roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md)
+- [Living Roadmap](../../roadmaps/ROADMAP.md)
+
+```text
+PRODUCT REORGANIZATION BASELINE = FROZEN
+PD-01–PD-07 = CLOSED
+AUTHORIZED SERIES = PR0-A → PR6-A
+IMPLEMENTATION ENTRY = PR0-A
+```
 
 **Canonical Product Identifier:** Scientific Graph AI  
 **Technical Slug:** `scientific-graph-ai` (representation only)

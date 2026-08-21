@@ -1,9 +1,30 @@
 # Post-CTR Roadmap Reorganization
 
 **Date:** 2026-08-18  
-**Nature:** PLAN-ONLY / DOCUMENTATION-ONLY — **NO `src/**` · NO BUILD · NO new product series OPEN · NO SemVer bump · NO CRP reopen · NO CTR reopen**  
+**Historical Status:** **SUPERSEDED AS LIVING-NEXT AUTHORITY ON 2026-08-21**
+**Nature when authored:** PLAN-ONLY / DOCUMENTATION-ONLY — **NO `src/**` · NO BUILD · NO new product series OPEN · NO SemVer bump · NO CRP reopen · NO CTR reopen**
 **Baseline:** Scientific Graph AI **v1.0.0** / display **v1.0** · CTR checkpoint `2db7b4b`  
 **Authority:** Living SSOT [`ROADMAP.md`](./ROADMAP.md)
+
+## Supersession Notice
+
+The `NEXT SERIES = PENDING OWNER DECISION` language below is preserved as historically correct for 2026-08-18.
+
+On 2026-08-21 the Product Owner completed Product Reorganization, closed PD-01–PD-07, accepted the certified route and authorized:
+
+```text
+NEXT AUTHORIZED SERIES = PR0-A → PR6-A
+IMPLEMENTATION ENTRY = PR0-A
+```
+
+Current authority:
+
+- [Living Roadmap](./ROADMAP.md)
+- [Product Reorganization Baseline](../PRODUCT/official-records/PRODUCT-REORGANIZATION-BASELINE.md)
+- [Detailed Implementation Roadmap](./PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md)
+- [Final Roadmap Certification](../PRODUCT/official-records/FINAL-ROADMAP-CERTIFICATION.md)
+
+This notice does not rewrite the historical candidate analysis that follows.
 
 ```text
 POST-CTR ROADMAP                   = REORGANIZED
