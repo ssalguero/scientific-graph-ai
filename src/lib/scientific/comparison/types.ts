@@ -13,6 +13,16 @@ export type ComparisonDeltaDirection =
   | "stable"
   | "n/a";
 
+export type ComparisonCompatibilityState =
+  | "COMPATIBLE"
+  | "INCOMPATIBLE"
+  | "UNKNOWN";
+
+export type ComparisonCompatibilityAssessment = {
+  state: ComparisonCompatibilityState;
+  reasons: readonly string[];
+};
+
 export type DatasetAnalysisProfileNormalitySnapshot = {
   seriesEvaluated: number;
   normalCount: number;
@@ -68,12 +78,14 @@ export type DatasetAnalysisProfileCaptureEngineFlags = {
 
 export type DatasetAnalysisProfileCaptureMetadata = {
   sourceDatasetChecksum?: string | null;
+  sourceUnavailable?: boolean;
   worksheetModifiedAtCapture?: boolean;
   provenance?: import("@/lib/scientific/contracts").ScientificProvenanceDescriptor;
+  snapshot?: import("@/lib/scientific/contracts").CitableScientificSnapshot;
   captureEngineFlags?: DatasetAnalysisProfileCaptureEngineFlags;
 };
 
-export type DatasetAnalysisProfile = {
+export type DatasetAnalysisProfilePayload = {
   slotLabel: ComparisonSlotId;
   datasetInfo: ComparisonDatasetInfo;
   capturedAt: string;
@@ -92,8 +104,11 @@ export type DatasetAnalysisProfile = {
   methodological?: DatasetAnalysisProfileMethodologicalSnapshot;
   multivariate?: DatasetAnalysisProfileMultivariateSnapshot;
   publication?: DatasetAnalysisProfilePublicationSnapshot;
-  captureMetadata?: DatasetAnalysisProfileCaptureMetadata;
   isComplete: boolean;
+};
+
+export type DatasetAnalysisProfile = DatasetAnalysisProfilePayload & {
+  captureMetadata?: DatasetAnalysisProfileCaptureMetadata;
 };
 
 export type ComparisonSlot = {
@@ -122,6 +137,7 @@ export type MultiDatasetComparisonAnalysis = {
   crossDatasetDiagnosis: string[];
   comparisonRecommendations: string[];
   evaluatedMetrics: number;
+  compatibility: ComparisonCompatibilityAssessment;
   methodologicalBreakdownAvailable?: boolean;
   multivariateSectionAvailable?: boolean;
   publicationHighlightsAvailable?: boolean;

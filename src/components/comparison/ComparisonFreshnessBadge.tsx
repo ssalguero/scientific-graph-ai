@@ -5,45 +5,50 @@ import {
   type ComparisonSlotFreshness,
 } from "./comparisonSlotFreshness";
 import type { DatasetAnalysisProfile } from "@/lib/scientific/comparison";
+import type { ScientificProvenanceDescriptor } from "@/lib/scientific/contracts";
 
 type ComparisonFreshnessBadgeProps = {
   profile: DatasetAnalysisProfile;
-  activeFileName: string | null;
-  activeImportedAt: string | null;
-  activeWorksheetModified: boolean;
+  currentProvenance?: ScientificProvenanceDescriptor | null;
+  sourceAvailable?: boolean | "unknown";
   freshness?: ComparisonSlotFreshness;
 };
 
 export function ComparisonFreshnessBadge({
   profile,
-  activeFileName,
-  activeImportedAt,
-  activeWorksheetModified,
+  currentProvenance,
+  sourceAvailable,
   freshness,
 }: ComparisonFreshnessBadgeProps) {
   const resolved =
     freshness ??
     deriveComparisonSlotFreshness({
       profile,
-      activeFileName,
-      activeImportedAt,
-      activeWorksheetModified,
+      currentProvenance,
+      sourceAvailable,
     });
-
-  if (resolved.messages.length === 0) {
-    return null;
-  }
+  const tone =
+    resolved.state === "CURRENT"
+      ? "text-emerald-600"
+      : resolved.state === "STALE"
+        ? "text-amber-600"
+        : resolved.state === "INVALID"
+          ? "text-red-600"
+          : "text-[var(--app-text-muted)]";
+  const icon =
+    resolved.state === "CURRENT"
+      ? "✓"
+      : resolved.state === "UNKNOWN"
+        ? "?"
+        : "⚠";
 
   return (
     <div className="mt-1 space-y-0.5">
+      <p className={`text-xs font-semibold ${tone}`}>
+        {icon} Vigencia: {resolved.state}
+      </p>
       {resolved.messages.map((message) => (
-        <p
-          key={message}
-          className={`text-xs ${
-            resolved.isStale ? "text-amber-600" : "text-[var(--app-text-muted)]"
-          }`}
-        >
-          {resolved.isStale ? "⚠ " : "ℹ "}
+        <p key={message} className={`text-xs ${tone}`}>
           {message}
         </p>
       ))}

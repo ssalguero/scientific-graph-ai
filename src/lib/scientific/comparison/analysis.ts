@@ -18,6 +18,8 @@ import type {
   DatasetAnalysisProfile,
   MultiDatasetComparisonAnalysis,
 } from "./types";
+import { getAuthoritativeDatasetAnalysisProfile } from "./snapshot";
+import { assessComparisonCompatibility } from "./freshness";
 
 export const computeComparisonDeltaDirection = (
   delta: number | null,
@@ -260,24 +262,35 @@ const buildEnrichedComparisonKpiRows = (
 export const canBuildMultiDatasetComparisonAnalysis = (
   slotA: DatasetAnalysisProfile | null,
   slotB: DatasetAnalysisProfile | null
-): boolean =>
-  slotA !== null &&
-  slotB !== null &&
-  slotA.isComplete &&
-  slotB.isComplete;
+): boolean => {
+  if (slotA === null || slotB === null) {
+    return false;
+  }
+  return (
+    getAuthoritativeDatasetAnalysisProfile(slotA).isComplete &&
+    getAuthoritativeDatasetAnalysisProfile(slotB).isComplete
+  );
+};
 
 export const buildMultiDatasetComparisonAnalysis = (input: {
   slotA: DatasetAnalysisProfile;
   slotB: DatasetAnalysisProfile;
 }): MultiDatasetComparisonAnalysis => {
-  const { slotA, slotB } = input;
+  const slotA = getAuthoritativeDatasetAnalysisProfile(input.slotA);
+  const slotB = getAuthoritativeDatasetAnalysisProfile(input.slotB);
   const kpiRows: ComparisonKpiRow[] = [
     ...buildCoreComparisonKpiRows(slotA, slotB),
     ...buildMethodologicalComparisonKpiRows(slotA, slotB),
     ...buildEnrichedComparisonKpiRows(slotA, slotB),
   ];
 
-  const comparabilityWarnings = buildComparabilityWarnings(slotA, slotB);
+  const compatibility = assessComparisonCompatibility(slotA, slotB);
+  const comparabilityWarnings = [
+    ...buildComparabilityWarnings(slotA, slotB),
+    ...(compatibility.state === "INCOMPATIBLE"
+      ? compatibility.reasons
+      : []),
+  ];
   const crossDatasetDiagnosis = buildCrossDatasetComparisonDiagnosis({
     slotA,
     slotB,
@@ -308,6 +321,7 @@ export const buildMultiDatasetComparisonAnalysis = (input: {
     crossDatasetDiagnosis,
     comparisonRecommendations,
     evaluatedMetrics: kpiRows.filter((row) => row.slotANumeric !== null).length,
+    compatibility,
     methodologicalBreakdownAvailable,
     multivariateSectionAvailable,
     publicationHighlightsAvailable,

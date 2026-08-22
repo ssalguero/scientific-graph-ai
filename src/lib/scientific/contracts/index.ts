@@ -58,3 +58,59 @@ export type {
   ScientificResultContractId,
   ScientificSemanticFieldDescriptor,
 } from "./result-inventory";
+
+export {
+  canonicalizeScientificValue,
+  cloneScientificSemanticValue,
+  cloneScientificValue,
+  createScientificSemanticValue,
+  toScientificValue,
+} from "./semantic-values";
+export type {
+  CreateScientificSemanticValueInput,
+  ScientificSemanticAuthority,
+  ScientificSemanticEquivalencePolicy,
+  ScientificSemanticUncertainty,
+  ScientificSemanticValue,
+  ScientificSemanticValueStatus,
+} from "./semantic-values";
+
+export {
+  createCitableScientificSnapshot,
+  createCitableSnapshotId,
+  isCitableScientificSnapshot,
+  reviveCitableScientificSnapshot,
+} from "./citable-snapshot";
+export type {
+  CitableScientificSnapshot,
+  CitableScientificSnapshotIdentity,
+  CitableScientificSnapshotStatus,
+  CreateCitableScientificSnapshotInput,
+} from "./citable-snapshot";
+
+export { assessScientificSnapshotFreshness } from "./freshness";
+export type {
+  AssessScientificSnapshotFreshnessInput,
+  ScientificFreshnessAssessment,
+  ScientificFreshnessReason,
+  ScientificFreshnessReasonCode,
+  ScientificFreshnessState,
+} from "./freshness";
+
+export { assessScientificArtifactEquivalence } from "./equivalence";
+export type {
+  ScientificArtifactEquivalenceAssessment,
+  ScientificArtifactEquivalenceState,
+} from "./equivalence";
+
+export {
+  assessSemanticProjectionParity,
+  createLiveScientificProjection,
+  projectCitableScientificSnapshot,
+} from "./semantic-parity";
+export type {
+  CreateLiveScientificProjectionInput,
+  ScientificProjectionArtifactIdentity,
+  ScientificProjectionSurface,
+  ScientificSemanticProjection,
+} from "./semantic-parity";

@@ -215,6 +215,7 @@ import { getSampleMeanAndStdDev } from "@/lib/scientific/shared/stats";
 import {
   composeScientificProvenance,
   getScientificCapabilityIdentity,
+  type ScientificProvenanceDescriptor,
 } from "@/lib/scientific/contracts";
 import {
   COMPOSITE_METHODOLOGY_PRIMARY_LABELS,
@@ -285,6 +286,7 @@ import {
   canIncludeMultiDatasetComparisonInReport,
   createEmptyComparisonSlots,
   formatDatasetAnalysisProfileMiniSummary,
+  invalidateDatasetAnalysisProfileSource,
   mapInferentialToProfileSnapshot,
   mapMethodologicalToProfileSnapshot,
   mapMultivariateToProfileSnapshot,
@@ -18082,6 +18084,73 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     ]);
     selectWorkspaceSection("results");
   };
+  const buildCurrentComparisonProfileProvenance = (
+    slotLabel: ComparisonSlotId
+  ): ScientificProvenanceDescriptor | null => {
+    if (!currentDatasetInfo) {
+      return null;
+    }
+    const activeSessionDataset = activeDatasetId
+      ? sessionDatasets.find((dataset) => dataset.id === activeDatasetId)
+      : undefined;
+    const currentWorksheetModified =
+      activeSessionDataset?.worksheetModified ?? worksheetModified;
+    const normalityAssessmentCount =
+      canonicalNormalityAssessment.seriesAssessments.length;
+    return composeScientificProvenance({
+      dataset: {
+        id: activeDatasetId ?? currentDatasetInfo.fileName,
+        label: currentDatasetInfo.fileName,
+      },
+      source: {
+        kind: "comparison-profile",
+        id: slotLabel,
+        label: `Perfil comparativo ${slotLabel}`,
+      },
+      series: visibleExperimentalSeries.map((series) => ({
+        id: series.id,
+        label: series.name,
+        role: "input",
+      })),
+      config: {
+        id: "comparison-profile-capture",
+        values: {
+          datasetImportedAt: currentDatasetInfo.importedAt,
+          sourceRevision: activeSessionDataset?.sourceRevision ?? 0,
+          worksheetModified: currentWorksheetModified,
+          normalityAssessmentCount,
+          hasMethodologicalDashboard:
+            methodologicalDashboardAnalysis !== null,
+          hasPublicationReadiness:
+            publicationReadinessAnalyzerAnalysis !== null,
+          hasEvidenceEngine: evidenceStrengthEngineAnalysis !== null,
+          hasMultivariateDashboard: multivariateDashboardAnalysis !== null,
+          hasEffectSizePower: effectSizePowerAnalysis !== null,
+        },
+      },
+      method: {
+        id: "scientific-comparison-profile",
+        label: "Perfil federado de comparación científica",
+        version: "1",
+        parameters: { slotLabel },
+      },
+      approximation: {
+        kind: "mixed",
+        details:
+          "El perfil combina resultados derivados y compuestos; cada contrato conserva su estado de aproximación.",
+      },
+      warnings: currentWorksheetModified
+        ? [
+            {
+              code: "WORKSHEET_MODIFIED_AT_CAPTURE",
+              message:
+                "La hoja de trabajo estaba modificada al capturar el perfil.",
+              severity: "warning",
+            },
+          ]
+        : [],
+    });
+  };
   const buildCurrentDatasetAnalysisProfile = (
     slotLabel: ComparisonSlotId
   ): DatasetAnalysisProfile | null => {
@@ -18173,62 +18242,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       captureMetadata: buildCaptureMetadata({
         worksheetModifiedAtCapture:
           activeSessionDataset?.worksheetModified ?? worksheetModified,
-        provenance: composeScientificProvenance({
-          dataset: {
-            id: activeDatasetId ?? currentDatasetInfo.fileName,
-            label: currentDatasetInfo.fileName,
-          },
-          source: {
-            kind: "comparison-profile",
-            id: slotLabel,
-            label: `Perfil comparativo ${slotLabel}`,
-          },
-          series: visibleExperimentalSeries.map((series) => ({
-            id: series.id,
-            label: series.name,
-            role: "input",
-          })),
-          config: {
-            id: "comparison-profile-capture",
-            values: {
-              worksheetModified:
-                activeSessionDataset?.worksheetModified ?? worksheetModified,
-              normalityAssessmentCount,
-              hasMethodologicalDashboard:
-                methodologicalDashboardAnalysis !== null,
-              hasPublicationReadiness:
-                publicationReadinessAnalyzerAnalysis !== null,
-              hasEvidenceEngine: evidenceStrengthEngineAnalysis !== null,
-              hasMultivariateDashboard:
-                multivariateDashboardAnalysis !== null,
-              hasEffectSizePower: effectSizePowerAnalysis !== null,
-            },
-          },
-          method: {
-            id: "scientific-comparison-profile",
-            label: "Perfil federado de comparación científica",
-            version: "1",
-            parameters: {
-              slotLabel,
-            },
-          },
-          approximation: {
-            kind: "mixed",
-            details:
-              "El perfil combina resultados derivados y compuestos; cada contrato conserva su estado de aproximación.",
-          },
-          warnings:
-            activeSessionDataset?.worksheetModified ?? worksheetModified
-              ? [
-                  {
-                    code: "WORKSHEET_MODIFIED_AT_CAPTURE",
-                    message:
-                      "La hoja de trabajo estaba modificada al capturar el perfil.",
-                    severity: "warning",
-                  },
-                ]
-              : [],
-        }),
+        provenance:
+          buildCurrentComparisonProfileProvenance(slotLabel) ?? undefined,
         hasMethodologicalDashboard: methodologicalDashboardAnalysis !== null,
         hasPublicationReadiness:
           publicationReadinessAnalyzerAnalysis !== null,
@@ -18272,7 +18287,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
     if (
       !window.confirm(
-        `¿Eliminar "${target.name}" de la sesión? Los snapshots en slots asociados también se limpiarán.`
+        `¿Eliminar "${target.name}" de la sesión? Los snapshots asociados se conservarán como INVALID.`
       )
     ) {
       return;
@@ -18291,12 +18306,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       A:
         slotReferencesSessionDataset(previous.A.profile, target) ||
         previous.A.sourceDatasetId === datasetId
-          ? { ...previous.A, profile: null, sourceDatasetId: null }
+          ? {
+              ...previous.A,
+              profile: previous.A.profile
+                ? invalidateDatasetAnalysisProfileSource(previous.A.profile)
+                : null,
+              sourceDatasetId: null,
+            }
           : previous.A,
       B:
         slotReferencesSessionDataset(previous.B.profile, target) ||
         previous.B.sourceDatasetId === datasetId
-          ? { ...previous.B, profile: null, sourceDatasetId: null }
+          ? {
+              ...previous.B,
+              profile: previous.B.profile
+                ? invalidateDatasetAnalysisProfileSource(previous.B.profile)
+                : null,
+              sourceDatasetId: null,
+            }
           : previous.B,
     }));
 
@@ -20762,6 +20789,21 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   {(["A", "B"] as ComparisonSlotId[]).map((slotId) => {
                     const slot = comparisonSlots[slotId];
                     const profile = slot.profile;
+                    const sourceDataset = slot.sourceDatasetId
+                      ? sessionDatasets.find(
+                          (dataset) => dataset.id === slot.sourceDatasetId
+                        )
+                      : undefined;
+                    const sourceAvailable =
+                      profile?.captureMetadata?.sourceUnavailable === true
+                        ? false
+                        : slot.sourceDatasetId
+                          ? sourceDataset !== undefined
+                          : "unknown";
+                    const currentProvenance =
+                      sourceDataset?.id === activeDatasetId
+                        ? buildCurrentComparisonProfileProvenance(slotId)
+                        : null;
                     return (
                       <div
                         key={slotId}
@@ -20798,13 +20840,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 </p>
                                 <ComparisonFreshnessBadge
                                   profile={profile}
-                                  activeFileName={
-                                    currentDatasetInfo?.fileName ?? null
-                                  }
-                                  activeImportedAt={
-                                    currentDatasetInfo?.importedAt ?? null
-                                  }
-                                  activeWorksheetModified={worksheetModified}
+                                  currentProvenance={currentProvenance}
+                                  sourceAvailable={sourceAvailable}
                                 />
                               </>
                             ) : (

@@ -33,6 +33,7 @@ const cloneSessionDataset = (dataset: SessionDataset): SessionDataset => ({
   seriesCount: dataset.seriesCount,
   observationCount: dataset.observationCount,
   worksheetModified: dataset.worksheetModified,
+  sourceRevision: dataset.sourceRevision,
   preserveAnalysisOnReimport: dataset.preserveAnalysisOnReimport,
   datasetPayload: {
     series: cloneExperimentalSeries(dataset.datasetPayload.series),
@@ -55,19 +56,29 @@ const mergeActiveEditorIntoSession = (
 ): SessionDataset => {
   const clonedSeries = cloneExperimentalSeries(ctx.experimentalSeries);
   const metrics = computeDatasetMetrics(clonedSeries);
+  const nextColumnRegistry =
+    ctx.activeColumnRegistry ?? dataset.datasetPayload.columnRegistry;
+  const nextAuxiliaryColumns =
+    ctx.activeAuxiliaryColumns ?? dataset.datasetPayload.auxiliaryColumns;
+  const sourceChanged =
+    JSON.stringify(dataset.datasetPayload.series) !==
+      JSON.stringify(clonedSeries) ||
+    JSON.stringify(dataset.datasetPayload.columnRegistry ?? null) !==
+      JSON.stringify(nextColumnRegistry ?? null) ||
+    JSON.stringify(dataset.datasetPayload.auxiliaryColumns ?? null) !==
+      JSON.stringify(nextAuxiliaryColumns ?? null);
 
   return {
     ...dataset,
     seriesCount: metrics.seriesCount,
     observationCount: metrics.observationCount,
     worksheetModified: ctx.worksheetModified ?? dataset.worksheetModified,
+    sourceRevision: (dataset.sourceRevision ?? 0) + (sourceChanged ? 1 : 0),
     datasetPayload: {
       series: clonedSeries,
       importReport: cloneImportReport(ctx.lastImportReport),
-      columnRegistry:
-        ctx.activeColumnRegistry ?? dataset.datasetPayload.columnRegistry,
-      auxiliaryColumns:
-        ctx.activeAuxiliaryColumns ?? dataset.datasetPayload.auxiliaryColumns,
+      columnRegistry: nextColumnRegistry,
+      auxiliaryColumns: nextAuxiliaryColumns,
     },
   };
 };
@@ -89,6 +100,7 @@ const buildMonoSessionDataset = (
     seriesCount: metrics.seriesCount,
     observationCount: metrics.observationCount,
     worksheetModified: ctx.worksheetModified ?? false,
+    sourceRevision: 0,
     preserveAnalysisOnReimport: ctx.preserveAnalysisConfiguration,
     datasetPayload: {
       series: clonedSeries,

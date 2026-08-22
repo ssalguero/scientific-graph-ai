@@ -19,6 +19,7 @@ import type {
   DatasetAnalysisProfileNormalitySnapshot,
   DatasetAnalysisProfilePublicationSnapshot,
 } from "./types";
+import { attachCitableSnapshotToDatasetAnalysisProfile } from "./snapshot";
 
 const PUBLICATION_SNAPSHOT_TOP_N = 3;
 
@@ -232,5 +233,10 @@ export const buildDatasetAnalysisProfile = (
     isComplete: false,
   };
   profile.isComplete = countCompleteProfileMetrics(profile) >= 3;
-  return profile;
+  return input.captureMetadata
+    ? attachCitableSnapshotToDatasetAnalysisProfile({
+        profile,
+        captureMetadata: input.captureMetadata,
+      })
+    : profile;
 };

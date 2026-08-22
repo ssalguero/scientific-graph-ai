@@ -16,7 +16,8 @@ export type ScientificArtifactKind =
   | "visualization"
   | "preview-values"
   | "report"
-  | "live-derived-result";
+  | "live-derived-result"
+  | "citable-scientific-snapshot";
 
 export const SCIENTIFIC_ARTIFACT_KINDS = [
   "dataset",
@@ -31,6 +32,7 @@ export const SCIENTIFIC_ARTIFACT_KINDS = [
   "preview-values",
   "report",
   "live-derived-result",
+  "citable-scientific-snapshot",
 ] as const satisfies readonly ScientificArtifactKind[];
 
 export type LiveDerivedResultIdentityDescriptor = {

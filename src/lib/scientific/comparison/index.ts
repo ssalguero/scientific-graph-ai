@@ -12,6 +12,8 @@ export type {
 
 export type {
   ComparisonDeltaDirection,
+  ComparisonCompatibilityAssessment,
+  ComparisonCompatibilityState,
   ComparisonKpiRow,
   ComparisonSlot,
   ComparisonSlotId,
@@ -22,6 +24,7 @@ export type {
   DatasetAnalysisProfileMethodologicalSnapshot,
   DatasetAnalysisProfileMultivariateSnapshot,
   DatasetAnalysisProfileNormalitySnapshot,
+  DatasetAnalysisProfilePayload,
   DatasetAnalysisProfilePublicationSnapshot,
   MultiDatasetComparisonAnalysis,
 } from "./types";
@@ -85,3 +88,26 @@ export {
   getMultiDatasetComparisonPdfLines,
   getMultiDatasetComparisonReportLines,
 } from "./report";
+
+export {
+  attachCitableSnapshotToDatasetAnalysisProfile,
+  buildDatasetAnalysisProfileSemanticValues,
+  getAuthoritativeDatasetAnalysisProfile,
+  invalidateDatasetAnalysisProfileSource,
+  reviveDatasetAnalysisProfile,
+} from "./snapshot";
+
+export {
+  findProjectedSemanticValue,
+  projectDatasetAnalysisProfile,
+  readProjectedNumber,
+  readProjectedString,
+} from "./projection";
+
+export {
+  assessComparisonCompatibility,
+  deriveComparisonSlotFreshness,
+} from "./freshness";
+export type {
+  ComparisonSlotFreshness,
+} from "./freshness";

@@ -34,6 +34,21 @@ export function ScientificMultiDatasetComparisonDashboard({
         <ComparisonSlotSummaryCard slotLabel="Slot A" profile={analysis.slotA} />
         <ComparisonSlotSummaryCard slotLabel="Slot B" profile={analysis.slotB} />
       </div>
+      <div className={contentPanel}>
+        <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+          Compatibilidad semántica: {analysis.compatibility.state}
+        </p>
+        {analysis.compatibility.state !== "COMPATIBLE"
+          ? analysis.compatibility.reasons.map((reason) => (
+              <p
+                key={reason}
+                className="mt-1 text-xs text-[var(--app-text-muted)]"
+              >
+                {reason}
+              </p>
+            ))
+          : null}
+      </div>
 
       {readinessRow &&
       readinessRow.delta !== null &&

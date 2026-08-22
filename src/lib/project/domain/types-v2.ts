@@ -54,6 +54,7 @@ export type ProjectDatasetV2 = {
   preserveAnalysisOnReimport?: boolean;
   worksheet?: ProjectWorksheetV2;
   checksum?: string | null;
+  sourceRevision?: number;
 };
 
 export type DatasetAnalysisProfileMethodologicalSnapshotV2 =

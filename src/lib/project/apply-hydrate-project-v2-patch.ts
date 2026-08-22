@@ -14,6 +14,10 @@ import {
 } from "@/lib/project/domain/mappers/visual-graph";
 import type { ProjectDatasetV2, ScientificProjectV2 } from "@/lib/project/domain/types-v2";
 import type { ProjectVisualGraphEntry } from "@/lib/visualGraphBuilder";
+import {
+  reviveDatasetAnalysisProfile,
+  type DatasetAnalysisProfile,
+} from "@/lib/scientific/comparison";
 import { VISIBILITY_KEYS_V1, type VisibilityKeyV1 } from "@/lib/project/keys";
 import type {
   PostHydrateAction,
@@ -64,12 +68,16 @@ export const cloneScientificProjectV2 = (
     slots: {
       A: {
         label: project.comparison.slots.A.label,
-        profile: project.comparison.slots.A.profile,
+        profile: reviveDatasetAnalysisProfile(
+          project.comparison.slots.A.profile as DatasetAnalysisProfile | null
+        ),
         sourceDatasetId: project.comparison.slots.A.sourceDatasetId,
       },
       B: {
         label: project.comparison.slots.B.label,
-        profile: project.comparison.slots.B.profile,
+        profile: reviveDatasetAnalysisProfile(
+          project.comparison.slots.B.profile as DatasetAnalysisProfile | null
+        ),
         sourceDatasetId: project.comparison.slots.B.sourceDatasetId,
       },
     },
@@ -331,13 +339,17 @@ export const applyHydrateProjectV2Patch = (
     A: {
       id: "A",
       label: project.comparison.slots.A.label,
-      profile: project.comparison.slots.A.profile,
+      profile: reviveDatasetAnalysisProfile(
+        project.comparison.slots.A.profile as DatasetAnalysisProfile | null
+      ),
       sourceDatasetId: project.comparison.slots.A.sourceDatasetId,
     },
     B: {
       id: "B",
       label: project.comparison.slots.B.label,
-      profile: project.comparison.slots.B.profile,
+      profile: reviveDatasetAnalysisProfile(
+        project.comparison.slots.B.profile as DatasetAnalysisProfile | null
+      ),
       sourceDatasetId: project.comparison.slots.B.sourceDatasetId,
     },
   });

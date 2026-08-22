@@ -2,6 +2,9 @@
 
 import {
   formatDatasetAnalysisProfileMiniSummary,
+  projectDatasetAnalysisProfile,
+  readProjectedNumber,
+  readProjectedString,
   type DatasetAnalysisProfile,
 } from "@/lib/scientific/comparison";
 
@@ -17,6 +20,19 @@ export function ComparisonSlotSummaryCard({
   slotLabel,
   profile,
 }: ComparisonSlotSummaryCardProps) {
+  const projection = projectDatasetAnalysisProfile(profile, "results");
+  const fileName =
+    readProjectedString(projection, "dataset.fileName") ??
+    profile.datasetInfo.fileName;
+  const seriesCount =
+    readProjectedNumber(projection, "seriesCount") ?? profile.seriesCount;
+  const totalObservations =
+    readProjectedNumber(projection, "totalObservations") ??
+    profile.totalObservations;
+  const capturedAt =
+    projection?.artifactIdentity.kind === "citable-scientific-snapshot"
+      ? projection.artifactIdentity.capturedAt
+      : profile.capturedAt;
   const engineFlags = profile.captureMetadata?.captureEngineFlags;
   const enginesCaptured = engineFlags
     ? [
@@ -35,13 +51,13 @@ export function ComparisonSlotSummaryCard({
         {slotLabel}
       </p>
       <p className="text-sm font-semibold text-[var(--app-heading)]">
-        {profile.datasetInfo.fileName}
+        {fileName}
       </p>
       <p className="text-xs text-[var(--app-text-muted)]">
-        {profile.seriesCount} series · {profile.totalObservations} obs.
+        {seriesCount} series · {totalObservations} obs.
       </p>
       <p className="text-xs text-[var(--app-text-muted)]">
-        Capturado: {new Date(profile.capturedAt).toLocaleString()}
+        Capturado: {new Date(capturedAt).toLocaleString()}
       </p>
       <p className="text-xs text-[var(--app-text-muted)]">
         {formatDatasetAnalysisProfileMiniSummary(profile)}

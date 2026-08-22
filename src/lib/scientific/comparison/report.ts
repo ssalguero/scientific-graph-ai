@@ -10,6 +10,12 @@ import type {
   MultiDatasetComparisonAnalysis,
 } from "./types";
 import { sanitizeForPdfText } from "./pdf-text";
+import {
+  projectDatasetAnalysisProfile,
+  readProjectedNumber,
+  readProjectedString,
+} from "./projection";
+import type { ScientificProjectionSurface } from "@/lib/scientific/contracts";
 
 export const MULTI_DATASET_COMPARISON_REPORT_TITLE =
   "Comparación Multi-Dataset (SCI-58)";
@@ -28,14 +34,28 @@ export const canIncludeMultiDatasetComparisonInReport = (
 const appendSlotSummaryLines = (
   lines: string[],
   label: string,
-  profile: DatasetAnalysisProfile
+  profile: DatasetAnalysisProfile,
+  surface: Extract<ScientificProjectionSurface, "report" | "pdf"> = "report"
 ): void => {
-  lines.push(`${label}: ${profile.datasetInfo.fileName}`);
+  const projection = projectDatasetAnalysisProfile(profile, surface);
+  const fileName =
+    readProjectedString(projection, "dataset.fileName") ??
+    profile.datasetInfo.fileName;
+  const seriesCount =
+    readProjectedNumber(projection, "seriesCount") ?? profile.seriesCount;
+  const totalObservations =
+    readProjectedNumber(projection, "totalObservations") ??
+    profile.totalObservations;
+  const capturedAt =
+    projection?.artifactIdentity.kind === "citable-scientific-snapshot"
+      ? projection.artifactIdentity.capturedAt
+      : profile.capturedAt;
+  lines.push(`${label}: ${fileName}`);
   lines.push(
-    `${label}: ${profile.seriesCount} series · ${profile.totalObservations} observaciones.`
+    `${label}: ${seriesCount} series · ${totalObservations} observaciones.`
   );
   lines.push(
-    `${label}: capturado ${new Date(profile.capturedAt).toLocaleString()}.`
+    `${label}: capturado ${new Date(capturedAt).toLocaleString()}.`
   );
   lines.push(
     `${label}: ${formatDatasetAnalysisProfileMiniSummary(profile)}.`
@@ -49,6 +69,7 @@ export const getMultiDatasetComparisonReportLines = (
 
   appendSlotSummaryLines(lines, "Slot A", analysis.slotA);
   appendSlotSummaryLines(lines, "Slot B", analysis.slotB);
+  lines.push(`Compatibilidad semántica: ${analysis.compatibility.state}.`);
 
   const readinessRow = analysis.kpiRows.find((row) => row.key === "readiness");
   if (readinessRow?.delta !== null && readinessRow?.delta !== undefined) {
@@ -130,16 +151,9 @@ const appendPdfSlotSummaryLines = (
   label: string,
   profile: DatasetAnalysisProfile
 ): void => {
-  lines.push(`${label}: ${profile.datasetInfo.fileName}`);
-  lines.push(
-    `${label}: ${profile.seriesCount} series, ${profile.totalObservations} observaciones.`
-  );
-  lines.push(
-    `${label}: capturado ${new Date(profile.capturedAt).toLocaleString()}.`
-  );
-  lines.push(
-    `${label}: ${formatDatasetAnalysisProfileMiniSummary(profile)}.`
-  );
+  const projected: string[] = [];
+  appendSlotSummaryLines(projected, label, profile, "pdf");
+  projected.forEach((line) => lines.push(line.replace(" · ", ", ")));
 };
 
 /** PDF-safe layout: ASCII symbols and one KPI field per line (no pipe-separated rows). */
@@ -150,6 +164,7 @@ export const getMultiDatasetComparisonPdfLines = (
 
   appendPdfSlotSummaryLines(rawLines, "Slot A", analysis.slotA);
   appendPdfSlotSummaryLines(rawLines, "Slot B", analysis.slotB);
+  rawLines.push(`Compatibilidad semantica: ${analysis.compatibility.state}.`);
 
   const readinessRow = analysis.kpiRows.find((row) => row.key === "readiness");
   if (readinessRow?.delta !== null && readinessRow?.delta !== undefined) {

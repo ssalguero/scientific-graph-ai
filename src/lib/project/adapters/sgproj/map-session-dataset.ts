@@ -101,6 +101,7 @@ export const sessionDatasetToProjectDatasetV2 = (
     series: clonedSeries,
     info: buildProjectDatasetInfo(session),
     importReport: cloneImportReport(session.datasetPayload.importReport),
+    sourceRevision: session.sourceRevision,
   };
 
   if (preserveAnalysisOnReimport !== undefined) {
@@ -139,6 +140,7 @@ export const projectDatasetV2ToSessionDataset = (
     seriesCount: metrics.seriesCount,
     observationCount: metrics.observationCount,
     worksheetModified: dataset.worksheet?.modified ?? false,
+    sourceRevision: dataset.sourceRevision,
     preserveAnalysisOnReimport: dataset.preserveAnalysisOnReimport,
     datasetPayload: {
       series: clonedSeries,

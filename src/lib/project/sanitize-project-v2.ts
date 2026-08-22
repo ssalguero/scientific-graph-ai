@@ -116,6 +116,7 @@ const sanitizeComparisonSlotV2 = (
   warnings: ProjectValidationIssue[]
 ): ComparisonSlotV2 => {
   let sourceDatasetId = slot.sourceDatasetId;
+  let profile = slot.profile;
   if (sourceDatasetId !== null && !datasetIds.has(sourceDatasetId)) {
     pushIssue(
       warnings,
@@ -127,11 +128,20 @@ const sanitizeComparisonSlotV2 = (
       )
     );
     sourceDatasetId = null;
+    if (profile) {
+      profile = {
+        ...profile,
+        captureMetadata: {
+          ...profile.captureMetadata,
+          sourceUnavailable: true,
+        },
+      };
+    }
   }
 
   return {
     label: slot.label.trim() || (slotId === "A" ? "Slot A" : "Slot B"),
-    profile: sanitizeComparisonProfileSlotLabel(slot.profile, slotId, warnings),
+    profile: sanitizeComparisonProfileSlotLabel(profile, slotId, warnings),
     sourceDatasetId,
   };
 };

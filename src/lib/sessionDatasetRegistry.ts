@@ -17,6 +17,7 @@ export type SessionDataset = {
   seriesCount: number;
   observationCount: number;
   worksheetModified: boolean;
+  sourceRevision?: number;
   preserveAnalysisOnReimport?: boolean;
   datasetPayload: SessionDatasetPayload;
 };

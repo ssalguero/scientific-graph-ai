@@ -554,6 +554,7 @@ export function createSessionDatasetFromImport(
     seriesCount: metrics.seriesCount,
     observationCount: metrics.observationCount,
     worksheetModified: false,
+    sourceRevision: 0,
     datasetPayload: {
       series: clonedSeries,
       importReport: importReport ? { ...importReport } : null,
@@ -593,21 +594,29 @@ export function updateSessionDatasetPayload(
 ): SessionDataset {
   const clonedSeries = cloneExperimentalSeries(series);
   const metrics = computeDatasetMetrics(clonedSeries);
+  const nextColumnRegistry =
+    payloadExtras?.columnRegistry ?? dataset.datasetPayload.columnRegistry;
+  const nextAuxiliaryColumns =
+    payloadExtras?.auxiliaryColumns ?? dataset.datasetPayload.auxiliaryColumns;
+  const sourceChanged =
+    JSON.stringify(dataset.datasetPayload.series) !==
+      JSON.stringify(clonedSeries) ||
+    JSON.stringify(dataset.datasetPayload.columnRegistry ?? null) !==
+      JSON.stringify(nextColumnRegistry ?? null) ||
+    JSON.stringify(dataset.datasetPayload.auxiliaryColumns ?? null) !==
+      JSON.stringify(nextAuxiliaryColumns ?? null);
 
   return {
     ...dataset,
     seriesCount: metrics.seriesCount,
     observationCount: metrics.observationCount,
     worksheetModified,
+    sourceRevision: (dataset.sourceRevision ?? 0) + (sourceChanged ? 1 : 0),
     datasetPayload: {
       series: clonedSeries,
       importReport: importReport ? { ...importReport } : null,
-      columnRegistry:
-        payloadExtras?.columnRegistry ??
-        dataset.datasetPayload.columnRegistry,
-      auxiliaryColumns:
-        payloadExtras?.auxiliaryColumns ??
-        dataset.datasetPayload.auxiliaryColumns,
+      columnRegistry: nextColumnRegistry,
+      auxiliaryColumns: nextAuxiliaryColumns,
     },
   };
 }
