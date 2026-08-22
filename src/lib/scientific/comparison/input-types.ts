@@ -54,6 +54,7 @@ export type PublicationSnapshotInput = {
 export type BuildCaptureMetadataInput = {
   sourceDatasetChecksum?: string | null;
   worksheetModifiedAtCapture?: boolean;
+  provenance?: import("@/lib/scientific/contracts").ScientificProvenanceDescriptor;
   hasMethodologicalDashboard: boolean;
   hasPublicationReadiness: boolean;
   hasEvidenceEngine: boolean;

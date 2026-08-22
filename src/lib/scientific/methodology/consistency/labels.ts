@@ -13,25 +13,25 @@ export const getConsistencyEngineClassificationText = (
   classification: ConsistencyEngineClassification
 ) => {
   if (classification === "very-strong") {
-    return "La evidencia científica presenta una consistencia muy fuerte.";
+    return "Las señales compuestas presentan consistencia muy alta.";
   }
   if (classification === "strong") {
-    return "La evidencia científica presenta una consistencia fuerte.";
+    return "Las señales compuestas presentan consistencia alta.";
   }
   if (classification === "moderate") {
-    return "La evidencia científica presenta consistencia moderada.";
+    return "Las señales compuestas presentan consistencia moderada.";
   }
-  return "La evidencia científica presenta consistencia limitada.";
+  return "Las señales compuestas presentan consistencia limitada.";
 };
 
 export const getConsistencyEngineClassificationInterpretation = (
   classification: ConsistencyEngineClassification
 ) => {
   if (classification === "very-strong") {
-    return "Los distintos enfoques analíticos convergen hacia conclusiones compatibles.";
+    return "Los indicadores contribuyentes convergen en esta puntuación compuesta.";
   }
   if (classification === "strong") {
-    return "La mayoría de los análisis respaldan una interpretación común.";
+    return "La mayoría de los indicadores contribuyentes siguen una dirección común.";
   }
   if (classification === "moderate") {
     return "Se observan coincidencias parciales entre los distintos enfoques.";

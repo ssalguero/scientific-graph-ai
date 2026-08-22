@@ -15,6 +15,10 @@ import type {
   AssumptionTrackerItem,
   AssumptionTrackerItemStatus,
 } from "./types";
+import {
+  buildCompositeMethodologyDisclosure,
+  type CompositeMethodologyFactorInput,
+} from "../disclosure";
 
 export const hasAssumptionTrackerInput = (input: {
   normalityAnalyses: AssumptionTrackerBuildInput["normalityAnalyses"];
@@ -258,5 +262,26 @@ export const buildAssumptionTrackerAnalysis = (
       classification,
       assumptions,
     }),
+    disclosure: buildCompositeMethodologyDisclosure(
+      assumptions.map(
+        (assumption): CompositeMethodologyFactorInput => ({
+          id: assumption.name.toLocaleLowerCase().replaceAll(/[^a-z0-9]+/g, "-"),
+          label: assumption.name,
+          role: "score",
+          status:
+            assumption.status === "not-evaluated"
+              ? "defaulted"
+              : "evaluated",
+          provenance:
+            assumption.status === "not-evaluated"
+              ? "neutral-fallback"
+              : "direct-input-summary",
+          fallback:
+            assumption.status === "not-evaluated"
+              ? "not-evaluated status contributes the fixed score of 50"
+              : undefined,
+        })
+      )
+    ),
   };
 };

@@ -45,3 +45,10 @@ export {
 export { resolveTTestSeriesSelection } from "./selection";
 
 export { getEffectSizePowerReportLines } from "./reporting";
+
+export {
+  APPROXIMATE_P_VALUE_DISCLOSURE,
+  APPROXIMATE_P_VALUE_QUALIFIER,
+  formatApproximatePValue,
+  formatPValueNumber,
+} from "./p-value-disclosure";

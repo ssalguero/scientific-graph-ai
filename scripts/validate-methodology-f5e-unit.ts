@@ -7,6 +7,7 @@ import type { CanonicalNormalityAssessment } from "../src/lib/scientific/normali
 import type { EvidenceStrengthEngineAnalysis } from "../src/lib/scientific/methodology/evidence";
 import type { MethodologicalDashboardAnalysis } from "../src/lib/scientific/methodology/summary";
 import type { PublicationReadinessAnalyzerAnalysis } from "../src/lib/scientific/methodology/readiness";
+import { buildCompositeMethodologyDisclosure } from "../src/lib/scientific/methodology/disclosure";
 import {
   buildPublicationDashboardAnalysis,
   buildPublicationDashboardInferentialHighlight,
@@ -30,6 +31,7 @@ import {
 
 const repoRoot = getRepoRoot(import.meta.url);
 const { results, assertCase } = createCaseRecorder();
+const mockDisclosure = buildCompositeMethodologyDisclosure([]);
 
 const emptyNormality: CanonicalNormalityAssessment = {
   seriesAssessments: [],
@@ -63,6 +65,7 @@ const mockReadinessNearReady: PublicationReadinessAnalyzerAnalysis = {
   classification: "near-ready",
   evaluatedAreas: 5,
   interpretation: ["Near ready for publication."],
+  disclosure: mockDisclosure,
 };
 
 const mockReadinessRequiresReview: PublicationReadinessAnalyzerAnalysis = {
@@ -70,6 +73,7 @@ const mockReadinessRequiresReview: PublicationReadinessAnalyzerAnalysis = {
   classification: "requires-review",
   evaluatedAreas: 5,
   interpretation: ["Requires methodological review."],
+  disclosure: mockDisclosure,
 };
 
 const mockMethodologicalDashboard: MethodologicalDashboardAnalysis = {
@@ -82,6 +86,7 @@ const mockMethodologicalDashboard: MethodologicalDashboardAnalysis = {
   overallHealthScore: 75.5,
   evaluatedEngines: 4,
   diagnosis: ["Mixed methodological health."],
+  disclosure: mockDisclosure,
 };
 
 const mockEvidenceStrong: EvidenceStrengthEngineAnalysis = {
@@ -89,6 +94,7 @@ const mockEvidenceStrong: EvidenceStrengthEngineAnalysis = {
   classification: "strong",
   evidenceSources: 5,
   interpretation: ["Strong evidence."],
+  disclosure: mockDisclosure,
 };
 
 const mockEffectSize: EffectSizePowerAnalysis = {
@@ -189,6 +195,13 @@ assertCase(
   "sci60.baseline.dataset5-status",
   dataset5Dashboard?.publicationStatus === "near-ready",
   dataset5Dashboard?.publicationStatus
+);
+assertCase(
+  "sci60.disclosure.composite",
+  dataset5Dashboard?.disclosure.methodology ===
+    "composite-decision-support" &&
+    dataset5Dashboard.disclosure.coverage.evaluated.length === 5 &&
+    dataset5Dashboard.disclosure.coverage.notEvaluated.length === 2
 );
 
 const dataset6Dashboard = buildPublicationDashboardAnalysis({
@@ -301,15 +314,20 @@ const fullDashboardReport = getPublicationDashboardReportLines(fullDashboard);
 assertCase(
   "sci60.report-lines.present",
   fullDashboardReport.length >= 5 &&
-    fullDashboardReport[0].startsWith("Publication Status:") &&
-    fullDashboardReport.some((line) => line.includes("Near Ready")) &&
-    fullDashboardReport.some((line) => line.includes("Diagnóstico editorial:")),
+    fullDashboardReport[0].startsWith("Estado compuesto para revisión:") &&
+    fullDashboardReport.some((line) =>
+      line.includes("Preparación compuesta cercana")
+    ) &&
+    fullDashboardReport.some((line) => line.includes("Diagnóstico compuesto:")) &&
+    fullDashboardReport.some((line) =>
+      line.includes("idoneidad para una revista")
+    ),
   fullDashboardReport.join(" | ")
 );
 assertCase(
   "sci60.report-lines.empty",
   getPublicationDashboardReportLines(null)[0] ===
-    "No hay datos suficientes para generar Executive Publication Dashboard."
+    "No hay datos suficientes para generar Resumen compuesto de preparación científica."
 );
 
 // --- Structural: page.tsx has no inline SCI-60 domain ---

@@ -307,6 +307,8 @@
     "validate:graph-publication-presets-visual-scaffold": "npx tsx scripts/validate-graph-publication-presets-visual-scaffold.ts",
     "validate:prod2e-d30-publication-presets-gate": "npx tsx scripts/validate-prod2e-d30-publication-presets-gate.ts",
     "validate:comparison-unit": "npx tsx scripts/validate-comparison-unit.ts",
+    "validate:pr1-contract-foundation-unit": "npx tsx scripts/validate-pr1-contract-foundation-unit.ts",
+    "validate:pr1-scientific-honesty-unit": "npx tsx scripts/validate-pr1-scientific-honesty-unit.ts",
     "validate:app-preferences-unit": "npx tsx scripts/validate-app-preferences-unit.ts",
     "validate:project-history-unit": "npx tsx scripts/validate-project-history-unit.ts",
     "validate:persistence-unit": "npx tsx scripts/validate-persistence-unit.ts",

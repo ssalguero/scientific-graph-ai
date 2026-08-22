@@ -1,3 +1,5 @@
+import type { CompositeMethodologyDisclosure } from "../disclosure";
+
 export type PublicationReadinessAnalyzerClassification =
   | "publication-ready"
   | "near-ready"
@@ -9,4 +11,5 @@ export type PublicationReadinessAnalyzerAnalysis = {
   classification: PublicationReadinessAnalyzerClassification;
   evaluatedAreas: number;
   interpretation: string[];
+  disclosure: CompositeMethodologyDisclosure;
 };

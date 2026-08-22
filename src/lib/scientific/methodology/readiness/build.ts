@@ -11,6 +11,10 @@ import type {
 } from "./input-types";
 import { getPublicationReadinessAnalyzerClassificationText } from "./labels";
 import type { PublicationReadinessAnalyzerAnalysis } from "./types";
+import {
+  buildCompositeMethodologyDisclosure,
+  type CompositeMethodologyFactorInput,
+} from "../disclosure";
 
 export const hasPublicationReadinessAnalyzerInput = (input: {
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
@@ -57,7 +61,7 @@ const buildPublicationReadinessAnalyzerInterpretation = (
 
   if (input.qualityScore >= 85) {
     interpretation.push(
-      "La calidad metodológica respalda la comunicación de resultados."
+      "El indicador compuesto de calidad metodológica es alto."
     );
   }
 
@@ -66,7 +70,7 @@ const buildPublicationReadinessAnalyzerInterpretation = (
   }
 
   if (input.evidenceScore >= 85) {
-    interpretation.push("La evidencia científica disponible es sólida.");
+    interpretation.push("El indicador compuesto de soporte es alto.");
   }
 
   if (input.assumptionScore >= 85) {
@@ -113,5 +117,25 @@ export const buildPublicationReadinessAnalyzerAnalysis = (
       evidenceScore,
       assumptionScore,
     }),
+    disclosure: buildCompositeMethodologyDisclosure(
+      [
+        ["consistency", "Composite consistency score", input.consistencyEngineAnalysis],
+        ["report-quality", "Composite report-quality score", input.reportQualityEngineAnalysis],
+        ["reproducibility", "Composite reproducibility-potential score", input.reproducibilityExplorerAnalysis],
+        ["evidence", "Composite evidence-strength score", input.evidenceStrengthEngineAnalysis],
+        ["assumptions", "Composite assumption-coverage score", input.assumptionTrackerAnalysis],
+      ].map(
+        ([id, label, value]): CompositeMethodologyFactorInput => ({
+          id: id as string,
+          label: label as string,
+          role: "score",
+          status: value ? "evaluated" : "defaulted",
+          provenance: value
+            ? "upstream-composite-output"
+            : "neutral-fallback",
+          fallback: value ? undefined : "neutral score of 50",
+        })
+      )
+    ),
   };
 };

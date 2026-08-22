@@ -11,6 +11,7 @@ import type {
 } from "./input-types";
 import { getReportQualityEngineClassificationText } from "./labels";
 import type { ReportQualityEngineAnalysis } from "./types";
+import { buildCompositeMethodologyDisclosure } from "../disclosure";
 
 export const hasReportQualityEngineInput = (input: {
   experimentalStatistics: ReportQualityEngineBuildInput["experimentalStatistics"];
@@ -150,13 +151,13 @@ const buildReportQualityEngineInterpretation = (
     input.consistencyEngineAnalysis.consistencyScore >= 85
   ) {
     interpretation.push(
-      "La evidencia científica presenta alta coherencia interna."
+      "Las señales compuestas presentan alta coherencia interna."
     );
   }
 
   if (input.hasInferentialTests) {
     interpretation.push(
-      "Las conclusiones se encuentran respaldadas por análisis inferenciales."
+      "Hay resultados inferenciales disponibles; su significación debe revisarse por separado."
     );
   }
 
@@ -231,5 +232,45 @@ export const buildReportQualityEngineAnalysis = (
       consistencyEngineAnalysis: input.consistencyEngineAnalysis,
       hasInferentialTests,
     }),
+    disclosure: buildCompositeMethodologyDisclosure([
+      {
+        id: "sample-size",
+        label: "Sample-size adequacy",
+        role: "score",
+        status: sampleSizeScore === null ? "not-evaluated" : "evaluated",
+        provenance: "direct-input-summary",
+      },
+      {
+        id: "normality",
+        label:
+          input.normalityConsensus.length > 0
+            ? "Normality consensus"
+            : "Normality analyses",
+        role: "score",
+        status: normalityScore === null ? "not-evaluated" : "evaluated",
+        provenance: "direct-input-summary",
+      },
+      {
+        id: "inference-availability",
+        label: "Inferential-result availability",
+        role: "score",
+        status: inferenceScore === null ? "not-evaluated" : "evaluated",
+        provenance: "direct-input-summary",
+      },
+      {
+        id: "resampling-stability",
+        label: "Resampling stability",
+        role: "score",
+        status: bootstrapScore === null ? "not-evaluated" : "evaluated",
+        provenance: "direct-input-summary",
+      },
+      {
+        id: "composite-consistency",
+        label: "Composite consistency score",
+        role: "score",
+        status: consistencyScore === null ? "not-evaluated" : "evaluated",
+        provenance: "upstream-composite-output",
+      },
+    ]),
   };
 };

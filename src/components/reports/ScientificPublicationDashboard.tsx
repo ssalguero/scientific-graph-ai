@@ -3,6 +3,7 @@
 import { getEvidenceStrengthEngineClassificationLabel } from "@/lib/scientific/methodology/evidence";
 import { getPublicationReadinessAnalyzerClassificationLabel } from "@/lib/scientific/methodology/readiness";
 import type { PublicationDashboardAnalysis } from "@/lib/scientific/methodology/publication";
+import { COMPOSITE_METHODOLOGY_PRIMARY_LABELS } from "@/lib/scientific/methodology/disclosure";
 import { getEffectMagnitudeLabel } from "@/lib/scientific/inference";
 import { contentPanel, emptyState } from "@/lib/ui/theme";
 
@@ -28,7 +29,7 @@ export function ScientificPublicationDashboard({
     {
       key: "readiness",
       icon: "📰",
-      title: "Readiness",
+      title: "Preparación compuesta",
       value: analysis.publicationScore.toFixed(1),
       subtitle: getPublicationReadinessAnalyzerClassificationLabel(
         analysis.publicationStatus
@@ -40,7 +41,7 @@ export function ScientificPublicationDashboard({
     kpiCards.push({
       key: "health",
       icon: "📋",
-      title: "Overall Health",
+      title: "Salud compuesta",
       value: analysis.methodologicalHealthScore.toFixed(1),
       subtitle: "Referencia SCI-56",
     });
@@ -50,7 +51,7 @@ export function ScientificPublicationDashboard({
     kpiCards.push({
       key: "evidence",
       icon: "🧪",
-      title: "Evidence",
+      title: "Soporte compuesto",
       value: analysis.evidenceScore.toFixed(1),
       subtitle: getEvidenceStrengthEngineClassificationLabel(
         analysis.evidenceClassification
@@ -77,7 +78,7 @@ export function ScientificPublicationDashboard({
     <div className="w-full mt-3">
       <div className={`${contentPanel} mb-3 flex flex-col gap-1`}>
         <p className="text-xs font-semibold text-[var(--app-text-muted)]">
-          Publication Status
+          {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]}
         </p>
         <p className="text-2xl font-semibold text-[var(--app-heading)]">
           {getPublicationReadinessAnalyzerClassificationLabel(
@@ -85,10 +86,37 @@ export function ScientificPublicationDashboard({
           )}
         </p>
         <p className="text-xs text-[var(--app-text-muted)] tabular-nums">
-          Readiness Score: {analysis.publicationScore.toFixed(1)} ·{" "}
+          Puntuación compuesta: {analysis.publicationScore.toFixed(1)} ·{" "}
           {analysis.evaluatedDomains} dominio
           {analysis.evaluatedDomains === 1 ? "" : "s"} evaluado
           {analysis.evaluatedDomains === 1 ? "" : "s"}
+        </p>
+      </div>
+
+      <div className={`${contentPanel} mb-3 text-xs text-[var(--app-text-muted)]`}>
+        <p className="font-semibold text-[var(--app-heading)]">
+          Apoyo compuesto a decisiones
+        </p>
+        <p className="mt-1">
+          Cobertura: {analysis.disclosure.coverage.evaluated.length} evaluados,{" "}
+          {analysis.disclosure.coverage.defaulted.length} predeterminados y{" "}
+          {analysis.disclosure.coverage.notEvaluated.length} no evaluados.
+        </p>
+        <p className="mt-1">
+          Factores:{" "}
+          {analysis.disclosure.contributingFactors
+            .map((factor) => factor.label)
+            .join(", ") || "ninguno"}
+          . Fallbacks:{" "}
+          {analysis.disclosure.defaultsAndFallbacks.length > 0
+            ? analysis.disclosure.defaultsAndFallbacks.join("; ")
+            : "ninguno"}
+          .
+        </p>
+        <p className="mt-1">
+          No constituye validación independiente ni idoneidad para una revista.
+          La revisión y autoridad científica permanecen en la persona
+          investigadora.
         </p>
       </div>
 
@@ -191,7 +219,7 @@ export function ScientificPublicationDashboard({
       {analysis.crossDomainDiagnosis.length > 0 ? (
         <div className="mt-4">
           <p className="text-sm font-semibold text-[var(--app-heading)]">
-            Diagnóstico editorial
+            Diagnóstico compuesto
           </p>
           <ul className="mt-2 space-y-1">
             {analysis.crossDomainDiagnosis.map((line, index) => (
@@ -209,7 +237,7 @@ export function ScientificPublicationDashboard({
       {analysis.publicationRisks.length > 0 ? (
         <div className="mt-4">
           <p className="text-sm font-semibold text-[var(--app-heading)]">
-            Riesgos pre-publicación
+            Riesgos para revisión
           </p>
           <ul className="mt-2 space-y-1">
             {analysis.publicationRisks.map((line, index) => (
@@ -227,7 +255,7 @@ export function ScientificPublicationDashboard({
       {analysis.publicationRecommendations.length > 0 ? (
         <div className="mt-4">
           <p className="text-sm font-semibold text-[var(--app-heading)]">
-            Recomendaciones
+            Sugerencias para revisión
           </p>
           <ul className="mt-2 space-y-1">
             {analysis.publicationRecommendations.map((line, index) => (

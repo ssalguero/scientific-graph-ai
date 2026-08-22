@@ -4,6 +4,7 @@ import { join } from "node:path";
 import type { ConsistencyEngineAnalysis } from "../src/lib/scientific/methodology/consistency";
 import type { ReportQualityEngineAnalysis } from "../src/lib/scientific/methodology/report-quality";
 import type { ReproducibilityExplorerAnalysis } from "../src/lib/scientific/methodology/reproducibility";
+import { buildCompositeMethodologyDisclosure } from "../src/lib/scientific/methodology/disclosure";
 import {
   buildAssumptionTrackerAnalysis,
   getAssumptionTrackerClassificationLabel,
@@ -37,6 +38,7 @@ import {
 
 const repoRoot = getRepoRoot(import.meta.url);
 const { results, assertCase } = createCaseRecorder();
+const mockDisclosure = buildCompositeMethodologyDisclosure([]);
 
 const mockConsistencyStrong: ConsistencyEngineAnalysis = {
   consistencyScore: 90,
@@ -44,6 +46,7 @@ const mockConsistencyStrong: ConsistencyEngineAnalysis = {
   evidenceCount: 4,
   supportingModules: ["pca"],
   interpretation: ["Strong consistency."],
+  disclosure: mockDisclosure,
 };
 
 const mockReportQualityStrong: ReportQualityEngineAnalysis = {
@@ -51,6 +54,7 @@ const mockReportQualityStrong: ReportQualityEngineAnalysis = {
   classification: "excellent",
   evaluatedCriteria: 5,
   interpretation: ["Excellent quality."],
+  disclosure: mockDisclosure,
 };
 
 const mockReproducibilityStrong: ReproducibilityExplorerAnalysis = {
@@ -58,6 +62,7 @@ const mockReproducibilityStrong: ReproducibilityExplorerAnalysis = {
   classification: "very-high",
   evaluatedFactors: 5,
   interpretation: ["Very high reproducibility."],
+  disclosure: mockDisclosure,
 };
 
 const emptyEvidenceInput = {
@@ -115,6 +120,11 @@ assertCase(
   strongEvidence ? String(strongEvidence.evidenceScore) : "null"
 );
 assertCase(
+  "sci53.disclosure.composite",
+  strongEvidence?.disclosure.methodology === "composite-decision-support" &&
+    strongEvidence.disclosure.coverage.evaluated.length === 6
+);
+assertCase(
   "sci53.flags.very-strong",
   hasEvidenceStrengthEngineVeryStrong(strongEvidence),
   "very-strong helper"
@@ -158,14 +168,16 @@ const strongEvidenceReport = getEvidenceStrengthEngineReportLines(strongEvidence
 assertCase(
   "sci53.report-lines.present",
   strongEvidenceReport.length >= 3 &&
-    strongEvidenceReport[0].startsWith("Evidence Score:") &&
+    strongEvidenceReport[0].startsWith(
+      "Puntuación compuesta de soporte evidenciario:"
+    ) &&
     strongEvidenceReport.some((line) => line.includes("Very Strong")),
   strongEvidenceReport.join(" | ")
 );
 assertCase(
   "sci53.report-lines.empty",
   getEvidenceStrengthEngineReportLines(null)[0] ===
-    "No hay datos suficientes para generar Evidence Strength Engine."
+    "No hay datos suficientes para generar Indicador compuesto de soporte evidenciario."
 );
 
 // --- SCI-54 behavioral ---
@@ -212,6 +224,11 @@ assertCase(
   "sci54.classification.excellent",
   excellentAssumptions?.classification === "excellent",
   excellentAssumptions?.classification
+);
+assertCase(
+  "sci54.disclosure.coverage",
+  excellentAssumptions?.disclosure.coverage.evaluated.length === 5 &&
+    excellentAssumptions.disclosure.coverage.defaulted.length === 0
 );
 assertCase(
   "sci54.flags.excellent",
@@ -297,15 +314,20 @@ const excellentAssumptionsReport =
 assertCase(
   "sci54.report-lines.present",
   excellentAssumptionsReport.length >= 4 &&
-    excellentAssumptionsReport[0].startsWith("Assumption Score:") &&
+    excellentAssumptionsReport[0].startsWith(
+      "Puntuación compuesta de cobertura de supuestos:"
+    ) &&
     excellentAssumptionsReport.some((line) => line.includes("Excellent")) &&
-    excellentAssumptionsReport.some((line) => line.includes("Normalidad:")),
+    excellentAssumptionsReport.some((line) => line.includes("Normalidad:")) &&
+    excellentAssumptionsReport.some((line) =>
+      line.includes("no acredita la ejecución")
+    ),
   excellentAssumptionsReport.join(" | ")
 );
 assertCase(
   "sci54.report-lines.empty",
   getAssumptionTrackerReportLines(null)[0] ===
-    "No hay datos suficientes para generar Assumption Tracker."
+    "No hay datos suficientes para generar Indicador compuesto de cobertura de supuestos."
 );
 
 // --- Structural: page.tsx has no inline SCI-53/54 domain ---

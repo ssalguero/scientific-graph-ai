@@ -1,3 +1,5 @@
+import type { CompositeMethodologyDisclosure } from "../disclosure";
+
 export type AssumptionTrackerItemStatus =
   | "satisfied"
   | "partially-satisfied"
@@ -21,4 +23,5 @@ export type AssumptionTrackerAnalysis = {
   classification: AssumptionTrackerClassification;
   assumptions: AssumptionTrackerItem[];
   interpretation: string[];
+  disclosure: CompositeMethodologyDisclosure;
 };

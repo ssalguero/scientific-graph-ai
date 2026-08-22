@@ -7,19 +7,24 @@ import { getReproducibilityExplorerClassificationLabel } from "@/lib/scientific/
 import { deduplicateTextLines } from "@/lib/scientific/shared";
 
 import type { MethodologicalDashboardAnalysis } from "./types";
+import {
+  COMPOSITE_METHODOLOGY_PRIMARY_LABELS,
+  getCompositeMethodologyDisclosureReportLines,
+} from "../disclosure";
 
 export const getMethodologicalDashboardReportLines = (
   analysis: MethodologicalDashboardAnalysis | null
 ): string[] => {
   if (!analysis) {
     return [
-      "No hay datos suficientes para generar Methodological Summary Dashboard.",
+      `No hay datos suficientes para generar ${COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"]}.`,
     ];
   }
 
   const lines = [
-    `Overall Health Score: ${analysis.overallHealthScore.toFixed(1)}.`,
-    `Motores evaluados: ${analysis.evaluatedEngines}.`,
+    `Salud metodológica compuesta: ${analysis.overallHealthScore.toFixed(1)}.`,
+    `Indicadores compuestos evaluados: ${analysis.evaluatedEngines}.`,
+    ...getCompositeMethodologyDisclosureReportLines(analysis.disclosure),
   ];
   const { summaryCards } = analysis;
 
@@ -49,7 +54,7 @@ export const getMethodologicalDashboardReportLines = (
 
   if (summaryCards.reproducibilityScore !== undefined) {
     lines.push(
-      `Reproducibility: ${summaryCards.reproducibilityScore.toFixed(1)} — ${
+      `Potencial reproducible: ${summaryCards.reproducibilityScore.toFixed(1)} — ${
         summaryCards.reproducibilityClassification
           ? getReproducibilityExplorerClassificationLabel(
               summaryCards.reproducibilityClassification
@@ -61,7 +66,7 @@ export const getMethodologicalDashboardReportLines = (
 
   if (summaryCards.evidenceScore !== undefined) {
     lines.push(
-      `Evidence: ${summaryCards.evidenceScore.toFixed(1)} — ${
+      `Soporte compuesto: ${summaryCards.evidenceScore.toFixed(1)} — ${
         summaryCards.evidenceClassification
           ? getEvidenceStrengthEngineClassificationLabel(
               summaryCards.evidenceClassification
@@ -85,7 +90,7 @@ export const getMethodologicalDashboardReportLines = (
 
   if (summaryCards.readinessScore !== undefined) {
     lines.push(
-      `Publication Readiness: ${summaryCards.readinessScore.toFixed(1)} — ${
+      `Preparación para revisión: ${summaryCards.readinessScore.toFixed(1)} — ${
         summaryCards.readinessClassification
           ? getPublicationReadinessAnalyzerClassificationLabel(
               summaryCards.readinessClassification

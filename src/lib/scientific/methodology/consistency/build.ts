@@ -9,6 +9,7 @@ import {
   getConsistencyEngineClassificationInterpretation,
   getConsistencyEngineClassificationText,
 } from "./labels";
+import { buildCompositeMethodologyDisclosure } from "../disclosure";
 
 export const hasConsistencyEngineInput = (input: {
   pcaAnalysis: ConsistencyEngineBuildInput["pcaAnalysis"];
@@ -106,21 +107,21 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.pcaAnalysis.cumulativeVariance >= 80) {
       score += 1;
-      supportingModules.push("PCA");
+      supportingModules.push("Variance-retention signal");
     }
   }
 
   if (input.hierarchicalClusteringAnalysis) {
     totalEvaluatedModules += 1;
     score += 1;
-    supportingModules.push("Clustering");
+    supportingModules.push("Hierarchy-availability signal");
   }
 
   if (input.mdsAnalysis) {
     totalEvaluatedModules += 1;
     if (input.mdsAnalysis.stress < 0.1) {
       score += 1;
-      supportingModules.push("MDS");
+      supportingModules.push("Low-stress representation signal");
     }
   }
 
@@ -128,7 +129,7 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.similarityNetworkAnalysis.averageSimilarity >= 0.75) {
       score += 1;
-      supportingModules.push("Similarity");
+      supportingModules.push("Similarity-cohesion signal");
     }
   }
 
@@ -136,7 +137,7 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.manovaExplorerAnalysis.separationScore >= 0.75) {
       score += 1;
-      supportingModules.push("MANOVA");
+      supportingModules.push("Group-separation signal");
     }
   }
 
@@ -144,7 +145,7 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.ldaExplorerAnalysis.discriminantScore >= 85) {
       score += 1;
-      supportingModules.push("LDA");
+      supportingModules.push("Discriminant-quality signal");
     }
   }
 
@@ -152,7 +153,7 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.pcrExplorerAnalysis.predictiveScore >= 85) {
       score += 1;
-      supportingModules.push("PCR");
+      supportingModules.push("Predictive-quality signal");
     }
   }
 
@@ -160,7 +161,7 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.plsExplorerAnalysis.explanatoryScore >= 85) {
       score += 1;
-      supportingModules.push("PLS");
+      supportingModules.push("Explanatory-quality signal");
     }
   }
 
@@ -168,7 +169,7 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.bootstrapExplorerAnalysis.stabilityScore >= 85) {
       score += 1;
-      supportingModules.push("Bootstrap");
+      supportingModules.push("Evidence-stability signal");
     }
   }
 
@@ -176,7 +177,7 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.sensitivityExplorerAnalysis.sensitivityScore >= 85) {
       score += 1;
-      supportingModules.push("Sensitivity");
+      supportingModules.push("Composite-robustness signal");
     }
   }
 
@@ -184,7 +185,7 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.tsneExplorerAnalysis.clusterTendency === "strong") {
       score += 1;
-      supportingModules.push("t-SNE");
+      supportingModules.push("MDS-neighborhood signal");
     }
   }
 
@@ -192,7 +193,7 @@ export const buildConsistencyEngineAnalysis = (
     totalEvaluatedModules += 1;
     if (input.umapExplorerAnalysis.manifoldQuality === "excellent") {
       score += 1;
-      supportingModules.push("UMAP");
+      supportingModules.push("MDS-connectivity signal");
     }
   }
 
@@ -212,5 +213,25 @@ export const buildConsistencyEngineAnalysis = (
       tsneExplorerAnalysis: input.tsneExplorerAnalysis,
       umapExplorerAnalysis: input.umapExplorerAnalysis,
     }),
+    disclosure: buildCompositeMethodologyDisclosure([
+      ["variance-retention", "Variance retention", input.pcaAnalysis],
+      ["hierarchy-availability", "Hierarchy availability", input.hierarchicalClusteringAnalysis],
+      ["representation-stress", "Representation stress", input.mdsAnalysis],
+      ["similarity-cohesion", "Similarity cohesion", input.similarityNetworkAnalysis],
+      ["group-separation", "Group separation", input.manovaExplorerAnalysis],
+      ["discriminant-quality", "Discriminant quality", input.ldaExplorerAnalysis],
+      ["predictive-quality", "Predictive quality", input.pcrExplorerAnalysis],
+      ["explanatory-quality", "Explanatory quality", input.plsExplorerAnalysis],
+      ["evidence-stability", "Evidence stability", input.bootstrapExplorerAnalysis],
+      ["composite-robustness", "Composite robustness", input.sensitivityExplorerAnalysis],
+      ["mds-neighborhood", "MDS neighborhood", input.tsneExplorerAnalysis],
+      ["mds-connectivity", "MDS connectivity", input.umapExplorerAnalysis],
+    ].map(([id, label, value]) => ({
+      id: id as string,
+      label: label as string,
+      role: "score",
+      status: value === null ? "not-evaluated" : "evaluated",
+      provenance: "direct-input-summary",
+    }))),
   };
 };

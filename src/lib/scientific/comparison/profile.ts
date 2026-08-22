@@ -170,6 +170,7 @@ export const buildCaptureMetadata = (
 ): DatasetAnalysisProfileCaptureMetadata => ({
   sourceDatasetChecksum: input.sourceDatasetChecksum ?? null,
   worksheetModifiedAtCapture: input.worksheetModifiedAtCapture,
+  provenance: input.provenance,
   captureEngineFlags: {
     hasMethodologicalDashboard: input.hasMethodologicalDashboard,
     hasPublicationReadiness: input.hasPublicationReadiness,

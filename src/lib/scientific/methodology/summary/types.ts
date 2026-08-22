@@ -5,6 +5,8 @@ import type { ReportQualityEngineAnalysis } from "@/lib/scientific/methodology/r
 import type { ReproducibilityExplorerAnalysis } from "@/lib/scientific/methodology/reproducibility";
 import type { PublicationReadinessAnalyzerAnalysis } from "@/lib/scientific/methodology/readiness";
 
+import type { CompositeMethodologyDisclosure } from "../disclosure";
+
 export type MethodologicalDashboardAnalysis = {
   summaryCards: {
     consistencyScore?: number;
@@ -23,4 +25,5 @@ export type MethodologicalDashboardAnalysis = {
   overallHealthScore: number;
   evaluatedEngines: number;
   diagnosis: string[];
+  disclosure: CompositeMethodologyDisclosure;
 };

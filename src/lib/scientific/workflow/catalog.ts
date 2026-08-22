@@ -37,6 +37,6 @@ export const GUIDED_WORKFLOW_TEMPLATE_CATALOG: GuidedWorkflowCatalogEntry[] =
       id: "evaluate-publication",
       title: "Evaluar publicación",
       description:
-        "Motores metodológicos SCI-50→55, SCI-56, SCI-57 y Executive Publication Dashboard.",
+        "Indicadores compuestos SCI-50→56, inferencia SCI-57 y resumen compuesto SCI-60 para revisión humana.",
     },
   ];

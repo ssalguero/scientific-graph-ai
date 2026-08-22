@@ -7,6 +7,7 @@ import type { EvidenceStrengthEngineAnalysis } from "../src/lib/scientific/metho
 import type { PublicationReadinessAnalyzerAnalysis } from "../src/lib/scientific/methodology/readiness";
 import type { ReportQualityEngineAnalysis } from "../src/lib/scientific/methodology/report-quality";
 import type { ReproducibilityExplorerAnalysis } from "../src/lib/scientific/methodology/reproducibility";
+import { buildCompositeMethodologyDisclosure } from "../src/lib/scientific/methodology/disclosure";
 import {
   buildMethodologicalDashboardAnalysis,
   canBuildMethodologicalDashboard,
@@ -27,6 +28,7 @@ import {
 
 const repoRoot = getRepoRoot(import.meta.url);
 const { results, assertCase } = createCaseRecorder();
+const mockDisclosure = buildCompositeMethodologyDisclosure([]);
 
 const mockConsistencyStrong: ConsistencyEngineAnalysis = {
   consistencyScore: 90,
@@ -34,6 +36,7 @@ const mockConsistencyStrong: ConsistencyEngineAnalysis = {
   evidenceCount: 4,
   supportingModules: ["pca"],
   interpretation: ["Strong consistency."],
+  disclosure: mockDisclosure,
 };
 
 const mockReportQualityStrong: ReportQualityEngineAnalysis = {
@@ -41,6 +44,7 @@ const mockReportQualityStrong: ReportQualityEngineAnalysis = {
   classification: "excellent",
   evaluatedCriteria: 5,
   interpretation: ["Excellent quality."],
+  disclosure: mockDisclosure,
 };
 
 const mockReproducibilityStrong: ReproducibilityExplorerAnalysis = {
@@ -48,6 +52,7 @@ const mockReproducibilityStrong: ReproducibilityExplorerAnalysis = {
   classification: "very-high",
   evaluatedFactors: 5,
   interpretation: ["Very high reproducibility."],
+  disclosure: mockDisclosure,
 };
 
 const mockEvidenceStrong: EvidenceStrengthEngineAnalysis = {
@@ -55,6 +60,7 @@ const mockEvidenceStrong: EvidenceStrengthEngineAnalysis = {
   classification: "very-strong",
   evidenceSources: 5,
   interpretation: ["Very strong evidence."],
+  disclosure: mockDisclosure,
 };
 
 const mockAssumptionsExcellent: AssumptionTrackerAnalysis = {
@@ -62,6 +68,7 @@ const mockAssumptionsExcellent: AssumptionTrackerAnalysis = {
   classification: "excellent",
   assumptions: [],
   interpretation: ["Excellent assumptions."],
+  disclosure: mockDisclosure,
 };
 
 const mockReadinessReady: PublicationReadinessAnalyzerAnalysis = {
@@ -69,6 +76,7 @@ const mockReadinessReady: PublicationReadinessAnalyzerAnalysis = {
   classification: "publication-ready",
   evaluatedAreas: 5,
   interpretation: ["Ready for publication."],
+  disclosure: mockDisclosure,
 };
 
 const emptyDashboardInput = {
@@ -138,6 +146,12 @@ assertCase(
   fullChainDashboard ? String(fullChainDashboard.overallHealthScore) : "null"
 );
 assertCase(
+  "sci56.disclosure.composite",
+  fullChainDashboard?.disclosure.methodology ===
+    "composite-decision-support" &&
+    fullChainDashboard.disclosure.coverage.evaluated.length === 6
+);
+assertCase(
   "sci56.integration.readiness-classification",
   fullChainDashboard?.summaryCards.readinessClassification === "publication-ready",
   fullChainDashboard?.summaryCards.readinessClassification
@@ -165,15 +179,20 @@ const fullChainReport = getMethodologicalDashboardReportLines(fullChainDashboard
 assertCase(
   "sci56.report-lines.present",
   fullChainReport.length >= 5 &&
-    fullChainReport[0].startsWith("Overall Health Score:") &&
+    fullChainReport[0].startsWith("Salud metodológica compuesta:") &&
     fullChainReport.some((line) => line.startsWith("Consistency:")) &&
-    fullChainReport.some((line) => line.startsWith("Publication Readiness:")),
+    fullChainReport.some((line) =>
+      line.startsWith("Preparación para revisión:")
+    ) &&
+    fullChainReport.some((line) =>
+      line.includes("no demuestra reproducibilidad")
+    ),
   fullChainReport.join(" | ")
 );
 assertCase(
   "sci56.report-lines.empty",
   getMethodologicalDashboardReportLines(null)[0] ===
-    "No hay datos suficientes para generar Methodological Summary Dashboard."
+    "No hay datos suficientes para generar Resumen compuesto metodológico."
 );
 
 // --- Structural: page.tsx has no inline SCI-56 domain ---

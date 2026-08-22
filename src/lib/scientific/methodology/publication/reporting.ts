@@ -5,6 +5,10 @@ import { deduplicateTextLines } from "@/lib/scientific/shared/text";
 
 import type { PublicationDashboardAdvisorConfidence } from "./input-types";
 import type { PublicationDashboardAnalysis } from "./types";
+import {
+  COMPOSITE_METHODOLOGY_PRIMARY_LABELS,
+  getCompositeMethodologyDisclosureReportLines,
+} from "../disclosure";
 
 const formatPCAVariancePercent = (value: number) => `${value.toFixed(1)}%`;
 
@@ -21,16 +25,17 @@ export const getPublicationDashboardReportLines = (
 ): string[] => {
   if (!analysis) {
     return [
-      "No hay datos suficientes para generar Executive Publication Dashboard.",
+      `No hay datos suficientes para generar ${COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]}.`,
     ];
   }
 
   const lines = [
-    `Publication Status: ${getPublicationReadinessAnalyzerClassificationLabel(
+    `Estado compuesto para revisión: ${getPublicationReadinessAnalyzerClassificationLabel(
       analysis.publicationStatus
     )}.`,
-    `Readiness Score: ${analysis.publicationScore.toFixed(1)}.`,
+    `Puntuación compuesta de preparación: ${analysis.publicationScore.toFixed(1)}.`,
     `Dominios evaluados: ${analysis.evaluatedDomains}.`,
+    ...getCompositeMethodologyDisclosureReportLines(analysis.disclosure),
   ];
 
   if (analysis.methodologicalHealthScore !== undefined) {
@@ -121,17 +126,17 @@ export const getPublicationDashboardReportLines = (
   }
 
   if (analysis.crossDomainDiagnosis.length > 0) {
-    lines.push("Diagnóstico editorial:");
+    lines.push("Diagnóstico compuesto:");
     analysis.crossDomainDiagnosis.forEach((line) => lines.push(line));
   }
 
   if (analysis.publicationRisks.length > 0) {
-    lines.push("Riesgos pre-publicación:");
+    lines.push("Riesgos para revisión:");
     analysis.publicationRisks.forEach((line) => lines.push(line));
   }
 
   if (analysis.publicationRecommendations.length > 0) {
-    lines.push("Recomendaciones:");
+    lines.push("Sugerencias para revisión:");
     analysis.publicationRecommendations.forEach((line) => lines.push(line));
   }
 

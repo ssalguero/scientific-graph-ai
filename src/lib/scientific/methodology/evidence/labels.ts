@@ -13,13 +13,13 @@ export const getEvidenceStrengthEngineClassificationText = (
   classification: EvidenceStrengthEngineClassification
 ) => {
   if (classification === "very-strong") {
-    return "La evidencia científica global es muy fuerte.";
+    return "El soporte compuesto disponible es muy alto.";
   }
   if (classification === "strong") {
-    return "La evidencia científica global es fuerte.";
+    return "El soporte compuesto disponible es alto.";
   }
   if (classification === "moderate") {
-    return "La evidencia científica global es moderada.";
+    return "El soporte compuesto disponible es moderado.";
   }
-  return "La evidencia científica global es limitada.";
+  return "El soporte compuesto disponible es limitado.";
 };

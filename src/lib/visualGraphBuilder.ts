@@ -172,7 +172,7 @@ export const VISUAL_GRAPH_TYPE_LABELS: Record<VisualGraphType, string> = {
   bar: "Bar",
   histogram: "Histogram",
   boxPlot: "Box Plot",
-  violin: "Violin Plot",
+  violin: "Raw-value Strip",
   heatmap: "Heatmap",
   bubble: "Bubble",
   pca: "PCA",

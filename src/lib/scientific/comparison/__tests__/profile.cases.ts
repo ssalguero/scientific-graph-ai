@@ -5,6 +5,7 @@ import {
   mapMultivariateToProfileSnapshot,
   mapPublicationToProfileSnapshot,
 } from "../profile";
+import { composeScientificProvenance } from "@/lib/scientific/contracts";
 import type { AssertCase } from "./run-assertions";
 
 export const runProfileCases = (assertCase: AssertCase) => {
@@ -59,6 +60,20 @@ export const runProfileCases = (assertCase: AssertCase) => {
 
   const metadata = buildCaptureMetadata({
     worksheetModifiedAtCapture: true,
+    provenance: composeScientificProvenance({
+      dataset: { id: "dataset-1", label: "Test.csv" },
+      source: { kind: "comparison-profile", id: "A" },
+      series: [{ id: "series-1", role: "input" }],
+      config: { values: { normalityAssessmentCount: 4 } },
+      method: {
+        id: "scientific-comparison-profile",
+        label: "Perfil federado de comparación científica",
+        version: "1",
+        parameters: { slotLabel: "A" },
+      },
+      approximation: { kind: "mixed", details: "Fixture." },
+      warnings: [],
+    }),
     hasMethodologicalDashboard: true,
     hasPublicationReadiness: true,
     hasEvidenceEngine: true,
@@ -73,6 +88,11 @@ export const runProfileCases = (assertCase: AssertCase) => {
   assertCase(
     "mapper.captureMetadata.worksheet",
     metadata.worksheetModifiedAtCapture === true
+  );
+  assertCase(
+    "mapper.captureMetadata.provenance",
+    metadata.provenance?.method.id === "scientific-comparison-profile" &&
+      metadata.provenance.dataset.id === "dataset-1"
   );
 
   const profile = buildDatasetAnalysisProfile({

@@ -98,6 +98,15 @@ assertCase(
   strongConsistency ? String(strongConsistency.consistencyScore) : "null"
 );
 assertCase(
+  "sci50.disclosure.composite-and-functional",
+  strongConsistency?.disclosure.methodology === "composite-decision-support" &&
+    strongConsistency.disclosure.coverage.evaluated.length === 5 &&
+    strongConsistency.supportingModules.every(
+      (label) =>
+        !["MANOVA", "LDA", "PCR", "PLS", "Bootstrap", "Sensitivity", "t-SNE", "UMAP"].includes(label)
+    )
+);
+assertCase(
   "sci50.classification.label",
   getConsistencyEngineClassificationLabel("very-strong") === "Very Strong"
 );
@@ -123,14 +132,16 @@ const strongConsistencyReport = getConsistencyEngineReportLines(strongConsistenc
 assertCase(
   "sci50.report-lines.present",
   strongConsistencyReport.length >= 4 &&
-    strongConsistencyReport[0].startsWith("Consistency Score:") &&
+    strongConsistencyReport[0].startsWith(
+      "Puntuación compuesta de consistencia:"
+    ) &&
     strongConsistencyReport.some((line) => line.includes("Very Strong")),
   strongConsistencyReport.join(" | ")
 );
 assertCase(
   "sci50.report-lines.empty",
   getConsistencyEngineReportLines(null)[0] ===
-    "No hay datos suficientes para generar Consistency Engine."
+    "No hay datos suficientes para generar Indicador compuesto de consistencia."
 );
 
 // --- SCI-51 behavioral ---
@@ -177,6 +188,12 @@ assertCase(
   reportQualityWithConsistency?.classification
 );
 assertCase(
+  "sci51.disclosure.composite",
+  reportQualityWithConsistency?.disclosure.methodology ===
+    "composite-decision-support" &&
+    reportQualityWithConsistency.disclosure.coverage.defaulted.length === 0
+);
+assertCase(
   "sci51.flags.excellent",
   hasReportQualityEngineExcellent(reportQualityWithConsistency)
 );
@@ -197,7 +214,9 @@ const reportQualityReport = getReportQualityEngineReportLines(
 assertCase(
   "sci51.report-lines.present",
   reportQualityReport.length >= 3 &&
-    reportQualityReport[0].startsWith("Quality Score:") &&
+    reportQualityReport[0].startsWith(
+      "Puntuación compuesta de calidad metodológica:"
+    ) &&
     reportQualityReport.some((line) => line.includes("Excellent")),
   reportQualityReport.join(" | ")
 );
@@ -246,6 +265,13 @@ assertCase(
   reproducibilityPartial?.classification
 );
 assertCase(
+  "sci52.disclosure.defaults",
+  reproducibilityPartial?.disclosure.coverage.defaulted.length === 4 &&
+    reproducibilityPartial.disclosure.defaultsAndFallbacks.every((line) =>
+      line.includes("50")
+    )
+);
+assertCase(
   "sci52.factors.evaluated-count",
   reproducibilityPartial?.evaluatedFactors === 5,
   reproducibilityPartial ? String(reproducibilityPartial.evaluatedFactors) : "null"
@@ -287,8 +313,13 @@ const reproducibilityReport = getReproducibilityExplorerReportLines(
 assertCase(
   "sci52.report-lines.present",
   reproducibilityReport.length >= 3 &&
-    reproducibilityReport[0].startsWith("Reproducibility Score:") &&
-    reproducibilityReport.some((line) => line.includes("Very High")),
+    reproducibilityReport[0].startsWith(
+      "Puntuación compuesta de reproducibilidad potencial:"
+    ) &&
+    reproducibilityReport.some((line) => line.includes("Very High")) &&
+    reproducibilityReport.some((line) =>
+      line.includes("apoyo compuesto a decisiones")
+    ),
   reproducibilityReport.join(" | ")
 );
 assertCase(

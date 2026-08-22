@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   ComposedChart,
+  ErrorBar,
   Line,
   ResponsiveContainer,
   Tooltip,
@@ -18,6 +19,8 @@ import { computeYAxisDomainFromValues } from "@/lib/graph/viewport";
 import type {
   VisualGraphMarkerStyle,
   VisualGraphPreview,
+  VisualGraphPreviewBarItem,
+  VisualGraphPreviewBoxPlotItem,
 } from "@/lib/visualGraphBuilder";
 import { VISUAL_GRAPH_TYPE_LABELS } from "@/lib/visualGraphBuilder";
 
@@ -48,58 +51,75 @@ const rechartsTooltipStyle = (chartTokens: ChartRenderTokens) => ({
   fontSize: chartTokens.tooltip.fontSize,
 });
 
+export function collectBarYAxisValues(
+  data: readonly VisualGraphPreviewBarItem[]
+): number[] {
+  return data.flatMap((item) => {
+    const error =
+      item.error !== undefined && Number.isFinite(item.error)
+        ? Math.abs(item.error)
+        : 0;
+    return [item.value - error, item.value + error];
+  });
+}
+
+const BOX_PLOT_SCALE_INSET = 4;
+
+export type BoxPlotGeometry = {
+  min: number;
+  q1: number;
+  median: number;
+  q3: number;
+  max: number;
+};
+
+export function computeBoxPlotValueDomain(
+  data: readonly VisualGraphPreviewBoxPlotItem[]
+): [number, number] {
+  const values = data.flatMap((item) => [item.min, item.max]);
+  const finiteValues = values.filter((value) => Number.isFinite(value));
+  if (finiteValues.length === 0) return [0, 0];
+  return [Math.min(...finiteValues), Math.max(...finiteValues)];
+}
+
+export function computeBoxPlotGeometry(
+  item: VisualGraphPreviewBoxPlotItem,
+  domain: readonly [number, number]
+): BoxPlotGeometry {
+  const [domainMin, domainMax] = domain;
+  const position = (value: number) => {
+    if (
+      !Number.isFinite(value) ||
+      !Number.isFinite(domainMin) ||
+      !Number.isFinite(domainMax) ||
+      domainMin === domainMax
+    ) {
+      return 50;
+    }
+    const ratio = Math.max(0, Math.min(1, (value - domainMin) / (domainMax - domainMin)));
+    return BOX_PLOT_SCALE_INSET + ratio * (100 - BOX_PLOT_SCALE_INSET * 2);
+  };
+
+  return {
+    min: position(item.min),
+    q1: position(item.q1),
+    median: position(item.median),
+    q3: position(item.q3),
+    max: position(item.max),
+  };
+}
+
 function BoxPlotPreview({
   data,
 }: {
   data: VisualGraphPreview["boxPlotData"];
 }) {
-  return (
-    <div className="space-y-3">
-      {data.map((item) => (
-        <div key={item.group} className="rounded-lg border border-[var(--app-border)] p-3">
-          <p className="mb-2 text-xs font-semibold text-[var(--app-heading)]">
-            {item.group}
-          </p>
-          <div className="grid grid-cols-5 gap-2 text-[10px] text-[var(--app-text-muted)]">
-            <span>Min: {item.min.toFixed(2)}</span>
-            <span>Q1: {item.q1.toFixed(2)}</span>
-            <span>Med: {item.median.toFixed(2)}</span>
-            <span>Q3: {item.q3.toFixed(2)}</span>
-            <span>Max: {item.max.toFixed(2)}</span>
-          </div>
-          <div className="relative mt-3 h-8 rounded bg-[var(--app-surface-muted)]">
-            <div
-              className="absolute top-1/2 h-0.5 -translate-y-1/2 bg-[var(--app-accent)]"
-              style={{
-                left: "8%",
-                width: "84%",
-              }}
-            />
-            <div
-              className="absolute top-1/2 h-5 -translate-y-1/2 rounded border border-[var(--app-accent)] bg-[var(--app-accent)]/15"
-              style={{
-                left: "28%",
-                width: "44%",
-              }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+  const domain = computeBoxPlotValueDomain(data);
 
-function ViolinPreview({
-  data,
-}: {
-  data: VisualGraphPreview["violinData"];
-}) {
   return (
     <div className="space-y-3">
       {data.map((item) => {
-        const min = Math.min(...item.values);
-        const max = Math.max(...item.values);
-        const range = max - min || 1;
+        const geometry = computeBoxPlotGeometry(item, domain);
         return (
           <div
             key={item.group}
@@ -108,17 +128,90 @@ function ViolinPreview({
             <p className="mb-2 text-xs font-semibold text-[var(--app-heading)]">
               {item.group}
             </p>
-            <div className="flex h-24 items-end gap-0.5">
+            <div className="grid grid-cols-5 gap-2 text-[10px] text-[var(--app-text-muted)]">
+              <span>Min: {item.min.toFixed(2)}</span>
+              <span>Q1: {item.q1.toFixed(2)}</span>
+              <span>Med: {item.median.toFixed(2)}</span>
+              <span>Q3: {item.q3.toFixed(2)}</span>
+              <span>Max: {item.max.toFixed(2)}</span>
+            </div>
+            <div className="relative mt-3 h-8 rounded bg-[var(--app-surface-muted)]">
+              <div
+                className="absolute top-1/2 h-0.5 -translate-y-1/2 bg-[var(--app-accent)]"
+                style={{
+                  left: `${geometry.min}%`,
+                  width: `${geometry.max - geometry.min}%`,
+                }}
+              />
+              {[geometry.min, geometry.max].map((position, index) => (
+                <div
+                  key={index === 0 ? "min" : "max"}
+                  className="absolute top-1/2 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-[var(--app-accent)]"
+                  style={{ left: `${position}%` }}
+                />
+              ))}
+              <div
+                className="absolute top-1/2 h-5 -translate-y-1/2 rounded border border-[var(--app-accent)] bg-[var(--app-accent)]/15"
+                style={{
+                  left: `${geometry.q1}%`,
+                  width: `${geometry.q3 - geometry.q1}%`,
+                }}
+              />
+              <div
+                className="absolute top-1/2 h-5 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-[var(--app-accent)]"
+                style={{ left: `${geometry.median}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function RawValueStripPreview({
+  data,
+}: {
+  data: VisualGraphPreview["violinData"];
+}) {
+  const allValues = data.flatMap((item) => item.values);
+  const globalMin = Math.min(...allValues);
+  const globalMax = Math.max(...allValues);
+  const globalRange = globalMax - globalMin;
+  const position = (value: number) =>
+    globalRange === 0 ? 50 : 4 + ((value - globalMin) / globalRange) * 92;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[10px] text-[var(--app-text-muted)]">
+        Raw values · no density estimate
+      </p>
+      {data.map((item) => {
+        return (
+          <div
+            key={item.group}
+            className="rounded-lg border border-[var(--app-border)] p-3"
+          >
+            <p className="mb-2 text-xs font-semibold text-[var(--app-heading)]">
+              {item.group}
+            </p>
+            <div className="relative h-20 rounded bg-[var(--app-surface-muted)]">
+              <div className="absolute left-[4%] right-[4%] top-1/2 h-px bg-[var(--app-border)]" />
               {item.values.map((value, index) => (
                 <div
                   key={`${item.group}-${index}`}
-                  className="flex-1 rounded-t bg-[var(--app-accent)]/70"
+                  className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--app-accent)]/80"
                   style={{
-                    height: `${Math.max(8, ((value - min) / range) * 100)}%`,
+                    left: `${position(value)}%`,
+                    top: `${20 + (index % 5) * 15}%`,
                   }}
                   title={String(value)}
                 />
               ))}
+            </div>
+            <div className="mt-1 flex justify-between text-[10px] text-[var(--app-text-muted)]">
+              <span>{globalMin.toFixed(2)}</span>
+              <span>{globalMax.toFixed(2)}</span>
             </div>
           </div>
         );
@@ -284,7 +377,7 @@ export function GraphPreview({
               />
               <YAxis
                 domain={computeYAxisDomainFromValues(
-                  preview.barData.map((item) => item.value)
+                  collectBarYAxisValues(preview.barData)
                 )}
                 stroke={effectiveChartTokens.axis.stroke}
                 fontSize={effectiveChartTokens.axis.tickFontSize}
@@ -294,7 +387,14 @@ export function GraphPreview({
                 dataKey="value"
                 fill={effectiveChartTokens.series.defaultColor}
                 fillOpacity={effectiveChartTokens.series.fillOpacity}
-              />
+              >
+                <ErrorBar
+                  dataKey="error"
+                  direction="y"
+                  width={4}
+                  stroke={effectiveChartTokens.axis.stroke}
+                />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : null}
@@ -304,7 +404,7 @@ export function GraphPreview({
         ) : null}
 
         {preview.graphType === "violin" && preview.violinData.length > 0 ? (
-          <ViolinPreview data={preview.violinData} />
+          <RawValueStripPreview data={preview.violinData} />
         ) : null}
 
         {preview.graphType === "heatmap" ? (

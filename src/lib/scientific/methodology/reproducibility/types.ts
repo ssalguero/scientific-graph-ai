@@ -1,3 +1,5 @@
+import type { CompositeMethodologyDisclosure } from "../disclosure";
+
 export type ReproducibilityExplorerClassification =
   | "very-high"
   | "high"
@@ -9,4 +11,5 @@ export type ReproducibilityExplorerAnalysis = {
   classification: ReproducibilityExplorerClassification;
   evaluatedFactors: number;
   interpretation: string[];
+  disclosure: CompositeMethodologyDisclosure;
 };

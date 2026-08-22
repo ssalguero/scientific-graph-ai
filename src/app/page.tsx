@@ -213,6 +213,14 @@ import {
 } from "@/lib/scientific/shared/text";
 import { getSampleMeanAndStdDev } from "@/lib/scientific/shared/stats";
 import {
+  composeScientificProvenance,
+  getScientificCapabilityIdentity,
+} from "@/lib/scientific/contracts";
+import {
+  COMPOSITE_METHODOLOGY_PRIMARY_LABELS,
+  type CompositeMethodologyDisclosure,
+} from "@/lib/scientific/methodology/disclosure";
+import {
   appendCanonicalNormalityFindings,
   buildCanonicalNormalityAssessment,
   buildScientificReportNormalityContent,
@@ -356,6 +364,7 @@ import {
   type PublicationDashboardAnalysis,
 } from "@/lib/scientific/methodology/publication";
 import {
+  APPROXIMATE_P_VALUE_DISCLOSURE,
   buildEffectSizePowerAnalysis,
   buildPostHocSummary,
   calculateIndependentTTest,
@@ -363,6 +372,7 @@ import {
   calculateMannWhitney,
   calculateOneWayAnova,
   calculateTukeyComparisons,
+  formatApproximatePValue,
   getAnovaBadge,
   getAnovaInterpretation,
   getEffectMagnitudeLabel,
@@ -1163,8 +1173,21 @@ const getErrorBarModeLabel = (mode: ErrorBarMode) =>
 
 const formatExperimentalStat = (value: number) => value.toFixed(4);
 
-const formatPValue = (pValue: number) =>
-  pValue < 0.0001 ? "< 0.0001" : pValue.toFixed(4);
+const formatPValue = formatApproximatePValue;
+
+const EXPLORER_IDENTITIES = {
+  manova: getScientificCapabilityIdentity("multivariate-separation-indicator"),
+  lda: getScientificCapabilityIdentity("discrimination-structure-indicator"),
+  canonical: getScientificCapabilityIdentity("association-network-indicator"),
+  pcr: getScientificCapabilityIdentity(
+    "component-importance-predictive-indicator"
+  ),
+  pls: getScientificCapabilityIdentity("composite-explanatory-indicator"),
+  bootstrap: getScientificCapabilityIdentity("evidence-stability-indicator"),
+  sensitivity: getScientificCapabilityIdentity("composite-robustness-indicator"),
+  tsne: getScientificCapabilityIdentity("mds-neighborhood-view"),
+  umap: getScientificCapabilityIdentity("mds-connectivity-view"),
+} as const;
 
 type CorrelationMethod = "pearson" | "spearman";
 
@@ -7480,7 +7503,9 @@ const getManovaExplorerReportLines = (
   analysis: ManovaExplorerAnalysis | null
 ): string[] => {
   if (!analysis) {
-    return ["No hay datos suficientes para generar MANOVA Explorer."];
+    return [
+      `No hay datos suficientes para generar ${EXPLORER_IDENTITIES.manova.primaryLabelEs}.`,
+    ];
   }
 
   const lines = [
@@ -7653,7 +7678,7 @@ const buildLdaExplorerInterpretation = (input: {
     input.manovaExplorerAnalysis.separationScore >= 0.75
   ) {
     interpretation.push(
-      "La separación observada coincide con el análisis MANOVA Explorer."
+      "La separación observada coincide con el indicador heurístico de separación multivariada."
     );
   }
 
@@ -7708,7 +7733,9 @@ const getLdaExplorerReportLines = (
   analysis: LdaExplorerAnalysis | null
 ): string[] => {
   if (!analysis) {
-    return ["No hay datos suficientes para generar LDA Explorer."];
+    return [
+      `No hay datos suficientes para generar ${EXPLORER_IDENTITIES.lda.primaryLabelEs}.`,
+    ];
   }
 
   const lines = [
@@ -7894,7 +7921,7 @@ const buildCanonicalCorrelationExplorerInterpretation = (input: {
     input.manovaExplorerAnalysis.separationScore >= 0.75
   ) {
     interpretation.push(
-      "La estructura relacional coincide con la separación observada en MANOVA Explorer."
+      "La estructura relacional coincide con el indicador heurístico de separación multivariada."
     );
   }
 
@@ -7903,7 +7930,7 @@ const buildCanonicalCorrelationExplorerInterpretation = (input: {
     input.ldaExplorerAnalysis.discriminantScore >= 85
   ) {
     interpretation.push(
-      "Las relaciones observadas son consistentes con la capacidad discriminante detectada por LDA Explorer."
+      "Las relaciones observadas son consistentes con el indicador heurístico de estructura discriminante."
     );
   }
 
@@ -7957,7 +7984,7 @@ const getCanonicalCorrelationExplorerReportLines = (
 ): string[] => {
   if (!analysis) {
     return [
-      "No hay datos suficientes para generar Canonical Correlation Explorer.",
+      `No hay datos suficientes para generar ${EXPLORER_IDENTITIES.canonical.primaryLabelEs}.`,
     ];
   }
 
@@ -8155,7 +8182,7 @@ const buildPcrExplorerInterpretation = (input: {
     input.ldaExplorerAnalysis.discriminantScore >= 85
   ) {
     interpretation.push(
-      "La capacidad predictiva es consistente con la separación observada en LDA Explorer."
+      "La capacidad predictiva es consistente con el indicador heurístico de estructura discriminante."
     );
   }
 
@@ -8210,7 +8237,9 @@ const getPcrExplorerReportLines = (
   analysis: PcrExplorerAnalysis | null
 ): string[] => {
   if (!analysis) {
-    return ["No hay datos suficientes para generar PCR Explorer."];
+    return [
+      `No hay datos suficientes para generar ${EXPLORER_IDENTITIES.pcr.primaryLabelEs}.`,
+    ];
   }
 
   const lines = [
@@ -8380,7 +8409,7 @@ const buildPlsExplorerInterpretation = (input: {
 
   if (input.pcrExplorerAnalysis.predictiveScore >= 85) {
     interpretation.push(
-      "La capacidad explicativa es consistente con el potencial predictivo estimado por PCR Explorer."
+      "La capacidad explicativa es consistente con el indicador heurístico de potencial predictivo."
     );
   }
 
@@ -8458,7 +8487,9 @@ const getPlsExplorerReportLines = (
   analysis: PlsExplorerAnalysis | null
 ): string[] => {
   if (!analysis) {
-    return ["No hay datos suficientes para generar PLS Explorer."];
+    return [
+      `No hay datos suficientes para generar ${EXPLORER_IDENTITIES.pls.primaryLabelEs}.`,
+    ];
   }
 
   const lines = [
@@ -8728,7 +8759,9 @@ const getBootstrapExplorerReportLines = (
   analysis: BootstrapExplorerAnalysis | null
 ): string[] => {
   if (!analysis) {
-    return ["No hay datos suficientes para generar Bootstrap Explorer."];
+    return [
+      `No hay datos suficientes para generar ${EXPLORER_IDENTITIES.bootstrap.primaryLabelEs}.`,
+    ];
   }
 
   const lines = [
@@ -8995,7 +9028,7 @@ const getSensitivityExplorerReportLines = (
 ): string[] => {
   if (!analysis) {
     return [
-      "No hay datos suficientes para generar Sensitivity Analysis Explorer.",
+      `No hay datos suficientes para generar ${EXPLORER_IDENTITIES.sensitivity.primaryLabelEs}.`,
     ];
   }
 
@@ -9212,7 +9245,9 @@ const getTsneExplorerReportLines = (
   analysis: TsneExplorerAnalysis | null
 ): string[] => {
   if (!analysis) {
-    return ["No hay datos suficientes para generar t-SNE Explorer."];
+    return [
+      `No hay datos suficientes para generar ${EXPLORER_IDENTITIES.tsne.primaryLabelEs}.`,
+    ];
   }
 
   const lines = [
@@ -9288,10 +9323,10 @@ function ScientificTsneExplorer({
             <XAxis
               type="number"
               dataKey="tsne1"
-              name="tSNE-1"
+              name="MDS-1"
               tick={{ fill: chartTheme.axis, fontSize: 11 }}
               label={{
-                value: "tSNE-1",
+                value: "MDS-1",
                 position: "insideBottom",
                 offset: -2,
                 fill: chartTheme.axis,
@@ -9301,10 +9336,10 @@ function ScientificTsneExplorer({
             <YAxis
               type="number"
               dataKey="tsne2"
-              name="tSNE-2"
+              name="MDS-2"
               tick={{ fill: chartTheme.axis, fontSize: 11 }}
               label={{
-                value: "tSNE-2",
+                value: "MDS-2",
                 angle: -90,
                 position: "insideLeft",
                 fill: chartTheme.axis,
@@ -9330,8 +9365,8 @@ function ScientificTsneExplorer({
                     }}
                   >
                     <p className="font-semibold">{point.variable}</p>
-                    <p>tSNE-1 = {point.tsne1.toFixed(4)}</p>
-                    <p>tSNE-2 = {point.tsne2.toFixed(4)}</p>
+                    <p>MDS-1 = {point.tsne1.toFixed(4)}</p>
+                    <p>MDS-2 = {point.tsne2.toFixed(4)}</p>
                   </div>
                 );
               }}
@@ -9483,7 +9518,7 @@ const buildUmapExplorerInterpretation = (input: {
     input.tsneExplorerAnalysis.clusterTendency === "strong"
   ) {
     interpretation.push(
-      "La estructura observada coincide con los agrupamientos sugeridos por t-SNE Explorer."
+      "La estructura observada coincide con la vista MDS y su indicador de vecindad."
     );
   }
 
@@ -9535,7 +9570,9 @@ const getUmapExplorerReportLines = (
   analysis: UmapExplorerAnalysis | null
 ): string[] => {
   if (!analysis) {
-    return ["No hay datos suficientes para generar UMAP Explorer."];
+    return [
+      `No hay datos suficientes para generar ${EXPLORER_IDENTITIES.umap.primaryLabelEs}.`,
+    ];
   }
 
   const lines = [
@@ -9611,10 +9648,10 @@ function ScientificUmapExplorer({
             <XAxis
               type="number"
               dataKey="umap1"
-              name="UMAP-1"
+              name="MDS perturbada 1"
               tick={{ fill: chartTheme.axis, fontSize: 11 }}
               label={{
-                value: "UMAP-1",
+                value: "MDS perturbada 1",
                 position: "insideBottom",
                 offset: -2,
                 fill: chartTheme.axis,
@@ -9624,10 +9661,10 @@ function ScientificUmapExplorer({
             <YAxis
               type="number"
               dataKey="umap2"
-              name="UMAP-2"
+              name="MDS perturbada 2"
               tick={{ fill: chartTheme.axis, fontSize: 11 }}
               label={{
-                value: "UMAP-2",
+                value: "MDS perturbada 2",
                 angle: -90,
                 position: "insideLeft",
                 fill: chartTheme.axis,
@@ -9653,8 +9690,8 @@ function ScientificUmapExplorer({
                     }}
                   >
                       <p className="font-semibold">{point.variable}</p>
-                      <p>UMAP-1 = {point.umap1.toFixed(4)}</p>
-                      <p>UMAP-2 = {point.umap2.toFixed(4)}</p>
+                      <p>MDS perturbada 1 = {point.umap1.toFixed(4)}</p>
+                      <p>MDS perturbada 2 = {point.umap2.toFixed(4)}</p>
                   </div>
                 );
               }}
@@ -9723,6 +9760,43 @@ type ScientificConsistencyEngineProps = {
   analysis: ConsistencyEngineAnalysis;
 };
 
+function CompositeMethodologyDisclosureNote({
+  disclosure,
+}: {
+  disclosure: CompositeMethodologyDisclosure;
+}) {
+  return (
+    <div className={`${contentPanel} mt-3 text-xs text-[var(--app-text-muted)]`}>
+      <p className="font-semibold text-[var(--app-heading)]">
+        Indicador compuesto de apoyo a decisiones
+      </p>
+      <p className="mt-1">
+        Cobertura: {disclosure.coverage.evaluated.length} evaluados,{" "}
+        {disclosure.coverage.defaulted.length} predeterminados y{" "}
+        {disclosure.coverage.notEvaluated.length} no evaluados.
+      </p>
+      <p className="mt-1">
+        Factores:{" "}
+        {disclosure.contributingFactors.map((factor) => factor.label).join(", ") ||
+          "ninguno"}
+        . Fallbacks:{" "}
+        {disclosure.defaultsAndFallbacks.length > 0
+          ? disclosure.defaultsAndFallbacks.join("; ")
+          : "ninguno"}
+        .
+      </p>
+      <p className="mt-1">
+        Proveniencia: {disclosure.provenanceLabels.join("; ") || "no disponible"}.
+      </p>
+      <p className="mt-1">
+        No constituye validación independiente, no demuestra reproducibilidad,
+        no establece idoneidad para una revista y no acredita la ejecución de
+        métodos upstream.
+      </p>
+    </div>
+  );
+}
+
 function ScientificConsistencyEngine({
   analysis,
 }: ScientificConsistencyEngineProps) {
@@ -9730,7 +9804,7 @@ function ScientificConsistencyEngine({
     {
       key: "score",
       icon: "🧩",
-      title: "Consistency Score",
+      title: "Puntuación compuesta",
       value: analysis.consistencyScore.toFixed(1),
       subtitle: "Consenso global",
     },
@@ -9744,14 +9818,14 @@ function ScientificConsistencyEngine({
     {
       key: "evidence",
       icon: "📚",
-      title: "Evidencias",
+      title: "Señales positivas",
       value: String(analysis.evidenceCount),
       subtitle: "Señales convergentes",
     },
     {
       key: "modules",
       icon: "🧠",
-      title: "Módulos",
+      title: "Contribuyentes",
       value:
         analysis.supportingModules.length > 0
           ? analysis.supportingModules.join(", ")
@@ -9782,6 +9856,7 @@ function ScientificConsistencyEngine({
           </div>
         ))}
       </div>
+      <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
           <p className="text-sm font-semibold text-[var(--app-heading)]">
@@ -9814,7 +9889,7 @@ function ScientificReportQualityEngine({
     {
       key: "score",
       icon: "📄",
-      title: "Quality Score",
+      title: "Puntuación compuesta",
       value: analysis.qualityScore.toFixed(1),
       subtitle: "Calidad metodológica",
     },
@@ -9856,6 +9931,7 @@ function ScientificReportQualityEngine({
           </div>
         ))}
       </div>
+      <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
           <p className="text-sm font-semibold text-[var(--app-heading)]">
@@ -9890,14 +9966,14 @@ function ScientificReproducibilityExplorer({
     {
       key: "score",
       icon: "🔁",
-      title: "Reproducibility Score",
+      title: "Puntuación compuesta",
       value: analysis.reproducibilityScore.toFixed(1),
       subtitle: "Reproducibilidad potencial",
     },
     {
       key: "classification",
       icon: "📊",
-      title: "Reproducibility",
+      title: "Potencial reproducible",
       value: getReproducibilityExplorerClassificationLabel(analysis.classification),
       subtitle: "Clasificación global",
     },
@@ -9939,6 +10015,7 @@ function ScientificReproducibilityExplorer({
           </div>
         ))}
       </div>
+      <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
           <p className="text-sm font-semibold text-[var(--app-heading)]">
@@ -9973,28 +10050,28 @@ function ScientificEvidenceStrengthEngine({
     {
       key: "score",
       icon: "🧪",
-      title: "Evidence Score",
+      title: "Puntuación compuesta",
       value: analysis.evidenceScore.toFixed(1),
       subtitle: "Fuerza global",
     },
     {
       key: "classification",
       icon: "📊",
-      title: "Evidence Strength",
+      title: "Soporte compuesto",
       value: getEvidenceStrengthEngineClassificationLabel(analysis.classification),
       subtitle: "Clasificación",
     },
     {
       key: "sources",
       icon: "📚",
-      title: "Sources",
+      title: "Factores",
       value: String(analysis.evidenceSources),
       subtitle: "Fuentes evaluadas",
     },
     {
       key: "reproducibility",
       icon: "🔁",
-      title: "Reproducibility",
+      title: "Potencial reproducible",
       value: reproducibilityScore.toFixed(1),
       subtitle: "Reproducibilidad potencial",
     },
@@ -10022,6 +10099,7 @@ function ScientificEvidenceStrengthEngine({
           </div>
         ))}
       </div>
+      <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
           <p className="text-sm font-semibold text-[var(--app-heading)]">
@@ -10061,14 +10139,14 @@ function ScientificAssumptionTracker({
     {
       key: "classification",
       icon: "📊",
-      title: "Assumptions",
+      title: "Supuestos",
       value: getAssumptionTrackerClassificationLabel(analysis.classification),
       subtitle: "Clasificación",
     },
     {
       key: "evaluated",
       icon: "📚",
-      title: "Assumptions",
+      title: "Supuestos",
       value: String(analysis.assumptions.length),
       subtitle: "Supuestos evaluados",
     },
@@ -10096,6 +10174,7 @@ function ScientificAssumptionTracker({
           </div>
         ))}
       </div>
+      <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
@@ -10166,14 +10245,14 @@ function ScientificPublicationReadinessAnalyzer({
     {
       key: "score",
       icon: "📄",
-      title: "Readiness Score",
+      title: "Puntuación compuesta",
       value: analysis.readinessScore.toFixed(1),
       subtitle: "Preparación global",
     },
     {
       key: "classification",
       icon: "📊",
-      title: "Publication Status",
+      title: "Estado para revisión",
       value: getPublicationReadinessAnalyzerClassificationLabel(
         analysis.classification
       ),
@@ -10189,7 +10268,7 @@ function ScientificPublicationReadinessAnalyzer({
     {
       key: "evidence",
       icon: "🧪",
-      title: "Evidence Score",
+      title: "Soporte compuesto",
       value: evidenceScore.toFixed(1),
       subtitle: "Evidencia científica",
     },
@@ -10217,6 +10296,7 @@ function ScientificPublicationReadinessAnalyzer({
           </div>
         ))}
       </div>
+      <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
           <p className="text-sm font-semibold text-[var(--app-heading)]">
@@ -10294,7 +10374,7 @@ function ScientificMethodologicalDashboard({
     cards.push({
       key: "consistency",
       icon: "🧩",
-      title: "Consistency",
+      title: "Consistencia",
       value: summaryCards.consistencyScore.toFixed(1),
       subtitle: summaryCards.consistencyClassification
         ? getConsistencyEngineClassificationLabel(
@@ -10308,7 +10388,7 @@ function ScientificMethodologicalDashboard({
     cards.push({
       key: "quality",
       icon: "📄",
-      title: "Quality",
+      title: "Calidad",
       value: summaryCards.qualityScore.toFixed(1),
       subtitle: summaryCards.qualityClassification
         ? getReportQualityEngineClassificationLabel(
@@ -10322,7 +10402,7 @@ function ScientificMethodologicalDashboard({
     cards.push({
       key: "reproducibility",
       icon: "🔁",
-      title: "Reproducibility",
+      title: "Potencial reproducible",
       value: summaryCards.reproducibilityScore.toFixed(1),
       subtitle: summaryCards.reproducibilityClassification
         ? getReproducibilityExplorerClassificationLabel(
@@ -10336,7 +10416,7 @@ function ScientificMethodologicalDashboard({
     cards.push({
       key: "evidence",
       icon: "🧪",
-      title: "Evidence",
+      title: "Soporte",
       value: summaryCards.evidenceScore.toFixed(1),
       subtitle: summaryCards.evidenceClassification
         ? getEvidenceStrengthEngineClassificationLabel(
@@ -10350,7 +10430,7 @@ function ScientificMethodologicalDashboard({
     cards.push({
       key: "assumptions",
       icon: "📋",
-      title: "Assumptions",
+      title: "Supuestos",
       value: summaryCards.assumptionScore.toFixed(1),
       subtitle: summaryCards.assumptionClassification
         ? getAssumptionTrackerClassificationLabel(
@@ -10364,7 +10444,7 @@ function ScientificMethodologicalDashboard({
     cards.push({
       key: "readiness",
       icon: "📰",
-      title: "Publication",
+      title: "Preparación para revisión",
       value: summaryCards.readinessScore.toFixed(1),
       subtitle: summaryCards.readinessClassification
         ? getPublicationReadinessAnalyzerClassificationLabel(
@@ -10378,14 +10458,14 @@ function ScientificMethodologicalDashboard({
     <div className="w-full mt-3">
       <div className={`${contentPanel} mb-3 flex flex-col gap-1`}>
         <p className="text-xs font-semibold text-[var(--app-text-muted)]">
-          📊 Overall Health Score
+          📊 Salud metodológica compuesta
         </p>
         <p className="text-2xl font-semibold text-[var(--app-heading)] tabular-nums">
           {analysis.overallHealthScore.toFixed(1)}
         </p>
         <p className="text-xs text-[var(--app-text-muted)]">
-          {analysis.evaluatedEngines} motor
-          {analysis.evaluatedEngines === 1 ? "" : "es"} metodológico
+          {analysis.evaluatedEngines} indicador
+          {analysis.evaluatedEngines === 1 ? "" : "es"} compuesto
           {analysis.evaluatedEngines === 1 ? "" : "s"} evaluado
           {analysis.evaluatedEngines === 1 ? "" : "s"}
         </p>
@@ -10410,6 +10490,7 @@ function ScientificMethodologicalDashboard({
           </div>
         ))}
       </div>
+      <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {diagnosis.length > 0 && (
         <div className="mt-4">
           <p className="text-sm font-semibold text-[var(--app-heading)]">
@@ -11853,17 +11934,17 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
-    title: "MANOVA Explorer",
+    title: EXPLORER_IDENTITIES.manova.primaryLabelEs,
     content: getManovaExplorerReportLines(input.manovaExplorerAnalysis),
   });
 
   sections.push({
-    title: "LDA Explorer",
+    title: EXPLORER_IDENTITIES.lda.primaryLabelEs,
     content: getLdaExplorerReportLines(input.ldaExplorerAnalysis),
   });
 
   sections.push({
-    title: "Canonical Correlation Explorer",
+    title: EXPLORER_IDENTITIES.canonical.primaryLabelEs,
     content: getCanonicalCorrelationExplorerReportLines(
       input.canonicalCorrelationExplorerAnalysis,
       input.correlationNetworkAnalysis
@@ -11873,80 +11954,80 @@ const generateScientificReport = (input: {
   });
 
   sections.push({
-    title: "PCR Explorer",
+    title: EXPLORER_IDENTITIES.pcr.primaryLabelEs,
     content: getPcrExplorerReportLines(input.pcrExplorerAnalysis),
   });
 
   sections.push({
-    title: "PLS Explorer",
+    title: EXPLORER_IDENTITIES.pls.primaryLabelEs,
     content: getPlsExplorerReportLines(input.plsExplorerAnalysis),
   });
 
   sections.push({
-    title: "Bootstrap Explorer",
+    title: EXPLORER_IDENTITIES.bootstrap.primaryLabelEs,
     content: getBootstrapExplorerReportLines(input.bootstrapExplorerAnalysis),
   });
 
   sections.push({
-    title: "Sensitivity Analysis Explorer",
+    title: EXPLORER_IDENTITIES.sensitivity.primaryLabelEs,
     content: getSensitivityExplorerReportLines(input.sensitivityExplorerAnalysis),
   });
 
   sections.push({
-    title: "t-SNE Explorer",
+    title: EXPLORER_IDENTITIES.tsne.primaryLabelEs,
     content: getTsneExplorerReportLines(input.tsneExplorerAnalysis),
   });
 
   sections.push({
-    title: "UMAP Explorer",
+    title: EXPLORER_IDENTITIES.umap.primaryLabelEs,
     content: getUmapExplorerReportLines(input.umapExplorerAnalysis),
   });
 
   sections.push({
-    title: "Consistency Engine",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"],
     content: getConsistencyEngineReportLines(input.consistencyEngineAnalysis),
   });
 
   sections.push({
-    title: "Report Quality Engine",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-51"],
     content: getReportQualityEngineReportLines(input.reportQualityEngineAnalysis),
   });
 
   sections.push({
-    title: "Reproducibility Explorer",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-52"],
     content: getReproducibilityExplorerReportLines(
       input.reproducibilityExplorerAnalysis
     ),
   });
 
   sections.push({
-    title: "Evidence Strength Engine",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-53"],
     content: getEvidenceStrengthEngineReportLines(
       input.evidenceStrengthEngineAnalysis
     ),
   });
 
   sections.push({
-    title: "Assumption Tracker",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-54"],
     content: getAssumptionTrackerReportLines(input.assumptionTrackerAnalysis),
   });
 
   sections.push({
-    title: "Publication Readiness Analyzer",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-55"],
     content: getPublicationReadinessAnalyzerReportLines(
       input.publicationReadinessAnalyzerAnalysis
     ),
   });
 
   sections.push({
-    title: "Methodological Summary Dashboard",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"],
     content: getMethodologicalDashboardReportLines(
       input.methodologicalDashboardAnalysis
     ),
   });
 
   sections.push({
-    title: "Executive Publication Dashboard",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"],
     content: getPublicationDashboardReportLines(
       input.publicationDashboardAnalysis
     ),
@@ -17999,9 +18080,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         displaySeries: result.displaySeries,
       }),
     ]);
-    setTitle(
-      result.graphSpec.title?.trim() || result.preview.title || title
-    );
     selectWorkspaceSection("results");
   };
   const buildCurrentDatasetAnalysisProfile = (
@@ -18095,6 +18173,62 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       captureMetadata: buildCaptureMetadata({
         worksheetModifiedAtCapture:
           activeSessionDataset?.worksheetModified ?? worksheetModified,
+        provenance: composeScientificProvenance({
+          dataset: {
+            id: activeDatasetId ?? currentDatasetInfo.fileName,
+            label: currentDatasetInfo.fileName,
+          },
+          source: {
+            kind: "comparison-profile",
+            id: slotLabel,
+            label: `Perfil comparativo ${slotLabel}`,
+          },
+          series: visibleExperimentalSeries.map((series) => ({
+            id: series.id,
+            label: series.name,
+            role: "input",
+          })),
+          config: {
+            id: "comparison-profile-capture",
+            values: {
+              worksheetModified:
+                activeSessionDataset?.worksheetModified ?? worksheetModified,
+              normalityAssessmentCount,
+              hasMethodologicalDashboard:
+                methodologicalDashboardAnalysis !== null,
+              hasPublicationReadiness:
+                publicationReadinessAnalyzerAnalysis !== null,
+              hasEvidenceEngine: evidenceStrengthEngineAnalysis !== null,
+              hasMultivariateDashboard:
+                multivariateDashboardAnalysis !== null,
+              hasEffectSizePower: effectSizePowerAnalysis !== null,
+            },
+          },
+          method: {
+            id: "scientific-comparison-profile",
+            label: "Perfil federado de comparación científica",
+            version: "1",
+            parameters: {
+              slotLabel,
+            },
+          },
+          approximation: {
+            kind: "mixed",
+            details:
+              "El perfil combina resultados derivados y compuestos; cada contrato conserva su estado de aproximación.",
+          },
+          warnings:
+            activeSessionDataset?.worksheetModified ?? worksheetModified
+              ? [
+                  {
+                    code: "WORKSHEET_MODIFIED_AT_CAPTURE",
+                    message:
+                      "La hoja de trabajo estaba modificada al capturar el perfil.",
+                    severity: "warning",
+                  },
+                ]
+              : [],
+        }),
         hasMethodologicalDashboard: methodologicalDashboardAnalysis !== null,
         hasPublicationReadiness:
           publicationReadinessAnalyzerAnalysis !== null,
@@ -22461,7 +22595,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar MANOVA Explorer
+                          Mostrar {EXPLORER_IDENTITIES.manova.primaryLabelEs}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22486,7 +22620,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar LDA Explorer
+                          Mostrar {EXPLORER_IDENTITIES.lda.primaryLabelEs}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22511,7 +22645,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Canonical Correlation Explorer
+                          Mostrar {EXPLORER_IDENTITIES.canonical.primaryLabelEs}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22540,7 +22674,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar PCR Explorer
+                          Mostrar {EXPLORER_IDENTITIES.pcr.primaryLabelEs}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22565,7 +22699,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar PLS Explorer
+                          Mostrar {EXPLORER_IDENTITIES.pls.primaryLabelEs}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22590,7 +22724,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Bootstrap Explorer
+                          Mostrar {EXPLORER_IDENTITIES.bootstrap.primaryLabelEs}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22615,7 +22749,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Sensitivity Explorer
+                          Mostrar {EXPLORER_IDENTITIES.sensitivity.primaryLabelEs}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22640,7 +22774,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar t-SNE Explorer
+                          Mostrar {EXPLORER_IDENTITIES.tsne.primaryLabelEs}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22665,7 +22799,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar UMAP Explorer
+                          Mostrar {EXPLORER_IDENTITIES.umap.primaryLabelEs}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22703,7 +22837,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Consistency Engine
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22736,7 +22870,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Report Quality Engine
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-51"]}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22769,7 +22903,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Reproducibility Explorer
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-52"]}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22802,7 +22936,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Evidence Strength Engine
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-53"]}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22835,7 +22969,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Publication Readiness Analyzer
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-55"]}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22882,7 +23016,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Assumption Tracker
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-54"]}
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -22932,7 +23066,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Methodological Summary Dashboard
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"]}
                           {highlightPublicationDashboards ? (
                             <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--app-accent)]">
                               SCI-56
@@ -22974,7 +23108,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar Executive Publication Dashboard
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]}
                           {highlightPublicationDashboards ? (
                             <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--app-accent)]">
                               SCI-60
@@ -25422,10 +25556,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showManovaExplorer && (
                   <div className={`${resultsSubsectionCard}`}>
-                    <p className={subsectionHeading}>🎯 MANOVA Explorer</p>
+                    <p className={subsectionHeading}>
+                      🎯 {EXPLORER_IDENTITIES.manova.primaryLabelEs}
+                    </p>
                     {!manovaExplorerAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar MANOVA Explorer.
+                        No hay datos suficientes para generar{" "}
+                        {EXPLORER_IDENTITIES.manova.primaryLabelEs}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25439,10 +25576,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showLdaExplorer && (
                   <div className={`${resultsSubsectionCard}`}>
-                    <p className={subsectionHeading}>🎯 LDA Explorer</p>
+                    <p className={subsectionHeading}>
+                      🎯 {EXPLORER_IDENTITIES.lda.primaryLabelEs}
+                    </p>
                     {!ldaExplorerAnalysis || !pcaAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar LDA Explorer.
+                        No hay datos suficientes para generar{" "}
+                        {EXPLORER_IDENTITIES.lda.primaryLabelEs}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25458,7 +25598,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {showCanonicalCorrelationExplorer && (
                   <div className={`${resultsSubsectionCard}`}>
                     <p className={subsectionHeading}>
-                      🔗 Canonical Correlation Explorer
+                      🔗 {EXPLORER_IDENTITIES.canonical.primaryLabelEs}
                     </p>
                     {!canonicalCorrelationExplorerAnalysis ||
                     !correlationNetworkAnalysis ? (
@@ -25481,10 +25621,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showPcrExplorer && (
                   <div className={`${resultsSubsectionCard}`}>
-                    <p className={subsectionHeading}>📈 PCR Explorer</p>
+                    <p className={subsectionHeading}>
+                      📈 {EXPLORER_IDENTITIES.pcr.primaryLabelEs}
+                    </p>
                     {!pcrExplorerAnalysis || !pcaAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar PCR Explorer.
+                        No hay datos suficientes para generar{" "}
+                        {EXPLORER_IDENTITIES.pcr.primaryLabelEs}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25499,10 +25642,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showPlsExplorer && (
                   <div className={`${resultsSubsectionCard}`}>
-                    <p className={subsectionHeading}>🧠 PLS Explorer</p>
+                    <p className={subsectionHeading}>
+                      🧠 {EXPLORER_IDENTITIES.pls.primaryLabelEs}
+                    </p>
                     {!plsExplorerAnalysis || !pcrExplorerAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar PLS Explorer.
+                        No hay datos suficientes para generar{" "}
+                        {EXPLORER_IDENTITIES.pls.primaryLabelEs}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25517,7 +25663,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showBootstrapExplorer && (
                   <div className={`${resultsSubsectionCard}`}>
-                    <p className={subsectionHeading}>🎲 Bootstrap Explorer</p>
+                    <p className={subsectionHeading}>
+                      🎲 {EXPLORER_IDENTITIES.bootstrap.primaryLabelEs}
+                    </p>
                     {!bootstrapExplorerAnalysis ? (
                       <p className={resultsEmptyState}>
                         No hay datos suficientes para generar Bootstrap
@@ -25538,7 +25686,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {showSensitivityExplorer && (
                   <div className={`${resultsSubsectionCard}`}>
                     <p className={subsectionHeading}>
-                      🛡️ Sensitivity Analysis Explorer
+                      🛡️ {EXPLORER_IDENTITIES.sensitivity.primaryLabelEs}
                     </p>
                     {!sensitivityExplorerAnalysis ||
                     !bootstrapExplorerAnalysis ? (
@@ -25564,10 +25712,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showTsneExplorer && (
                   <div className={`${resultsSubsectionCard} ${resultsPanelFull}`}>
-                    <p className={subsectionHeading}>🧭 t-SNE Explorer</p>
+                    <p className={subsectionHeading}>
+                      🧭 {EXPLORER_IDENTITIES.tsne.primaryLabelEs}
+                    </p>
                     {!tsneExplorerAnalysis || !mdsAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar t-SNE Explorer.
+                        No hay datos suficientes para generar{" "}
+                        {EXPLORER_IDENTITIES.tsne.primaryLabelEs}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25583,12 +25734,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showUmapExplorer && (
                   <div className={`${resultsSubsectionCard} ${resultsPanelFull}`}>
-                    <p className={subsectionHeading}>🌍 UMAP Explorer</p>
+                    <p className={subsectionHeading}>
+                      🌍 {EXPLORER_IDENTITIES.umap.primaryLabelEs}
+                    </p>
                     {!umapExplorerAnalysis ||
                     !mdsAnalysis ||
                     !similarityNetworkAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar UMAP Explorer.
+                        No hay datos suficientes para generar{" "}
+                        {EXPLORER_IDENTITIES.umap.primaryLabelEs}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25604,11 +25758,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showConsistencyEngine && (
                   <div className={`${resultsSubsectionCard}`}>
-                    <p className={subsectionHeading}>🧩 Consistency Engine</p>
+                    <p className={subsectionHeading}>
+                      🧩 {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]}
+                    </p>
                     {!consistencyEngineAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar Consistency
-                        Engine.
+                        No hay datos suficientes para generar{" "}
+                        {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25622,11 +25778,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showReportQualityEngine && (
                   <div className={`${resultsSubsectionCard}`}>
-                    <p className={subsectionHeading}>📄 Report Quality Engine</p>
+                    <p className={subsectionHeading}>
+                      📄 {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-51"]}
+                    </p>
                     {!reportQualityEngineAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar Report Quality
-                        Engine.
+                        No hay datos suficientes para generar{" "}
+                        {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-51"]}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25641,12 +25799,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {showReproducibilityExplorer && (
                   <div className={`${resultsSubsectionCard}`}>
                     <p className={subsectionHeading}>
-                      🔁 Reproducibility Explorer
+                      🔁 {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-52"]}
                     </p>
                     {!reproducibilityExplorerAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar Reproducibility
-                        Explorer.
+                        No hay datos suficientes para generar{" "}
+                        {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-52"]}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25665,12 +25823,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {showEvidenceStrengthEngine && (
                   <div className={`${resultsSubsectionCard} ${resultsPanelCompact}`}>
                     <p className={subsectionHeading}>
-                      🧪 Evidence Strength Engine
+                      🧪 {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-53"]}
                     </p>
                     {!evidenceStrengthEngineAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar Evidence Strength
-                        Engine.
+                        No hay datos suficientes para generar{" "}
+                        {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-53"]}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25688,11 +25846,13 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {showAssumptionTracker && (
                   <div className={`${resultsSubsectionCard} ${resultsPanelFull}`}>
-                    <p className={subsectionHeading}>📋 Assumption Tracker</p>
+                    <p className={subsectionHeading}>
+                      📋 {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-54"]}
+                    </p>
                     {!assumptionTrackerAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar Assumption
-                        Tracker.
+                        No hay datos suficientes para generar{" "}
+                        {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-54"]}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25707,12 +25867,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {showMethodologicalDashboard && (
                   <div className={`${resultsSubsectionCard} ${resultsPanelFull}`}>
                     <p className={subsectionHeading}>
-                      📋 Methodological Summary Dashboard
+                      📋 {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"]}
                     </p>
                     {!methodologicalDashboardAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar Methodological
-                        Summary Dashboard.
+                        No hay datos suficientes para generar{" "}
+                        {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"]}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25727,12 +25887,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {showPublicationDashboard && (
                   <div className={`${resultsSubsectionCard} ${resultsPanelFull}`}>
                     <p className={subsectionHeading}>
-                      📰 Executive Publication Dashboard
+                      📰 {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]}
                     </p>
                     {!publicationDashboardAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar Executive
-                        Publication Dashboard.
+                        No hay datos suficientes para generar{" "}
+                        {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -25747,12 +25907,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {showPublicationReadinessAnalyzer && (
                   <div className={`${resultsSubsectionCard} ${resultsPanelCompact}`}>
                     <p className={subsectionHeading}>
-                      📄 Publication Readiness Analyzer
+                      📄 {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-55"]}
                     </p>
                     {!publicationReadinessAnalyzerAnalysis ? (
                       <p className={resultsEmptyState}>
-                        No hay datos suficientes para generar Publication
-                        Readiness Analyzer.
+                        No hay datos suficientes para generar{" "}
+                        {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-55"]}.
                       </p>
                     ) : (
                       <div className={contentPanel}>
@@ -26040,6 +26200,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className="font-semibold">p:</span>{" "}
                           {formatPValue(tTestResult.pValue)}
                         </p>
+                        <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                          {APPROXIMATE_P_VALUE_DISCLOSURE}
+                        </p>
 
                         <p className="mt-2 font-semibold">
                           {getTTestBadge(tTestResult)}
@@ -26116,6 +26279,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <p className="mt-1">
                             <span className="font-semibold">p:</span>{" "}
                             {formatPValue(anovaAnalysis.result.pValue)}
+                          </p>
+                          <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                            {APPROXIMATE_P_VALUE_DISCLOSURE}
                           </p>
 
                           <p className="mt-2 font-semibold">
@@ -26333,6 +26499,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             <span className="font-semibold">p:</span>{" "}
                             {formatPValue(mannWhitneyResult.pValue)}
                           </p>
+                          <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                            {APPROXIMATE_P_VALUE_DISCLOSURE}
+                          </p>
                           <p className="mt-2 font-semibold">
                             {getNonParametricBadge(mannWhitneyResult.significant)}
                           </p>
@@ -26387,6 +26556,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         <p className="mt-1">
                           <span className="font-semibold">p:</span>{" "}
                           {formatPValue(kruskalWallisResult.pValue)}
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                          {APPROXIMATE_P_VALUE_DISCLOSURE}
                         </p>
                         <p className="mt-2 font-semibold">
                           {getNonParametricBadge(kruskalWallisResult.significant)}

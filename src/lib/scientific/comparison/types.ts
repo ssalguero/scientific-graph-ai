@@ -69,6 +69,7 @@ export type DatasetAnalysisProfileCaptureEngineFlags = {
 export type DatasetAnalysisProfileCaptureMetadata = {
   sourceDatasetChecksum?: string | null;
   worksheetModifiedAtCapture?: boolean;
+  provenance?: import("@/lib/scientific/contracts").ScientificProvenanceDescriptor;
   captureEngineFlags?: DatasetAnalysisProfileCaptureEngineFlags;
 };
 

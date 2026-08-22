@@ -110,7 +110,7 @@ const buildCoreComparisonKpiRows = (
   }),
   buildComparisonKpiRow({
     key: "publicationStatus",
-    title: "Publication Status",
+    title: "Estado compuesto para revisión",
     slotAValue: formatProfilePublicationStatusValue(slotA),
     slotBValue: formatProfilePublicationStatusValue(slotB),
     higherIsBetter: false,

@@ -11,7 +11,7 @@ const DATASET6 = process.env.DATASET6_PATH ??
 const STATISTICS_TOGGLES = [
   "Mostrar correlación",
   "Mostrar normalidad",
-  "Mostrar Methodological Summary Dashboard",
+  "Mostrar Resumen compuesto metodológico",
   "Mostrar Q-Q Plot",
   "Mostrar Violin Plot",
   "Mostrar Kernel Density Plot",
@@ -19,15 +19,15 @@ const STATISTICS_TOGGLES = [
   "Mostrar Dashboard Multivariante",
   "Mostrar Cluster Heatmap",
   "Mostrar Clustered Distance Heatmap",
-  "Mostrar Bootstrap Explorer",
-  "Mostrar Sensitivity Explorer",
-  "Mostrar Consistency Engine",
-  "Mostrar Report Quality Engine",
-  "Mostrar Reproducibility Explorer",
-  "Mostrar Evidence Strength Engine",
-  "Mostrar Assumption Tracker",
-  "Mostrar Publication Readiness Analyzer",
-  "Mostrar Executive Publication Dashboard",
+  "Mostrar Indicador heurístico de estabilidad de evidencia",
+  "Mostrar Indicador heurístico de robustez compuesta",
+  "Mostrar Indicador compuesto de consistencia",
+  "Mostrar Indicador compuesto de calidad metodológica",
+  "Mostrar Indicador compuesto de reproducibilidad potencial",
+  "Mostrar Indicador compuesto de soporte evidenciario",
+  "Mostrar Indicador compuesto de cobertura de supuestos",
+  "Mostrar Indicador compuesto de preparación para revisión",
+  "Mostrar Resumen compuesto de preparación científica",
 ];
 
 const INFERENCE_TOGGLES = [
@@ -372,7 +372,7 @@ async function validateDataset(page, datasetPath, datasetName) {
   const criticalToggles = [
     "Mostrar normalidad",
     "Mostrar Q-Q Plot",
-    "Mostrar Bootstrap Explorer",
+    "Mostrar Indicador heurístico de estabilidad de evidencia",
     "Mostrar reporte científico",
     "Mostrar interpretación científica",
   ];
@@ -394,11 +394,11 @@ async function validateDataset(page, datasetPath, datasetName) {
     .getByText("🔬 Evaluación integrada de normalidad")
     .isVisible();
   result.checks.methodologicalDashboard = await page
-    .getByText("📋 Methodological Summary Dashboard")
+    .getByText("📋 Resumen compuesto metodológico")
     .isVisible()
     .catch(() => false);
   if (!result.checks.methodologicalDashboard) {
-    result.issues.push("Panel Methodological Summary Dashboard no visible");
+    result.issues.push("Panel Resumen compuesto metodológico no visible");
   }
   if (!result.checks.integratedPanel) {
     result.issues.push("Panel integrado no visible en Resultados");
@@ -413,12 +413,12 @@ async function validateDataset(page, datasetPath, datasetName) {
   }
 
   const engineTexts = [
-    "Bootstrap Explorer",
-    "Report Quality Engine",
-    "Reproducibility Explorer",
-    "Assumption Tracker",
-    "Publication Readiness Analyzer",
-    "Methodological Summary Dashboard",
+    "Indicador heurístico de estabilidad de evidencia",
+    "Indicador compuesto de calidad metodológica",
+    "Indicador compuesto de reproducibilidad potencial",
+    "Indicador compuesto de cobertura de supuestos",
+    "Indicador compuesto de preparación para revisión",
+    "Resumen compuesto metodológico",
   ];
   for (const engineText of engineTexts) {
     const locator = page.getByText(engineText, { exact: false }).first();
@@ -429,38 +429,46 @@ async function validateDataset(page, datasetPath, datasetName) {
   await page.waitForTimeout(500);
 
   result.checks.bootstrapEngine = await page
-    .getByText("Bootstrap Explorer", { exact: false })
+    .getByText("Indicador heurístico de estabilidad de evidencia", {
+      exact: false,
+    })
     .first()
     .isVisible();
   result.checks.qualityEngine = await page
-    .getByText("Report Quality Engine", { exact: false })
+    .getByText("Indicador compuesto de calidad metodológica", { exact: false })
     .first()
     .isVisible();
   result.checks.reproducibilityEngine = await page
-    .getByText("Reproducibility Explorer", { exact: false })
+    .getByText("Indicador compuesto de reproducibilidad potencial", {
+      exact: false,
+    })
     .first()
     .isVisible();
   result.checks.assumptionTracker = await page
-    .getByText("Assumption Tracker", { exact: false })
+    .getByText("Indicador compuesto de cobertura de supuestos", {
+      exact: false,
+    })
     .first()
     .isVisible();
   result.checks.publicationReadiness = await page
-    .getByText("Publication Readiness Analyzer", { exact: false })
+    .getByText("Indicador compuesto de preparación para revisión", {
+      exact: false,
+    })
     .first()
     .isVisible();
 
   result.checks.sci56DashboardPanel = await page
-    .getByText("📋 Methodological Summary Dashboard")
+    .getByText("📋 Resumen compuesto metodológico")
     .first()
     .isVisible()
     .catch(() => false);
   result.checks.sci56OverallHealthScore = await page
-    .getByText("Overall Health Score", { exact: false })
+    .getByText("Salud metodológica compuesta", { exact: false })
     .first()
     .isVisible()
     .catch(() => false);
   const sci56Cards = await Promise.all(
-    ["Consistency", "Quality", "Reproducibility", "Evidence", "Assumptions", "Publication"].map(
+    ["Consistencia", "Calidad", "Potencial reproducible", "Soporte", "Supuestos", "Preparación para revisión"].map(
       (cardTitle) =>
         page
           .getByText(cardTitle, { exact: true })
@@ -474,7 +482,7 @@ async function validateDataset(page, datasetPath, datasetName) {
     result.issues.push("SCI-56: panel del dashboard no visible");
   }
   if (!result.checks.sci56OverallHealthScore) {
-    result.issues.push("SCI-56: Overall Health Score no visible");
+    result.issues.push("SCI-56: salud metodológica compuesta no visible");
   }
   if (result.checks.sci56EngineCards < 4) {
     result.issues.push(
@@ -493,12 +501,12 @@ async function validateDataset(page, datasetPath, datasetName) {
   }
 
   const engineEmptyStates = [
-    "No hay datos suficientes para generar Bootstrap Explorer.",
-    "No hay datos suficientes para generar Report Quality Engine.",
-    "No hay datos suficientes para generar Reproducibility Explorer.",
-    "No hay datos suficientes para generar Assumption Tracker.",
-    "No hay datos suficientes para generar Publication Readiness",
-    "No hay datos suficientes para generar Methodological",
+    "No hay datos suficientes para generar Indicador heurístico de estabilidad de evidencia.",
+    "No hay datos suficientes para generar Indicador compuesto de calidad metodológica.",
+    "No hay datos suficientes para generar Indicador compuesto de reproducibilidad potencial.",
+    "No hay datos suficientes para generar Indicador compuesto de cobertura de supuestos.",
+    "No hay datos suficientes para generar Indicador compuesto de preparación para revisión.",
+    "No hay datos suficientes para generar Resumen compuesto metodológico.",
   ];
   result.checks.enginesHaveOutput = !engineEmptyStates.some((text) =>
     bodyText.includes(text)

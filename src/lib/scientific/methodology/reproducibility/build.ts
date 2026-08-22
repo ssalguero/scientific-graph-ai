@@ -13,6 +13,7 @@ import type {
 } from "./input-types";
 import { getReproducibilityExplorerClassificationText } from "./labels";
 import type { ReproducibilityExplorerAnalysis } from "./types";
+import { buildCompositeMethodologyDisclosure } from "../disclosure";
 
 export const hasReproducibilityExplorerInput = (input: {
   experimentalStatistics: ReproducibilityExplorerBuildInput["experimentalStatistics"];
@@ -85,7 +86,7 @@ const buildReproducibilityExplorerInterpretation = (
     input.bootstrapExplorerAnalysis.stabilityScore >= 85
   ) {
     interpretation.push(
-      "La estabilidad observada favorece la reproducibilidad de los resultados."
+      "La estabilidad observada favorece el potencial de reproducibilidad; no lo demuestra."
     );
   }
 
@@ -103,7 +104,7 @@ const buildReproducibilityExplorerInterpretation = (
     input.reportQualityEngineAnalysis.qualityScore >= 85
   ) {
     interpretation.push(
-      "La calidad metodológica observada respalda la reproducibilidad."
+      "El indicador compuesto de calidad metodológica es alto."
     );
   }
 
@@ -112,7 +113,7 @@ const buildReproducibilityExplorerInterpretation = (
     input.consistencyEngineAnalysis.consistencyScore >= 85
   ) {
     interpretation.push(
-      "La convergencia entre análisis fortalece la reproducibilidad potencial."
+      "La convergencia entre indicadores aumenta el potencial de reproducibilidad."
     );
   }
 
@@ -155,5 +156,82 @@ export const buildReproducibilityExplorerAnalysis = (
       reportQualityEngineAnalysis: input.reportQualityEngineAnalysis,
       consistencyEngineAnalysis: input.consistencyEngineAnalysis,
     }),
+    disclosure: buildCompositeMethodologyDisclosure([
+      {
+        id: "sample-size",
+        label: "Sample-size adequacy",
+        role: "score",
+        status:
+          input.experimentalStatistics.length > 0 ? "evaluated" : "defaulted",
+        provenance:
+          input.experimentalStatistics.length > 0
+            ? "direct-input-summary"
+            : "neutral-fallback",
+        fallback:
+          input.experimentalStatistics.length > 0
+            ? undefined
+            : "neutral score of 50",
+      },
+      {
+        id: "normality",
+        label: "Normality consensus",
+        role: "score",
+        status:
+          input.normalityConsensus.length > 0 ? "evaluated" : "defaulted",
+        provenance:
+          input.normalityConsensus.length > 0
+            ? "direct-input-summary"
+            : "neutral-fallback",
+        fallback:
+          input.normalityConsensus.length > 0
+            ? undefined
+            : "neutral score of 50",
+      },
+      {
+        id: "resampling-stability",
+        label: "Resampling stability",
+        role: "score",
+        status: input.bootstrapExplorerAnalysis ? "evaluated" : "defaulted",
+        provenance: input.bootstrapExplorerAnalysis
+          ? "direct-input-summary"
+          : "neutral-fallback",
+        fallback: input.bootstrapExplorerAnalysis
+          ? undefined
+          : "neutral score of 50",
+      },
+      {
+        id: "perturbation-robustness",
+        label: "Perturbation robustness",
+        role: "score",
+        status: input.sensitivityExplorerAnalysis ? "evaluated" : "defaulted",
+        provenance: input.sensitivityExplorerAnalysis
+          ? "direct-input-summary"
+          : "neutral-fallback",
+        fallback: input.sensitivityExplorerAnalysis
+          ? undefined
+          : "neutral score of 50",
+      },
+      {
+        id: "composite-report-quality",
+        label: "Composite report-quality score",
+        role: "score",
+        status: input.reportQualityEngineAnalysis ? "evaluated" : "defaulted",
+        provenance: input.reportQualityEngineAnalysis
+          ? "upstream-composite-output"
+          : "neutral-fallback",
+        fallback: input.reportQualityEngineAnalysis
+          ? undefined
+          : "neutral score of 50",
+      },
+      {
+        id: "composite-consistency",
+        label: "Composite consistency score",
+        role: "interpretation",
+        status: input.consistencyEngineAnalysis
+          ? "evaluated"
+          : "not-evaluated",
+        provenance: "upstream-composite-output",
+      },
+    ]),
   };
 };

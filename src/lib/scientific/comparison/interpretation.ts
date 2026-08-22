@@ -94,7 +94,7 @@ export const buildCrossDatasetComparisonDiagnosis = (input: {
   ) {
     pushUniqueTextLine(
       diagnosis,
-      `Publication Status diverge: Slot A (${publicationRow.slotAValue}) vs Slot B (${publicationRow.slotBValue}).`
+      `El estado compuesto para revisión diverge: Slot A (${publicationRow.slotAValue}) vs Slot B (${publicationRow.slotBValue}).`
     );
   }
 

@@ -14,6 +14,7 @@ import {
   resolveChartExportSampleStep,
   buildChartExportSeriesPoints,
 } from "../src/app/chartExport";
+import { COMPOSITE_METHODOLOGY_PRIMARY_LABELS } from "../src/lib/scientific/methodology/disclosure";
 import { resolvePdfSectionsForState } from "../src/lib/scientific/visibility";
 import type { VisibilityState } from "../src/lib/scientific/visibility";
 import {
@@ -136,7 +137,10 @@ check(
 // --- Integration: Visibility → resolve → filter → PDF assembly inputs ---
 const sampleSections = [
   { title: "Descripción de datos", content: ["a"] },
-  { title: "Consistency Engine", content: ["b"] },
+  {
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"],
+    content: ["b"],
+  },
   { title: "Normalidad", content: ["c"] },
   { title: "Effect Size & Power", content: ["d"] },
   { title: "Recomendación final", content: ["e"] },
@@ -158,7 +162,9 @@ perf["filterScientificReportSectionsForPdf.default.ms"] =
 check(
   "S-E2-01 default excludes when-visible methodology",
   filteredDefault.some((s) => s.title === "Descripción de datos") &&
-    !filteredDefault.some((s) => s.title === "Consistency Engine") &&
+    !filteredDefault.some(
+      (s) => s.title === COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]
+    ) &&
     !filteredDefault.some((s) => s.title === "Normalidad")
 );
 
@@ -175,7 +181,9 @@ const filteredHidden = filterScientificReportSectionsForPdf(
 );
 check(
   "S-E2-02 when-visible sections omitted when toggles off",
-  !filteredHidden.some((s) => s.title === "Consistency Engine") &&
+  !filteredHidden.some(
+    (s) => s.title === COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]
+  ) &&
     !filteredHidden.some((s) => s.title === "Normalidad") &&
     !filteredHidden.some((s) => s.title === "Effect Size & Power") &&
     !filteredHidden.some((s) => s.title === "Recomendación final") &&
@@ -199,7 +207,9 @@ const filteredVisible = filterScientificReportSectionsForPdf(
 );
 check(
   "integration visible includes policy sections",
-  filteredVisible.some((s) => s.title === "Consistency Engine") &&
+  filteredVisible.some(
+    (s) => s.title === COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]
+  ) &&
     filteredVisible.some((s) => s.title === "Normalidad") &&
     filteredVisible.some((s) => s.title === "Effect Size & Power") &&
     filteredVisible.some((s) => s.title === "Recomendación final") &&
@@ -218,7 +228,7 @@ check(
     filteredVisible.map((s) => s.title).join("|") ===
       filteredVisible2.map((s) => s.title).join("|") &&
     filteredVisible.map((s) => s.title).join("|") ===
-      "Descripción de datos|Consistency Engine|Normalidad|Effect Size & Power|Recomendación final"
+      `Descripción de datos|${COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]}|Normalidad|Effect Size & Power|Recomendación final`
 );
 
 check(

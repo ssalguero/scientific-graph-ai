@@ -12,6 +12,7 @@ import type {
 } from "./input-types";
 import { getEvidenceStrengthEngineClassificationText } from "./labels";
 import type { EvidenceStrengthEngineAnalysis } from "./types";
+import { buildCompositeMethodologyDisclosure } from "../disclosure";
 
 export const hasEvidenceStrengthEngineInput = (input: {
   consistencyEngineAnalysis: ConsistencyEngineAnalysis | null;
@@ -124,7 +125,7 @@ const buildEvidenceStrengthEngineInterpretation = (
     input.reportQualityEngineAnalysis.qualityScore >= 85
   ) {
     interpretation.push(
-      "La calidad metodológica respalda las conclusiones obtenidas."
+      "El indicador compuesto de calidad metodológica es alto."
     );
   }
 
@@ -133,12 +134,14 @@ const buildEvidenceStrengthEngineInterpretation = (
     input.bootstrapExplorerAnalysis.stabilityScore >= 85
   ) {
     interpretation.push(
-      "La estabilidad observada fortalece la evidencia disponible."
+      "La estabilidad observada aumenta el soporte compuesto disponible."
     );
   }
 
   if (input.hasInferentialTests) {
-    interpretation.push("Las conclusiones cuentan con respaldo inferencial.");
+    interpretation.push(
+      "Hay resultados inferenciales disponibles; este indicador compuesto no evalúa por sí solo su significación."
+    );
   }
 
   return deduplicateTextLines(interpretation);
@@ -184,5 +187,76 @@ export const buildEvidenceStrengthEngineAnalysis = (
       bootstrapExplorerAnalysis: input.bootstrapExplorerAnalysis,
       hasInferentialTests,
     }),
+    disclosure: buildCompositeMethodologyDisclosure([
+      {
+        id: "composite-consistency",
+        label: "Composite consistency score",
+        role: "score",
+        status: input.consistencyEngineAnalysis ? "evaluated" : "defaulted",
+        provenance: input.consistencyEngineAnalysis
+          ? "upstream-composite-output"
+          : "neutral-fallback",
+        fallback: input.consistencyEngineAnalysis
+          ? undefined
+          : "neutral score of 50",
+      },
+      {
+        id: "composite-report-quality",
+        label: "Composite report-quality score",
+        role: "score",
+        status: input.reportQualityEngineAnalysis ? "evaluated" : "defaulted",
+        provenance: input.reportQualityEngineAnalysis
+          ? "upstream-composite-output"
+          : "neutral-fallback",
+        fallback: input.reportQualityEngineAnalysis
+          ? undefined
+          : "neutral score of 50",
+      },
+      {
+        id: "composite-reproducibility",
+        label: "Composite reproducibility-potential score",
+        role: "score",
+        status: input.reproducibilityExplorerAnalysis
+          ? "evaluated"
+          : "defaulted",
+        provenance: input.reproducibilityExplorerAnalysis
+          ? "upstream-composite-output"
+          : "neutral-fallback",
+        fallback: input.reproducibilityExplorerAnalysis
+          ? undefined
+          : "neutral score of 50",
+      },
+      {
+        id: "resampling-stability",
+        label: "Resampling stability",
+        role: "score",
+        status: input.bootstrapExplorerAnalysis ? "evaluated" : "defaulted",
+        provenance: input.bootstrapExplorerAnalysis
+          ? "direct-input-summary"
+          : "neutral-fallback",
+        fallback: input.bootstrapExplorerAnalysis
+          ? undefined
+          : "neutral score of 50",
+      },
+      {
+        id: "effect-magnitude",
+        label: "Effect-magnitude summary",
+        role: "score",
+        status: input.effectSizePowerAnalysis ? "evaluated" : "defaulted",
+        provenance: input.effectSizePowerAnalysis
+          ? "direct-input-summary"
+          : "neutral-fallback",
+        fallback: input.effectSizePowerAnalysis
+          ? undefined
+          : "neutral score of 50",
+      },
+      {
+        id: "inferential-result-availability",
+        label: "Inferential-result availability",
+        role: "interpretation",
+        status: hasInferentialTests ? "evaluated" : "not-evaluated",
+        provenance: "direct-input-summary",
+      },
+    ]),
   };
 };

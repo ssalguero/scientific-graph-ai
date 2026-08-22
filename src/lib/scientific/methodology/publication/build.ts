@@ -20,6 +20,7 @@ import type {
   PublicationDashboardMultivariateHighlights,
   PublicationDashboardNormalitySummary,
 } from "./types";
+import { buildCompositeMethodologyDisclosure } from "../disclosure";
 
 const formatVariableImportanceCoLeaders = (variables: string[]) =>
   variables.join(" / ");
@@ -129,14 +130,14 @@ const buildPublicationDashboardCrossDomainDiagnosis = (input: {
   if (input.publicationStatus === "publication-ready") {
     pushUniqueTextLine(
       diagnosis,
-      "El análisis presenta preparación adecuada para comunicación científica."
+      "Las señales compuestas muestran preparación alta para revisión científica humana."
     );
   }
 
   if (input.publicationStatus === "near-ready") {
     pushUniqueTextLine(
       diagnosis,
-      "El análisis se encuentra próximo a preparación para publicación; conviene revisar los riesgos listados."
+      "Las señales compuestas se aproximan a preparación alta; conviene revisar los riesgos listados."
     );
   }
 
@@ -146,7 +147,7 @@ const buildPublicationDashboardCrossDomainDiagnosis = (input: {
   ) {
     pushUniqueTextLine(
       diagnosis,
-      "La evidencia inferencial es sólida y está respaldada por un efecto de magnitud elevada."
+      "El indicador compuesto de soporte es alto y el efecto dominante tiene magnitud elevada."
     );
   }
 
@@ -156,7 +157,7 @@ const buildPublicationDashboardCrossDomainDiagnosis = (input: {
   ) {
     pushUniqueTextLine(
       diagnosis,
-      "La evidencia metodológica converge, pero la magnitud inferencial dominante es limitada."
+      "Los indicadores metodológicos convergen, pero la magnitud inferencial dominante es limitada."
     );
   }
 
@@ -175,7 +176,7 @@ const buildPublicationDashboardCrossDomainDiagnosis = (input: {
   if (input.publicationScore >= 70 && dominantMagnitude === "large") {
     pushUniqueTextLine(
       diagnosis,
-      "La magnitud del efecto observado respalda la comunicación de resultados."
+      "La magnitud del efecto observado es relevante para la revisión de resultados."
     );
   }
 
@@ -250,7 +251,7 @@ const buildPublicationDashboardRisks = (input: {
   ) {
     pushUniqueTextLine(
       risks,
-      "La fuerza de evidencia supera la preparación global para publicación; revisar supuestos y reproducibilidad."
+      "El soporte compuesto supera la preparación global para revisión; revisar supuestos y reproducibilidad potencial."
     );
   }
 
@@ -314,7 +315,7 @@ const buildPublicationDashboardRecommendations = (input: {
   if (input.publicationStatus === "near-ready") {
     pushUniqueTextLine(
       recommendations,
-      "Realizar una revisión final de supuestos y reproducibilidad antes del envío."
+      "Realizar una revisión final de supuestos y reproducibilidad potencial antes de cualquier envío."
     );
   }
 
@@ -403,5 +404,71 @@ export const buildPublicationDashboardAnalysis = (
     publicationRisks,
     publicationRecommendations,
     evaluatedDomains,
+    disclosure: buildCompositeMethodologyDisclosure([
+      {
+        id: "publication-readiness",
+        label: "Composite publication-readiness score",
+        role: "score",
+        status: input.publicationReadinessAnalyzerAnalysis
+          ? "evaluated"
+          : "defaulted",
+        provenance: input.publicationReadinessAnalyzerAnalysis
+          ? "upstream-composite-output"
+          : "neutral-fallback",
+        fallback: input.publicationReadinessAnalyzerAnalysis
+          ? undefined
+          : 'score 50 and status "not-ready"',
+      },
+      {
+        id: "methodological-health",
+        label: "Composite methodological-health score",
+        role: "interpretation",
+        status: input.methodologicalDashboardAnalysis
+          ? "evaluated"
+          : "not-evaluated",
+        provenance: "upstream-composite-output",
+      },
+      {
+        id: "multivariate-summary",
+        label: "Multivariate summary",
+        role: "interpretation",
+        status: input.multivariateDashboardAnalysis
+          ? "evaluated"
+          : "not-evaluated",
+        provenance: "direct-input-summary",
+      },
+      {
+        id: "evidence-strength",
+        label: "Composite evidence-strength score",
+        role: "interpretation",
+        status: input.evidenceStrengthEngineAnalysis
+          ? "evaluated"
+          : "not-evaluated",
+        provenance: "upstream-composite-output",
+      },
+      {
+        id: "effect-size-power",
+        label: "Effect-size and power summary",
+        role: "interpretation",
+        status: input.effectSizePowerAnalysis ? "evaluated" : "not-evaluated",
+        provenance: "direct-input-summary",
+      },
+      {
+        id: "normality",
+        label: "Canonical normality summary",
+        role: "interpretation",
+        status: normalitySummary ? "evaluated" : "not-evaluated",
+        provenance: "direct-input-summary",
+      },
+      {
+        id: "statistical-recommendation",
+        label: "Statistical recommendation",
+        role: "display",
+        status: input.statisticalRecommendation
+          ? "evaluated"
+          : "not-evaluated",
+        provenance: "direct-input-summary",
+      },
+    ]),
   };
 };

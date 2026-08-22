@@ -16,6 +16,7 @@ import {
 import { runBubbleCaseSuite } from "../src/lib/visualGraphBuilder/__tests__/bubble.cases";
 import { runPcaCaseSuite } from "../src/lib/visualGraphBuilder/__tests__/pca.cases";
 import { runScatterCaseSuite } from "../src/lib/visualGraphBuilder/__tests__/scatter.cases";
+import { runTruthfulnessCaseSuite } from "../src/lib/visualGraphBuilder/__tests__/truthfulness.cases";
 
 type CaseResult = { id: string; pass: boolean; detail?: string };
 
@@ -265,6 +266,7 @@ results.push({
 results.push(...runBubbleCaseSuite());
 results.push(...runPcaCaseSuite());
 results.push(...runScatterCaseSuite());
+results.push(...runTruthfulnessCaseSuite());
 
 const summary = {
   phase: "visual-graph-builder-unit",

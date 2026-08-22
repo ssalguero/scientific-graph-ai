@@ -1,5 +1,6 @@
 import { resolvePdfSectionsForState } from "@/lib/scientific/visibility";
 import type { VisibilityState } from "@/lib/scientific/visibility";
+import { COMPOSITE_METHODOLOGY_PRIMARY_LABELS } from "@/lib/scientific/methodology/disclosure";
 import type { AssertCase } from "../../comparison/__tests__/run-assertions";
 import {
   PDF_BLOCK_ADVISOR_ID,
@@ -10,7 +11,10 @@ import {
 
 const sampleSections = [
   { title: "Descripción de datos", content: ["a"] },
-  { title: "Consistency Engine", content: ["b"] },
+  {
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"],
+    content: ["b"],
+  },
   { title: "Normalidad", content: ["c"] },
   { title: "Effect Size & Power", content: ["d"] },
   { title: "Recomendación final", content: ["e"] },
@@ -31,7 +35,7 @@ export const runPdfSectionFilterCases = (assertCase: AssertCase): void => {
   assertCase(
     "export2.filter.includesSci50WhenAllowed",
     sci50Titles.includes("Descripción de datos") &&
-      sci50Titles.includes("Consistency Engine") &&
+      sci50Titles.includes(COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]) &&
       !sci50Titles.includes("Normalidad")
   );
 
@@ -43,7 +47,7 @@ export const runPdfSectionFilterCases = (assertCase: AssertCase): void => {
   assertCase(
     "export2.filter.excludesSci50WhenNotAllowed",
     normalityTitles.includes("Normalidad") &&
-      !normalityTitles.includes("Consistency Engine")
+      !normalityTitles.includes(COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"])
   );
 
   const filteredAll = filterScientificReportSectionsForPdf(sampleSections, [
@@ -55,7 +59,7 @@ export const runPdfSectionFilterCases = (assertCase: AssertCase): void => {
   assertCase(
     "export2.filter.preservesDeterministicOrder",
     filteredAll.map((section) => section.title).join("|") ===
-      "Descripción de datos|Consistency Engine|Normalidad|Effect Size & Power|Recomendación final"
+      `Descripción de datos|${COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]}|Normalidad|Effect Size & Power|Recomendación final`
   );
 
   assertCase(
@@ -96,9 +100,9 @@ export const runPdfSectionFilterCases = (assertCase: AssertCase): void => {
   assertCase(
     "export2.policy.wiringRespectsResolvePdfSections",
     defaultsTitles.includes("Descripción de datos") &&
-      !defaultsTitles.includes("Consistency Engine") &&
+      !defaultsTitles.includes(COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]) &&
       !defaultsTitles.includes("Normalidad") &&
-      visibleTitles.includes("Consistency Engine") &&
+      visibleTitles.includes(COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]) &&
       visibleTitles.includes("Normalidad") &&
       allowed.includes("sci-50-consistency") &&
       allowed.includes("panel--normality")

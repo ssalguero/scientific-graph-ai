@@ -1,3 +1,5 @@
+import type { CompositeMethodologyDisclosure } from "../disclosure";
+
 export type ConsistencyEngineClassification =
   | "very-strong"
   | "strong"
@@ -10,4 +12,5 @@ export type ConsistencyEngineAnalysis = {
   evidenceCount: number;
   supportingModules: string[];
   interpretation: string[];
+  disclosure: CompositeMethodologyDisclosure;
 };

@@ -1,3 +1,5 @@
+import { COMPOSITE_METHODOLOGY_PRIMARY_LABELS } from "@/lib/scientific/methodology/disclosure";
+
 import { resolveInferentialWorkflowToggles } from "./inferential";
 import type { GuidedWorkflowStep } from "./types";
 
@@ -153,16 +155,17 @@ export const buildEvaluatePublicationWorkflowSteps = (): GuidedWorkflowStep[] =>
   },
   {
     id: "sci56",
-    title: "Methodological Summary Dashboard",
-    explanation: "SCI-56 resume la salud metodológica global del análisis.",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"],
+    explanation:
+      "SCI-56 resume indicadores metodológicos compuestos; no certifica el análisis.",
     workspaceTab: "results",
     toggles: ["showMethodologicalDashboard"],
   },
   {
     id: "sci60",
-    title: "Executive Publication Dashboard",
+    title: COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"],
     explanation:
-      "SCI-60 consolida preparación, evidencia, normalidad y riesgos pre-manuscrito.",
+      "SCI-60 consolida señales compuestas para revisión; no establece idoneidad editorial.",
     workspaceTab: "results",
     toggles: ["showPublicationDashboard"],
   },

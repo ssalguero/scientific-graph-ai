@@ -1,3 +1,5 @@
+import type { CompositeMethodologyDisclosure } from "../disclosure";
+
 export type ReportQualityEngineClassification =
   | "excellent"
   | "good"
@@ -9,4 +11,5 @@ export type ReportQualityEngineAnalysis = {
   classification: ReportQualityEngineClassification;
   evaluatedCriteria: number;
   interpretation: string[];
+  disclosure: CompositeMethodologyDisclosure;
 };

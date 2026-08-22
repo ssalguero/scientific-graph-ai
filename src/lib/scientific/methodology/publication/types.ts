@@ -3,6 +3,7 @@ import type { EvidenceStrengthEngineAnalysis } from "@/lib/scientific/methodolog
 import type { PublicationReadinessAnalyzerAnalysis } from "@/lib/scientific/methodology/readiness";
 
 import type { PublicationDashboardAdvisorConfidence } from "./input-types";
+import type { CompositeMethodologyDisclosure } from "../disclosure";
 
 export type PublicationDashboardNormalitySummary = {
   seriesEvaluated: number;
@@ -48,4 +49,5 @@ export type PublicationDashboardAnalysis = {
   publicationRisks: string[];
   publicationRecommendations: string[];
   evaluatedDomains: number;
+  disclosure: CompositeMethodologyDisclosure;
 };

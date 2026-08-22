@@ -6,6 +6,7 @@ import type { ConsistencyEngineAnalysis } from "../src/lib/scientific/methodolog
 import type { EvidenceStrengthEngineAnalysis } from "../src/lib/scientific/methodology/evidence";
 import type { ReportQualityEngineAnalysis } from "../src/lib/scientific/methodology/report-quality";
 import type { ReproducibilityExplorerAnalysis } from "../src/lib/scientific/methodology/reproducibility";
+import { buildCompositeMethodologyDisclosure } from "../src/lib/scientific/methodology/disclosure";
 import {
   buildPublicationReadinessAnalyzerAnalysis,
   getPublicationReadinessAnalyzerClassificationLabel,
@@ -29,6 +30,7 @@ import {
 
 const repoRoot = getRepoRoot(import.meta.url);
 const { results, assertCase } = createCaseRecorder();
+const mockDisclosure = buildCompositeMethodologyDisclosure([]);
 
 const mockConsistencyStrong: ConsistencyEngineAnalysis = {
   consistencyScore: 90,
@@ -36,6 +38,7 @@ const mockConsistencyStrong: ConsistencyEngineAnalysis = {
   evidenceCount: 4,
   supportingModules: ["pca"],
   interpretation: ["Strong consistency."],
+  disclosure: mockDisclosure,
 };
 
 const mockReportQualityStrong: ReportQualityEngineAnalysis = {
@@ -43,6 +46,7 @@ const mockReportQualityStrong: ReportQualityEngineAnalysis = {
   classification: "excellent",
   evaluatedCriteria: 5,
   interpretation: ["Excellent quality."],
+  disclosure: mockDisclosure,
 };
 
 const mockReproducibilityStrong: ReproducibilityExplorerAnalysis = {
@@ -50,6 +54,7 @@ const mockReproducibilityStrong: ReproducibilityExplorerAnalysis = {
   classification: "very-high",
   evaluatedFactors: 5,
   interpretation: ["Very high reproducibility."],
+  disclosure: mockDisclosure,
 };
 
 const mockEvidenceStrong: EvidenceStrengthEngineAnalysis = {
@@ -57,6 +62,7 @@ const mockEvidenceStrong: EvidenceStrengthEngineAnalysis = {
   classification: "very-strong",
   evidenceSources: 5,
   interpretation: ["Very strong evidence."],
+  disclosure: mockDisclosure,
 };
 
 const mockAssumptionsExcellent: AssumptionTrackerAnalysis = {
@@ -64,6 +70,7 @@ const mockAssumptionsExcellent: AssumptionTrackerAnalysis = {
   classification: "excellent",
   assumptions: [],
   interpretation: ["Excellent assumptions."],
+  disclosure: mockDisclosure,
 };
 
 const emptyReadinessInput = {
@@ -111,6 +118,11 @@ assertCase(
   readyReadiness ? String(readyReadiness.readinessScore) : "null"
 );
 assertCase(
+  "sci55.disclosure.composite",
+  readyReadiness?.disclosure.methodology === "composite-decision-support" &&
+    readyReadiness.disclosure.coverage.evaluated.length === 5
+);
+assertCase(
   "sci55.flags.ready",
   hasPublicationReadinessAnalyzerReady(readyReadiness),
   "ready helper"
@@ -129,6 +141,7 @@ const notReadyReadiness = buildPublicationReadinessAnalyzerAnalysis({
     evidenceCount: 1,
     supportingModules: [],
     interpretation: ["Weak consistency."],
+    disclosure: mockDisclosure,
   },
 });
 
@@ -161,30 +174,35 @@ const nearReadyReadiness = buildPublicationReadinessAnalyzerAnalysis({
     evidenceCount: 3,
     supportingModules: ["pca"],
     interpretation: ["Strong."],
+    disclosure: mockDisclosure,
   },
   reportQualityEngineAnalysis: {
     qualityScore: 75,
     classification: "good",
     evaluatedCriteria: 4,
     interpretation: ["Good quality."],
+    disclosure: mockDisclosure,
   },
   reproducibilityExplorerAnalysis: {
     reproducibilityScore: 75,
     classification: "high",
     evaluatedFactors: 4,
     interpretation: ["High reproducibility."],
+    disclosure: mockDisclosure,
   },
   evidenceStrengthEngineAnalysis: {
     evidenceScore: 75,
     classification: "strong",
     evidenceSources: 4,
     interpretation: ["Strong evidence."],
+    disclosure: mockDisclosure,
   },
   assumptionTrackerAnalysis: {
     overallScore: 75,
     classification: "good",
     assumptions: [],
     interpretation: ["Good assumptions."],
+    disclosure: mockDisclosure,
   },
 });
 
@@ -198,34 +216,43 @@ assertCase(
 assertCase(
   "sci55.labels.publication-ready",
   getPublicationReadinessAnalyzerClassificationLabel("publication-ready") ===
-    "Publication Ready"
+    "Preparación compuesta alta"
 );
 assertCase(
   "sci55.labels.near-ready",
-  getPublicationReadinessAnalyzerClassificationLabel("near-ready") === "Near Ready"
+  getPublicationReadinessAnalyzerClassificationLabel("near-ready") ===
+    "Preparación compuesta cercana"
 );
 assertCase(
   "sci55.labels.requires-review",
   getPublicationReadinessAnalyzerClassificationLabel("requires-review") ===
-    "Requires Review"
+    "Requiere revisión"
 );
 assertCase(
   "sci55.labels.not-ready",
-  getPublicationReadinessAnalyzerClassificationLabel("not-ready") === "Not Ready"
+  getPublicationReadinessAnalyzerClassificationLabel("not-ready") ===
+    "Preparación compuesta insuficiente"
 );
 
 const readyReadinessReport = getPublicationReadinessAnalyzerReportLines(readyReadiness);
 assertCase(
   "sci55.report-lines.present",
   readyReadinessReport.length >= 3 &&
-    readyReadinessReport[0].startsWith("Readiness Score:") &&
-    readyReadinessReport.some((line) => line.includes("Publication Ready")),
+    readyReadinessReport[0].startsWith(
+      "Puntuación compuesta de preparación para revisión:"
+    ) &&
+    readyReadinessReport.some((line) =>
+      line.includes("Preparación compuesta alta")
+    ) &&
+    readyReadinessReport.some((line) =>
+      line.includes("no constituye validación independiente")
+    ),
   readyReadinessReport.join(" | ")
 );
 assertCase(
   "sci55.report-lines.empty",
   getPublicationReadinessAnalyzerReportLines(null)[0] ===
-    "No hay datos suficientes para generar Publication Readiness Analyzer."
+    "No hay datos suficientes para generar Indicador compuesto de preparación para revisión."
 );
 
 // --- Structural: page.tsx has no inline SCI-55 domain ---

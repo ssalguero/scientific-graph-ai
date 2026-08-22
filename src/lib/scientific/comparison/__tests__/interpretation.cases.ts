@@ -98,7 +98,7 @@ export const runInterpretationCases = (assertCase: AssertCase) => {
   });
   const publicationRow = buildComparisonKpiRow({
     key: "publicationStatus",
-    title: "Publication Status",
+    title: "Estado compuesto para revisión",
     slotAValue: "Near Ready",
     slotBValue: "Requires Review",
     higherIsBetter: false,
@@ -117,7 +117,9 @@ export const runInterpretationCases = (assertCase: AssertCase) => {
   );
   assertCase(
     "diagnosis.publicationDiverge",
-    diagnosis.some((line) => line.includes("Publication Status diverge"))
+    diagnosis.some((line) =>
+      line.includes("El estado compuesto para revisión diverge")
+    )
   );
 
   const neutralKpiRows = [

@@ -2,6 +2,10 @@ import { deduplicateTextLines } from "@/lib/scientific/shared";
 
 import type { MethodologicalDashboardBuildInput } from "./input-types";
 import type { MethodologicalDashboardAnalysis } from "./types";
+import {
+  buildCompositeMethodologyDisclosure,
+  type CompositeMethodologyFactorInput,
+} from "../disclosure";
 
 export const canBuildMethodologicalDashboard = (
   input: MethodologicalDashboardBuildInput
@@ -33,7 +37,7 @@ const buildMethodologicalDashboardDiagnosis = (
 
   if (readinessScore !== undefined && readinessScore >= 85) {
     diagnosis.push(
-      "El análisis presenta preparación adecuada para publicación."
+      "Las señales compuestas muestran preparación alta para revisión humana."
     );
   }
 
@@ -150,5 +154,23 @@ export const buildMethodologicalDashboardAnalysis = (
     overallHealthScore,
     evaluatedEngines: scores.length,
     diagnosis,
+    disclosure: buildCompositeMethodologyDisclosure(
+      [
+        ["consistency", "Composite consistency score", input.consistencyEngineAnalysis],
+        ["report-quality", "Composite report-quality score", input.reportQualityEngineAnalysis],
+        ["reproducibility", "Composite reproducibility-potential score", input.reproducibilityExplorerAnalysis],
+        ["evidence", "Composite evidence-strength score", input.evidenceStrengthEngineAnalysis],
+        ["assumptions", "Composite assumption-coverage score", input.assumptionTrackerAnalysis],
+        ["readiness", "Composite publication-readiness score", input.publicationReadinessAnalyzerAnalysis],
+      ].map(
+        ([id, label, value]): CompositeMethodologyFactorInput => ({
+          id: id as string,
+          label: label as string,
+          role: "score",
+          status: value ? "evaluated" : "not-evaluated",
+          provenance: "upstream-composite-output",
+        })
+      )
+    ),
   };
 };

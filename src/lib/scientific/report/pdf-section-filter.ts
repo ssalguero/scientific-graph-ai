@@ -3,6 +3,35 @@
  * Consumes pdfSectionIds from ARCH-6 resolvePdfSectionsForState; does not own visibility policy.
  */
 
+import { getScientificCapabilityIdentity } from "@/lib/scientific/contracts";
+import { COMPOSITE_METHODOLOGY_PRIMARY_LABELS } from "@/lib/scientific/methodology/disclosure";
+
+const EXPLORER_REPORT_TITLES = {
+  manova: getScientificCapabilityIdentity(
+    "multivariate-separation-indicator"
+  ).primaryLabelEs,
+  lda: getScientificCapabilityIdentity(
+    "discrimination-structure-indicator"
+  ).primaryLabelEs,
+  canonical: getScientificCapabilityIdentity(
+    "association-network-indicator"
+  ).primaryLabelEs,
+  pcr: getScientificCapabilityIdentity(
+    "component-importance-predictive-indicator"
+  ).primaryLabelEs,
+  pls: getScientificCapabilityIdentity(
+    "composite-explanatory-indicator"
+  ).primaryLabelEs,
+  bootstrap: getScientificCapabilityIdentity(
+    "evidence-stability-indicator"
+  ).primaryLabelEs,
+  sensitivity: getScientificCapabilityIdentity(
+    "composite-robustness-indicator"
+  ).primaryLabelEs,
+  tsne: getScientificCapabilityIdentity("mds-neighborhood-view").primaryLabelEs,
+  umap: getScientificCapabilityIdentity("mds-connectivity-view").primaryLabelEs,
+} as const;
+
 export type PdfSectionAllowRule =
   | { kind: "always" }
   | { kind: "id"; id: string }
@@ -51,32 +80,59 @@ export const SCIENTIFIC_REPORT_PDF_SECTION_RULES: Readonly<
     kind: "id",
     id: "sci-40-multivariate-dashboard",
   },
-  "MANOVA Explorer": { kind: "id", id: "panel--manova-explorer" },
-  "LDA Explorer": { kind: "id", id: "panel--lda-explorer" },
-  "Canonical Correlation Explorer": {
+  [EXPLORER_REPORT_TITLES.manova]: {
+    kind: "id",
+    id: "panel--manova-explorer",
+  },
+  [EXPLORER_REPORT_TITLES.lda]: { kind: "id", id: "panel--lda-explorer" },
+  [EXPLORER_REPORT_TITLES.canonical]: {
     kind: "id",
     id: "panel--canonical-correlation-explorer",
   },
-  "PCR Explorer": { kind: "id", id: "panel--pcr-explorer" },
-  "PLS Explorer": { kind: "id", id: "panel--pls-explorer" },
-  "Bootstrap Explorer": { kind: "id", id: "panel--bootstrap-explorer" },
-  "Sensitivity Analysis Explorer": {
+  [EXPLORER_REPORT_TITLES.pcr]: { kind: "id", id: "panel--pcr-explorer" },
+  [EXPLORER_REPORT_TITLES.pls]: { kind: "id", id: "panel--pls-explorer" },
+  [EXPLORER_REPORT_TITLES.bootstrap]: {
+    kind: "id",
+    id: "panel--bootstrap-explorer",
+  },
+  [EXPLORER_REPORT_TITLES.sensitivity]: {
     kind: "id",
     id: "panel--sensitivity-explorer",
   },
-  "t-SNE Explorer": { kind: "id", id: "panel--t-sne-explorer" },
-  "UMAP Explorer": { kind: "id", id: "panel--umap-explorer" },
-  "Consistency Engine": { kind: "id", id: "sci-50-consistency" },
-  "Report Quality Engine": { kind: "id", id: "sci-51-report-quality" },
-  "Reproducibility Explorer": { kind: "id", id: "sci-52-reproducibility" },
-  "Evidence Strength Engine": { kind: "id", id: "sci-53-evidence" },
-  "Assumption Tracker": { kind: "id", id: "sci-54-assumptions" },
-  "Publication Readiness Analyzer": { kind: "id", id: "sci-55-readiness" },
-  "Methodological Summary Dashboard": {
+  [EXPLORER_REPORT_TITLES.tsne]: {
+    kind: "id",
+    id: "panel--t-sne-explorer",
+  },
+  [EXPLORER_REPORT_TITLES.umap]: { kind: "id", id: "panel--umap-explorer" },
+  [COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]]: {
+    kind: "id",
+    id: "sci-50-consistency",
+  },
+  [COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-51"]]: {
+    kind: "id",
+    id: "sci-51-report-quality",
+  },
+  [COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-52"]]: {
+    kind: "id",
+    id: "sci-52-reproducibility",
+  },
+  [COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-53"]]: {
+    kind: "id",
+    id: "sci-53-evidence",
+  },
+  [COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-54"]]: {
+    kind: "id",
+    id: "sci-54-assumptions",
+  },
+  [COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-55"]]: {
+    kind: "id",
+    id: "sci-55-readiness",
+  },
+  [COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"]]: {
     kind: "id",
     id: "sci-56-methodological-dashboard",
   },
-  "Executive Publication Dashboard": {
+  [COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]]: {
     kind: "id",
     id: "sci-60-publication-dashboard",
   },
