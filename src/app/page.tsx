@@ -100,8 +100,17 @@ import {
 } from "@/lib/scientific/figure";
 import {
   formatPdfCtr08BlockMessage,
+  formatPr5ContinuityDisposition,
+  formatPr5GatedModuleDescription,
+  formatPr5ReportPublicationContext,
+  PR5_ANALYSIS_ROLE,
+  PR5_COMPARE_PATH,
+  PR5_COMPUTATION_NOT_STOPPED,
+  PR5_GE_VGB_DISTINCT,
+  PR5_GATED_MODULE_REASON,
   PR5_MULTIPLE_WORKING_FIGURES_DISCLOSURE,
   PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE,
+  PR5_RESULTS_ROLE,
   replaceWorkingVisualGraphEntry,
   resolveReopenVisualBuilderContext,
 } from "@/lib/project/pr5-researcher-continuity";
@@ -21351,7 +21360,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         modules={SCIENTIFIC_MODULES.map((module) => ({
           id: module.id,
           name: module.name,
-          description: module.description,
+          description: formatPr5GatedModuleDescription(
+            isScientificModuleEnabled(enabledModules, module.id),
+            module.description
+          ),
           enabled: isScientificModuleEnabled(enabledModules, module.id),
           badgeLabel: module.badge
             ? getScientificModuleBadgeLabel(module.badge)
@@ -21414,7 +21426,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           <section
             className={
               activeWorkspaceSection === "home"
-                ? "flex h-full min-h-0 flex-1 flex-col"
+                ? "relative flex h-full min-h-0 flex-1 flex-col"
                 : "hidden"
             }
             aria-hidden={activeWorkspaceSection !== "home"}
@@ -21424,6 +21436,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               onSelect={handleSmartStartSelect}
               onStartRecommendation={handleIntentRecommendationStart}
             />
+            <p className="pointer-events-none absolute inset-x-0 bottom-2 px-4 text-center text-[11px] leading-snug text-[var(--color-text-muted)]">
+              {formatPr5ContinuityDisposition()}
+            </p>
           </section>
 
           <>
@@ -21433,6 +21448,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             {importDestinationActive ? (
               <div ref={importarDestinationRef}>
+                <WorkflowContinuityBar
+                  stepLabel="Ahora · Importar"
+                  contextLine={`Importe datos para continuar a Datos. ${formatPr5ContinuityDisposition()}`}
+                  actions={[
+                    {
+                      label: "Continuar a Datos →",
+                      onClick: () => selectWorkspaceSection("data"),
+                      prominence: "primary",
+                    },
+                  ]}
+                />
                 <ImportarDestination
                   selectedDataSourceId={selectedDataSourceId}
                   onSourceChange={(sourceId) => {
@@ -21462,8 +21488,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               stepLabel={
                 currentDatasetInfo?.fileName ?? "Sin dataset experimental"
               }
-              contextLine=""
+              contextLine={[
+                experimentalSeries.length === 0 && !hasChartContent
+                  ? "Importe datos experimentales para habilitar Análisis."
+                  : workflowContextLine,
+                PR5_GE_VGB_DISTINCT,
+                formatPr5ContinuityDisposition(),
+              ].join(" ")}
               actions={[
+                {
+                  label: "Constructor y=f(x)",
+                  onClick: () => openDataView("curves"),
+                },
                 {
                   label: "Constructor Visual",
                   onClick: () => openDataView("visual-builder"),
@@ -22365,12 +22401,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </p>
             <WorkflowContinuityBar
               stepLabel="Ahora · Análisis"
-              contextLine={workflowContextLine}
+              contextLine={`${PR5_ANALYSIS_ROLE} ${PR5_COMPUTATION_NOT_STOPPED} ${workflowContextLine}`}
               actions={[
                 {
                   label: "← Datos",
                   onClick: () => selectWorkspaceSection("data"),
                 },
+                ...(hasEnoughDataForMultiDatasetComparison
+                  ? [
+                      {
+                        label: "Comparar en Resultados",
+                        onClick: () => {
+                          pendingComparisonResultsFocusRef.current = true;
+                          setShowMultiDatasetComparison(true);
+                          selectWorkspaceSection("results");
+                        },
+                      },
+                    ]
+                  : []),
                 {
                   label: "Ver gráfico / Resultados →",
                   onClick: () => selectWorkspaceSection("results"),
@@ -22427,8 +22475,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 <div className="min-w-0 flex-1">
                   {visibleInspectorCategories.length === 0 ? (
                     <p className={emptyState}>
-                      No hay categorías de análisis activas. Active módulos en
-                      el panel Módulos del dashboard.
+                      {PR5_GATED_MODULE_REASON} No hay categorías de análisis
+                      activas. Active módulos en el panel Módulos del dashboard.
                     </p>
                   ) : (
                   <>
@@ -24509,7 +24557,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             <h2 className={`${sectionLabel} mb-2`}>📈 Resultados</h2>
             <WorkflowContinuityBar
               stepLabel="Ahora · Resultados"
-              contextLine={workflowContextLine}
+              contextLine={`${PR5_RESULTS_ROLE} ${PR5_GE_VGB_DISTINCT} ${PR5_COMPARE_PATH} ${workflowContextLine}${
+                isReportsModuleEnabled ? "" : ` ${PR5_GATED_MODULE_REASON}`
+              }`}
               actions={[
                 {
                   label: "← Análisis",
@@ -24519,13 +24569,28 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   label: "Constructor Visual",
                   onClick: () => openDataView("visual-builder"),
                 },
+                ...(hasEnoughDataForMultiDatasetComparison
+                  ? [
+                      {
+                        label: "Revisar comparación",
+                        onClick: () => {
+                          pendingComparisonResultsFocusRef.current = true;
+                          setShowMultiDatasetComparison(true);
+                        },
+                      },
+                    ]
+                  : []),
                 {
                   label: "Ir a Reportes",
                   onClick: () => selectWorkspaceSection("reports"),
                   prominence: "primary",
+                  disabled: !isReportsModuleEnabled,
                 },
               ]}
             />
+            {!isBasicModuleEnabled ? (
+              <p className={emptyState}>{PR5_GATED_MODULE_REASON}</p>
+            ) : null}
             {projectVisualGraphs.length > 0 ? (
               <div className="mb-3 space-y-2">
                 <NotebookSection
@@ -28404,21 +28469,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </p>
             <WorkflowContinuityBar
               stepLabel="Ahora · Reportes"
-              contextLine={
-                canIncludeVgbPublicationFiguresInReport(
+              contextLine={formatPr5ReportPublicationContext({
+                liveReportAvailable: Boolean(scientificReport),
+                publicationCount: canIncludeVgbPublicationFiguresInReport(
                   vgbFigureLifecycleStore.publications
                 )
-                  ? `${PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE} ${vgbFigureLifecycleStore.publications.length} figura${
-                      vgbFigureLifecycleStore.publications.length === 1
-                        ? ""
-                        : "s"
-                    } listada${
-                      vgbFigureLifecycleStore.publications.length === 1
-                        ? ""
-                        : "s"
-                    }.`
-                  : ""
-              }
+                  ? vgbFigureLifecycleStore.publications.length
+                  : 0,
+              })}
               actions={[
                 {
                   label: "← Resultados",
@@ -28540,9 +28598,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </div>
                     </div>
                   ) : (
-                    <p className={emptyState}>
-                      No hay datos suficientes para generar un reporte.
-                    </p>
+                    <div className={emptyState}>
+                      <p>No hay datos suficientes para generar un reporte.</p>
+                      {canIncludeVgbPublicationFiguresInReport(
+                        vgbFigureLifecycleStore.publications
+                      ) ? (
+                        <p className="mt-2">
+                          {formatPr5ReportPublicationContext({
+                            liveReportAvailable: false,
+                            publicationCount:
+                              vgbFigureLifecycleStore.publications.length,
+                          })}
+                        </p>
+                      ) : null}
+                    </div>
                   )}
                 </NotebookSection>
               )}

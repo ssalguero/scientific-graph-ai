@@ -22,6 +22,67 @@ export const PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE =
 export const PR5_MULTIPLE_WORKING_FIGURES_DISCLOSURE =
   "Hay más de una figura de trabajo. Continúe desde Resultados para seleccionar cuál reconstruir. No se elige una figura automáticamente.";
 
+export const PR5_PROJECT_RECOVERY_DISPOSITION =
+  "Guardar y Abrir Proyecto recuperan el artefacto durable.";
+
+export const PR5_SESSION_RESTORE_DISPOSITION =
+  "Restaurar sesión (ventanas, pestañas o contenido efímero) no está disponible.";
+
+export const PR5_DOMAIN_UNDO_DISPOSITION =
+  "Deshacer y rehacer de dominio (datos, gráfico o análisis) no está implementado y permanece diferido.";
+
+export const PR5_LIVE_REPORT_ACTIVE_DATASET =
+  "El reporte científico vivo se genera desde el dataset activo.";
+
+export const PR5_PROJECT_PUBLICATION_SCOPE =
+  "Las figuras de publicación (VGB) pertenecen al Proyecto, no al dataset activo.";
+
+export const PR5_PUBLICATION_BANNER_NOT_FRESHNESS =
+  "El listado de publicación no implica que el reporte vivo del dataset activo contenga esa figura, ni que esté vigente o aprobado.";
+
+export const PR5_ANALYSIS_ROLE =
+  "Análisis configura y controla el cálculo. La revisión científica está en Resultados.";
+
+export const PR5_RESULTS_ROLE =
+  "Resultados es el centro de revisión científica. Análisis permanece como control.";
+
+export const PR5_GE_VGB_DISTINCT =
+  "Constructor y=f(x) (GE) y Constructor Visual (VGB) son capacidades distintas. VGB no alimenta Análisis automáticamente.";
+
+export const PR5_COMPARE_PATH =
+  "La comparación se revisa en Resultados. Un snapshot comparativo no se convierte en análisis vivo.";
+
+export const PR5_GATED_MODULE_REASON =
+  "Este módulo científico está desactivado. Actívelo en Módulos de la barra lateral para usarlo.";
+
+export const PR5_COMPUTATION_NOT_STOPPED =
+  "Ocultar un panel no detiene el cálculo científico mientras haya datos suficientes.";
+
+export const formatPr5ContinuityDisposition = (): string =>
+  `${PR5_PROJECT_RECOVERY_DISPOSITION} ${PR5_SESSION_RESTORE_DISPOSITION} ${PR5_DOMAIN_UNDO_DISPOSITION}`;
+
+export const formatPr5ReportPublicationContext = (input: {
+  liveReportAvailable: boolean;
+  publicationCount: number;
+}): string => {
+  if (input.publicationCount <= 0) {
+    return "";
+  }
+  const listing = `${PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE} ${input.publicationCount} figura${
+    input.publicationCount === 1 ? "" : "s"
+  } listada${input.publicationCount === 1 ? "" : "s"}.`;
+  if (input.liveReportAvailable) {
+    return `${PR5_LIVE_REPORT_ACTIVE_DATASET} ${listing}`;
+  }
+  return `${PR5_LIVE_REPORT_ACTIVE_DATASET} ${PR5_PROJECT_PUBLICATION_SCOPE} ${PR5_PUBLICATION_BANNER_NOT_FRESHNESS} ${listing}`;
+};
+
+export const formatPr5GatedModuleDescription = (
+  enabled: boolean,
+  description: string
+): string =>
+  enabled ? description : `${PR5_GATED_MODULE_REASON} ${description}`;
+
 export type ReopenVisualBuilderContext = {
   restoreVisualBuilderView: boolean;
   continueFigureId: string | null;

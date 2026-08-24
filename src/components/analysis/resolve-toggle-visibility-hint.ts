@@ -1,3 +1,4 @@
+import { PR5_COMPUTATION_NOT_STOPPED } from "@/lib/project/pr5-researcher-continuity";
 import { resolvePdfExportPolicy } from "@/lib/scientific/visibility/pdf-export-policy";
 import { getToggleRegistryEntry } from "@/lib/scientific/visibility/registry";
 import {
@@ -115,7 +116,7 @@ export const resolveToggleVisibilityLongHint = (
   const visualization = getVisualizationPhrase(entry.workspaceTab);
   const exportation = getExportPhrase(policy);
 
-  return `${calculation}. ${visualization}. ${exportation}.`;
+  return `${calculation}. ${visualization}. ${exportation}. ${PR5_COMPUTATION_NOT_STOPPED}`;
 };
 
 export const resolveToggleVisibilityHint = (
