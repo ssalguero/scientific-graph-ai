@@ -67,6 +67,7 @@ export type GraphEditorProjectIntegrationInput = {
   activeAuxiliaryColumns: ImportAuxiliaryColumn[];
   projectVisualGraphs: ProjectVisualGraphEntry[];
   setProjectVisualGraphs: (value: ProjectVisualGraphEntry[]) => void;
+  projectExtensions?: Record<string, unknown>;
   title: string;
   setTitle: (value: string) => void;
   curves: Curve[];
@@ -190,6 +191,7 @@ export const createGraphEditorProjectIntegration = (
         sourceDatasetId: input.comparisonSlots.B.sourceDatasetId ?? null,
       },
     },
+    extensions: input.projectExtensions,
     workspace: {
       activeSection:
         input.activeWorkspaceSection === "home"
