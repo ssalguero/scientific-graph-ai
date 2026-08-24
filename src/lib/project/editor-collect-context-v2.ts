@@ -59,6 +59,7 @@ export type EditorProjectCollectContextV2 = {
   activeColumnRegistry?: WorksheetColumnRegistry;
   activeAuxiliaryColumns?: ImportAuxiliaryColumn[];
   projectVisualGraphEntries?: readonly ProjectVisualGraphEntry[];
+  extensions?: Record<string, unknown>;
 };
 
 export type GraphEditorProjectSnapshotV2 = ScientificProjectV2;

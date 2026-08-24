@@ -301,5 +301,8 @@ export const collectProjectSnapshotV2 = (
     workspace: { ...ctx.workspace },
     graphContext: buildGraphContext(ctx),
     ...(visualGraphs !== undefined ? { visualGraphs } : {}),
+    ...(ctx.extensions !== undefined
+      ? { extensions: structuredClone(ctx.extensions) }
+      : {}),
   };
 };

@@ -153,6 +153,10 @@ export const SCIENTIFIC_REPORT_PDF_SECTION_RULES: Readonly<
   },
   "Effect Size & Power": { kind: "id", id: "sci-57-effect-size-power" },
   "Recomendación final": { kind: "id", id: "scientific-advisor" },
+  "Comparación Multi-Dataset (SCI-58)": {
+    kind: "id",
+    id: "sci-58-comparison-dashboard",
+  },
 };
 
 export const PDF_BLOCK_COMPARISON_ID = "sci-58-comparison-dashboard";

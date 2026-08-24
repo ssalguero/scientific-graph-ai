@@ -48,6 +48,14 @@ export const runPublicationPackLiteCases = (assertCase: AssertCase): void => {
         hasChartContent: false,
       }) === "blocked-no-report"
   );
+  assertCase(
+    "spe12.pack.status.blocked-unapproved",
+    resolvePublicationPackLiteStatus({
+      hasScientificReport: true,
+      hasChartContent: true,
+      reviewExportAllowed: false,
+    }) === "blocked-unapproved-content"
+  );
 
   assertCase(
     "spe12.pack.message.ready",
@@ -65,5 +73,10 @@ export const runPublicationPackLiteCases = (assertCase: AssertCase): void => {
     "spe12.pack.message.blocked",
     publicationPackLiteStatusMessage("blocked-no-report") ===
       PUBLICATION_PACK_LITE_MESSAGES.blocked
+  );
+  assertCase(
+    "spe12.pack.message.blocked-unapproved",
+    publicationPackLiteStatusMessage("blocked-unapproved-content") ===
+      PUBLICATION_PACK_LITE_MESSAGES.blockedUnapproved
   );
 };

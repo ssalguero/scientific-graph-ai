@@ -4,6 +4,7 @@ import {
   formatComparisonNumericDelta,
   type MultiDatasetComparisonAnalysis,
 } from "@/lib/scientific/comparison";
+import type { ScientificFreshnessAssessment } from "@/lib/scientific/contracts";
 import { ComparisonKpiTable } from "./ComparisonKpiTable";
 import { ComparisonMultivariateSection } from "./ComparisonMultivariateSection";
 import { partitionComparisonKpiRows } from "./comparisonKpiGroups";
@@ -18,10 +19,18 @@ const emptyState =
 
 type ScientificMultiDatasetComparisonDashboardProps = {
   analysis: MultiDatasetComparisonAnalysis;
+  slotAFreshness?: ScientificFreshnessAssessment;
+  slotBFreshness?: ScientificFreshnessAssessment;
+  onExportSlotANumeric?: () => void;
+  onExportSlotBNumeric?: () => void;
 };
 
 export function ScientificMultiDatasetComparisonDashboard({
   analysis,
+  slotAFreshness,
+  slotBFreshness,
+  onExportSlotANumeric,
+  onExportSlotBNumeric,
 }: ScientificMultiDatasetComparisonDashboardProps) {
   const readinessRow = analysis.kpiRows.find((row) => row.key === "readiness");
   const { core, methodological, enriched } = partitionComparisonKpiRows(
@@ -31,8 +40,18 @@ export function ScientificMultiDatasetComparisonDashboard({
   return (
     <div className="w-full mt-3 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <ComparisonSlotSummaryCard slotLabel="Slot A" profile={analysis.slotA} />
-        <ComparisonSlotSummaryCard slotLabel="Slot B" profile={analysis.slotB} />
+        <ComparisonSlotSummaryCard
+          slotLabel="Slot A"
+          profile={analysis.slotA}
+          freshness={slotAFreshness}
+          onExportNumeric={onExportSlotANumeric}
+        />
+        <ComparisonSlotSummaryCard
+          slotLabel="Slot B"
+          profile={analysis.slotB}
+          freshness={slotBFreshness}
+          onExportNumeric={onExportSlotBNumeric}
+        />
       </div>
       <div className={contentPanel}>
         <p className="text-xs font-semibold text-[var(--app-text-muted)]">
@@ -154,6 +173,10 @@ export function ScientificMultiDatasetComparisonDashboard({
               {line}
             </p>
           ))}
+          <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+            Contenido generado y no autoritativo hasta revisión y aprobación
+            explícitas de la persona investigadora.
+          </p>
         </div>
       ) : null}
     </div>

@@ -114,3 +114,29 @@ export type {
   ScientificProjectionSurface,
   ScientificSemanticProjection,
 } from "./semantic-parity";
+
+export {
+  SCIENTIFIC_GENERATED_TEXT_REVIEW_SCHEMA,
+  createGeneratedTextArtifactIdentityFromSnapshot,
+  createGeneratedTextContentIdentity,
+  createGeneratedTextEvidenceIdentity,
+  fingerprintGeneratedTextValue,
+  freezeGeneratedTextReviewRecord,
+  isGeneratedTextReviewIsoTimestamp,
+  isGeneratedTextReviewRecord,
+  reviveGeneratedTextReviewRecord,
+} from "./generated-text-review";
+export type {
+  CreateGeneratedTextReviewRecordInput,
+  GeneratedTextArtifactIdentity,
+  GeneratedTextClassification,
+  GeneratedTextContentIdentity,
+  GeneratedTextEvidenceIdentity,
+  GeneratedTextProducer,
+  GeneratedTextReviewRecord,
+  GeneratedTextReviewer,
+  GeneratedTextReviewState,
+  GeneratedTextReviewTransition,
+  GeneratedTextReviewTransitionKind,
+  GeneratedTextReviewValidity,
+} from "./generated-text-review";

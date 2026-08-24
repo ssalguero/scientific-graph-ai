@@ -118,6 +118,10 @@ export function ScientificPublicationDashboard({
           La revisión y autoridad científica permanecen en la persona
           investigadora.
         </p>
+        <p className="mt-1 font-semibold">
+          Contenido mixto generado: GENERATED hasta revisión y aprobación
+          explícitas; no es automáticamente citable ni una afirmación autoral.
+        </p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

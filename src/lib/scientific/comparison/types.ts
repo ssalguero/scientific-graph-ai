@@ -82,6 +82,7 @@ export type DatasetAnalysisProfileCaptureMetadata = {
   worksheetModifiedAtCapture?: boolean;
   provenance?: import("@/lib/scientific/contracts").ScientificProvenanceDescriptor;
   snapshot?: import("@/lib/scientific/contracts").CitableScientificSnapshot;
+  snapshotValidation?: "invalid";
   captureEngineFlags?: DatasetAnalysisProfileCaptureEngineFlags;
 };
 

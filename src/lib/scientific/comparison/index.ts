@@ -78,7 +78,10 @@ export {
   getPublicationReadinessClassificationLabel,
 } from "./labels";
 
-export type { MultiDatasetComparisonReportSection } from "./report";
+export type {
+  MultiDatasetComparisonProjectionContext,
+  MultiDatasetComparisonReportSection,
+} from "./report";
 
 export {
   MULTI_DATASET_COMPARISON_REPORT_TITLE,
@@ -87,6 +90,7 @@ export {
   canIncludeMultiDatasetComparisonInReport,
   getMultiDatasetComparisonPdfLines,
   getMultiDatasetComparisonReportLines,
+  replaceMultiDatasetComparisonWithPdfProjection,
 } from "./report";
 
 export {
@@ -98,6 +102,7 @@ export {
 } from "./snapshot";
 
 export {
+  buildScientificProjectionDisclosureLines,
   findProjectedSemanticValue,
   projectDatasetAnalysisProfile,
   readProjectedNumber,

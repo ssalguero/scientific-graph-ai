@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useCallback,
   useMemo,
   useRef,
   useState,
@@ -214,7 +215,10 @@ import {
 import { getSampleMeanAndStdDev } from "@/lib/scientific/shared/stats";
 import {
   composeScientificProvenance,
+  createGeneratedTextContentIdentity,
+  createGeneratedTextEvidenceIdentity,
   getScientificCapabilityIdentity,
+  type GeneratedTextReviewRecord,
   type ScientificProvenanceDescriptor,
 } from "@/lib/scientific/contracts";
 import {
@@ -280,11 +284,11 @@ import {
   buildCaptureMetadata,
   buildDatasetAnalysisProfile,
   buildMultiDatasetComparisonAnalysis,
-  buildMultiDatasetComparisonPdfReportSection,
+  buildMultiDatasetComparisonReportSection,
   canBuildDatasetAnalysisProfile,
   canBuildMultiDatasetComparisonAnalysis,
-  canIncludeMultiDatasetComparisonInReport,
   createEmptyComparisonSlots,
+  deriveComparisonSlotFreshness,
   formatDatasetAnalysisProfileMiniSummary,
   invalidateDatasetAnalysisProfileSource,
   mapInferentialToProfileSnapshot,
@@ -292,12 +296,19 @@ import {
   mapMultivariateToProfileSnapshot,
   mapNormalitySummaryToProfileSnapshot,
   mapPublicationToProfileSnapshot,
+  projectDatasetAnalysisProfile,
+  replaceMultiDatasetComparisonWithPdfProjection,
   type ComparisonDatasetInfo,
   type ComparisonSlot,
   type ComparisonSlotId,
   type DatasetAnalysisProfile,
   type MultiDatasetComparisonAnalysis,
+  type MultiDatasetComparisonProjectionContext,
 } from "@/lib/scientific/comparison";
+import {
+  createScientificNumericExport,
+} from "@/lib/scientific/export";
+import { downloadScientificNumericExport } from "./scientificNumericExportActions";
 import {
   buildConsistencyEngineAnalysis,
   getConsistencyEngineClassificationLabel,
@@ -406,6 +417,25 @@ import {
   shouldIncludePdfExportBlock,
 } from "@/lib/scientific/report/pdf-section-filter";
 import { prepareScientificReportPdfLine } from "@/lib/scientific/report/pdf-text";
+import {
+  SCIENTIFIC_REPORT_SUMMARY_REVIEW_DESCRIPTOR,
+  getScientificReportBlockReviewDescriptor,
+} from "@/lib/scientific/report/generated-text-classification";
+import {
+  approveGeneratedTextReview,
+  createLiveGeneratedTextReview,
+  markGeneratedTextResearcherReviewed,
+} from "@/lib/scientific/report/review-authority";
+import {
+  guardGeneratedTextExportManifest,
+  type GeneratedTextExportManifest,
+} from "@/lib/scientific/report/review-export-guard";
+import {
+  getReviewAuthorityRecordsFromExtensions,
+  reconcileGeneratedTextReviewRecords,
+  resolveCurrentGeneratedTextReviewBinding,
+  setReviewAuthorityRecordsOnExtensions,
+} from "@/lib/scientific/report/review-persistence";
 import {
   PUBLICATION_PACK_LITE_MESSAGES,
   PUBLICATION_PACK_LITE_SEMANTICS,
@@ -11286,6 +11316,74 @@ type ScientificReport = {
   sections: ScientificReportSection[];
 };
 
+type ScientificReportReviewDraft = {
+  blockId: string;
+  record: GeneratedTextReviewRecord;
+};
+
+const buildScientificReportReviewDrafts = (
+  report: ScientificReport,
+  provenance: ScientificProvenanceDescriptor,
+  advisorPdfContent: string
+): ScientificReportReviewDraft[] => {
+  const blocks = [
+    {
+      descriptor: SCIENTIFIC_REPORT_SUMMARY_REVIEW_DESCRIPTOR,
+      content: report.summary,
+    },
+    ...report.sections.map((section) => ({
+      descriptor: getScientificReportBlockReviewDescriptor(section.title),
+      content: section.content.join("\n"),
+    })),
+    {
+      descriptor: {
+        blockId: "scientific-report.pdf-advisor",
+        classification: "advisory" as const,
+        resultContractId: "sci-60.publication-dashboard" as const,
+      },
+      content: advisorPdfContent,
+    },
+  ];
+
+  return blocks.map(({ descriptor, content }) => {
+    const semanticEvidence = {
+      blockId: descriptor.blockId,
+      resultContractId: descriptor.resultContractId,
+      provenance,
+      content,
+    };
+    const contentIdentity = createGeneratedTextContentIdentity(content);
+    const evidenceIdentity = createGeneratedTextEvidenceIdentity(
+      semanticEvidence,
+      "live-semantic-evidence"
+    );
+    const recordId = [
+      descriptor.blockId,
+      contentIdentity.fingerprint,
+      evidenceIdentity.fingerprint,
+    ].join(":");
+    return {
+      blockId: descriptor.blockId,
+      record: createLiveGeneratedTextReview({
+        recordId,
+        artifactId: descriptor.blockId,
+        producer: {
+          kind: "system",
+          id: "scientific-report-deterministic-generator",
+          label: "Scientific Graph AI report generator",
+          version: "1",
+        },
+        generatedAt: report.generatedAt,
+        content,
+        classification: descriptor.classification,
+        resultContractId: descriptor.resultContractId,
+        provenance,
+        semanticEvidence,
+      }),
+    };
+  });
+};
+
 const getStatisticalAdvisorConfidenceLabel = (
   confidence: StatisticalRecommendationConfidence
 ) =>
@@ -11419,6 +11517,8 @@ type ScientificReportPdfInput = {
   statisticalRecommendation: StatisticalRecommendation | null;
   datasetInfo?: ImportedDatasetInfo | null;
   comparisonAnalysis?: MultiDatasetComparisonAnalysis | null;
+  comparisonProjectionContext?: MultiDatasetComparisonProjectionContext;
+  reviewManifest: GeneratedTextExportManifest;
   /** When set, PDF body respects ARCH-6 / EXPORT-2 toggle policy. Omit = historical all-sections. */
   allowedPdfSectionIds?: readonly string[];
 };
@@ -11469,6 +11569,13 @@ const buildAdvisorPdfSectionLines = (
 const exportScientificReportPdf = async (
   input: ScientificReportPdfInput
 ): Promise<void> => {
+  if (!input.reviewManifest.allowed) {
+    throw new Error(
+      `Scientific content review blocks PDF export: ${input.reviewManifest.reasons.join(
+        " "
+      )}`
+    );
+  }
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const footerTimestamp = new Date().toLocaleString();
@@ -11552,6 +11659,9 @@ const exportScientificReportPdf = async (
 
   drawSectionHeading("Resumen ejecutivo");
   drawWrappedParagraph(input.report.summary, 11, "normal");
+  input.reviewManifest.disclosures.forEach((disclosure) =>
+    drawWrappedParagraph(disclosure, 9, "normal")
+  );
   cursorY += 4;
 
   if (input.chartImageDataUrl) {
@@ -11590,37 +11700,27 @@ const exportScientificReportPdf = async (
   doc.addPage();
   cursorY = PDF_MARGIN_MM;
 
-  const reportSectionsForPdf =
+  const filteredReportSectionsForPdf =
     input.allowedPdfSectionIds === undefined
       ? input.report.sections
       : filterScientificReportSectionsForPdf(
           input.report.sections,
           input.allowedPdfSectionIds
         );
+  const reportSectionsForPdf =
+    replaceMultiDatasetComparisonWithPdfProjection({
+      sections: filteredReportSectionsForPdf,
+      analysis: input.comparisonAnalysis ?? null,
+      context: input.comparisonProjectionContext,
+      included: shouldIncludePdfExportBlock(
+        PDF_BLOCK_COMPARISON_ID,
+        input.allowedPdfSectionIds
+      ),
+    });
 
   reportSectionsForPdf.forEach((section) => {
     drawReportSection(section);
   });
-
-  if (
-    canIncludeMultiDatasetComparisonInReport(
-      input.comparisonAnalysis ?? null
-    ) &&
-    shouldIncludePdfExportBlock(
-      PDF_BLOCK_COMPARISON_ID,
-      input.allowedPdfSectionIds
-    )
-  ) {
-    const comparisonSection = buildMultiDatasetComparisonPdfReportSection(
-      input.comparisonAnalysis!
-    );
-    drawSectionHeading(comparisonSection.title);
-    comparisonSection.content.forEach((line) => {
-      drawWrappedParagraph(line, 11, "normal");
-      cursorY += 1;
-    });
-    cursorY += 3;
-  }
 
   if (
     shouldIncludePdfExportBlock(
@@ -15273,6 +15373,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [publicationPackLiteMessage, setPublicationPackLiteMessage] = useState<
     string | null
   >(null);
+  const [scientificNumericExportMessage, setScientificNumericExportMessage] =
+    useState<string | null>(null);
+  const [generatedTextCopyMessage, setGeneratedTextCopyMessage] = useState<
+    string | null
+  >(null);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>("linear");
   const [naturalLanguageEnabled, setNaturalLanguageEnabled] = useState(true);
   const [hiddenLegendKeys, setHiddenLegendKeys] = useState<string[]>([]);
@@ -15430,6 +15535,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [projectMetadata, setProjectMetadata] = useState<ProjectMetadataV1>(() =>
     createInitialProjectMetadata()
+  );
+  const [projectExtensions, setProjectExtensions] = useState<
+    Record<string, unknown>
+  >({});
+  const auxiliaryGeneratedReviewIdsRef = useRef<ReadonlySet<string>>(
+    new Set()
   );
   const [isProjectDirty, setIsProjectDirty] = useState(false);
   const [projectFileFeedback, setProjectFileFeedback] =
@@ -15991,6 +16102,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       return false;
     }
 
+    const allowedPdfSectionIds = resolvePdfSectionsForState(visibilityState);
+    const reviewManifest =
+      buildScientificReportExportReviewManifest(allowedPdfSectionIds);
+    if (!reviewManifest.allowed) {
+      setScientificReportPdfMessage(
+        `Exportación bloqueada: ${reviewManifest.reasons[0] ?? "hay contenido científico sin aprobación vigente."}`
+      );
+      window.setTimeout(() => setScientificReportPdfMessage(null), 6000);
+      return false;
+    }
+
     setScientificReportPdfExporting(true);
     setScientificReportPdfMessage("Exportando PDF...");
 
@@ -16013,13 +16135,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
 
     try {
-      const allowedPdfSectionIds = resolvePdfSectionsForState(visibilityState);
       await exportScientificReportPdf({
         report: scientificReport,
         chartImageDataUrl,
         statisticalRecommendation,
         datasetInfo: currentDatasetInfo,
         comparisonAnalysis,
+        comparisonProjectionContext,
+        reviewManifest,
         allowedPdfSectionIds,
       });
       setScientificReportPdfMessage("PDF descargado correctamente.");
@@ -16040,9 +16163,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     const packStatus = resolvePublicationPackLiteStatus({
       hasScientificReport: Boolean(scientificReport),
       hasChartContent: chartReady,
+      reviewExportAllowed: buildScientificReportExportReviewManifest(
+        resolvePdfSectionsForState(visibilityState)
+      ).allowed,
     });
 
-    if (packStatus === "blocked-no-report") {
+    if (
+      packStatus === "blocked-no-report" ||
+      packStatus === "blocked-unapproved-content"
+    ) {
       setPublicationPackLiteMessage(
         publicationPackLiteStatusMessage(packStatus)
       );
@@ -18084,7 +18213,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     ]);
     selectWorkspaceSection("results");
   };
-  const buildCurrentComparisonProfileProvenance = (
+  const buildCurrentComparisonProfileProvenance = useCallback((
     slotLabel: ComparisonSlotId
   ): ScientificProvenanceDescriptor | null => {
     if (!currentDatasetInfo) {
@@ -18150,7 +18279,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           ]
         : [],
     });
-  };
+  }, [
+    currentDatasetInfo,
+    activeDatasetId,
+    sessionDatasets,
+    worksheetModified,
+    canonicalNormalityAssessment,
+    visibleExperimentalSeries,
+    methodologicalDashboardAnalysis,
+    publicationReadinessAnalyzerAnalysis,
+    evidenceStrengthEngineAnalysis,
+    multivariateDashboardAnalysis,
+    effectSizePowerAnalysis,
+  ]);
   const buildCurrentDatasetAnalysisProfile = (
     slotLabel: ComparisonSlotId
   ): DatasetAnalysisProfile | null => {
@@ -18421,10 +18562,89 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       slotB: profileB,
     });
   }, [comparisonSlots.A.profile, comparisonSlots.B.profile]);
+  const comparisonProjectionContext =
+    useMemo<MultiDatasetComparisonProjectionContext>(() => {
+      const buildAssessment = (slotId: ComparisonSlotId) => {
+        const slot = comparisonSlots[slotId];
+        if (!slot.profile) {
+          return undefined;
+        }
+        const sourceDataset = slot.sourceDatasetId
+          ? sessionDatasets.find((dataset) => dataset.id === slot.sourceDatasetId)
+          : undefined;
+        const sourceAvailable =
+          slot.profile.captureMetadata?.sourceUnavailable === true
+            ? false
+            : slot.sourceDatasetId
+              ? sourceDataset !== undefined
+              : "unknown";
+        const currentProvenance =
+          sourceDataset?.id === activeDatasetId
+            ? buildCurrentComparisonProfileProvenance(slotId)
+            : null;
+        return deriveComparisonSlotFreshness({
+          profile: slot.profile,
+          currentProvenance,
+          sourceAvailable,
+        }).assessment;
+      };
+      return {
+        slotAFreshness: buildAssessment("A"),
+        slotBFreshness: buildAssessment("B"),
+      };
+    }, [
+      comparisonSlots,
+      sessionDatasets,
+      activeDatasetId,
+      buildCurrentComparisonProfileProvenance,
+    ]);
+  const exportComparisonSlotScientificNumeric = useCallback(
+    (slotId: ComparisonSlotId) => {
+      const profile = comparisonSlots[slotId].profile;
+      const freshness =
+        slotId === "A"
+          ? comparisonProjectionContext.slotAFreshness
+          : comparisonProjectionContext.slotBFreshness;
+      if (!profile) {
+        setScientificNumericExportMessage(
+          `Slot ${slotId}: no hay perfil científico para exportar.`
+        );
+        return;
+      }
+      const projection = projectDatasetAnalysisProfile(
+        profile,
+        "numeric-export-foundation",
+        freshness
+      );
+      if (!projection) {
+        setScientificNumericExportMessage(
+          `Slot ${slotId}: el perfil legado no contiene un snapshot científico autoritativo.`
+        );
+        return;
+      }
+      try {
+        const artifact = createScientificNumericExport({ projection });
+        downloadScientificNumericExport(artifact, {
+          fileName: `${profile.datasetInfo.fileName}-slot-${slotId}`,
+        });
+        setScientificNumericExportMessage(
+          `Slot ${slotId}: exportación científica numérica descargada.`
+        );
+      } catch (error) {
+        console.error("Error al exportar datos científicos numéricos:", error);
+        setScientificNumericExportMessage(
+          `Slot ${slotId}: no se pudo crear la exportación científica numérica.`
+        );
+      } finally {
+        window.setTimeout(() => setScientificNumericExportMessage(null), 5000);
+      }
+    },
+    [comparisonSlots, comparisonProjectionContext]
+  );
   const hasEnoughDataForMultiDatasetComparison = comparisonAnalysis !== null;
   const scientificReport = useMemo(
-    () =>
-      generateScientificReport({
+    () => {
+      const report = generateScientificReport({
         graphTitle: title,
         series: visibleExperimentalSeries,
         experimentalStatistics,
@@ -18479,7 +18699,21 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         kruskalWallisResult,
         statisticalRecommendation,
         datasetInfo: currentDatasetInfo,
-      }),
+      });
+      if (!report || !comparisonAnalysis) {
+        return report;
+      }
+      return {
+        ...report,
+        sections: [
+          ...report.sections,
+          buildMultiDatasetComparisonReportSection(
+            comparisonAnalysis,
+            comparisonProjectionContext
+          ),
+        ],
+      };
+    },
     [
       title,
       visibleExperimentalSeries,
@@ -18535,7 +18769,248 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       kruskalWallisResult,
       statisticalRecommendation,
       currentDatasetInfo,
+      comparisonAnalysis,
+      comparisonProjectionContext,
     ]
+  );
+  const scientificReportProvenance = useMemo(() => {
+    const activeSessionDataset = activeDatasetId
+      ? sessionDatasets.find((dataset) => dataset.id === activeDatasetId)
+      : undefined;
+    const currentWorksheetModified =
+      activeSessionDataset?.worksheetModified ?? worksheetModified;
+    return composeScientificProvenance({
+      dataset: {
+        id: activeDatasetId ?? currentDatasetInfo?.fileName ?? "live-dataset",
+        label: currentDatasetInfo?.fileName ?? "Dataset activo sin metadatos",
+      },
+      source: {
+        kind: "experimental-series",
+        id:
+          activeDatasetId ??
+          currentDatasetInfo?.fileName ??
+          "live-experimental-series",
+        label: "Series experimentales del reporte",
+      },
+      series: visibleExperimentalSeries.map((series) => ({
+        id: series.id,
+        label: series.name,
+        role: "input",
+      })),
+      config: {
+        id: "scientific-report-config",
+        values: {
+          sourceRevision: activeSessionDataset?.sourceRevision ?? 0,
+          worksheetModified: currentWorksheetModified,
+          liveSeriesEvidenceFingerprint: createGeneratedTextEvidenceIdentity(
+            visibleExperimentalSeries,
+            "live-semantic-evidence"
+          ).fingerprint,
+          correlationMethod,
+          outlierMethod,
+          nonParametricMode,
+          regressionModel,
+          errorBarMode,
+          histogramBins,
+          selectedTTestSeriesA,
+          selectedTTestSeriesB,
+          selectedMannWhitneySeriesA,
+          selectedMannWhitneySeriesB,
+        },
+      },
+      method: {
+        id: "scientific-report-deterministic-generator",
+        label: "Generador determinístico de reporte científico",
+        version: "1",
+        parameters: {},
+      },
+      approximation: {
+        kind: "mixed",
+        details:
+          "Cada bloque conserva las aproximaciones y advertencias de sus contratos científicos fuente.",
+      },
+      warnings: currentWorksheetModified
+        ? [
+            {
+              code: "WORKSHEET_MODIFIED",
+              message:
+                "La hoja de trabajo contiene cambios que forman parte de la evidencia revisada.",
+              severity: "warning",
+            },
+          ]
+        : [],
+    });
+  }, [
+    currentDatasetInfo,
+    activeDatasetId,
+    sessionDatasets,
+    worksheetModified,
+    visibleExperimentalSeries,
+    correlationMethod,
+    outlierMethod,
+    nonParametricMode,
+    regressionModel,
+    errorBarMode,
+    histogramBins,
+    selectedTTestSeriesA,
+    selectedTTestSeriesB,
+    selectedMannWhitneySeriesA,
+    selectedMannWhitneySeriesB,
+  ]);
+  const scientificReportReviewDrafts = useMemo(
+    () =>
+      scientificReport && scientificReportProvenance
+        ? buildScientificReportReviewDrafts(
+            scientificReport,
+            scientificReportProvenance,
+            buildAdvisorPdfSectionLines(statisticalRecommendation).join("\n")
+          )
+        : [],
+    [
+      scientificReport,
+      scientificReportProvenance,
+      statisticalRecommendation,
+    ]
+  );
+  const persistedReviewAuthorityRecords = useMemo(
+    () => getReviewAuthorityRecordsFromExtensions(projectExtensions),
+    [projectExtensions]
+  );
+
+  useEffect(() => {
+    if (scientificReportReviewDrafts.length === 0) {
+      return;
+    }
+    setProjectExtensions((previous) => {
+      const records = getReviewAuthorityRecordsFromExtensions(previous);
+      const reconciled = reconcileGeneratedTextReviewRecords(
+        records,
+        scientificReportReviewDrafts.map((draft) => draft.record),
+        new Date().toISOString()
+      );
+      return reconciled === records
+        ? previous
+        : setReviewAuthorityRecordsOnExtensions(previous, reconciled);
+    });
+  }, [scientificReportReviewDrafts]);
+
+  const currentScientificReportReviewDrafts = useMemo(
+    () =>
+      scientificReportReviewDrafts.map((draft) => ({
+        ...draft,
+        record:
+          resolveCurrentGeneratedTextReviewBinding(
+            draft.record,
+            persistedReviewAuthorityRecords
+          ) ?? draft.record,
+      })),
+    [persistedReviewAuthorityRecords, scientificReportReviewDrafts]
+  );
+  const updateCurrentScientificReportReviews = useCallback(
+    (
+      update: (record: GeneratedTextReviewRecord) => GeneratedTextReviewRecord
+    ) => {
+      const currentIds = new Set(
+        currentScientificReportReviewDrafts.map(
+          (draft) => draft.record.recordId
+        )
+      );
+      auxiliaryGeneratedReviewIdsRef.current.forEach((recordId) =>
+        currentIds.add(recordId)
+      );
+      setProjectExtensions((previous) => {
+        const records = getReviewAuthorityRecordsFromExtensions(previous);
+        return setReviewAuthorityRecordsOnExtensions(
+          previous,
+          records.map((record) =>
+            currentIds.has(record.recordId) ? update(record) : record
+          )
+        );
+      });
+    },
+    [currentScientificReportReviewDrafts]
+  );
+  const markCurrentScientificReportReviewed = useCallback(() => {
+    const at = new Date().toISOString();
+    updateCurrentScientificReportReviews((record) =>
+      record.state === "GENERATED" && record.validity === "CURRENT"
+        ? markGeneratedTextResearcherReviewed(record, {
+            reviewer: {
+              kind: "researcher",
+              id: "current-project-researcher",
+              name: "Investigador/a del proyecto",
+            },
+            at,
+          })
+        : record
+    );
+  }, [updateCurrentScientificReportReviews]);
+  const approveCurrentScientificReport = useCallback(() => {
+    const at = new Date().toISOString();
+    updateCurrentScientificReportReviews((record) =>
+      record.state === "RESEARCHER_REVIEWED" &&
+      record.validity === "CURRENT"
+        ? approveGeneratedTextReview(record, {
+            reviewer: {
+              kind: "researcher",
+              id: "current-project-researcher",
+              name: "Investigador/a del proyecto",
+            },
+            at,
+          })
+        : record
+    );
+  }, [updateCurrentScientificReportReviews]);
+  const buildScientificReportExportReviewManifest = useCallback(
+    (
+      allowedPdfSectionIds: readonly string[] | undefined,
+      includePdfOnlyBlocks = true
+    ): GeneratedTextExportManifest => {
+      if (!scientificReport) {
+        return guardGeneratedTextExportManifest([]);
+      }
+      if (currentScientificReportReviewDrafts.length === 0) {
+        return guardGeneratedTextExportManifest([
+          { included: true, record: null },
+        ]);
+      }
+      const includedBlockIds = new Set<string>([
+        SCIENTIFIC_REPORT_SUMMARY_REVIEW_DESCRIPTOR.blockId,
+        ...(allowedPdfSectionIds === undefined
+          ? scientificReport.sections
+          : filterScientificReportSectionsForPdf(
+              scientificReport.sections,
+              allowedPdfSectionIds
+            )
+        ).map(
+          (section) =>
+            getScientificReportBlockReviewDescriptor(section.title).blockId
+        ),
+      ]);
+      if (
+        includePdfOnlyBlocks &&
+        shouldIncludePdfExportBlock(
+          PDF_BLOCK_ADVISOR_ID,
+          allowedPdfSectionIds
+        )
+      ) {
+        includedBlockIds.add("scientific-report.pdf-advisor");
+      }
+      return guardGeneratedTextExportManifest(
+        currentScientificReportReviewDrafts.map((draft) => ({
+          included: includedBlockIds.has(draft.blockId),
+          record: draft.record,
+        }))
+      );
+    },
+    [scientificReport, currentScientificReportReviewDrafts]
+  );
+  const currentScientificReportExportReviewManifest = useMemo(
+    () =>
+      buildScientificReportExportReviewManifest(
+        resolvePdfSectionsForState(visibilityState)
+      ),
+    [buildScientificReportExportReviewManifest, visibilityState]
   );
   const scientificInterpretation = useMemo(
     () =>
@@ -18751,12 +19226,175 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       scientificInterpretation,
     ]
   );
+  const auxiliaryGeneratedTextReviewDrafts = useMemo(() => {
+    if (!scientificReportProvenance || !scientificReport) {
+      return [];
+    }
+    const blocks = [
+      scientificInterpretation
+        ? {
+            blockId: "scientific-interpretation.generated",
+            classification: "mixed" as const,
+            content: formatScientificInterpretationAsText(
+              scientificInterpretation
+            ),
+          }
+        : null,
+      scientificAssistantReport
+        ? {
+            blockId: "scientific-assistant.generated",
+            classification: "advisory" as const,
+            content: formatScientificAssistantReportAsText(
+              scientificAssistantReport
+            ),
+          }
+        : null,
+    ].filter(
+      (
+        block
+      ): block is {
+        blockId: string;
+        classification: "mixed" | "advisory";
+        content: string;
+      } => block !== null
+    );
+    return blocks.map((block): ScientificReportReviewDraft => {
+      const semanticEvidence = {
+        blockId: block.blockId,
+        resultContractId: "sci-60.publication-dashboard",
+        provenance: scientificReportProvenance,
+        content: block.content,
+      };
+      const contentIdentity = createGeneratedTextContentIdentity(block.content);
+      const evidenceIdentity = createGeneratedTextEvidenceIdentity(
+        semanticEvidence,
+        "live-semantic-evidence"
+      );
+      return {
+        blockId: block.blockId,
+        record: createLiveGeneratedTextReview({
+          recordId: [
+            block.blockId,
+            contentIdentity.fingerprint,
+            evidenceIdentity.fingerprint,
+          ].join(":"),
+          artifactId: block.blockId,
+          producer: {
+            kind: "system",
+            id: block.blockId,
+            label: "Scientific Graph AI deterministic generated prose",
+            version: "1",
+          },
+          generatedAt: scientificReport.generatedAt,
+          content: block.content,
+          classification: block.classification,
+          resultContractId: "sci-60.publication-dashboard",
+          provenance: scientificReportProvenance,
+          semanticEvidence,
+        }),
+      };
+    });
+  }, [
+    scientificReport,
+    scientificReportProvenance,
+    scientificInterpretation,
+    scientificAssistantReport,
+  ]);
+
+  useEffect(() => {
+    if (auxiliaryGeneratedTextReviewDrafts.length === 0) {
+      return;
+    }
+    setProjectExtensions((previous) => {
+      const records = getReviewAuthorityRecordsFromExtensions(previous);
+      const reconciled = reconcileGeneratedTextReviewRecords(
+        records,
+        auxiliaryGeneratedTextReviewDrafts.map((draft) => draft.record),
+        new Date().toISOString()
+      );
+      return reconciled === records
+        ? previous
+        : setReviewAuthorityRecordsOnExtensions(previous, reconciled);
+    });
+  }, [auxiliaryGeneratedTextReviewDrafts]);
+
+  const currentAuxiliaryGeneratedTextReviewDrafts = useMemo(
+    () =>
+      auxiliaryGeneratedTextReviewDrafts.map((draft) => ({
+        ...draft,
+        record:
+          resolveCurrentGeneratedTextReviewBinding(
+            draft.record,
+            persistedReviewAuthorityRecords
+          ) ?? draft.record,
+      })),
+    [
+      auxiliaryGeneratedTextReviewDrafts,
+      persistedReviewAuthorityRecords,
+    ]
+  );
+  useEffect(() => {
+    auxiliaryGeneratedReviewIdsRef.current = new Set(
+      currentAuxiliaryGeneratedTextReviewDrafts.map(
+        (draft) => draft.record.recordId
+      )
+    );
+  }, [currentAuxiliaryGeneratedTextReviewDrafts]);
+  const allCurrentGeneratedTextReviewDrafts = useMemo(
+    () => [
+      ...currentScientificReportReviewDrafts,
+      ...currentAuxiliaryGeneratedTextReviewDrafts,
+    ],
+    [
+      currentScientificReportReviewDrafts,
+      currentAuxiliaryGeneratedTextReviewDrafts,
+    ]
+  );
+  const allGeneratedTextReviewCounts = useMemo(
+    () =>
+      allCurrentGeneratedTextReviewDrafts.reduce(
+        (counts, draft) => {
+          counts[draft.record.state] += 1;
+          return counts;
+        },
+        {
+          GENERATED: 0,
+          RESEARCHER_REVIEWED: 0,
+          RESEARCHER_APPROVED: 0,
+        }
+      ),
+    [allCurrentGeneratedTextReviewDrafts]
+  );
+  const currentAuxiliaryReviewByBlockId = useMemo(
+    () =>
+      new Map(
+        currentAuxiliaryGeneratedTextReviewDrafts.map((draft) => [
+          draft.blockId,
+          draft.record,
+        ])
+      ),
+    [currentAuxiliaryGeneratedTextReviewDrafts]
+  );
   const handleCopyScientificReport = async () => {
     if (!scientificReport) return;
+    const copyManifest = buildScientificReportExportReviewManifest(
+      undefined,
+      false
+    );
+    if (!copyManifest.allowed) {
+      setGeneratedTextCopyMessage(
+        "Copia bloqueada: el contenido interpretativo incluido requiere aprobación investigadora vigente."
+      );
+      window.setTimeout(() => setGeneratedTextCopyMessage(null), 5000);
+      return;
+    }
 
     try {
       await navigator.clipboard.writeText(
-        formatScientificReportAsText(scientificReport)
+        [
+          ...copyManifest.disclosures,
+          formatScientificReportAsText(scientificReport),
+        ].join("\n\n")
       );
       setScientificReportCopied(true);
       window.setTimeout(() => setScientificReportCopied(false), 2000);
@@ -18766,10 +19404,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   };
   const handleCopyScientificInterpretation = async () => {
     if (!scientificInterpretation) return;
+    const record = currentAuxiliaryReviewByBlockId.get(
+      "scientific-interpretation.generated"
+    );
+    const manifest = guardGeneratedTextExportManifest([
+      { included: true, record },
+    ]);
+    if (!manifest.allowed) {
+      setGeneratedTextCopyMessage(
+        "Copia bloqueada: la interpretación generada requiere aprobación investigadora vigente."
+      );
+      window.setTimeout(() => setGeneratedTextCopyMessage(null), 5000);
+      return;
+    }
 
     try {
       await navigator.clipboard.writeText(
-        formatScientificInterpretationAsText(scientificInterpretation)
+        [
+          ...manifest.disclosures,
+          formatScientificInterpretationAsText(scientificInterpretation),
+        ].join("\n\n")
       );
       setScientificInterpretationCopied(true);
       window.setTimeout(() => setScientificInterpretationCopied(false), 2000);
@@ -18779,10 +19433,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   };
   const handleCopyScientificAssistantReport = async () => {
     if (!scientificAssistantReport) return;
+    const record = currentAuxiliaryReviewByBlockId.get(
+      "scientific-assistant.generated"
+    );
+    const manifest = guardGeneratedTextExportManifest([
+      { included: true, record },
+    ]);
+    if (!manifest.allowed) {
+      setGeneratedTextCopyMessage(
+        "Copia bloqueada: el texto advisory generado requiere aprobación investigadora vigente."
+      );
+      window.setTimeout(() => setGeneratedTextCopyMessage(null), 5000);
+      return;
+    }
 
     try {
       await navigator.clipboard.writeText(
-        formatScientificAssistantReportAsText(scientificAssistantReport)
+        [
+          ...manifest.disclosures,
+          formatScientificAssistantReportAsText(scientificAssistantReport),
+        ].join("\n\n")
       );
       setScientificAssistantCopied(true);
       window.setTimeout(() => setScientificAssistantCopied(false), 2000);
@@ -19593,6 +20263,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     activeAuxiliaryColumns,
     projectVisualGraphs,
     setProjectVisualGraphs,
+    projectExtensions,
     title,
     setTitle,
     curves,
@@ -19658,6 +20329,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     clearEphemeralUiState,
     onProjectOpened: (patch) => {
       clearProjectHistory();
+      setProjectExtensions(
+        patch.project.extensions
+          ? structuredClone(patch.project.extensions)
+          : {}
+      );
       const runtimeEntries = extractVisualGraphRuntimeState(patch);
       const injected = injectVisualGraphEntriesBySourceDatasetId(
         patch.sessionDatasets,
@@ -19824,6 +20500,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const handleNewProject = () => {
     pendingSlotCaptureRef.current = null;
     resetProjectVisualGraphState();
+    setProjectExtensions({});
     setSessionDatasets([]);
     setActiveDatasetId(null);
     setWorksheetModified(false);
@@ -25983,7 +26660,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className={contentPanel}>
                         <ScientificMultiDatasetComparisonDashboard
                           analysis={comparisonAnalysis}
+                          slotAFreshness={
+                            comparisonProjectionContext.slotAFreshness
+                          }
+                          slotBFreshness={
+                            comparisonProjectionContext.slotBFreshness
+                          }
+                          onExportSlotANumeric={() =>
+                            exportComparisonSlotScientificNumeric("A")
+                          }
+                          onExportSlotBNumeric={() =>
+                            exportComparisonSlotScientificNumeric("B")
+                          }
                         />
+                        {scientificNumericExportMessage ? (
+                          <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                            {scientificNumericExportMessage}
+                          </p>
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -27266,6 +27960,58 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           scientificReport.generatedAt
                         )}
                       </p>
+                      <div className="mt-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/50 p-3">
+                        <p className="text-xs font-semibold text-[var(--app-heading)]">
+                          Autoridad de revisión científica
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                          Bloques actuales (reporte, interpretación y advisory):
+                          {" "}GENERATED {allGeneratedTextReviewCounts.GENERATED}
+                          {" "}· REVIEWED{" "}
+                          {
+                            allGeneratedTextReviewCounts.RESEARCHER_REVIEWED
+                          }
+                          {" "}· APPROVED{" "}
+                          {
+                            allGeneratedTextReviewCounts.RESEARCHER_APPROVED
+                          }
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                          El contenido generado no es autoritativo ni citable
+                          como afirmación de la persona investigadora. Revisar
+                          no implica aprobar.
+                        </p>
+                        <div className={`${actionBarGroup} mt-2`}>
+                          <button
+                            type="button"
+                            onClick={markCurrentScientificReportReviewed}
+                            disabled={
+                              allGeneratedTextReviewCounts.GENERATED === 0
+                            }
+                            className={`${btnOutline} disabled:cursor-not-allowed disabled:opacity-50`}
+                          >
+                            Marcar revisión explícita
+                          </button>
+                          <button
+                            type="button"
+                            onClick={approveCurrentScientificReport}
+                            disabled={
+                              allGeneratedTextReviewCounts.RESEARCHER_REVIEWED ===
+                              0
+                            }
+                            className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-50`}
+                          >
+                            Aprobar contenido vigente
+                          </button>
+                        </div>
+                        {!currentScientificReportExportReviewManifest.allowed ? (
+                          <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                            PDF y Pack Lite bloqueados para el contenido
+                            interpretativo/advisory incluido hasta aprobación
+                            vigente.
+                          </p>
+                        ) : null}
+                      </div>
                       <div className={`${contentPanel} mt-3`}>
                         <p className="font-semibold text-sm">
                           Resumen ejecutivo
@@ -27416,10 +28162,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <button
                         type="button"
                         onClick={exportChartJson}
-                        title="Exportar JSON"
+                        title="Exportar configuración del gráfico (no es exportación científica numérica)"
                         className={actionBarBtnExport}
                       >
-                        JSON
+                        Configuración JSON
                       </button>
                     </div>
                   </div>
@@ -27498,6 +28244,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       : "📋 Copiar análisis"}
                   </button>
                 </div>
+                <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                  La copia de contenido interpretativo o advisory exige
+                  aprobación investigadora vigente e incluye disclosure de
+                  autoridad generada.
+                </p>
+                {generatedTextCopyMessage ? (
+                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                    {generatedTextCopyMessage}
+                  </p>
+                ) : null}
               </NotebookSection>
               ) : null}
 

@@ -1,6 +1,7 @@
 import {
   createCitableScientificSnapshot,
   createScientificSemanticValue,
+  isCitableScientificSnapshot,
   reviveCitableScientificSnapshot,
   toScientificValue,
   type ScientificProvenanceDescriptor,
@@ -187,17 +188,125 @@ export const buildDatasetAnalysisProfileSemanticValues = (
 const isProfilePayload = (
   value: unknown
 ): value is DatasetAnalysisProfilePayload => {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+  const isRecord = (candidate: unknown): candidate is Record<string, unknown> =>
+    candidate !== null &&
+    typeof candidate === "object" &&
+    !Array.isArray(candidate);
+  const isFiniteNumber = (candidate: unknown): candidate is number =>
+    typeof candidate === "number" && Number.isFinite(candidate);
+  const isOptionalFiniteNumber = (candidate: unknown): boolean =>
+    candidate === undefined || isFiniteNumber(candidate);
+  const isOptionalNullableFiniteNumber = (candidate: unknown): boolean =>
+    candidate === undefined || candidate === null || isFiniteNumber(candidate);
+  const isOptionalString = (candidate: unknown): boolean =>
+    candidate === undefined || typeof candidate === "string";
+  const isOptionalNullableString = (candidate: unknown): boolean =>
+    candidate === undefined ||
+    candidate === null ||
+    typeof candidate === "string";
+  const isOptionalStringArray = (candidate: unknown): boolean =>
+    candidate === undefined ||
+    (Array.isArray(candidate) &&
+      candidate.every((item) => typeof item === "string"));
+  const isOptionalClassification = (
+    candidate: unknown,
+    allowed: readonly string[]
+  ): boolean => candidate === undefined || allowed.includes(String(candidate));
+  const isDatasetInfo = (candidate: unknown): boolean =>
+    isRecord(candidate) &&
+    typeof candidate.fileName === "string" &&
+    typeof candidate.importedAt === "string" &&
+    isFiniteNumber(candidate.seriesCount) &&
+    isFiniteNumber(candidate.observationCount);
+  const isNormality = (candidate: unknown): boolean =>
+    candidate === undefined ||
+    (isRecord(candidate) &&
+      isFiniteNumber(candidate.seriesEvaluated) &&
+      isFiniteNumber(candidate.normalCount) &&
+      isFiniteNumber(candidate.nonNormalCount) &&
+      isFiniteNumber(candidate.questionableCount) &&
+      isFiniteNumber(candidate.contradictoryCount) &&
+      isOptionalString(candidate.globalHeadline) &&
+      typeof candidate.hasWarnings === "boolean");
+  const isInferential = (candidate: unknown): boolean =>
+    candidate === undefined ||
+    (isRecord(candidate) &&
+      isOptionalClassification(candidate.dominantMagnitude, [
+        "trivial",
+        "small",
+        "medium",
+        "large",
+      ]) &&
+      isOptionalString(candidate.metric) &&
+      isOptionalString(candidate.valueDisplay) &&
+      isOptionalNullableFiniteNumber(candidate.prospectiveSampleSize));
+  const isMethodological = (candidate: unknown): boolean =>
+    candidate === undefined ||
+    (isRecord(candidate) &&
+      isOptionalFiniteNumber(candidate.consistencyScore) &&
+      isOptionalFiniteNumber(candidate.qualityScore) &&
+      isOptionalFiniteNumber(candidate.reproducibilityScore) &&
+      isOptionalFiniteNumber(candidate.evidenceScore) &&
+      isOptionalFiniteNumber(candidate.assumptionScore) &&
+      isOptionalFiniteNumber(candidate.readinessScore) &&
+      isFiniteNumber(candidate.evaluatedEngines));
+  const isMultivariate = (candidate: unknown): boolean =>
+    candidate === undefined ||
+    (isRecord(candidate) &&
+      isOptionalFiniteNumber(candidate.pcaVariance) &&
+      isOptionalFiniteNumber(candidate.clusterCount) &&
+      isOptionalString(candidate.topVariable) &&
+      isOptionalStringArray(candidate.topVariableTied) &&
+      isOptionalFiniteNumber(candidate.averageSimilarity) &&
+      isOptionalString(candidate.headline));
+  const isPublication = (candidate: unknown): boolean =>
+    candidate === undefined ||
+    (isRecord(candidate) &&
+      isOptionalStringArray(candidate.crossDomainDiagnosisTop) &&
+      isOptionalStringArray(candidate.publicationRisksTop) &&
+      isOptionalNullableFiniteNumber(candidate.prospectiveSampleSize) &&
+      isOptionalNullableFiniteNumber(candidate.currentSampleSize) &&
+      isOptionalNullableString(candidate.insufficientSampleWarning));
+
+  if (!isRecord(value)) {
     return false;
   }
-  const candidate = value as Partial<DatasetAnalysisProfilePayload>;
+  const candidate = value;
   return (
     (candidate.slotLabel === "A" || candidate.slotLabel === "B") &&
-    candidate.datasetInfo !== null &&
-    typeof candidate.datasetInfo === "object" &&
+    isDatasetInfo(candidate.datasetInfo) &&
     typeof candidate.capturedAt === "string" &&
-    typeof candidate.seriesCount === "number" &&
-    typeof candidate.totalObservations === "number" &&
+    Number.isFinite(Date.parse(candidate.capturedAt)) &&
+    isFiniteNumber(candidate.seriesCount) &&
+    isFiniteNumber(candidate.totalObservations) &&
+    isOptionalFiniteNumber(candidate.readinessScore) &&
+    isOptionalClassification(candidate.readinessClassification, [
+      "publication-ready",
+      "near-ready",
+      "requires-review",
+      "not-ready",
+    ]) &&
+    isOptionalFiniteNumber(candidate.overallHealthScore) &&
+    isOptionalFiniteNumber(candidate.evidenceScore) &&
+    isOptionalClassification(candidate.evidenceClassification, [
+      "very-strong",
+      "strong",
+      "moderate",
+      "limited",
+    ]) &&
+    isOptionalClassification(candidate.publicationStatus, [
+      "publication-ready",
+      "near-ready",
+      "requires-review",
+      "not-ready",
+    ]) &&
+    isOptionalFiniteNumber(candidate.publicationScore) &&
+    isNormality(candidate.normality) &&
+    isInferential(candidate.inferential) &&
+    isOptionalString(candidate.multivariateHeadline) &&
+    isMethodological(candidate.methodological) &&
+    isMultivariate(candidate.multivariate) &&
+    isPublication(candidate.publication) &&
     typeof candidate.isComplete === "boolean"
   );
 };
@@ -205,11 +314,30 @@ const isProfilePayload = (
 export const getAuthoritativeDatasetAnalysisProfile = (
   profile: DatasetAnalysisProfile
 ): DatasetAnalysisProfile => {
-  const semanticValue = profile.captureMetadata?.snapshot?.semanticValues.find(
+  if (profile.captureMetadata?.snapshotValidation === "invalid") {
+    return {
+      ...profile,
+      isComplete: false,
+    };
+  }
+  const snapshot = profile.captureMetadata?.snapshot;
+  if (!snapshot) {
+    return profile;
+  }
+  if (!isCitableScientificSnapshot(snapshot)) {
+    return {
+      ...profile,
+      isComplete: false,
+    };
+  }
+  const semanticValue = snapshot.semanticValues.find(
     (value) => value.field === "comparisonProfile"
   );
   if (!semanticValue || !isProfilePayload(semanticValue.value)) {
-    return profile;
+    return {
+      ...profile,
+      isComplete: false,
+    };
   }
   return {
     ...(structuredClone(semanticValue.value) as DatasetAnalysisProfilePayload),
@@ -265,16 +393,21 @@ export const reviveDatasetAnalysisProfile = (
   if (!profile) {
     return null;
   }
-  const snapshot = reviveCitableScientificSnapshot(
-    profile.captureMetadata?.snapshot
-  );
+  const persistedSnapshot = profile.captureMetadata?.snapshot;
+  const hasPersistedSnapshot = persistedSnapshot !== undefined;
+  const snapshot = reviveCitableScientificSnapshot(persistedSnapshot);
+  const snapshotMalformed =
+    profile.captureMetadata?.snapshotValidation === "invalid" ||
+    (hasPersistedSnapshot && snapshot === null);
   const cloned = structuredClone(profile);
   return deepFreeze({
     ...cloned,
+    isComplete: snapshotMalformed ? false : cloned.isComplete,
     captureMetadata: cloned.captureMetadata
       ? {
           ...cloned.captureMetadata,
           snapshot: snapshot ?? undefined,
+          snapshotValidation: snapshotMalformed ? "invalid" : undefined,
         }
       : undefined,
   }) as DatasetAnalysisProfile;

@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  buildScientificProjectionDisclosureLines,
   formatDatasetAnalysisProfileMiniSummary,
   projectDatasetAnalysisProfile,
   readProjectedNumber,
   readProjectedString,
   type DatasetAnalysisProfile,
 } from "@/lib/scientific/comparison";
+import type { ScientificFreshnessAssessment } from "@/lib/scientific/contracts";
 
 const contentPanel =
   "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2.5 text-sm text-[var(--app-text)] transition-colors duration-200";
@@ -14,21 +16,30 @@ const contentPanel =
 type ComparisonSlotSummaryCardProps = {
   slotLabel: string;
   profile: DatasetAnalysisProfile;
+  freshness?: ScientificFreshnessAssessment;
+  onExportNumeric?: () => void;
 };
 
 export function ComparisonSlotSummaryCard({
   slotLabel,
   profile,
+  freshness,
+  onExportNumeric,
 }: ComparisonSlotSummaryCardProps) {
-  const projection = projectDatasetAnalysisProfile(profile, "results");
-  const fileName =
-    readProjectedString(projection, "dataset.fileName") ??
-    profile.datasetInfo.fileName;
-  const seriesCount =
-    readProjectedNumber(projection, "seriesCount") ?? profile.seriesCount;
-  const totalObservations =
-    readProjectedNumber(projection, "totalObservations") ??
-    profile.totalObservations;
+  const projection = projectDatasetAnalysisProfile(
+    profile,
+    "results",
+    freshness
+  );
+  const fileName = projection
+    ? (readProjectedString(projection, "dataset.fileName") ?? "No disponible")
+    : profile.datasetInfo.fileName;
+  const seriesCount = projection
+    ? (readProjectedNumber(projection, "seriesCount") ?? 0)
+    : profile.seriesCount;
+  const totalObservations = projection
+    ? (readProjectedNumber(projection, "totalObservations") ?? 0)
+    : profile.totalObservations;
   const capturedAt =
     projection?.artifactIdentity.kind === "citable-scientific-snapshot"
       ? projection.artifactIdentity.capturedAt
@@ -44,6 +55,7 @@ export function ComparisonSlotSummaryCard({
         engineFlags.normalityAssessmentCount > 0,
       ].filter(Boolean).length
     : null;
+  const disclosureLines = buildScientificProjectionDisclosureLines(projection);
 
   return (
     <div className={`${contentPanel} flex flex-col gap-1`}>
@@ -78,6 +90,31 @@ export function ComparisonSlotSummaryCard({
             ? ` · normalidad (${engineFlags.normalityAssessmentCount} series)`
             : ""}
         </p>
+      ) : null}
+      <details className="mt-1 text-xs text-[var(--app-text-muted)]">
+        <summary className="cursor-pointer font-semibold">
+          Identidad, proveniencia y vigencia
+        </summary>
+        <ul className="mt-1 space-y-1">
+          {disclosureLines.map((line) => (
+            <li key={line}>• {line}</li>
+          ))}
+        </ul>
+      </details>
+      {onExportNumeric ? (
+        <button
+          type="button"
+          onClick={onExportNumeric}
+          disabled={!projection}
+          title={
+            projection
+              ? "Exportar el snapshot científico como scientific-numeric-export/v1"
+              : "El perfil legado no contiene un snapshot científico autoritativo"
+          }
+          className="mt-2 self-start rounded border border-[var(--app-border)] px-2 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Exportar datos científicos JSON
+        </button>
       ) : null}
     </div>
   );

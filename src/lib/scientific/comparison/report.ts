@@ -11,11 +11,15 @@ import type {
 } from "./types";
 import { sanitizeForPdfText } from "./pdf-text";
 import {
+  buildScientificProjectionDisclosureLines,
   projectDatasetAnalysisProfile,
   readProjectedNumber,
   readProjectedString,
 } from "./projection";
-import type { ScientificProjectionSurface } from "@/lib/scientific/contracts";
+import type {
+  ScientificFreshnessAssessment,
+  ScientificProjectionSurface,
+} from "@/lib/scientific/contracts";
 
 export const MULTI_DATASET_COMPARISON_REPORT_TITLE =
   "Comparación Multi-Dataset (SCI-58)";
@@ -23,6 +27,11 @@ export const MULTI_DATASET_COMPARISON_REPORT_TITLE =
 export type MultiDatasetComparisonReportSection = {
   title: string;
   content: string[];
+};
+
+export type MultiDatasetComparisonProjectionContext = {
+  slotAFreshness?: ScientificFreshnessAssessment;
+  slotBFreshness?: ScientificFreshnessAssessment;
 };
 
 export const canIncludeMultiDatasetComparisonInReport = (
@@ -35,17 +44,19 @@ const appendSlotSummaryLines = (
   lines: string[],
   label: string,
   profile: DatasetAnalysisProfile,
-  surface: Extract<ScientificProjectionSurface, "report" | "pdf"> = "report"
+  surface: Extract<ScientificProjectionSurface, "report" | "pdf"> = "report",
+  freshness?: ScientificFreshnessAssessment
 ): void => {
-  const projection = projectDatasetAnalysisProfile(profile, surface);
-  const fileName =
-    readProjectedString(projection, "dataset.fileName") ??
-    profile.datasetInfo.fileName;
-  const seriesCount =
-    readProjectedNumber(projection, "seriesCount") ?? profile.seriesCount;
-  const totalObservations =
-    readProjectedNumber(projection, "totalObservations") ??
-    profile.totalObservations;
+  const projection = projectDatasetAnalysisProfile(profile, surface, freshness);
+  const fileName = projection
+    ? (readProjectedString(projection, "dataset.fileName") ?? "No disponible")
+    : profile.datasetInfo.fileName;
+  const seriesCount = projection
+    ? (readProjectedNumber(projection, "seriesCount") ?? 0)
+    : profile.seriesCount;
+  const totalObservations = projection
+    ? (readProjectedNumber(projection, "totalObservations") ?? 0)
+    : profile.totalObservations;
   const capturedAt =
     projection?.artifactIdentity.kind === "citable-scientific-snapshot"
       ? projection.artifactIdentity.capturedAt
@@ -60,15 +71,31 @@ const appendSlotSummaryLines = (
   lines.push(
     `${label}: ${formatDatasetAnalysisProfileMiniSummary(profile)}.`
   );
+  buildScientificProjectionDisclosureLines(projection).forEach((line) =>
+    lines.push(`${label}: ${line}`)
+  );
 };
 
 export const getMultiDatasetComparisonReportLines = (
-  analysis: MultiDatasetComparisonAnalysis
+  analysis: MultiDatasetComparisonAnalysis,
+  context: MultiDatasetComparisonProjectionContext = {}
 ): string[] => {
   const lines: string[] = [];
 
-  appendSlotSummaryLines(lines, "Slot A", analysis.slotA);
-  appendSlotSummaryLines(lines, "Slot B", analysis.slotB);
+  appendSlotSummaryLines(
+    lines,
+    "Slot A",
+    analysis.slotA,
+    "report",
+    context.slotAFreshness
+  );
+  appendSlotSummaryLines(
+    lines,
+    "Slot B",
+    analysis.slotB,
+    "report",
+    context.slotBFreshness
+  );
   lines.push(`Compatibilidad semántica: ${analysis.compatibility.state}.`);
 
   const readinessRow = analysis.kpiRows.find((row) => row.key === "readiness");
@@ -140,30 +167,43 @@ export const getMultiDatasetComparisonReportLines = (
 };
 
 export const buildMultiDatasetComparisonReportSection = (
-  analysis: MultiDatasetComparisonAnalysis
+  analysis: MultiDatasetComparisonAnalysis,
+  context: MultiDatasetComparisonProjectionContext = {}
 ): MultiDatasetComparisonReportSection => ({
   title: MULTI_DATASET_COMPARISON_REPORT_TITLE,
-  content: getMultiDatasetComparisonReportLines(analysis),
+  content: getMultiDatasetComparisonReportLines(analysis, context),
 });
 
 const appendPdfSlotSummaryLines = (
   lines: string[],
   label: string,
-  profile: DatasetAnalysisProfile
+  profile: DatasetAnalysisProfile,
+  freshness?: ScientificFreshnessAssessment
 ): void => {
   const projected: string[] = [];
-  appendSlotSummaryLines(projected, label, profile, "pdf");
+  appendSlotSummaryLines(projected, label, profile, "pdf", freshness);
   projected.forEach((line) => lines.push(line.replace(" · ", ", ")));
 };
 
 /** PDF-safe layout: ASCII symbols and one KPI field per line (no pipe-separated rows). */
 export const getMultiDatasetComparisonPdfLines = (
-  analysis: MultiDatasetComparisonAnalysis
+  analysis: MultiDatasetComparisonAnalysis,
+  context: MultiDatasetComparisonProjectionContext = {}
 ): string[] => {
   const rawLines: string[] = [];
 
-  appendPdfSlotSummaryLines(rawLines, "Slot A", analysis.slotA);
-  appendPdfSlotSummaryLines(rawLines, "Slot B", analysis.slotB);
+  appendPdfSlotSummaryLines(
+    rawLines,
+    "Slot A",
+    analysis.slotA,
+    context.slotAFreshness
+  );
+  appendPdfSlotSummaryLines(
+    rawLines,
+    "Slot B",
+    analysis.slotB,
+    context.slotBFreshness
+  );
   rawLines.push(`Compatibilidad semantica: ${analysis.compatibility.state}.`);
 
   const readinessRow = analysis.kpiRows.find((row) => row.key === "readiness");
@@ -238,8 +278,38 @@ export const getMultiDatasetComparisonPdfLines = (
 };
 
 export const buildMultiDatasetComparisonPdfReportSection = (
-  analysis: MultiDatasetComparisonAnalysis
+  analysis: MultiDatasetComparisonAnalysis,
+  context: MultiDatasetComparisonProjectionContext = {}
 ): MultiDatasetComparisonReportSection => ({
   title: MULTI_DATASET_COMPARISON_REPORT_TITLE,
-  content: getMultiDatasetComparisonPdfLines(analysis),
+  content: getMultiDatasetComparisonPdfLines(analysis, context),
 });
+
+/**
+ * Replaces any Report-surface SCI-58 section with the PDF-specific projection.
+ * This keeps production PDF orchestration on the same authoritative snapshot
+ * while preserving the PDF formatter boundary.
+ */
+export const replaceMultiDatasetComparisonWithPdfProjection = (input: {
+  sections: readonly MultiDatasetComparisonReportSection[];
+  analysis: MultiDatasetComparisonAnalysis | null;
+  context?: MultiDatasetComparisonProjectionContext;
+  included: boolean;
+}): MultiDatasetComparisonReportSection[] => {
+  const withoutReportProjection = input.sections.filter(
+    (section) => section.title !== MULTI_DATASET_COMPARISON_REPORT_TITLE
+  );
+  if (
+    !input.included ||
+    !canIncludeMultiDatasetComparisonInReport(input.analysis)
+  ) {
+    return withoutReportProjection;
+  }
+  return [
+    ...withoutReportProjection,
+    buildMultiDatasetComparisonPdfReportSection(
+      input.analysis!,
+      input.context
+    ),
+  ];
+};
