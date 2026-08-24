@@ -3,6 +3,8 @@
 **Status:** **CLOSED** — Planning Series **RELEASE CERTIFIED / FROZEN**  
 **Planning Authority:** [`../PERFORMANCE-Planning-Charter.md`](../PERFORMANCE-Planning-Charter.md) (RELEASE CERTIFIED / FROZEN)
 
+**Live pointer (PR6-A Wave 0; does not rewrite P0–P11 freeze bodies):** PERFORMANCE implementation series **I0–I10 is RELEASE CERTIFIED / FROZEN**. Authority: [`../implementation/README.md`](../implementation/README.md). `src/performance/` exists as that certified layer. PR6-A.2 **consumes** I0–I10 and must **not** reopen it. The I0–I10 row below is freeze-time planning-index language from before that implementation certification; it is not living next.
+
 This directory holds PERFORMANCE-P0…P11 Official Records.
 
 | Record | Status |
