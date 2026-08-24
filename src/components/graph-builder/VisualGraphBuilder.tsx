@@ -26,6 +26,7 @@ import {
   type VisualGraphPreview,
   type VisualGraphSpecification,
 } from "@/lib/visualGraphBuilder";
+import { toVisualGraphBuilderDraftFromGraphSpec } from "@/lib/project/pr5-researcher-continuity";
 
 import { GraphPreview } from "./GraphPreview";
 import { GraphTypeSelector } from "./GraphTypeSelector";
@@ -34,6 +35,7 @@ import { VariableBadgeList, VariableSelector } from "./VariableSelector";
 type VisualGraphBuilderProps = {
   series: ExperimentalSeries[];
   columnRegistry?: WorksheetColumnRegistry;
+  initialGraphSpec?: GraphSpecification | null;
   onCreateGraph: (result: {
     graphSpec: GraphSpecification;
     preview: VisualGraphPreview;
@@ -53,9 +55,19 @@ const configSectionLabelClass =
 const configSectionClass =
   "space-y-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3";
 
+const presetFromGraphSpec = (
+  graphSpec: GraphSpecification | null | undefined
+): PublicationPresetId => {
+  const value = graphSpec?.publicationPresetId;
+  return value === "journal" || value === "presentation" || value === "default"
+    ? value
+    : "default";
+};
+
 export function VisualGraphBuilder({
   series,
   columnRegistry = {},
+  initialGraphSpec = null,
   onCreateGraph,
   btnOutlineSm: _btnOutlineSm,
   btnPrimary,
@@ -69,15 +81,21 @@ export function VisualGraphBuilder({
     () => buildVisualGraphVariables(model, columnRegistry),
     [model, columnRegistry]
   );
+  const continueMode = Boolean(initialGraphSpec);
 
-  const [spec, setSpec] = useState<VisualGraphBuilderDraft>(
-    INITIAL_VISUAL_GRAPH_BUILDER_DRAFT
+  const [spec, setSpec] = useState<VisualGraphBuilderDraft>(() =>
+    initialGraphSpec
+      ? toVisualGraphBuilderDraftFromGraphSpec(initialGraphSpec)
+      : INITIAL_VISUAL_GRAPH_BUILDER_DRAFT
   );
   const [publicationPresetId, setPublicationPresetId] =
-    useState<PublicationPresetId>("default");
+    useState<PublicationPresetId>(() => presetFromGraphSpec(initialGraphSpec));
   const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (continueMode) {
+      return;
+    }
     if (
       spec.graphType === null ||
       spec.graphType === "heatmap" ||
@@ -90,7 +108,7 @@ export function VisualGraphBuilder({
     setSpec((previous) =>
       previous.yVariable ? previous : { ...previous, yVariable: defaultY }
     );
-  }, [variables, spec.graphType]);
+  }, [continueMode, variables, spec.graphType]);
 
   const validation = useMemo(
     () => validateVisualGraphConfiguration(spec, model, columnRegistry),
@@ -131,7 +149,11 @@ export function VisualGraphBuilder({
   };
 
   const handleCreateGraph = () => {
-    const result = applyVisualGraphSpecification(spec, series, columnRegistry);
+    const result = applyVisualGraphSpecification(
+      { ...spec, publicationPresetId },
+      series,
+      columnRegistry
+    );
     if (!result.ok) {
       setCreateError(result.message);
       return;
@@ -175,7 +197,9 @@ export function VisualGraphBuilder({
           </p>
           <p className="text-[11px] text-[var(--app-text-muted)]">
             {selectedTypeLabel
-              ? `Tipo activo: ${selectedTypeLabel}`
+              ? `Tipo activo: ${selectedTypeLabel}${
+                  continueMode ? " · continuar figura persistida" : ""
+                }`
               : "Seleccione un tipo, asigne variables y cree el gráfico."}
           </p>
         </div>
@@ -588,7 +612,9 @@ export function VisualGraphBuilder({
               </p>
             ) : canCreateGraph ? (
               <p className="text-xs font-medium text-[var(--app-success-text)]">
-                Vista previa lista · puede crear el gráfico
+                {continueMode
+                  ? "Vista previa lista · puede actualizar la figura de trabajo"
+                  : "Vista previa lista · puede crear el gráfico"}
               </p>
             ) : (
               <p className="text-xs text-[var(--app-text-muted)]">
@@ -603,7 +629,7 @@ export function VisualGraphBuilder({
               disabled={!canCreateGraph}
               aria-disabled={!canCreateGraph}
             >
-              Crear gráfico
+              {continueMode ? "Actualizar figura de trabajo" : "Crear gráfico"}
             </button>
           </div>
         </div>

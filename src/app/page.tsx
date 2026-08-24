@@ -96,7 +96,15 @@ import {
   upsertWorkingVgbFigureRecord,
   approveVgbFigure,
   reviewVgbFigure,
+  VGB_PUBLICATION_FIGURE_REPORT_TITLE,
 } from "@/lib/scientific/figure";
+import {
+  formatPdfCtr08BlockMessage,
+  PR5_MULTIPLE_WORKING_FIGURES_DISCLOSURE,
+  PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE,
+  replaceWorkingVisualGraphEntry,
+  resolveReopenVisualBuilderContext,
+} from "@/lib/project/pr5-researcher-continuity";
 import {
   SessionDatasetPanel,
 } from "@/components/data/SessionDatasetPanel";
@@ -15442,6 +15450,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [sidebarRailCollapsed, setSidebarRailCollapsed] = useState(true);
   const [dataWorkspaceView, setDataWorkspaceView] =
     useState<DataWorkspaceView>("experimental");
+  const [continueVisualGraphId, setContinueVisualGraphId] = useState<
+    string | null
+  >(null);
   const [importDestinationActive, setImportDestinationActive] = useState(false);
   const importarDestinationRef = useRef<HTMLDivElement | null>(null);
   const [sidebarGraphLibraryOpen, setSidebarGraphLibraryOpen] = useState(false);
@@ -16147,9 +16158,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     const reviewManifest =
       buildScientificReportExportReviewManifest(allowedPdfSectionIds);
     if (!reviewManifest.allowed) {
-      setScientificReportPdfMessage(
-        `Exportación bloqueada: ${reviewManifest.reasons[0] ?? "hay contenido científico sin aprobación vigente."}`
-      );
+      setScientificReportPdfMessage(formatPdfCtr08BlockMessage());
       window.setTimeout(() => setScientificReportPdfMessage(null), 6000);
       return false;
     }
@@ -18246,6 +18255,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     preview: VisualGraphPreview;
     displaySeries: ExperimentalSeries[];
   }) => {
+    if (continueVisualGraphId) {
+      setProjectVisualGraphs((previous) => {
+        const replaced = replaceWorkingVisualGraphEntry(
+          previous,
+          continueVisualGraphId,
+          result
+        );
+        return replaced ?? previous;
+      });
+      selectWorkspaceSection("results");
+      return;
+    }
     const entry = createProjectVisualGraphEntry({
       ok: true,
       graphSpec: result.graphSpec,
@@ -20698,6 +20719,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         (dataset) => dataset.id === patch.activeDatasetId
       );
       if (!activeSession) {
+        setContinueVisualGraphId(null);
+        setDataWorkspaceView("experimental");
         recordProjectHistory(
           buildProjectHistoryEntry("project.opened", {
             source: projectOpenSourceRef.current,
@@ -20706,7 +20729,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         );
         return;
       }
-      setProjectVisualGraphs(readVisualGraphEntriesFromDataset(activeSession));
+      const restoredVisualGraphs =
+        readVisualGraphEntriesFromDataset(activeSession);
+      setProjectVisualGraphs(restoredVisualGraphs);
+      const reopen = resolveReopenVisualBuilderContext(restoredVisualGraphs);
+      setContinueVisualGraphId(reopen.continueFigureId);
+      setDataWorkspaceView(
+        reopen.restoreVisualBuilderView ? "visual-builder" : "experimental"
+      );
       loadSessionDatasetIntoEditor(activeSession, {
         applyExperimentalViewportAutoFit: patch.project.graphContext == null,
       });
@@ -20853,6 +20883,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const handleNewProject = () => {
     pendingSlotCaptureRef.current = null;
     resetProjectVisualGraphState();
+    setContinueVisualGraphId(null);
+    setDataWorkspaceView("experimental");
     setProjectExtensions({});
     setSessionDatasets([]);
     setActiveDatasetId(null);
@@ -21432,6 +21464,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               }
               contextLine=""
               actions={[
+                {
+                  label: "Constructor Visual",
+                  onClick: () => openDataView("visual-builder"),
+                },
                 {
                   label: "Continuar a Análisis →",
                   onClick: () => selectWorkspaceSection("analysis"),
@@ -22244,12 +22280,31 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 defaultOpen
               >
                 <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
-                  Crear gráfico guarda la vista previa en Resultados del dataset
-                  activo
+                  {continueVisualGraphId
+                    ? "Actualizar figura de trabajo conserva la identidad persistida y no crea una figura nueva."
+                    : "Crear gráfico guarda la vista previa en Resultados del dataset activo"}
                   {experimentalSeries.length === 0
                     ? ". Importe datos en Experimental para comenzar."
-                    : "."}
+                    : continueVisualGraphId
+                      ? ""
+                      : "."}
                 </p>
+                {projectVisualGraphs.length > 1 && !continueVisualGraphId ? (
+                  <p className="mb-2 text-[11px] text-[var(--app-text)]">
+                    {PR5_MULTIPLE_WORKING_FIGURES_DISCLOSURE}
+                  </p>
+                ) : null}
+                {continueVisualGraphId ? (
+                  <p className="mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setContinueVisualGraphId(null)}
+                      className={workflowContinuityLinkClass}
+                    >
+                      Nueva figura
+                    </button>
+                  </p>
+                ) : null}
                 {experimentalSeries.length === 0 ? (
                   <p className="mb-2">
                     <button
@@ -22262,9 +22317,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </p>
                 ) : null}
                 <VisualGraphBuilder
-                  key={activeDatasetId ?? "no-dataset"}
+                  key={`${activeDatasetId ?? "no-dataset"}:${continueVisualGraphId ?? "new"}`}
                   series={experimentalSeries}
                   columnRegistry={activeColumnRegistry}
+                  initialGraphSpec={
+                    continueVisualGraphId
+                      ? projectVisualGraphs.find(
+                          (entry) => entry.id === continueVisualGraphId
+                        )?.graphSpec ?? null
+                      : null
+                  }
                   onCreateGraph={handleVisualGraphCreate}
                   btnOutlineSm={btnOutlineSm}
                   btnPrimary={btnPrimary}
@@ -24454,6 +24516,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   onClick: () => selectWorkspaceSection("analysis"),
                 },
                 {
+                  label: "Constructor Visual",
+                  onClick: () => openDataView("visual-builder"),
+                },
+                {
                   label: "Ir a Reportes",
                   onClick: () => selectWorkspaceSection("reports"),
                   prominence: "primary",
@@ -24567,6 +24633,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                   )
                               : undefined
                           }
+                          onContinueEdit={() => {
+                            setContinueVisualGraphId(entry.id);
+                            openDataView("visual-builder");
+                          }}
                         />
                       </div>
                       );
@@ -28334,7 +28404,21 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             </p>
             <WorkflowContinuityBar
               stepLabel="Ahora · Reportes"
-              contextLine=""
+              contextLine={
+                canIncludeVgbPublicationFiguresInReport(
+                  vgbFigureLifecycleStore.publications
+                )
+                  ? `${PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE} ${vgbFigureLifecycleStore.publications.length} figura${
+                      vgbFigureLifecycleStore.publications.length === 1
+                        ? ""
+                        : "s"
+                    } listada${
+                      vgbFigureLifecycleStore.publications.length === 1
+                        ? ""
+                        : "s"
+                    }.`
+                  : ""
+              }
               actions={[
                 {
                   label: "← Resultados",
@@ -28422,9 +28506,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         </div>
                         {!currentScientificReportExportReviewManifest.allowed ? (
                           <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
-                            PDF y Pack Lite bloqueados para el contenido
-                            interpretativo/advisory incluido hasta aprobación
-                            vigente.
+                            {formatPdfCtr08BlockMessage()}
                           </p>
                         ) : null}
                       </div>
@@ -28437,11 +28519,22 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         </p>
                       </div>
                       <div className="mt-3">
+                        {canIncludeVgbPublicationFiguresInReport(
+                          vgbFigureLifecycleStore.publications
+                        ) ? (
+                          <p className="mb-2 text-xs text-[var(--app-text-muted)]">
+                            {PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE}
+                          </p>
+                        ) : null}
                         {scientificReport.sections.map((section) => (
                           <ScientificReportSectionCollapsible
                             key={section.title}
                             title={section.title}
                             content={section.content}
+                            defaultOpen={
+                              section.title ===
+                              VGB_PUBLICATION_FIGURE_REPORT_TITLE
+                            }
                           />
                         ))}
                       </div>
