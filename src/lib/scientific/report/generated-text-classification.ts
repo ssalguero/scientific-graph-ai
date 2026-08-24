@@ -117,6 +117,10 @@ const REPORT_BLOCK_RULES: Readonly<
     classification: "mixed",
     resultContractId: "sci-58.comparison",
   },
+  "Figuras de publicación (VGB)": {
+    classification: "factual",
+    resultContractId: "vgb.preview-values",
+  },
 };
 
 const stableBlockSlug = (title: string): string => {

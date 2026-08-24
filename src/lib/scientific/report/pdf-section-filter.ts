@@ -5,6 +5,10 @@
 
 import { getScientificCapabilityIdentity } from "@/lib/scientific/contracts";
 import { COMPOSITE_METHODOLOGY_PRIMARY_LABELS } from "@/lib/scientific/methodology/disclosure";
+import {
+  PDF_BLOCK_VGB_PUBLICATION_FIGURES_ID,
+  VGB_PUBLICATION_FIGURE_REPORT_TITLE,
+} from "@/lib/scientific/figure/report";
 
 const EXPLORER_REPORT_TITLES = {
   manova: getScientificCapabilityIdentity(
@@ -157,10 +161,12 @@ export const SCIENTIFIC_REPORT_PDF_SECTION_RULES: Readonly<
     kind: "id",
     id: "sci-58-comparison-dashboard",
   },
+  [VGB_PUBLICATION_FIGURE_REPORT_TITLE]: { kind: "always" },
 };
 
 export const PDF_BLOCK_COMPARISON_ID = "sci-58-comparison-dashboard";
 export const PDF_BLOCK_ADVISOR_ID = "scientific-advisor";
+export { PDF_BLOCK_VGB_PUBLICATION_FIGURES_ID };
 
 export const isPdfSectionTitleAllowed = (
   title: string,

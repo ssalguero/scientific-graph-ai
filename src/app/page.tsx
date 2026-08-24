@@ -60,6 +60,7 @@ import { ScientificWorksheetPanel } from "@/components/data/ScientificWorksheetP
 import { GUEST_AUTH_UNAVAILABLE_NOTICE } from "@/lib/guestAuthUnavailable";
 import { VisualGraphBuilder } from "@/components/graph-builder/VisualGraphBuilder";
 import { GraphPreview } from "@/components/graph-builder/GraphPreview";
+import { VgbFigureLifecyclePanel } from "@/components/graph-builder/VgbFigureLifecyclePanel";
 import type {
   GraphSpecification,
   ProjectVisualGraphEntry,
@@ -69,6 +70,33 @@ import {
   createProjectVisualGraphEntry,
   VISUAL_GRAPH_TYPE_LABELS,
 } from "@/lib/visualGraphBuilder";
+import {
+  mapLineStyleToStrokeDasharray,
+  resolveGraphRenderStyle,
+} from "@/lib/graph/publication-presets";
+import {
+  appendVgbPublicationFigure,
+  assessVgbVisualTruth,
+  buildVgbPublicationFigureReportSection,
+  canIncludeVgbPublicationFiguresInReport,
+  canPromoteVgbFigureToPublication,
+  composeVgbFigureProvenance,
+  createPublicationVgbFigure,
+  createPublicationVgbFigureNumericExport,
+  createVgbFigureReviewRecord,
+  createWorkingVgbFigure,
+  deriveVgbFigureLifecyclePhase,
+  getVgbFigureLifecycleStoreFromExtensions,
+  projectWorkingVgbFigure,
+  reassessVgbFigureReview,
+  refreshWorkingVgbFigureBinding,
+  replaceVgbPublicationFiguresWithPdfProjection,
+  setVgbFigureLifecycleStoreOnExtensions,
+  submitWorkingVgbFigureForReview,
+  upsertWorkingVgbFigureRecord,
+  approveVgbFigure,
+  reviewVgbFigure,
+} from "@/lib/scientific/figure";
 import {
   SessionDatasetPanel,
 } from "@/components/data/SessionDatasetPanel";
@@ -220,6 +248,7 @@ import {
   getScientificCapabilityIdentity,
   type GeneratedTextReviewRecord,
   type ScientificProvenanceDescriptor,
+  type VgbPublicationFigureArtifact,
 } from "@/lib/scientific/contracts";
 import {
   COMPOSITE_METHODOLOGY_PRIMARY_LABELS,
@@ -517,6 +546,11 @@ const getCachedInitialUserPreferences = (): ReturnType<
 
 const METHODOLOGY_PUBLICATION_VISIBILITY_CALLOUT_MESSAGE = `Los motores SCI-50→55: ${resolveToggleVisibilityShortHint("showConsistencyEngine")}.`;
 const PDF_EXPORT_DISCLAIMER = resolvePdfExportDisclaimer();
+const CURRENT_PROJECT_RESEARCHER = {
+  kind: "researcher" as const,
+  id: "current-project-researcher",
+  name: "Investigador/a del proyecto",
+};
 
 type DataWorkspaceView = "experimental" | "curves" | "advanced" | "visual-builder";
 
@@ -11518,6 +11552,7 @@ type ScientificReportPdfInput = {
   datasetInfo?: ImportedDatasetInfo | null;
   comparisonAnalysis?: MultiDatasetComparisonAnalysis | null;
   comparisonProjectionContext?: MultiDatasetComparisonProjectionContext;
+  publicationFigures?: readonly VgbPublicationFigureArtifact[];
   reviewManifest: GeneratedTextExportManifest;
   /** When set, PDF body respects ARCH-6 / EXPORT-2 toggle policy. Omit = historical all-sections. */
   allowedPdfSectionIds?: readonly string[];
@@ -11708,13 +11743,19 @@ const exportScientificReportPdf = async (
           input.allowedPdfSectionIds
         );
   const reportSectionsForPdf =
-    replaceMultiDatasetComparisonWithPdfProjection({
-      sections: filteredReportSectionsForPdf,
-      analysis: input.comparisonAnalysis ?? null,
-      context: input.comparisonProjectionContext,
-      included: shouldIncludePdfExportBlock(
-        PDF_BLOCK_COMPARISON_ID,
-        input.allowedPdfSectionIds
+    replaceVgbPublicationFiguresWithPdfProjection({
+      sections: replaceMultiDatasetComparisonWithPdfProjection({
+        sections: filteredReportSectionsForPdf,
+        analysis: input.comparisonAnalysis ?? null,
+        context: input.comparisonProjectionContext,
+        included: shouldIncludePdfExportBlock(
+          PDF_BLOCK_COMPARISON_ID,
+          input.allowedPdfSectionIds
+        ),
+      }),
+      artifacts: input.publicationFigures ?? [],
+      included: canIncludeVgbPublicationFiguresInReport(
+        input.publicationFigures
       ),
     });
 
@@ -16144,6 +16185,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         comparisonProjectionContext,
         reviewManifest,
         allowedPdfSectionIds,
+        publicationFigures: getVgbFigureLifecycleStoreFromExtensions(
+          projectExtensions
+        ).publications,
       });
       setScientificReportPdfMessage("PDF descargado correctamente.");
       return true;
@@ -18202,15 +18246,28 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     preview: VisualGraphPreview;
     displaySeries: ExperimentalSeries[];
   }) => {
-    setProjectVisualGraphs((previous) => [
-      ...previous,
-      createProjectVisualGraphEntry({
-        ok: true,
-        graphSpec: result.graphSpec,
-        preview: result.preview,
-        displaySeries: result.displaySeries,
-      }),
-    ]);
+    const entry = createProjectVisualGraphEntry({
+      ok: true,
+      graphSpec: result.graphSpec,
+      preview: result.preview,
+      displaySeries: result.displaySeries,
+    });
+    const createdAt = new Date().toISOString();
+    setProjectVisualGraphs((previous) => [...previous, entry]);
+    setProjectExtensions((previous) => {
+      const store = getVgbFigureLifecycleStoreFromExtensions(previous);
+      return setVgbFigureLifecycleStoreOnExtensions(
+        previous,
+        upsertWorkingVgbFigureRecord(
+          store,
+          createWorkingVgbFigure({
+            entry,
+            at: createdAt,
+            sourceDatasetId: activeDatasetId,
+          })
+        )
+      );
+    });
     selectWorkspaceSection("results");
   };
   const buildCurrentComparisonProfileProvenance = useCallback((
@@ -18642,6 +18699,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     [comparisonSlots, comparisonProjectionContext]
   );
   const hasEnoughDataForMultiDatasetComparison = comparisonAnalysis !== null;
+  const vgbFigureLifecycleStore = useMemo(
+    () => getVgbFigureLifecycleStoreFromExtensions(projectExtensions),
+    [projectExtensions]
+  );
   const scientificReport = useMemo(
     () => {
       const report = generateScientificReport({
@@ -18700,18 +18761,35 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         statisticalRecommendation,
         datasetInfo: currentDatasetInfo,
       });
-      if (!report || !comparisonAnalysis) {
+      if (!report) {
+        return report;
+      }
+      const sections = [...report.sections];
+      if (comparisonAnalysis) {
+        sections.push(
+          buildMultiDatasetComparisonReportSection(
+            comparisonAnalysis,
+            comparisonProjectionContext
+          )
+        );
+      }
+      if (
+        canIncludeVgbPublicationFiguresInReport(
+          vgbFigureLifecycleStore.publications
+        )
+      ) {
+        sections.push(
+          buildVgbPublicationFigureReportSection(
+            vgbFigureLifecycleStore.publications
+          )
+        );
+      }
+      if (sections.length === report.sections.length) {
         return report;
       }
       return {
         ...report,
-        sections: [
-          ...report.sections,
-          buildMultiDatasetComparisonReportSection(
-            comparisonAnalysis,
-            comparisonProjectionContext
-          ),
-        ],
+        sections,
       };
     },
     [
@@ -18771,6 +18849,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       currentDatasetInfo,
       comparisonAnalysis,
       comparisonProjectionContext,
+      vgbFigureLifecycleStore.publications,
     ]
   );
   const scientificReportProvenance = useMemo(() => {
@@ -18961,6 +19040,280 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         : record
     );
   }, [updateCurrentScientificReportReviews]);
+  const composeActiveVgbFigureProvenance = useCallback(
+    (entry: ProjectVisualGraphEntry) => {
+      const activeSessionDataset = activeDatasetId
+        ? sessionDatasets.find((dataset) => dataset.id === activeDatasetId)
+        : undefined;
+      return composeVgbFigureProvenance({
+        entry,
+        datasetId:
+          activeDatasetId ?? currentDatasetInfo?.fileName ?? "live-dataset",
+        datasetLabel: currentDatasetInfo?.fileName,
+        sourceRevision: activeSessionDataset?.sourceRevision ?? 0,
+        worksheetModified:
+          activeSessionDataset?.worksheetModified ?? worksheetModified,
+      });
+    },
+    [activeDatasetId, currentDatasetInfo, sessionDatasets, worksheetModified]
+  );
+
+  useEffect(() => {
+    if (projectVisualGraphs.length === 0) {
+      return;
+    }
+    const at = new Date().toISOString();
+    setProjectExtensions((previous) => {
+      let store = getVgbFigureLifecycleStoreFromExtensions(previous);
+      let reviews = getReviewAuthorityRecordsFromExtensions(previous);
+      let storeChanged = false;
+      let reviewsChanged = false;
+      for (const entry of projectVisualGraphs) {
+        const existing = store.working.find(
+          (record) => record.figureId === entry.id
+        );
+        if (!existing) {
+          store = upsertWorkingVgbFigureRecord(
+            store,
+            createWorkingVgbFigure({
+              entry,
+              at,
+              sourceDatasetId: activeDatasetId,
+            })
+          );
+          storeChanged = true;
+          continue;
+        }
+        const refreshed = refreshWorkingVgbFigureBinding({
+          record: existing,
+          entry,
+          at,
+        });
+        if (
+          refreshed.scientificFingerprint !== existing.scientificFingerprint ||
+          refreshed.cosmeticFingerprint !== existing.cosmeticFingerprint ||
+          refreshed.lifecycleState !== existing.lifecycleState ||
+          refreshed.reviewRecordId !== existing.reviewRecordId
+        ) {
+          store = upsertWorkingVgbFigureRecord(store, refreshed);
+          storeChanged = true;
+        }
+        if (!existing.reviewRecordId) {
+          continue;
+        }
+        const boundReview = reviews.find(
+          (record) => record.recordId === existing.reviewRecordId
+        );
+        if (!boundReview) {
+          continue;
+        }
+        const projection = projectWorkingVgbFigure({
+          entry,
+          provenance: composeActiveVgbFigureProvenance(entry),
+        });
+        const nextReview = reassessVgbFigureReview({
+          record: boundReview,
+          graphSpec: entry.graphSpec,
+          projection,
+          at,
+        });
+        if (nextReview !== boundReview) {
+          reviews = reviews.map((record) =>
+            record.recordId === boundReview.recordId ? nextReview : record
+          );
+          reviewsChanged = true;
+        }
+      }
+      let next = previous;
+      if (storeChanged) {
+        next = setVgbFigureLifecycleStoreOnExtensions(next, store);
+      }
+      if (reviewsChanged) {
+        next = setReviewAuthorityRecordsOnExtensions(next, reviews);
+      }
+      return next;
+    });
+  }, [
+    activeDatasetId,
+    composeActiveVgbFigureProvenance,
+    projectVisualGraphs,
+  ]);
+
+  const submitVgbFigureForReview = useCallback(
+    (figureId: string) => {
+      const entry = projectVisualGraphs.find((item) => item.id === figureId);
+      if (!entry) {
+        return;
+      }
+      const at = new Date().toISOString();
+      const projection = projectWorkingVgbFigure({
+        entry,
+        provenance: composeActiveVgbFigureProvenance(entry),
+      });
+      setProjectExtensions((previous) => {
+        const store = getVgbFigureLifecycleStoreFromExtensions(previous);
+        const working =
+          store.working.find((record) => record.figureId === figureId) ??
+          createWorkingVgbFigure({
+            entry,
+            at,
+            sourceDatasetId: activeDatasetId,
+          });
+        const generated = createVgbFigureReviewRecord({
+          recordId: `vgb-figure-review:${figureId}:${at}`,
+          figureId,
+          generatedAt: at,
+          graphSpec: entry.graphSpec,
+          projection,
+        });
+        const nextStore = upsertWorkingVgbFigureRecord(
+          store,
+          submitWorkingVgbFigureForReview({
+            record: working,
+            review: generated,
+            at,
+          })
+        );
+        const reviews = getReviewAuthorityRecordsFromExtensions(previous);
+        return setVgbFigureLifecycleStoreOnExtensions(
+          setReviewAuthorityRecordsOnExtensions(previous, [
+            ...reviews,
+            generated,
+          ]),
+          nextStore
+        );
+      });
+    },
+    [
+      activeDatasetId,
+      composeActiveVgbFigureProvenance,
+      projectVisualGraphs,
+    ]
+  );
+
+  const reviewVgbFigureById = useCallback(
+    (figureId: string) => {
+      const at = new Date().toISOString();
+      setProjectExtensions((previous) => {
+        const store = getVgbFigureLifecycleStoreFromExtensions(previous);
+        const working = store.working.find(
+          (record) => record.figureId === figureId
+        );
+        if (!working?.reviewRecordId) {
+          return previous;
+        }
+        const reviews = getReviewAuthorityRecordsFromExtensions(previous);
+        return setReviewAuthorityRecordsOnExtensions(
+          previous,
+          reviews.map((record) =>
+            record.recordId === working.reviewRecordId &&
+            record.state === "GENERATED" &&
+            record.validity === "CURRENT"
+              ? reviewVgbFigure(record, {
+                  reviewer: CURRENT_PROJECT_RESEARCHER,
+                  at,
+                })
+              : record
+          )
+        );
+      });
+    },
+    []
+  );
+
+  const approveVgbFigureById = useCallback((figureId: string) => {
+    const at = new Date().toISOString();
+    setProjectExtensions((previous) => {
+      const store = getVgbFigureLifecycleStoreFromExtensions(previous);
+      const working = store.working.find(
+        (record) => record.figureId === figureId
+      );
+      if (!working?.reviewRecordId) {
+        return previous;
+      }
+      const reviews = getReviewAuthorityRecordsFromExtensions(previous);
+      return setReviewAuthorityRecordsOnExtensions(
+        previous,
+        reviews.map((record) =>
+          record.recordId === working.reviewRecordId &&
+          record.state === "RESEARCHER_REVIEWED" &&
+          record.validity === "CURRENT"
+            ? approveVgbFigure(record, {
+                reviewer: CURRENT_PROJECT_RESEARCHER,
+                at,
+              })
+            : record
+        )
+      );
+    });
+  }, []);
+
+  const publishVgbFigureById = useCallback(
+    (figureId: string) => {
+      const entry = projectVisualGraphs.find((item) => item.id === figureId);
+      if (!entry) {
+        return;
+      }
+      const at = new Date().toISOString();
+      const projection = projectWorkingVgbFigure({
+        entry,
+        provenance: composeActiveVgbFigureProvenance(entry),
+      });
+      setProjectExtensions((previous) => {
+        const store = getVgbFigureLifecycleStoreFromExtensions(previous);
+        const working = store.working.find(
+          (record) => record.figureId === figureId
+        );
+        const reviews = getReviewAuthorityRecordsFromExtensions(previous);
+        const review = working?.reviewRecordId
+          ? reviews.find((record) => record.recordId === working.reviewRecordId)
+          : undefined;
+        if (!working || !review) {
+          return previous;
+        }
+        try {
+          const publication = createPublicationVgbFigure({
+            working,
+            entry,
+            projection,
+            review,
+            at,
+          });
+          return setVgbFigureLifecycleStoreOnExtensions(
+            previous,
+            appendVgbPublicationFigure(store, publication)
+          );
+        } catch {
+          return previous;
+        }
+      });
+    },
+    [composeActiveVgbFigureProvenance, projectVisualGraphs]
+  );
+
+  const exportVgbPublicationNumeric = useCallback(
+    (publicationId: string) => {
+      const artifact = vgbFigureLifecycleStore.publications.find(
+        (item) => item.publicationId === publicationId
+      );
+      if (!artifact) {
+        return;
+      }
+      try {
+        downloadScientificNumericExport(
+          createPublicationVgbFigureNumericExport(artifact),
+          { fileName: `vgb-publication-${publicationId}` }
+        );
+      } catch {
+        setScientificNumericExportMessage(
+          "No se pudo exportar la Figura de publicación."
+        );
+        window.setTimeout(() => setScientificNumericExportMessage(null), 5000);
+      }
+    },
+    [vgbFigureLifecycleStore.publications]
+  );
+
   const buildScientificReportExportReviewManifest = useCallback(
     (
       allowedPdfSectionIds: readonly string[] | undefined,
@@ -24112,9 +24465,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 <NotebookSection
                   title="Gráficos del Constructor Visual"
                   icon="📊"
-                  subtitle={`${projectVisualGraphs.length} gráfico${
+                  subtitle={`${projectVisualGraphs.length} figura${
                     projectVisualGraphs.length === 1 ? "" : "s"
-                  } del dataset activo${
+                  } de trabajo del dataset activo${
                     currentDatasetInfo?.fileName
                       ? ` (${currentDatasetInfo.fileName})`
                       : ""
@@ -24122,7 +24475,41 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   defaultOpen
                 >
                   <div className="space-y-4">
-                    {projectVisualGraphs.map((entry) => (
+                    {projectVisualGraphs.map((entry) => {
+                      const working =
+                        vgbFigureLifecycleStore.working.find(
+                          (record) => record.figureId === entry.id
+                        ) ?? null;
+                      const figurePublications =
+                        vgbFigureLifecycleStore.publications.filter(
+                          (artifact) => artifact.workingFigureId === entry.id
+                        );
+                      const publication =
+                        figurePublications[figurePublications.length - 1] ??
+                        null;
+                      const review = working?.reviewRecordId
+                        ? persistedReviewAuthorityRecords.find(
+                            (record) =>
+                              record.recordId === working.reviewRecordId
+                          ) ?? null
+                        : null;
+                      const workingProjection = projectWorkingVgbFigure({
+                        entry,
+                        provenance: composeActiveVgbFigureProvenance(entry),
+                      });
+                      const eligibility = canPromoteVgbFigureToPublication({
+                        visualTruth: assessVgbVisualTruth({
+                          graphSpec: entry.graphSpec,
+                          projection: workingProjection,
+                        }),
+                        review,
+                      });
+                      const phase = deriveVgbFigureLifecyclePhase({
+                        working,
+                        publications: figurePublications,
+                        review,
+                      });
+                      return (
                       <div
                         key={entry.id}
                         className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3"
@@ -24143,6 +24530,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         </div>
                         <GraphPreview
                           preview={entry.preview}
+                          chartTokens={resolveGraphRenderStyle({
+                            publicationPresetId:
+                              entry.graphSpec.publicationPresetId,
+                            color: entry.graphSpec.color,
+                          })}
+                          lineStrokeDasharray={mapLineStyleToStrokeDasharray(
+                            entry.graphSpec.lineStyle
+                          )}
                           scatterStyle={
                             entry.preview.graphType === "scatter"
                               ? {
@@ -24153,8 +24548,29 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               : null
                           }
                         />
+                        <VgbFigureLifecyclePanel
+                          phase={phase}
+                          review={review}
+                          publication={publication}
+                          eligibilityReasons={eligibility.reasons}
+                          onSubmitForReview={() =>
+                            submitVgbFigureForReview(entry.id)
+                          }
+                          onReview={() => reviewVgbFigureById(entry.id)}
+                          onApprove={() => approveVgbFigureById(entry.id)}
+                          onPublish={() => publishVgbFigureById(entry.id)}
+                          onExportNumeric={
+                            publication
+                              ? () =>
+                                  exportVgbPublicationNumeric(
+                                    publication.publicationId
+                                  )
+                              : undefined
+                          }
+                        />
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </NotebookSection>
               </div>

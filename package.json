@@ -314,6 +314,8 @@
     "validate:pr3-output-parity-unit": "npx tsx scripts/validate-pr3-output-parity-unit.ts",
     "validate:pr3-numeric-export-unit": "npx tsx scripts/validate-pr3-numeric-export-unit.ts",
     "validate:pr3-gate": "npm run validate:pr3-review-authority-unit && npm run validate:pr3-output-parity-unit && npm run validate:pr3-numeric-export-unit && npx tsc --noEmit",
+    "validate:pr4-figure-lifecycle-unit": "npx tsx scripts/validate-pr4-figure-lifecycle-unit.ts",
+    "validate:pr4-gate": "npm run validate:pr4-figure-lifecycle-unit && npx tsc --noEmit",
     "validate:app-preferences-unit": "npx tsx scripts/validate-app-preferences-unit.ts",
     "validate:project-history-unit": "npx tsx scripts/validate-project-history-unit.ts",
     "validate:persistence-unit": "npx tsx scripts/validate-persistence-unit.ts",

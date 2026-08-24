@@ -140,3 +140,34 @@ export type {
   GeneratedTextReviewTransitionKind,
   GeneratedTextReviewValidity,
 } from "./generated-text-review";
+
+export {
+  SCIENTIFIC_VGB_FIGURE_LIFECYCLE_SCHEMA,
+  SCIENTIFIC_VGB_FIGURE_LIFECYCLE_STORE_SCHEMA,
+  SCIENTIFIC_VGB_PUBLICATION_FIGURE_SCHEMA,
+  SCIENTIFIC_VGB_WORKING_FIGURE_SCHEMA,
+  VGB_DISPLAY_SERIES_DISPOSITION,
+  VGB_FIGURE_LIFECYCLE_STATES,
+  createVgbPublicationFigureId,
+  extractVgbFigureCosmeticBinding,
+  extractVgbFigureScientificBinding,
+  fingerprintVgbFigureCosmeticBinding,
+  fingerprintVgbFigureEvidence,
+  fingerprintVgbFigureScientificBinding,
+  freezeVgbFigureLifecycleStore,
+  freezeVgbPublicationFigureArtifact,
+  freezeVgbWorkingFigureRecord,
+  isVgbFigureLifecycleStore,
+  isVgbPublicationFigureArtifact,
+  isVgbWorkingFigureRecord,
+} from "./vgb-figure-lifecycle";
+export type {
+  VgbDisplaySeriesDisposition,
+  VgbFigureCosmeticBinding,
+  VgbFigureLifecyclePhase,
+  VgbFigureLifecycleState,
+  VgbFigureLifecycleStore,
+  VgbFigureScientificBinding,
+  VgbPublicationFigureArtifact,
+  VgbWorkingFigureRecord,
+} from "./vgb-figure-lifecycle";
