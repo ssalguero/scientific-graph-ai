@@ -21426,7 +21426,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           <section
             className={
               activeWorkspaceSection === "home"
-                ? "relative flex h-full min-h-0 flex-1 flex-col"
+                ? "flex h-full min-h-0 flex-1 flex-col"
                 : "hidden"
             }
             aria-hidden={activeWorkspaceSection !== "home"}
@@ -21436,7 +21436,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               onSelect={handleSmartStartSelect}
               onStartRecommendation={handleIntentRecommendationStart}
             />
-            <p className="pointer-events-none absolute inset-x-0 bottom-2 px-4 text-center text-[11px] leading-snug text-[var(--color-text-muted)]">
+            <p
+              className="shrink-0 px-4 py-2 text-center text-[11px] leading-snug text-[var(--color-text-muted)]"
+              data-pr5-home-disposition
+            >
               {formatPr5ContinuityDisposition()}
             </p>
           </section>

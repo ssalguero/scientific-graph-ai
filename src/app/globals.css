@@ -207,22 +207,30 @@ html[data-crp-home-shell="true"] [data-home-stage] {
   display: flex !important;
   flex: 1 1 auto !important;
   flex-direction: column !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
   align-items: stretch !important;
   min-height: 0 !important;
   height: 100% !important;
   width: 100% !important;
+  overflow: hidden !important;
 }
 
 html[data-crp-home-shell="true"] [data-home-launcher] {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   width: 100% !important;
-  height: 100% !important;
+  height: auto !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+html[data-crp-home-shell="true"] [data-pr5-home-disposition] {
+  flex: 0 0 auto !important;
+  width: 100% !important;
 }
 
 /*

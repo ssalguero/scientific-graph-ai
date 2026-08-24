@@ -51,6 +51,8 @@ export const runPr5Wave2ContinuityCases = (assertCase: AssertCase): void => {
   const page = read("src/app/page.tsx");
   const helper = read("src/lib/project/pr5-researcher-continuity.ts");
   const hint = read("src/components/analysis/resolve-toggle-visibility-hint.ts");
+  const homeLauncher = read("src/components/home/SmartStartScreen.tsx");
+  const homeCss = read("src/app/globals.css");
   const sessionFiles = walkFiles(join(process.cwd(), "src/components/session"));
   const readAbs = (path: string): string => readFileSync(path, "utf8");
   const disposition = formatPr5ContinuityDisposition();
@@ -231,5 +233,15 @@ export const runPr5Wave2ContinuityCases = (assertCase: AssertCase): void => {
       page.includes('activeWorkspaceSection === "results"') &&
       page.includes('activeWorkspaceSection === "reports"') &&
       !page.includes("extractPageOrchestration")
+  );
+  assertCase(
+    "pr5.wave2.home.disclosure-in-document-flow-not-overlay",
+    page.includes("data-pr5-home-disposition") &&
+      page.includes("formatPr5ContinuityDisposition()") &&
+      !page.includes("absolute inset-x-0 bottom-2") &&
+      homeLauncher.includes("flex-wrap") &&
+      !homeLauncher.includes("flex-nowrap") &&
+      homeCss.includes("[data-pr5-home-disposition]") &&
+      homeCss.includes("flex: 0 0 auto")
   );
 };

@@ -54,7 +54,7 @@ export function SmartStartScreen({
         </div>
 
         <ul
-          className="mt-11 flex w-max max-w-full list-none flex-nowrap items-start justify-center gap-8 m-0 p-0"
+          className="mt-11 flex w-full max-w-full list-none flex-wrap items-start justify-center gap-8 m-0 p-0"
           aria-label="Capacidades"
         >
           {CAPABILITY_IDENTITY.map((capability) => {
