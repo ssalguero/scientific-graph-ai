@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-24 (this file is the **sole living SSOT** for “what is next”; CRP OPEN as index; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; `PRODUCT 1.0 — COMMERCIAL TEST READY`; Product Reorganization Baseline **FROZEN**; **PR0-A → PR5 = CERTIFIED BASELINE**; **PR5 CLOSED / CERTIFIED**; **NEXT = PR6-A**; PR6-A **NOT CERTIFIED / IMPLEMENTATION NOT STARTED**; SemVer 1.0.0)
+**Actualizado:** 2026-08-24 (this file is the **sole living SSOT** for “what is next”; CRP OPEN as index; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; `PRODUCT 1.0 — COMMERCIAL TEST READY`; Product Reorganization Baseline **FROZEN**; **PR0-A → PR5 = CERTIFIED BASELINE**; **PR5 CLOSED / CERTIFIED**; **NEXT = PR6-A**; PR6-A **NOT CERTIFIED**; Wave 0 checkpointed; Wave 1 evidence recorded; Wave 2 evidence recorded; Wave 3 not started; SemVer 1.0.0)
 
 ---
 
@@ -14,8 +14,10 @@ PR5 = CLOSED / CERTIFIED
 NEXT = PR6-A
 PR6-A = Integrated Validation, Performance Evidence, and Product V1 Certification Proposal
 PR6-A STATUS = NOT CERTIFIED
-PR6-A IMPLEMENTATION (WAVES 1–3) = NOT STARTED
-WAVE 0 = documentation SSOT only (this reconciliation)
+WAVE 0 = documentation SSOT checkpointed (c0a3599)
+WAVE 1 = evidence recorded (e47f892); does not certify PR6-A or CP-7
+WAVE 2 = evidence recorded; does not certify PR6-A or CP-7
+WAVE 3 = NOT STARTED
 ```
 
 Charter: [`docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md`](../PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md)
@@ -62,7 +64,7 @@ Historical freeze records (`FINAL-ROADMAP-CERTIFICATION.md`, `PRODUCT-REORGANIZA
 | Next authorized SPE step | **None** — series closed |
 | CRP program | **OPEN** — `docs/CRP/official-records/` · CRP-0…6 **PASS** · CRP-6.2.2 Screen 2 **CLOSED** · CRP-6.3 Home **PASS** · CRP-6.3.x **FINAL** · CRP-6.3-SHELL **CLOSED** |
 | CTR (Commercial Test Ready) | **CTR DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES** — `PRODUCT 1.0 — COMMERCIAL TEST READY` — Owner Gate **ACCEPTED WITH DISCLOSURES** — `docs/CRP/official-records/CRP-CTR-Declaration.md` |
-| Next program | **PR6-A** — Integrated Validation, Performance Evidence, and Product V1 Certification Proposal. **NOT CERTIFIED**. Waves 1–3 **NOT STARTED**. Charter: `docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md`. Certified baseline: **PR0-A → PR5 CLOSED / CERTIFIED** (PR5 docs `3e2edb5`; implementation/browser `6a6bc92`). Historical route (freeze-time text preserved): `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. |
+| Next program | **PR6-A** — Integrated Validation, Performance Evidence, and Product V1 Certification Proposal. **NOT CERTIFIED**. Wave 0 checkpointed (`c0a3599`). Wave 1 evidence recorded (`e47f892`; does not certify PR6-A or CP-7). Wave 2 evidence recorded (does not certify PR6-A or CP-7). Wave 3 **NOT STARTED**. Charter: `docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md`. Certified baseline: **PR0-A → PR5 CLOSED / CERTIFIED** (PR5 docs `3e2edb5`; implementation/browser `6a6bc92`). Historical route (freeze-time text preserved): `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
