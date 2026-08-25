@@ -33,8 +33,8 @@ function assertIntent(
   });
 }
 
-assertIntent("example.analyze-csv", "Quiero importar un CSV para análisis", "analyze-dataset", "basic");
-assertIntent("example.analyze-excel", "Tengo datos en Excel", "analyze-dataset", "basic");
+assertIntent("example.analyze-csv", "Quiero importar un CSV para análisis", "analyze-dataset", "standard");
+assertIntent("example.analyze-excel", "Tengo datos en Excel", "analyze-dataset", "standard");
 assertIntent("example.compare-ab", "comparar grupos A/B en un experimento", "compare-datasets", "standard");
 assertIntent("example.math-sine", "graficar función seno y coseno", "math-graph", "standard");
 assertIntent("example.publication", "evaluar paper para revista científica", "evaluate-publication", "standard");

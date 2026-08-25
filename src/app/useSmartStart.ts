@@ -297,7 +297,13 @@ export function useSmartStart(params: UseSmartStartParams) {
   const handleIntentRecommendationStart = (
     recommendation: IntentRecommendation
   ) => {
-    setLabUsageProfile(recommendation.recommendedProfile);
+    if (recommendation.intentId === "analyze-dataset") {
+      if (labUsageProfile === "basic") {
+        setLabUsageProfile("standard");
+      }
+    } else {
+      setLabUsageProfile(recommendation.recommendedProfile);
+    }
     if (recommendation.intentId === "open-project") {
       handleOpenProjectFromIntent();
       return;

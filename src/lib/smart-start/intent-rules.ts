@@ -157,7 +157,7 @@ export const INTENT_RULES: IntentRule[] = [
       "series",
       "archivo de datos",
     ],
-    recommendedProfile: "basic",
+    recommendedProfile: "standard",
     flowLabel: "Analizar dataset",
     destinationLabel: "Datos → Experimental → Importación",
     priority: 30,

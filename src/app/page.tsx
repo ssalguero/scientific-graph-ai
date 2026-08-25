@@ -15416,6 +15416,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [showScientificInterpretation, setShowScientificInterpretation] =
     useState(false);
   const [showScientificAssistant, setShowScientificAssistant] = useState(false);
+  const [scientificAssistantSectionOpen, setScientificAssistantSectionOpen] =
+    useState(false);
+  const scientificAssistantSectionRef = useRef<HTMLDivElement | null>(null);
   const [scientificReportCopied, setScientificReportCopied] = useState(false);
   const [scientificInterpretationCopied, setScientificInterpretationCopied] =
     useState(false);
@@ -16345,6 +16348,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setShowScientificReport(false);
     setShowScientificInterpretation(false);
     setShowScientificAssistant(false);
+    setScientificAssistantSectionOpen(false);
     setErrorBarMode("sd");
     setCorrelationMethod("pearson");
     setOutlierMethod("iqr");
@@ -18132,6 +18136,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setImportDestinationActive,
     importarDestinationRef,
   });
+  const revealScientificAssistant = () => {
+    setShowScientificAssistant(true);
+    setScientificAssistantSectionOpen(true);
+    selectWorkspaceSection("results");
+  };
+  useEffect(() => {
+    if (!showScientificAssistant || !scientificAssistantSectionOpen) return;
+    if (activeWorkspaceSection !== "results") return;
+    const timer = window.setTimeout(() => {
+      scientificAssistantSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [
+    showScientificAssistant,
+    scientificAssistantSectionOpen,
+    activeWorkspaceSection,
+  ]);
   const cancelGuidedWorkflow = () => {
     const cancelledTemplateId = guidedWorkflowSession.templateId;
     const snapshot = workflowVisibilitySnapshotRef.current;
@@ -21381,8 +21405,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         isAssistantEnabled={isAssistantModuleEnabled}
         isReportsEnabled={isReportsModuleEnabled}
         onOpenAssistant={() => {
-          setActiveWorkspaceSection("analysis");
-          setAnalysisInspectorSection("advisor");
+          revealScientificAssistant();
         }}
         onOpenReports={() => setActiveWorkspaceSection("reports")}
         onOpenFunctionLibrary={() => {
@@ -21459,12 +21482,29 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               <div ref={importarDestinationRef}>
                 <WorkflowContinuityBar
                   stepLabel="Ahora · Importar"
-                  contextLine={`Importe datos para continuar a Datos. ${formatPr5ContinuityDisposition()}`}
+                  contextLine={
+                    currentDatasetInfo || experimentalSeries.length > 0
+                      ? `Dataset listo. Continúe a Análisis. ${formatPr5ContinuityDisposition()}`
+                      : `Importe datos para continuar a Datos. ${formatPr5ContinuityDisposition()}`
+                  }
                   actions={[
+                    ...(currentDatasetInfo || experimentalSeries.length > 0
+                      ? [
+                          {
+                            label: "Continuar a Análisis →",
+                            onClick: () =>
+                              selectWorkspaceSection("analysis"),
+                            prominence: "primary" as const,
+                          },
+                        ]
+                      : []),
                     {
                       label: "Continuar a Datos →",
                       onClick: () => selectWorkspaceSection("data"),
-                      prominence: "primary",
+                      prominence:
+                        currentDatasetInfo || experimentalSeries.length > 0
+                          ? ("secondary" as const)
+                          : ("primary" as const),
                     },
                   ]}
                 />
@@ -24553,9 +24593,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             type="checkbox"
                             className={toggleInput}
                             checked={showScientificAssistant}
-                            onChange={(e) =>
-                              setShowScientificAssistant(e.target.checked)
-                            }
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                revealScientificAssistant();
+                              } else {
+                                setShowScientificAssistant(false);
+                                setScientificAssistantSectionOpen(false);
+                              }
+                            }}
                             disabled={!hasVisibleExperimentalSeries}
                           />
                           <span className={toggleTrackBg} aria-hidden />
@@ -28366,14 +28411,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </NotebookSection>
             )}
 
-            {profileShowsAdvancedResults(labUsageProfile) &&
-              isAssistantModuleEnabled &&
+            {isAssistantModuleEnabled &&
               showScientificAssistant && (
               <NotebookSection
                 title="Asistente científico"
                 icon="🧪"
                 subtitle="Conclusiones y flujo recomendado"
-                defaultOpen={false}
+                open={scientificAssistantSectionOpen}
+                onOpenChange={setScientificAssistantSectionOpen}
+                sectionRef={scientificAssistantSectionRef}
               >
                 {scientificAssistantReport ? (
                   <div className={contentPanel}>
