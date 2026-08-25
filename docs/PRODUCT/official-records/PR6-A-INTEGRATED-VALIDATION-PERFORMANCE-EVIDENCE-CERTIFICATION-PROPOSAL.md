@@ -10,7 +10,17 @@
 **Wave 0 Status:** **SSOT DOCUMENTATION RECONCILIATION ONLY**  
 **Decision Authority:** PROJECT OWNER / PRODUCT GOVERNANCE AUTHORITY  
 **Implementation Authority:** Frozen PD-01–PD-07; certified PR0-A through PR5  
-**Living next SSOT:** [`docs/roadmaps/ROADMAP.md`](../../roadmaps/ROADMAP.md)
+**Living SSOT:** [`docs/roadmaps/ROADMAP.md`](../../roadmaps/ROADMAP.md)
+
+**Live pointer (does not rewrite the freeze-time Wave 0 body below):**
+
+```text
+CP-7 = ISSUED / CLOSED — docs/PRODUCT/official-records/CP-7-PRODUCT-REORGANIZATION-CERTIFICATION.md
+PR6-A OVERALL = CERTIFIED WITH EXPLICIT DISCLOSURES / CLOSED
+WAVES 0–3 = CLOSED AS HISTORICAL EVIDENCE (bodies not rewritten)
+ROADMAP = FINISHED
+NEXT = NONE
+```
 
 ```text
 PR6-A WAVE 0 IMPLEMENTED — NOT CERTIFIED
@@ -19,7 +29,7 @@ CP-7 = NOT ISSUED
 PRODUCT V1 / 1.0.0 = EXISTING BASELINE (NOT REOPENED)
 ```
 
-This record does **not** certify PR6-A, CP-7, or Product V1. Wave 0 records the Owner-approved charter and restores living SSOT. It performs no product implementation.
+This record does **not** certify PR6-A, CP-7, or Product V1. Wave 0 records the Owner-approved charter and restores living SSOT. It performs no product implementation. Live overall closeout is the CP-7 official record, not this freeze-time Wave 0 body.
 
 ---
 
