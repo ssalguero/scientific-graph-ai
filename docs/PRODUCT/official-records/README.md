@@ -1,6 +1,6 @@
 # PRODUCT Official Records
 
-**Status:** Product Identity **DECIDED / CERTIFIED** · Product Reorganization Baseline **FROZEN** · PD-01–PD-07 **CLOSED** · Detailed Roadmap **AUTHORIZED** · **PR0-A → PR5 CERTIFIED BASELINE** · **PR5 CLOSED / CERTIFIED** · Product Face Wave 1 **CERTIFIED / CLOSED** (`89731b3`) · Product Face Wave 2 **NOT SCHEDULED** · **living next = Product Navigation / Cognitive Load Review** ([`ROADMAP.md`](../../roadmaps/ROADMAP.md)) · PR6-A Waves 0–3 **CLOSED as evidence** · PR6-A overall **NOT CERTIFIED** · CP-7 proposed / not issued
+**Status:** Product Identity **DECIDED / CERTIFIED** · Product Reorganization Baseline **FROZEN** · PD-01–PD-07 **CLOSED** · Detailed Roadmap **AUTHORIZED** · **PR0-A → PR5 CERTIFIED BASELINE** · **PR5 CLOSED / CERTIFIED** · Product Face Wave 1 **CERTIFIED / CLOSED** (`89731b3`) · Product Navigation / Cognitive Load Review **CLOSED** · Product Face Wave 2 **NOT SCHEDULED** · UX DEBT NAV-01 / METH-01 **not scheduled** · **living next = CP-7 Owner decision** (PROPOSED / NOT ISSUED; governance only; not a product implementation series) ([`ROADMAP.md`](../../roadmaps/ROADMAP.md)) · PR6-A Waves 0–3 **CLOSED as evidence** · PR6-A overall **NOT CERTIFIED**
 **Decision Authority:** PROJECT OWNER / PRODUCT GOVERNANCE AUTHORITY
 
 This directory holds whole-product Product Identity, Version Authority / Format, Version Identity and Product Reorganization Official Records.
@@ -11,7 +11,7 @@ It is the authoritative location for those governance artifacts.
 ```text
 PR0-A → PR5 = CERTIFIED IMPLEMENTATION BASELINE
 PR5 = CLOSED / CERTIFIED
-PR6-A = CHARTER APPROVED / NOT CERTIFIED (Owner governance / CP-7; not living next)
+PR6-A = CHARTER APPROVED / NOT CERTIFIED (not living implementation next)
 WAVE 0 = documentation SSOT checkpointed
 WAVE 1 = evidence recorded / does not certify PR6-A or CP-7
 WAVE 2 = evidence recorded / does not certify PR6-A or CP-7
@@ -19,8 +19,15 @@ WAVE 3 = CERTIFIED / CLOSED / CP-7 proposed / Owner decision required / CP-7 NOT
 CP-7 = PROPOSED / OWNER DECISION REQUIRED / NOT ISSUED
 PR6-A = NOT CERTIFIED
 Product Face Wave 1A–1D = CERTIFIED / CLOSED (89731b3)
-Product Face Wave 2 = NOT SCHEDULED (contingent on review evidence only)
-NEXT = Product Navigation / Cognitive Load Review
+Product Navigation / Cognitive Load Review = CLOSED
+Product Face Wave 2 = NOT SCHEDULED
+UX DEBT (not scheduled; not a blocker; not a Wave 2 trigger)
+  NAV-01 — Sidebar optional-module labels can be interpreted as navigation
+  METH-01 — methodology group may sit below the first Análisis viewport
+NEXT = CP-7 Owner decision
+  (PROPOSED / NOT ISSUED; governance only; not a product implementation series)
+  ≠ PR6-A reopen
+  ≠ Product Face Wave 2
   (living SSOT: docs/roadmaps/ROADMAP.md)
 ```
 
@@ -59,15 +66,18 @@ PD-01–PD-07 = CLOSED
 AUTHORIZED SERIES = PR0-A → PR6-A (historical route)
 CERTIFIED IMPLEMENTATION BASELINE = PR0-A → PR5
 PR5 = CLOSED / CERTIFIED
-PR6-A = NOT CERTIFIED (Owner governance / CP-7; not living next)
+PR6-A = NOT CERTIFIED (not living implementation next)
 WAVE 0 = DOCUMENTATION SSOT CHECKPOINTED
 WAVE 1 = EVIDENCE RECORDED (NOT PR6-A / CP-7 CERTIFICATION)
 WAVE 2 = EVIDENCE RECORDED (NOT PR6-A / CP-7 CERTIFICATION)
 WAVE 3 = CERTIFIED / CLOSED (CP-7 PROPOSED / NOT ISSUED)
 CP-7 = PROPOSED / OWNER DECISION REQUIRED / NOT ISSUED
 Product Face Wave 1 = CERTIFIED / CLOSED (89731b3)
+Product Navigation / Cognitive Load Review = CLOSED
 Product Face Wave 2 = NOT SCHEDULED
-NEXT = Product Navigation / Cognitive Load Review
+UX DEBT NAV-01 / METH-01 = not scheduled
+NEXT = CP-7 Owner decision
+  (PROPOSED / NOT ISSUED; governance only; not a product implementation series)
 ```
 
 **Canonical Product Identifier:** Scientific Graph AI  
