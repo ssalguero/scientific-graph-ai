@@ -26,8 +26,9 @@ export const SMART_START_OPTIONS: SmartStartOption[] = [
   },
   {
     id: "math-graph",
-    title: "Crear gráfico",
-    description: "Crea y explora visualizaciones.",
+    title: "Gráfico y=f(x)",
+    description:
+      "Expresiones y funciones matemáticas y=f(x). La visualización queda en Resultados. No abre el Constructor Visual.",
     actionLabel: "Abrir constructor",
     prominence: "secondary",
   },
@@ -40,8 +41,9 @@ export const SMART_START_OPTIONS: SmartStartOption[] = [
   },
   {
     id: "evaluate-publication",
-    title: "Evaluar / Publicar",
-    description: "Revisa, valida y prepara tus resultados.",
+    title: "Evaluar metodología",
+    description:
+      "Indicadores SCI-50→60 para preparación metodológica. No publica una figura VGB.",
     actionLabel: "Iniciar evaluación",
     prominence: "secondary",
   },

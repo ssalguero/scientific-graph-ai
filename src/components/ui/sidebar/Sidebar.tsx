@@ -182,10 +182,13 @@ export function Sidebar({
   const isHome = workspaceSection === "home";
   const showCientifico =
     workspaceSection === "analysis" || workspaceSection === "results";
-  const showAnalisisTools =
-    workspaceSection === "analysis" ||
-    workspaceSection === "results" ||
-    workspaceSection === "reports";
+  const showNuevoGrafico = workspaceSection === "analysis";
+  const showAssistantItem =
+    isAssistantEnabled &&
+    (workspaceSection === "analysis" ||
+      workspaceSection === "results" ||
+      workspaceSection === "reports");
+  const showAnalisisTools = showNuevoGrafico || showAssistantItem;
   const showRecursos = workspaceSection === "data";
   const showAjustes = !isHome;
 
@@ -508,25 +511,18 @@ export function Sidebar({
                 workspaceSection === "reports"
               }
             >
-              <button
-                type="button"
-                onClick={onNewCurve}
-                className={sidebarBtnPrimary}
-                title="Reinicia el constructor: gráfico y=f(x) vacío. No agrega una expresión al gráfico actual. No borra datos experimentales ni proyecto."
-                aria-label="Nuevo gráfico — reinicia el constructor"
-              >
-                {effectiveRailCollapsed ? getIcon("add") : "+ Nuevo gráfico"}
-              </button>
-              <button
-                type="button"
-                onClick={onClearCurves}
-                className={sidebarBtnSecondary}
-                title="Vacía las expresiones del constructor. No borra datos experimentales ni proyecto."
-                aria-label="Vaciar curvas"
-              >
-                {effectiveRailCollapsed ? getIcon("remove") : "Vaciar curvas"}
-              </button>
-              {isAssistantEnabled ? (
+              {showNuevoGrafico ? (
+                <button
+                  type="button"
+                  onClick={onNewCurve}
+                  className={sidebarBtnPrimary}
+                  title="Reinicia el constructor: gráfico y=f(x) vacío. No agrega una expresión al gráfico actual. No borra datos experimentales ni proyecto."
+                  aria-label="Nuevo gráfico — reinicia el constructor"
+                >
+                  {effectiveRailCollapsed ? getIcon("add") : "+ Nuevo gráfico"}
+                </button>
+              ) : null}
+              {showAssistantItem ? (
                 <SidebarItem
                   icon="advisor"
                   label="Asistente científico"
@@ -537,22 +533,7 @@ export function Sidebar({
                     )
                   }
                 />
-              ) : (
-                <SidebarItem
-                  icon="advisor"
-                  label="Asistente científico"
-                  disabled
-                />
-              )}
-              {isReportsEnabled ? (
-                <SidebarItem
-                  icon="reports"
-                  label="Reportes"
-                  onClick={onOpenReports}
-                />
-              ) : (
-                <SidebarItem icon="reports" label="Reportes" disabled />
-              )}
+              ) : null}
             </SidebarSection>
           </div>
           ) : null}

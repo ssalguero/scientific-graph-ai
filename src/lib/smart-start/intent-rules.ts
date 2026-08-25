@@ -82,8 +82,9 @@ export const INTENT_RULES: IntentRule[] = [
       "publicar",
     ],
     recommendedProfile: "standard",
-    flowLabel: "Evaluar publicación",
-    destinationLabel: "Análisis → Estadística / Workflow de publicación",
+    flowLabel: "Evaluar metodología",
+    destinationLabel:
+      "Análisis → Estadística / indicadores SCI-50→60 (no publica figura VGB)",
     priority: 45,
   },
   {

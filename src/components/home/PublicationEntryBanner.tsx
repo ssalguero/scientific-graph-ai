@@ -22,11 +22,12 @@ export function PublicationEntryBanner({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-            Evaluar para publicar
+            Evaluar metodología
           </p>
           <p className="text-xs text-[var(--color-text-muted)] mt-1">
-            Complete los pasos hacia el reporte científico. Importe datos si aún
-            no hay evidencia suficiente para iniciar la evaluación.
+            Active los indicadores SCI-50→60 y prepare la revisión metodológica.
+            Esto no publica una figura VGB. Importe datos si aún no hay evidencia
+            suficiente.
           </p>
         </div>
         <button

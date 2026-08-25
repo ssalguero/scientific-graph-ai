@@ -577,8 +577,8 @@ const DATA_WORKSPACE_VIEWS: {
 }[] = [
   { id: "experimental", label: "Experimental" },
   { id: "curves", label: "Constructor y=f(x)" },
-  { id: "advanced", label: "Avanzado" },
   { id: "visual-builder", label: "📊 Constructor Visual" },
+  { id: "advanced", label: "Avanzado" },
 ];
 
 type ScientificReportSectionCollapsibleProps = {
@@ -20990,6 +20990,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   }, [currentDatasetInfo, experimentalSeries.length, hasChartContent]);
 
   const openDataView = (view: DataWorkspaceView) => {
+    if (
+      labUsageProfile === "basic" &&
+      (view === "curves" || view === "visual-builder")
+    ) {
+      setLabUsageProfile("standard");
+    }
     setDataWorkspaceView(view);
     selectWorkspaceSection("data");
   };
@@ -21507,11 +21513,23 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   label: "Constructor Visual",
                   onClick: () => openDataView("visual-builder"),
                 },
+                ...(chartData.length > 0 || projectVisualGraphs.length > 0
+                  ? [
+                      {
+                        label: "Ver gráfico / Resultados →",
+                        onClick: () => selectWorkspaceSection("results"),
+                        prominence: "primary" as const,
+                      },
+                    ]
+                  : []),
                 {
                   label: "Continuar a Análisis →",
                   onClick: () => selectWorkspaceSection("analysis"),
                   disabled: experimentalSeries.length === 0 && !hasChartContent,
-                  prominence: "primary",
+                  prominence:
+                    chartData.length > 0 || projectVisualGraphs.length > 0
+                      ? "tertiary"
+                      : "primary",
                 },
               ]}
             />
