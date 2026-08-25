@@ -1,6 +1,6 @@
 # Scientific Graph AI — Roadmap
 
-**Actualizado:** 2026-08-24 (this file is the **sole living SSOT** for “what is next”; CRP OPEN as index; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; `PRODUCT 1.0 — COMMERCIAL TEST READY`; Product Reorganization Baseline **FROZEN**; **PR0-A → PR5 = CERTIFIED BASELINE**; **PR5 CLOSED / CERTIFIED**; **NEXT = PR6-A**; PR6-A **NOT CERTIFIED**; Wave 3 **CERTIFIED / CLOSED**; CP-7 proposed / not issued; SemVer 1.0.0)
+**Actualizado:** 2026-08-24 (this file is the **sole living SSOT** for “what is next”; CRP OPEN as index; CTR **DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES**; `PRODUCT 1.0 — COMMERCIAL TEST READY`; Product Reorganization Baseline **FROZEN**; **PR0-A → PR5 = CERTIFIED BASELINE**; **PR5 CLOSED / CERTIFIED**; Product Face Wave 1 **CERTIFIED / CLOSED** (`89731b3`); PR6-A Waves 0–3 **CLOSED as evidence** · PR6-A overall **NOT CERTIFIED**; CP-7 proposed / not issued; **NEXT = Product Navigation / Cognitive Load Review**; Product Face Wave 2 **NOT SCHEDULED**; SemVer 1.0.0)
 
 ---
 
@@ -11,14 +11,22 @@ PR0-A → PR5 = CERTIFIED IMPLEMENTATION BASELINE
 PR5 = CLOSED / CERTIFIED
   documentation checkpoint: 3e2edb5
   implementation/browser checkpoint: 6a6bc92  (PR5 official record)
-NEXT = PR6-A
 PR6-A = Integrated Validation, Performance Evidence, and Product V1 Certification Proposal
-PR6-A STATUS = NOT CERTIFIED
+PR6-A STATUS = NOT CERTIFIED (Owner governance / CP-7; not living next)
 WAVE 0 = documentation SSOT checkpointed (c0a3599)
 WAVE 1 = evidence recorded (e47f892); does not certify PR6-A or CP-7
 WAVE 2 = evidence recorded (07c77c3); CERTIFIED WITH DOCUMENTED MEASUREMENT LIMITATIONS; does not certify PR6-A or CP-7
 WAVE 3 = CERTIFIED / CLOSED; CP-7 proposed / Owner decision required; CP-7 NOT ISSUED
-PR6-A = NOT CERTIFIED
+Product Face Wave 1A–1D = CERTIFIED / CLOSED
+  checkpoint: 89731b3
+  commit: feat(product): certify product face reorganization
+  1A Home Product Face Honesty
+  1B Datos Organization + GE/VGB Discoverability
+  1C Datos Workflow Continuity
+  1D Sidebar / Chrome Cleanup
+Product Face Wave 2 = NOT SCHEDULED (contingent on review evidence only)
+NEXT = Product Navigation / Cognitive Load Review
+  (black-box product usability; not scientific validation; not Wave 2 implementation)
 ```
 
 Charter: [`docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md`](../PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md)
@@ -65,7 +73,7 @@ Historical freeze records (`FINAL-ROADMAP-CERTIFICATION.md`, `PRODUCT-REORGANIZA
 | Next authorized SPE step | **None** — series closed |
 | CRP program | **OPEN** — `docs/CRP/official-records/` · CRP-0…6 **PASS** · CRP-6.2.2 Screen 2 **CLOSED** · CRP-6.3 Home **PASS** · CRP-6.3.x **FINAL** · CRP-6.3-SHELL **CLOSED** |
 | CTR (Commercial Test Ready) | **CTR DECLARED** · **CTR CERTIFIED WITH EXPLICIT DISCLOSURES** — `PRODUCT 1.0 — COMMERCIAL TEST READY` — Owner Gate **ACCEPTED WITH DISCLOSURES** — `docs/CRP/official-records/CRP-CTR-Declaration.md` |
-| Next program | **PR6-A** — Integrated Validation, Performance Evidence, and Product V1 Certification Proposal. **NOT CERTIFIED**. Wave 0 `c0a3599`. Wave 1 `e47f892`. Wave 2 `07c77c3` (CERTIFIED WITH DOCUMENTED MEASUREMENT LIMITATIONS). Wave 3 **CERTIFIED / CLOSED**; **CP-7 PROPOSED / NOT ISSUED**. Charter: `docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md`. Wave 3 record: `docs/PRODUCT/official-records/PR6-A.3-PRODUCT-GAP-JOURNEY-GOVERNANCE-CERTIFICATION.md`. Certified baseline: **PR0-A → PR5 CLOSED / CERTIFIED** (PR5 docs `3e2edb5`; implementation/browser `6a6bc92`). Historical route (freeze-time text preserved): `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. Later Product Face / IA / visual-PWA remains outside PR6-A. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. |
+| Next activity | **Product Navigation / Cognitive Load Review** — black-box product usability (orientation, navigation, redundant paths, competing CTAs, cognitive load, next-action clarity, GE vs VGB, methodology vs publication, Sidebar, five-tab comprehension). **Not** scientific validation. **Not** Wave 2 implementation. Product Face Wave 1 **CERTIFIED / CLOSED** (`89731b3`). Product Face Wave 2 **NOT SCHEDULED** (contingent on concrete, repeatable review evidence only). PR6-A Waves 0–3 remain **CLOSED as evidence**; PR6-A overall **NOT CERTIFIED**; **CP-7 PROPOSED / NOT ISSUED** (Owner governance, not living next). Certified baseline: **PR0-A → PR5 CLOSED / CERTIFIED** (PR5 docs `3e2edb5`; implementation/browser `6a6bc92`). Historical route (freeze-time text preserved): `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. |
 | Current PP gate | **PP11 PASS · IN FORCE** · repository **RELEASE COMPLETED** / **VERIFIED** |
 | Next authorized PP step | **None** — PP0…PP11 complete |
 | PP10 | **PASS** — Production Approval **GRANTED** |
@@ -118,7 +126,12 @@ PR0-A → PR5 CERTIFIED
    ↓
 PR5 CLOSED / CERTIFIED
    ↓
-PR6-A NEXT (NOT CERTIFIED)
+PR6-A WAVES 0–3 EVIDENCE CLOSED (OVERALL NOT CERTIFIED; CP-7 NOT ISSUED)
+   ↓
+Product Face Wave 1 CERTIFIED / CLOSED (89731b3)
+   ↓
+NEXT = Product Navigation / Cognitive Load Review
+   (Wave 2 NOT SCHEDULED — contingent on review evidence)
 ```
 
 ---
@@ -137,6 +150,7 @@ CERTIFIED BASELINE
     PRODUCT 1.0 — COMMERCIAL TEST READY
     SPE-1 CERTIFIED / CLOSED
     Product Face / CRP execution closed through CRP-6.3-SHELL
+    Product Face Wave 1A–1D CERTIFIED / CLOSED (89731b3)
     DEP-2 CERTIFIED / CLOSED (G6 OUT · cloud NOT CERTIFIED · RLS DEFERRED)
 
 POST-CTR
@@ -147,9 +161,12 @@ PRODUCT REORGANIZATION
     Baseline = FROZEN
     PD-01–PD-07 = CLOSED
     Final Roadmap Certification = CERTIFIED AFTER CORRECTIONS (historical freeze record)
-    Detailed route = PR0-A → PR6-A
+    Detailed route = PR0-A → PR6-A (historical)
     Certified implementation baseline = PR0-A → PR5
     PR5 = CLOSED / CERTIFIED
+    PR6-A Waves 0–3 = CLOSED as evidence (overall NOT CERTIFIED; CP-7 NOT ISSUED)
+    Product Face Wave 1 = CERTIFIED / CLOSED (89731b3)
+    Product Face Wave 2 = NOT SCHEDULED (contingent on review evidence only)
 
 DEFERRED (protected — not debt by listing)
     AIR-1 · Cloud · RLS · G6 · Auth implementation
@@ -157,19 +174,19 @@ DEFERRED (protected — not debt by listing)
     COLLAB realtime · PLUGINS loading · EXPORT-3
     marketplace / Lovable · v1.1 bump
 
-NEXT SERIES
-    PR6-A
-    CHARTER APPROVED
-    NOT CERTIFIED
-    IMPLEMENTATION (WAVES 1–3) NOT STARTED
-    WAVE 0 = documentation SSOT only
+NEXT ACTIVITY
+    Product Navigation / Cognitive Load Review
+    BLACK-BOX PRODUCT USABILITY
+    ≠ scientific validation
+    ≠ Wave 2 implementation
+    ≠ PR6-A implementation series
 
 CRP: docs/CRP/official-records/ (OPEN — index/history only)
 Phase 3 = OPTIONAL / BLOCKED / NOT DEBT
 CRP-6.4 Importar architecture = PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION
-ENGINE · DATA · SCIENTIFIC · UX · PROJECT · PERFORMANCE · RELEASE = governed by the detailed phase/contract route
+ENGINE · DATA · SCIENTIFIC · UX · PROJECT · PERFORMANCE · RELEASE = certified historical domains (not living next)
 AI · COLLAB · PLUGINS = deferred except explicit disposition/evidence
-NEXT: PR6-A (NOT CERTIFIED)
+NEXT: Product Navigation / Cognitive Load Review
 ```
 
 | Track | Status |
@@ -178,7 +195,7 @@ NEXT: PR6-A (NOT CERTIFIED)
 | **CTR** | **DECLARED** · **CERTIFIED WITH EXPLICIT DISCLOSURES** — `docs/CRP/official-records/CRP-CTR-Declaration.md` |
 | **CRP** | **OPEN** as index — historical CRP-0…6 PASS; Screen 2 / Home / 6.3.x / 6.3-SHELL **closed**; **not** Phase 3; **not** CRP-6.4 implementation |
 | **Post-CTR roadmap** | Historical plan preserved at `docs/roadmaps/POST-CTR-ROADMAP.md`; superseded as living-next authority by Product Reorganization |
-| **Product Reorganization** | Baseline **FROZEN** · PD-01–PD-07 **CLOSED** · certified implementation **PR0-A → PR5 CLOSED / CERTIFIED** · **NEXT = PR6-A** (**NOT CERTIFIED**; Wave 3 **CERTIFIED / CLOSED**; **CP-7 PROPOSED / NOT ISSUED**) · charter `docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md` · historical route (freeze-time text preserved) `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md` |
+| **Product Reorganization** | Baseline **FROZEN** · PD-01–PD-07 **CLOSED** · certified implementation **PR0-A → PR5 CLOSED / CERTIFIED** · Product Face Wave 1 **CERTIFIED / CLOSED** (`89731b3`) · Product Face Wave 2 **NOT SCHEDULED** · **living next = Product Navigation / Cognitive Load Review** · PR6-A Waves 0–3 **CLOSED as evidence** (**NOT CERTIFIED**; **CP-7 PROPOSED / NOT ISSUED**) · charter `docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md` · historical route (freeze-time text preserved) `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md` |
 | **EXTERNAL COMMERCIAL TEST** | Operational (SPE-1.C) — **not** an implementation series |
 | ENGINE · DATA · Scientific · UX · Project · PERFORMANCE · RELEASE | Supporting domains governed by the authorized PR0-A→PR6-A route |
 | AI · COLLAB · PLUGINS | Existing baseline preserved; runtime expansion remains deferred |
@@ -224,7 +241,7 @@ The AI Domain is certified under `src/ai/` as structural Intelligence Domain ske
 **DEP-2:** **CERTIFIED / CLOSED** — see `docs/DEP/official-records/DEP-2-Hosted-Deployment-Execution.md`.
 **UXC-1:** **CERTIFIED / CLOSED** — see `docs/UXC/official-records/UXC-1-UX-Continuity-Certification.md`.
 **SPE-1:** **CERTIFIED / CLOSED** — see `docs/SPE/official-records/SPE-1-Series-Closure.md`.
-**Living next (this file only):** **PR6-A** — Integrated Validation, Performance Evidence, and Product V1 Certification Proposal. **NOT CERTIFIED**. Wave 3 **CERTIFIED / CLOSED**. **CP-7 PROPOSED / NOT ISSUED**. Certified baseline: **PR0-A → PR5 CLOSED / CERTIFIED**. Charter: `docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md`. Wave 3: `docs/PRODUCT/official-records/PR6-A.3-PRODUCT-GAP-JOURNEY-GOVERNANCE-CERTIFICATION.md`. Historical freeze authority (not living next): `docs/PRODUCT/official-records/PRODUCT-REORGANIZATION-BASELINE.md` and `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. Later Product Face / IA / visual-PWA remains outside PR6-A. CTR remains **DECLARED / CERTIFIED WITH EXPLICIT DISCLOSURES** and `PRODUCT 1.0 — COMMERCIAL TEST READY`. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). Phase 3 remains OPTIONAL / BLOCKED / NOT DEBT. CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. ARCH-U remains NOT ACTIVE. Lovable remains **VISUAL REFERENCE**. Official CRP index: `docs/CRP/official-records/`.
+**Living next (this file only):** **Product Navigation / Cognitive Load Review** — black-box product usability; **not** scientific validation; **not** Wave 2 implementation. Product Face Wave 1 **CERTIFIED / CLOSED** (`89731b3`). Product Face Wave 2 **NOT SCHEDULED** (contingent on concrete, repeatable review evidence only). PR6-A Waves 0–3 remain **CLOSED as evidence**; PR6-A overall **NOT CERTIFIED**; **CP-7 PROPOSED / NOT ISSUED** (Owner governance, not living next). Certified baseline: **PR0-A → PR5 CLOSED / CERTIFIED**. Charter (historical): `docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md`. Wave 3: `docs/PRODUCT/official-records/PR6-A.3-PRODUCT-GAP-JOURNEY-GOVERNANCE-CERTIFICATION.md`. Historical freeze authority (not living next): `docs/PRODUCT/official-records/PRODUCT-REORGANIZATION-BASELINE.md` and `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md`. CTR remains **DECLARED / CERTIFIED WITH EXPLICIT DISCLOSURES** and `PRODUCT 1.0 — COMMERCIAL TEST READY`. SPE-1.C **EXTERNAL COMMERCIAL TEST** remains operational (not an implementation series). Phase 3 remains OPTIONAL / BLOCKED / NOT DEBT. CRP-6.4 remains PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION. ARCH-U remains NOT ACTIVE. Lovable remains **VISUAL REFERENCE**. Official CRP index: `docs/CRP/official-records/`.
 
 ---
 
@@ -245,7 +262,7 @@ The AI Domain is certified under `src/ai/` as structural Intelligence Domain ske
 | **PROD-2C** — Worksheet + Visual Graph Builder persistence | **COMPLETED** |
 | **PROD-2D** — UX profesional + arquitectura transversal | **CLOSED** (2026-07-09) |
 | **PROD-2E** — Motor gráfico profesional | **CLOSED** (2026-07-16) |
-| **Living next series** | **PR6-A** (**NOT CERTIFIED**; Wave 3 **CERTIFIED / CLOSED**; **CP-7 PROPOSED / NOT ISSUED**); certified baseline **PR0-A → PR5 CLOSED / CERTIFIED**; CRP remains **OPEN** as index; CTR remains **DECLARED / CERTIFIED WITH EXPLICIT DISCLOSURES** |
+| **Living next series** | **Product Navigation / Cognitive Load Review** (black-box product usability; **not** scientific validation; **not** Wave 2); Product Face Wave 1 **CERTIFIED / CLOSED** (`89731b3`); Product Face Wave 2 **NOT SCHEDULED**; PR6-A Waves 0–3 **CLOSED as evidence** (**NOT CERTIFIED**; **CP-7 PROPOSED / NOT ISSUED**); certified baseline **PR0-A → PR5 CLOSED / CERTIFIED**; CRP remains **OPEN** as index; CTR remains **DECLARED / CERTIFIED WITH EXPLICIT DISCLOSURES** |
 | Historical PROD-3 pointer | **RETIRED as living next** — archive / SDC Continuity; not SPE-1 reopen of PROD-3 |
 
 Referencia de estado detallado (histórico):
@@ -360,7 +377,7 @@ Sincronización de README, ROADMAP, README técnico y referencias de estado con 
 
 | Series | Descripción |
 |--------|-------------|
-| **Living next** | **PR6-A** — Integrated Validation, Performance Evidence, and Product V1 Certification Proposal. **NOT CERTIFIED**. Wave 3 **CERTIFIED / CLOSED**. **CP-7 PROPOSED / NOT ISSUED**. Charter: `docs/PRODUCT/official-records/PR6-A-INTEGRATED-VALIDATION-PERFORMANCE-EVIDENCE-CERTIFICATION-PROPOSAL.md`. Certified baseline: **PR0-A → PR5 CLOSED / CERTIFIED**. Historical route (freeze-time text preserved): `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md` |
+| **Living next** | **Product Navigation / Cognitive Load Review** — black-box product usability (orientation, navigation, redundancy, competing CTAs, cognitive load, next-action clarity, GE vs VGB, methodology vs publication, Sidebar, five tabs). **Not** scientific validation. **Not** Wave 2 implementation. Product Face Wave 1 **CERTIFIED / CLOSED** (`89731b3`). Product Face Wave 2 **NOT SCHEDULED** (contingent on concrete, repeatable review evidence only). PR6-A Waves 0–3 **CLOSED as evidence**; PR6-A overall **NOT CERTIFIED**; **CP-7 PROPOSED / NOT ISSUED**. Certified baseline: **PR0-A → PR5 CLOSED / CERTIFIED**. Historical route (freeze-time text preserved): `docs/roadmaps/PRODUCT-REORGANIZATION-DETAILED-IMPLEMENTATION-ROADMAP.md` |
 | **Commercial Readiness Preparation** | **OPEN** (index) — historical records closed through CRP-6.3-SHELL; Phase 3 OPTIONAL / BLOCKED / NOT DEBT; CRP-6.4 PLAN ONLY / NOT AUTHORIZED FOR IMPLEMENTATION |
 | **SPE-1** (closed) | Scientific Product Expansion — **CERTIFIED / CLOSED** — `docs/SPE/official-records/SPE-1-Series-Closure.md` |
 | ENGINE · DATA · Scientific · UX · Project · PERFORMANCE · RELEASE | Supporting domains governed by PR0-A→PR6-A; runtime AI, COLLAB and PLUGINS remain deferred |
