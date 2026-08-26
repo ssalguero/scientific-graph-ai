@@ -38,3 +38,41 @@ export type IntentRecommendation = {
   confidence: IntentConfidence;
   matchedKeywords: string[];
 };
+
+/** Home Guidance AI — session flags actually known to Home (P2). */
+export type HomeGuidanceContext = {
+  hasDataset: boolean | null;
+  hasExperimentalSeries: boolean | null;
+};
+
+export type GuidanceClarificationSlot = "data_source" | null;
+
+export type HomeGuidanceConversationState = {
+  lastUserText: string;
+  candidateIntentIds: SmartStartIntentId[];
+  pendingSlot: GuidanceClarificationSlot;
+  suggestedCardIds: SmartStartCardOptionId[];
+  clarificationAsked: boolean;
+};
+
+export const EMPTY_HOME_GUIDANCE_CONVERSATION: HomeGuidanceConversationState = {
+  lastUserText: "",
+  candidateIntentIds: [],
+  pendingSlot: null,
+  suggestedCardIds: [],
+  clarificationAsked: false,
+};
+
+export type GuidanceUncertainty = "none" | "low" | "unknown_context";
+
+/** Semantic guidance decision. Not a navigation command. */
+export type GuidanceDecision = {
+  interpretation: string;
+  explanation: string;
+  prerequisite: string | null;
+  suggestedCardIds: SmartStartCardOptionId[];
+  primaryCardId: SmartStartCardOptionId | null;
+  clarification: string | null;
+  uncertainty: GuidanceUncertainty;
+  candidateIntentIds: SmartStartIntentId[];
+};

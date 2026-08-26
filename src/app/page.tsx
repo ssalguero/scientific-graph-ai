@@ -18099,7 +18099,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     showPublicationEntryBanner,
     handleSmartStartSelect,
     handleSmartStartExpertMode,
-    handleIntentRecommendationStart,
     handlePublicationEntryGoToImport,
     handlePublicationEntryStartWorkflow,
     selectWorkspaceSection,
@@ -21463,7 +21462,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           >
             <SmartStartScreen
               onSelect={handleSmartStartSelect}
-              onStartRecommendation={handleIntentRecommendationStart}
+              hasDataset={Boolean(currentDatasetInfo)}
+              hasExperimentalSeries={experimentalSeries.length > 0}
             />
             <p
               className="shrink-0 px-4 py-2 text-center text-[11px] leading-snug text-[var(--color-text-muted)]"

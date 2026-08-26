@@ -1,6 +1,7 @@
 "use client";
 
-import type { IntentRecommendation } from "@/lib/smart-start";
+import { useState } from "react";
+
 import {
   capabilityAccentBridgeStyle,
   capabilityAccentCssVar,
@@ -13,7 +14,8 @@ import { DS_FOCUS_RING, DS_MOTION_FEEDBACK } from "@/lib/ui/focus-ring";
 type SmartStartScreenProps = {
   onSelect: (optionId: string) => void;
   onExpertMode?: () => void;
-  onStartRecommendation: (recommendation: IntentRecommendation) => void;
+  hasDataset: boolean;
+  hasExperimentalSeries: boolean;
 };
 
 /**
@@ -21,8 +23,11 @@ type SmartStartScreenProps = {
  */
 export function SmartStartScreen({
   onSelect,
-  onStartRecommendation,
+  hasDataset,
+  hasExperimentalSeries,
 }: SmartStartScreenProps) {
+  const [guidanceEpoch, setGuidanceEpoch] = useState(0);
+
   return (
     <section
       className="flex h-full min-h-0 w-full flex-1 flex-col items-center justify-center px-[var(--spacing-default)]"
@@ -48,7 +53,9 @@ export function SmartStartScreen({
 
           <div className="mt-7 w-full">
             <SmartStartIntentAssistant
-              onStartRecommendation={onStartRecommendation}
+              key={guidanceEpoch}
+              hasDataset={hasDataset}
+              hasExperimentalSeries={hasExperimentalSeries}
             />
           </div>
         </div>
@@ -70,7 +77,10 @@ export function SmartStartScreen({
               >
                 <button
                   type="button"
-                  onClick={() => onSelect(capability.id)}
+                  onClick={() => {
+                    setGuidanceEpoch((epoch) => epoch + 1);
+                    onSelect(capability.id);
+                  }}
                   className={[
                     "relative flex h-[9rem] w-[9rem] cursor-pointer items-center justify-center",
                     "rounded-2xl",

@@ -2,7 +2,11 @@ import { LAB_USAGE_PROFILE_META } from "@/app/labUsageProfile";
 
 import { INTENT_RULES } from "./intent-rules";
 import { keywordMatches, normalizeIntentText } from "./normalize-intent-text";
-import type { IntentConfidence, IntentRecommendation } from "./types";
+import type {
+  IntentConfidence,
+  IntentRecommendation,
+  SmartStartIntentId,
+} from "./types";
 
 function scoreRule(
   text: string,
@@ -22,6 +26,18 @@ function scoreRule(
   }
 
   return { score, matchedKeywords };
+}
+
+/** All intent rules with score > 0. Does not change classifyIntent winner. */
+export function matchingIntentIds(input: string): SmartStartIntentId[] {
+  const text = normalizeIntentText(input);
+  if (text.trim().length === 0) return [];
+  const ids: SmartStartIntentId[] = [];
+  for (const rule of INTENT_RULES) {
+    const { score } = scoreRule(text, rule);
+    if (score > 0) ids.push(rule.id);
+  }
+  return ids;
 }
 
 export function classifyIntent(input: string): IntentRecommendation | null {

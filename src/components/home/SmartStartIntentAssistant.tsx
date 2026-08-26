@@ -3,39 +3,99 @@
 import { useState } from "react";
 
 import {
-  classifyIntent,
-  formatIntentRecommendationSummary,
-  type IntentRecommendation,
-} from "@/lib/smart-start";
+  buildGuidanceDecision,
+  cardLauncherTitle,
+  nextGuidanceConversation,
+} from "@/lib/smart-start/build-guidance-decision";
 import {
-  btnPrimary,
-  btnSecondary,
-  inputField,
-} from "@/app/projectFileUiStyles";
+  EMPTY_HOME_GUIDANCE_CONVERSATION,
+  type GuidanceDecision,
+  type HomeGuidanceConversationState,
+} from "@/lib/smart-start/types";
+import { btnSecondary, inputField } from "@/app/projectFileUiStyles";
 import { DS_FOCUS_RING, DS_MOTION_FEEDBACK } from "@/lib/ui/focus-ring";
 
 type SmartStartIntentAssistantProps = {
-  onStartRecommendation: (recommendation: IntentRecommendation) => void;
+  hasDataset: boolean | null;
+  hasExperimentalSeries: boolean | null;
 };
+
+function GuidancePanel({ decision }: { decision: GuidanceDecision }) {
+  const primaryTitle = decision.primaryCardId
+    ? cardLauncherTitle(decision.primaryCardId)
+    : null;
+  const otherTitles = decision.suggestedCardIds
+    .filter((id) => id !== decision.primaryCardId)
+    .map((id) => cardLauncherTitle(id));
+
+  return (
+    <div
+      className="rounded-[var(--radius-container)] border border-[var(--color-brand-primary)]/30 bg-[var(--color-brand-primary)]/5 px-[var(--spacing-compact)] py-2.5 space-y-[var(--spacing-tight)] text-left"
+      role="status"
+    >
+      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+        {decision.interpretation}
+      </p>
+      <p className="text-xs text-[var(--color-text-muted)]">
+        {decision.explanation}
+      </p>
+      {decision.prerequisite ? (
+        <p className="text-xs text-[var(--color-text-muted)]">
+          {decision.prerequisite}
+        </p>
+      ) : null}
+      {primaryTitle ? (
+        <p className="text-xs text-[var(--color-text-primary)]">
+          Siguiente paso: use la tarjeta {primaryTitle}.
+        </p>
+      ) : null}
+      {otherTitles.length > 0 ? (
+        <p className="text-xs text-[var(--color-text-muted)]">
+          También puede usar: {otherTitles.join(", ")}.
+        </p>
+      ) : null}
+      {decision.clarification ? (
+        <p className="text-sm text-[var(--color-text-primary)]">
+          {decision.clarification}
+        </p>
+      ) : null}
+      {decision.uncertainty === "unknown_context" && !decision.clarification ? (
+        <p className="text-xs text-[var(--color-text-muted)]">
+          No está claro si ya hay datos cargados. No asumo un dataset.
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 /**
  * CRP-6.3.x calibration — objective entry scaled with the capability launcher.
+ * P2: Sugerir produces guidance only. Cards remain the execution surface.
  */
 export function SmartStartIntentAssistant({
-  onStartRecommendation,
+  hasDataset,
+  hasExperimentalSeries,
 }: SmartStartIntentAssistantProps) {
   const [intentText, setIntentText] = useState("");
-  const [recommendation, setRecommendation] =
-    useState<IntentRecommendation | null>(null);
+  const [decision, setDecision] = useState<GuidanceDecision | null>(null);
+  const [conversation, setConversation] =
+    useState<HomeGuidanceConversationState>(EMPTY_HOME_GUIDANCE_CONVERSATION);
   const [noMatchMessage, setNoMatchMessage] = useState<string | null>(null);
 
   const handleSuggest = () => {
-    const result = classifyIntent(intentText);
-    setRecommendation(result);
+    const next = buildGuidanceDecision(
+      intentText,
+      { hasDataset, hasExperimentalSeries },
+      conversation
+    );
+    setDecision(next);
+    setConversation(nextGuidanceConversation(next, intentText));
     setNoMatchMessage(
-      result
-        ? null
-        : "No detectamos una intención clara. Pruebe con palabras como CSV, comparar, función, publicación o proyecto."
+      next.suggestedCardIds.length === 0 &&
+        !next.clarification &&
+        next.uncertainty !== "none"
+        ? next.explanation
+        : null
     );
   };
 
@@ -73,28 +133,9 @@ export function SmartStartIntentAssistant({
         </button>
       </div>
 
-      {recommendation ? (
-        <div
-          className="rounded-[var(--radius-container)] border border-[var(--color-brand-primary)]/30 bg-[var(--color-brand-primary)]/5 px-[var(--spacing-compact)] py-2.5 space-y-[var(--spacing-tight)] text-left"
-          role="status"
-        >
-          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-            {formatIntentRecommendationSummary(recommendation)}
-          </p>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Destino: {recommendation.destinationLabel}
-          </p>
-          <button
-            type="button"
-            onClick={() => onStartRecommendation(recommendation)}
-            className={btnPrimary}
-          >
-            Iniciar flujo recomendado
-          </button>
-        </div>
-      ) : null}
+      {decision ? <GuidancePanel decision={decision} /> : null}
 
-      {noMatchMessage ? (
+      {noMatchMessage && !decision ? (
         <p className="text-xs text-[var(--color-text-muted)]" role="status">
           {noMatchMessage}
         </p>
