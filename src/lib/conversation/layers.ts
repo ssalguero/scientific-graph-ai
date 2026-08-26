@@ -1,6 +1,7 @@
 /**
- * P5.4 layer map. Conversation must not merge with Results/Reporting.
- * Catalogs stay in src/lib/smart-start. This file only names layers.
+ * P5.4 / P6.0 layer map. Conversation must not merge with Results or Reports.
+ * Results and Reports are distinct unwired domains. Catalogs stay in
+ * src/lib/smart-start. This file only names layers.
  */
 
 export const CONVERSATION_LAYER_IDS = [
@@ -23,11 +24,15 @@ export const CONVERSATION_LAYER_OWNERS = {
     "src/lib/smart-start/follow-up-catalog.ts",
     "src/lib/smart-start/continuation-resolve.ts",
     "src/lib/conversation/contract.ts",
+    "src/lib/conversation/architecture.ts",
+    "src/lib/conversation/orientation.ts",
   ],
   analysis_scientific: [
     "workspace engines and inspector controls (user-driven; not conversation)",
   ],
   results_reporting: [
     "src/app/page.tsx generateScientificAssistantReport (Level 2; not a conversation adapter)",
+    "results domain is unwired and distinct from reports",
+    "reports domain is unwired; existing publication dashboards are not a conversation adapter",
   ],
 } as const satisfies Record<ConversationLayerId, readonly string[]>;

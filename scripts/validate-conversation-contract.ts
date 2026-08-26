@@ -1,9 +1,14 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  CONVERSATION_ARCHITECTURE,
+} from "../src/lib/conversation/architecture";
+import {
+  CONVERSATION_DOMAINS_THAT_ARE_NOT_WORKSPACE_SECTIONS,
   CONVERSATION_POLICY,
+  DOCUMENTED_WORKSPACE_SECTIONS,
   UNWIRED_CONVERSATION_DOMAINS,
   WIRED_CONVERSATION_DOMAINS,
   homeConversationContext,
@@ -56,8 +61,17 @@ assertCase(
     WIRED_CONVERSATION_DOMAINS[0] === "home" &&
     isWiredConversationDomain("home") &&
     !(UNWIRED_CONVERSATION_DOMAINS as readonly string[]).includes("home") &&
-    UNWIRED_CONVERSATION_DOMAINS.length === 6,
+    UNWIRED_CONVERSATION_DOMAINS.length === 7 &&
+    (UNWIRED_CONVERSATION_DOMAINS as readonly string[]).includes("reports"),
   WIRED_CONVERSATION_DOMAINS.join(",")
+);
+
+assertCase(
+  "p6.0.reports-unwired",
+  (UNWIRED_CONVERSATION_DOMAINS as readonly string[]).includes("reports") &&
+    !(WIRED_CONVERSATION_DOMAINS as readonly string[]).includes("reports") &&
+    !isWiredConversationDomain("reports"),
+  "reports"
 );
 
 assertCase(
@@ -107,6 +121,9 @@ assertCase(
   CONVERSATION_LAYER_OWNERS.results_reporting.some((item) =>
     item.includes("generateScientificAssistantReport")
   ) &&
+    CONVERSATION_LAYER_OWNERS.results_reporting.some((item) =>
+      item.includes("reports domain is unwired")
+    ) &&
     !CONVERSATION_LAYER_OWNERS.conversational.some((item) =>
       item.includes("page.tsx")
     ),
@@ -122,6 +139,25 @@ const assistantSource = readFileSync(
   join(repoRoot, "src/components/home/SmartStartIntentAssistant.tsx"),
   "utf8"
 );
+
+const uiImportDirs = [
+  "src/app",
+  "src/components/home",
+  "src/components/comparison",
+  "src/components/reports",
+  "src/components/graph-builder",
+];
+const uiImportHits = uiImportDirs.flatMap((dir) =>
+  collectSourceFiles(dir)
+    .filter((rel) => {
+      const source = readFileSync(join(repoRoot, rel), "utf8");
+      return (
+        source.includes("@/lib/conversation") ||
+        source.includes("src/lib/conversation")
+      );
+    })
+);
+
 assertCase(
   "p5.4.no-other-domain-wiring",
   !pageSource.includes("@/lib/conversation") &&
@@ -129,6 +165,20 @@ assertCase(
     !assistantSource.includes("@/lib/conversation") &&
     !assistantSource.includes("src/lib/conversation"),
   "ui unwired"
+);
+
+assertCase(
+  "p6.0.ui-does-not-import-contract",
+  uiImportHits.length === 0,
+  uiImportHits.join(", ") || "none"
+);
+
+assertCase(
+  "p6.0.home-context-tests-only",
+  !assistantSource.includes("homeConversationContext") &&
+    !pageSource.includes("homeConversationContext") &&
+    !useSmartStartSource.includes("homeConversationContext"),
+  "homeConversationContext tests-only"
 );
 
 const followUpCatalog = readFileSync(
@@ -152,6 +202,90 @@ assertCase(
     !resolveTurn.includes("@/lib/conversation") &&
     !continuationResolve.includes("@/lib/conversation"),
   "catalogs stay in smart-start"
+);
+
+assertCase(
+  "p6.0.single-conversation-core",
+  CONVERSATION_ARCHITECTURE.singleConversationCore === true &&
+    CONVERSATION_ARCHITECTURE.independentDomainAssistants === false &&
+    CONVERSATION_ARCHITECTURE.adaptersNormalizeContextOnly === true &&
+    CONVERSATION_ARCHITECTURE.orientationIsSemanticNotNavigation === true &&
+    CONVERSATION_ARCHITECTURE.implemented === false,
+  JSON.stringify(CONVERSATION_ARCHITECTURE)
+);
+
+const assistantNamedFiles = conversationFiles.filter((rel) =>
+  /assistant/i.test(basename(rel))
+);
+assertCase(
+  "p6.0.no-domain-assistants",
+  assistantNamedFiles.length === 0,
+  assistantNamedFiles.join(", ") || "none"
+);
+
+const workspaceSectionSet = new Set<string>(DOCUMENTED_WORKSPACE_SECTIONS);
+const domainSectionCollisions =
+  CONVERSATION_DOMAINS_THAT_ARE_NOT_WORKSPACE_SECTIONS.filter((domain) =>
+    workspaceSectionSet.has(domain)
+  );
+assertCase(
+  "p6.0.domain-is-not-workspace-section",
+  domainSectionCollisions.length === 0 &&
+    workspaceSectionSet.has("results") &&
+    workspaceSectionSet.has("reports") &&
+    workspaceSectionSet.has("home"),
+  domainSectionCollisions.join(",") || "ok"
+);
+
+const orientationRel = "src/lib/conversation/orientation.ts";
+const orientationSource = conversationSources.find(
+  (file) => file.rel.replace(/\\/g, "/") === orientationRel
+)?.source ?? "";
+const forbiddenOrientationFields = [
+  "target:",
+  "route:",
+  "href:",
+  "navigate:",
+  "destination:",
+  "workspaceSection:",
+  "inspectorSection:",
+];
+const orientationFieldHits = forbiddenOrientationFields.filter((field) =>
+  orientationSource.includes(field)
+);
+const forbiddenOrientationFns = [
+  "orientationToNavigation",
+  "applyOrientation",
+  "navigateTo",
+  "setAnalysisInspectorSection",
+  "startGuidedWorkflow",
+];
+const orientationFnHits = conversationSources.flatMap((file) =>
+  forbiddenOrientationFns
+    .filter((name) => file.source.includes(name))
+    .map((name) => `${file.rel}:${name}`)
+);
+assertCase(
+  "p6.0.orientation-not-a-command",
+  orientationSource.includes("ConversationOrientation") &&
+    orientationSource.includes("Display / explain only") &&
+    orientationFieldHits.length === 0 &&
+    orientationFnHits.length === 0,
+  [...orientationFieldHits, ...orientationFnHits].join(", ") || "ok"
+);
+
+const architectureSource =
+  conversationSources.find(
+    (file) => file.rel.replace(/\\/g, "/").endsWith("architecture.ts")
+  )?.source ?? "";
+assertCase(
+  "p6.0.adapters-normalize-context-only",
+  architectureSource.includes('role: "normalize_context"') &&
+    architectureSource.includes("DomainContextAdapter") &&
+    !architectureSource.includes("buildGuidanceDecision") &&
+    !/:\s*GuidanceDecision/.test(architectureSource) &&
+    !/:\s*ConversationOrientation/.test(architectureSource),
+  "ok"
 );
 
 const summary = {
