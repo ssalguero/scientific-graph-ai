@@ -44,6 +44,7 @@ const scenarioA = runConversationCore({
   system: analyzeSystem,
   analyzeContext,
   compareContext: null,
+  mathContext: null,
   previous: null,
 });
 
@@ -66,6 +67,7 @@ const scenarioB = runConversationCore({
   },
   analyzeContext: null,
   compareContext: null,
+  mathContext: null,
   previous: null,
 });
 
@@ -85,6 +87,7 @@ const scenarioC = runConversationCore({
   system: analyzeSystem,
   analyzeContext,
   compareContext: null,
+  mathContext: null,
   previous: scenarioA,
 });
 
@@ -165,6 +168,7 @@ const nullDomainTurn = runConversationCore({
   },
   analyzeContext: null,
   compareContext: null,
+  mathContext: null,
   previous: null,
 });
 assertCase(
@@ -180,6 +184,7 @@ const methodRefusal = runConversationCore({
   system: analyzeSystem,
   analyzeContext,
   compareContext: null,
+  mathContext: null,
   previous: null,
 });
 assertCase(

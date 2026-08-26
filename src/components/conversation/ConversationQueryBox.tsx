@@ -7,6 +7,7 @@ import {
   type AnalyzeInspectorCategory,
 } from "@/lib/conversation/analyze-adapter";
 import { normalizeCompareContext } from "@/lib/conversation/compare-adapter";
+import { normalizeMathContext } from "@/lib/conversation/math-adapter";
 import {
   runConversationCore,
   type ConversationTurnResult,
@@ -28,6 +29,9 @@ export type ConversationQueryBoxProps = {
   slotBOccupied: boolean | null;
   slotAFileName: string | null;
   slotBFileName: string | null;
+  constructorPanelOpen: boolean | null;
+  hasNonEmptyExpressions: boolean | null;
+  hasGraphedCurves: boolean | null;
 };
 
 function TurnPanel({ turn }: { turn: ConversationTurnResult }) {
@@ -54,7 +58,7 @@ function TurnPanel({ turn }: { turn: ConversationTurnResult }) {
 
 /**
  * Transversal on-demand query surface for the Conversation Core.
- * Not an Analyze or Compare assistant. Does not navigate or execute.
+ * Not an Analyze, Compare, or Math assistant. Does not navigate or execute.
  */
 export function ConversationQueryBox({
   workspaceSection,
@@ -69,6 +73,9 @@ export function ConversationQueryBox({
   slotBOccupied,
   slotAFileName,
   slotBFileName,
+  constructorPanelOpen,
+  hasNonEmptyExpressions,
+  hasGraphedCurves,
 }: ConversationQueryBoxProps) {
   const [queryText, setQueryText] = useState("");
   const [turn, setTurn] = useState<ConversationTurnResult | null>(null);
@@ -104,11 +111,22 @@ export function ConversationQueryBox({
             slotBFileName,
           })
         : null;
+    const mathContext =
+      system.activeConversationDomain === "math" ||
+      hasNonEmptyExpressions === true ||
+      hasGraphedCurves === true
+        ? normalizeMathContext({
+            constructorPanelOpen,
+            hasNonEmptyExpressions,
+            hasGraphedCurves,
+          })
+        : null;
     const next = runConversationCore({
       text: queryText,
       system,
       analyzeContext,
       compareContext,
+      mathContext,
       previous: turn,
     });
     setTurn(next);

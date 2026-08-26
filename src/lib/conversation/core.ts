@@ -1,6 +1,7 @@
 import type {
   AnalyzeConversationContext,
   CompareConversationContext,
+  MathConversationContext,
 } from "./contract";
 import type { SystemContext } from "./architecture";
 import type { ConversationOrientation, ConversationProductArea } from "./orientation";
@@ -23,6 +24,7 @@ export type ConversationCoreInput = {
   system: SystemContext;
   analyzeContext: AnalyzeConversationContext | null;
   compareContext: CompareConversationContext | null;
+  mathContext: MathConversationContext | null;
   previous: ConversationTurnResult | null;
 };
 
@@ -153,6 +155,73 @@ function isOccupancyQuestion(text: string): boolean {
   ]);
 }
 
+function mathOccupancySummary(
+  math: MathConversationContext | null
+): string {
+  if (!math) {
+    return "No hay un contexto de constructor de curvas disponible. La conversación no escribe expresiones ni grafica.";
+  }
+  const hasExpr = math.hasNonEmptyExpressions === true;
+  const graphed = math.hasGraphedCurves === true;
+  const panel = math.constructorPanelOpen === true;
+  const panelNote = panel
+    ? " El panel del constructor está abierto."
+    : " El panel del constructor puede usarse en Datos.";
+  if (!hasExpr) {
+    return `El constructor no tiene expresiones no vacías.${panelNote} Usted decide si escribe una expresión. La conversación no escribe expresiones.`;
+  }
+  if (!graphed) {
+    return `Hay expresiones en el constructor, pero aún no se han graficado.${panelNote} Usted decide si usa Graficar. La conversación no llama a Graficar ni reescribe expresiones.`;
+  }
+  return `Hay contenido de curvas graficado.${panelNote} La revisión de ese gráfico está en Resultados; usted decide si abre esa sección. La conversación no genera resultados ni reescribe expresiones.`;
+}
+
+function mathOccupancyFootnote(
+  math: MathConversationContext | null
+): string {
+  if (!math) return "";
+  const parts: string[] = [];
+  if (math.constructorPanelOpen === true) parts.push("el constructor está abierto");
+  if (math.hasGraphedCurves === true) parts.push("hay curvas graficadas");
+  else if (math.hasNonEmptyExpressions === true) {
+    parts.push("hay expresiones aún no graficadas");
+  }
+  if (parts.length === 0) return "";
+  return ` Ahora ${parts.join(" y ")}.`;
+}
+
+function mathCompareHonesty(
+  here: SystemContext["activeConversationDomain"],
+  math: MathConversationContext | null
+): string {
+  if (
+    here !== "math" &&
+    math?.hasNonEmptyExpressions !== true &&
+    math?.hasGraphedCurves !== true
+  ) {
+    return "";
+  }
+  return " Las curvas y=f(x) del constructor no se capturan en Slot A/B. Comparar usa datasets experimentales. La conversación no llena slots ni inicia el flujo de comparación.";
+}
+
+function isMathLocationQuestion(text: string): boolean {
+  return (
+    includesAny(text, ["donde esta", "donde queda", "donde esta el", "donde hago"]) &&
+    includesAny(text, ["constructor", "curva", "curvas", "y f x"])
+  );
+}
+
+function isMathOccupancyQuestion(text: string): boolean {
+  return includesAny(text, [
+    "estoy graficando",
+    "que estoy graficando",
+    "hay curvas",
+    "que hay graficado",
+    "hay graficado",
+    "el constructor",
+  ]);
+}
+
 function currentSurfaceLabel(system: SystemContext): string {
   switch (system.activeConversationDomain) {
     case "analyze":
@@ -191,6 +260,20 @@ export function runConversationCore(
         PRODUCT_AREA_MEANING[area]
       ),
       continuationPrompt: null,
+      turnCount,
+    };
+  }
+
+  if (isMathLocationQuestion(text)) {
+    return {
+      interpretation: "Quiere localizar el constructor de curvas.",
+      explanation: `El constructor de curvas y=f(x) está en Datos.${mathOccupancyFootnote(input.mathContext)} Usted decide si abre ese constructor con los controles del workspace. La conversación no abre el constructor ni reescribe expresiones.`,
+      orientation: orientationFor(
+        "data_area",
+        "data_graphs_math",
+        PRODUCT_AREA_MEANING.data_graphs_math
+      ),
+      continuationPrompt: "¿Quiere consultarme algo más sobre el constructor de curvas?",
       turnCount,
     };
   }
@@ -307,9 +390,10 @@ export function runConversationCore(
         : ""
       : " Aun así puede referirse a comparar desde aquí; el contexto actual no limita el referente.";
     const occupancyNote = occupancyFootnote(input.compareContext);
+    const mathHonesty = mathCompareHonesty(here, input.mathContext);
     return {
       interpretation: "La pregunta se refiere a comparar grupos o datasets.",
-      explanation: `Está en ${currentSurfaceLabel(input.system)}. La comparación de grupos es una capacidad de Datos (comparar datasets), no una orden de ejecución.${relatedNote}${occupancyNote} Usted decide si usa esa superficie. La conversación no inicia el flujo ni selecciona grupos.`,
+      explanation: `Está en ${currentSurfaceLabel(input.system)}. La comparación de grupos es una capacidad de Datos (comparar datasets), no una orden de ejecución.${relatedNote}${occupancyNote}${mathHonesty} Usted decide si usa esa superficie. La conversación no inicia el flujo ni selecciona grupos.`,
       orientation: orientationFor(
         "data_area",
         "data_compare_groups",
@@ -340,10 +424,29 @@ export function runConversationCore(
     };
   }
 
+  if (isMathOccupancyQuestion(text)) {
+    const previousMeaning = input.previous?.orientation.meaning;
+    const referentNote =
+      previousMeaning && includesAny(text, ["y esto", "y eso"])
+        ? ` Se refiere a lo anterior (${previousMeaning}).`
+        : "";
+    return {
+      interpretation: "Pregunta por el estado del constructor de curvas.",
+      explanation: `${mathOccupancySummary(input.mathContext)}.${referentNote} Usted decide si usa los controles de Datos. La conversación no escribe expresiones, no grafica ni navega.`,
+      orientation: orientationFor(
+        "data_area",
+        "data_graphs_math",
+        PRODUCT_AREA_MEANING.data_graphs_math
+      ),
+      continuationPrompt: "¿Quiere consultarme algo más sobre el constructor de curvas?",
+      turnCount,
+    };
+  }
+
   if (includesAny(text, ["curva", "curvas", "graficar", "grafico", "constructor"])) {
     return {
       interpretation: "La pregunta se refiere a curvas o gráficos.",
-      explanation: `Está en ${currentSurfaceLabel(input.system)}. El constructor de curvas está en Datos. La conversación no navega ni reescribe expresiones.`,
+      explanation: `Está en ${currentSurfaceLabel(input.system)}. El constructor de curvas está en Datos.${mathOccupancyFootnote(input.mathContext)} La conversación no navega ni reescribe expresiones.`,
       orientation: orientationFor(
         "data_area",
         "data_graphs_math",

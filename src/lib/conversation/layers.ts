@@ -30,6 +30,7 @@ export const CONVERSATION_LAYER_OWNERS = {
     "src/lib/conversation/core.ts",
     "src/lib/conversation/analyze-adapter.ts",
     "src/lib/conversation/compare-adapter.ts",
+    "src/lib/conversation/math-adapter.ts",
     "src/lib/conversation/system-context.ts",
   ],
   analysis_scientific: [

@@ -18,6 +18,7 @@ import {
 import { runConversationCore } from "../src/lib/conversation/core";
 import { deriveActiveConversationDomain, normalizeAnalyzeContext } from "../src/lib/conversation/analyze-adapter";
 import { normalizeCompareContext } from "../src/lib/conversation/compare-adapter";
+import { normalizeMathContext } from "../src/lib/conversation/math-adapter";
 import { CONVERSATION_LAYER_OWNERS } from "../src/lib/conversation/layers";
 
 type CaseResult = {
@@ -242,6 +243,7 @@ const scenarioA = runConversationCore({
     hasExecutedAnalysis: false,
   }),
   compareContext: null,
+  mathContext: null,
   previous: null,
 });
 assertCase(
@@ -261,6 +263,7 @@ const scenarioB = runConversationCore({
   },
   analyzeContext: null,
   compareContext: null,
+  mathContext: null,
   previous: null,
 });
 assertCase(
@@ -284,6 +287,7 @@ const scenarioC = runConversationCore({
     hasExecutedAnalysis: false,
   }),
   compareContext: null,
+  mathContext: null,
   previous: scenarioA,
 });
 assertCase(
@@ -310,6 +314,7 @@ assertCase(
       },
       analyzeContext: null,
       compareContext: null,
+      mathContext: null,
       previous: null,
     }).orientation.productArea === "data_compare_groups",
   "null is unspecified; Core still orients"
@@ -361,12 +366,12 @@ const p62A = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: occupiedCompare,
+  mathContext: null,
   previous: null,
 });
 assertCase(
   "p6.2.compare-is-provider-not-wired",
-  CONVERSATION_CORE_CONTEXT_PROVIDERS.length === 2 &&
-    (CONVERSATION_CORE_CONTEXT_PROVIDERS as readonly string[]).includes("compare") &&
+  (CONVERSATION_CORE_CONTEXT_PROVIDERS as readonly string[]).includes("compare") &&
     (CONVERSATION_CORE_CONTEXT_PROVIDERS as readonly string[]).includes("analyze") &&
     WIRED_CONVERSATION_DOMAINS[0] === "home" &&
     !(WIRED_CONVERSATION_DOMAINS as readonly string[]).includes("compare") &&
@@ -419,6 +424,7 @@ const p62B = runConversationCore({
     hasExecutedAnalysis: false,
   }),
   compareContext: occupiedCompare,
+  mathContext: null,
   previous: null,
 });
 assertCase(
@@ -435,6 +441,7 @@ const p62C1 = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: occupiedCompare,
+  mathContext: null,
   previous: null,
 });
 const p62C2 = runConversationCore({
@@ -442,6 +449,7 @@ const p62C2 = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: occupiedCompare,
+  mathContext: null,
   previous: p62C1,
 });
 assertCase(
@@ -459,6 +467,7 @@ const p62D = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: occupiedCompare,
+  mathContext: null,
   previous: p62C1,
 });
 assertCase(
@@ -485,6 +494,165 @@ assertCase(
     pageSource.includes("comparisonSlots.A.profile") &&
     !pageSource.includes("@/lib/conversation"),
   "page slots"
+);
+
+const mathAdapterSource =
+  conversationSources.find(
+    (file) => file.rel.replace(/\\/g, "/").endsWith("math-adapter.ts")
+  )?.source ?? "";
+const emptyMath = normalizeMathContext({
+  constructorPanelOpen: false,
+  hasNonEmptyExpressions: false,
+  hasGraphedCurves: false,
+});
+const graphedMath = normalizeMathContext({
+  constructorPanelOpen: true,
+  hasNonEmptyExpressions: true,
+  hasGraphedCurves: true,
+});
+const mathSystem = {
+  hasDataset: false,
+  hasExperimentalSeries: false,
+  activeConversationDomain: "math" as const,
+};
+assertCase(
+  "p6.3.math-is-provider-not-wired",
+  CONVERSATION_CORE_CONTEXT_PROVIDERS.length === 3 &&
+    (CONVERSATION_CORE_CONTEXT_PROVIDERS as readonly string[]).includes("math") &&
+    WIRED_CONVERSATION_DOMAINS[0] === "home" &&
+    !(WIRED_CONVERSATION_DOMAINS as readonly string[]).includes("math") &&
+    (UNWIRED_CONVERSATION_DOMAINS as readonly string[]).includes("math"),
+  "math provider"
+);
+assertCase(
+  "p6.3.stub-fields-not-invented",
+  !compareContextType.includes("constructorOpen") &&
+    !compareContextType.includes("hasVisibleCurves") &&
+    compareContextType.includes("constructorPanelOpen") &&
+    compareContextType.includes("hasNonEmptyExpressions") &&
+    compareContextType.includes("hasGraphedCurves"),
+  "math occupancy fields"
+);
+assertCase(
+  "p6.3.adapter-occupancy-only",
+  emptyMath.domain === "math" &&
+    graphedMath.hasGraphedCurves === true &&
+    !("orientation" in emptyMath) &&
+    !mathAdapterSource.includes("generateGraph") &&
+    !mathAdapterSource.includes("setCurves") &&
+    !mathAdapterSource.includes("openDataView") &&
+    !mathAdapterSource.includes("selectWorkspaceSection") &&
+    !mathAdapterSource.includes("setDataSectionOpen") &&
+    !mathAdapterSource.includes("ConversationOrientation") &&
+    !mathAdapterSource.includes("GuidanceDecision") &&
+    !mathAdapterSource.includes("VisualGraph"),
+  emptyMath.domain
+);
+const p63A = runConversationCore({
+  text: "¿Esto lo puedo analizar?",
+  system: mathSystem,
+  analyzeContext: null,
+  compareContext: null,
+  mathContext: graphedMath,
+  previous: null,
+});
+assertCase(
+  "p6.3.scenario-a-analyze-from-math",
+  p63A.orientation.kind === "scientific_area" &&
+    !p63A.orientation.homeCardId &&
+    /no cambia de secci/i.test(p63A.explanation),
+  p63A.orientation.productArea
+);
+const p63B = runConversationCore({
+  text: "¿Puedo comparar estas curvas?",
+  system: mathSystem,
+  analyzeContext: null,
+  compareContext: null,
+  mathContext: graphedMath,
+  previous: null,
+});
+assertCase(
+  "p6.3.scenario-b-compare-from-math",
+  p63B.orientation.productArea === "data_compare_groups" &&
+    p63B.orientation.kind === "data_area" &&
+    !p63B.orientation.homeCardId &&
+    /slot a\/b/i.test(p63B.explanation) &&
+    /no (llena slots|inicia el flujo)/i.test(p63B.explanation),
+  p63B.orientation.productArea
+);
+const p63C = runConversationCore({
+  text: "¿Dónde está el constructor de curvas?",
+  system: {
+    hasDataset: true,
+    hasExperimentalSeries: true,
+    activeConversationDomain: "analyze",
+  },
+  analyzeContext: normalizeAnalyzeContext({
+    hasDataset: true,
+    hasExperimentalSeries: true,
+    inspectorCategory: "statistics",
+    hasExecutedAnalysis: false,
+  }),
+  compareContext: null,
+  mathContext: null,
+  previous: null,
+});
+assertCase(
+  "p6.3.scenario-c-analyze-to-math",
+  p63C.orientation.productArea === "data_graphs_math" &&
+    p63C.orientation.kind === "data_area" &&
+    !p63C.orientation.homeCardId &&
+    /no abre el constructor/i.test(p63C.explanation),
+  p63C.orientation.productArea
+);
+const p63D1 = runConversationCore({
+  text: "¿Qué estoy graficando?",
+  system: mathSystem,
+  analyzeContext: null,
+  compareContext: null,
+  mathContext: graphedMath,
+  previous: null,
+});
+const p63D2 = runConversationCore({
+  text: "¿Y esto lo puedo analizar?",
+  system: mathSystem,
+  analyzeContext: null,
+  compareContext: null,
+  mathContext: graphedMath,
+  previous: p63D1,
+});
+assertCase(
+  "p6.3.scenario-d-referent",
+  p63D1.orientation.productArea === "data_graphs_math" &&
+    p63D2.orientation.kind === "scientific_area" &&
+    !p63D2.orientation.homeCardId,
+  p63D2.orientation.productArea
+);
+assertCase(
+  "p6.3.vgb-still-unspecified",
+  deriveActiveConversationDomain({
+    workspaceSection: "data",
+    dataWorkspaceView: "visual-builder",
+    comparisonSurfaceOpen: false,
+    importDestinationActive: false,
+  }) === null,
+  "vgb null"
+);
+assertCase(
+  "p6.3.query-box-no-mutators",
+  queryBoxSource.includes("normalizeMathContext") &&
+    !queryBoxSource.includes("generateGraph") &&
+    !queryBoxSource.includes("setCurves") &&
+    !queryBoxSource.includes("openDataView") &&
+    !queryBoxSource.includes("MathQueryBox"),
+  "query box math"
+);
+assertCase(
+  "p6.3.page-still-no-contract-import",
+  pageSource.includes("hasActiveMathCurves") &&
+    pageSource.includes("constructorPanelOpen") &&
+    !pageSource.includes("@/lib/conversation"),
+  "page math props"
 );
 
 const assistantNamedFiles = conversationFiles.filter((rel) =>

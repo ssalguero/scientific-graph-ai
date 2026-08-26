@@ -65,6 +65,7 @@ const scenarioA = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: aOnlyCompare,
+  mathContext: null,
   previous: null,
 });
 assertCase(
@@ -86,6 +87,7 @@ const scenarioB = runConversationCore({
   },
   analyzeContext: null,
   compareContext: aOnlyCompare,
+  mathContext: null,
   previous: null,
 });
 assertCase(
@@ -102,6 +104,7 @@ const occupancyEmpty = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: emptyCompare,
+  mathContext: null,
   previous: null,
 });
 assertCase(
@@ -117,6 +120,7 @@ const occupancyA = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: aOnlyCompare,
+  mathContext: null,
   previous: null,
 });
 const occupancyOther = runConversationCore({
@@ -124,6 +128,7 @@ const occupancyOther = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: aOnlyCompare,
+  mathContext: null,
   previous: occupancyA,
 });
 assertCase(
@@ -142,6 +147,7 @@ const slotAAsk = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: aOnlyCompare,
+  mathContext: null,
   previous: occupancyA,
 });
 const slotBAsk = runConversationCore({
@@ -149,6 +155,7 @@ const slotBAsk = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: aOnlyCompare,
+  mathContext: null,
   previous: occupancyA,
 });
 assertCase(
@@ -164,6 +171,7 @@ const bothOccupied = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: bothCompare,
+  mathContext: null,
   previous: null,
 });
 assertCase(
@@ -181,6 +189,7 @@ const scenarioD = runConversationCore({
   system: compareSystem,
   analyzeContext: null,
   compareContext: aOnlyCompare,
+  mathContext: null,
   previous: occupancyA,
 });
 assertCase(

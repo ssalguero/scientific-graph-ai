@@ -21494,6 +21494,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               slotBFileName={
                 comparisonSlots.B.profile?.datasetInfo.fileName ?? null
               }
+              constructorPanelOpen={dataSectionOpen.constructor}
+              hasNonEmptyExpressions={hasActiveMathCurves}
+              hasGraphedCurves={chartData.length > 0}
             />
           ) : null}
 

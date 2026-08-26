@@ -33,10 +33,11 @@ export const UNWIRED_CONVERSATION_DOMAINS = [
   "reports",
 ] as const satisfies readonly ConversationDomainId[];
 
-/** Analyze and Compare are Core context providers, not P5 wired Home domains. */
+/** Analyze, Compare, and Math are Core context providers, not P5 wired Home domains. */
 export const CONVERSATION_CORE_CONTEXT_PROVIDERS = [
   "analyze",
   "compare",
+  "math",
 ] as const satisfies readonly ConversationDomainId[];
 
 export const CONVERSATION_POLICY = {
@@ -141,11 +142,16 @@ export type AnalyzeConversationContext = {
 /**
  * P6 adapter not wired. Do not import from UI.
  * Curves/constructor occupancy, not a DataWorkspaceView id.
+ * constructorPanelOpen maps dataSectionOpen.constructor.
+ * hasNonEmptyExpressions maps hasActiveMathCurves.
+ * hasGraphedCurves maps chartData.length > 0.
+ * Not VGB. Not expression strings.
  */
 export type MathConversationContext = {
   domain: "math";
-  constructorOpen: boolean | null;
-  hasVisibleCurves: boolean | null;
+  constructorPanelOpen: boolean | null;
+  hasNonEmptyExpressions: boolean | null;
+  hasGraphedCurves: boolean | null;
 };
 
 /**
