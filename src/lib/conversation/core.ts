@@ -204,14 +204,36 @@ function mathCompareHonesty(
   return " Las curvas y=f(x) del constructor no se capturan en Slot A/B. Comparar usa datasets experimentales. La conversación no llena slots ni inicia el flujo de comparación.";
 }
 
+function refersToVisualBuilder(text: string): boolean {
+  return includesAny(text, [
+    "constructor visual",
+    "visual builder",
+    "builder visual",
+    "graficos visuales",
+  ]);
+}
+
+function isWhereQuestion(text: string): boolean {
+  return includesAny(text, [
+    "donde hago",
+    "donde esta",
+    "donde queda",
+    "donde veo",
+    "donde evaluo",
+    "y donde",
+  ]);
+}
+
 function isMathLocationQuestion(text: string): boolean {
+  if (refersToVisualBuilder(text)) return false;
   return (
-    includesAny(text, ["donde esta", "donde queda", "donde esta el", "donde hago"]) &&
+    isWhereQuestion(text) &&
     includesAny(text, ["constructor", "curva", "curvas", "y f x"])
   );
 }
 
 function isMathOccupancyQuestion(text: string): boolean {
+  if (refersToVisualBuilder(text)) return false;
   return includesAny(text, [
     "estoy graficando",
     "que estoy graficando",
@@ -220,6 +242,31 @@ function isMathOccupancyQuestion(text: string): boolean {
     "hay graficado",
     "el constructor",
   ]);
+}
+
+function isResultsLocationQuestion(text: string): boolean {
+  return (
+    isWhereQuestion(text) && includesAny(text, ["resultado", "resultados"])
+  );
+}
+
+function isReportsLocationQuestion(text: string): boolean {
+  return (
+    isWhereQuestion(text) &&
+    includesAny(text, ["reporte", "reportes", "informe"])
+  );
+}
+
+function isEvaluateLocationQuestion(text: string): boolean {
+  return (
+    isWhereQuestion(text) &&
+    includesAny(text, ["metodologia", "publicacion", "evaluar publicacion"])
+  );
+}
+
+function isMathCurveCapabilityQuestion(text: string): boolean {
+  if (refersToVisualBuilder(text)) return false;
+  return includesAny(text, ["curva", "curvas", "graficar", "grafico", "constructor"]);
 }
 
 function currentSurfaceLabel(system: SystemContext): string {
@@ -278,7 +325,52 @@ export function runConversationCore(
     };
   }
 
-  if (includesAny(text, ["donde hago", "donde esta", "donde queda", "y donde"])) {
+  if (isResultsLocationQuestion(text)) {
+    return {
+      interpretation: "Quiere localizar resultados ya calculados.",
+      explanation:
+        "La revisión de resultados que ya se calcularon está en Resultados. Usted decide si abre esa sección. La conversación no genera resultados científicos ni ejecuta el análisis.",
+      orientation: orientationFor(
+        "existing_dashboard",
+        "existing_results",
+        PRODUCT_AREA_MEANING.existing_results
+      ),
+      continuationPrompt: "¿Quiere consultarme algo más sobre resultados existentes?",
+      turnCount,
+    };
+  }
+
+  if (isReportsLocationQuestion(text)) {
+    return {
+      interpretation: "Quiere localizar reportes existentes.",
+      explanation:
+        "Los reportes que ya existan viven en la sección Reportes. Usted decide si abre esa sección. La conversación no genera un reporte ni sustituye el motor de publicación.",
+      orientation: orientationFor(
+        "existing_dashboard",
+        "existing_reports",
+        PRODUCT_AREA_MEANING.existing_reports
+      ),
+      continuationPrompt: "¿Quiere consultarme algo más sobre reportes existentes?",
+      turnCount,
+    };
+  }
+
+  if (isEvaluateLocationQuestion(text)) {
+    return {
+      interpretation: "Quiere localizar la evaluación de metodología o publicación.",
+      explanation:
+        "La evaluación de metodología y publicación es una capacidad de Análisis. Usted decide si usa el inspector. La conversación no inicia un flujo, no elige un método científico ni ejecuta indicadores.",
+      orientation: orientationFor(
+        "scientific_area",
+        "publication_evaluation",
+        PRODUCT_AREA_MEANING.publication_evaluation
+      ),
+      continuationPrompt: "¿Quiere consultarme algo más sobre evaluar metodología?",
+      turnCount,
+    };
+  }
+
+  if (!refersToVisualBuilder(text) && isWhereQuestion(text)) {
     const previousOrientation = input.previous?.orientation ?? null;
     if (!previousOrientation) {
       return {
@@ -443,7 +535,7 @@ export function runConversationCore(
     };
   }
 
-  if (includesAny(text, ["curva", "curvas", "graficar", "grafico", "constructor"])) {
+  if (isMathCurveCapabilityQuestion(text)) {
     return {
       interpretation: "La pregunta se refiere a curvas o gráficos.",
       explanation: `Está en ${currentSurfaceLabel(input.system)}. El constructor de curvas está en Datos.${mathOccupancyFootnote(input.mathContext)} La conversación no navega ni reescribe expresiones.`,
