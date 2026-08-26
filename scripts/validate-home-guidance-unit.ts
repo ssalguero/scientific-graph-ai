@@ -565,12 +565,16 @@ const whenUsed = buildGuidanceDecision(
   emptyCtx,
   afterPearsonDefine
 );
+const whenUsedCopy = `${whenUsed.interpretation} ${whenUsed.explanation} ${whenUsed.continuationPrompt ?? ""}`;
 assertCase(
   "p5.1.resolver.define-then-cuando",
   afterPearsonDefine.lastDecision !== null &&
     whenUsed.turnType === "follow_up" &&
-    /no hay una intenci[oó]n clara/i.test(whenUsed.interpretation) &&
-    whenUsed.primaryCardId === null,
+    /pearson/i.test(whenUsedCopy) &&
+    !/no hay una intenci[oó]n clara/i.test(whenUsedCopy) &&
+    !/debes usar pearson/i.test(whenUsedCopy) &&
+    whenUsed.primaryCardId === null &&
+    whenUsed.clarification === null,
   `${whenUsed.turnType}/${whenUsed.interpretation}`
 );
 
@@ -672,6 +676,181 @@ assertCase(
     !assistantSource.includes("selectWorkspaceSection") &&
     !assistantSource.includes("setAnalysisInspectorSection"),
   "assistant"
+);
+
+assertCase(
+  "p5.2.a.pearson-when-used",
+  whenUsed.turnType === "follow_up" &&
+    whenUsed.continuationKind === "deepen_concept" &&
+    /asociaci[oó]n lineal|correlaci/i.test(whenUsedCopy) &&
+    /profundicemos en este concepto/i.test(whenUsed.explanation) &&
+    whenUsed.clarification === null &&
+    !/no hay una intenci[oó]n clara/i.test(whenUsedCopy) &&
+    !/debes usar pearson/i.test(whenUsedCopy),
+  `${whenUsed.turnType}/${whenUsed.continuationKind}/${whenUsed.explanation}`
+);
+
+const afterRegressionWhereState = nextGuidanceConversation(
+  regressionEmpty,
+  regressionOnly
+);
+const whereRegression = buildGuidanceDecision(
+  "¿Dónde está?",
+  emptyCtx,
+  afterRegressionWhereState
+);
+const whereRegressionCopy = `${whereRegression.interpretation} ${whereRegression.explanation}`;
+assertCase(
+  "p5.2.b.regression-where",
+  whereRegression.turnType === "follow_up" &&
+    /matem[aá]ticas/i.test(whereRegressionCopy) &&
+    /an[aá]lisis/i.test(whereRegressionCopy) &&
+    whereRegression.primaryCardId === null &&
+    whereRegression.clarification === null &&
+    whereRegression.suggestedCardIds.every((id) =>
+      ["analyze-dataset", "analyze-workspace"].includes(id)
+    ) &&
+    whereRegression.continuationKind === "next_step",
+  `${whereRegression.turnType}/${whereRegression.primaryCardId}/${whereRegressionCopy}`
+);
+
+const afterCsvAnalyze = nextGuidanceConversation(guidanceA, phraseA);
+const alreadyHaveEmpty = buildGuidanceDecision(
+  "¿Y si ya tengo los datos?",
+  emptyCtx,
+  afterCsvAnalyze
+);
+const alreadyHaveLoaded = buildGuidanceDecision(
+  "¿Y si ya tengo los datos?",
+  loadedCtx,
+  afterCsvAnalyze
+);
+const alreadyHaveEmptyCopy = `${alreadyHaveEmpty.interpretation} ${alreadyHaveEmpty.explanation}`;
+const alreadyHaveLoadedCopy = `${alreadyHaveLoaded.interpretation} ${alreadyHaveLoaded.explanation}`;
+assertCase(
+  "p5.2.c.already-have-data",
+  alreadyHaveEmpty.turnType === "follow_up" &&
+    alreadyHaveLoaded.turnType === "follow_up" &&
+    /importar/i.test(alreadyHaveEmptyCopy) &&
+    /analizar/i.test(alreadyHaveEmptyCopy) &&
+    /analizar/i.test(alreadyHaveLoadedCopy) &&
+    alreadyHaveEmpty.clarification === null &&
+    alreadyHaveLoaded.primaryCardId === "analyze-workspace" &&
+    alreadyHaveEmpty.continuationKind === "next_step" &&
+    /no invento un dataset/i.test(alreadyHaveEmptyCopy) &&
+    /no verifica el contenido del archivo/i.test(alreadyHaveLoadedCopy) &&
+    !/no hay una intenci[oó]n clara/i.test(alreadyHaveEmptyCopy),
+  `${alreadyHaveEmpty.primaryCardId}/${alreadyHaveLoaded.primaryCardId}/${alreadyHaveEmptyCopy}`
+);
+
+const topicChangeFromPearson = buildGuidanceDecision(
+  "Quiero graficar una función",
+  emptyCtx,
+  afterPearsonDefine
+);
+assertCase(
+  "p5.2.d.topic-change-math",
+  topicChangeFromPearson.turnType === "topic_change" &&
+    topicChangeFromPearson.primaryCardId === "math-graph" &&
+    topicChangeFromPearson.goal === "plot" &&
+    classifyIntent("Quiero graficar una función")?.intentId === "math-graph",
+  `${topicChangeFromPearson.turnType}/${topicChangeFromPearson.primaryCardId}`
+);
+
+const afterMultiConcepts = nextGuidanceConversation(
+  multi,
+  "Quiero analizar mis datos con Pearson y regresión"
+);
+const whenUsedAmbiguous = buildGuidanceDecision(
+  "¿Y cuándo se usa?",
+  emptyCtx,
+  afterMultiConcepts
+);
+const whenUsedAmbiguousCopy = `${whenUsedAmbiguous.interpretation} ${whenUsedAmbiguous.explanation}`;
+assertCase(
+  "p5.2.e.multi-concept-no-winner",
+  whenUsedAmbiguous.turnType === "follow_up" &&
+    /pearson/i.test(whenUsedAmbiguousCopy) &&
+    /regresi/i.test(whenUsedAmbiguousCopy) &&
+    /no elijo un m[eé]todo/i.test(whenUsedAmbiguousCopy) &&
+    whenUsedAmbiguous.primaryCardId === null &&
+    whenUsedAmbiguous.clarification === null &&
+    whenUsedAmbiguous.userConcepts.some((item) => item.conceptId === "pearson") &&
+    whenUsedAmbiguous.userConcepts.some((item) => item.conceptId === "regression") &&
+    !/debes usar|m[eé]todo correcto|elija pearson|elija regresi/i.test(
+      whenUsedAmbiguousCopy
+    ),
+  whenUsedAmbiguousCopy
+);
+
+const afterKruskal = nextGuidanceConversation(unknownTerm, "¿Qué es Kruskal?");
+const whereKruskal = buildGuidanceDecision("¿Dónde está?", emptyCtx, afterKruskal);
+const whereKruskalCopy = `${whereKruskal.interpretation} ${whereKruskal.explanation}`;
+assertCase(
+  "p5.2.f.kruskal-unknown",
+  whereKruskal.turnType === "follow_up" &&
+    whereKruskal.userConcepts.some((item) => item.conceptId === "unknown") &&
+    whereKruskal.primaryCardId === null &&
+    whereKruskal.clarification === null &&
+    !/matem[aá]ticas|est[aá] en an[aá]lisis →|analysis\/multivariate/i.test(
+      whereKruskalCopy
+    ) &&
+    /no hay una ubicaci[oó]n|no hay una capacidad verificada|no invento/i.test(
+      whereKruskalCopy
+    ),
+  whereKruskalCopy
+);
+
+const closingCopy = `${closing.interpretation} ${closing.explanation} ${closing.continuationPrompt ?? ""}`;
+assertCase(
+  "p5.2.g.closing",
+  closing.turnType === "closing" &&
+    closing.primaryCardId === null &&
+    closing.clarification === null &&
+    closing.continuationPrompt === null &&
+    closing.continuationKind === "none" &&
+    !/no hay una intenci[oó]n clara/i.test(closingCopy) &&
+    !/handleSmartStartSelect|selectWorkspaceSection/.test(guidanceSource),
+  `${closing.turnType}/${closing.interpretation}`
+);
+
+const overreachCorpus = [
+  whenUsedCopy,
+  whereRegressionCopy,
+  alreadyHaveEmptyCopy,
+  alreadyHaveLoadedCopy,
+  whenUsedAmbiguousCopy,
+  whereKruskalCopy,
+  closingCopy,
+].join(" ");
+assertCase(
+  "p5.2.i.overreach",
+  !/recomend|debes usar|es correcta|ejecutar/i.test(overreachCorpus),
+  overreachCorpus
+);
+
+const followUpCatalogSource = readFileSync(
+  join(repoRoot, "src/lib/smart-start/follow-up-catalog.ts"),
+  "utf8"
+);
+assertCase(
+  "p5.2.no-continuation-slot",
+  whenUsed.clarification === null &&
+    whereRegression.clarification === null &&
+    alreadyHaveEmpty.clarification === null &&
+    !guidanceSource.includes('pendingSlot: "continuation"') &&
+    !followUpCatalogSource.includes("openai") &&
+    !followUpCatalogSource.includes("handleSmartStartSelect"),
+  "slot/llm"
+);
+
+const afterWhenUsed = nextGuidanceConversation(whenUsed, "¿Y cuándo se usa?");
+assertCase(
+  "p5.2.yes-not-parsed",
+  afterWhenUsed.pendingSlot === null &&
+    afterContinuationYes.turnType === "new_intent" &&
+    /no hay una intenci[oó]n clara/i.test(afterContinuationYes.interpretation),
+  `${afterWhenUsed.pendingSlot}/${afterContinuationYes.turnType}`
 );
 
 const summary = {

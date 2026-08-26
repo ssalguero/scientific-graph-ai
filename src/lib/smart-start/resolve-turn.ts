@@ -1,4 +1,5 @@
 import { classifyIntent } from "./classify-intent";
+import { matchFollowUpCue } from "./follow-up-catalog";
 import { normalizeGuidanceText } from "./normalize-intent-text";
 import type {
   GuidanceClarificationSlot,
@@ -14,44 +15,6 @@ const CLOSE_PHRASES = new Set([
   "nada mas",
   "eso es todo",
   "listo",
-]);
-
-/** Longest first so "y si ya tengo los datos" wins over "y si ya tengo". */
-const FOLLOW_UP_CUES = [
-  "y si ya tengo los datos",
-  "y si ya tengo",
-  "cuando se utiliza",
-  "cuando se usa",
-  "y la regresion",
-  "como se usa",
-  "donde esta",
-  "y eso que",
-  "y pearson",
-  "por que",
-  "y eso",
-  "donde",
-  "como",
-] as const;
-
-const FOLLOW_UP_REST = new Set([
-  "y",
-  "eso",
-  "que",
-  "los",
-  "datos",
-  "el",
-  "la",
-  "un",
-  "una",
-  "de",
-  "del",
-  "a",
-  "al",
-  "me",
-  "mi",
-  "mis",
-  "lo",
-  "las",
 ]);
 
 const TOPIC_CHANGE_IDS = new Set([
@@ -90,18 +53,11 @@ function isContinuationSlot(slot: GuidanceClarificationSlot): boolean {
 }
 
 function isContextualFollowUp(
-  text: string,
+  input: string,
   previous: HomeGuidanceConversationState
 ): boolean {
   if (!hasPriorContext(previous)) return false;
-  for (const cue of FOLLOW_UP_CUES) {
-    const padded = ` ${cue} `;
-    if (!text.includes(padded)) continue;
-    const leftover = text.replace(padded, " ");
-    const tokens = leftover.trim().split(/\s+/).filter(Boolean);
-    if (tokens.every((token) => FOLLOW_UP_REST.has(token))) return true;
-  }
-  return false;
+  return matchFollowUpCue(input) !== null;
 }
 
 /**
@@ -120,6 +76,6 @@ export function resolveTurnType(
     return "clarification";
   }
   if (isContinuationSlot(previous.pendingSlot)) return "continuation_answer";
-  if (isContextualFollowUp(text, previous)) return "follow_up";
+  if (isContextualFollowUp(input, previous)) return "follow_up";
   return "new_intent";
 }

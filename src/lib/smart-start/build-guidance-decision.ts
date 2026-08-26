@@ -9,6 +9,7 @@ import {
 } from "./concept-vocabulary";
 import { detectSpeechAct } from "./speech-act";
 import { resolveTurnType } from "./resolve-turn";
+import { buildFollowUpCatalogResult } from "./follow-up-catalog";
 import { keywordMatches, normalizeIntentText } from "./normalize-intent-text";
 import type {
   ContinuationKind,
@@ -50,6 +51,7 @@ type GuidanceEnrichment = {
   userConcepts: UserConcept[];
   methodInterest: MethodInterest | null;
   continuationPrompt: string | null;
+  continuationKind?: ContinuationKind;
   turnType: GuidanceTurnType;
   turnCount: number;
 };
@@ -225,7 +227,9 @@ function decision(
     continuationPrompt: enrichment.continuationPrompt,
     turnType: enrichment.turnType,
     turnCount: enrichment.turnCount,
-    continuationKind: continuationKindFromPrompt(enrichment.continuationPrompt),
+    continuationKind:
+      enrichment.continuationKind ??
+      continuationKindFromPrompt(enrichment.continuationPrompt),
   };
 }
 
@@ -630,6 +634,69 @@ export function buildGuidanceDecision(
       dataSource,
       enrichment
     );
+  }
+
+  if (turnType === "closing") {
+    const prior = previous.lastDecision;
+    return decision(
+      {
+        interpretation: "De acuerdo.",
+        explanation:
+          "Cuando quiera, las tarjetas de Inicio siguen siendo el punto de entrada.",
+        prerequisite: null,
+        suggestedCardIds: [],
+        primaryCardId: null,
+        clarification: null,
+        uncertainty: "none",
+        candidateIntentIds: [],
+      },
+      prior?.goal ?? "unknown",
+      prior?.dataSource ?? dataSource,
+      {
+        speechAct: prior?.speechAct ?? previous.speechAct,
+        userConcepts: prior?.userConcepts ?? previous.userConcepts,
+        methodInterest: prior?.methodInterest ?? previous.methodInterest,
+        continuationPrompt: null,
+        continuationKind: "none",
+        turnType,
+        turnCount,
+      }
+    );
+  }
+
+  if (turnType === "follow_up") {
+    const catalog = buildFollowUpCatalogResult(input, previous, context);
+    if (catalog) {
+      const prior = previous.lastDecision;
+      const followUp = decision(
+        {
+          interpretation: catalog.interpretation,
+          explanation: catalog.explanation,
+          prerequisite: null,
+          suggestedCardIds: catalog.suggestedCardIds,
+          primaryCardId: catalog.primaryCardId,
+          clarification: null,
+          uncertainty: catalog.primaryCardId ? "none" : "low",
+          candidateIntentIds: catalog.suggestedCardIds,
+        },
+        prior?.goal ?? "unknown",
+        prior?.dataSource ?? dataSource,
+        {
+          speechAct: prior?.speechAct ?? previous.speechAct,
+          userConcepts: catalog.userConcepts,
+          methodInterest: deriveMethodInterest(catalog.userConcepts),
+          continuationPrompt: catalog.continuationPrompt,
+          continuationKind: catalog.continuationKind,
+          turnType,
+          turnCount,
+        }
+      );
+      if (!followUp.continuationPrompt) return followUp;
+      return {
+        ...followUp,
+        explanation: `${followUp.explanation} ${followUp.continuationPrompt}`,
+      };
+    }
   }
 
   if (
