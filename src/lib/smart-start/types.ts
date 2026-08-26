@@ -47,6 +47,24 @@ export type HomeGuidanceContext = {
 
 export type GuidanceClarificationSlot = "data_source" | null;
 
+/** P5.1 detection only. Not a guidance path switch. */
+export type GuidanceTurnType =
+  | "closing"
+  | "topic_change"
+  | "clarification"
+  | "continuation_answer"
+  | "follow_up"
+  | "new_intent";
+
+/** Typed companion to continuationPrompt. P5.1 does not add a continuation slot. */
+export type ContinuationKind =
+  | "explain_more"
+  | "next_step"
+  | "deepen_concept"
+  | "review_options"
+  | "ask_before_continue"
+  | "none";
+
 export type GuidanceGoal =
   | "analyze"
   | "import"
@@ -88,6 +106,9 @@ export type HomeGuidanceConversationState = {
   methodInterest: MethodInterest | null;
   userConcepts: UserConcept[];
   speechAct: GuidanceSpeechAct;
+  lastDecision: GuidanceDecision | null;
+  turnCount: number;
+  continuationKind: ContinuationKind;
 };
 
 export const EMPTY_HOME_GUIDANCE_CONVERSATION: HomeGuidanceConversationState = {
@@ -99,6 +120,9 @@ export const EMPTY_HOME_GUIDANCE_CONVERSATION: HomeGuidanceConversationState = {
   methodInterest: null,
   userConcepts: [],
   speechAct: "unknown",
+  lastDecision: null,
+  turnCount: 0,
+  continuationKind: "none",
 };
 
 export type GuidanceUncertainty = "none" | "low" | "unknown_context";
@@ -120,4 +144,7 @@ export type GuidanceDecision = {
   userConcepts: UserConcept[];
   /** Display-only. Must not create a slot or parse the next submit as an answer. */
   continuationPrompt: string | null;
+  turnType: GuidanceTurnType;
+  turnCount: number;
+  continuationKind: ContinuationKind;
 };

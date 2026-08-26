@@ -556,6 +556,124 @@ assertCase(
   `${classifyIntent("analizar")?.intentId}/${classifyIntent("análisis")?.intentId}`
 );
 
+const afterPearsonDefine = nextGuidanceConversation(
+  pearsonDefine,
+  "¿Qué es Pearson?"
+);
+const whenUsed = buildGuidanceDecision(
+  "¿Y cuándo se usa?",
+  emptyCtx,
+  afterPearsonDefine
+);
+assertCase(
+  "p5.1.resolver.define-then-cuando",
+  afterPearsonDefine.lastDecision !== null &&
+    whenUsed.turnType === "follow_up" &&
+    /no hay una intenci[oó]n clara/i.test(whenUsed.interpretation) &&
+    whenUsed.primaryCardId === null,
+  `${whenUsed.turnType}/${whenUsed.interpretation}`
+);
+
+const afterRegressionTopic = nextGuidanceConversation(
+  regressionEmpty,
+  regressionOnly
+);
+const topicChange = buildGuidanceDecision(
+  "Quiero comparar dos grupos",
+  emptyCtx,
+  afterRegressionTopic
+);
+assertCase(
+  "p5.1.resolver.topic-change",
+  topicChange.turnType === "topic_change" &&
+    topicChange.primaryCardId === "compare-datasets" &&
+    classifyIntent("Quiero comparar dos grupos")?.intentId ===
+      "compare-datasets",
+  `${topicChange.turnType}/${topicChange.primaryCardId}`
+);
+
+assertCase(
+  "p5.1.resolver.clarification",
+  afterAsk.pendingSlot === "data_source" &&
+    followUpImport.turnType === "clarification" &&
+    followUpImport.primaryCardId === "analyze-dataset",
+  `${followUpImport.turnType}/${followUpImport.primaryCardId}`
+);
+
+assertCase(
+  "p5.1.resolver.si-without-slot",
+  afterRegressionOnly.pendingSlot === null &&
+    afterContinuationYes.turnType === "new_intent" &&
+    afterContinuationYes.primaryCardId === null &&
+    /no hay una intenci[oó]n clara/i.test(afterContinuationYes.interpretation),
+  `${afterContinuationYes.turnType}/${afterContinuationYes.interpretation}`
+);
+
+const closing = buildGuidanceDecision("Gracias.", emptyCtx);
+assertCase(
+  "p5.1.resolver.closing",
+  closing.turnType === "closing" &&
+    closing.primaryCardId === null &&
+    !guidanceSource.includes("handleSmartStartSelect"),
+  `${closing.turnType}/${closing.primaryCardId}`
+);
+
+const secondTurn = buildGuidanceDecision(
+  "¿Qué es Pearson?",
+  emptyCtx,
+  afterRegressionTopic
+);
+assertCase(
+  "p5.1.state.turnCount",
+  regressionEmpty.turnCount === 1 &&
+    afterRegressionTopic.turnCount === 1 &&
+    afterRegressionTopic.lastDecision !== null &&
+    secondTurn.turnCount === 2,
+  `${regressionEmpty.turnCount}/${secondTurn.turnCount}`
+);
+
+const afterSecond = nextGuidanceConversation(secondTurn, "¿Qué es Pearson?");
+assertCase(
+  "p5.1.state.lastDecision-is-latest",
+  afterSecond.lastDecision === secondTurn && afterSecond.turnCount === 2,
+  `${afterSecond.turnCount}`
+);
+
+assertCase(
+  "p5.1.state.kind-from-p4-prompt",
+  regressionEmpty.continuationPrompt !== null &&
+    regressionEmpty.continuationKind === "ask_before_continue" &&
+    afterRegressionTopic.continuationKind === "ask_before_continue" &&
+    afterRegressionTopic.pendingSlot === null,
+  `${regressionEmpty.continuationKind}/${afterRegressionTopic.pendingSlot}`
+);
+
+assertCase(
+  "p5.1.no-behavior-change.p4-regression",
+  regressionEmpty.primaryCardId === "analyze-dataset" &&
+    regressionEmpty.suggestedCardIds.includes("analyze-workspace") &&
+    regressionEmpty.speechAct === "use" &&
+    regressionEmpty.goal === "analyze" &&
+    regressionEmpty.turnType === "new_intent",
+  `${regressionEmpty.primaryCardId}/${regressionEmpty.turnType}`
+);
+
+assertCase(
+  "p5.1.protected.classifier",
+  !classifySource.includes("resolve-turn") &&
+    !classifySource.includes("resolveTurnType"),
+  "classify-intent"
+);
+
+assertCase(
+  "p5.1.protected.assistant-no-handlers",
+  !assistantSource.includes("Iniciar flujo recomendado") &&
+    !assistantSource.includes("handleSmartStartSelect") &&
+    !assistantSource.includes("selectWorkspaceSection") &&
+    !assistantSource.includes("setAnalysisInspectorSection"),
+  "assistant"
+);
+
 const summary = {
   phase: "home-guidance-unit",
   pass: results.every((item) => item.pass),

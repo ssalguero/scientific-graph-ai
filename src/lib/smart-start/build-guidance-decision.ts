@@ -8,12 +8,15 @@ import {
   knownAnalysisConcepts,
 } from "./concept-vocabulary";
 import { detectSpeechAct } from "./speech-act";
+import { resolveTurnType } from "./resolve-turn";
 import { keywordMatches, normalizeIntentText } from "./normalize-intent-text";
 import type {
+  ContinuationKind,
   GuidanceDataSource,
   GuidanceDecision,
   GuidanceGoal,
   GuidanceSpeechAct,
+  GuidanceTurnType,
   HomeGuidanceContext,
   HomeGuidanceConversationState,
   MethodInterest,
@@ -37,6 +40,9 @@ type GuidancePath = Omit<
   | "speechAct"
   | "userConcepts"
   | "continuationPrompt"
+  | "turnType"
+  | "turnCount"
+  | "continuationKind"
 >;
 
 type GuidanceEnrichment = {
@@ -44,6 +50,8 @@ type GuidanceEnrichment = {
   userConcepts: UserConcept[];
   methodInterest: MethodInterest | null;
   continuationPrompt: string | null;
+  turnType: GuidanceTurnType;
+  turnCount: number;
 };
 
 function sessionStatus(
@@ -137,12 +145,17 @@ function uniqueCards(
   return result;
 }
 
-function emptyEnrichment(): GuidanceEnrichment {
+function emptyEnrichment(
+  turnType: GuidanceTurnType,
+  turnCount: number
+): GuidanceEnrichment {
   return {
     speechAct: "unknown",
     userConcepts: [],
     methodInterest: null,
     continuationPrompt: null,
+    turnType,
+    turnCount,
   };
 }
 
@@ -156,6 +169,12 @@ function resolveUserConcepts(
     return extracted;
   }
   return extracted.length > 0 ? extracted : previous.userConcepts;
+}
+
+function continuationKindFromPrompt(
+  prompt: string | null
+): ContinuationKind {
+  return prompt ? "ask_before_continue" : "none";
 }
 
 function withContinuation(
@@ -204,6 +223,9 @@ function decision(
     speechAct: enrichment.speechAct,
     userConcepts: enrichment.userConcepts,
     continuationPrompt: enrichment.continuationPrompt,
+    turnType: enrichment.turnType,
+    turnCount: enrichment.turnCount,
+    continuationKind: continuationKindFromPrompt(enrichment.continuationPrompt),
   };
 }
 
@@ -516,6 +538,9 @@ export function nextGuidanceConversation(
     methodInterest: decisionValue.methodInterest,
     userConcepts: decisionValue.userConcepts,
     speechAct: decisionValue.speechAct,
+    lastDecision: decisionValue,
+    turnCount: decisionValue.turnCount,
+    continuationKind: decisionValue.continuationKind,
   };
 }
 
@@ -525,6 +550,9 @@ export function buildGuidanceDecision(
   previous: HomeGuidanceConversationState = EMPTY_HOME_GUIDANCE_CONVERSATION
 ): GuidanceDecision {
   const text = normalizeIntentText(input);
+  const turnType = resolveTurnType(input, previous);
+  const turnCount =
+    text.trim().length === 0 ? previous.turnCount : previous.turnCount + 1;
   const speechAct = detectSpeechAct(input);
   const extractedConcepts = extractUserConcepts(input);
   const userConcepts = resolveUserConcepts(input, previous, speechAct);
@@ -536,12 +564,16 @@ export function buildGuidanceDecision(
     userConcepts,
     methodInterest,
     continuationPrompt: null,
+    turnType,
+    turnCount,
   };
   const extractedEnrichment: GuidanceEnrichment = {
     speechAct,
     userConcepts: extractedConcepts,
     methodInterest: deriveMethodInterest(extractedConcepts),
     continuationPrompt: null,
+    turnType,
+    turnCount,
   };
 
   if (text.trim().length === 0) {
@@ -559,7 +591,7 @@ export function buildGuidanceDecision(
       },
       "unknown",
       "unspecified",
-      emptyEnrichment()
+      emptyEnrichment(turnType, turnCount)
     );
   }
 
@@ -765,7 +797,7 @@ export function buildGuidanceDecision(
       },
       "unknown",
       dataSource,
-      emptyEnrichment()
+      emptyEnrichment(turnType, turnCount)
     );
   }
 
