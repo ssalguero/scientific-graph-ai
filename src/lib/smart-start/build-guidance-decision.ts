@@ -1,30 +1,50 @@
 import { CAPABILITY_IDENTITY } from "./capability-identity";
 import { classifyIntent, matchingIntentIds } from "./classify-intent";
-import { extractMethodInterest } from "./method-interest";
+import {
+  extractUserConcepts,
+  deriveMethodInterest,
+  formatConceptLocationCopy,
+  formatConceptMention,
+  knownAnalysisConcepts,
+} from "./concept-vocabulary";
+import { detectSpeechAct } from "./speech-act";
 import { keywordMatches, normalizeIntentText } from "./normalize-intent-text";
 import type {
   GuidanceDataSource,
   GuidanceDecision,
   GuidanceGoal,
+  GuidanceSpeechAct,
   HomeGuidanceContext,
   HomeGuidanceConversationState,
   MethodInterest,
   SmartStartCardOptionId,
   SmartStartIntentId,
+  UserConcept,
 } from "./types";
 import { EMPTY_HOME_GUIDANCE_CONVERSATION } from "./types";
 
 const FILE_TOKENS = ["csv", "excel", "xlsx", "xls", "ods", "txt"] as const;
 const ANALYZE_TOKENS = ["analizar", "analisis"] as const;
-const EXPLORE_PHRASES = ["que puedo hacer", "descubrir"] as const;
 
-const METHOD_LOCATION_COPY =
-  "Las herramientas de ajuste o regresión están en Análisis (Matemáticas), después de incorporar los datos. No se elige ni se ejecuta un método por usted.";
+const DISPLAY_ONLY_CONTINUATION =
+  "Las tarjetas de Inicio siguen siendo el punto de entrada. No inicio un flujo ni elijo un método.";
 
 type GuidancePath = Omit<
   GuidanceDecision,
-  "goal" | "dataSource" | "methodInterest"
+  | "goal"
+  | "dataSource"
+  | "methodInterest"
+  | "speechAct"
+  | "userConcepts"
+  | "continuationPrompt"
 >;
+
+type GuidanceEnrichment = {
+  speechAct: GuidanceSpeechAct;
+  userConcepts: UserConcept[];
+  methodInterest: MethodInterest | null;
+  continuationPrompt: string | null;
+};
 
 function sessionStatus(
   context: HomeGuidanceContext
@@ -48,10 +68,6 @@ function hasImportLanguage(text: string): boolean {
 
 function isCompoundFileAndAnalyze(text: string): boolean {
   return anyToken(text, ANALYZE_TOKENS) && anyToken(text, FILE_TOKENS) && !hasImportLanguage(text);
-}
-
-function isExploreRequest(text: string): boolean {
-  return EXPLORE_PHRASES.some((phrase) => text.includes(phrase));
 }
 
 function isImportFollowUp(text: string): boolean {
@@ -86,6 +102,18 @@ function isUnrelatedConcreteRequest(text: string): boolean {
   );
 }
 
+function isClassifierOwnedAction(
+  winnerId: SmartStartIntentId | undefined
+): boolean {
+  return (
+    winnerId === "compare-datasets" ||
+    winnerId === "math-graph" ||
+    winnerId === "evaluate-publication" ||
+    winnerId === "expert-mode" ||
+    winnerId === "open-project"
+  );
+}
+
 function inferDataSource(
   text: string,
   status: "loaded" | "empty" | "unknown"
@@ -109,25 +137,49 @@ function uniqueCards(
   return result;
 }
 
-function resolveMethodInterest(
-  input: string,
-  previous: HomeGuidanceConversationState
-): MethodInterest | null {
-  if (isUnrelatedConcreteRequest(input)) {
-    return extractMethodInterest(input);
-  }
-  return extractMethodInterest(input) ?? previous.methodInterest;
+function emptyEnrichment(): GuidanceEnrichment {
+  return {
+    speechAct: "unknown",
+    userConcepts: [],
+    methodInterest: null,
+    continuationPrompt: null,
+  };
 }
 
-function acknowledgeMethodInterest(
+function resolveUserConcepts(
+  input: string,
+  previous: HomeGuidanceConversationState,
+  speechAct: GuidanceSpeechAct
+): UserConcept[] {
+  const extracted = extractUserConcepts(input);
+  if (isUnrelatedConcreteRequest(input) || speechAct === "explore") {
+    return extracted;
+  }
+  return extracted.length > 0 ? extracted : previous.userConcepts;
+}
+
+function withContinuation(
+  enrichment: GuidanceEnrichment,
+  prompt: string | null
+): GuidanceEnrichment {
+  return { ...enrichment, continuationPrompt: prompt };
+}
+
+function acknowledgeConcepts(
   path: GuidancePath,
-  methodInterest: MethodInterest | null
+  userConcepts: UserConcept[]
 ): GuidancePath {
-  if (!methodInterest) return path;
+  if (userConcepts.length === 0) return path;
+  const mention = formatConceptMention(userConcepts);
+  const location = formatConceptLocationCopy(userConcepts);
   return {
     ...path,
-    interpretation: `${path.interpretation} Mencionó interés en ${methodInterest.userTerm}.`,
-    explanation: `${path.explanation} ${METHOD_LOCATION_COPY}`,
+    interpretation: mention
+      ? `${path.interpretation} ${mention}`
+      : path.interpretation,
+    explanation: location
+      ? `${path.explanation} ${location}`
+      : path.explanation,
   };
 }
 
@@ -135,27 +187,30 @@ function decision(
   partial: GuidancePath,
   goal: GuidanceGoal,
   dataSource: GuidanceDataSource,
-  methodInterest: MethodInterest | null
+  enrichment: GuidanceEnrichment
 ): GuidanceDecision {
-  const path = acknowledgeMethodInterest(
+  const path = acknowledgeConcepts(
     {
       ...partial,
       suggestedCardIds: uniqueCards(partial.suggestedCardIds),
     },
-    methodInterest
+    enrichment.userConcepts
   );
   return {
     ...path,
     goal,
     dataSource,
-    methodInterest,
+    methodInterest: enrichment.methodInterest,
+    speechAct: enrichment.speechAct,
+    userConcepts: enrichment.userConcepts,
+    continuationPrompt: enrichment.continuationPrompt,
   };
 }
 
 function importThenAnalyze(
   interpretation: string,
   dataSource: GuidanceDataSource,
-  methodInterest: MethodInterest | null
+  enrichment: GuidanceEnrichment
 ): GuidanceDecision {
   return decision(
     {
@@ -171,14 +226,14 @@ function importThenAnalyze(
     },
     "analyze",
     dataSource,
-    methodInterest
+    enrichment
   );
 }
 
 function analyzeAvailable(
   interpretation: string,
   dataSource: GuidanceDataSource,
-  methodInterest: MethodInterest | null
+  enrichment: GuidanceEnrichment
 ): GuidanceDecision {
   return decision(
     {
@@ -194,14 +249,14 @@ function analyzeAvailable(
     },
     "analyze",
     dataSource,
-    methodInterest
+    enrichment
   );
 }
 
 function importFirstForAnalyze(
   interpretation: string,
   dataSource: GuidanceDataSource,
-  methodInterest: MethodInterest | null
+  enrichment: GuidanceEnrichment
 ): GuidanceDecision {
   return decision(
     {
@@ -217,14 +272,14 @@ function importFirstForAnalyze(
     },
     "analyze",
     dataSource,
-    methodInterest
+    enrichment
   );
 }
 
 function askDataSource(
   interpretation: string,
   dataSource: GuidanceDataSource,
-  methodInterest: MethodInterest | null
+  enrichment: GuidanceEnrichment
 ): GuidanceDecision {
   return decision(
     {
@@ -241,7 +296,69 @@ function askDataSource(
     },
     "analyze",
     dataSource,
-    methodInterest
+    withContinuation(enrichment, null)
+  );
+}
+
+function sessionAwareAnalyze(
+  interpretation: string,
+  status: "loaded" | "empty" | "unknown",
+  dataSource: GuidanceDataSource,
+  enrichment: GuidanceEnrichment
+): GuidanceDecision {
+  if (status === "loaded") {
+    return analyzeAvailable(interpretation, dataSource, enrichment);
+  }
+  if (status === "empty") {
+    return importFirstForAnalyze(interpretation, dataSource, enrichment);
+  }
+  return askDataSource(interpretation, dataSource, enrichment);
+}
+
+function defineConceptGuidance(
+  dataSource: GuidanceDataSource,
+  enrichment: GuidanceEnrichment
+): GuidanceDecision {
+  const known = knownAnalysisConcepts(enrichment.userConcepts);
+  const suggested: SmartStartCardOptionId[] =
+    known.length > 0 ? ["analyze-workspace"] : [];
+  return decision(
+    {
+      interpretation: "Quiere una explicación de un término científico.",
+      explanation:
+        "Puedo indicar dónde vive esa idea en el producto, si hay un área verificada. No indico si un método es el adecuado para sus datos.",
+      prerequisite: null,
+      suggestedCardIds: suggested,
+      primaryCardId: null,
+      clarification: null,
+      uncertainty: known.length > 0 ? "none" : "low",
+      candidateIntentIds: suggested,
+    },
+    known.length > 0 ? "analyze" : "unknown",
+    dataSource,
+    withContinuation(enrichment, DISPLAY_ONLY_CONTINUATION)
+  );
+}
+
+function unknownConceptGuidance(
+  dataSource: GuidanceDataSource,
+  enrichment: GuidanceEnrichment
+): GuidanceDecision {
+  return decision(
+    {
+      interpretation: "Mencionó un término científico que no corresponde a una capacidad verificada.",
+      explanation:
+        "No invento una herramienta, una tarjeta ni un área de producto. Las entradas visibles siguen siendo las tarjetas de Inicio.",
+      prerequisite: null,
+      suggestedCardIds: [],
+      primaryCardId: null,
+      clarification: null,
+      uncertainty: "low",
+      candidateIntentIds: [],
+    },
+    "unknown",
+    dataSource,
+    withContinuation(enrichment, DISPLAY_ONLY_CONTINUATION)
   );
 }
 
@@ -250,7 +367,7 @@ function guidanceForWinner(
   status: "loaded" | "empty" | "unknown",
   candidates: SmartStartIntentId[],
   dataSource: GuidanceDataSource,
-  methodInterest: MethodInterest | null
+  enrichment: GuidanceEnrichment
 ): GuidanceDecision {
   if (winnerId === "compare-datasets") {
     return decision(
@@ -267,7 +384,7 @@ function guidanceForWinner(
       },
       "compare",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
   if (winnerId === "math-graph") {
@@ -285,7 +402,7 @@ function guidanceForWinner(
       },
       "plot",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
   if (winnerId === "evaluate-publication") {
@@ -303,7 +420,7 @@ function guidanceForWinner(
       },
       "evaluate",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
   if (winnerId === "expert-mode") {
@@ -321,7 +438,7 @@ function guidanceForWinner(
       },
       "unknown",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
   if (winnerId === "open-project") {
@@ -339,7 +456,7 @@ function guidanceForWinner(
       },
       "unknown",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
   if (winnerId === "analyze-dataset") {
@@ -362,27 +479,27 @@ function guidanceForWinner(
       },
       "import",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
   if (status === "loaded") {
     return analyzeAvailable(
       "Quiere analizar los datos de la sesión.",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
   if (status === "empty") {
     return importFirstForAnalyze(
       "Quiere analizar datos y la sesión está vacía.",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
   return askDataSource(
     "Quiere analizar, pero no está claro si ya hay datos cargados.",
     dataSource,
-    methodInterest
+    enrichment
   );
 }
 
@@ -397,6 +514,8 @@ export function nextGuidanceConversation(
     suggestedCardIds: decisionValue.suggestedCardIds,
     clarificationAsked: Boolean(decisionValue.clarification),
     methodInterest: decisionValue.methodInterest,
+    userConcepts: decisionValue.userConcepts,
+    speechAct: decisionValue.speechAct,
   };
 }
 
@@ -406,9 +525,24 @@ export function buildGuidanceDecision(
   previous: HomeGuidanceConversationState = EMPTY_HOME_GUIDANCE_CONVERSATION
 ): GuidanceDecision {
   const text = normalizeIntentText(input);
-  const methodInterest = resolveMethodInterest(input, previous);
+  const speechAct = detectSpeechAct(input);
+  const extractedConcepts = extractUserConcepts(input);
+  const userConcepts = resolveUserConcepts(input, previous, speechAct);
+  const methodInterest = deriveMethodInterest(userConcepts);
   const status = sessionStatus(context);
   const dataSource = inferDataSource(text, status);
+  const enrichment: GuidanceEnrichment = {
+    speechAct,
+    userConcepts,
+    methodInterest,
+    continuationPrompt: null,
+  };
+  const extractedEnrichment: GuidanceEnrichment = {
+    speechAct,
+    userConcepts: extractedConcepts,
+    methodInterest: deriveMethodInterest(extractedConcepts),
+    continuationPrompt: null,
+  };
 
   if (text.trim().length === 0) {
     return decision(
@@ -425,7 +559,7 @@ export function buildGuidanceDecision(
       },
       "unknown",
       "unspecified",
-      null
+      emptyEnrichment()
     );
   }
 
@@ -438,14 +572,14 @@ export function buildGuidanceDecision(
       return analyzeAvailable(
         "Indicó que los datos ya están disponibles.",
         dataSource === "unspecified" ? "session" : dataSource,
-        methodInterest
+        enrichment
       );
     }
     if (isImportFollowUp(text) || status === "empty") {
       return importThenAnalyze(
         "Indicó que necesita incorporar un archivo.",
         dataSource,
-        methodInterest
+        enrichment
       );
     }
     return decision(
@@ -462,32 +596,33 @@ export function buildGuidanceDecision(
       },
       "analyze",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
 
   if (
-    previous.methodInterest !== null &&
+    (previous.methodInterest !== null || previous.userConcepts.length > 0) &&
     !isUnrelatedConcreteRequest(input) &&
     isLoadedFollowUp(text)
   ) {
     return analyzeAvailable(
       "Indicó que los datos ya están disponibles.",
       dataSource === "unspecified" ? "session" : dataSource,
-      methodInterest
+      enrichment
     );
   }
 
   const candidates = matchingIntentIds(input);
   const winner = classifyIntent(input);
+  const winnerId = winner?.intentId;
 
-  if (isExploreRequest(text)) {
+  if (speechAct === "explore") {
     if (status === "loaded") {
       return decision(
         {
           interpretation: "Quiere ver qué puede hacer con los datos ya disponibles.",
           explanation:
-            "Las tarjetas son las entradas visibles. Con datos cargados puede usar Analizar, Comparar o Evaluar metodología. Resultados y Reportes aparecen después, al revisar y documentar.",
+            "Las tarjetas son las entradas visibles. Con datos cargados puede usar Analizar, Comparar o Evaluar metodología. Resultados y Reportes aparecen después, al revisar y documentar. No elijo un método estadístico por usted.",
           prerequisite: "Datos ya disponibles.",
           suggestedCardIds: [
             "analyze-workspace",
@@ -501,7 +636,7 @@ export function buildGuidanceDecision(
         },
         "explore",
         dataSource,
-        methodInterest
+        enrichment
       );
     }
     if (status === "empty") {
@@ -509,7 +644,7 @@ export function buildGuidanceDecision(
         {
           interpretation: "Quiere ver qué puede hacer, y la sesión está vacía.",
           explanation:
-            "Empiece por Importar para traer datos. Luego podrá usar Analizar, Comparar u otras tarjetas. No invento un dataset.",
+            "Empiece por Importar para traer datos. Luego podrá usar Analizar, Comparar u otras tarjetas. No invento un dataset ni elijo un método estadístico.",
           prerequisite: "No hay datos cargados.",
           suggestedCardIds: [
             "analyze-dataset",
@@ -523,13 +658,13 @@ export function buildGuidanceDecision(
         },
         "explore",
         dataSource,
-        methodInterest
+        enrichment
       );
     }
     return askDataSource(
       "Quiere explorar qué puede hacer, pero no está claro si hay datos.",
       dataSource,
-      methodInterest
+      enrichment
     );
   }
 
@@ -553,21 +688,66 @@ export function buildGuidanceDecision(
         },
         "analyze",
         dataSource,
-        methodInterest
+        enrichment
       );
     }
     if (status === "unknown") {
       return askDataSource(
         "Quiere analizar un CSV, pero no está claro si ya hay datos cargados.",
         dataSource,
-        methodInterest
+        enrichment
       );
     }
     return importThenAnalyze(
       "Quiere analizar un CSV: hay que incorporarlo y luego analizarlo.",
       dataSource,
-      methodInterest
+      enrichment
     );
+  }
+
+  if (winner && isClassifierOwnedAction(winner.intentId)) {
+    return guidanceForWinner(
+      winner.intentId,
+      status,
+      [winner.intentId, ...candidates.filter((id) => id !== winner.intentId)],
+      dataSource,
+      enrichment
+    );
+  }
+
+  if (speechAct === "define" && extractedConcepts.length > 0) {
+    return defineConceptGuidance(dataSource, extractedEnrichment);
+  }
+
+  const knownNow = knownAnalysisConcepts(extractedConcepts);
+  const hasExplicitImportOrFile =
+    hasImportLanguage(text) || anyToken(text, FILE_TOKENS);
+
+  if (
+    knownNow.length > 0 &&
+    !hasExplicitImportOrFile &&
+    (speechAct === "use" ||
+      !winner ||
+      winnerId === "analyze-workspace" ||
+      winnerId === "analyze-dataset")
+  ) {
+    const conceptUse = withContinuation(
+      extractedEnrichment,
+      winner ? null : DISPLAY_ONLY_CONTINUATION
+    );
+    return sessionAwareAnalyze(
+      "Quiere usar una capacidad de análisis mencionada en el texto.",
+      status,
+      dataSource,
+      conceptUse
+    );
+  }
+
+  if (
+    !winner &&
+    extractedConcepts.some((item) => item.conceptId === "unknown")
+  ) {
+    return unknownConceptGuidance(dataSource, extractedEnrichment);
   }
 
   if (!winner) {
@@ -585,7 +765,7 @@ export function buildGuidanceDecision(
       },
       "unknown",
       dataSource,
-      null
+      emptyEnrichment()
     );
   }
 
@@ -594,7 +774,7 @@ export function buildGuidanceDecision(
     status,
     [winner.intentId, ...candidates.filter((id) => id !== winner.intentId)],
     dataSource,
-    methodInterest
+    enrichment
   );
 }
 

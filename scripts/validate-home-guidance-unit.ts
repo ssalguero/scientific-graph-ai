@@ -284,6 +284,278 @@ assertCase(
   `${afterBThenCompare.methodInterest}/${afterBThenCompare.primaryCardId}`
 );
 
+const regressionOnly = "Quiero hacer una regresión";
+const regressionEmpty = buildGuidanceDecision(regressionOnly, emptyCtx);
+assertCase(
+  "p4.1.regression-only.classifier-null",
+  classifyIntent(regressionOnly) === null,
+  String(classifyIntent(regressionOnly)?.intentId)
+);
+assertCase(
+  "p4.1.regression-only.empty.understands-concept",
+  regressionEmpty.speechAct === "use" &&
+    regressionEmpty.goal === "analyze" &&
+    regressionEmpty.primaryCardId === "analyze-dataset" &&
+    regressionEmpty.suggestedCardIds.includes("analyze-workspace") &&
+    regressionEmpty.userConcepts.some((item) => item.conceptId === "regression") &&
+    regressionEmpty.methodInterest?.productLocation === "analysis/mathematics" &&
+    !/no hay una intenci[oó]n clara/i.test(
+      `${regressionEmpty.interpretation} ${regressionEmpty.explanation}`
+    ) &&
+    /matem[aá]ticas/i.test(regressionEmpty.explanation) &&
+    !/recomend|debes usar|es correcta|ejecutar regresi/i.test(
+      `${regressionEmpty.interpretation} ${regressionEmpty.explanation}`
+    ),
+  `${regressionEmpty.speechAct}/${regressionEmpty.primaryCardId}`
+);
+
+const regressionLoaded = buildGuidanceDecision(regressionOnly, loadedCtx);
+assertCase(
+  "p4.1.regression-only.loaded.analizar",
+  regressionLoaded.primaryCardId === "analyze-workspace" &&
+    regressionLoaded.speechAct === "use",
+  `${regressionLoaded.primaryCardId}`
+);
+
+const pearsonDefine = buildGuidanceDecision("¿Qué es Pearson?", emptyCtx);
+assertCase(
+  "p4.2.pearson-define",
+  classifyIntent("¿Qué es Pearson?") === null &&
+    pearsonDefine.speechAct === "define" &&
+    pearsonDefine.userConcepts.some((item) => item.conceptId === "pearson") &&
+    pearsonDefine.userConcepts.every((item) => item.conceptId !== "unknown") &&
+    pearsonDefine.primaryCardId === null &&
+    /estad[ií]stica/i.test(pearsonDefine.explanation) &&
+    /correlaci/i.test(pearsonDefine.explanation) &&
+    !/recomend|es correcta|debes usar|el m[eé]todo correcto/i.test(
+      `${pearsonDefine.interpretation} ${pearsonDefine.explanation} ${pearsonDefine.continuationPrompt ?? ""}`
+    ),
+  `${pearsonDefine.speechAct}/${pearsonDefine.primaryCardId}`
+);
+
+const pearsonUseEmpty = buildGuidanceDecision(
+  "Quiero usar Pearson con mis datos",
+  emptyCtx
+);
+const pearsonUseLoaded = buildGuidanceDecision(
+  "Quiero usar Pearson con mis datos",
+  loadedCtx
+);
+assertCase(
+  "p4.3.pearson-use.session-aware",
+  pearsonUseEmpty.speechAct === "use" &&
+    pearsonUseEmpty.userConcepts.some((item) => item.conceptId === "pearson") &&
+    pearsonUseEmpty.primaryCardId === "analyze-dataset" &&
+    pearsonUseEmpty.suggestedCardIds.includes("analyze-workspace") &&
+    pearsonUseLoaded.primaryCardId === "analyze-workspace" &&
+    pearsonUseEmpty.suggestedCardIds.every((id) =>
+      ["analyze-dataset", "analyze-workspace"].includes(id)
+    ),
+  `${pearsonUseEmpty.primaryCardId}/${pearsonUseLoaded.primaryCardId}`
+);
+
+const exploreNeed = buildGuidanceDecision(
+  "No sé qué análisis necesito",
+  emptyCtx
+);
+assertCase(
+  "p4.4.explore.overrides-guidance-not-classifier",
+  classifyIntent("No sé qué análisis necesito")?.intentId ===
+    "analyze-workspace" &&
+    exploreNeed.speechAct === "explore" &&
+    exploreNeed.userConcepts.length === 0 &&
+    exploreNeed.goal === "explore" &&
+    exploreNeed.primaryCardId === "analyze-dataset" &&
+    !/regresi|pearson|anova|manova/i.test(
+      `${exploreNeed.interpretation} ${exploreNeed.explanation}`
+    ),
+  `${exploreNeed.speechAct}/${exploreNeed.primaryCardId}/${classifyIntent("No sé qué análisis necesito")?.intentId}`
+);
+
+const compareP4 = buildGuidanceDecision("Quiero comparar dos grupos", emptyCtx);
+assertCase(
+  "p4.5.compare.no-anova-from-grupos",
+  classifyIntent("Quiero comparar dos grupos")?.intentId ===
+    "compare-datasets" &&
+    compareP4.primaryCardId === "compare-datasets" &&
+    compareP4.goal === "compare" &&
+    !compareP4.userConcepts.some((item) => item.conceptId === "anova"),
+  `${compareP4.primaryCardId}/${compareP4.userConcepts.map((item) => item.conceptId).join(",")}`
+);
+
+const mathP4 = buildGuidanceDecision("Quiero graficar una función", emptyCtx);
+assertCase(
+  "p4.6.math.no-regression-from-funcion",
+  classifyIntent("Quiero graficar una función")?.intentId === "math-graph" &&
+    mathP4.primaryCardId === "math-graph" &&
+    mathP4.goal === "plot" &&
+    !mathP4.userConcepts.some((item) => item.conceptId === "regression"),
+  `${mathP4.primaryCardId}/${mathP4.userConcepts.map((item) => item.conceptId).join(",")}`
+);
+
+assertCase(
+  "p4.7.csv-regression.p3-preserved",
+  guidanceB.primaryCardId === guidanceA.primaryCardId &&
+    guidanceB.userConcepts.some((item) => item.conceptId === "regression") &&
+    guidanceB.methodInterest !== null,
+  `${guidanceB.primaryCardId}`
+);
+
+const multi = buildGuidanceDecision(
+  "Quiero analizar mis datos con Pearson y regresión",
+  emptyCtx
+);
+assertCase(
+  "p4.8.pearson-and-regression.one-primary",
+  multi.userConcepts.some((item) => item.conceptId === "pearson") &&
+    multi.userConcepts.some((item) => item.conceptId === "regression") &&
+    multi.primaryCardId === "analyze-dataset" &&
+    multi.suggestedCardIds.includes("analyze-workspace") &&
+    /pearson/i.test(`${multi.interpretation} ${multi.explanation}`) &&
+    /regresi/i.test(`${multi.interpretation} ${multi.explanation}`) &&
+    /estad[ií]stica/i.test(multi.explanation) &&
+    /matem[aá]ticas/i.test(multi.explanation) &&
+    !/recomend|m[eé]todo correcto|elija Pearson|elija regresi|mejor m[eé]todo/i.test(
+      `${multi.interpretation} ${multi.explanation}`
+    ),
+  `${multi.primaryCardId}/${multi.userConcepts.map((item) => item.conceptId).join(",")}`
+);
+
+const unknownTerm = buildGuidanceDecision("¿Qué es Kruskal?", emptyCtx);
+assertCase(
+  "p4.9.unknown-scientific-term",
+  unknownTerm.speechAct === "define" &&
+    unknownTerm.userConcepts.some(
+      (item) => item.conceptId === "unknown" && item.productAreaId === null
+    ) &&
+    unknownTerm.primaryCardId === null &&
+    !/an[aá]lisis →|est[aá] en an[aá]lisis/i.test(unknownTerm.explanation),
+  `${unknownTerm.userConcepts.map((item) => `${item.conceptId}:${item.productAreaId}`).join(",")}`
+);
+
+const manovaUse = buildGuidanceDecision("Quiero hacer MANOVA", emptyCtx);
+const manovaCopy = `${manovaUse.interpretation} ${manovaUse.explanation} ${manovaUse.continuationPrompt ?? ""}`;
+assertCase(
+  "p4.10.manova-safety",
+  manovaUse.userConcepts.some(
+    (item) =>
+      item.conceptId === "unknown" &&
+      item.productAreaId === null &&
+      /manova/i.test(item.userTerm)
+  ) &&
+    manovaUse.primaryCardId === null &&
+    !/prueba manova|ejecuta manova|disponible.*manova|manova explorer|indicador heur[ií]stico/i.test(
+      manovaCopy
+    ) &&
+    !/analysis\/multivariate/i.test(manovaCopy) &&
+    /no invento|no hay una capacidad verificada/i.test(manovaCopy),
+  manovaCopy
+);
+
+const anovaUse = buildGuidanceDecision("Quiero hacer una ANOVA", emptyCtx);
+const anovaCopy = `${anovaUse.interpretation} ${anovaUse.explanation}`;
+assertCase(
+  "p4.11.anova-location-statistics",
+  anovaUse.userConcepts.some(
+    (item) =>
+      item.conceptId === "anova" && item.productAreaId === "analysis/statistics"
+  ) &&
+    /estad[ií]stica/i.test(anovaCopy) &&
+    /esencial/i.test(anovaCopy) &&
+    !/inferencia/i.test(anovaCopy) &&
+    anovaUse.primaryCardId === "analyze-dataset",
+  anovaCopy
+);
+
+assertCase(
+  "p4.12.intent-rules.no-method-tokens",
+  !/pearson|anova|manova|correlacion|descriptivo|distribucion|regresi/i.test(
+    intentRulesSource
+  ),
+  "intent-rules"
+);
+
+const afterRegressionOnly = nextGuidanceConversation(
+  regressionEmpty,
+  regressionOnly
+);
+assertCase(
+  "p4.13.continuation-display-only",
+  typeof regressionEmpty.continuationPrompt === "string" &&
+    regressionEmpty.continuationPrompt.length > 0 &&
+    regressionEmpty.clarification === null &&
+    afterRegressionOnly.pendingSlot === null &&
+    afterRegressionOnly.clarificationAsked === false,
+  `${regressionEmpty.continuationPrompt}/${afterRegressionOnly.pendingSlot}`
+);
+
+const afterContinuationYes = buildGuidanceDecision(
+  "sí",
+  emptyCtx,
+  afterRegressionOnly
+);
+assertCase(
+  "p4.13.continuation-does-not-parse-next-as-answer",
+  afterContinuationYes.primaryCardId === null &&
+    /no hay una intenci[oó]n clara/i.test(afterContinuationYes.interpretation),
+  `${afterContinuationYes.primaryCardId}/${afterContinuationYes.interpretation}`
+);
+
+assertCase(
+  "p4.14.no-execute-cta",
+  !assistantSource.includes("Iniciar flujo recomendado") &&
+    !assistantSource.includes("onStartRecommendation") &&
+    !assistantSource.includes("handleIntentRecommendationStart") &&
+    !assistantSource.includes("handleSmartStartSelect") &&
+    !assistantSource.includes("selectWorkspaceSection") &&
+    !assistantSource.includes("setAnalysisInspectorSection"),
+  "assistant handlers"
+);
+
+const classifySource = readFileSync(
+  join(repoRoot, "src/lib/smart-start/classify-intent.ts"),
+  "utf8"
+);
+const guidanceSource = readFileSync(
+  join(repoRoot, "src/lib/smart-start/build-guidance-decision.ts"),
+  "utf8"
+);
+assertCase(
+  "p4.15.classifier-untouched-by-vocabulary",
+  !classifySource.includes("concept-vocabulary") &&
+    !classifySource.includes("speech-act") &&
+    !classifySource.includes("detectSpeechAct") &&
+    !classifySource.includes("extractUserConcepts") &&
+    classifySource.includes("INTENT_RULES"),
+  "classify-intent"
+);
+
+assertCase(
+  "p4.16.no-navigation-in-guidance",
+  !guidanceSource.includes("handleSmartStartSelect") &&
+    !guidanceSource.includes("handleIntentRecommendationStart") &&
+    !guidanceSource.includes("selectWorkspaceSection") &&
+    !guidanceSource.includes("setAnalysisInspectorSection"),
+  "build-guidance-decision"
+);
+
+assertCase(
+  "p4.p0-import-still-standard",
+  classifyIntent("Quiero importar un CSV para análisis")?.intentId ===
+    "analyze-dataset" &&
+    classifyIntent("Quiero importar un CSV para análisis")
+      ?.recommendedProfile === "standard" &&
+    explicitImport.primaryCardId === "analyze-dataset",
+  "p0"
+);
+
+assertCase(
+  "p4.p1-analizar-still-workspace",
+  classifyIntent("analizar")?.intentId === "analyze-workspace" &&
+    classifyIntent("análisis")?.intentId === "analyze-workspace",
+  `${classifyIntent("analizar")?.intentId}/${classifyIntent("análisis")?.intentId}`
+);
+
 const summary = {
   phase: "home-guidance-unit",
   pass: results.every((item) => item.pass),

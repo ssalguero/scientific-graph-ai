@@ -7,6 +7,11 @@ export function normalizeIntentText(text: string): string {
     .trim()} `;
 }
 
+/** Guidance-only: strip surrounding punctuation so "¿Qué es Pearson?" can match. */
+export function normalizeGuidanceText(text: string): string {
+  return normalizeIntentText(text.replace(/[¿?¡!.,;:()"'“”]/g, " "));
+}
+
 export function keywordMatches(text: string, keyword: string): boolean {
   const normalizedKeyword = normalizeIntentText(keyword).trim();
   if (!normalizedKeyword) return false;

@@ -64,6 +64,21 @@ export type MethodInterest = {
   productLocation: "analysis/mathematics";
 };
 
+export type GuidanceSpeechAct = "use" | "define" | "explore" | "unknown";
+
+/** Verified Home guidance product areas. Not inspector navigation commands. */
+export type GuidanceProductAreaId = "analysis/mathematics" | "analysis/statistics";
+
+/**
+ * User-mentioned scientific vocabulary. Not a Card, not a classifier winner.
+ * conceptId "unknown" + productAreaId null means no verified product location.
+ */
+export type UserConcept = {
+  userTerm: string;
+  conceptId: string;
+  productAreaId: GuidanceProductAreaId | null;
+};
+
 export type HomeGuidanceConversationState = {
   lastUserText: string;
   candidateIntentIds: SmartStartIntentId[];
@@ -71,6 +86,8 @@ export type HomeGuidanceConversationState = {
   suggestedCardIds: SmartStartCardOptionId[];
   clarificationAsked: boolean;
   methodInterest: MethodInterest | null;
+  userConcepts: UserConcept[];
+  speechAct: GuidanceSpeechAct;
 };
 
 export const EMPTY_HOME_GUIDANCE_CONVERSATION: HomeGuidanceConversationState = {
@@ -80,6 +97,8 @@ export const EMPTY_HOME_GUIDANCE_CONVERSATION: HomeGuidanceConversationState = {
   suggestedCardIds: [],
   clarificationAsked: false,
   methodInterest: null,
+  userConcepts: [],
+  speechAct: "unknown",
 };
 
 export type GuidanceUncertainty = "none" | "low" | "unknown_context";
@@ -97,4 +116,8 @@ export type GuidanceDecision = {
   goal: GuidanceGoal;
   dataSource: GuidanceDataSource;
   methodInterest: MethodInterest | null;
+  speechAct: GuidanceSpeechAct;
+  userConcepts: UserConcept[];
+  /** Display-only. Must not create a slot or parse the next submit as an answer. */
+  continuationPrompt: string | null;
 };
