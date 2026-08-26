@@ -1,4 +1,7 @@
-import type { AnalyzeConversationContext } from "./contract";
+import type {
+  AnalyzeConversationContext,
+  CompareConversationContext,
+} from "./contract";
 import type { SystemContext } from "./architecture";
 import type { ConversationOrientation, ConversationProductArea } from "./orientation";
 import { productAreasAreRelated } from "./relations";
@@ -19,6 +22,7 @@ export type ConversationCoreInput = {
   text: string;
   system: SystemContext;
   analyzeContext: AnalyzeConversationContext | null;
+  compareContext: CompareConversationContext | null;
   previous: ConversationTurnResult | null;
 };
 
@@ -74,6 +78,79 @@ function orientationFor(
   meaning: string
 ): ConversationOrientation {
   return { kind, productArea, meaning };
+}
+
+function slotOccupancyPhrase(
+  occupied: boolean | null,
+  fileName: string | null,
+  slot: "A" | "B"
+): string {
+  if (occupied !== true) return `Slot ${slot} está vacío`;
+  if (fileName) return `Slot ${slot} tiene «${fileName}»`;
+  return `Slot ${slot} está ocupado`;
+}
+
+function occupancySummary(
+  compare: CompareConversationContext | null
+): string {
+  if (!compare) {
+    return "No hay ocupación de slots de comparación en el contexto. La conversación no captura datasets.";
+  }
+  const a = slotOccupancyPhrase(
+    compare.slotAOccupied,
+    compare.slotAFileName,
+    "A"
+  );
+  const b = slotOccupancyPhrase(
+    compare.slotBOccupied,
+    compare.slotBFileName,
+    "B"
+  );
+  const aOn = compare.slotAOccupied === true;
+  const bOn = compare.slotBOccupied === true;
+  if (!aOn && !bOn) {
+    return `${a}. ${b}. Usted decide si usa los controles de Datos. La conversación no captura ni llena slots.`;
+  }
+  if (aOn && !bOn) {
+    return `${a}. ${b}. Usted decide si llena B. La conversación no llena el slot vacío.`;
+  }
+  if (!aOn && bOn) {
+    return `${a}. ${b}. Usted decide si llena A. La conversación no llena el slot vacío.`;
+  }
+  return `${a}. ${b}. Hay información en ambos slots. La revisión de esa comparación está en Resultados; usted decide si abre esa sección. La conversación no ejecuta el análisis ni genera resultados.`;
+}
+
+function occupancyFootnote(
+  compare: CompareConversationContext | null
+): string {
+  if (!compare) return "";
+  const aOn = compare.slotAOccupied === true;
+  const bOn = compare.slotBOccupied === true;
+  if (!aOn && !bOn) return " Slot A y Slot B están vacíos.";
+  if (aOn && !bOn) {
+    const name = compare.slotAFileName ? ` (${compare.slotAFileName})` : "";
+    return ` Slot A está ocupado${name}; Slot B está vacío.`;
+  }
+  if (!aOn && bOn) {
+    const name = compare.slotBFileName ? ` (${compare.slotBFileName})` : "";
+    return ` Slot B está ocupado${name}; Slot A está vacío.`;
+  }
+  return " Slot A y Slot B están ocupados.";
+}
+
+function isOccupancyQuestion(text: string): boolean {
+  return includesAny(text, [
+    "estoy comparando",
+    "que estoy comparando",
+    "otro grupo",
+    "que hay en a",
+    "que hay en b",
+    "que hay en el slot",
+    "hay en a",
+    "hay en b",
+    "slot a",
+    "slot b",
+  ]);
 }
 
 function currentSurfaceLabel(system: SystemContext): string {
@@ -204,15 +281,35 @@ export function runConversationCore(
     };
   }
 
-  if (includesAny(text, ["comparar", "comparacion", "grupos", "otro grupo"])) {
+  if (isOccupancyQuestion(text)) {
+    const previousMeaning = input.previous?.orientation.meaning;
+    const referentNote =
+      previousMeaning && includesAny(text, ["otro grupo", "y esto"])
+        ? ` Se refiere a lo anterior (${previousMeaning}).`
+        : "";
+    return {
+      interpretation: "Pregunta por los datasets en los slots de comparación.",
+      explanation: `${occupancySummary(input.compareContext)}.${referentNote} Usted decide si usa los controles de Datos. La conversación no captura, no llena slots ni ejecuta.`,
+      orientation: orientationFor(
+        "data_area",
+        "data_compare_groups",
+        PRODUCT_AREA_MEANING.data_compare_groups
+      ),
+      continuationPrompt: "¿Quiere consultarme algo más sobre los slots de comparación?",
+      turnCount,
+    };
+  }
+
+  if (includesAny(text, ["comparar", "comparacion", "grupos"])) {
     const relatedNote = productAreasAreRelated(here, "compare")
       ? here && here !== "compare"
         ? " Esa capacidad está relacionada con la superficie donde está ahora."
         : ""
       : " Aun así puede referirse a comparar desde aquí; el contexto actual no limita el referente.";
+    const occupancyNote = occupancyFootnote(input.compareContext);
     return {
       interpretation: "La pregunta se refiere a comparar grupos o datasets.",
-      explanation: `Está en ${currentSurfaceLabel(input.system)}. La comparación de grupos es una capacidad de Datos (comparar datasets), no una orden de ejecución.${relatedNote} Usted decide si usa esa superficie. La conversación no inicia el flujo ni selecciona grupos.`,
+      explanation: `Está en ${currentSurfaceLabel(input.system)}. La comparación de grupos es una capacidad de Datos (comparar datasets), no una orden de ejecución.${relatedNote}${occupancyNote} Usted decide si usa esa superficie. La conversación no inicia el flujo ni selecciona grupos.`,
       orientation: orientationFor(
         "data_area",
         "data_compare_groups",

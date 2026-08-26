@@ -43,6 +43,7 @@ const scenarioA = runConversationCore({
   text: "¿Puedo comparar estos grupos?",
   system: analyzeSystem,
   analyzeContext,
+  compareContext: null,
   previous: null,
 });
 
@@ -64,6 +65,7 @@ const scenarioB = runConversationCore({
     activeConversationDomain: "math",
   },
   analyzeContext: null,
+  compareContext: null,
   previous: null,
 });
 
@@ -82,6 +84,7 @@ const scenarioC = runConversationCore({
   text: "¿Y dónde hago eso?",
   system: analyzeSystem,
   analyzeContext,
+  compareContext: null,
   previous: scenarioA,
 });
 
@@ -161,6 +164,7 @@ const nullDomainTurn = runConversationCore({
     activeConversationDomain: null,
   },
   analyzeContext: null,
+  compareContext: null,
   previous: null,
 });
 assertCase(
@@ -175,6 +179,7 @@ const methodRefusal = runConversationCore({
   text: "Ejecuta ANOVA y elige el método",
   system: analyzeSystem,
   analyzeContext,
+  compareContext: null,
   previous: null,
 });
 assertCase(
@@ -198,7 +203,7 @@ assertCase(
 
 assertCase(
   "p6.1.core-providers-not-wired",
-  CONVERSATION_CORE_CONTEXT_PROVIDERS[0] === "analyze" &&
+  (CONVERSATION_CORE_CONTEXT_PROVIDERS as readonly string[]).includes("analyze") &&
     WIRED_CONVERSATION_DOMAINS[0] === "home" &&
     !(WIRED_CONVERSATION_DOMAINS as readonly string[]).includes("analyze") &&
     CONVERSATION_ARCHITECTURE.coreRuntimeEnabled === true &&

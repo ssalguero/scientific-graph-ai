@@ -17,6 +17,7 @@ import {
 } from "../src/lib/conversation/contract";
 import { runConversationCore } from "../src/lib/conversation/core";
 import { deriveActiveConversationDomain, normalizeAnalyzeContext } from "../src/lib/conversation/analyze-adapter";
+import { normalizeCompareContext } from "../src/lib/conversation/compare-adapter";
 import { CONVERSATION_LAYER_OWNERS } from "../src/lib/conversation/layers";
 
 type CaseResult = {
@@ -220,8 +221,7 @@ assertCase(
 
 assertCase(
   "p6.1.analyze-is-provider-not-wired",
-  CONVERSATION_CORE_CONTEXT_PROVIDERS.length === 1 &&
-    CONVERSATION_CORE_CONTEXT_PROVIDERS[0] === "analyze" &&
+  (CONVERSATION_CORE_CONTEXT_PROVIDERS as readonly string[]).includes("analyze") &&
     WIRED_CONVERSATION_DOMAINS[0] === "home" &&
     !(WIRED_CONVERSATION_DOMAINS as readonly string[]).includes("analyze") &&
     (UNWIRED_CONVERSATION_DOMAINS as readonly string[]).includes("analyze"),
@@ -241,6 +241,7 @@ const scenarioA = runConversationCore({
     inspectorCategory: "statistics",
     hasExecutedAnalysis: false,
   }),
+  compareContext: null,
   previous: null,
 });
 assertCase(
@@ -259,6 +260,7 @@ const scenarioB = runConversationCore({
     activeConversationDomain: "math",
   },
   analyzeContext: null,
+  compareContext: null,
   previous: null,
 });
 assertCase(
@@ -281,6 +283,7 @@ const scenarioC = runConversationCore({
     inspectorCategory: "statistics",
     hasExecutedAnalysis: false,
   }),
+  compareContext: null,
   previous: scenarioA,
 });
 assertCase(
@@ -306,6 +309,7 @@ assertCase(
         activeConversationDomain: null,
       },
       analyzeContext: null,
+      compareContext: null,
       previous: null,
     }).orientation.productArea === "data_compare_groups",
   "null is unspecified; Core still orients"
@@ -331,6 +335,156 @@ assertCase(
   pageSource.includes("ConversationQueryBox") &&
     !pageSource.includes("@/lib/conversation"),
   "page mount"
+);
+
+const compareContextType =
+  conversationSources.find(
+    (file) => file.rel.replace(/\\/g, "/").endsWith("contract.ts")
+  )?.source ?? "";
+const compareAdapterSource =
+  conversationSources.find(
+    (file) => file.rel.replace(/\\/g, "/").endsWith("compare-adapter.ts")
+  )?.source ?? "";
+const occupiedCompare = normalizeCompareContext({
+  slotAOccupied: true,
+  slotBOccupied: false,
+  slotAFileName: "grupos.csv",
+  slotBFileName: "ignored.csv",
+});
+const compareSystem = {
+  hasDataset: true,
+  hasExperimentalSeries: true,
+  activeConversationDomain: "compare" as const,
+};
+const p62A = runConversationCore({
+  text: "¿Y esto lo puedo analizar?",
+  system: compareSystem,
+  analyzeContext: null,
+  compareContext: occupiedCompare,
+  previous: null,
+});
+assertCase(
+  "p6.2.compare-is-provider-not-wired",
+  CONVERSATION_CORE_CONTEXT_PROVIDERS.length === 2 &&
+    (CONVERSATION_CORE_CONTEXT_PROVIDERS as readonly string[]).includes("compare") &&
+    (CONVERSATION_CORE_CONTEXT_PROVIDERS as readonly string[]).includes("analyze") &&
+    WIRED_CONVERSATION_DOMAINS[0] === "home" &&
+    !(WIRED_CONVERSATION_DOMAINS as readonly string[]).includes("compare") &&
+    (UNWIRED_CONVERSATION_DOMAINS as readonly string[]).includes("compare"),
+  "compare provider"
+);
+assertCase(
+  "p6.2.stub-fields-not-invented",
+  !compareContextType.includes("groupLabels") &&
+    !compareContextType.includes("workflowStepLabel") &&
+    compareContextType.includes("slotAFileName") &&
+    compareContextType.includes("slotBFileName"),
+  "occupancy fields only"
+);
+assertCase(
+  "p6.2.adapter-occupancy-only",
+  occupiedCompare.domain === "compare" &&
+    occupiedCompare.slotAOccupied === true &&
+    occupiedCompare.slotBOccupied === false &&
+    occupiedCompare.slotAFileName === "grupos.csv" &&
+    occupiedCompare.slotBFileName === null &&
+    !("orientation" in occupiedCompare) &&
+    !compareAdapterSource.includes("captureComparisonSlot") &&
+    !compareAdapterSource.includes("selectWorkspaceSection") &&
+    !compareAdapterSource.includes("startGuidedWorkflow") &&
+    !compareAdapterSource.includes("comparisonAnalysis") &&
+    !compareAdapterSource.includes("DatasetAnalysisProfile") &&
+    !compareAdapterSource.includes("ConversationOrientation") &&
+    !compareAdapterSource.includes("GuidanceDecision"),
+  occupiedCompare.slotAFileName ?? "none"
+);
+assertCase(
+  "p6.2.scenario-a-analyze-from-compare",
+  p62A.orientation.kind === "scientific_area" &&
+    !p62A.orientation.homeCardId &&
+    /no cambia de secci/i.test(p62A.explanation),
+  p62A.orientation.productArea
+);
+const p62B = runConversationCore({
+  text: "¿Puedo comparar estos grupos?",
+  system: {
+    hasDataset: true,
+    hasExperimentalSeries: true,
+    activeConversationDomain: "analyze",
+  },
+  analyzeContext: normalizeAnalyzeContext({
+    hasDataset: true,
+    hasExperimentalSeries: true,
+    inspectorCategory: "statistics",
+    hasExecutedAnalysis: false,
+  }),
+  compareContext: occupiedCompare,
+  previous: null,
+});
+assertCase(
+  "p6.2.scenario-b-compare-from-analyze-stable",
+  p62B.orientation.productArea === "data_compare_groups" &&
+    p62B.orientation.kind === "data_area" &&
+    !p62B.orientation.homeCardId &&
+    /no inicia el flujo/i.test(p62B.explanation) &&
+    /slot a/i.test(p62B.explanation),
+  p62B.orientation.productArea
+);
+const p62C1 = runConversationCore({
+  text: "¿Qué estoy comparando?",
+  system: compareSystem,
+  analyzeContext: null,
+  compareContext: occupiedCompare,
+  previous: null,
+});
+const p62C2 = runConversationCore({
+  text: "¿Y esto con qué otro grupo?",
+  system: compareSystem,
+  analyzeContext: null,
+  compareContext: occupiedCompare,
+  previous: p62C1,
+});
+assertCase(
+  "p6.2.scenario-c-slot-referent",
+  p62C1.orientation.productArea === "data_compare_groups" &&
+    p62C2.orientation.productArea === p62C1.orientation.productArea &&
+    /slot a/i.test(p62C1.explanation) &&
+    /vacío|vacio/i.test(p62C1.explanation) &&
+    /no (captura|llena|ejecuta)/i.test(p62C2.explanation) &&
+    !p62C2.orientation.homeCardId,
+  p62C2.orientation.productArea
+);
+const p62D = runConversationCore({
+  text: "¿Y dónde hago eso?",
+  system: compareSystem,
+  analyzeContext: null,
+  compareContext: occupiedCompare,
+  previous: p62C1,
+});
+assertCase(
+  "p6.2.scenario-d-where-referent",
+  p62D.orientation.productArea === p62C1.orientation.productArea &&
+    p62D.orientation.kind === p62C1.orientation.kind &&
+    !p62D.orientation.homeCardId &&
+    /no navega ni ejecuta/i.test(p62D.explanation),
+  p62D.orientation.productArea
+);
+assertCase(
+  "p6.2.query-box-no-mutators",
+  queryBoxSource.includes("normalizeCompareContext") &&
+    !queryBoxSource.includes("captureComparisonSlot") &&
+    !queryBoxSource.includes("sendSessionDatasetToSlot") &&
+    !queryBoxSource.includes("setShowMultiDatasetComparison") &&
+    !queryBoxSource.includes("selectWorkspaceSection") &&
+    !queryBoxSource.includes("startGuidedWorkflow"),
+  "query box compare"
+);
+assertCase(
+  "p6.2.page-still-no-contract-import",
+  pageSource.includes("slotAOccupied") &&
+    pageSource.includes("comparisonSlots.A.profile") &&
+    !pageSource.includes("@/lib/conversation"),
+  "page slots"
 );
 
 const assistantNamedFiles = conversationFiles.filter((rel) =>

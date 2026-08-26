@@ -6,6 +6,7 @@ import {
   normalizeAnalyzeContext,
   type AnalyzeInspectorCategory,
 } from "@/lib/conversation/analyze-adapter";
+import { normalizeCompareContext } from "@/lib/conversation/compare-adapter";
 import {
   runConversationCore,
   type ConversationTurnResult,
@@ -23,6 +24,10 @@ export type ConversationQueryBoxProps = {
   hasExperimentalSeries: boolean | null;
   inspectorCategory: AnalyzeInspectorCategory | null;
   hasExecutedAnalysis: boolean | null;
+  slotAOccupied: boolean | null;
+  slotBOccupied: boolean | null;
+  slotAFileName: string | null;
+  slotBFileName: string | null;
 };
 
 function TurnPanel({ turn }: { turn: ConversationTurnResult }) {
@@ -49,7 +54,7 @@ function TurnPanel({ turn }: { turn: ConversationTurnResult }) {
 
 /**
  * Transversal on-demand query surface for the Conversation Core.
- * Not an Analyze assistant. Does not navigate or execute.
+ * Not an Analyze or Compare assistant. Does not navigate or execute.
  */
 export function ConversationQueryBox({
   workspaceSection,
@@ -60,6 +65,10 @@ export function ConversationQueryBox({
   hasExperimentalSeries,
   inspectorCategory,
   hasExecutedAnalysis,
+  slotAOccupied,
+  slotBOccupied,
+  slotAFileName,
+  slotBFileName,
 }: ConversationQueryBoxProps) {
   const [queryText, setQueryText] = useState("");
   const [turn, setTurn] = useState<ConversationTurnResult | null>(null);
@@ -84,10 +93,22 @@ export function ConversationQueryBox({
             hasExecutedAnalysis,
           })
         : null;
+    const compareContext =
+      comparisonSurfaceOpen ||
+      slotAOccupied === true ||
+      slotBOccupied === true
+        ? normalizeCompareContext({
+            slotAOccupied,
+            slotBOccupied,
+            slotAFileName,
+            slotBFileName,
+          })
+        : null;
     const next = runConversationCore({
       text: queryText,
       system,
       analyzeContext,
+      compareContext,
       previous: turn,
     });
     setTurn(next);

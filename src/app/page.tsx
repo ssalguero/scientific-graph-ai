@@ -21486,6 +21486,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               hasExecutedAnalysis={
                 showStatistics || showCorrelation || showTTest || showAnova
               }
+              slotAOccupied={comparisonSlots.A.profile !== null}
+              slotBOccupied={comparisonSlots.B.profile !== null}
+              slotAFileName={
+                comparisonSlots.A.profile?.datasetInfo.fileName ?? null
+              }
+              slotBFileName={
+                comparisonSlots.B.profile?.datasetInfo.fileName ?? null
+              }
             />
           ) : null}
 

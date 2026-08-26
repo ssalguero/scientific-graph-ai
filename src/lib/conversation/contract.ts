@@ -33,9 +33,10 @@ export const UNWIRED_CONVERSATION_DOMAINS = [
   "reports",
 ] as const satisfies readonly ConversationDomainId[];
 
-/** Analyze is a Core context provider, not a P5 wired Home domain. */
+/** Analyze and Compare are Core context providers, not P5 wired Home domains. */
 export const CONVERSATION_CORE_CONTEXT_PROVIDERS = [
   "analyze",
+  "compare",
 ] as const satisfies readonly ConversationDomainId[];
 
 export const CONVERSATION_POLICY = {
@@ -108,14 +109,15 @@ export type HomeConversationContext = {
 /**
  * P6 adapter not wired. Do not import from UI.
  * Adapters normalize context for the Conversation Core; they are not
- * conversational brains.
+ * conversational brains. Occupancy maps real comparisonSlots profiles;
+ * filenames map profile.datasetInfo.fileName. Not group labels or workflow steps.
  */
 export type CompareConversationContext = {
   domain: "compare";
   slotAOccupied: boolean | null;
   slotBOccupied: boolean | null;
-  groupLabels: readonly string[] | null;
-  workflowStepLabel: string | null;
+  slotAFileName: string | null;
+  slotBFileName: string | null;
 };
 
 /**
