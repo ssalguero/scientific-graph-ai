@@ -1061,6 +1061,21 @@ assertCase(
   `${csvDuringContinuation.turnType}/${csvDuringContinuation.primaryCardId}`
 );
 
+const conversationContractSource = readFileSync(
+  join(repoRoot, "src/lib/conversation/contract.ts"),
+  "utf8"
+);
+assertCase(
+  "p5.4.contract-exists-home-wired",
+  conversationContractSource.includes("WIRED_CONVERSATION_DOMAINS") &&
+    conversationContractSource.includes('"home"') &&
+    conversationContractSource.includes("homeConversationContext") &&
+    conversationContractSource.includes("allowLlm: false") &&
+    !conversationContractSource.includes("openai") &&
+    !assistantSource.includes("@/lib/conversation"),
+  "p5.4 freeze"
+);
+
 const summary = {
   phase: "home-guidance-unit",
   pass: results.every((item) => item.pass),
