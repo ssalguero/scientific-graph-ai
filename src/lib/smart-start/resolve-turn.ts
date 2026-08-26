@@ -1,8 +1,11 @@
 import { classifyIntent } from "./classify-intent";
+import {
+  isExhaustedContinuationYes,
+  matchContinuationAnswer,
+} from "./continuation-resolve";
 import { matchFollowUpCue } from "./follow-up-catalog";
 import { normalizeGuidanceText } from "./normalize-intent-text";
 import type {
-  GuidanceClarificationSlot,
   GuidanceTurnType,
   HomeGuidanceConversationState,
 } from "./types";
@@ -48,10 +51,6 @@ function isTopicChange(
   return Boolean(winner && TOPIC_CHANGE_IDS.has(winner.intentId));
 }
 
-function isContinuationSlot(slot: GuidanceClarificationSlot): boolean {
-  return slot !== null && slot !== "data_source";
-}
-
 function isContextualFollowUp(
   input: string,
   previous: HomeGuidanceConversationState
@@ -61,7 +60,7 @@ function isContextualFollowUp(
 }
 
 /**
- * Deterministic turn classifier. Does not change classifyIntent or guidance copy.
+ * Deterministic turn classifier. Does not change classifyIntent.
  * First match wins.
  */
 export function resolveTurnType(
@@ -70,12 +69,18 @@ export function resolveTurnType(
 ): GuidanceTurnType {
   const text = normalizeGuidanceText(input);
   if (text.trim().length === 0) return "new_intent";
-  if (isClosingUtterance(text)) return "closing";
   if (isTopicChange(input, previous)) return "topic_change";
   if (previous.pendingSlot === "data_source" && previous.clarificationAsked) {
     return "clarification";
   }
-  if (isContinuationSlot(previous.pendingSlot)) return "continuation_answer";
+  if (
+    previous.pendingSlot === "continuation" &&
+    matchContinuationAnswer(input) !== null
+  ) {
+    return "continuation_answer";
+  }
+  if (isExhaustedContinuationYes(input, previous)) return "closing";
+  if (isClosingUtterance(text)) return "closing";
   if (isContextualFollowUp(input, previous)) return "follow_up";
   return "new_intent";
 }

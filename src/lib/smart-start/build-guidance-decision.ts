@@ -10,6 +10,10 @@ import {
 import { detectSpeechAct } from "./speech-act";
 import { resolveTurnType } from "./resolve-turn";
 import { buildFollowUpCatalogResult } from "./follow-up-catalog";
+import {
+  buildContinuationAnswerResult,
+  isActionableContinuation,
+} from "./continuation-resolve";
 import { keywordMatches, normalizeIntentText } from "./normalize-intent-text";
 import type {
   ContinuationKind,
@@ -536,7 +540,11 @@ export function nextGuidanceConversation(
   return {
     lastUserText: userText,
     candidateIntentIds: decisionValue.candidateIntentIds,
-    pendingSlot: decisionValue.clarification ? "data_source" : null,
+    pendingSlot: decisionValue.clarification
+      ? "data_source"
+      : isActionableContinuation(decisionValue)
+        ? "continuation"
+        : null,
     suggestedCardIds: decisionValue.suggestedCardIds,
     clarificationAsked: Boolean(decisionValue.clarification),
     methodInterest: decisionValue.methodInterest,
@@ -634,6 +642,41 @@ export function buildGuidanceDecision(
       dataSource,
       enrichment
     );
+  }
+
+  if (turnType === "continuation_answer") {
+    const catalog = buildContinuationAnswerResult(input, previous, context);
+    if (catalog) {
+      const prior = previous.lastDecision;
+      const answered = decision(
+        {
+          interpretation: catalog.interpretation,
+          explanation: catalog.explanation,
+          prerequisite: null,
+          suggestedCardIds: catalog.suggestedCardIds,
+          primaryCardId: catalog.primaryCardId,
+          clarification: null,
+          uncertainty: catalog.primaryCardId ? "none" : "low",
+          candidateIntentIds: catalog.suggestedCardIds,
+        },
+        prior?.goal ?? "unknown",
+        prior?.dataSource ?? dataSource,
+        {
+          speechAct: prior?.speechAct ?? previous.speechAct,
+          userConcepts: catalog.userConcepts,
+          methodInterest: deriveMethodInterest(catalog.userConcepts),
+          continuationPrompt: catalog.continuationPrompt,
+          continuationKind: catalog.continuationKind,
+          turnType,
+          turnCount,
+        }
+      );
+      if (!answered.continuationPrompt) return answered;
+      return {
+        ...answered,
+        explanation: `${answered.explanation} ${answered.continuationPrompt}`,
+      };
+    }
   }
 
   if (turnType === "closing") {

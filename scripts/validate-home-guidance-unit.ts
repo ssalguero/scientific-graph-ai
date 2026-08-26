@@ -838,7 +838,8 @@ assertCase(
   whenUsed.clarification === null &&
     whereRegression.clarification === null &&
     alreadyHaveEmpty.clarification === null &&
-    !guidanceSource.includes('pendingSlot: "continuation"') &&
+    afterPearsonDefine.pendingSlot === null &&
+    afterRegressionOnly.pendingSlot === null &&
     !followUpCatalogSource.includes("openai") &&
     !followUpCatalogSource.includes("handleSmartStartSelect"),
   "slot/llm"
@@ -847,10 +848,217 @@ assertCase(
 const afterWhenUsed = nextGuidanceConversation(whenUsed, "¿Y cuándo se usa?");
 assertCase(
   "p5.2.yes-not-parsed",
-  afterWhenUsed.pendingSlot === null &&
+  afterContinuationYes.turnType === "new_intent" &&
+    afterContinuationYes.primaryCardId === null &&
+    /no hay una intenci[oó]n clara/i.test(afterContinuationYes.interpretation) &&
+    afterRegressionOnly.pendingSlot === null,
+  `${afterContinuationYes.turnType}/${afterRegressionOnly.pendingSlot}`
+);
+
+const pearsonYes = buildGuidanceDecision("sí", emptyCtx, afterWhenUsed);
+const pearsonYesCopy = `${pearsonYes.interpretation} ${pearsonYes.explanation}`;
+assertCase(
+  "p5.3.a.pearson-yes",
+  afterWhenUsed.pendingSlot === "continuation" &&
+    afterWhenUsed.clarificationAsked === false &&
+    pearsonYes.turnType === "continuation_answer" &&
+    pearsonYes.clarification === null &&
+    /pearson/i.test(pearsonYesCopy) &&
+    !/no hay una intenci[oó]n clara/i.test(pearsonYesCopy) &&
+    !/debes usar pearson/i.test(pearsonYesCopy) &&
+    pearsonYes.userConcepts.some((item) => item.conceptId === "pearson") &&
+    pearsonYes.primaryCardId === null,
+  `${afterWhenUsed.pendingSlot}/${pearsonYes.turnType}/${pearsonYesCopy}`
+);
+
+const afterWhereRegression = nextGuidanceConversation(
+  whereRegression,
+  "¿Dónde está?"
+);
+const regressionYes = buildGuidanceDecision("sí", emptyCtx, afterWhereRegression);
+const regressionYesCopy = `${regressionYes.interpretation} ${regressionYes.explanation}`;
+assertCase(
+  "p5.3.b.regression-where-yes",
+  afterWhereRegression.pendingSlot === "continuation" &&
+    regressionYes.turnType === "continuation_answer" &&
+    /importar|analizar|matem[aá]ticas/i.test(regressionYesCopy) &&
+    regressionYes.clarification === null &&
+    regressionYes.continuationKind === "none" &&
+    !/handleSmartStartSelect/.test(guidanceSource),
+  `${regressionYes.turnType}/${regressionYes.primaryCardId}/${regressionYesCopy}`
+);
+
+const continuationNo = buildGuidanceDecision("no", emptyCtx, afterWhenUsed);
+assertCase(
+  "p5.3.c.continuation-no",
+  continuationNo.turnType === "continuation_answer" &&
+    continuationNo.continuationKind === "none" &&
+    continuationNo.continuationPrompt === null &&
+    continuationNo.clarification === null &&
+    /de acuerdo/i.test(continuationNo.interpretation) &&
+    continuationNo.userConcepts.some((item) => item.conceptId === "pearson") &&
+    nextGuidanceConversation(continuationNo, "no").pendingSlot === null,
+  `${continuationNo.turnType}/${continuationNo.continuationKind}`
+);
+
+const compareWhileSlot = buildGuidanceDecision(
+  "sí, quiero comparar dos grupos",
+  emptyCtx,
+  afterWhenUsed
+);
+assertCase(
+  "p5.3.d.yes-compare-topic-change",
+  compareWhileSlot.turnType === "topic_change" &&
+    compareWhileSlot.primaryCardId === "compare-datasets" &&
+    compareWhileSlot.goal === "compare" &&
+    !compareWhileSlot.userConcepts.some((item) => item.conceptId === "pearson"),
+  `${compareWhileSlot.turnType}/${compareWhileSlot.primaryCardId}`
+);
+
+const mathWhileSlot = buildGuidanceDecision(
+  "sí, pero quiero graficar una función",
+  emptyCtx,
+  afterWhenUsed
+);
+assertCase(
+  "p5.3.e.yes-math-topic-change",
+  mathWhileSlot.turnType === "topic_change" &&
+    mathWhileSlot.primaryCardId === "math-graph" &&
+    mathWhileSlot.goal === "plot",
+  `${mathWhileSlot.turnType}/${mathWhileSlot.primaryCardId}`
+);
+
+assertCase(
+  "p5.3.f.no-slot-si-p4",
+  afterRegressionOnly.pendingSlot === null &&
     afterContinuationYes.turnType === "new_intent" &&
-    /no hay una intenci[oó]n clara/i.test(afterContinuationYes.interpretation),
-  `${afterWhenUsed.pendingSlot}/${afterContinuationYes.turnType}`
+    /no hay una intenci[oó]n clara/i.test(afterContinuationYes.interpretation) &&
+    regressionEmpty.continuationKind === "ask_before_continue",
+  `${afterRegressionOnly.pendingSlot}/${afterContinuationYes.turnType}`
+);
+
+const noWithoutSlot = buildGuidanceDecision("no", emptyCtx, afterRegressionOnly);
+assertCase(
+  "p5.3.g.no-slot-no-closing",
+  noWithoutSlot.turnType === "closing" &&
+    noWithoutSlot.primaryCardId === null &&
+    noWithoutSlot.continuationKind === "none" &&
+    afterRegressionOnly.pendingSlot === null,
+  `${noWithoutSlot.turnType}/${noWithoutSlot.continuationKind}`
+);
+
+const depende = buildGuidanceDecision("depende", emptyCtx, afterWhenUsed);
+const dependeCopy = `${depende.interpretation} ${depende.explanation}`;
+assertCase(
+  "p5.3.h.ambiguous-depende",
+  depende.turnType === "continuation_answer" &&
+    depende.clarification === null &&
+    depende.continuationKind === "none" &&
+    depende.primaryCardId === null &&
+    !/debes usar|m[eé]todo correcto|ejecutar/i.test(dependeCopy) &&
+    !/\bs[ií] o no\b/i.test(dependeCopy) &&
+    nextGuidanceConversation(depende, "depende").pendingSlot === null,
+  dependeCopy
+);
+
+const afterPearsonYes = nextGuidanceConversation(pearsonYes, "sí");
+const pearsonYes2 = buildGuidanceDecision("sí", emptyCtx, afterPearsonYes);
+const afterPearsonYes2 = nextGuidanceConversation(pearsonYes2, "sí");
+const pearsonYes3 = buildGuidanceDecision("sí", emptyCtx, afterPearsonYes2);
+assertCase(
+  "p5.3.i.repeated-si-bound",
+  pearsonYes.turnType === "continuation_answer" &&
+    pearsonYes2.turnType === "continuation_answer" &&
+    pearsonYes2.continuationKind === "none" &&
+    afterPearsonYes2.pendingSlot === null &&
+    pearsonYes3.turnType === "closing" &&
+    pearsonYes3.continuationKind === "none" &&
+    !/no hay una intenci[oó]n clara/i.test(pearsonYes3.interpretation),
+  `${pearsonYes.continuationKind}/${pearsonYes2.continuationKind}/${pearsonYes3.turnType}`
+);
+
+const afterWhereKruskal = nextGuidanceConversation(whereKruskal, "¿Dónde está?");
+const kruskalYes = buildGuidanceDecision("sí", emptyCtx, afterWhereKruskal);
+const kruskalYesCopy = `${kruskalYes.interpretation} ${kruskalYes.explanation}`;
+assertCase(
+  "p5.3.j.kruskal-yes-unknown",
+  afterWhereKruskal.pendingSlot === null &&
+    kruskalYes.turnType === "new_intent" &&
+    kruskalYes.primaryCardId === null &&
+    !/an[aá]lisis →|analysis\/multivariate|prueba kruskal|disponible.*kruskal/i.test(
+      kruskalYesCopy
+    ),
+  `${afterWhereKruskal.pendingSlot}/${kruskalYes.turnType}/${kruskalYesCopy}`
+);
+
+const afterAmbiguousWhen = nextGuidanceConversation(
+  whenUsedAmbiguous,
+  "¿Y cuándo se usa?"
+);
+const multiYes = buildGuidanceDecision("sí", emptyCtx, afterAmbiguousWhen);
+const multiYesCopy = `${multiYes.interpretation} ${multiYes.explanation}`;
+assertCase(
+  "p5.3.k.multi-yes-no-winner",
+  afterAmbiguousWhen.pendingSlot === null &&
+    multiYes.primaryCardId === null &&
+    !/debes usar|elija pearson|elija regresi|m[eé]todo correcto/i.test(multiYesCopy),
+  `${afterAmbiguousWhen.pendingSlot}/${multiYes.turnType}/${multiYesCopy}`
+);
+
+const screenSource = readFileSync(
+  join(repoRoot, "src/components/home/SmartStartScreen.tsx"),
+  "utf8"
+);
+assertCase(
+  "p5.3.l.card-remount",
+  EMPTY_HOME_GUIDANCE_CONVERSATION.pendingSlot === null &&
+    EMPTY_HOME_GUIDANCE_CONVERSATION.turnCount === 0 &&
+    EMPTY_HOME_GUIDANCE_CONVERSATION.lastDecision === null &&
+    screenSource.includes("guidanceEpoch"),
+  "empty default / guidanceEpoch"
+);
+
+const continuationResolveSource = readFileSync(
+  join(repoRoot, "src/lib/smart-start/continuation-resolve.ts"),
+  "utf8"
+);
+const p53Overreach = [
+  pearsonYesCopy,
+  regressionYesCopy,
+  `${continuationNo.interpretation} ${continuationNo.explanation}`,
+  dependeCopy,
+  kruskalYesCopy,
+  multiYesCopy,
+].join(" ");
+assertCase(
+  "p5.3.n.overreach",
+  !/recomend|debes usar|es correcta|ejecutar/i.test(p53Overreach) &&
+    !continuationResolveSource.includes("openai") &&
+    !continuationResolveSource.includes("handleSmartStartSelect") &&
+    !guidanceSource.includes("handleSmartStartSelect"),
+  "copy/handlers"
+);
+
+assertCase(
+  "p5.3.data-source-not-continuation",
+  afterAsk.pendingSlot === "data_source" &&
+    followUpImport.turnType === "clarification" &&
+    followUpImport.primaryCardId === "analyze-dataset" &&
+    afterWhenUsed.pendingSlot === "continuation" &&
+    afterWhenUsed.clarificationAsked === false,
+  `${afterAsk.pendingSlot}/${followUpImport.turnType}/${afterWhenUsed.pendingSlot}`
+);
+
+const csvDuringContinuation = buildGuidanceDecision(
+  "tengo un CSV",
+  emptyCtx,
+  afterWhenUsed
+);
+assertCase(
+  "p5.3.csv-not-continuation-answer",
+  csvDuringContinuation.turnType !== "continuation_answer" &&
+    csvDuringContinuation.clarification === null,
+  `${csvDuringContinuation.turnType}/${csvDuringContinuation.primaryCardId}`
 );
 
 const summary = {

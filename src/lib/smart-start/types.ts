@@ -45,7 +45,7 @@ export type HomeGuidanceContext = {
   hasExperimentalSeries: boolean | null;
 };
 
-export type GuidanceClarificationSlot = "data_source" | null;
+export type GuidanceClarificationSlot = "data_source" | "continuation" | null;
 
 /** P5.1 detection only. Not a guidance path switch. */
 export type GuidanceTurnType =
@@ -142,7 +142,10 @@ export type GuidanceDecision = {
   methodInterest: MethodInterest | null;
   speechAct: GuidanceSpeechAct;
   userConcepts: UserConcept[];
-  /** Display-only. Must not create a slot or parse the next submit as an answer. */
+  /**
+   * P4 `ask_before_continue` is display-only and must not create a slot.
+   * P5.2 question-form `deepen_concept` / `next_step` may stamp `pendingSlot: "continuation"`.
+   */
   continuationPrompt: string | null;
   turnType: GuidanceTurnType;
   turnCount: number;
