@@ -119,6 +119,8 @@ export const INTENT_RULES: IntentRule[] = [
   {
     id: "analyze-workspace",
     keywords: [
+      "analizar",
+      "analisis",
       "espacio de analisis",
       "espacio de análisis",
       "ir a analisis",
@@ -147,9 +149,6 @@ export const INTENT_RULES: IntentRule[] = [
       "txt",
       "datos",
       "dataset",
-      "analisis",
-      "análisis",
-      "analizar",
       "importar",
       "tabla",
       "experimental",

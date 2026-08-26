@@ -34,6 +34,20 @@ function assertIntent(
 }
 
 assertIntent("example.analyze-csv", "Quiero importar un CSV para análisis", "analyze-dataset", "standard");
+assertIntent("p1.generic-analizar", "analizar", "analyze-workspace", "standard");
+assertIntent("p1.generic-analisis", "análisis", "analyze-workspace", "standard");
+assertIntent(
+  "p1.explicit-csv-import",
+  "Quiero importar un CSV para análisis.",
+  "analyze-dataset",
+  "standard"
+);
+assertIntent(
+  "p1.explicit-csv-para-analizar",
+  "importar un CSV para analizar",
+  "analyze-dataset",
+  "standard"
+);
 assertIntent("example.analyze-excel", "Tengo datos en Excel", "analyze-dataset", "standard");
 assertIntent("example.compare-ab", "comparar grupos A/B en un experimento", "compare-datasets", "standard");
 assertIntent("example.math-sine", "graficar función seno y coseno", "math-graph", "standard");
