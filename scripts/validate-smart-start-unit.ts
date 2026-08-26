@@ -118,6 +118,7 @@ subGatesPass = runTsxScript("validate-smart-start-config-unit.ts", "smart-start-
 subGatesPass = runTsxScript("validate-intent-assistant-unit.ts", "intent-assistant-unit") && subGatesPass;
 subGatesPass = runTsxScript("validate-home-guidance-unit.ts", "home-guidance-unit") && subGatesPass;
 subGatesPass = runTsxScript("validate-conversation-contract.ts", "conversation-contract") && subGatesPass;
+subGatesPass = runTsxScript("validate-conversation-core-unit.ts", "conversation-core-unit") && subGatesPass;
 
 const summary = {
   phase: "smart-start-unit",

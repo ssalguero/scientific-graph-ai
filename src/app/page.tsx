@@ -314,6 +314,7 @@ import { ComparisonFreshnessBadge } from "@/components/comparison/ComparisonFres
 import { GuidedWorkflowPanel } from "@/components/workflow";
 import { WorkflowSessionIndicator } from "@/components/workflow/WorkflowSessionIndicator";
 import { SmartStartScreen } from "@/components/home/SmartStartScreen";
+import { ConversationQueryBox } from "@/components/conversation/ConversationQueryBox";
 import { CompareStepsBanner } from "@/components/home/CompareStepsBanner";
 import { PublicationEntryBanner } from "@/components/home/PublicationEntryBanner";
 import {
@@ -21472,6 +21473,21 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               {formatPr5ContinuityDisposition()}
             </p>
           </section>
+
+          {isDatosShell || isAnalysisShell ? (
+            <ConversationQueryBox
+              workspaceSection={activeWorkspaceSection}
+              dataWorkspaceView={dataWorkspaceView}
+              comparisonSurfaceOpen={showMultiDatasetComparison}
+              importDestinationActive={importDestinationActive}
+              hasDataset={Boolean(currentDatasetInfo)}
+              hasExperimentalSeries={experimentalSeries.length > 0}
+              inspectorCategory={analysisInspectorSection}
+              hasExecutedAnalysis={
+                showStatistics || showCorrelation || showTTest || showAnova
+              }
+            />
+          ) : null}
 
           <>
           <section

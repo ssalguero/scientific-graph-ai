@@ -1,10 +1,9 @@
 import type { ConversationDomainId, ConversationContext } from "./contract";
 
 /**
- * P6 architecture freeze. Types only — no Conversation Core runtime,
- * no adapters, no context builders, no query UI.
+ * P6 architecture. Conversation Core runtime may be enabled while the
+ * overall P6 series remains incomplete.
  *
- * Target architecture:
  * Conversation Core + System Context + Domain Context Adapters + Semantic Orientation
  *
  * P6 will not build independent assistants per domain.
@@ -15,23 +14,26 @@ export const CONVERSATION_ARCHITECTURE = {
   independentDomainAssistants: false,
   adaptersNormalizeContextOnly: true,
   orientationIsSemanticNotNavigation: true,
+  coreRuntimeEnabled: true,
   implemented: false,
 } as const;
 
 export type ConversationArchitecture = typeof CONVERSATION_ARCHITECTURE;
 
 /**
- * Named slot for the single future Conversation Core.
- * P6.0 does not implement it. Not a per-domain assistant.
+ * Named slot for the single Conversation Core.
+ * Runtime is runConversationCore. This type is not a per-domain assistant.
+ * CONVERSATION_ARCHITECTURE.implemented remains false until P6 is complete.
  */
 export type ConversationCore = {
-  readonly implemented: false;
   readonly single: true;
 };
 
 /**
- * Transversal session/product awareness for a future Core.
- * Stub only. Not a builder. Not a workspace mutator.
+ * Transversal session/product awareness.
+ * activeConversationDomain is where the user is, not a question whitelist.
+ * null means no specific conversation domain for the current surface
+ * (not lost context). The Core still interprets the question.
  */
 export type SystemContext = {
   hasDataset: boolean | null;

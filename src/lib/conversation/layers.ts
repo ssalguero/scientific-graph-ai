@@ -26,6 +26,10 @@ export const CONVERSATION_LAYER_OWNERS = {
     "src/lib/conversation/contract.ts",
     "src/lib/conversation/architecture.ts",
     "src/lib/conversation/orientation.ts",
+    "src/lib/conversation/relations.ts",
+    "src/lib/conversation/core.ts",
+    "src/lib/conversation/analyze-adapter.ts",
+    "src/lib/conversation/system-context.ts",
   ],
   analysis_scientific: [
     "workspace engines and inspector controls (user-driven; not conversation)",

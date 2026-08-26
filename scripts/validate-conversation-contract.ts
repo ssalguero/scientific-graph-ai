@@ -6,6 +6,7 @@ import {
   CONVERSATION_ARCHITECTURE,
 } from "../src/lib/conversation/architecture";
 import {
+  CONVERSATION_CORE_CONTEXT_PROVIDERS,
   CONVERSATION_DOMAINS_THAT_ARE_NOT_WORKSPACE_SECTIONS,
   CONVERSATION_POLICY,
   DOCUMENTED_WORKSPACE_SECTIONS,
@@ -14,6 +15,8 @@ import {
   homeConversationContext,
   isWiredConversationDomain,
 } from "../src/lib/conversation/contract";
+import { runConversationCore } from "../src/lib/conversation/core";
+import { deriveActiveConversationDomain, normalizeAnalyzeContext } from "../src/lib/conversation/analyze-adapter";
 import { CONVERSATION_LAYER_OWNERS } from "../src/lib/conversation/layers";
 
 type CaseResult = {
@@ -210,8 +213,124 @@ assertCase(
     CONVERSATION_ARCHITECTURE.independentDomainAssistants === false &&
     CONVERSATION_ARCHITECTURE.adaptersNormalizeContextOnly === true &&
     CONVERSATION_ARCHITECTURE.orientationIsSemanticNotNavigation === true &&
-    CONVERSATION_ARCHITECTURE.implemented === false,
+    CONVERSATION_ARCHITECTURE.implemented === false &&
+    CONVERSATION_ARCHITECTURE.coreRuntimeEnabled === true,
   JSON.stringify(CONVERSATION_ARCHITECTURE)
+);
+
+assertCase(
+  "p6.1.analyze-is-provider-not-wired",
+  CONVERSATION_CORE_CONTEXT_PROVIDERS.length === 1 &&
+    CONVERSATION_CORE_CONTEXT_PROVIDERS[0] === "analyze" &&
+    WIRED_CONVERSATION_DOMAINS[0] === "home" &&
+    !(WIRED_CONVERSATION_DOMAINS as readonly string[]).includes("analyze") &&
+    (UNWIRED_CONVERSATION_DOMAINS as readonly string[]).includes("analyze"),
+  "analyze provider"
+);
+
+const scenarioA = runConversationCore({
+  text: "¿Puedo comparar estos grupos?",
+  system: {
+    hasDataset: true,
+    hasExperimentalSeries: true,
+    activeConversationDomain: "analyze",
+  },
+  analyzeContext: normalizeAnalyzeContext({
+    hasDataset: true,
+    hasExperimentalSeries: true,
+    inspectorCategory: "statistics",
+    hasExecutedAnalysis: false,
+  }),
+  previous: null,
+});
+assertCase(
+  "p6.1.scenario-a",
+  scenarioA.orientation.productArea === "data_compare_groups" &&
+    scenarioA.orientation.kind === "data_area" &&
+    !scenarioA.orientation.homeCardId,
+  scenarioA.orientation.productArea
+);
+
+const scenarioB = runConversationCore({
+  text: "¿Esto lo puedo analizar?",
+  system: {
+    hasDataset: true,
+    hasExperimentalSeries: false,
+    activeConversationDomain: "math",
+  },
+  analyzeContext: null,
+  previous: null,
+});
+assertCase(
+  "p6.1.scenario-b",
+  scenarioB.orientation.kind === "scientific_area" &&
+    !scenarioB.orientation.homeCardId,
+  scenarioB.orientation.productArea
+);
+
+const scenarioC = runConversationCore({
+  text: "¿Y dónde hago eso?",
+  system: {
+    hasDataset: true,
+    hasExperimentalSeries: true,
+    activeConversationDomain: "analyze",
+  },
+  analyzeContext: normalizeAnalyzeContext({
+    hasDataset: true,
+    hasExperimentalSeries: true,
+    inspectorCategory: "statistics",
+    hasExecutedAnalysis: false,
+  }),
+  previous: scenarioA,
+});
+assertCase(
+  "p6.1.scenario-c",
+  scenarioC.orientation.productArea === scenarioA.orientation.productArea &&
+    !scenarioC.orientation.homeCardId,
+  scenarioC.orientation.productArea
+);
+
+assertCase(
+  "p6.1.visual-builder-unspecified-domain",
+  deriveActiveConversationDomain({
+    workspaceSection: "data",
+    dataWorkspaceView: "visual-builder",
+    comparisonSurfaceOpen: false,
+    importDestinationActive: false,
+  }) === null &&
+    runConversationCore({
+      text: "¿Puedo comparar estos grupos?",
+      system: {
+        hasDataset: true,
+        hasExperimentalSeries: false,
+        activeConversationDomain: null,
+      },
+      analyzeContext: null,
+      previous: null,
+    }).orientation.productArea === "data_compare_groups",
+  "null is unspecified; Core still orients"
+);
+
+const queryBoxSource = readFileSync(
+  join(repoRoot, "src/components/conversation/ConversationQueryBox.tsx"),
+  "utf8"
+);
+assertCase(
+  "p6.1.query-box-no-mutators",
+  queryBoxSource.includes("runConversationCore") &&
+    !queryBoxSource.includes("selectWorkspaceSection") &&
+    !queryBoxSource.includes("setAnalysisInspectorSection") &&
+    !queryBoxSource.includes("handleSmartStartSelect") &&
+    !queryBoxSource.includes("startGuidedWorkflow") &&
+    !queryBoxSource.includes("setShow"),
+  "query box"
+);
+
+assertCase(
+  "p6.1.page-mounts-box-not-contract",
+  pageSource.includes("ConversationQueryBox") &&
+    !pageSource.includes("@/lib/conversation"),
+  "page mount"
 );
 
 const assistantNamedFiles = conversationFiles.filter((rel) =>

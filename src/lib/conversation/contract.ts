@@ -33,6 +33,11 @@ export const UNWIRED_CONVERSATION_DOMAINS = [
   "reports",
 ] as const satisfies readonly ConversationDomainId[];
 
+/** Analyze is a Core context provider, not a P5 wired Home domain. */
+export const CONVERSATION_CORE_CONTEXT_PROVIDERS = [
+  "analyze",
+] as const satisfies readonly ConversationDomainId[];
+
 export const CONVERSATION_POLICY = {
   onDemandOnly: true,
   allowLlm: false,
