@@ -143,6 +143,147 @@ assertCase(
   "no select handler"
 );
 
+const phraseA = "quiero analizar un csv";
+const phraseB = "quiero analizar un csv utilizando funciones de regresión";
+const guidanceA = buildGuidanceDecision(phraseA, emptyCtx);
+const guidanceB = buildGuidanceDecision(phraseB, emptyCtx);
+
+assertCase(
+  "p3.a.analyze-csv.slots",
+  guidanceA.goal === "analyze" &&
+    guidanceA.dataSource === "csv" &&
+    guidanceA.methodInterest === null &&
+    guidanceA.primaryCardId === "analyze-dataset" &&
+    guidanceA.suggestedCardIds.includes("analyze-workspace"),
+  `${guidanceA.goal}/${guidanceA.dataSource}/${guidanceA.primaryCardId}`
+);
+
+assertCase(
+  "p3.b.regression-interest.same-cards",
+  guidanceB.goal === "analyze" &&
+    guidanceB.dataSource === "csv" &&
+    guidanceB.methodInterest !== null &&
+    guidanceB.methodInterest.productLocation === "analysis/mathematics" &&
+    /regresi/i.test(guidanceB.methodInterest.userTerm) &&
+    guidanceB.primaryCardId === guidanceA.primaryCardId &&
+    guidanceB.suggestedCardIds.includes("analyze-workspace") &&
+    /regresi/i.test(guidanceB.interpretation + guidanceB.explanation) &&
+    /matem[aá]ticas/i.test(guidanceB.explanation),
+  `${guidanceB.primaryCardId}/${guidanceB.methodInterest?.userTerm}`
+);
+
+assertCase(
+  "p3.b.no-overreach",
+  !/recomend|debes usar|es correcta|ejecutar regresi/i.test(
+    `${guidanceB.interpretation} ${guidanceB.explanation}`
+  ),
+  "copy"
+);
+
+const intentRulesSource = readFileSync(
+  join(repoRoot, "src/lib/smart-start/intent-rules.ts"),
+  "utf8"
+);
+assertCase(
+  "p3.no-regression-intent-rule",
+  !/regresi[oó]n/i.test(intentRulesSource),
+  "intent-rules"
+);
+
+assertCase(
+  "p3.c.p0-import",
+  classifyIntent("Quiero importar un CSV para análisis")?.intentId ===
+    "analyze-dataset" &&
+    classifyIntent("Quiero importar un CSV para análisis")
+      ?.recommendedProfile === "standard" &&
+    explicitImport.primaryCardId === "analyze-dataset" &&
+    explicitImport.goal === "import",
+  explicitImport.goal
+);
+
+assertCase(
+  "p3.d.p1-analizar",
+  classifyIntent("analizar")?.intentId === "analyze-workspace",
+  classifyIntent("analizar")?.intentId
+);
+
+assertCase(
+  "p3.e.p1-import-para-analizar",
+  classifyIntent("importar un CSV para analizar")?.intentId ===
+    "analyze-dataset" &&
+    classifyIntent("importar un CSV para analizar")?.recommendedProfile ===
+      "standard",
+  classifyIntent("importar un CSV para analizar")?.intentId
+);
+
+const compareP3 = buildGuidanceDecision("quiero comparar dos grupos", emptyCtx);
+assertCase(
+  "p3.f.compare",
+  compareP3.primaryCardId === "compare-datasets" &&
+    compareP3.goal === "compare" &&
+    classifyIntent("quiero comparar dos grupos")?.intentId ===
+      "compare-datasets",
+  `${compareP3.primaryCardId}`
+);
+
+const mathP3 = buildGuidanceDecision("quiero graficar una función", emptyCtx);
+assertCase(
+  "p3.g.math",
+  mathP3.primaryCardId === "math-graph" && mathP3.goal === "plot",
+  `${mathP3.primaryCardId}`
+);
+
+const unknownMethod = buildGuidanceDecision(
+  "No sé qué análisis necesito",
+  emptyCtx
+);
+assertCase(
+  "p3.h.no-invented-method",
+  unknownMethod.methodInterest === null &&
+    !/regresi|pearson|anova|manova/i.test(
+      `${unknownMethod.interpretation} ${unknownMethod.explanation}`
+    ),
+  unknownMethod.methodInterest?.userTerm ?? "null"
+);
+
+const messy = buildGuidanceDecision("analisar un archvo", emptyCtx);
+assertCase(
+  "p3.i.no-fake-method-interest",
+  messy.methodInterest === null,
+  messy.methodInterest?.userTerm ?? "null"
+);
+
+const afterB = nextGuidanceConversation(guidanceB, phraseB);
+const followUpLoaded = buildGuidanceDecision(
+  "sí, ya tengo el archivo",
+  emptyCtx,
+  afterB
+);
+assertCase(
+  "p3.j.follow-up-keeps-method-interest",
+  followUpLoaded.methodInterest !== null &&
+    followUpLoaded.methodInterest.productLocation === "analysis/mathematics" &&
+    followUpLoaded.clarification === null &&
+    (followUpLoaded.primaryCardId === "analyze-workspace" ||
+      followUpLoaded.primaryCardId === "analyze-dataset") &&
+    !/qu[eé] modelo|qu[eé] regresi/i.test(
+      followUpLoaded.clarification ?? followUpLoaded.explanation
+    ),
+  `${followUpLoaded.primaryCardId}/${followUpLoaded.methodInterest?.userTerm}`
+);
+
+const afterBThenCompare = buildGuidanceDecision(
+  "quiero comparar dos grupos",
+  emptyCtx,
+  afterB
+);
+assertCase(
+  "p3.unrelated-clears-method-interest",
+  afterBThenCompare.methodInterest === null &&
+    afterBThenCompare.primaryCardId === "compare-datasets",
+  `${afterBThenCompare.methodInterest}/${afterBThenCompare.primaryCardId}`
+);
+
 const summary = {
   phase: "home-guidance-unit",
   pass: results.every((item) => item.pass),

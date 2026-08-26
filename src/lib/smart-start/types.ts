@@ -47,12 +47,30 @@ export type HomeGuidanceContext = {
 
 export type GuidanceClarificationSlot = "data_source" | null;
 
+export type GuidanceGoal =
+  | "analyze"
+  | "import"
+  | "compare"
+  | "plot"
+  | "evaluate"
+  | "explore"
+  | "unknown";
+
+export type GuidanceDataSource = "csv" | "file" | "unspecified" | "session";
+
+/** Non-authoritative user-stated interest. Not a Card, method choice, or command. */
+export type MethodInterest = {
+  userTerm: string;
+  productLocation: "analysis/mathematics";
+};
+
 export type HomeGuidanceConversationState = {
   lastUserText: string;
   candidateIntentIds: SmartStartIntentId[];
   pendingSlot: GuidanceClarificationSlot;
   suggestedCardIds: SmartStartCardOptionId[];
   clarificationAsked: boolean;
+  methodInterest: MethodInterest | null;
 };
 
 export const EMPTY_HOME_GUIDANCE_CONVERSATION: HomeGuidanceConversationState = {
@@ -61,6 +79,7 @@ export const EMPTY_HOME_GUIDANCE_CONVERSATION: HomeGuidanceConversationState = {
   pendingSlot: null,
   suggestedCardIds: [],
   clarificationAsked: false,
+  methodInterest: null,
 };
 
 export type GuidanceUncertainty = "none" | "low" | "unknown_context";
@@ -75,4 +94,7 @@ export type GuidanceDecision = {
   clarification: string | null;
   uncertainty: GuidanceUncertainty;
   candidateIntentIds: SmartStartIntentId[];
+  goal: GuidanceGoal;
+  dataSource: GuidanceDataSource;
+  methodInterest: MethodInterest | null;
 };
