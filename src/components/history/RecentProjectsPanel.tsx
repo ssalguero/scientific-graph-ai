@@ -22,18 +22,18 @@ export type RecentProjectsPanelProps = {
 };
 
 const panelClassName =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-2 text-xs text-[var(--app-text)]";
+  "rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-2 py-2 text-xs text-[var(--color-text-primary)]";
 
 const itemClassName =
-  "flex items-start justify-between gap-2 rounded-md border border-[var(--app-border)]/60 bg-[var(--app-surface-muted)]/40 px-2 py-1.5";
+  "flex items-start justify-between gap-2 rounded-md border border-[var(--color-border-default)]/60 bg-[var(--color-surface-canvas)]/40 px-2 py-1.5";
 
 const btnOpenClassName = `shrink-0 ${projectFileBtnPrimary}`;
 
 const btnLinkClassName =
-  "text-[11px] font-medium text-[var(--app-accent)] hover:underline";
+  "text-[11px] font-medium text-[var(--color-brand-primary)] hover:underline";
 
 const activeBadgeClass =
-  "inline-flex shrink-0 rounded border border-[var(--app-accent)]/40 bg-[var(--app-accent)]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--app-accent)]";
+  "inline-flex shrink-0 rounded border border-[var(--color-brand-primary)]/40 bg-[var(--color-brand-primary)]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--color-brand-primary)]";
 
 const formatLastAccessedAt = (iso: string): string => {
   const date = new Date(iso);
@@ -63,13 +63,13 @@ export function RecentProjectsPanel({
       className={[panelClassName, className].filter(Boolean).join(" ")}
       aria-label="Proyectos recientes"
     >
-      <p className="px-0.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+      <p className="px-0.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
         Proyectos recientes
       </p>
 
       {isLoading ? (
         <p
-          className="px-0.5 text-[11px] text-[var(--app-text-muted)]"
+          className="px-0.5 text-[11px] text-[var(--color-text-muted)]"
           role="status"
         >
           Cargando…
@@ -78,7 +78,7 @@ export function RecentProjectsPanel({
 
       {loadError ? (
         <p
-          className="rounded-md border border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] px-2 py-1.5 text-[11px] text-[var(--app-danger-text)]"
+          className="rounded-md border border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))] px-2 py-1.5 text-[11px] text-[var(--color-feedback-danger)]"
           role="alert"
         >
           {loadError}
@@ -87,13 +87,13 @@ export function RecentProjectsPanel({
 
       {showEmpty ? (
         <div
-          className="rounded-md border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 px-2 py-2 space-y-1"
+          className="rounded-md border border-dashed border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 px-2 py-2 space-y-1"
           role="status"
         >
-          <p className="text-[11px] font-medium text-[var(--app-text)]">
+          <p className="text-[11px] font-medium text-[var(--color-text-primary)]">
             No hay proyectos recientes
           </p>
-          <p className="text-[10px] text-[var(--app-text-muted)]">
+          <p className="text-[10px] text-[var(--color-text-muted)]">
             Guarde un proyecto localmente o abra la biblioteca completa.
           </p>
           {onOpenLibrary ? (
@@ -118,15 +118,15 @@ export function RecentProjectsPanel({
                 key={project.id}
                 className={`${itemClassName}${
                   isActive
-                    ? " border-[var(--app-accent)] bg-[var(--app-accent)]/5"
+                    ? " border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5"
                     : isRecoverable
-                      ? " border-[var(--app-warning-border)] bg-[var(--app-warning-bg)]/40"
+                      ? " border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))_40%,transparent)]"
                       : ""
                 }`}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="text-xs font-medium text-[var(--app-text)] leading-snug break-words">
+                    <p className="text-xs font-medium text-[var(--color-text-primary)] leading-snug break-words">
                       {project.name}
                     </p>
                     {isActive ? (
@@ -134,7 +134,7 @@ export function RecentProjectsPanel({
                     ) : null}
                   </div>
                   <time
-                    className="mt-0.5 block text-[10px] text-[var(--app-text-muted)]"
+                    className="mt-0.5 block text-[10px] text-[var(--color-text-muted)]"
                     dateTime={project.lastAccessedAt}
                   >
                     Último acceso: {formatLastAccessedAt(project.lastAccessedAt)}
@@ -160,7 +160,7 @@ export function RecentProjectsPanel({
       ) : null}
 
       {onOpenLibrary && !showEmpty ? (
-        <div className="mt-2 border-t border-[var(--app-border)]/60 pt-2">
+        <div className="mt-2 border-t border-[var(--color-border-default)]/60 pt-2">
           <button
             type="button"
             className={btnLinkClassName}

@@ -34,7 +34,7 @@ export function ComparisonFreshnessBadge({
         ? "text-amber-600"
         : resolved.state === "INVALID"
           ? "text-red-600"
-          : "text-[var(--app-text-muted)]";
+          : "text-[var(--color-text-muted)]";
   const icon =
     resolved.state === "CURRENT"
       ? "✓"

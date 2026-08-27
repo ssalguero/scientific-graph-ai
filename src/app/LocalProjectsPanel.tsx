@@ -23,7 +23,7 @@ const formatSize = (bytes: number) => {
 };
 
 const activeBadgeClass =
-  "inline-flex shrink-0 rounded border border-[var(--app-accent)]/40 bg-[var(--app-accent)]/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-accent)]";
+  "inline-flex shrink-0 rounded border border-[var(--color-brand-primary)]/40 bg-[var(--color-brand-primary)]/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-brand-primary)]";
 
 export type LocalProjectsPanelProps = {
   isOpen: boolean;
@@ -70,20 +70,20 @@ export function LocalProjectsPanel({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div
-        className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-xl"
+        className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="local-projects-title"
       >
-        <div className="flex items-center justify-between border-b border-[var(--app-border)] px-4 py-3">
+        <div className="flex items-center justify-between border-b border-[var(--color-border-default)] px-4 py-3">
           <div>
             <h2
               id="local-projects-title"
-              className="text-sm font-semibold text-[var(--app-text)]"
+              className="text-sm font-semibold text-[var(--color-text-primary)]"
             >
               Proyectos locales
             </h2>
-            <p className="text-[11px] text-[var(--app-text-muted)]">
+            <p className="text-[11px] text-[var(--color-text-muted)]">
               Recupere o abra proyectos guardados en este navegador. Distinto de
               «Abrir proyecto» (.sgproj desde disco).
             </p>
@@ -101,7 +101,7 @@ export function LocalProjectsPanel({
         <div className="max-h-[65vh] overflow-y-auto p-4 space-y-2">
           {isLoading ? (
             <p
-              className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-2 text-xs text-[var(--app-text-muted)]"
+              className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-3 py-2 text-xs text-[var(--color-text-muted)]"
               role="status"
             >
               Cargando biblioteca local…
@@ -109,7 +109,7 @@ export function LocalProjectsPanel({
           ) : null}
           {loadError ? (
             <p
-              className="rounded-lg border border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] px-3 py-2 text-xs text-[var(--app-danger-text)]"
+              className="rounded-lg border border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))] px-3 py-2 text-xs text-[var(--color-feedback-danger)]"
               role="alert"
             >
               {loadError}
@@ -117,13 +117,13 @@ export function LocalProjectsPanel({
           ) : null}
           {!isLoading && !loadError && sortedProjects.length === 0 ? (
             <div
-              className="rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)]/50 px-3 py-4 text-center space-y-1"
+              className="rounded-lg border border-dashed border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/50 px-3 py-4 text-center space-y-1"
               role="status"
             >
-              <p className="text-xs font-medium text-[var(--app-text)]">
+              <p className="text-xs font-medium text-[var(--color-text-primary)]">
                 No hay proyectos guardados en este navegador
               </p>
-              <p className="text-[11px] text-[var(--app-text-muted)]">
+              <p className="text-[11px] text-[var(--color-text-muted)]">
                 Use «Guardar localmente» en el panel Proyecto para crear el
                 primero aquí. Luego podrá recuperarlo desde esta biblioteca.
               </p>
@@ -141,12 +141,12 @@ export function LocalProjectsPanel({
                 key={project.id}
                 className={`rounded-lg border px-3 py-2 ${
                   isActive
-                    ? "border-[var(--app-accent)] bg-[var(--app-accent)]/5"
+                    ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5"
                     : isRecoverable
-                      ? "border-[var(--app-warning-border)] bg-[var(--app-warning-bg)]/40"
+                      ? "border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))_40%,transparent)]"
                       : isCorrupted
-                        ? "border-[var(--app-danger-border)] bg-[var(--app-danger-bg)]/40"
-                        : "border-[var(--app-border)]"
+                        ? "border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))_40%,transparent)]"
+                        : "border-[var(--color-border-default)]"
                 }`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -156,7 +156,7 @@ export function LocalProjectsPanel({
                         <span className={activeBadgeClass}>Activo</span>
                       ) : null}
                       {isRecoverable ? (
-                        <span className="inline-flex shrink-0 rounded border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-warning-text)]">
+                        <span className="inline-flex shrink-0 rounded border border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-feedback-warning)]">
                           Recuperable
                         </span>
                       ) : null}
@@ -175,7 +175,7 @@ export function LocalProjectsPanel({
                         }))
                       }
                     />
-                    <p className="mt-1 text-[11px] text-[var(--app-text-muted)]">
+                    <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
                       Modificado: {formatDate(project.updatedAt)} · Reciente:{" "}
                       {formatDate(project.lastAccessedAt)} · {formatSize(project.sizeBytes)}
                     </p>
@@ -228,12 +228,12 @@ export function LocalProjectsPanel({
                       Exportar .sgproj
                     </button>
                     {pendingDeleteId === project.id ? (
-                      <div className="rounded border border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] p-2 text-[11px] text-[var(--app-danger-text)]">
+                      <div className="rounded border border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))] p-2 text-[11px] text-[var(--color-feedback-danger)]">
                         <p>¿Eliminar permanentemente?</p>
                         <div className="mt-1 flex gap-1">
                           <button
                             type="button"
-                            className="rounded border border-[var(--app-danger-border)] px-2 py-0.5 font-semibold"
+                            className="rounded border border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] px-2 py-0.5 font-semibold"
                             onClick={() => {
                               onDelete(project.id);
                               setPendingDeleteId(null);
@@ -243,7 +243,7 @@ export function LocalProjectsPanel({
                           </button>
                           <button
                             type="button"
-                            className="rounded border border-[var(--app-border)] px-2 py-0.5 text-[var(--app-text)]"
+                            className="rounded border border-[var(--color-border-default)] px-2 py-0.5 text-[var(--color-text-primary)]"
                             onClick={() => setPendingDeleteId(null)}
                           >
                             Cancelar

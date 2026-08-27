@@ -11,7 +11,7 @@ import {
 import type { ScientificFreshnessAssessment } from "@/lib/scientific/contracts";
 
 const contentPanel =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2.5 text-sm text-[var(--app-text)] transition-colors duration-200";
+  "rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] transition-colors duration-200";
 
 type ComparisonSlotSummaryCardProps = {
   slotLabel: string;
@@ -59,19 +59,19 @@ export function ComparisonSlotSummaryCard({
 
   return (
     <div className={`${contentPanel} flex flex-col gap-1`}>
-      <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+      <p className="text-xs font-semibold text-[var(--color-text-muted)]">
         {slotLabel}
       </p>
-      <p className="text-sm font-semibold text-[var(--app-heading)]">
+      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
         {fileName}
       </p>
-      <p className="text-xs text-[var(--app-text-muted)]">
+      <p className="text-xs text-[var(--color-text-muted)]">
         {seriesCount} series · {totalObservations} obs.
       </p>
-      <p className="text-xs text-[var(--app-text-muted)]">
+      <p className="text-xs text-[var(--color-text-muted)]">
         Capturado: {new Date(capturedAt).toLocaleString()}
       </p>
-      <p className="text-xs text-[var(--app-text-muted)]">
+      <p className="text-xs text-[var(--color-text-muted)]">
         {formatDatasetAnalysisProfileMiniSummary(profile)}
       </p>
       <p className="text-xs">
@@ -84,14 +84,14 @@ export function ComparisonSlotSummaryCard({
         </span>
       </p>
       {enginesCaptured !== null ? (
-        <p className="text-xs text-[var(--app-text-muted)]">
+        <p className="text-xs text-[var(--color-text-muted)]">
           Motores al capturar: {enginesCaptured}/6
           {engineFlags && engineFlags.normalityAssessmentCount > 0
             ? ` · normalidad (${engineFlags.normalityAssessmentCount} series)`
             : ""}
         </p>
       ) : null}
-      <details className="mt-1 text-xs text-[var(--app-text-muted)]">
+      <details className="mt-1 text-xs text-[var(--color-text-muted)]">
         <summary className="cursor-pointer font-semibold">
           Identidad, proveniencia y vigencia
         </summary>
@@ -111,7 +111,7 @@ export function ComparisonSlotSummaryCard({
               ? "Exportar el snapshot científico como scientific-numeric-export/v1"
               : "El perfil legado no contiene un snapshot científico autoritativo"
           }
-          className="mt-2 self-start rounded border border-[var(--app-border)] px-2 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 self-start rounded border border-[var(--color-border-default)] px-2 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
         >
           Exportar datos científicos JSON
         </button>

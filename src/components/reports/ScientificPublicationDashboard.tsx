@@ -77,15 +77,15 @@ export function ScientificPublicationDashboard({
   return (
     <div className="w-full mt-3">
       <div className={`${contentPanel} mb-3 flex flex-col gap-1`}>
-        <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+        <p className="text-xs font-semibold text-[var(--color-text-muted)]">
           {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]}
         </p>
-        <p className="text-2xl font-semibold text-[var(--app-heading)]">
+        <p className="text-2xl font-semibold text-[var(--color-text-primary)]">
           {getPublicationReadinessAnalyzerClassificationLabel(
             analysis.publicationStatus
           )}
         </p>
-        <p className="text-xs text-[var(--app-text-muted)] tabular-nums">
+        <p className="text-xs text-[var(--color-text-muted)] tabular-nums">
           Puntuación compuesta: {analysis.publicationScore.toFixed(1)} ·{" "}
           {analysis.evaluatedDomains} dominio
           {analysis.evaluatedDomains === 1 ? "" : "s"} evaluado
@@ -93,8 +93,8 @@ export function ScientificPublicationDashboard({
         </p>
       </div>
 
-      <div className={`${contentPanel} mb-3 text-xs text-[var(--app-text-muted)]`}>
-        <p className="font-semibold text-[var(--app-heading)]">
+      <div className={`${contentPanel} mb-3 text-xs text-[var(--color-text-muted)]`}>
+        <p className="font-semibold text-[var(--color-text-primary)]">
           Apoyo compuesto a decisiones
         </p>
         <p className="mt-1">
@@ -130,14 +130,14 @@ export function ScientificPublicationDashboard({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -147,7 +147,7 @@ export function ScientificPublicationDashboard({
 
       {analysis.normalitySummary ? (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Normalidad integrada
           </p>
           <p className={`mt-1 text-sm ${emptyState}`}>
@@ -165,7 +165,7 @@ export function ScientificPublicationDashboard({
 
       {analysis.multivariateHighlights ? (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Highlights multivariantes
           </p>
           {analysis.multivariateHighlights.pcaVariance !== undefined ? (
@@ -205,7 +205,7 @@ export function ScientificPublicationDashboard({
       analysis.inferentialHighlight.currentSampleSize !== null &&
       analysis.inferentialHighlight.currentSampleSize !== undefined ? (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Potencia prospectiva
           </p>
           <p className={`mt-1 text-sm ${emptyState}`}>
@@ -222,7 +222,7 @@ export function ScientificPublicationDashboard({
 
       {analysis.crossDomainDiagnosis.length > 0 ? (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Diagnóstico compuesto
           </p>
           <ul className="mt-2 space-y-1">
@@ -240,7 +240,7 @@ export function ScientificPublicationDashboard({
 
       {analysis.publicationRisks.length > 0 ? (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Riesgos para revisión
           </p>
           <ul className="mt-2 space-y-1">
@@ -258,7 +258,7 @@ export function ScientificPublicationDashboard({
 
       {analysis.publicationRecommendations.length > 0 ? (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Sugerencias para revisión
           </p>
           <ul className="mt-2 space-y-1">

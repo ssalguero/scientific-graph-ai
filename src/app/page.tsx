@@ -549,6 +549,7 @@ import {
   toggleThumb,
   toggleTrackBg,
 } from "@/lib/ui/theme";
+import { DS_FOCUS_RING } from "@/lib/ui/focus-ring";
 
 let cachedInitialUserPreferences: ReturnType<typeof readUserPreferences> | null =
   null;
@@ -600,11 +601,11 @@ function ScientificReportSectionCollapsible({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center gap-2 text-left text-sm font-semibold text-[var(--app-heading)]"
+        className="flex w-full items-center gap-2 text-left text-sm font-semibold text-[var(--color-text-primary)]"
         aria-expanded={open}
       >
         <span
-          className="w-3 text-xs text-[var(--app-text-muted)]"
+          className="w-3 text-xs text-[var(--color-text-muted)]"
           aria-hidden
         >
           {open ? "▼" : "▶"}
@@ -612,7 +613,7 @@ function ScientificReportSectionCollapsible({
         <span>{title}</span>
       </button>
       {open && (
-        <div className="mt-2 space-y-1 text-sm text-[var(--app-text)]">
+        <div className="mt-2 space-y-1 text-sm text-[var(--color-text-primary)]">
           {content.map((line, index) => (
             <p key={`${title}-${index}`}>{line}</p>
           ))}
@@ -789,11 +790,11 @@ function InspectorToggleGroup({
   };
 
   return (
-    <div className="border-b border-[var(--app-border)]/70 pb-2 last:border-b-0 last:pb-0">
+    <div className="border-b border-[var(--color-border-default)]/70 pb-2 last:border-b-0 last:pb-0">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-1.5 py-0.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)] hover:text-[var(--app-heading)] transition-colors"
+        className="flex w-full items-center gap-1.5 py-0.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
         aria-expanded={open}
       >
         <span className="w-2.5 shrink-0 text-[9px]" aria-hidden>
@@ -828,14 +829,14 @@ function FunctionLibraryCategoryAccordion({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="min-w-0 rounded-lg border border-[var(--app-border)]/80">
+    <div className="min-w-0 rounded-lg border border-[var(--color-border-default)]/80">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left text-[11px] font-semibold text-[var(--app-text)] hover:bg-[var(--app-surface-muted)] transition-colors rounded-lg"
+        className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left text-[11px] font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-surface-canvas)] transition-colors rounded-lg"
         aria-expanded={open}
       >
-        <span className="w-3 shrink-0 text-[10px] text-[var(--app-text-muted)]" aria-hidden>
+        <span className="w-3 shrink-0 text-[10px] text-[var(--color-text-muted)]" aria-hidden>
           {open ? "▼" : "▶"}
         </span>
         <span>{category}</span>
@@ -901,7 +902,7 @@ function NotebookSection({
         aria-expanded={open}
       >
         <span
-          className="mt-0.5 w-2.5 shrink-0 text-[10px] text-[var(--app-text-muted)]"
+          className="mt-0.5 w-2.5 shrink-0 text-[10px] text-[var(--color-text-muted)]"
           aria-hidden
         >
           {open ? "▼" : "▶"}
@@ -912,17 +913,17 @@ function NotebookSection({
           </span>
         ) : null}
         <span className="flex-1 min-w-0">
-          <span className="block text-xs sm:text-sm font-semibold text-[var(--app-heading)]">
+          <span className="block text-xs sm:text-sm font-semibold text-[var(--color-text-primary)]">
             {title}
           </span>
           {subtitle ? (
-            <span className="block text-[11px] text-[var(--app-text-muted)] mt-0 leading-snug">
+            <span className="block text-[11px] text-[var(--color-text-muted)] mt-0 leading-snug">
               {subtitle}
             </span>
           ) : null}
         </span>
         {badge ? (
-          <span className="shrink-0 inline-flex rounded-full border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]">
+          <span className="shrink-0 inline-flex rounded-full border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
             {badge}
           </span>
         ) : null}
@@ -1102,8 +1103,8 @@ function InspectorCategoryButton({
       onClick={onSelect}
       className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs sm:text-sm font-medium transition-colors ${
         isActive
-          ? "bg-[var(--app-accent)]/10 text-[var(--app-heading)] ring-1 ring-[var(--app-accent)]/30 border border-[var(--app-accent)]/40"
-          : "border border-transparent text-[var(--app-text)] hover:bg-[var(--app-surface-muted)]"
+          ? "bg-[var(--color-brand-primary)]/10 text-[var(--color-text-primary)] ring-1 ring-[var(--color-brand-primary)]/30 border border-[var(--color-brand-primary)]/40"
+          : "border border-transparent text-[var(--color-text-primary)] hover:bg-[var(--color-surface-canvas)]"
       }`}
     >
       <span className="text-base leading-none shrink-0" aria-hidden>
@@ -1778,7 +1779,7 @@ function ScientificHeatmapGrid({ analysis }: ScientificHeatmapGridProps) {
         {analysis.columns.map((column) => (
           <div
             key={`heatmap-col-${column}`}
-            className="px-1 py-1 text-center text-xs font-semibold text-[var(--app-heading)] truncate"
+            className="px-1 py-1 text-center text-xs font-semibold text-[var(--color-text-primary)] truncate"
             title={column}
           >
             {column}
@@ -1788,7 +1789,7 @@ function ScientificHeatmapGrid({ analysis }: ScientificHeatmapGridProps) {
         {analysis.rows.map((row) => (
           <div key={`heatmap-row-${row}`} className="contents">
             <div
-              className="px-2 py-1 text-xs font-semibold text-[var(--app-heading)] truncate"
+              className="px-2 py-1 text-xs font-semibold text-[var(--color-text-primary)] truncate"
               title={row}
             >
               {row}
@@ -4068,7 +4069,7 @@ function ScientificPCALoadingsSection({
           {analysis.loadingsInterpretation.map((line, index) => (
             <p
               key={`pca-loading-interpretation-${index}`}
-              className="text-sm text-[var(--app-text-muted)]"
+              className="text-sm text-[var(--color-text-muted)]"
             >
               {line}
             </p>
@@ -4080,7 +4081,7 @@ function ScientificPCALoadingsSection({
       <div className="overflow-x-auto mt-2">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="border-b border-[var(--app-border)]">
+            <tr className="border-b border-[var(--color-border-default)]">
               <th className="text-left py-2 pr-3 font-semibold">Variable</th>
               <th className="text-left py-2 pr-3 font-semibold">Loading PC1</th>
               <th className="text-left py-2 pr-3 font-semibold">Loading PC2</th>
@@ -4096,7 +4097,7 @@ function ScientificPCALoadingsSection({
             {analysis.loadings.map((loading, index) => (
               <tr
                 key={`pca-loading-${loading.variable}-${index}`}
-                className="border-b border-[var(--app-border)]"
+                className="border-b border-[var(--color-border-default)]"
               >
                 <td className="py-2 pr-3">{loading.variable}</td>
                 <td className="py-2 pr-3 font-mono">
@@ -4511,7 +4512,7 @@ function ScientificScatterMatrix({
               return (
                 <div
                   key={`scatter-matrix-cell-${rowVariable}-${columnVariable}`}
-                  className="rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-1 flex flex-col items-center justify-center"
+                  className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] p-1 flex flex-col items-center justify-center"
                   style={{ width: 120, minHeight: 120 }}
                 >
                   {isDiagonal ? (
@@ -4550,7 +4551,7 @@ function ScientificScatterMatrix({
                           </ScatterChart>
                         </ResponsiveContainer>
                       </div>
-                      <p className="text-[10px] text-[var(--app-text-muted)] mt-0.5">
+                      <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
                         {cell?.correlation != null &&
                         Number.isFinite(cell.correlation)
                           ? `r = ${cell.correlation.toFixed(2)}`
@@ -6657,7 +6658,7 @@ function ScientificDistanceMatrix({ analysis }: ScientificDistanceMatrixProps) {
           {analysis.variables.map((variable) => (
             <div
               key={`distance-matrix-col-${variable}`}
-              className="px-1 py-1 text-center text-xs font-semibold text-[var(--app-heading)] truncate"
+              className="px-1 py-1 text-center text-xs font-semibold text-[var(--color-text-primary)] truncate"
               title={variable}
             >
               {variable}
@@ -6667,7 +6668,7 @@ function ScientificDistanceMatrix({ analysis }: ScientificDistanceMatrixProps) {
           {analysis.variables.map((rowVariable, rowIndex) => (
             <div key={`distance-matrix-row-${rowVariable}`} className="contents">
               <div
-                className="px-2 py-1 text-xs font-semibold text-[var(--app-heading)] truncate"
+                className="px-2 py-1 text-xs font-semibold text-[var(--color-text-primary)] truncate"
                 title={rowVariable}
               >
                 {rowVariable}
@@ -7427,14 +7428,14 @@ function ScientificMultivariateDashboard({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -7443,7 +7444,7 @@ function ScientificMultivariateDashboard({
       </div>
       {diagnosis.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Diagnóstico
           </p>
           <ul className="mt-2 space-y-1">
@@ -7648,14 +7649,14 @@ function ScientificManovaExplorer({ analysis }: ScientificManovaExplorerProps) {
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -7664,7 +7665,7 @@ function ScientificManovaExplorer({ analysis }: ScientificManovaExplorerProps) {
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -7887,14 +7888,14 @@ function ScientificLdaExplorer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -7903,7 +7904,7 @@ function ScientificLdaExplorer({
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -8143,14 +8144,14 @@ function ScientificCanonicalCorrelationExplorer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -8159,7 +8160,7 @@ function ScientificCanonicalCorrelationExplorer({
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -8391,14 +8392,14 @@ function ScientificPcrExplorer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -8407,7 +8408,7 @@ function ScientificPcrExplorer({
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -8641,14 +8642,14 @@ function ScientificPlsExplorer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -8657,7 +8658,7 @@ function ScientificPlsExplorer({
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -8909,14 +8910,14 @@ function ScientificBootstrapExplorer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -8925,7 +8926,7 @@ function ScientificBootstrapExplorer({
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -9177,14 +9178,14 @@ function ScientificSensitivityExplorer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -9193,7 +9194,7 @@ function ScientificSensitivityExplorer({
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -9386,14 +9387,14 @@ function ScientificTsneExplorer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -9496,7 +9497,7 @@ function ScientificTsneExplorer({
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -9711,14 +9712,14 @@ function ScientificUmapExplorer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -9821,7 +9822,7 @@ function ScientificUmapExplorer({
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -9850,8 +9851,8 @@ function CompositeMethodologyDisclosureNote({
   disclosure: CompositeMethodologyDisclosure;
 }) {
   return (
-    <div className={`${contentPanel} mt-3 text-xs text-[var(--app-text-muted)]`}>
-      <p className="font-semibold text-[var(--app-heading)]">
+    <div className={`${contentPanel} mt-3 text-xs text-[var(--color-text-muted)]`}>
+      <p className="font-semibold text-[var(--color-text-primary)]">
         Indicador compuesto de apoyo a decisiones
       </p>
       <p className="mt-1">
@@ -9926,14 +9927,14 @@ function ScientificConsistencyEngine({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -9943,7 +9944,7 @@ function ScientificConsistencyEngine({
       <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -10001,14 +10002,14 @@ function ScientificReportQualityEngine({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -10018,7 +10019,7 @@ function ScientificReportQualityEngine({
       <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -10085,14 +10086,14 @@ function ScientificReproducibilityExplorer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -10102,7 +10103,7 @@ function ScientificReproducibilityExplorer({
       <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -10169,14 +10170,14 @@ function ScientificEvidenceStrengthEngine({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -10186,7 +10187,7 @@ function ScientificEvidenceStrengthEngine({
       <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -10244,14 +10245,14 @@ function ScientificAssumptionTracker({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -10262,14 +10263,14 @@ function ScientificAssumptionTracker({
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="border-b border-[var(--app-border)]">
-              <th className="py-2 pr-3 text-left font-semibold text-[var(--app-heading)]">
+            <tr className="border-b border-[var(--color-border-default)]">
+              <th className="py-2 pr-3 text-left font-semibold text-[var(--color-text-primary)]">
                 Supuesto
               </th>
-              <th className="py-2 pr-3 text-left font-semibold text-[var(--app-heading)]">
+              <th className="py-2 pr-3 text-left font-semibold text-[var(--color-text-primary)]">
                 Estado
               </th>
-              <th className="py-2 text-left font-semibold text-[var(--app-heading)]">
+              <th className="py-2 text-left font-semibold text-[var(--color-text-primary)]">
                 Fuente
               </th>
             </tr>
@@ -10278,16 +10279,16 @@ function ScientificAssumptionTracker({
             {analysis.assumptions.map((assumption) => (
               <tr
                 key={`assumption-tracker-row-${assumption.name}`}
-                className="border-b border-[var(--app-border)]/60"
+                className="border-b border-[var(--color-border-default)]/60"
               >
-                <td className="py-2 pr-3 text-[var(--app-heading)]">
+                <td className="py-2 pr-3 text-[var(--color-text-primary)]">
                   {assumption.name}
                 </td>
-                <td className="py-2 pr-3 text-[var(--app-text-muted)]">
+                <td className="py-2 pr-3 text-[var(--color-text-muted)]">
                   {getAssumptionTrackerStatusIcon(assumption.status)}{" "}
                   {getAssumptionTrackerStatusLabel(assumption.status)}
                 </td>
-                <td className="py-2 text-[var(--app-text-muted)]">
+                <td className="py-2 text-[var(--color-text-muted)]">
                   {assumption.source}
                 </td>
               </tr>
@@ -10297,7 +10298,7 @@ function ScientificAssumptionTracker({
       </div>
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -10366,14 +10367,14 @@ function ScientificPublicationReadinessAnalyzer({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums break-words">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums break-words">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -10383,7 +10384,7 @@ function ScientificPublicationReadinessAnalyzer({
       <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {analysis.interpretation.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Interpretación
           </p>
           <ul className="mt-2 space-y-1">
@@ -10412,21 +10413,21 @@ function GraphSaveToast({ title, onDismiss }: GraphSaveToastProps) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 max-w-md w-[calc(100%-2rem)] rounded-lg border border-emerald-200 bg-[var(--app-surface)] px-4 py-3 shadow-lg"
+      className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 max-w-md w-[calc(100%-2rem)] rounded-lg border border-emerald-200 bg-[var(--color-surface-default)] px-4 py-3 shadow-lg"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-emerald-700">
             ✓ Gráfico guardado en biblioteca
           </p>
-          <p className="text-xs text-[var(--app-text-muted)] mt-0.5 truncate">
+          <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
             {title}
           </p>
         </div>
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-heading)]"
+          className="shrink-0 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           aria-label="Cerrar notificación"
         >
           ✕
@@ -10541,13 +10542,13 @@ function ScientificMethodologicalDashboard({
   return (
     <div className="w-full mt-3">
       <div className={`${contentPanel} mb-3 flex flex-col gap-1`}>
-        <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+        <p className="text-xs font-semibold text-[var(--color-text-muted)]">
           📊 Salud metodológica compuesta
         </p>
-        <p className="text-2xl font-semibold text-[var(--app-heading)] tabular-nums">
+        <p className="text-2xl font-semibold text-[var(--color-text-primary)] tabular-nums">
           {analysis.overallHealthScore.toFixed(1)}
         </p>
-        <p className="text-xs text-[var(--app-text-muted)]">
+        <p className="text-xs text-[var(--color-text-muted)]">
           {analysis.evaluatedEngines} indicador
           {analysis.evaluatedEngines === 1 ? "" : "es"} compuesto
           {analysis.evaluatedEngines === 1 ? "" : "s"} evaluado
@@ -10560,14 +10561,14 @@ function ScientificMethodologicalDashboard({
             key={card.key}
             className={`${contentPanel} flex flex-col gap-1 min-h-[5.5rem]`}
           >
-            <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
               {card.icon} {card.title}
             </p>
-            <p className="text-lg font-semibold text-[var(--app-heading)] tabular-nums">
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] tabular-nums">
               {card.value}
             </p>
             {card.subtitle ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {card.subtitle}
               </p>
             ) : null}
@@ -10577,7 +10578,7 @@ function ScientificMethodologicalDashboard({
       <CompositeMethodologyDisclosureNote disclosure={analysis.disclosure} />
       {diagnosis.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Diagnóstico global
           </p>
           <ul className="mt-2 space-y-1">
@@ -10648,7 +10649,7 @@ function ScientificClusterHeatmap({
           {analysis.orderedVariables.map((variable) => (
             <div
               key={`cluster-heatmap-col-${variable}`}
-              className="px-1 py-1 text-center text-xs font-semibold text-[var(--app-heading)] truncate"
+              className="px-1 py-1 text-center text-xs font-semibold text-[var(--color-text-primary)] truncate"
               title={variable}
             >
               {variable}
@@ -10658,7 +10659,7 @@ function ScientificClusterHeatmap({
           {analysis.orderedVariables.map((rowVariable, rowIndex) => (
             <div key={`cluster-heatmap-row-${rowVariable}`} className="contents">
               <div
-                className="px-2 py-1 text-xs font-semibold text-[var(--app-heading)] truncate"
+                className="px-2 py-1 text-xs font-semibold text-[var(--color-text-primary)] truncate"
                 title={rowVariable}
               >
                 {rowVariable}
@@ -21614,7 +21615,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   onClick={() => setDataWorkspaceView(view.id)}
                   className={
                     dataWorkspaceView === view.id
-                      ? "rounded-md border border-[var(--app-accent)] bg-[var(--app-accent)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--app-heading)]"
+                      ? "rounded-md border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--color-text-primary)]"
                       : `${btnOutlineSm} font-medium`
                   }
                 >
@@ -21706,7 +21707,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </button>
 
                       <label
-                        className="inline-flex items-center gap-2 text-xs sm:text-sm text-[var(--app-text)] cursor-pointer lg:mb-1"
+                        className="inline-flex items-center gap-2 text-xs sm:text-sm text-[var(--color-text-primary)] cursor-pointer lg:mb-1"
                         title="Conserva los análisis seleccionados al cargar un nuevo dataset"
                       >
                         <input
@@ -21716,7 +21717,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             setPreserveAnalysisConfiguration(e.target.checked)
                           }
                           disabled={isExperimentalImporting}
-                          className="h-3.5 w-3.5 rounded border-[var(--app-border)] text-[var(--app-accent)] focus:ring-[var(--app-accent)]/20"
+                          className={`h-3.5 w-3.5 rounded border-[var(--color-border-default)] text-[var(--color-brand-primary)] ${DS_FOCUS_RING}`}
                         />
                         Mantener configuración
                       </label>
@@ -21733,7 +21734,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                     {isExperimentalImporting ? (
                       <p
-                        className="mt-2 text-xs font-medium text-[var(--app-accent)]"
+                        className="mt-2 text-xs font-medium text-[var(--color-brand-primary)]"
                         role="status"
                         aria-live="polite"
                       >
@@ -21751,7 +21752,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <div className="mt-2 space-y-2">
                         {!importReportHasIssues ? (
                           <p
-                            className="rounded-md border border-[var(--app-success)]/30 bg-[var(--app-success-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--app-success-text)]"
+                            className="rounded-md border border-[var(--color-feedback-success)]/30 bg-[color-mix(in_srgb,var(--color-feedback-success)_16%,var(--color-surface-default))] px-2.5 py-1.5 text-xs font-medium text-[var(--color-feedback-success)]"
                             role="status"
                           >
                             Importación OK · {lastImportReport.importedPointCount}{" "}
@@ -21763,7 +21764,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           </p>
                         ) : (
                           <p
-                            className="rounded-md border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--app-warning-text)]"
+                            className="rounded-md border border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] px-2.5 py-1.5 text-xs font-medium text-[var(--color-feedback-warning)]"
                             role="status"
                           >
                             Importación con avisos ·{" "}
@@ -21829,7 +21830,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   defaultOpen={false}
                   badge={`${currentDatasetInfo.observationCount} obs.`}
                 >
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-[var(--app-text)]">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-[var(--color-text-primary)]">
                     <p>
                       <span className="font-semibold">Series:</span>{" "}
                       <span className="tabular-nums">
@@ -21890,7 +21891,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         <div className="overflow-x-auto -mx-1 px-1">
                           <table className="w-full text-xs sm:text-sm">
                             <thead>
-                              <tr className="text-left text-[var(--app-text-muted)]">
+                              <tr className="text-left text-[var(--color-text-muted)]">
                                 <th className="py-1 pr-2 font-medium">Serie</th>
                                 <th className="py-1 pr-2 font-medium">Puntos</th>
                                 <th className="py-1 font-medium text-right">
@@ -21902,12 +21903,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               {experimentalSeries.map((series) => (
                                 <tr
                                   key={series.id}
-                                  className="border-t border-[var(--app-border)]"
+                                  className="border-t border-[var(--color-border-default)]"
                                 >
-                                  <td className="py-1 pr-2 text-[var(--app-text)]">
+                                  <td className="py-1 pr-2 text-[var(--color-text-primary)]">
                                     {series.name}
                                   </td>
-                                  <td className="py-1 pr-2 text-[var(--app-text-muted)]">
+                                  <td className="py-1 pr-2 text-[var(--color-text-muted)]">
                                     {series.points.length}
                                   </td>
                                   <td className="py-1 text-right">
@@ -21916,7 +21917,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                       onClick={() =>
                                         removeExperimentalSeries(series.id)
                                       }
-                                      className={`${btnOutlineSm} text-[var(--app-danger-text)] border-[var(--app-danger-border)] hover:bg-[var(--app-danger-bg)]`}
+                                      className={`${btnOutlineSm} text-[var(--color-feedback-danger)] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] hover:bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))]`}
                                     >
                                       Eliminar
                                     </button>
@@ -21931,11 +21932,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           {experimentalSeries.map((series) => (
                             <li
                               key={series.id}
-                              className="flex flex-wrap items-center justify-between gap-1.5 rounded-md border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-1 text-xs sm:text-sm text-[var(--app-text)]"
+                              className="flex flex-wrap items-center justify-between gap-1.5 rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-2 py-1 text-xs sm:text-sm text-[var(--color-text-primary)]"
                             >
                               <span>
                                 {series.name}{" "}
-                                <span className="text-[var(--app-text-muted)]">
+                                <span className="text-[var(--color-text-muted)]">
                                   ({series.points.length} pts)
                                 </span>
                               </span>
@@ -21944,7 +21945,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 onClick={() =>
                                   removeExperimentalSeries(series.id)
                                 }
-                                className={`${btnOutlineSm} text-[var(--app-danger-text)] border-[var(--app-danger-border)] hover:bg-[var(--app-danger-bg)]`}
+                                className={`${btnOutlineSm} text-[var(--color-feedback-danger)] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] hover:bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))]`}
                               >
                                 Eliminar
                               </button>
@@ -22001,16 +22002,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
-                            <p className="text-sm font-semibold text-[var(--app-heading)]">
+                            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                               {slot.label}
                             </p>
                             {profile ? (
                               <>
-                                <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+                                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                                   {profile.datasetInfo.fileName} ·{" "}
                                   {new Date(profile.capturedAt).toLocaleString()}
                                 </p>
-                                <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+                                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                                   {formatDatasetAnalysisProfileMiniSummary(
                                     profile
                                   )}
@@ -22035,7 +22036,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 />
                               </>
                             ) : (
-                              <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+                              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                                 Vacío — capture desde el dataset activo.
                               </p>
                             )}
@@ -22100,17 +22101,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 badge={isEditing ? "Editando" : "Nuevo"}
               >
                 <div className="space-y-3">
-                  <p className="text-[11px] leading-snug text-[var(--app-text-muted)]">
+                  <p className="text-[11px] leading-snug text-[var(--color-text-muted)]">
                     Escriba una expresión (ej.{" "}
-                    <span className="font-mono text-[var(--app-heading)]">
+                    <span className="font-mono text-[var(--color-text-primary)]">
                       x^2
                     </span>
                     ). Use «Agregar expresión» para más curvas en este gráfico.
                     «Nuevo gráfico» en la barra lateral reinicia el constructor;
                     no agrega una expresión.
                   </p>
-                  <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                  <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                       Identidad del gráfico
                     </p>
                     <label className={fieldLabel}>
@@ -22125,10 +22126,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     />
                   </div>
 
-                  <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3 space-y-3">
+                  <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 p-3 space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                           Expresiones y=f(x)
                         </p>
                         <p className={`${fieldLabel} mb-0 mt-0.5`}>
@@ -22138,7 +22139,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <button
                         type="button"
                         onClick={addCurve}
-                        className="text-sm font-semibold text-[var(--app-accent)] hover:opacity-80 hover:underline"
+                        className="text-sm font-semibold text-[var(--color-brand-primary)] hover:opacity-80 hover:underline"
                         title="Añade otra expresión y=f(x) al gráfico actual. No reinicia el constructor."
                         aria-label="Agregar expresión al gráfico actual"
                       >
@@ -22150,30 +22151,30 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       {curves.map((curve, idx) => (
                         <div
                           key={curve.id}
-                          className={`rounded-md border bg-[var(--app-surface)] p-2.5 ${
+                          className={`rounded-md border bg-[var(--color-surface-default)] p-2.5 ${
                             idx === activeCurveIndex
-                              ? "border-[var(--app-accent)]"
-                              : "border-[var(--app-border)]"
+                              ? "border-[var(--color-brand-primary)]"
+                              : "border-[var(--color-border-default)]"
                           }`}
                         >
                           <div className="mb-2 flex items-center justify-between gap-3">
                             <label className={`${fieldLabel} mb-0`}>
                               Expresión {idx + 1}
                               {idx === activeCurveIndex ? (
-                                <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-accent)]">
+                                <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-brand-primary)]">
                                   Activa
                                 </span>
                               ) : null}
                             </label>
                             <div className="flex items-center gap-3">
-                              <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--app-text-muted)]">
+                              <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--color-text-muted)]">
                                 <input
                                   type="color"
                                   value={curve.color}
                                   onChange={(e) =>
                                     updateCurveColor(curve.id, e.target.value)
                                   }
-                                  className="h-9 w-12 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)] p-0.5"
+                                  className="h-9 w-12 cursor-pointer rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)] p-0.5"
                                   title="Color de la curva"
                                 />
                                 Color
@@ -22182,7 +22183,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 <button
                                   type="button"
                                   onClick={() => removeCurve(curve.id)}
-                                  className="text-sm font-semibold text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:underline"
+                                  className="text-sm font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:underline"
                                   title="Eliminar curva"
                                 >
                                   Eliminar
@@ -22206,7 +22207,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           />
                           {idx === activeCurveIndex &&
                             activeCurveNaturalLanguagePreview && (
-                              <p className="mt-2 text-sm text-[var(--app-text)]">
+                              <p className="mt-2 text-sm text-[var(--color-text-primary)]">
                                 <span className="font-semibold">
                                   Interpretado como:
                                 </span>{" "}
@@ -22218,7 +22219,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                       activeCurveNaturalLanguagePreview
                                     )
                                   }
-                                  className="-mx-1 cursor-pointer rounded px-1 font-mono text-[var(--app-accent)] transition-colors hover:bg-[var(--app-surface-muted)] hover:opacity-90"
+                                  className="-mx-1 cursor-pointer rounded px-1 font-mono text-[var(--color-brand-primary)] transition-colors hover:bg-[var(--color-surface-canvas)] hover:opacity-90"
                                   title="Usar esta expresión en el campo"
                                 >
                                   {activeCurveNaturalLanguagePreview}
@@ -22229,19 +22230,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       ))}
                     </div>
 
-                    <div className="space-y-1 border-t border-[var(--app-border)] pt-2">
-                      <label className="inline-flex cursor-pointer items-center gap-2.5 text-base text-[var(--app-text)]">
+                    <div className="space-y-1 border-t border-[var(--color-border-default)] pt-2">
+                      <label className="inline-flex cursor-pointer items-center gap-2.5 text-base text-[var(--color-text-primary)]">
                         <input
                           type="checkbox"
                           checked={naturalLanguageEnabled}
                           onChange={(e) =>
                             setNaturalLanguageEnabled(e.target.checked)
                           }
-                          className="h-4 w-4 rounded border-[var(--app-border)] text-[var(--app-accent)] focus:ring-[var(--app-accent)]/20"
+                          className={`h-4 w-4 rounded border-[var(--color-border-default)] text-[var(--color-brand-primary)] ${DS_FOCUS_RING}`}
                         />
                         Interpretar lenguaje natural
                       </label>
-                      <p className="text-sm text-[var(--app-text-muted)]">
+                      <p className="text-sm text-[var(--color-text-muted)]">
                         Permite escribir expresiones como &apos;seno de x&apos;,
                         &apos;x al cuadrado más 3&apos;, etc.
                       </p>
@@ -22249,7 +22250,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   </div>
                 </div>
 
-                <div className="pt-3 mt-1 border-t border-[var(--app-border)]">
+                <div className="pt-3 mt-1 border-t border-[var(--color-border-default)]">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
                     <div className={actionBarGroup}>
                       <button
@@ -22306,7 +22307,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </button>
                     </p>
                   ) : (
-                    <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                    <p className="mt-2 text-xs text-[var(--color-text-muted)]">
                       Tras Graficar, el canvas vive en Resultados junto a la
                       leyenda y las exportaciones.
                     </p>
@@ -22314,7 +22315,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                   {isEditing && selectedGraphId && (
                     <div
-                      className={`${actionBarGroup} mt-2 pt-2 border-t border-dashed border-[var(--app-border)] w-full`}
+                      className={`${actionBarGroup} mt-2 pt-2 border-t border-dashed border-[var(--color-border-default)] w-full`}
                     >
                       <button
                         type="button"
@@ -22361,7 +22362,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       aria-label="Buscar función"
                     />
                     {functionSearch.trim() && !functionLibraryHasResults ? (
-                      <p className="text-sm text-[var(--app-text-muted)]">
+                      <p className="text-sm text-[var(--color-text-muted)]">
                         No se encontraron funciones
                       </p>
                     ) : (
@@ -22403,7 +22404,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 }
                 defaultOpen
               >
-                <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
                   {continueVisualGraphId
                     ? "Actualizar figura de trabajo conserva la identidad persistida y no crea una figura nueva."
                     : "Crear gráfico guarda la vista previa en Resultados del dataset activo"}
@@ -22414,7 +22415,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       : "."}
                 </p>
                 {projectVisualGraphs.length > 1 && !continueVisualGraphId ? (
-                  <p className="mb-2 text-[11px] text-[var(--app-text)]">
+                  <p className="mb-2 text-[11px] text-[var(--color-text-primary)]">
                     {PR5_MULTIPLE_WORKING_FIGURES_DISCLOSURE}
                   </p>
                 ) : null}
@@ -22568,7 +22569,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </p>
                   ) : (
                   <>
-                  <div className="mb-4 border-b border-[var(--app-border)] pb-3">
+                  <div className="mb-4 border-b border-[var(--color-border-default)] pb-3">
                     <h3 className="sr-only">
                       {activeAnalysisInspectorCategory.label}
                     </h3>
@@ -22586,7 +22587,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   >
                   <div className={subsectionCard}>
                     <p className={subsectionHeading}>📏 Rango</p>
-                    <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                    <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
                       Dominio X usado al graficar y muestrear curvas.
                     </p>
                     <div className="grid grid-cols-2 gap-3">
@@ -22619,7 +22620,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                   <div className={subsectionCard}>
                     <p className={subsectionHeading}>📊 Ejes</p>
-                    <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                    <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
                       Ajuste automático y eje secundario para series experimentales.
                     </p>
                     <div className="space-y-3">
@@ -22661,7 +22662,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                   <div className={subsectionCard}>
                     <p className={subsectionHeading}>📐 Escalas</p>
-                    <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                    <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
                       Lineal o logarítmica; avisos aparecen en Resultados si hay
                       valores incompatibles.
                     </p>
@@ -24326,14 +24327,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             : ""
                         } ${
                           highlightPublicationDashboards
-                            ? "ring-2 ring-[var(--app-accent)]/40 rounded-lg px-2 py-1.5 bg-[var(--app-accent)]/5"
+                            ? "ring-2 ring-[var(--color-brand-primary)]/40 rounded-lg px-2 py-1.5 bg-[var(--color-brand-primary)]/5"
                             : ""
                         }`}
                       >
                         <span className="flex-1 min-w-0">
                           Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"]}
                           {highlightPublicationDashboards ? (
-                            <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--app-accent)]">
+                            <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--color-brand-primary)]">
                               SCI-56
                             </span>
                           ) : null}
@@ -24368,14 +24369,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             : ""
                         } ${
                           highlightPublicationDashboards
-                            ? "ring-2 ring-[var(--app-accent)]/40 rounded-lg px-2 py-1.5 bg-[var(--app-accent)]/5"
+                            ? "ring-2 ring-[var(--color-brand-primary)]/40 rounded-lg px-2 py-1.5 bg-[var(--color-brand-primary)]/5"
                             : ""
                         }`}
                       >
                         <span className="flex-1 min-w-0">
                           Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]}
                           {highlightPublicationDashboards ? (
-                            <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--app-accent)]">
+                            <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--color-brand-primary)]">
                               SCI-60
                             </span>
                           ) : null}
@@ -24736,19 +24737,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       return (
                       <div
                         key={entry.id}
-                        className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3"
+                        className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] p-3"
                       >
                         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                           <div>
-                            <p className="text-sm font-semibold text-[var(--app-heading)]">
+                            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                               {entry.preview.title}
                             </p>
-                            <p className="text-xs text-[var(--app-text-muted)]">
+                            <p className="text-xs text-[var(--color-text-muted)]">
                               {VISUAL_GRAPH_TYPE_LABELS[entry.graphSpec.graphType]}{" "}
                               · {new Date(entry.createdAt).toLocaleString()}
                             </p>
                           </div>
-                          <span className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]">
+                          <span className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                             {VISUAL_GRAPH_TYPE_LABELS[entry.graphSpec.graphType]}
                           </span>
                         </div>
@@ -24812,7 +24813,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   subtitle="Seleccione un objetivo analítico"
                   defaultOpen={false}
                 >
-                  <p className="text-xs text-[var(--app-text-muted)] mb-2">
+                  <p className="text-xs text-[var(--color-text-muted)] mb-2">
                     El workflow activará módulos y navegará el workspace paso
                     a paso. Modo experto siempre disponible.
                   </p>
@@ -24824,10 +24825,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         onClick={() => startGuidedWorkflow(template.id)}
                         className={`${btnOutline} text-left flex flex-col items-start gap-0.5 py-2.5`}
                       >
-                        <span className="font-semibold text-[var(--app-heading)]">
+                        <span className="font-semibold text-[var(--color-text-primary)]">
                           {template.title}
                         </span>
-                        <span className="text-xs text-[var(--app-text-muted)] font-normal">
+                        <span className="text-xs text-[var(--color-text-muted)] font-normal">
                           {template.description}
                         </span>
                       </button>
@@ -24865,7 +24866,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               defaultOpen
             >
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[11px] text-[var(--app-text-muted)]">
+              <p className="text-[11px] text-[var(--color-text-muted)]">
                 {hasChartContent
                   ? "Arrastre el área del gráfico para desplazar la vista."
                   : "Graficar curvas o importar series para poblar el canvas."}
@@ -24899,10 +24900,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   className={`${emptyState} flex min-h-[440px] flex-col items-center justify-center gap-1 text-center sm:min-h-[480px]`}
                   role="status"
                 >
-                  <p className="text-sm font-medium text-[var(--app-text)]">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
                     No hay gráfico para mostrar
                   </p>
-                  <p className="text-xs text-[var(--app-text-muted)]">
+                  <p className="text-xs text-[var(--color-text-muted)]">
                     Use &quot;Graficar&quot; en el Constructor de curvas o importe
                     series experimentales.
                   </p>
@@ -25898,7 +25899,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 )
                               ) && (
                                 <p
-                                  className={`mt-2 border-t border-[var(--app-border)] pt-2 text-sm ${
+                                  className={`mt-2 border-t border-[var(--color-border-default)] pt-2 text-sm ${
                                     canonicalNormalityBySeriesName.get(
                                       analysis.seriesName
                                     )?.conclusion === "contradictory"
@@ -25978,7 +25979,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                     )
                                   ) && (
                                     <p
-                                      className={`mt-2 border-t border-[var(--app-border)] pt-2 text-sm ${
+                                      className={`mt-2 border-t border-[var(--color-border-default)] pt-2 text-sm ${
                                         canonicalNormalityBySeriesName.get(
                                           series.name
                                         )?.conclusion === "contradictory"
@@ -26168,7 +26169,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                     )
                                   ) && (
                                     <p
-                                      className={`mt-2 border-t border-[var(--app-border)] pt-2 text-sm ${
+                                      className={`mt-2 border-t border-[var(--color-border-default)] pt-2 text-sm ${
                                         canonicalNormalityBySeriesName.get(
                                           series.name
                                         )?.conclusion === "contradictory"
@@ -26220,7 +26221,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           {heatmapAnalysis.columns.length}
                         </p>
 
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--app-text-muted)]">
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-muted)]">
                           {heatmapAnalysis.mode === "correlation" ? (
                             <>
                               <span className="inline-flex items-center gap-1">
@@ -26355,7 +26356,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           seriesColors={radarSeriesColors}
                         />
 
-                        <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                        <p className="mt-2 text-xs text-[var(--color-text-muted)]">
                           ■ media · ─── intervalo de confianza 95%
                         </p>
 
@@ -26363,7 +26364,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           {forestPlotAnalysis.entries.map((entry) => (
                             <div
                               key={`forest-info-${entry.seriesName}`}
-                              className="rounded-lg border border-[var(--app-border)] px-3 py-2"
+                              className="rounded-lg border border-[var(--color-border-default)] px-3 py-2"
                             >
                               <p>
                                 <span className="font-semibold">Serie:</span>{" "}
@@ -27318,7 +27319,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           }
                         />
                         {scientificNumericExportMessage ? (
-                          <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                          <p className="mt-2 text-xs text-[var(--color-text-muted)]">
                             {scientificNumericExportMessage}
                           </p>
                         ) : null}
@@ -27378,7 +27379,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           {kernelDensityAnalyses.map((analysis) => (
                             <span
                               key={`kde-legend-${analysis.seriesName}`}
-                              className="inline-flex items-center gap-1.5 text-xs text-[var(--app-text)]"
+                              className="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-primary)]"
                             >
                               <span
                                 className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
@@ -27398,7 +27399,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           {kernelDensityAnalyses.map((analysis) => (
                             <div
                               key={`kde-info-${analysis.seriesName}`}
-                              className="rounded-lg border border-[var(--app-border)] px-3 py-2"
+                              className="rounded-lg border border-[var(--color-border-default)] px-3 py-2"
                             >
                               <p>
                                 <span className="font-semibold">Serie:</span>{" "}
@@ -27439,7 +27440,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 )
                               ) && (
                                 <p
-                                  className={`mt-2 border-t border-[var(--app-border)] pt-2 text-sm ${
+                                  className={`mt-2 border-t border-[var(--color-border-default)] pt-2 text-sm ${
                                     canonicalNormalityBySeriesName.get(
                                       analysis.seriesName
                                     )?.conclusion === "contradictory"
@@ -27491,7 +27492,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           {radarPlotAnalysis.profiles.map((profile) => (
                             <span
                               key={`radar-legend-${profile.seriesName}`}
-                              className="inline-flex items-center gap-1.5 text-xs text-[var(--app-text)]"
+                              className="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-primary)]"
                             >
                               <span
                                 className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
@@ -27575,7 +27576,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className="font-semibold">p:</span>{" "}
                           {formatPValue(tTestResult.pValue)}
                         </p>
-                        <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                           {APPROXIMATE_P_VALUE_DISCLOSURE}
                         </p>
 
@@ -27655,7 +27656,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             <span className="font-semibold">p:</span>{" "}
                             {formatPValue(anovaAnalysis.result.pValue)}
                           </p>
-                          <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                             {APPROXIMATE_P_VALUE_DISCLOSURE}
                           </p>
 
@@ -27874,7 +27875,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             <span className="font-semibold">p:</span>{" "}
                             {formatPValue(mannWhitneyResult.pValue)}
                           </p>
-                          <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                             {APPROXIMATE_P_VALUE_DISCLOSURE}
                           </p>
                           <p className="mt-2 font-semibold">
@@ -27932,7 +27933,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className="font-semibold">p:</span>{" "}
                           {formatPValue(kruskalWallisResult.pValue)}
                         </p>
-                        <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                           {APPROXIMATE_P_VALUE_DISCLOSURE}
                         </p>
                         <p className="mt-2 font-semibold">
@@ -28210,7 +28211,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 : "No disponible"}
                             </p>
                             {comparison.bestModel && comparison.bestR2 != null && (
-                              <div className="mt-2 rounded-md bg-[var(--app-surface-muted)] px-3 py-2">
+                              <div className="mt-2 rounded-md bg-[var(--color-surface-canvas)] px-3 py-2">
                                 <p className="font-semibold">🏆 Mejor ajuste:</p>
                                 <p>
                                   {comparison.bestModel === "linear"
@@ -28232,7 +28233,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                   {bestQuality?.label}
                                 </p>
                                 {bestQuality && (
-                                  <span className="mt-1 inline-flex rounded-md bg-[var(--app-surface)] border border-[var(--app-border)] px-2.5 py-1 text-xs font-medium text-[var(--app-text)]">
+                                  <span className="mt-1 inline-flex rounded-md bg-[var(--color-surface-default)] border border-[var(--color-border-default)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-primary)]">
                                     {bestQuality.badge}
                                   </span>
                                 )}
@@ -28270,7 +28271,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                                 No disponible
                               </p>
                               {status.unavailableReason && (
-                                <p className="mt-1 text-[var(--app-text-muted)]">
+                                <p className="mt-1 text-[var(--color-text-muted)]">
                                   <span className="font-semibold">Motivo:</span>{" "}
                                   {status.unavailableReason}
                                 </p>
@@ -28342,7 +28343,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               <span className="font-semibold">Calidad:</span>{" "}
                               {quality.label}
                             </p>
-                            <span className="mt-1 inline-flex rounded-md bg-[var(--app-surface)] border border-[var(--app-border)] px-2.5 py-1 text-xs font-medium text-[var(--app-text)]">
+                            <span className="mt-1 inline-flex rounded-md bg-[var(--color-surface-default)] border border-[var(--color-border-default)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-primary)]">
                               {quality.badge}
                             </span>
                           </div>
@@ -28370,7 +28371,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 {scientificInterpretation ? (
                   <div className={contentPanel}>
                     {scientificInterpretation.summary.length > 0 && (
-                      <div className="mb-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3">
+                      <div className="mb-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] p-3">
                         <p className="font-semibold text-sm mb-2">
                           Resumen general
                         </p>
@@ -28383,7 +28384,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     )}
 
                     {scientificInterpretation.findings.length > 0 && (
-                      <div className="mb-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3">
+                      <div className="mb-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] p-3">
                         <p className="font-semibold text-sm mb-2">
                           Hallazgos principales
                         </p>
@@ -28396,7 +28397,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     )}
 
                     {scientificInterpretation.recommendations.length > 0 && (
-                      <div className="mb-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3">
+                      <div className="mb-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] p-3">
                         <p className="font-semibold text-sm mb-2">
                           Recomendaciones
                         </p>
@@ -28607,16 +28608,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       <p className="font-semibold text-base">
                         {scientificReport.title}
                       </p>
-                      <p className="text-sm text-[var(--app-text-muted)] mt-1">
+                      <p className="text-sm text-[var(--color-text-muted)] mt-1">
                         {formatScientificReportDate(
                           scientificReport.generatedAt
                         )}
                       </p>
-                      <div className="mt-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/50 p-3">
-                        <p className="text-xs font-semibold text-[var(--app-heading)]">
+                      <div className="mt-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/50 p-3">
+                        <p className="text-xs font-semibold text-[var(--color-text-primary)]">
                           Autoridad de revisión científica
                         </p>
-                        <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                           Bloques actuales (reporte, interpretación y advisory):
                           {" "}GENERATED {allGeneratedTextReviewCounts.GENERATED}
                           {" "}· REVIEWED{" "}
@@ -28628,7 +28629,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                             allGeneratedTextReviewCounts.RESEARCHER_APPROVED
                           }
                         </p>
-                        <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                           El contenido generado no es autoritativo ni citable
                           como afirmación de la persona investigadora. Revisar
                           no implica aprobar.
@@ -28674,7 +28675,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         {canIncludeVgbPublicationFiguresInReport(
                           vgbFigureLifecycleStore.publications
                         ) ? (
-                          <p className="mb-2 text-xs text-[var(--app-text-muted)]">
+                          <p className="mb-2 text-xs text-[var(--color-text-muted)]">
                             {PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE}
                           </p>
                         ) : null}
@@ -28724,11 +28725,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   />
                 ) : null}
                 <div className="space-y-3">
-                  <div className="rounded-lg border border-[var(--color-brand-primary)]/30 bg-[var(--app-surface-muted)]/40 p-3">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                  <div className="rounded-lg border border-[var(--color-brand-primary)]/30 bg-[var(--color-surface-canvas)]/40 p-3">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                       {PUBLICATION_PACK_LITE_TITLE}
                     </p>
-                    <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                    <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
                       {PUBLICATION_PACK_LITE_SEMANTICS}
                     </p>
                     <div className={actionBarGroup}>
@@ -28751,17 +28752,17 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </button>
                     </div>
                     {publicationPackLiteMessage ? (
-                      <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
                         {publicationPackLiteMessage}
                       </p>
                     ) : null}
                   </div>
 
-                  <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                  <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                       Exportaciones individuales · gráfico
                     </p>
-                    <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--app-text-muted)]">
+                    <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--color-text-muted)]">
                       <label className="inline-flex items-center gap-1.5">
                         <span>PNG DPI</span>
                         <select
@@ -28774,7 +28775,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               )
                             )
                           }
-                          className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[var(--app-text)]"
+                          className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-1.5 py-0.5 text-[var(--color-text-primary)]"
                           title="pixelRatio de captura PNG (≥ 2)"
                         >
                           {CHART_EXPORT_PIXEL_RATIO_PRESETS.map((ratio) => (
@@ -28796,7 +28797,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                               )
                             )
                           }
-                          className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1.5 py-0.5 text-[var(--app-text)]"
+                          className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-1.5 py-0.5 text-[var(--color-text-primary)]"
                           title="Muestreo de curvas al exportar PNG/SVG (superficie export; no altera GRAPH)"
                         >
                           {CHART_EXPORT_SAMPLE_STEP_PRESETS.map((step) => (
@@ -28808,7 +28809,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </label>
                     </div>
                     {!hasChartContent ? (
-                      <p className="mb-2 text-[11px] text-[var(--app-text-muted)]">
+                      <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
                         PNG/SVG requieren contenido en el gráfico principal.
                       </p>
                     ) : null}
@@ -28842,8 +28843,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                  <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                       Exportaciones individuales · documento
                     </p>
                     <div className={actionBarGroup}>
@@ -28865,7 +28866,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </button>
                     </div>
                     {scientificReportPdfMessage && (
-                      <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
                         {scientificReportPdfMessage}
                       </p>
                     )}
@@ -28916,7 +28917,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       : "📋 Copiar análisis"}
                   </button>
                 </div>
-                <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
                   La copia de contenido interpretativo o advisory exige
                   aprobación investigadora vigente e incluye disclosure de
                   autoridad generada.
@@ -29011,7 +29012,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             <div
               role="status"
               aria-live="polite"
-              className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 max-w-md w-[calc(100%-2rem)] rounded-lg border border-[var(--color-border-default)] bg-[var(--app-surface)] px-4 py-3 shadow-lg"
+              className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 max-w-md w-[calc(100%-2rem)] rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-3 shadow-lg"
             >
               <div className="flex items-start justify-between gap-3">
                 <p className="text-sm text-[var(--color-text-primary)]">
@@ -29020,7 +29021,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 <button
                   type="button"
                   onClick={() => setGuestAuthNoticeAt(null)}
-                  className="shrink-0 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-heading)]"
+                  className="shrink-0 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                   aria-label="Cerrar notificación"
                 >
                   ✕

@@ -6,7 +6,7 @@ import {
 } from "@/lib/scientific/comparison";
 
 const emptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-2 text-sm text-[var(--app-text-muted)]";
+  "rounded-lg border border-dashed border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-3 py-2 text-sm text-[var(--color-text-muted)]";
 
 type ComparisonMultivariateSectionProps = {
   slotA: DatasetAnalysisProfile;
@@ -52,13 +52,13 @@ export function ComparisonMultivariateSection({
 
   return (
     <div>
-      <p className="text-sm font-semibold text-[var(--app-heading)] mb-2">
+      <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">
         Multivariante (SCI-40)
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {linesA.length > 0 ? (
           <div className={emptyState}>
-            <p className="text-xs font-semibold text-[var(--app-heading)] mb-1">
+            <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-1">
               Slot A
             </p>
             {linesA.map((line) => (
@@ -68,7 +68,7 @@ export function ComparisonMultivariateSection({
         ) : null}
         {linesB.length > 0 ? (
           <div className={emptyState}>
-            <p className="text-xs font-semibold text-[var(--app-heading)] mb-1">
+            <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-1">
               Slot B
             </p>
             {linesB.map((line) => (

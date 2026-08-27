@@ -7,7 +7,7 @@ import type { VisibilityToggleKey } from "@/lib/scientific/visibility/types";
 import { resolveToggleVisibilityHint } from "./resolve-toggle-visibility-hint";
 
 const hintBadgeClassName =
-  "inline-flex max-w-full items-center rounded border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] px-1.5 py-0.5 text-[10px] leading-tight text-[var(--app-warning-text)] transition-colors duration-200";
+  "inline-flex max-w-full items-center rounded border border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] px-1.5 py-0.5 text-[10px] leading-tight text-[var(--color-feedback-warning)] transition-colors duration-200";
 
 const visuallyHiddenClassName = "sr-only";
 

@@ -14,10 +14,10 @@ import {
 import type { MainChartLegendProps } from "./types";
 
 const legendChipClass =
-  "inline-flex items-center gap-2 rounded-md border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2 py-1 transition-opacity cursor-pointer hover:bg-[var(--app-surface)]";
+  "inline-flex items-center gap-2 rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-2 py-1 transition-opacity cursor-pointer hover:bg-[var(--color-surface-default)]";
 
 const legendGroupLabelClass =
-  "w-full text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
+  "w-full text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]";
 
 export function MainChartLegend({
   hasLegendItems,
@@ -41,12 +41,12 @@ export function MainChartLegend({
     [hasCurves, hasExperimental, hasRegression].filter(Boolean).length > 1;
 
   return (
-    <div className="mb-2 space-y-2 border-b border-[var(--app-border)] pb-2">
+    <div className="mb-2 space-y-2 border-b border-[var(--color-border-default)] pb-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-xs font-semibold text-[var(--app-heading)]">
+        <p className="text-xs font-semibold text-[var(--color-text-primary)]">
           Leyenda
         </p>
-        <p className="text-[11px] text-[var(--app-text-muted)]">
+        <p className="text-[11px] text-[var(--color-text-muted)]">
           Clic para mostrar u ocultar series
         </p>
       </div>
@@ -77,8 +77,8 @@ export function MainChartLegend({
               <span
                 className={`text-sm font-mono ${
                   isHidden
-                    ? "text-[var(--app-text-muted)] opacity-60"
-                    : "text-[var(--app-text)]"
+                    ? "text-[var(--color-text-muted)] opacity-60"
+                    : "text-[var(--color-text-primary)]"
                 }`}
               >
                 {curve.expression}
@@ -111,8 +111,8 @@ export function MainChartLegend({
               <span
                 className={`text-sm font-mono ${
                   isHidden
-                    ? "text-[var(--app-text-muted)] opacity-60"
-                    : "text-[var(--app-text)]"
+                    ? "text-[var(--color-text-muted)] opacity-60"
+                    : "text-[var(--color-text-primary)]"
                 }`}
               >
                 f&apos;({curve.sourceExpression})
@@ -146,8 +146,8 @@ export function MainChartLegend({
               <span
                 className={`text-sm font-mono ${
                   isHidden
-                    ? "text-[var(--app-text-muted)] opacity-60"
-                    : "text-[var(--app-text)]"
+                    ? "text-[var(--color-text-muted)] opacity-60"
+                    : "text-[var(--color-text-primary)]"
                 }`}
               >
                 ∫({curve.sourceExpression})
@@ -181,8 +181,8 @@ export function MainChartLegend({
               <span
                 className={`text-sm ${
                   isHidden
-                    ? "text-[var(--app-text-muted)] opacity-60"
-                    : "text-[var(--app-text)]"
+                    ? "text-[var(--color-text-muted)] opacity-60"
+                    : "text-[var(--color-text-primary)]"
                 }`}
               >
                 {series.name}
@@ -216,8 +216,8 @@ export function MainChartLegend({
               <span
                 className={`text-sm ${
                   isHidden
-                    ? "text-[var(--app-text-muted)] opacity-60"
-                    : "text-[var(--app-text)]"
+                    ? "text-[var(--color-text-muted)] opacity-60"
+                    : "text-[var(--color-text-primary)]"
                 }`}
               >
                 Regresión - {regression.name}

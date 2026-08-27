@@ -50,10 +50,10 @@ type VisualGraphBuilderProps = {
 };
 
 const configSectionLabelClass =
-  "text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
+  "text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]";
 
 const configSectionClass =
-  "space-y-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)]/40 p-3";
+  "space-y-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 p-3";
 
 const presetFromGraphSpec = (
   graphSpec: GraphSpecification | null | undefined
@@ -178,10 +178,10 @@ export function VisualGraphBuilder({
   if (series.length === 0) {
     return (
       <div className={`${dataEmptyState} text-center space-y-1`} role="status">
-        <p className="text-xs font-medium text-[var(--app-text)]">
+        <p className="text-xs font-medium text-[var(--color-text-primary)]">
           Constructor Visual sin datos
         </p>
-        <p className="text-[11px] text-[var(--app-text-muted)]">
+        <p className="text-[11px] text-[var(--color-text-muted)]">
           Importe o edite datos en la Worksheet para configurar un gráfico.
         </p>
       </div>
@@ -190,12 +190,12 @@ export function VisualGraphBuilder({
 
   return (
     <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_3fr]">
-      <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)]">
-        <div className="border-b border-[var(--app-border)] px-4 py-3">
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+      <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)]">
+        <div className="border-b border-[var(--color-border-default)] px-4 py-3">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Configuración
           </p>
-          <p className="text-[11px] text-[var(--app-text-muted)]">
+          <p className="text-[11px] text-[var(--color-text-muted)]">
             {selectedTypeLabel
               ? `Tipo activo: ${selectedTypeLabel}${
                   continueMode ? " · continuar figura persistida" : ""
@@ -317,7 +317,7 @@ export function VisualGraphBuilder({
                   onChange={(event) =>
                     updateSpec({ color: event.target.value })
                   }
-                  className="h-9 w-14 cursor-pointer rounded border border-[var(--app-border)] bg-[var(--app-surface)]"
+                  className="h-9 w-14 cursor-pointer rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)]"
                 />
               </div>
               {spec.graphType === "scatter" ? (
@@ -478,7 +478,7 @@ export function VisualGraphBuilder({
           {spec.graphType === "heatmap" ? (
             <div className={configSectionClass}>
               <p className={configSectionLabelClass}>Variables</p>
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 Sin columnas X/Y se correlacionan todas las variables numéricas.
                 Con ambas, se acota el subconjunto al rango en el worksheet.
               </p>
@@ -525,10 +525,10 @@ export function VisualGraphBuilder({
           {spec.graphType === "pca" ? (
             <div className={configSectionClass}>
               <p className={configSectionLabelClass}>Variables PCA</p>
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 Seleccione al menos 2 columnas numéricas para el análisis.
               </p>
-              <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-3">
+              <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-default)] p-3">
                 {variables
                   .filter((variable) => variable.numericCompatible)
                   .map((variable) => {
@@ -539,7 +539,7 @@ export function VisualGraphBuilder({
                     return (
                       <label
                         key={`${variable.kind}-${variable.seriesId}`}
-                        className="flex cursor-pointer items-center gap-2 text-sm text-[var(--app-text)]"
+                        className="flex cursor-pointer items-center gap-2 text-sm text-[var(--color-text-primary)]"
                       >
                         <input
                           type="checkbox"
@@ -553,7 +553,7 @@ export function VisualGraphBuilder({
                               : [...current, variable.seriesId];
                             updateSpec({ pcaVariables: next });
                           }}
-                          className="rounded border-[var(--app-border)]"
+                          className="rounded border-[var(--color-border-default)]"
                         />
                         <span>
                           {variable.label}
@@ -571,7 +571,7 @@ export function VisualGraphBuilder({
                   onChange={(event) =>
                     updateSpec({ pcaStandardize: event.target.checked })
                   }
-                  className="rounded border-[var(--app-border)]"
+                  className="rounded border-[var(--color-border-default)]"
                 />
                 <span className={fieldLabel}>Estandarizar variables</span>
               </label>
@@ -597,34 +597,34 @@ export function VisualGraphBuilder({
           </div>
 
           <div
-            className="space-y-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-3"
+            className="space-y-2 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-default)] p-3"
             role="status"
             aria-live="polite"
           >
             {createError ? (
-              <p className="text-sm text-[var(--app-danger-text)]">
+              <p className="text-sm text-[var(--color-feedback-danger)]">
                 {createError}
               </p>
             ) : null}
             {!canCreateGraph && validation.ok === false ? (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 Complete las variables requeridas para habilitar la creación.
               </p>
             ) : canCreateGraph ? (
-              <p className="text-xs font-medium text-[var(--app-success-text)]">
+              <p className="text-xs font-medium text-[var(--color-feedback-success)]">
                 {continueMode
                   ? "Vista previa lista · puede actualizar la figura de trabajo"
                   : "Vista previa lista · puede crear el gráfico"}
               </p>
             ) : (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 Configure el tipo y las variables para habilitar la creación.
               </p>
             )}
             <button
               type="button"
               data-testid="create-graph-button"
-              className={`${btnPrimary} w-full bg-[var(--app-accent)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
+              className={`${btnPrimary} w-full bg-[var(--color-brand-primary)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={handleCreateGraph}
               disabled={!canCreateGraph}
               aria-disabled={!canCreateGraph}
@@ -637,10 +637,10 @@ export function VisualGraphBuilder({
 
       <div className="space-y-2">
         <div>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Vista previa
           </p>
-          <p className="text-[11px] text-[var(--app-text-muted)]">
+          <p className="text-[11px] text-[var(--color-text-muted)]">
             Se actualiza con la configuración actual del constructor.
           </p>
         </div>

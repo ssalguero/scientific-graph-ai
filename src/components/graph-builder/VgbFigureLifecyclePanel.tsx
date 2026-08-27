@@ -60,48 +60,48 @@ export function VgbFigureLifecyclePanel({
     : null;
 
   return (
-    <div className="mt-3 space-y-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2.5">
+    <div className="mt-3 space-y-2 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-3 py-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--app-heading)]">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-primary)]">
           Ciclo de figura
         </p>
-        <span className="rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]">
+        <span className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
           {PHASE_LABEL[phase]}
         </span>
       </div>
-      <p className="text-[11px] text-[var(--app-text-muted)]">
+      <p className="text-[11px] text-[var(--color-text-muted)]">
         Figura de trabajo → Revisión → Figura de publicación. Una figura
         mostrada o generada no es automáticamente publicable.
       </p>
       {review ? (
         <div className="space-y-1">
-          <p className="text-[11px] text-[var(--app-text)]">
+          <p className="text-[11px] text-[var(--color-text-primary)]">
             Revisión CTR-08: {reviewState} · vigencia {reviewValidity}
           </p>
           {validityDisclosure?.body ? (
-            <p className="text-[11px] text-[var(--app-text)]">
+            <p className="text-[11px] text-[var(--color-text-primary)]">
               {validityDisclosure.body}
             </p>
           ) : null}
           {validityDisclosure?.nextAction ? (
-            <p className="text-[11px] text-[var(--app-text-muted)]">
+            <p className="text-[11px] text-[var(--color-text-muted)]">
               {validityDisclosure.nextAction}
             </p>
           ) : null}
         </div>
       ) : (
-        <p className="text-[11px] text-[var(--app-text-muted)]">
+        <p className="text-[11px] text-[var(--color-text-muted)]">
           Sin autoridad de revisión vinculada.
         </p>
       )}
       {publication ? (
-        <p className="text-[11px] text-[var(--app-text)]">
+        <p className="text-[11px] text-[var(--color-text-primary)]">
           Figura de publicación inmutable: {publication.publicationId}. La
           vigencia de la figura de trabajo no modifica esa identidad.
         </p>
       ) : null}
       {eligibilityReasons.length > 0 && phase !== "WORKING" ? (
-        <ul className="list-disc space-y-0.5 pl-4 text-[11px] text-[var(--app-text-muted)]">
+        <ul className="list-disc space-y-0.5 pl-4 text-[11px] text-[var(--color-text-muted)]">
           {eligibilityReasons.map((reason) => (
             <li key={reason}>{reason}</li>
           ))}

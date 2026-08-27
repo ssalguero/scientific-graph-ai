@@ -21,7 +21,7 @@ const PROJECT_HISTORY_EVENT_ICONS: Record<ProjectHistoryEventType, string> = {
 };
 
 const panelClassName =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-2 text-xs text-[var(--app-text)]";
+  "rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-2 py-2 text-xs text-[var(--color-text-primary)]";
 
 const formatProjectHistoryTimestamp = (occurredAt: string): string => {
   const date = new Date(occurredAt);
@@ -41,7 +41,7 @@ export function HistoryPanel({ entries, className }: HistoryPanelProps) {
         className={[panelClassName, className].filter(Boolean).join(" ")}
         role="status"
       >
-        <p className="text-[11px] text-[var(--app-text-muted)] px-0.5">
+        <p className="text-[11px] text-[var(--color-text-muted)] px-0.5">
           Aún no hay actividad registrada en este proyecto.
         </p>
       </div>
@@ -58,7 +58,7 @@ export function HistoryPanel({ entries, className }: HistoryPanelProps) {
         {entries.map((entry) => (
           <li
             key={entry.id}
-            className="flex items-start gap-2 rounded-md border border-[var(--app-border)]/60 bg-[var(--app-surface-muted)]/40 px-2 py-1.5"
+            className="flex items-start gap-2 rounded-md border border-[var(--color-border-default)]/60 bg-[var(--color-surface-canvas)]/40 px-2 py-1.5"
           >
             <span
               className="mt-0.5 shrink-0 text-sm leading-none"
@@ -67,11 +67,11 @@ export function HistoryPanel({ entries, className }: HistoryPanelProps) {
               {PROJECT_HISTORY_EVENT_ICONS[entry.type]}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-[var(--app-text)] leading-snug break-words">
+              <p className="text-xs text-[var(--color-text-primary)] leading-snug break-words">
                 {entry.description}
               </p>
               <time
-                className="mt-0.5 block text-[10px] text-[var(--app-text-muted)]"
+                className="mt-0.5 block text-[10px] text-[var(--color-text-muted)]"
                 dateTime={entry.occurredAt}
               >
                 {formatProjectHistoryTimestamp(entry.occurredAt)}

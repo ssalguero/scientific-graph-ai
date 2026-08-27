@@ -52,6 +52,7 @@ import {
 } from "@/lib/worksheetLineage";
 import { WorksheetFormulaBuilderModal } from "@/components/data/WorksheetFormulaBuilderModal";
 import { WorksheetColumnHistoryModal } from "@/components/data/WorksheetColumnHistoryModal";
+import { DS_FOCUS_RING } from "@/lib/ui/focus-ring";
 
 type ScientificWorksheetPanelProps = {
   series: ExperimentalSeries[];
@@ -682,10 +683,10 @@ export function ScientificWorksheetPanel({
         className={`${dataEmptyState} text-center space-y-1`}
         role="status"
       >
-        <p className="text-xs font-medium text-[var(--app-text)]">
+        <p className="text-xs font-medium text-[var(--color-text-primary)]">
           Worksheet sin datos
         </p>
-        <p className="text-[11px] text-[var(--app-text-muted)]">
+        <p className="text-[11px] text-[var(--color-text-muted)]">
           Importe un dataset experimental o active uno de la sesión para
           editarlo aquí.
         </p>
@@ -701,19 +702,19 @@ export function ScientificWorksheetPanel({
         onCopy={handleTableCopy}
         onPaste={handleTablePaste}
         onKeyDown={handleTableKeyDown}
-        className="overflow-x-auto rounded-lg border border-[var(--app-border)] focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/30"
+        className={`overflow-x-auto rounded-lg border border-[var(--color-border-default)] ${DS_FOCUS_RING}`}
         aria-label="Worksheet científica"
       >
         <table className="min-w-full text-xs sm:text-sm border-collapse">
-          <thead className="sticky top-0 z-10 bg-[var(--app-surface-muted)]">
+          <thead className="sticky top-0 z-10 bg-[var(--color-surface-canvas)]">
             <tr>
-              <th className="px-2 py-1.5 text-left font-semibold text-[var(--app-text-muted)] border-b border-[var(--app-border)] whitespace-nowrap">
+              <th className="px-2 py-1.5 text-left font-semibold text-[var(--color-text-muted)] border-b border-[var(--color-border-default)] whitespace-nowrap">
                 ID
               </th>
               <th
-                className={`px-2 py-1.5 text-left border-b border-[var(--app-border)] whitespace-nowrap ${
+                className={`px-2 py-1.5 text-left border-b border-[var(--color-border-default)] whitespace-nowrap ${
                   selectedColumns.includes("x")
-                    ? "bg-[var(--app-accent)]/10"
+                    ? "bg-[var(--color-brand-primary)]/10"
                     : ""
                 }`}
               >
@@ -724,7 +725,7 @@ export function ScientificWorksheetPanel({
                     setPasteAnchor({ rowKey: displayRows[0]?.rowKey ?? "", column: "x", kind: "header" });
                   }}
                   onDoubleClick={() => toggleSort("x")}
-                  className="font-semibold text-[var(--app-heading)] hover:text-[var(--app-accent)]"
+                  className="font-semibold text-[var(--color-text-primary)] hover:text-[var(--color-brand-primary)]"
                   title="Click: seleccionar · Shift+click: rango · Doble click: ordenar"
                 >
                   {baseModel.xColumnLabel}{" "}
@@ -739,9 +740,9 @@ export function ScientificWorksheetPanel({
                 return (
                   <th
                     key={column.seriesId}
-                    className={`px-2 py-1.5 text-left border-b border-[var(--app-border)] whitespace-nowrap min-w-[8rem] relative ${
+                    className={`px-2 py-1.5 text-left border-b border-[var(--color-border-default)] whitespace-nowrap min-w-[8rem] relative ${
                       selectedColumns.includes(column.seriesId)
-                        ? "bg-[var(--app-accent)]/10"
+                        ? "bg-[var(--color-brand-primary)]/10"
                         : ""
                     }`}
                   >
@@ -784,7 +785,7 @@ export function ScientificWorksheetPanel({
                               });
                             }}
                             onDoubleClick={() => toggleSort(column.seriesId)}
-                            className="font-semibold text-[var(--app-heading)] hover:text-[var(--app-accent)] text-left"
+                            className="font-semibold text-[var(--color-text-primary)] hover:text-[var(--color-brand-primary)] text-left"
                             title="Click: seleccionar · Shift+click: rango · Doble click: ordenar"
                           >
                             {column.label}{" "}
@@ -794,14 +795,14 @@ export function ScientificWorksheetPanel({
                           </button>
                         )}
                         <span
-                          className="ml-1 inline-flex rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-1 py-0 text-[9px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]"
+                          className="ml-1 inline-flex rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-1 py-0 text-[9px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]"
                           title={WORKSHEET_COLUMN_TYPE_LABELS[metadata.columnType]}
                         >
                           {WORKSHEET_COLUMN_TYPE_BADGES[metadata.columnType]}
                         </span>
                         {isFormulaDerivedColumnFromMetadata(metadata) ? (
                           <span
-                            className="ml-1 inline-flex rounded border border-[var(--app-accent)]/30 bg-[var(--app-accent)]/10 px-1 py-0 text-[9px] font-semibold text-[var(--app-accent)]"
+                            className="ml-1 inline-flex rounded border border-[var(--color-brand-primary)]/30 bg-[var(--color-brand-primary)]/10 px-1 py-0 text-[9px] font-semibold text-[var(--color-brand-primary)]"
                             title="Creada mediante fórmula"
                           >
                             ƒx
@@ -809,7 +810,7 @@ export function ScientificWorksheetPanel({
                         ) : null}
                         {isTransformDerivedColumn(metadata) ? (
                           <span
-                            className="ml-1 inline-flex rounded border border-[var(--app-warning)]/30 bg-[var(--app-warning-bg)] px-1 py-0 text-[9px] font-semibold text-[var(--app-warning-text)]"
+                            className="ml-1 inline-flex rounded border border-[var(--color-feedback-warning)]/30 bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] px-1 py-0 text-[9px] font-semibold text-[var(--color-feedback-warning)]"
                             title="Creada mediante transformación"
                           >
                             ⇄
@@ -831,10 +832,10 @@ export function ScientificWorksheetPanel({
                           ⋮
                         </button>
                         {isMenuOpen ? (
-                          <div className="absolute right-0 mt-1 z-20 min-w-[10rem] rounded-md border border-[var(--app-border)] bg-[var(--app-surface)] py-1 shadow-lg">
+                          <div className="absolute right-0 mt-1 z-20 min-w-[10rem] rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-default)] py-1 shadow-lg">
                             <button
                               type="button"
-                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--app-surface-muted)]"
+                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--color-surface-canvas)]"
                               onClick={() =>
                                 startRenameColumn(column.seriesId, column.label)
                               }
@@ -843,13 +844,13 @@ export function ScientificWorksheetPanel({
                             </button>
                             <button
                               type="button"
-                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--app-surface-muted)]"
+                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--color-surface-canvas)]"
                               onClick={() => handleDuplicateColumn(column.seriesId)}
                             >
                               Duplicar
                             </button>
-                            <div className="my-1 border-t border-[var(--app-border)]" />
-                            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]">
+                            <div className="my-1 border-t border-[var(--color-border-default)]" />
+                            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                               Transformar columna
                             </p>
                             {(
@@ -860,7 +861,7 @@ export function ScientificWorksheetPanel({
                               <button
                                 key={kind}
                                 type="button"
-                                className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--app-surface-muted)]"
+                                className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--color-surface-canvas)]"
                                 onClick={() => {
                                   if (kind === "scale") {
                                     promptTransformParam(
@@ -890,37 +891,37 @@ export function ScientificWorksheetPanel({
                             ))}
                             <button
                               type="button"
-                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--app-surface-muted)]"
+                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--color-surface-canvas)]"
                               onClick={() =>
                                 openFormulaBuilder(column.seriesId, column.label)
                               }
                             >
                               Crear fórmula...
                             </button>
-                            <div className="my-1 border-t border-[var(--app-border)]" />
+                            <div className="my-1 border-t border-[var(--color-border-default)]" />
                             <button
                               type="button"
-                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--app-surface-muted)]"
+                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--color-surface-canvas)]"
                               onClick={() => openColumnHistory(column.seriesId)}
                             >
                               Ver historial
                             </button>
                             <button
                               type="button"
-                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--app-surface-muted)]"
+                              className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--color-surface-canvas)]"
                               onClick={() => void handleCopyColumn(column.seriesId)}
                             >
                               Copiar columna
                             </button>
                             <button
                               type="button"
-                              className="block w-full px-3 py-1.5 text-left text-xs text-[var(--app-danger-text)] hover:bg-[var(--app-danger-bg)]"
+                              className="block w-full px-3 py-1.5 text-left text-xs text-[var(--color-feedback-danger)] hover:bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))]"
                               onClick={() => handleDeleteColumn(column.seriesId)}
                             >
                               Eliminar
                             </button>
-                            <div className="my-1 border-t border-[var(--app-border)]" />
-                            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]">
+                            <div className="my-1 border-t border-[var(--color-border-default)]" />
+                            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                               Tipo
                             </p>
                             {(
@@ -931,9 +932,9 @@ export function ScientificWorksheetPanel({
                               <button
                                 key={columnType}
                                 type="button"
-                                className={`block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--app-surface-muted)] ${
+                                className={`block w-full px-3 py-1.5 text-left text-xs hover:bg-[var(--color-surface-canvas)] ${
                                   metadata.columnType === columnType
-                                    ? "font-semibold text-[var(--app-accent)]"
+                                    ? "font-semibold text-[var(--color-brand-primary)]"
                                     : ""
                                 }`}
                                 onClick={() =>
@@ -953,7 +954,7 @@ export function ScientificWorksheetPanel({
                   </th>
                 );
               })}
-              <th className="px-2 py-1.5 text-right border-b border-[var(--app-border)] whitespace-nowrap">
+              <th className="px-2 py-1.5 text-right border-b border-[var(--color-border-default)] whitespace-nowrap">
                 Acción
               </th>
             </tr>
@@ -962,19 +963,19 @@ export function ScientificWorksheetPanel({
             {displayRows.map((row, rowIndex) => (
               <tr
                 key={row.rowKey}
-                className={`border-b border-[var(--app-border)]/70 hover:bg-[var(--app-surface-muted)]/50 ${
+                className={`border-b border-[var(--color-border-default)]/70 hover:bg-[var(--color-surface-canvas)]/50 ${
                   selectedRowKeys.includes(row.rowKey)
-                    ? "bg-[var(--app-accent)]/10"
+                    ? "bg-[var(--color-brand-primary)]/10"
                     : ""
                 }`}
               >
-                <td className="px-2 py-1 text-[var(--app-text-muted)] tabular-nums">
+                <td className="px-2 py-1 text-[var(--color-text-muted)] tabular-nums">
                   <button
                     type="button"
                     onClick={(event) =>
                       toggleRowSelection(row.rowKey, event.shiftKey)
                     }
-                    className="rounded px-1 hover:bg-[var(--app-accent)]/10"
+                    className="rounded px-1 hover:bg-[var(--color-brand-primary)]/10"
                     title="Click: seleccionar fila · Shift+click: rango"
                   >
                     {rowIndex + 1}
@@ -1006,7 +1007,7 @@ export function ScientificWorksheetPanel({
                         setPasteAnchor({ rowKey: row.rowKey, column: "x", kind: "cell" });
                         startEditCell(row.rowKey, "x", row.x);
                       }}
-                      className="w-full text-left rounded px-1 py-0.5 hover:bg-[var(--app-accent)]/10"
+                      className="w-full text-left rounded px-1 py-0.5 hover:bg-[var(--color-brand-primary)]/10"
                     >
                       {Number.isFinite(row.x) ? row.x : "—"}
                     </button>
@@ -1052,7 +1053,7 @@ export function ScientificWorksheetPanel({
                               cellValue
                             );
                           }}
-                          className="w-full text-left rounded px-1 py-0.5 hover:bg-[var(--app-accent)]/10"
+                          className="w-full text-left rounded px-1 py-0.5 hover:bg-[var(--color-brand-primary)]/10"
                         >
                           {cellValue === null || !Number.isFinite(cellValue)
                             ? "—"
@@ -1066,7 +1067,7 @@ export function ScientificWorksheetPanel({
                   <button
                     type="button"
                     onClick={() => handleDeleteRow(row.rowKey)}
-                    className={`${btnOutlineSm} text-[var(--app-danger-text)] border-[var(--app-danger-border)] hover:bg-[var(--app-danger-bg)]`}
+                    className={`${btnOutlineSm} text-[var(--color-feedback-danger)] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] hover:bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))]`}
                     aria-label={`Eliminar fila ${rowIndex + 1}`}
                     title="Eliminar fila"
                   >
@@ -1094,7 +1095,7 @@ export function ScientificWorksheetPanel({
           Copiar selección
         </button>
         <p
-          className={`${fieldLabel} mb-0 normal-case tracking-normal text-[var(--app-text-muted)]`}
+          className={`${fieldLabel} mb-0 normal-case tracking-normal text-[var(--color-text-muted)]`}
         >
           Ctrl+V pega desde Excel · Ctrl+C copia TSV · Menú ⋮ por columna ·
           Click en ID/encabezado para seleccionar
@@ -1102,7 +1103,7 @@ export function ScientificWorksheetPanel({
       </div>
 
       <p
-        className="text-[11px] text-[var(--app-text-muted)]"
+        className="text-[11px] text-[var(--color-text-muted)]"
         role="status"
         aria-label="Resumen de worksheet"
       >
@@ -1116,14 +1117,14 @@ export function ScientificWorksheetPanel({
       </p>
 
       {auxiliaryColumns.length > 0 ? (
-        <details className="text-xs text-[var(--app-text-muted)]">
-          <summary className="cursor-pointer font-medium text-[var(--app-text)]">
+        <details className="text-xs text-[var(--color-text-muted)]">
+          <summary className="cursor-pointer font-medium text-[var(--color-text-primary)]">
             Columnas auxiliares ({auxiliaryColumns.length})
           </summary>
           <div className="mt-1 space-y-1">
             {auxiliaryColumns.map((column) => (
               <div key={column.id}>
-                <span className="font-medium text-[var(--app-text)]">
+                <span className="font-medium text-[var(--color-text-primary)]">
                   {column.label}
                 </span>{" "}
                 ({column.role === "replicate"

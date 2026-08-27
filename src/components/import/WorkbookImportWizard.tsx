@@ -40,15 +40,15 @@ const stepLabel: Record<WizardStep, string> = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-sm text-[var(--app-text)]";
+  "w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-3 py-2 text-sm text-[var(--color-text-primary)]";
 const btnPrimary =
-  "rounded-lg bg-[var(--app-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-text-inverse,#fff)] disabled:opacity-50";
+  "rounded-lg bg-[var(--color-brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-text-inverse,#fff)] disabled:opacity-50";
 const btnSecondary =
-  "rounded-lg border border-[var(--app-border)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] hover:bg-[var(--app-surface-muted)]";
+  "rounded-lg border border-[var(--color-border-default)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-surface-canvas)]";
 const stepActiveClass =
-  "bg-[var(--app-accent)] text-[var(--color-text-inverse,#fff)]";
+  "bg-[var(--color-brand-primary)] text-[var(--color-text-inverse,#fff)]";
 const stepIdleClass =
-  "bg-[var(--app-surface-muted)] text-[var(--app-text-muted)] border border-[var(--app-border)]";
+  "bg-[var(--color-surface-canvas)] text-[var(--color-text-muted)] border border-[var(--color-border-default)]";
 
 export function WorkbookImportWizard({
   open,
@@ -139,21 +139,21 @@ export function WorkbookImportWizard({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-2xl">
-        <div className="border-b border-[var(--app-border)] px-5 py-4">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] shadow-2xl">
+        <div className="border-b border-[var(--color-border-default)] px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-[var(--app-heading)]">
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 Asistente de importación
               </h2>
-              <p className="text-sm text-[var(--app-text-muted)]">
+              <p className="text-sm text-[var(--color-text-muted)]">
                 {analysis.snapshot.fileName}
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="text-sm text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
+              className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
             >
               Cerrar
             </button>
@@ -176,7 +176,7 @@ export function WorkbookImportWizard({
         <div className="max-h-[55vh] overflow-auto px-5 py-4 space-y-4">
           {state.step === "sheet" && (
             <div className="space-y-3">
-              <p className="text-sm text-[var(--app-text-muted)]">
+              <p className="text-sm text-[var(--color-text-muted)]">
                 Seleccione la hoja que contiene la tabla experimental.
               </p>
               <div className="space-y-2">
@@ -185,8 +185,8 @@ export function WorkbookImportWizard({
                     key={sheet.name}
                     className={`flex cursor-pointer flex-col gap-1 rounded-lg border px-3 py-2 ${
                       state.selectedSheetName === sheet.name
-                        ? "border-[var(--app-accent)] bg-[var(--app-accent-soft)]"
-                        : "border-[var(--app-border)]"
+                        ? "border-[var(--color-brand-primary)] bg-[color-mix(in_srgb,var(--color-brand-primary)_14%,var(--color-surface-default))]"
+                        : "border-[var(--color-border-default)]"
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -232,15 +232,15 @@ export function WorkbookImportWizard({
                           );
                         }}
                       />
-                      <span className="font-medium text-[var(--app-heading)]">
+                      <span className="font-medium text-[var(--color-text-primary)]">
                         {sheet.name}
                       </span>
-                      <span className="text-xs text-[var(--app-text-muted)]">
+                      <span className="text-xs text-[var(--color-text-muted)]">
                         {sheet.kind} · {sheet.rowCount} filas
                       </span>
                     </div>
                     {sheet.warnings[0] && (
-                      <span className="text-xs text-[var(--app-text-muted)]">
+                      <span className="text-xs text-[var(--color-text-muted)]">
                         {sheet.warnings[0]}
                       </span>
                     )}
@@ -252,7 +252,7 @@ export function WorkbookImportWizard({
 
           {state.step === "table" && (
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-[var(--app-heading)]">
+              <label className="block text-sm font-medium text-[var(--color-text-primary)]">
                 Fila de encabezados
               </label>
               <input
@@ -283,7 +283,7 @@ export function WorkbookImportWizard({
           {state.step === "columns" && (
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-[var(--app-heading)]">
+                <label className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">
                   Columna X
                 </label>
                 <select
@@ -311,13 +311,13 @@ export function WorkbookImportWizard({
                   ))}
                 </select>
                 {xSuggestion && (
-                  <p className="mt-1.5 text-xs text-[var(--app-text-muted)]">
+                  <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
                     Razón de selección: {xSuggestion.reason}
                   </p>
                 )}
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-[var(--app-heading)]">
+                <label className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">
                   Columna Y
                 </label>
                 <select
@@ -345,7 +345,7 @@ export function WorkbookImportWizard({
                   ))}
                 </select>
                 {ySuggestion && (
-                  <p className="mt-1.5 text-xs text-[var(--app-text-muted)]">
+                  <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
                     Razón de selección: {ySuggestion.reason}
                   </p>
                 )}
@@ -364,13 +364,13 @@ export function WorkbookImportWizard({
               </div>
               {state.mapping.yColumnIndices &&
               state.mapping.yColumnIndices.length >= 2 ? (
-                <p className="sm:col-span-2 text-xs text-[var(--app-accent)]">
+                <p className="sm:col-span-2 text-xs text-[var(--color-brand-primary)]">
                   Layout multi-serie detectado:{" "}
                   {state.mapping.yColumnIndices.length} series Y side-by-side.
                 </p>
               ) : null}
               <div className="sm:col-span-2">
-                <label className="mb-2 block text-sm font-medium text-[var(--app-heading)]">
+                <label className="mb-2 block text-sm font-medium text-[var(--color-text-primary)]">
                   Nombre de la serie
                 </label>
                 <input
@@ -391,7 +391,7 @@ export function WorkbookImportWizard({
             <div className="space-y-3">
               {state.mapping.yColumnIndices &&
               state.mapping.yColumnIndices.length >= 2 ? (
-                <p className="text-sm text-[var(--app-accent)]">
+                <p className="text-sm text-[var(--color-brand-primary)]">
                   Se importarán {state.mapping.yColumnIndices.length} series desde
                   columnas Y side-by-side.
                 </p>
@@ -405,7 +405,7 @@ export function WorkbookImportWizard({
                 onDiscardedRowSelect={setHighlightedRowIndex}
               />
               {submitError && (
-                <p className="text-sm text-[var(--app-danger-text)]" role="alert">
+                <p className="text-sm text-[var(--color-feedback-danger)]" role="alert">
                   {submitError}
                 </p>
               )}
@@ -413,7 +413,7 @@ export function WorkbookImportWizard({
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-[var(--app-border)] px-5 py-4">
+        <div className="flex items-center justify-between border-t border-[var(--color-border-default)] px-5 py-4">
           <button type="button" className={btnSecondary} onClick={onClose}>
             Cancelar
           </button>

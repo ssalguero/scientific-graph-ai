@@ -121,15 +121,15 @@ export const sliceRegionMatrix = (
 };
 
 export const confidenceLevelClass: Record<ConfidenceLevel, string> = {
-  Alta: "text-[var(--app-success-text,#15803d)]",
-  Media: "text-[var(--app-warning-text)]",
-  Baja: "text-[var(--app-danger-text)]",
+  Alta: "text-[var(--color-feedback-success,#15803d)]",
+  Media: "text-[var(--color-feedback-warning)]",
+  Baja: "text-[var(--color-feedback-danger)]",
 };
 
 export const rowKindClass: Record<RowKind, string> = {
   metadata:
-    "bg-[var(--app-surface-muted)]/80 text-[var(--app-text-muted)] italic",
+    "bg-[var(--color-surface-canvas)]/80 text-[var(--color-text-muted)] italic",
   header:
-    "bg-[var(--app-accent-soft)] font-semibold text-[var(--app-heading)]",
-  data: "bg-[var(--app-surface)] text-[var(--app-text)]",
+    "bg-[color-mix(in_srgb,var(--color-brand-primary)_14%,var(--color-surface-default))] font-semibold text-[var(--color-text-primary)]",
+  data: "bg-[var(--color-surface-default)] text-[var(--color-text-primary)]",
 };

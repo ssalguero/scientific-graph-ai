@@ -22,10 +22,10 @@ type SessionDatasetPanelProps = {
 };
 
 const warningBadgeClass =
-  "inline-flex rounded-full border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--app-warning-text)]";
+  "inline-flex rounded-full border border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--color-feedback-warning)]";
 
 const actionGroupLabelClass =
-  "block w-full text-[9px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]";
+  "block w-full text-[9px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]";
 
 function datasetKey(dataset: SessionDataset): string {
   return sessionDatasetIdentityKey(dataset.name, dataset.importedAt);
@@ -62,10 +62,10 @@ export function SessionDatasetPanel({
         className={`${dataEmptyState} text-center space-y-1`}
         role="status"
       >
-        <p className="text-xs font-medium text-[var(--app-text)]">
+        <p className="text-xs font-medium text-[var(--color-text-primary)]">
           No hay datasets en esta sesión
         </p>
-        <p className="text-[11px] text-[var(--app-text-muted)]">
+        <p className="text-[11px] text-[var(--color-text-muted)]">
           Use &quot;Importar datos experimentales&quot; para cargar el primero.
         </p>
       </div>
@@ -87,8 +87,8 @@ export function SessionDatasetPanel({
             key={dataset.id}
             className={`rounded-md border px-2.5 py-2 ${
               isActive
-                ? "border-[var(--app-accent)] bg-[var(--app-accent)]/5"
-                : "border-[var(--app-border)] bg-[var(--app-surface)]"
+                ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5"
+                : "border-[var(--color-border-default)] bg-[var(--color-surface-default)]"
             }`}
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -97,12 +97,12 @@ export function SessionDatasetPanel({
                   <span
                     className={`inline-block h-2 w-2 rounded-full shrink-0 ${
                       isActive
-                        ? "bg-[var(--app-accent)]"
-                        : "bg-[var(--app-text-muted)]/50"
+                        ? "bg-[var(--color-brand-primary)]"
+                        : "bg-[var(--color-text-muted)]/50"
                     }`}
                     aria-hidden
                   />
-                  <p className="text-xs sm:text-sm font-semibold text-[var(--app-heading)] truncate">
+                  <p className="text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] truncate">
                     {dataset.name}
                   </p>
                   {isActive ? (
@@ -123,7 +123,7 @@ export function SessionDatasetPanel({
                     <span className={warningBadgeClass}>Modificado</span>
                   ) : null}
                 </div>
-                <p className="text-[11px] text-[var(--app-text-muted)] mt-0.5">
+                <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
                   {dataset.seriesCount} series · {dataset.observationCount}{" "}
                   observaciones · {dataset.importedAt}
                 </p>
@@ -172,7 +172,7 @@ export function SessionDatasetPanel({
                   <button
                     type="button"
                     onClick={() => onRemove(dataset.id)}
-                    className={`${btnOutlineSm} text-[var(--app-danger-text)] border-[var(--app-danger-border)] hover:bg-[var(--app-danger-bg)]`}
+                    className={`${btnOutlineSm} text-[var(--color-feedback-danger)] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] hover:bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))]`}
                   >
                     Eliminar
                   </button>

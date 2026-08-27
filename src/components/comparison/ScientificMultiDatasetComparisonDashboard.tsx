@@ -13,9 +13,9 @@ import { ComparisonPublicationSection } from "./ComparisonPublicationSection";
 import { ComparisonSlotSummaryCard } from "./ComparisonSlotSummaryCard";
 
 const contentPanel =
-  "rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2.5 text-sm text-[var(--app-text)] transition-colors duration-200";
+  "rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] transition-colors duration-200";
 const emptyState =
-  "rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] px-3 py-4 text-sm text-[var(--app-text-muted)] text-center transition-colors duration-200";
+  "rounded-lg border border-dashed border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-3 py-4 text-sm text-[var(--color-text-muted)] text-center transition-colors duration-200";
 
 type ScientificMultiDatasetComparisonDashboardProps = {
   analysis: MultiDatasetComparisonAnalysis;
@@ -54,14 +54,14 @@ export function ScientificMultiDatasetComparisonDashboard({
         />
       </div>
       <div className={contentPanel}>
-        <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+        <p className="text-xs font-semibold text-[var(--color-text-muted)]">
           Compatibilidad semántica: {analysis.compatibility.state}
         </p>
         {analysis.compatibility.state !== "COMPATIBLE"
           ? analysis.compatibility.reasons.map((reason) => (
               <p
                 key={reason}
-                className="mt-1 text-xs text-[var(--app-text-muted)]"
+                className="mt-1 text-xs text-[var(--color-text-muted)]"
               >
                 {reason}
               </p>
@@ -73,10 +73,10 @@ export function ScientificMultiDatasetComparisonDashboard({
       readinessRow.delta !== null &&
       readinessRow.delta !== undefined ? (
         <div className={`${contentPanel} flex flex-col gap-1`}>
-          <p className="text-xs font-semibold text-[var(--app-text-muted)]">
+          <p className="text-xs font-semibold text-[var(--color-text-muted)]">
             Delta Readiness (B − A)
           </p>
-          <p className="text-2xl font-semibold text-[var(--app-heading)] tabular-nums">
+          <p className="text-2xl font-semibold text-[var(--color-text-primary)] tabular-nums">
             {formatComparisonNumericDelta(readinessRow.delta)}
           </p>
         </div>
@@ -108,7 +108,7 @@ export function ScientificMultiDatasetComparisonDashboard({
 
       {(analysis.slotA.normality || analysis.slotB.normality) && (
         <div>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Normalidad integrada
           </p>
           {analysis.slotA.normality ? (
@@ -139,7 +139,7 @@ export function ScientificMultiDatasetComparisonDashboard({
 
       {analysis.comparabilityWarnings.length > 0 ? (
         <div>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Advertencias de comparabilidad
           </p>
           {analysis.comparabilityWarnings.map((warning) => (
@@ -152,7 +152,7 @@ export function ScientificMultiDatasetComparisonDashboard({
 
       {analysis.crossDatasetDiagnosis.length > 0 ? (
         <div>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Diagnóstico cruzado
           </p>
           {analysis.crossDatasetDiagnosis.map((line) => (
@@ -165,7 +165,7 @@ export function ScientificMultiDatasetComparisonDashboard({
 
       {analysis.comparisonRecommendations.length > 0 ? (
         <div>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Recomendaciones
           </p>
           {analysis.comparisonRecommendations.map((line) => (
@@ -173,7 +173,7 @@ export function ScientificMultiDatasetComparisonDashboard({
               {line}
             </p>
           ))}
-          <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+          <p className="mt-2 text-xs text-[var(--color-text-muted)]">
             Contenido generado y no autoritativo hasta revisión y aprobación
             explícitas de la persona investigadora.
           </p>

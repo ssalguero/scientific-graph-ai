@@ -172,16 +172,16 @@ export const LOCAL_PROJECT_STORAGE_STATE_LABEL: Record<
 
 /**
  * Token-class presentation for existing LocalProjectStorageState values.
- * Uses certified --app-* bridge tokens (no new Design System tokens).
+ * Uses certified --color-* tokens via Theme Runtime (no new Design System tokens).
  */
 export const LOCAL_PROJECT_STORAGE_STATE_CLASS: Record<
   LocalProjectStorageState,
   string
 > = {
-  NORMAL: "text-[var(--app-success-text)]",
-  DIRTY: "text-[var(--app-warning-text)]",
-  RECOVERABLE: "text-[var(--app-warning-text)]",
-  CORRUPTED: "text-[var(--app-danger-text)]",
+  NORMAL: "text-[var(--color-feedback-success)]",
+  DIRTY: "text-[var(--color-feedback-warning)]",
+  RECOVERABLE: "text-[var(--color-feedback-warning)]",
+  CORRUPTED: "text-[var(--color-feedback-danger)]",
 };
 
 const AUTOSAVE_INDICATOR_MESSAGES: Record<AutosaveIndicatorState, string> = {

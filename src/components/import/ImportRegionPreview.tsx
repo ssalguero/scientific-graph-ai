@@ -40,9 +40,9 @@ export function ImportRegionPreview({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-4 py-3 text-sm">
-        <p className="font-medium text-[var(--app-heading)]">Región detectada</p>
-        <ul className="mt-1 space-y-0.5 text-[var(--app-text-muted)]">
+      <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-4 py-3 text-sm">
+        <p className="font-medium text-[var(--color-text-primary)]">Región detectada</p>
+        <ul className="mt-1 space-y-0.5 text-[var(--color-text-muted)]">
           <li>Filas {summary.rowRange}</li>
           <li>
             Metadatos: {summary.metadataRowCount}{" "}
@@ -58,13 +58,13 @@ export function ImportRegionPreview({
 
       {showConfidence && (
         <div className="text-sm">
-          <p className="text-[var(--app-text-muted)]">
+          <p className="text-[var(--color-text-muted)]">
             Confianza:{" "}
             <span className={`font-semibold ${confidenceLevelClass[confidenceLevel]}`}>
               {confidenceLevel}
             </span>
           </p>
-          <ul className="mt-1 space-y-0.5 text-[var(--app-text-muted)]">
+          <ul className="mt-1 space-y-0.5 text-[var(--color-text-muted)]">
             {confidenceReasons.map((reason) => (
               <li key={reason}>✓ {reason}</li>
             ))}
@@ -72,32 +72,32 @@ export function ImportRegionPreview({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 text-xs text-[var(--app-text-muted)]">
+      <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-muted)]">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)]/80" />
+          <span className="inline-block h-3 w-3 rounded border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/80" />
           Metadatos
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded border border-[var(--app-border)] bg-[var(--app-accent-soft)]" />
+          <span className="inline-block h-3 w-3 rounded border border-[var(--color-border-default)] bg-[color-mix(in_srgb,var(--color-brand-primary)_14%,var(--color-surface-default))]" />
           Encabezados
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded border border-[var(--app-border)] bg-[var(--app-surface)]" />
+          <span className="inline-block h-3 w-3 rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)]" />
           Datos
         </span>
         {highlightColumns && (
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded border-2 border-[var(--app-accent)] bg-[var(--app-accent-soft)]/40" />
+            <span className="inline-block h-3 w-3 rounded border-2 border-[var(--color-brand-primary)] bg-[color-mix(in_srgb,color-mix(in_srgb,var(--color-brand-primary)_14%,var(--color-surface-default))_40%,transparent)]" />
             Columna X/Y
           </span>
         )}
       </div>
 
-      <div className="overflow-auto rounded-lg border border-[var(--app-border)]">
+      <div className="overflow-auto rounded-lg border border-[var(--color-border-default)]">
         <table className="min-w-full text-xs">
           <thead>
-            <tr className="border-b border-[var(--app-border)] bg-[var(--app-surface-muted)]">
-              <th className="sticky left-0 z-10 bg-[var(--app-surface-muted)] px-2 py-1 text-left font-medium text-[var(--app-text-muted)]">
+            <tr className="border-b border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]">
+              <th className="sticky left-0 z-10 bg-[var(--color-surface-canvas)] px-2 py-1 text-left font-medium text-[var(--color-text-muted)]">
                 #
               </th>
               {Array.from(
@@ -108,8 +108,8 @@ export function ImportRegionPreview({
                   key={colIndex}
                   className={`px-2 py-1 text-left font-medium whitespace-nowrap ${
                     isHighlightedCol(colIndex)
-                      ? "bg-[var(--app-accent-soft)] text-[var(--app-accent)]"
-                      : "text-[var(--app-text-muted)]"
+                      ? "bg-[color-mix(in_srgb,var(--color-brand-primary)_14%,var(--color-surface-default))] text-[var(--color-brand-primary)]"
+                      : "text-[var(--color-text-muted)]"
                   }`}
                 >
                   {columnIndexToLetter(colIndex)}
@@ -124,13 +124,13 @@ export function ImportRegionPreview({
               return (
                 <tr
                   key={rowIndex}
-                  className={`border-b border-[var(--app-border)] ${rowKindClass[kind]} ${
+                  className={`border-b border-[var(--color-border-default)] ${rowKindClass[kind]} ${
                     isHighlightedRow
-                      ? "ring-2 ring-inset ring-[var(--app-warning-text)]/60"
+                      ? "ring-2 ring-inset ring-[var(--color-feedback-warning)]/60"
                       : ""
                   }`}
                 >
-                  <td className="sticky left-0 z-10 px-2 py-1 font-medium text-[var(--app-text-muted)] bg-inherit">
+                  <td className="sticky left-0 z-10 px-2 py-1 font-medium text-[var(--color-text-muted)] bg-inherit">
                     {rowIndex + 1}
                   </td>
                   {cells.map((cell, cellOffset) => {
@@ -140,7 +140,7 @@ export function ImportRegionPreview({
                         key={colIndex}
                         className={`px-2 py-1 whitespace-nowrap ${
                           isHighlightedCol(colIndex)
-                            ? "ring-1 ring-inset ring-[var(--app-accent)]/50"
+                            ? "ring-1 ring-inset ring-[var(--color-brand-primary)]/50"
                             : ""
                         }`}
                       >

@@ -55,7 +55,7 @@ function renderBubbleShape(props: BubbleScatterShapeProps) {
 export function BubblePreview({ data, chartTokens }: BubblePreviewProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-full min-h-[12rem] items-center justify-center text-sm text-[var(--app-text-muted)]">
+      <div className="flex h-full min-h-[12rem] items-center justify-center text-sm text-[var(--color-text-muted)]">
         Sin puntos válidos para visualizar.
       </div>
     );

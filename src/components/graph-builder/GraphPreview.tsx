@@ -123,21 +123,21 @@ function BoxPlotPreview({
         return (
           <div
             key={item.group}
-            className="rounded-lg border border-[var(--app-border)] p-3"
+            className="rounded-lg border border-[var(--color-border-default)] p-3"
           >
-            <p className="mb-2 text-xs font-semibold text-[var(--app-heading)]">
+            <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">
               {item.group}
             </p>
-            <div className="grid grid-cols-5 gap-2 text-[10px] text-[var(--app-text-muted)]">
+            <div className="grid grid-cols-5 gap-2 text-[10px] text-[var(--color-text-muted)]">
               <span>Min: {item.min.toFixed(2)}</span>
               <span>Q1: {item.q1.toFixed(2)}</span>
               <span>Med: {item.median.toFixed(2)}</span>
               <span>Q3: {item.q3.toFixed(2)}</span>
               <span>Max: {item.max.toFixed(2)}</span>
             </div>
-            <div className="relative mt-3 h-8 rounded bg-[var(--app-surface-muted)]">
+            <div className="relative mt-3 h-8 rounded bg-[var(--color-surface-canvas)]">
               <div
-                className="absolute top-1/2 h-0.5 -translate-y-1/2 bg-[var(--app-accent)]"
+                className="absolute top-1/2 h-0.5 -translate-y-1/2 bg-[var(--color-brand-primary)]"
                 style={{
                   left: `${geometry.min}%`,
                   width: `${geometry.max - geometry.min}%`,
@@ -146,19 +146,19 @@ function BoxPlotPreview({
               {[geometry.min, geometry.max].map((position, index) => (
                 <div
                   key={index === 0 ? "min" : "max"}
-                  className="absolute top-1/2 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-[var(--app-accent)]"
+                  className="absolute top-1/2 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-[var(--color-brand-primary)]"
                   style={{ left: `${position}%` }}
                 />
               ))}
               <div
-                className="absolute top-1/2 h-5 -translate-y-1/2 rounded border border-[var(--app-accent)] bg-[var(--app-accent)]/15"
+                className="absolute top-1/2 h-5 -translate-y-1/2 rounded border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/15"
                 style={{
                   left: `${geometry.q1}%`,
                   width: `${geometry.q3 - geometry.q1}%`,
                 }}
               />
               <div
-                className="absolute top-1/2 h-5 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-[var(--app-accent)]"
+                className="absolute top-1/2 h-5 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-[var(--color-brand-primary)]"
                 style={{ left: `${geometry.median}%` }}
               />
             </div>
@@ -183,24 +183,24 @@ function RawValueStripPreview({
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] text-[var(--app-text-muted)]">
+      <p className="text-[10px] text-[var(--color-text-muted)]">
         Raw values · no density estimate
       </p>
       {data.map((item) => {
         return (
           <div
             key={item.group}
-            className="rounded-lg border border-[var(--app-border)] p-3"
+            className="rounded-lg border border-[var(--color-border-default)] p-3"
           >
-            <p className="mb-2 text-xs font-semibold text-[var(--app-heading)]">
+            <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">
               {item.group}
             </p>
-            <div className="relative h-20 rounded bg-[var(--app-surface-muted)]">
-              <div className="absolute left-[4%] right-[4%] top-1/2 h-px bg-[var(--app-border)]" />
+            <div className="relative h-20 rounded bg-[var(--color-surface-canvas)]">
+              <div className="absolute left-[4%] right-[4%] top-1/2 h-px bg-[var(--color-border-default)]" />
               {item.values.map((value, index) => (
                 <div
                   key={`${item.group}-${index}`}
-                  className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--app-accent)]/80"
+                  className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-brand-primary)]/80"
                   style={{
                     left: `${position(value)}%`,
                     top: `${20 + (index % 5) * 15}%`,
@@ -209,7 +209,7 @@ function RawValueStripPreview({
                 />
               ))}
             </div>
-            <div className="mt-1 flex justify-between text-[10px] text-[var(--app-text-muted)]">
+            <div className="mt-1 flex justify-between text-[10px] text-[var(--color-text-muted)]">
               <span>{globalMin.toFixed(2)}</span>
               <span>{globalMax.toFixed(2)}</span>
             </div>
@@ -230,13 +230,13 @@ export function GraphPreview({
   if (errorMessage) {
     return (
       <div
-        className="flex h-full min-h-[320px] flex-col items-center justify-center gap-1 rounded-xl border border-[var(--app-danger-border)] bg-[var(--app-danger-bg)] p-4 text-center"
+        className="flex h-full min-h-[320px] flex-col items-center justify-center gap-1 rounded-xl border border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))] p-4 text-center"
         role="alert"
       >
-        <p className="text-sm font-medium text-[var(--app-danger-text)]">
+        <p className="text-sm font-medium text-[var(--color-feedback-danger)]">
           Vista previa no disponible
         </p>
-        <p className="text-xs text-[var(--app-danger-text)]">{errorMessage}</p>
+        <p className="text-xs text-[var(--color-feedback-danger)]">{errorMessage}</p>
       </div>
     );
   }
@@ -244,13 +244,13 @@ export function GraphPreview({
   if (!preview) {
     return (
       <div
-        className="flex h-full min-h-[320px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--app-border)] bg-[var(--app-surface-muted)] p-4 text-center"
+        className="flex h-full min-h-[320px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] p-4 text-center"
         role="status"
       >
-        <p className="text-sm font-medium text-[var(--app-text)]">
+        <p className="text-sm font-medium text-[var(--color-text-primary)]">
           Sin vista previa
         </p>
-        <p className="text-xs text-[var(--app-text-muted)]">
+        <p className="text-xs text-[var(--color-text-muted)]">
           Configure el tipo y las variables del gráfico para verla aquí.
         </p>
       </div>
@@ -265,19 +265,19 @@ export function GraphPreview({
       : undefined;
 
   return (
-    <div className="flex h-full min-h-[320px] flex-col rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-3">
-      <div className="mb-3 border-b border-[var(--app-border)] pb-2">
+    <div className="flex h-full min-h-[320px] flex-col rounded-xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] p-3">
+      <div className="mb-3 border-b border-[var(--color-border-default)] pb-2">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-[var(--app-heading)]">
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
               {preview.title}
             </p>
-            <p className="text-xs text-[var(--app-text-muted)]">
+            <p className="text-xs text-[var(--color-text-muted)]">
               {preview.xLabel}
               {preview.yLabel ? ` · ${preview.yLabel}` : ""}
             </p>
           </div>
-          <span className="shrink-0 rounded border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--app-text-muted)]">
+          <span className="shrink-0 rounded border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
             {VISUAL_GRAPH_TYPE_LABELS[preview.graphType]}
           </span>
         </div>

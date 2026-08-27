@@ -67,7 +67,7 @@ function PCAPreviewTooltip({
 export function PCAPreview({ pcaData, pcaMeta, chartTokens }: PCAPreviewProps) {
   if (pcaMeta == null || pcaData.length === 0) {
     return (
-      <div className="flex h-full min-h-[12rem] items-center justify-center text-sm text-[var(--app-text-muted)]">
+      <div className="flex h-full min-h-[12rem] items-center justify-center text-sm text-[var(--color-text-muted)]">
         Sin puntos válidos para visualizar.
       </div>
     );

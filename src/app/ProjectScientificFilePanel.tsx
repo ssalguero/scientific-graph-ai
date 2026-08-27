@@ -19,13 +19,13 @@ export type { ProjectFileFeedback };
 type PendingDiscardAction = "new" | "open" | "local-open";
 
 const promptBannerClass =
-  "rounded-lg border border-[var(--app-warning-border)] bg-[var(--app-warning-bg)] px-3 py-2 text-xs text-[var(--app-warning-text)] space-y-2";
+  "rounded-lg border border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] px-3 py-2 text-xs text-[var(--color-feedback-warning)] space-y-2";
 
 const promptPrimaryBtnClass =
-  "rounded-md border border-[var(--app-warning-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]";
+  "rounded-md border border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] px-2 py-1 text-xs font-semibold hover:bg-[var(--color-surface-canvas)]";
 
 const promptSecondaryBtnClass =
-  "rounded-md border border-[var(--app-border)] px-2 py-1 text-xs font-semibold hover:bg-[var(--app-surface-muted)]";
+  "rounded-md border border-[var(--color-border-default)] px-2 py-1 text-xs font-semibold hover:bg-[var(--color-surface-canvas)]";
 
 export type ProjectScientificFilePanelProps = {
   projectMetadata: ProjectMetadataV1;
@@ -133,12 +133,12 @@ export function ProjectScientificFilePanel({
 
   const feedbackClass =
     feedback?.kind === "error"
-      ? "text-[var(--app-danger-text)] bg-[var(--app-danger-bg)] border-[var(--app-danger-border)]"
+      ? "text-[var(--color-feedback-danger)] bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))]"
       : feedback?.kind === "warning"
-        ? "text-[var(--app-warning-text)] bg-[var(--app-warning-bg)] border-[var(--app-warning-border)]"
+        ? "text-[var(--color-feedback-warning)] bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))]"
         : feedback?.kind === "success"
-          ? "text-[var(--app-success-text)] bg-[var(--app-success-bg)] border-[var(--app-success)]"
-          : "text-[var(--app-text-muted)] bg-[var(--app-surface-muted)] border-[var(--app-border)]";
+          ? "text-[var(--color-feedback-success)] bg-[color-mix(in_srgb,var(--color-feedback-success)_16%,var(--color-surface-default))] border-[var(--color-feedback-success)]"
+          : "text-[var(--color-text-muted)] bg-[var(--color-surface-canvas)] border-[var(--color-border-default)]";
 
   const discardPrompt =
     pendingDiscard && sessionConflict.prompt ? sessionConflict.prompt : null;
@@ -167,7 +167,7 @@ export function ProjectScientificFilePanel({
           {autosaveIndicator.label}
         </p>
         {projectSizeMessage ? (
-          <p className="text-[11px] text-[var(--app-warning-text)] mt-0.5">
+          <p className="text-[11px] text-[var(--color-feedback-warning)] mt-0.5">
             {projectSizeMessage}
           </p>
         ) : null}
@@ -307,8 +307,8 @@ export function ProjectScientificFilePanel({
           {moreOpen ? "Menos opciones" : "Más opciones"}
         </button>
         {moreOpen ? (
-          <div className="space-y-1 rounded-md border border-[var(--app-border)]/70 bg-[var(--app-surface-muted)]/40 p-1.5">
-            <p className="px-1 text-[10px] leading-snug text-[var(--app-text-muted)]">
+          <div className="space-y-1 rounded-md border border-[var(--color-border-default)]/70 bg-[var(--color-surface-canvas)]/40 p-1.5">
+            <p className="px-1 text-[10px] leading-snug text-[var(--color-text-muted)]">
               Archivo del proyecto ({PROJECT_FILE_EXTENSION}): biblioteca local
               del navegador o disco.
             </p>

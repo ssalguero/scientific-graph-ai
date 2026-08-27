@@ -1,7 +1,7 @@
 "use client";
 
 const calloutClassName =
-  "rounded-md border border-[var(--app-accent)]/20 bg-[var(--app-surface-muted)] px-2 py-1.5 text-[10px] leading-snug text-[var(--app-text-muted)] transition-colors duration-200";
+  "rounded-md border border-[var(--color-brand-primary)]/20 bg-[var(--color-surface-canvas)] px-2 py-1.5 text-[10px] leading-snug text-[var(--color-text-muted)] transition-colors duration-200";
 
 export type MethodologyVisibilityCalloutProps = {
   message: string;

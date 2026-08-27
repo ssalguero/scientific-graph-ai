@@ -19,14 +19,14 @@ export function ComparisonKpiTable({ rows, heading }: ComparisonKpiTableProps) {
   return (
     <div>
       {heading ? (
-        <p className="text-sm font-semibold text-[var(--app-heading)] mb-2">
+        <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">
           {heading}
         </p>
       ) : null}
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="border-b border-[var(--app-border)]">
+            <tr className="border-b border-[var(--color-border-default)]">
               <th className="text-left py-2 pr-3 font-semibold">KPI</th>
               <th className="text-left py-2 px-3 font-semibold">Slot A</th>
               <th className="text-left py-2 px-3 font-semibold">Slot B</th>
@@ -37,18 +37,18 @@ export function ComparisonKpiTable({ rows, heading }: ComparisonKpiTableProps) {
             {rows.map((row) => (
               <tr
                 key={row.key}
-                className="border-b border-[var(--app-border)]/60"
+                className="border-b border-[var(--color-border-default)]/60"
               >
-                <td className="py-2 pr-3 text-[var(--app-heading)]">
+                <td className="py-2 pr-3 text-[var(--color-text-primary)]">
                   {row.title}
                 </td>
-                <td className="py-2 px-3 text-[var(--app-text-muted)]">
+                <td className="py-2 px-3 text-[var(--color-text-muted)]">
                   {row.slotAValue}
                 </td>
-                <td className="py-2 px-3 text-[var(--app-text-muted)]">
+                <td className="py-2 px-3 text-[var(--color-text-muted)]">
                   {row.slotBValue}
                 </td>
-                <td className="py-2 pl-3 tabular-nums text-[var(--app-text)]">
+                <td className="py-2 pl-3 tabular-nums text-[var(--color-text-primary)]">
                   {row.delta !== null
                     ? `${formatComparisonNumericDelta(row.delta)} (${getComparisonDeltaDirectionLabel(row.deltaDirection)})`
                     : "—"}

@@ -1,7 +1,7 @@
 "use client";
 
 const bannerClassName =
-  "rounded-md border border-[var(--app-accent)]/20 bg-[var(--app-surface-muted)] px-2 py-1.5 text-[10px] leading-snug text-[var(--app-text-muted)] transition-colors duration-200";
+  "rounded-md border border-[var(--color-brand-primary)]/20 bg-[var(--color-surface-canvas)] px-2 py-1.5 text-[10px] leading-snug text-[var(--color-text-muted)] transition-colors duration-200";
 
 export type PdfExportVisibilityBannerProps = {
   shortMessage: string;
@@ -30,7 +30,7 @@ export function PdfExportVisibilityBanner({
       role="note"
       aria-label="Información sobre exportación PDF y visibilidad de paneles"
     >
-      <p className="font-medium text-[var(--app-text)]">{shortMessage}</p>
+      <p className="font-medium text-[var(--color-text-primary)]">{shortMessage}</p>
       <p className="mt-1">{longMessage}</p>
     </aside>
   );

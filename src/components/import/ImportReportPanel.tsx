@@ -11,16 +11,16 @@ type ImportReportPanelProps = {
 };
 
 const severityClass: Record<ValidationSeverity, string> = {
-  error: "text-[var(--app-danger-text)]",
-  warning: "text-[var(--app-warning-text)]",
-  info: "text-[var(--app-text-muted)]",
+  error: "text-[var(--color-feedback-danger)]",
+  warning: "text-[var(--color-feedback-warning)]",
+  info: "text-[var(--color-text-muted)]",
 };
 
 const severityBadge: Record<ValidationSeverity, string> = {
-  error: "bg-[var(--app-danger-bg)] text-[var(--app-danger-text)] border-[var(--app-danger-border)]",
+  error: "bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))] text-[var(--color-feedback-danger)] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))]",
   warning:
-    "bg-[var(--app-warning-bg)] text-[var(--app-warning-text)] border-[var(--app-warning-border)]",
-  info: "bg-[var(--app-surface-muted)] text-[var(--app-text-muted)] border-[var(--app-border)]",
+    "bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] text-[var(--color-feedback-warning)] border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))]",
+  info: "bg-[var(--color-surface-canvas)] text-[var(--color-text-muted)] border-[var(--color-border-default)]",
 };
 
 function DestinationImportReport({
@@ -267,30 +267,30 @@ export function ImportReportPanel({
 
   return (
     <div
-      className="mt-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-4 py-3 space-y-3"
+      className="mt-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-4 py-3 space-y-3"
       role="region"
       aria-label="Informe de importación"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0 space-y-0.5">
-          <p className="text-sm font-medium text-[var(--app-heading)]">
+          <p className="text-sm font-medium text-[var(--color-text-primary)]">
             Informe de importación
           </p>
           {hasErrors ? (
-            <p className="text-[11px] font-medium text-[var(--app-danger-text)]">
+            <p className="text-[11px] font-medium text-[var(--color-feedback-danger)]">
               Hay errores de validación en este informe
             </p>
           ) : hasWarnings ? (
-            <p className="text-[11px] font-medium text-[var(--app-warning-text)]">
+            <p className="text-[11px] font-medium text-[var(--color-feedback-warning)]">
               Hay avisos de validación en este informe
             </p>
           ) : (
-            <p className="text-[11px] font-medium text-[var(--app-success-text)]">
+            <p className="text-[11px] font-medium text-[var(--color-feedback-success)]">
               Importación sin avisos de validación
             </p>
           )}
         </div>
-        <span className="rounded-full border border-[var(--app-border)] px-2 py-0.5 text-xs text-[var(--app-text-muted)]">
+        <span className="rounded-full border border-[var(--color-border-default)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">
           {report.importMode === "fast-path" ? "Directa" : "Asistente"} ·{" "}
           {report.version ?? "v1"}
           {report.ruleCatalogVersion
@@ -301,33 +301,33 @@ export function ImportReportPanel({
       </div>
 
       {report.executiveSummary && (
-        <p className="text-sm text-[var(--app-text-muted)]">
+        <p className="text-sm text-[var(--color-text-muted)]">
           {report.executiveSummary}
         </p>
       )}
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 text-sm">
         <div>
-          <p className="text-[var(--app-text-muted)]">Puntos importados</p>
-          <p className="font-semibold text-[var(--app-heading)]">
+          <p className="text-[var(--color-text-muted)]">Puntos importados</p>
+          <p className="font-semibold text-[var(--color-text-primary)]">
             {report.importedPointCount}
           </p>
         </div>
         <div>
-          <p className="text-[var(--app-text-muted)]">Filas descartadas</p>
-          <p className="font-semibold text-[var(--app-heading)]">
+          <p className="text-[var(--color-text-muted)]">Filas descartadas</p>
+          <p className="font-semibold text-[var(--color-text-primary)]">
             {report.discardedPointCount}
           </p>
         </div>
         <div>
-          <p className="text-[var(--app-text-muted)]">Cobertura</p>
-          <p className="font-semibold text-[var(--app-heading)]">
+          <p className="text-[var(--color-text-muted)]">Cobertura</p>
+          <p className="font-semibold text-[var(--color-text-primary)]">
             {Math.round(report.coverageRatio * 100)}%
           </p>
         </div>
         <div>
-          <p className="text-[var(--app-text-muted)]">Advertencias</p>
-          <p className="font-semibold text-[var(--app-heading)]">
+          <p className="text-[var(--color-text-muted)]">Advertencias</p>
+          <p className="font-semibold text-[var(--color-text-primary)]">
             {issueSummary.warning}
           </p>
         </div>
@@ -335,26 +335,26 @@ export function ImportReportPanel({
 
       <div className="grid gap-2 sm:grid-cols-3 text-sm">
         <div>
-          <p className="text-[var(--app-text-muted)]">Errores</p>
-          <p className="font-semibold text-[var(--app-danger-text)]">
+          <p className="text-[var(--color-text-muted)]">Errores</p>
+          <p className="font-semibold text-[var(--color-feedback-danger)]">
             {issueSummary.error}
           </p>
         </div>
         <div>
-          <p className="text-[var(--app-text-muted)]">Informativos</p>
-          <p className="font-semibold text-[var(--app-heading)]">
+          <p className="text-[var(--color-text-muted)]">Informativos</p>
+          <p className="font-semibold text-[var(--color-text-primary)]">
             {issueSummary.info}
           </p>
         </div>
         <div>
-          <p className="text-[var(--app-text-muted)]">Reglas evaluadas</p>
-          <p className="font-semibold text-[var(--app-heading)]">
+          <p className="text-[var(--color-text-muted)]">Reglas evaluadas</p>
+          <p className="font-semibold text-[var(--color-text-primary)]">
             {report.ruleCatalog?.length ?? 0}
           </p>
         </div>
       </div>
 
-      <ul className="space-y-1 text-sm text-[var(--app-text-muted)]">
+      <ul className="space-y-1 text-sm text-[var(--color-text-muted)]">
         {formatImportReportLines(report)
           .slice(0, 8)
           .map((line) => (
@@ -364,20 +364,20 @@ export function ImportReportPanel({
 
       {report.audit && report.audit.reasonCounts.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-[var(--app-heading)]">
+          <p className="text-sm font-medium text-[var(--color-text-primary)]">
             Auditoría de filas descartadas
           </p>
-          <div className="flex flex-wrap gap-2 text-xs text-[var(--app-text-muted)]">
+          <div className="flex flex-wrap gap-2 text-xs text-[var(--color-text-muted)]">
             {report.audit.reasonCounts.map((item) => (
               <span
                 key={item.code}
-                className="rounded-full border border-[var(--app-border)] px-2 py-0.5"
+                className="rounded-full border border-[var(--color-border-default)] px-2 py-0.5"
               >
                 {item.label}: {item.count}
               </span>
             ))}
           </div>
-          <ul className="space-y-1 text-xs text-[var(--app-text-muted)]">
+          <ul className="space-y-1 text-xs text-[var(--color-text-muted)]">
             {report.audit.sampledDiscardedRows.map((row) => (
               <li key={row.rowIndex}>
                 Fila {row.rowIndex + 1}: {row.reason}
@@ -385,7 +385,7 @@ export function ImportReportPanel({
             ))}
           </ul>
           {report.audit.truncated && (
-            <p className="text-xs text-[var(--app-text-muted)]">
+            <p className="text-xs text-[var(--color-text-muted)]">
               Muestra limitada a {report.audit.sampleLimit} filas de{" "}
               {report.audit.totalDiscardedRows} descartadas.
             </p>
@@ -395,7 +395,7 @@ export function ImportReportPanel({
 
       {issues.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-[var(--app-heading)]">
+          <p className="text-sm font-medium text-[var(--color-text-primary)]">
             Validación
           </p>
           <ul className="space-y-2">
@@ -421,8 +421,8 @@ export function ImportReportPanel({
       )}
 
       {report.reproducibility && (
-        <div className="rounded-md border border-[var(--app-border)] px-3 py-2 text-xs text-[var(--app-text-muted)]">
-          <p className="font-medium text-[var(--app-heading)]">
+        <div className="rounded-md border border-[var(--color-border-default)] px-3 py-2 text-xs text-[var(--color-text-muted)]">
+          <p className="font-medium text-[var(--color-text-primary)]">
             Auditoría reproducible
           </p>
           <p>

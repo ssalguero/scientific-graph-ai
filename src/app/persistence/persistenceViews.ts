@@ -31,11 +31,11 @@ const AUTOSAVE_INDICATOR_CLASS: Record<
   AutosaveIndicatorView["state"],
   string
 > = {
-  idle: "text-[var(--app-text-muted)]",
-  pending: "text-[var(--app-warning-text)]",
-  saving: "text-[var(--app-accent)]",
-  saved: "text-[var(--app-success-text)]",
-  error: "text-[var(--app-danger-text)]",
+  idle: "text-[var(--color-text-muted)]",
+  pending: "text-[var(--color-feedback-warning)]",
+  saving: "text-[var(--color-brand-primary)]",
+  saved: "text-[var(--color-feedback-success)]",
+  error: "text-[var(--color-feedback-danger)]",
 };
 
 const mapSizeTierToUiState = (

@@ -622,7 +622,7 @@ export function ImportarDestination({
                 <p
                   className={`mt-1 [@media(max-height:720px)]:mt-0.5 text-[length:var(--typography-heading-sm-font-size)] font-semibold tabular-nums ${
                     lastImportReport.warningCount > 0
-                      ? "text-[var(--app-warning-text)]"
+                      ? "text-[var(--color-feedback-warning)]"
                       : "text-[var(--color-text-primary)]"
                   }`}
                 >
@@ -636,7 +636,7 @@ export function ImportarDestination({
                 <p
                   className={`mt-1 [@media(max-height:720px)]:mt-0.5 text-[length:var(--typography-heading-sm-font-size)] font-semibold tabular-nums ${
                     lastImportReport.errorCount > 0
-                      ? "text-[var(--app-danger-text)]"
+                      ? "text-[var(--color-feedback-danger)]"
                       : "text-[var(--color-text-primary)]"
                   }`}
                 >
@@ -669,7 +669,7 @@ export function ImportarDestination({
           <p
             className={`mt-2 text-[length:var(--typography-body-lg-font-size)] font-semibold [@media(max-height:720px)]:mt-1 ${
               importReportHasIssues
-                ? "text-[var(--app-warning-text)]"
+                ? "text-[var(--color-feedback-warning)]"
                 : "text-[var(--color-text-primary)]"
             }`}
             role="status"

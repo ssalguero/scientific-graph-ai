@@ -57,7 +57,7 @@ export function VariableSelector({
         ))}
       </select>
       {errorMessage ? (
-        <p className="mt-1 text-xs text-[var(--app-danger-text)]" role="alert">
+        <p className="mt-1 text-xs text-[var(--color-feedback-danger)]" role="alert">
           {errorMessage}
         </p>
       ) : null}
@@ -79,16 +79,16 @@ export function VariableBadgeList({
           key={`${variable.kind}-${variable.seriesId}`}
           type="button"
           onClick={() => onInsert?.(variable.seriesId)}
-          className="inline-flex items-center gap-1 rounded-full border border-[var(--app-border)] bg-[var(--app-surface-muted)] px-2 py-0.5 text-xs text-[var(--app-text)]"
+          className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)] px-2 py-0.5 text-xs text-[var(--color-text-primary)]"
         >
           <span>{variable.label}</span>
           {variable.badges.includes("fx") ? (
-            <span className="text-[10px] font-semibold text-[var(--app-accent)]">
+            <span className="text-[10px] font-semibold text-[var(--color-brand-primary)]">
               ƒx
             </span>
           ) : null}
           {variable.badges.includes("transform") ? (
-            <span className="text-[10px] font-semibold text-[var(--app-warning-text)]">
+            <span className="text-[10px] font-semibold text-[var(--color-feedback-warning)]">
               ⇄
             </span>
           ) : null}

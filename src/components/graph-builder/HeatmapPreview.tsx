@@ -95,7 +95,7 @@ function formatCellValue(value: number): string {
 export function HeatmapPreview({ data, chartTokens }: HeatmapPreviewProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-full min-h-[12rem] items-center justify-center text-sm text-[var(--app-text-muted)]">
+      <div className="flex h-full min-h-[12rem] items-center justify-center text-sm text-[var(--color-text-muted)]">
         Sin datos válidos para el heatmap.
       </div>
     );
@@ -122,7 +122,7 @@ export function HeatmapPreview({ data, chartTokens }: HeatmapPreviewProps) {
         {columns.map((column) => (
           <div
             key={`heatmap-col-${column}`}
-            className="truncate px-1 py-1 text-center font-semibold text-[var(--app-heading)]"
+            className="truncate px-1 py-1 text-center font-semibold text-[var(--color-text-primary)]"
             style={labelStyle}
             title={column}
           >
@@ -133,7 +133,7 @@ export function HeatmapPreview({ data, chartTokens }: HeatmapPreviewProps) {
         {rows.map((row) => (
           <div key={`heatmap-row-${row}`} className="contents">
             <div
-              className="truncate px-2 py-1 font-semibold text-[var(--app-heading)]"
+              className="truncate px-2 py-1 font-semibold text-[var(--color-text-primary)]"
               style={labelStyle}
               title={row}
             >

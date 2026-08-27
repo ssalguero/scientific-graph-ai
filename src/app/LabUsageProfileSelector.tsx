@@ -7,6 +7,7 @@ import {
   LAB_USAGE_PROFILE_ORDER,
   type LabUsageProfile,
 } from "./labUsageProfile";
+import { DS_FOCUS_RING } from "@/lib/ui/focus-ring";
 
 type LabUsageProfileSelectorProps = {
   value: LabUsageProfile;
@@ -68,7 +69,7 @@ export function LabUsageProfileSelector({
                     value={profileId}
                     checked={value === profileId}
                     onChange={() => onChange(profileId)}
-                    className="h-3 w-3 border-[var(--color-border-default)] text-[var(--color-brand-primary)] focus:ring-[var(--color-brand-primary)]/20"
+                    className={`h-3 w-3 border-[var(--color-border-default)] text-[var(--color-brand-primary)] ${DS_FOCUS_RING}`}
                   />
                   {meta.label}
                 </label>
@@ -93,21 +94,21 @@ export function LabExpertModeToast({ onDismiss }: LabExpertModeToastProps) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 max-w-md w-[calc(100%-2rem)] rounded-lg border border-[var(--app-accent)]/35 bg-[var(--app-surface)] px-4 py-3 shadow-lg"
+      className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 max-w-md w-[calc(100%-2rem)] rounded-lg border border-[var(--color-brand-primary)]/35 bg-[var(--color-surface-default)] px-4 py-3 shadow-lg"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-[var(--app-heading)]">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Perfil experto activado.
           </p>
-          <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
             Todas las herramientas están disponibles.
           </p>
         </div>
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-heading)]"
+          className="shrink-0 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           aria-label="Cerrar notificación"
         >
           ✕

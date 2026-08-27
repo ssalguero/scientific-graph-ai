@@ -80,28 +80,28 @@ export function WorksheetFormulaBuilderModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4">
       <div
-        className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-2xl"
+        className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="worksheet-formula-builder-title"
       >
-        <div className="border-b border-[var(--app-border)] px-5 py-4">
+        <div className="border-b border-[var(--color-border-default)] px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2
                 id="worksheet-formula-builder-title"
-                className="text-lg font-semibold text-[var(--app-heading)]"
+                className="text-lg font-semibold text-[var(--color-text-primary)]"
               >
                 Nueva columna derivada
               </h2>
-              <p className="text-sm text-[var(--app-text-muted)]">
+              <p className="text-sm text-[var(--color-text-muted)]">
                 Combine varias variables con expresiones matemáticas.
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="text-sm text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
+              className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
             >
               Cerrar
             </button>
@@ -137,7 +137,7 @@ export function WorksheetFormulaBuilderModal({
               className={`${inputField} font-mono text-sm`}
             />
             {errorMessage ? (
-              <p className="mt-2 text-sm text-[var(--app-danger-text)]">
+              <p className="mt-2 text-sm text-[var(--color-feedback-danger)]">
                 {errorMessage}
               </p>
             ) : null}
@@ -173,14 +173,14 @@ export function WorksheetFormulaBuilderModal({
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-xs text-[var(--app-text-muted)]">
+            <p className="mt-2 text-xs text-[var(--color-text-muted)]">
               Operadores: + − × / ^ ( ). V2: condicionales, estadísticas por
               fila y funciones sobre columnas completas.
             </p>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-[var(--app-border)] px-5 py-4">
+        <div className="flex justify-end gap-2 border-t border-[var(--color-border-default)] px-5 py-4">
           <button type="button" className={btnOutlineSm} onClick={onClose}>
             Cancelar
           </button>
