@@ -12,6 +12,7 @@ import type { ComparisonSlotIdV1 } from "./types";
 import { issue, pushIssue } from "./guards";
 import type { ProjectValidationIssue } from "./types";
 import {
+  sanitizeLegendHiddenKeys,
   sanitizeSelections,
   sanitizeVisibility,
   sanitizeWorkflowSession,
@@ -240,8 +241,9 @@ export const sanitizeScientificProjectV2 = (
         warnings
       ),
       legend: {
-        hiddenKeys: cloned.analysisConfig.legend.hiddenKeys.filter((key) =>
-          seriesIds.has(key)
+        hiddenKeys: sanitizeLegendHiddenKeys(
+          cloned.analysisConfig.legend.hiddenKeys,
+          seriesIds
         ),
       },
     },

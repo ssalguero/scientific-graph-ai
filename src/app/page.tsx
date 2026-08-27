@@ -15918,6 +15918,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setActiveColumnRegistry(columnRegistry);
     setImportReportExpanded(true);
     setExperimentalSeries(mappedSeries);
+    setChartData([]);
     setWorksheetModified(false);
     setCurrentDatasetInfo(createSessionDatasetInfo(newDataset));
     applyExperimentalXViewportFit(mappedSeries, {

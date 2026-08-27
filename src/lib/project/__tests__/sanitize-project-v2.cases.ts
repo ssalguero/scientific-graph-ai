@@ -348,5 +348,53 @@ export const runSanitizeProjectV2CaseSuite = (): CaseResult[] => {
       comparisonOnly.slots.B.sourceDatasetId === DATASET_B_ID
   );
 
+  const legendSource = cloneProject(valid);
+  legendSource.analysisConfig.legend.hiddenKeys = [
+    "exp:s1",
+    "exp:s2",
+    "exp:missing",
+    "exp:",
+    "s1",
+    "curve:0",
+    "derivative:1",
+    "integral:0",
+    "regression:s1",
+    "not-a-key",
+  ];
+  const legendSanitized =
+    sanitizeScientificProjectV2(legendSource).project.analysisConfig.legend
+      .hiddenKeys;
+  assertCase(
+    "sanitize.legend.expPresent.survives",
+    legendSanitized.includes("exp:s1")
+  );
+  assertCase(
+    "sanitize.legend.expSecondPresent.survives",
+    legendSanitized.includes("exp:s2")
+  );
+  assertCase(
+    "sanitize.legend.expOrphan.removed",
+    !legendSanitized.includes("exp:missing") && !legendSanitized.includes("exp:")
+  );
+  assertCase(
+    "sanitize.legend.overlayPrefixes.dropped",
+    !legendSanitized.includes("curve:0") &&
+      !legendSanitized.includes("derivative:1") &&
+      !legendSanitized.includes("integral:0") &&
+      !legendSanitized.includes("regression:s1")
+  );
+  assertCase(
+    "sanitize.legend.rawSeriesId.survives",
+    legendSanitized.includes("s1")
+  );
+  assertCase(
+    "sanitize.legend.junk.removed",
+    !legendSanitized.includes("not-a-key")
+  );
+  assertCase(
+    "sanitize.legend.keptOrder",
+    JSON.stringify(legendSanitized) === JSON.stringify(["exp:s1", "exp:s2", "s1"])
+  );
+
   return results;
 };

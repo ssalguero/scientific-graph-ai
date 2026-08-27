@@ -89,6 +89,26 @@ export const sanitizeSelections = (
   };
 };
 
+const EXPERIMENTAL_LEGEND_PREFIX = "exp:";
+
+/** Series-bound legend hiddenKeys only: raw series.id or exp:${id} when that series exists. */
+export const sanitizeLegendHiddenKeys = (
+  hiddenKeys: string[],
+  seriesIds: Set<string>
+): string[] =>
+  hiddenKeys.filter((key) => {
+    if (seriesIds.has(key)) {
+      return true;
+    }
+
+    if (!key.startsWith(EXPERIMENTAL_LEGEND_PREFIX)) {
+      return false;
+    }
+
+    const seriesId = key.slice(EXPERIMENTAL_LEGEND_PREFIX.length);
+    return seriesId.length > 0 && seriesIds.has(seriesId);
+  });
+
 export const sanitizeWorkflowSession = (
   session: GuidedWorkflowSession,
   seriesCount: number,
@@ -370,8 +390,9 @@ export const sanitizeProjectSnapshot = (
         warnings
       ),
       legend: {
-        hiddenKeys: project.analysisConfig.legend.hiddenKeys.filter((key) =>
-          seriesIds.has(key)
+        hiddenKeys: sanitizeLegendHiddenKeys(
+          project.analysisConfig.legend.hiddenKeys,
+          seriesIds
         ),
       },
     },
