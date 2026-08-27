@@ -12,7 +12,7 @@ export type SmartStartOption = {
 export const SMART_START_OPTIONS: SmartStartOption[] = [
   {
     id: "analyze-dataset",
-    title: "Importar / Datos",
+    title: "Importar",
     description: "Incorpora tus datos para comenzar.",
     actionLabel: "Empezar con datos",
     prominence: "primary",
@@ -29,7 +29,7 @@ export const SMART_START_OPTIONS: SmartStartOption[] = [
     title: "Gráfico y=f(x)",
     description:
       "Expresiones y funciones matemáticas y=f(x). La visualización queda en Resultados. No abre el Constructor Visual.",
-    actionLabel: "Abrir constructor",
+    actionLabel: "Abrir y=f(x)",
     prominence: "secondary",
   },
   {
