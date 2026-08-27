@@ -377,6 +377,7 @@ export const activateSessionDatasetForTest = (
   };
 };
 
+// Test stand-in for the worksheet dual-write flush (prepareCollectContextForSave / flushEditorDualWriteIntoCollectContext).
 export const prepareCollectContextForSaveForTest = (
   ctx: EditorProjectCollectContextV2,
   editor: WorksheetEditorState

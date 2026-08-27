@@ -121,6 +121,7 @@ import {
   slotReferencesSessionDataset,
   type SessionDataset,
 } from "@/lib/sessionDatasetRegistry";
+import type { EditorProjectCollectContextV2 } from "@/lib/project/editor-collect-context-v2";
 import { extractVisualGraphRuntimeState } from "@/lib/project/apply-hydrate-project-v2-patch";
 import {
   injectVisualGraphEntriesBySourceDatasetId,
@@ -15845,6 +15846,19 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     );
   };
 
+  const flushEditorDualWriteIntoCollectContext = (
+    ctx: EditorProjectCollectContextV2
+  ): EditorProjectCollectContextV2 => {
+    const withWorksheet = {
+      ...ctx,
+      sessionDatasets: persistActiveSessionDataset([...ctx.sessionDatasets]),
+    };
+    return prepareCollectContextWithSessionVisualGraphs(
+      withWorksheet,
+      projectVisualGraphs
+    );
+  };
+
   const persistSessionRegistryWithActiveVisualGraphs = (
     registry: SessionDataset[]
   ): SessionDataset[] =>
@@ -20784,16 +20798,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     onProjectSaved: (meta) => {
       recordProjectHistory(buildProjectHistoryEntry("project.saved", meta));
     },
-    prepareCollectContextForSave: (ctx) => {
-      const withWorksheet = {
-        ...ctx,
-        sessionDatasets: persistActiveSessionDataset([...ctx.sessionDatasets]),
-      };
-      return prepareCollectContextWithSessionVisualGraphs(
-        withWorksheet,
-        projectVisualGraphs
-      );
-    },
+    prepareCollectContextForSave: flushEditorDualWriteIntoCollectContext,
     finalizeProjectSnapshotForSave: (project, ctx) =>
       mergeVisualGraphsFromSessionIntoProjectSnapshot(project, ctx),
     showDerivative,

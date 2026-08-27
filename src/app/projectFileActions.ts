@@ -51,6 +51,7 @@ export type ProjectFileActionsDeps = {
     target: "local" | "file";
     projectName: string;
   }) => void;
+  // Dual-write flush (editor experimentalSeries → sessionDatasets). Must run before collect.
   prepareCollectContextForSave?: (
     ctx: EditorProjectCollectContextV2
   ) => EditorProjectCollectContextV2;
@@ -78,6 +79,7 @@ export const createProjectFileActions = (deps: ProjectFileActionsDeps) => {
     deps.setProjectMetadata(nextMetadata);
 
     const baseCtx = deps.buildCollectContextV2();
+    // Dual-write flush, then collect. Do not reverse this order.
     const ctx = deps.prepareCollectContextForSave?.(baseCtx) ?? baseCtx;
 
     const collected = collectProjectSnapshotV2({

@@ -86,7 +86,7 @@ flowchart TB
 
 ```
 sessionDatasets (worksheet + visualGraphEntries stash en payload runtime)
-  → prepareCollectContextForSave / finalizeProjectSnapshotForSave
+  → prepareCollectContextForSave (named dual-write flush: editor experimentalSeries → sessionDatasets; must run before collect) / finalizeProjectSnapshotForSave
   → collectProjectSnapshotV2 (+ collect-visual-graph-v2)
   → map-session-dataset (worksheet por dataset)
   → serializeProjectV2 → .sgproj
