@@ -30,6 +30,17 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# P7 W1 — local gate/debug artifacts (do not re-track)
+/.d23-*
+/.d24-*
+/.e2e1-*
+/.diagnostic-*
+/validate-full*.log
+/validate-prod2a-gate*.log
+scripts/_tmp*.pdf
+scripts/.validation-*.pdf
+.cursor/debug*.log
+
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
