@@ -81,8 +81,8 @@ const parseNumericPair = (parts: string[]): { x: number; y: number } | null => {
 };
 
 const isCsvHeaderRow = (line: string): boolean => {
-  const parts = line.split(",").map((part) => part.trim().toLowerCase());
-  return parts.length >= 2 && parts[0] === "x" && parts[1] === "y";
+  const parts = line.split(",").map((part) => part.trim());
+  return parts.length >= 2 && parseNumericPair(parts) === null;
 };
 
 const isMultiSeriesDelimitedHeader = (parts: string[]): boolean => {

@@ -1,6 +1,7 @@
 import {
   buildExperimentalSeriesCollection,
   detectExperimentalDataLayout,
+  parseExperimentalDataFile,
   parseMultiSeriesCsvContent,
 } from "../builders";
 import {
@@ -124,6 +125,51 @@ export const runSeriesCaseSuite = (): CaseResult[] => {
   assertCase(
     "builders.buildCollection",
     built.length === 1 && built[0]?.name === "A" && built[0]?.points.length === 1
+  );
+
+  const arbitraryHeader = parseExperimentalDataFile(
+    "csv",
+    "time,temperature\n1,20\n2,21",
+    "time-temperature.csv"
+  );
+  assertCase(
+    "builders.parseCsv.arbitraryHeader.timeTemperature",
+    arbitraryHeader?.length === 1 &&
+      arbitraryHeader[0]?.points.length === 2 &&
+      arbitraryHeader[0]?.points[0]?.x === 1 &&
+      arbitraryHeader[0]?.points[0]?.y === 20 &&
+      arbitraryHeader[0]?.points[1]?.x === 2 &&
+      arbitraryHeader[0]?.points[1]?.y === 21
+  );
+
+  const xyHeader = parseExperimentalDataFile(
+    "csv",
+    "x,y\n1,20\n2,21",
+    "xy.csv"
+  );
+  assertCase(
+    "builders.parseCsv.xyHeader",
+    xyHeader?.length === 1 &&
+      xyHeader[0]?.points.length === 2 &&
+      xyHeader[0]?.points[0]?.x === 1 &&
+      xyHeader[0]?.points[0]?.y === 20 &&
+      xyHeader[0]?.points[1]?.x === 2 &&
+      xyHeader[0]?.points[1]?.y === 21
+  );
+
+  const headerless = parseExperimentalDataFile(
+    "csv",
+    "1,20\n2,21",
+    "headerless.csv"
+  );
+  assertCase(
+    "builders.parseCsv.headerless",
+    headerless?.length === 1 &&
+      headerless[0]?.points.length === 2 &&
+      headerless[0]?.points[0]?.x === 1 &&
+      headerless[0]?.points[0]?.y === 20 &&
+      headerless[0]?.points[1]?.x === 2 &&
+      headerless[0]?.points[1]?.y === 21
   );
 
   return results;
