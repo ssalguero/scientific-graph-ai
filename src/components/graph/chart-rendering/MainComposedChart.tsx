@@ -213,7 +213,7 @@ export function MainComposedChart({
               stroke={curve.color}
               strokeWidth={2}
               dot={false}
-              connectNulls
+              connectNulls={!usesLogY}
             />
           )
         )}

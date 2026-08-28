@@ -10,6 +10,7 @@ import {
   getAxisScaleViolations,
   getAxisScaleWarnings,
   getChartTheme,
+  sanitizeChartDataForLogScale,
   usesLogXScale,
   usesLogYScale,
 } from "@/lib/graph/axes";
@@ -220,6 +221,95 @@ export const runAxesCaseSuite = (): CaseResult[] => {
   assertCase(
     "synchronization.alignVisibleRangeToDataRange",
     aligned.visibleMinX === 3 && aligned.visibleMaxX === 7
+  );
+
+  const xSquaredFixture: Array<Record<string, unknown>> = [];
+  for (let x = -10; x <= 10; x += 0.5) {
+    xSquaredFixture.push({ x, y1: x * x });
+  }
+
+  const linearSanitized = sanitizeChartDataForLogScale(
+    xSquaredFixture,
+    false,
+    false
+  );
+  assertCase(
+    "scales.sanitizeChartDataForLogScale.linearUnchanged",
+    linearSanitized === xSquaredFixture &&
+      linearSanitized.length === xSquaredFixture.length &&
+      linearSanitized.every(
+        (row, index) =>
+          row.x === xSquaredFixture[index]?.x &&
+          row.y1 === xSquaredFixture[index]?.y1
+      )
+  );
+
+  const logLogSanitized = sanitizeChartDataForLogScale(
+    xSquaredFixture,
+    true,
+    true
+  );
+  const hasPositiveBranchStart = logLogSanitized.some(
+    (row) => approx(row.x as number, 0.5) && approx(row.y1 as number, 0.25)
+  );
+  const hasPositiveBranchEnd = logLogSanitized.some(
+    (row) => approx(row.x as number, 10) && approx(row.y1 as number, 100)
+  );
+  assertCase(
+    "scales.sanitizeChartDataForLogScale.logLogXSquared",
+    logLogSanitized.length > 0 &&
+      logLogSanitized.every(
+        (row) =>
+          typeof row.x === "number" &&
+          row.x > 0 &&
+          typeof row.y1 === "number" &&
+          row.y1 > 0
+      ) &&
+      hasPositiveBranchStart &&
+      hasPositiveBranchEnd &&
+      !logLogSanitized.some((row) => row.x === 0) &&
+      xSquaredFixture.some((row) => row.x === 0 && row.y1 === 0)
+  );
+
+  const logXSanitized = sanitizeChartDataForLogScale(
+    [
+      { x: -1, y1: 4 },
+      { x: 0, y1: 0 },
+      { x: 2, y1: -3 },
+    ],
+    true,
+    false
+  );
+  assertCase(
+    "scales.sanitizeChartDataForLogScale.logXAllowsNonPositiveY",
+    logXSanitized.length === 1 &&
+      logXSanitized[0]?.x === 2 &&
+      logXSanitized[0]?.y1 === -3
+  );
+
+  const logYNegativeX = sanitizeChartDataForLogScale(
+    [{ x: -2, y1: 4 }],
+    false,
+    true
+  );
+  assertCase(
+    "scales.sanitizeChartDataForLogScale.logYRetainsNegativeX",
+    logYNegativeX.length === 1 &&
+      logYNegativeX[0]?.x === -2 &&
+      logYNegativeX[0]?.y1 === 4
+  );
+
+  const logYMixed = sanitizeChartDataForLogScale(
+    [{ x: 2, y1: -1, y2: 4 }],
+    false,
+    true
+  );
+  assertCase(
+    "scales.sanitizeChartDataForLogScale.logYMixedCurveRow",
+    logYMixed.length === 1 &&
+      logYMixed[0]?.x === 2 &&
+      logYMixed[0]?.y1 === null &&
+      logYMixed[0]?.y2 === 4
   );
 
   return results;

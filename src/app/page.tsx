@@ -186,6 +186,7 @@ import {
   getAxisScaleViolations,
   getAxisScaleWarnings,
   getChartTheme,
+  sanitizeChartDataForLogScale,
   usesLogXScale,
   usesLogYScale,
   type AxisScaleMode,
@@ -20590,13 +20591,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         showScientificAssistant));
   const showAdvancedResultsPanels =
     profileShowsAdvancedResults(labUsageProfile) && showMathResultsPanel;
-  const composedChartData = useMemo(() => {
-    if (chartData.length > 0) return chartData;
-
-    // Las series experimentales se dibujan con Scatter por serie; no fusionar
-    // filas por X compartido (evita claves duplicadas en ComposedChart).
-    return chartData;
-  }, [chartData]);
+  const composedChartData = useMemo(
+    () => sanitizeChartDataForLogScale(chartData, usesLogX, usesLogY),
+    [chartData, usesLogX, usesLogY]
+  );
   const chartTheme = useMemo(() => getChartTheme(themeMode), [themeMode]);
 
   useEffect(() => {

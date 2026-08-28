@@ -28,6 +28,48 @@ export const getAxisScaleViolations = (
   };
 };
 
+const isPositiveFinite = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value > 0;
+
+export const sanitizeChartDataForLogScale = (
+  data: Array<Record<string, unknown>>,
+  usesLogX: boolean,
+  usesLogY: boolean
+): Array<Record<string, unknown>> => {
+  if (!usesLogX && !usesLogY) return data;
+
+  const sanitized: Array<Record<string, unknown>> = [];
+
+  for (const row of data) {
+    if (usesLogX && !isPositiveFinite(row.x)) continue;
+
+    if (!usesLogY) {
+      sanitized.push(row);
+      continue;
+    }
+
+    const next: Record<string, unknown> = { ...row };
+    let hasPlottableY = false;
+
+    for (const key of Object.keys(next)) {
+      if (key === "x") continue;
+      const value = next[key];
+      if (typeof value !== "number") continue;
+      if (isPositiveFinite(value)) {
+        hasPlottableY = true;
+      } else {
+        next[key] = null;
+      }
+    }
+
+    if (hasPlottableY) {
+      sanitized.push(next);
+    }
+  }
+
+  return sanitized;
+};
+
 export const getAxisScaleWarnings = (
   mode: AxisScaleMode,
   violations: { hasNonPositiveX: boolean; hasNonPositiveY: boolean }
