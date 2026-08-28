@@ -41,7 +41,7 @@ const renameLabels = [
   "Visualización",
   "Proyecto",
   "Científico",
-  "Análisis",
+  "Herramientas",
   "Recursos",
   "Ajustes",
 ];
@@ -126,9 +126,9 @@ assertCase(
   "legacy label Proyecto científico absent"
 );
 assertCase(
-  "rename.absent.Herramientas",
-  !sidebarSource.includes("Herramientas"),
-  "legacy label Herramientas absent"
+  "rename.absent.AnalisisSectionTitle",
+  !sidebarSource.includes('title="Análisis"'),
+  "sidebar tools section is not labelled Análisis (S1 NAV-01)"
 );
 assertCase(
   "rename.absent.Sistema",

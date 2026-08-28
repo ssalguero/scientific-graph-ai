@@ -8,6 +8,7 @@ import {
   useState,
   Fragment,
   type ChangeEvent,
+  type KeyboardEvent,
   type RefObject,
   type ReactNode,
 } from "react";
@@ -634,6 +635,12 @@ const WORKSPACE_TABS: { id: WorkspaceSection; label: string }[] = [
   { id: "reports", label: "Reportes" },
 ];
 
+const workspaceTabId = (section: WorkspaceSection) =>
+  `workspace-tab-${section}`;
+
+const workspacePanelId = (section: WorkspaceSection) =>
+  `workspace-panel-${section}`;
+
 const PERSISTED_WORKSPACE_SECTIONS = [
   "data",
   "analysis",
@@ -652,6 +659,7 @@ type WorkspaceTabProps = {
   label: string;
   isActive: boolean;
   onSelect: (section: WorkspaceSection) => void;
+  visibleSections: WorkspaceSection[];
   badge?: number;
 };
 
@@ -660,18 +668,54 @@ function WorkspaceTab({
   label,
   isActive,
   onSelect,
+  visibleSections,
   badge,
 }: WorkspaceTabProps) {
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (
+      event.key !== "ArrowLeft" &&
+      event.key !== "ArrowRight" &&
+      event.key !== "Home" &&
+      event.key !== "End"
+    ) {
+      return;
+    }
+    event.preventDefault();
+    const count = visibleSections.length;
+    const index = visibleSections.indexOf(section);
+    if (count === 0 || index < 0) return;
+    let nextIndex = index;
+    if (event.key === "ArrowLeft") {
+      nextIndex = (index - 1 + count) % count;
+    } else if (event.key === "ArrowRight") {
+      nextIndex = (index + 1) % count;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else {
+      nextIndex = count - 1;
+    }
+    const next = visibleSections[nextIndex];
+    if (!next || next === section) return;
+    onSelect(next);
+    requestAnimationFrame(() => {
+      document.getElementById(workspaceTabId(next))?.focus();
+    });
+  };
+
   return (
     <button
       type="button"
       role="tab"
+      id={workspaceTabId(section)}
+      aria-controls={workspacePanelId(section)}
       aria-selected={isActive}
+      tabIndex={isActive ? 0 : -1}
       onClick={() => onSelect(section)}
+      onKeyDown={handleKeyDown}
       className={
         isActive
-          ? "relative rounded-none border-0 border-b-2 border-[var(--color-brand-primary)] bg-transparent px-3 py-2.5 text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] transition-colors"
-          : "relative rounded-none border-0 border-b-2 border-transparent bg-transparent px-3 py-2.5 text-xs sm:text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+          ? `relative rounded-none border-0 border-b-2 border-[var(--color-brand-primary)] bg-transparent px-3 py-2.5 text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] transition-colors ${DS_FOCUS_RING}`
+          : `relative rounded-none border-0 border-b-2 border-transparent bg-transparent px-3 py-2.5 text-xs sm:text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors ${DS_FOCUS_RING}`
       }
     >
       <span className="inline-flex items-center gap-2">
@@ -988,7 +1032,7 @@ const SCIENTIFIC_MODULES: Omit<ScientificModule, "enabled">[] = [
   },
   {
     id: "reports",
-    name: "Reportes",
+    name: "Módulo de reportes",
     icon: "📄",
     description: "Exportación y reporte científico",
   },
@@ -1102,7 +1146,7 @@ function InspectorCategoryButton({
       role="tab"
       aria-selected={isActive}
       onClick={onSelect}
-      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs sm:text-sm font-medium transition-colors ${
+      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs sm:text-sm font-medium transition-colors ${DS_FOCUS_RING} ${
         isActive
           ? "bg-[var(--color-brand-primary)]/10 text-[var(--color-text-primary)] ring-1 ring-[var(--color-brand-primary)]/30 border border-[var(--color-brand-primary)]/40"
           : "border border-transparent text-[var(--color-text-primary)] hover:bg-[var(--color-surface-canvas)]"
@@ -15375,6 +15419,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   });
   const [highlightPublicationDashboards, setHighlightPublicationDashboards] =
     useState(false);
+  const methodologyPublicationGroupRef = useRef<HTMLDivElement | null>(null);
+  const [methodologyPublicationOpen, setMethodologyPublicationOpen] =
+    useState(false);
   const [statisticsDashboardsOpen, setStatisticsDashboardsOpen] =
     useState(false);
   const [highlightProjectPanel, setHighlightProjectPanel] = useState(false);
@@ -15463,6 +15510,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     node.focus();
   }, [showMultiDatasetComparison, activeWorkspaceSection]);
   const [sidebarRailCollapsed, setSidebarRailCollapsed] = useState(true);
+  const sidebarUserRailPreferenceRef = useRef<boolean | null>(null);
+  const sidebarWasFaceShellRef = useRef(true);
   const [dataWorkspaceView, setDataWorkspaceView] =
     useState<DataWorkspaceView>("experimental");
   const [continueVisualGraphId, setContinueVisualGraphId] = useState<
@@ -15694,6 +15743,24 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }, 12000);
     return () => window.clearTimeout(timer);
   }, [highlightPublicationDashboards, highlightProjectPanel]);
+
+  useEffect(() => {
+    if (!highlightPublicationDashboards) return;
+    if (analysisInspectorSection !== "statistics") return;
+    if (activeWorkspaceSection !== "analysis") return;
+    setMethodologyPublicationOpen(true);
+    const timer = window.setTimeout(() => {
+      methodologyPublicationGroupRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [
+    highlightPublicationDashboards,
+    analysisInspectorSection,
+    activeWorkspaceSection,
+  ]);
 
   useEffect(() => {
     const visible = ANALYSIS_INSPECTOR_CATEGORIES.filter((category) =>
@@ -18150,6 +18217,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setHighlightProjectPanel,
     startGuidedWorkflow,
     setImportDestinationActive,
+    importDestinationActive,
     importarDestinationRef,
   });
   const revealScientificAssistant = () => {
@@ -21191,10 +21259,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       setSidebarRailCollapsed(!homeNeedsProjectAttention);
     } else if (isImportarShell) {
       setSidebarRailCollapsed(true);
-    } else {
-      setSidebarRailCollapsed(false);
+    } else if (sidebarWasFaceShellRef.current) {
+      setSidebarRailCollapsed(sidebarUserRailPreferenceRef.current ?? false);
     }
+    sidebarWasFaceShellRef.current = isHomeShell || isImportarShell;
   }, [isHomeShell, isImportarShell, homeNeedsProjectAttention]);
+
+  const handleSidebarCollapsedChange = (collapsed: boolean) => {
+    if (!isHomeShell && !isImportarShell) {
+      sidebarUserRailPreferenceRef.current = collapsed;
+    }
+    setSidebarRailCollapsed(collapsed);
+  };
 
   // CRP-6.1 — instructional copy lives in Smart Start / stage content (compact header).
 
@@ -21256,7 +21332,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     </button>
                     <button
                       type="button"
-                      className={`${btnPrimary} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
+                      className={`${btnOutlineSm} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
                       onClick={() => setGuestAuthNoticeAt(Date.now())}
                     >
                       Registrarse
@@ -21276,6 +21352,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       label={tab.label}
                       isActive={activeWorkspaceSection === tab.id}
                       onSelect={selectWorkspaceSection}
+                      visibleSections={visibleWorkspaceTabs.map(
+                        (visibleTab) => visibleTab.id
+                      )}
                       badge={
                         tab.id === "analysis"
                           ? activeVisibilityToggleCount
@@ -21306,7 +21385,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
                 {!isHomeShell ? (
                   <div
-                    className="opacity-30 max-w-[14rem] scale-90 origin-left pointer-events-auto"
+                    className="max-w-[14rem] origin-left pointer-events-auto"
                     data-lab-profile-chrome
                   >
                     <LabUsageProfileSelector
@@ -21324,9 +21403,12 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       <Sidebar
         workspaceSection={activeWorkspaceSection}
         collapsed={sidebarRailCollapsed}
-        onCollapsedChange={setSidebarRailCollapsed}
+        onCollapsedChange={handleSidebarCollapsedChange}
         chromeSuppressed={sidebarChromeSuppressed}
-        onNewCurve={newGraph}
+        onNewCurve={() => {
+          newGraph();
+          openDataView("curves");
+        }}
         onClearCurves={clearGraph}
         graphLibraryOpen={sidebarGraphLibraryOpen}
         onToggleGraphLibrary={() =>
@@ -21465,6 +21547,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 ? "flex h-full min-h-0 flex-1 flex-col"
                 : "hidden"
             }
+            id={workspacePanelId("home")}
+            role="tabpanel"
+            aria-labelledby={workspaceTabId("home")}
             aria-hidden={activeWorkspaceSection !== "home"}
             data-home-stage
           >
@@ -21510,6 +21595,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
           <>
           <section
             className={activeWorkspaceSection === "data" ? "" : "hidden"}
+            id={workspacePanelId("data")}
+            role="tabpanel"
+            aria-labelledby={workspaceTabId("data")}
             aria-hidden={activeWorkspaceSection !== "data"}
           >
             {importDestinationActive ? (
@@ -21518,29 +21606,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   stepLabel="Ahora · Importar"
                   contextLine={
                     currentDatasetInfo || experimentalSeries.length > 0
-                      ? `Dataset listo. Continúe a Análisis. ${formatPr5ContinuityDisposition()}`
-                      : `Importe datos para continuar a Datos. ${formatPr5ContinuityDisposition()}`
+                      ? "Dataset listo. Continúe a Datos."
+                      : "Importe datos para continuar a Datos."
                   }
-                  actions={[
-                    ...(currentDatasetInfo || experimentalSeries.length > 0
+                  actions={
+                    currentDatasetInfo || experimentalSeries.length > 0
                       ? [
                           {
-                            label: "Continuar a Análisis →",
-                            onClick: () =>
-                              selectWorkspaceSection("analysis"),
+                            label: "Continuar a Datos →",
+                            onClick: () => selectWorkspaceSection("data"),
                             prominence: "primary" as const,
                           },
                         ]
-                      : []),
-                    {
-                      label: "Continuar a Datos →",
-                      onClick: () => selectWorkspaceSection("data"),
-                      prominence:
-                        currentDatasetInfo || experimentalSeries.length > 0
-                          ? ("secondary" as const)
-                          : ("primary" as const),
-                    },
-                  ]}
+                      : []
+                  }
                 />
                 <ImportarDestination
                   selectedDataSourceId={selectedDataSourceId}
@@ -21576,17 +21655,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   ? "Importe datos experimentales para habilitar Análisis."
                   : workflowContextLine,
                 PR5_GE_VGB_DISTINCT,
-                formatPr5ContinuityDisposition(),
               ].join(" ")}
               actions={[
-                {
-                  label: "Constructor y=f(x)",
-                  onClick: () => openDataView("curves"),
-                },
-                {
-                  label: "Constructor Visual",
-                  onClick: () => openDataView("visual-builder"),
-                },
                 ...(chartData.length > 0 || projectVisualGraphs.length > 0
                   ? [
                       {
@@ -21621,8 +21691,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   onClick={() => setDataWorkspaceView(view.id)}
                   className={
                     dataWorkspaceView === view.id
-                      ? "rounded-md border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--color-text-primary)]"
-                      : `${btnOutlineSm} font-medium`
+                      ? `rounded-md border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--color-text-primary)] ${DS_FOCUS_RING}`
+                      : `${btnOutlineSm} font-medium ${DS_FOCUS_RING}`
                   }
                 >
                   {view.label}
@@ -22487,6 +22557,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
           <section
             className={activeWorkspaceSection === "analysis" ? "" : "hidden"}
+            id={workspacePanelId("analysis")}
+            role="tabpanel"
+            aria-labelledby={workspaceTabId("analysis")}
             aria-hidden={activeWorkspaceSection !== "analysis"}
           >
             <h2 className={sectionLabel}>🔬 Análisis</h2>
@@ -24091,10 +24164,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       ) : null}
 
                       {profileShowsStatisticsGroup("metodologia", labUsageProfile) ? (
+                      <div ref={methodologyPublicationGroupRef}>
                       <InspectorToggleGroup
                         title="Metodología y publicación"
                         defaultOpen={false}
-                        open={forceExpertInspectorOpen ? true : undefined}
+                        open={
+                          forceExpertInspectorOpen
+                            ? true
+                            : methodologyPublicationOpen
+                              ? true
+                              : undefined
+                        }
+                        onOpenChange={setMethodologyPublicationOpen}
                       >
                       <MethodologyVisibilityCallout
                         message={METHODOLOGY_PUBLICATION_VISIBILITY_CALLOUT_MESSAGE}
@@ -24271,6 +24352,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       />
                       </div>
                       </InspectorToggleGroup>
+                      </div>
                       ) : null}
 
                       {profileShowsStatisticsGroup("inferencia_avanzada", labUsageProfile) ? (
@@ -24652,6 +24734,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
           <section
             className={activeWorkspaceSection === "results" ? "" : "hidden"}
+            id={workspacePanelId("results")}
+            role="tabpanel"
+            aria-labelledby={workspaceTabId("results")}
             aria-hidden={activeWorkspaceSection !== "results"}
           >
             <h2 className={`${sectionLabel} mb-2`}>📈 Resultados</h2>
@@ -28560,6 +28645,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 ? ""
                 : "hidden"
             }
+            id={workspacePanelId("reports")}
+            role="tabpanel"
+            aria-labelledby={workspaceTabId("reports")}
             aria-hidden={
               activeWorkspaceSection !== "reports" || !isReportsModuleEnabled
             }

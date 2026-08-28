@@ -278,7 +278,7 @@ export function ProjectScientificFilePanel({
           className={`w-full h-8 ${btnSecondary}`}
           title={`Abrir archivo de proyecto ${PROJECT_FILE_EXTENSION}`}
         >
-          Abrir
+          Abrir proyecto
         </button>
         <input
           ref={fileInputRef}
@@ -293,7 +293,7 @@ export function ProjectScientificFilePanel({
           className={`w-full h-8 ${btnSave}`}
           title={`Guardar como archivo ${PROJECT_FILE_EXTENSION}`}
         >
-          Guardar
+          Guardar proyecto
         </button>
       </div>
 

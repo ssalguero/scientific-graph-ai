@@ -117,7 +117,7 @@ export function SidebarItem({
       title={tooltip}
       aria-label={railCollapsed ? label : undefined}
       aria-expanded={showCaret ? expanded : undefined}
-      aria-current={active ? "true" : undefined}
+      aria-pressed={!showCaret && active ? true : undefined}
     >
       {content}
     </button>

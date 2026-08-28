@@ -394,7 +394,7 @@ export function Sidebar({
                 <>
                   <SidebarItem
                     icon="open"
-                    label="Abrir"
+                    label="Abrir proyecto"
                     title="Abrir proyecto"
                     onClick={() =>
                       projectFilePanelProps.openProjectButtonRef?.current?.click()
@@ -504,7 +504,7 @@ export function Sidebar({
             }
           >
             <SidebarSection
-              title="Análisis"
+              title="Herramientas"
               icon="advisor"
               defaultOpen={
                 workspaceSection === "analysis" ||

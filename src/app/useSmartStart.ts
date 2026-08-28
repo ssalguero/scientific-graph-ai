@@ -66,6 +66,7 @@ export type UseSmartStartParams = {
   setHighlightPublicationDashboards: (highlight: boolean) => void;
   setHighlightProjectPanel: (highlight: boolean) => void;
   setImportDestinationActive: (active: boolean) => void;
+  importDestinationActive: boolean;
   importarDestinationRef: RefObject<HTMLDivElement | null>;
   startGuidedWorkflow: (templateId: GuidedWorkflowTemplateId) => void;
 };
@@ -99,6 +100,7 @@ export function useSmartStart(params: UseSmartStartParams) {
     setHighlightPublicationDashboards,
     setHighlightProjectPanel,
     setImportDestinationActive,
+    importDestinationActive,
     importarDestinationRef,
     startGuidedWorkflow,
   } = params;
@@ -182,6 +184,15 @@ export function useSmartStart(params: UseSmartStartParams) {
     setExpertModeToastVisible(true);
   };
   const selectWorkspaceSection = (section: WorkspaceSection) => {
+    if (
+      importDestinationActive &&
+      (currentDatasetInfo || experimentalSeries.length > 0)
+    ) {
+      setDataSectionOpen((previous) => ({
+        ...previous,
+        import: false,
+      }));
+    }
     setImportDestinationActive(false);
     if (section === "home") {
       setSmartStartDismissed(false);
