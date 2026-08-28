@@ -35,5 +35,5 @@ export function productAreasAreRelated(
 ): boolean {
   if (!from) return true;
   if (from === toward) return true;
-  return PRODUCT_RELATION_MAP[from].includes(toward);
+  return relatedConversationDomains(from).includes(toward);
 }

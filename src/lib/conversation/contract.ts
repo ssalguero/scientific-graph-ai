@@ -108,7 +108,8 @@ export type HomeConversationContext = {
 };
 
 /**
- * P6 adapter not wired. Do not import from UI.
+ * Core context provider. Adapter exists; ConversationQueryBox may call it.
+ * Still not a WIRED Home domain. page.tsx must not import @/lib/conversation.
  * Adapters normalize context for the Conversation Core; they are not
  * conversational brains. Occupancy maps real comparisonSlots profiles;
  * filenames map profile.datasetInfo.fileName. Not group labels or workflow steps.
@@ -122,12 +123,16 @@ export type CompareConversationContext = {
 };
 
 /**
- * P6 adapter not wired. Do not import from UI.
+ * Core context provider. Adapter exists; ConversationQueryBox may call it.
+ * Still not a WIRED Home domain. page.tsx must not import @/lib/conversation.
  * scientificArea is product language, not AnalysisInspectorSection.
+ * hasExperimentalSeries is occupancy, parallel to hasDataset; Core reads
+ * SystemContext.hasExperimentalSeries, not this field, for occupancy.
  */
 export type AnalyzeConversationContext = {
   domain: "analyze";
   hasDataset: boolean | null;
+  hasExperimentalSeries: boolean | null;
   scientificArea:
     | "mathematics_area"
     | "statistics_area"
@@ -140,7 +145,8 @@ export type AnalyzeConversationContext = {
 };
 
 /**
- * P6 adapter not wired. Do not import from UI.
+ * Core context provider. Adapter exists; ConversationQueryBox may call it.
+ * Still not a WIRED Home domain. page.tsx must not import @/lib/conversation.
  * Curves/constructor occupancy, not a DataWorkspaceView id.
  * constructorPanelOpen maps dataSectionOpen.constructor.
  * hasNonEmptyExpressions maps hasActiveMathCurves.

@@ -229,6 +229,17 @@ assertCase(
   "analyze provider"
 );
 
+assertCase(
+  "s3.analyze.hasExperimentalSeries.roundTrip",
+  normalizeAnalyzeContext({
+    hasDataset: true,
+    hasExperimentalSeries: true,
+    inspectorCategory: "statistics",
+    hasExecutedAnalysis: false,
+  }).hasExperimentalSeries === true,
+  "round-trip"
+);
+
 const scenarioA = runConversationCore({
   text: "¿Puedo comparar estos grupos?",
   system: {
