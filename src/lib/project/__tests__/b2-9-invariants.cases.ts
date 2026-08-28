@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { calculateExperimentalStatistics } from "@/lib/graph/series/transforms";
 import type { ExperimentalSeries } from "@/lib/experimentalData";
 import { collectProjectSnapshotV2 } from "@/lib/project/collect-project-snapshot-v2";
 import type { EditorProjectCollectContextV2 } from "@/lib/project/editor-collect-context-v2";
@@ -389,6 +390,92 @@ export const runB29InvariantCaseSuite = (): CaseResult[] => {
       assertCase(
         "invariantA.fixture.d5d6.multiDataset",
         reloadedFixture.patch.sessionDatasets.length === 2
+      );
+    }
+  }
+
+  const f02DirtySeries: ExperimentalSeries[] = [
+    {
+      id: "s2",
+      name: "Series B",
+      color: "#dc3912",
+      points: [
+        { x: 1, y: 50 },
+        { x: 2, y: 60 },
+        { x: 3, y: 70 },
+      ],
+    },
+  ];
+  const f02Context = {
+    ...buildMultiCollectContext(projectId),
+    experimentalSeries: f02DirtySeries,
+    hiddenLegendKeys: [
+      "exp:s1",
+      "exp:s2",
+      "exp:missing",
+      "exp:",
+      "s1",
+      "curve:0",
+      "not-a-key",
+    ],
+  };
+  const f02BeforeSeries = f02DirtySeries;
+  const f02BeforeStats = calculateExperimentalStatistics(f02BeforeSeries);
+  const f02Collected = collectProjectSnapshotV2(f02Context);
+  const f02Serialized = serializeProjectV2({
+    project: f02Collected,
+    appVersion: APP_VERSION,
+    options: { includeChecksum: false },
+  });
+  assertCase("f02.serialize.ok", f02Serialized.ok === true);
+  if (f02Serialized.ok) {
+    const f02Hydrated = hydrateProjectJson(f02Serialized.json);
+    assertCase("f02.hydrate.ok", f02Hydrated.ok === true);
+    if (f02Hydrated.ok) {
+      const restoredActive = f02Hydrated.patch.sessionDatasets.find(
+        (dataset) => dataset.id === f02Hydrated.patch.activeDatasetId
+      );
+      const restoredSeries = restoredActive?.datasetPayload.series ?? [];
+      const restoredStats = calculateExperimentalStatistics(restoredSeries);
+      assertCase(
+        "f02.series.ids",
+        JSON.stringify(restoredSeries.map((item) => item.id)) ===
+          JSON.stringify(f02BeforeSeries.map((item) => item.id))
+      );
+      assertCase(
+        "f02.series.count",
+        restoredSeries.length === f02BeforeSeries.length
+      );
+      assertCase(
+        "f02.series.pointCounts",
+        JSON.stringify(restoredSeries.map((item) => item.points.length)) ===
+          JSON.stringify(f02BeforeSeries.map((item) => item.points.length))
+      );
+      assertCase(
+        "f02.series.pointValues",
+        JSON.stringify(restoredSeries.map((item) => item.points)) ===
+          JSON.stringify(f02BeforeSeries.map((item) => item.points))
+      );
+      assertCase(
+        "f02.numeric.checksum",
+        JSON.stringify(restoredStats) === JSON.stringify(f02BeforeStats)
+      );
+      const restoredHidden =
+        f02Hydrated.patch.project.analysisConfig.legend.hiddenKeys;
+      assertCase(
+        "f02.legend.rawSeriesId.survives",
+        restoredHidden.includes("s1")
+      );
+      assertCase(
+        "f02.legend.expBound.survives",
+        restoredHidden.includes("exp:s1") && restoredHidden.includes("exp:s2")
+      );
+      assertCase(
+        "f02.legend.orphanDropped",
+        !restoredHidden.includes("exp:missing") &&
+          !restoredHidden.includes("exp:") &&
+          !restoredHidden.includes("curve:0") &&
+          !restoredHidden.includes("not-a-key")
       );
     }
   }

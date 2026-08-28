@@ -47,6 +47,23 @@ export type LocalProjectActionsDeps = {
   buildApplyContext: () => EditorProjectApplyContext;
   onProjectOpened?: (patch: HydrateProjectV2Patch) => void;
   setActiveLocalProjectId?: (id: string | null) => void;
+  prepareCollectContextForSave?: (
+    ctx: EditorProjectCollectContextV2
+  ) => EditorProjectCollectContextV2;
+};
+
+export const buildLocalSaveCollectContext = (
+  buildCollectContextV2: () => EditorProjectCollectContextV2,
+  prepareCollectContextForSave?: (
+    ctx: EditorProjectCollectContextV2
+  ) => EditorProjectCollectContextV2
+): EditorProjectCollectContextV2 => {
+  const base = buildCollectContextV2();
+  const prepared = prepareCollectContextForSave?.(base) ?? base;
+  return {
+    ...prepared,
+    projectVisualGraphEntries: base.projectVisualGraphEntries,
+  };
 };
 
 type OpenedProjectView = {
@@ -107,7 +124,10 @@ export const createLocalProjectActions = (deps: LocalProjectActionsDeps) => {
     ensureAppEngineConfigured();
     const response = await saveProject({
       projectName,
-      ctx: deps.buildCollectContextV2(),
+      ctx: buildLocalSaveCollectContext(
+        deps.buildCollectContextV2,
+        deps.prepareCollectContextForSave
+      ),
       appVersion: APP_VERSION,
     });
     if (!response.ok) {

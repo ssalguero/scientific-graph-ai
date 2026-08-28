@@ -33,6 +33,9 @@ export type UseLocalProjectPersistenceParams = {
   setIsProjectDirty: (value: boolean) => void;
   suppressProjectDirtyRef: { current: boolean };
   onProjectOpened?: (patch: HydrateProjectV2Patch) => void;
+  prepareCollectContextForSave?: (
+    ctx: EditorProjectCollectContextV2
+  ) => EditorProjectCollectContextV2;
 };
 
 export type LocalProjectRecoveryPrompt = {
@@ -68,12 +71,14 @@ export function useLocalProjectPersistence(params: UseLocalProjectPersistencePar
         buildApplyContext: params.buildApplyContext,
         onProjectOpened: params.onProjectOpened,
         setActiveLocalProjectId,
+        prepareCollectContextForSave: params.prepareCollectContextForSave,
       }),
     [
       repo,
       params.buildApplyContext,
       params.buildCollectContextV2,
       params.onProjectOpened,
+      params.prepareCollectContextForSave,
       params.setIsProjectDirty,
       params.setProjectFileFeedback,
       params.suppressProjectDirtyRef,

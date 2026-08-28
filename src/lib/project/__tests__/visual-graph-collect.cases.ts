@@ -11,6 +11,7 @@ import {
   type CaseResult,
 } from "@/lib/scientific/comparison/__tests__/run-assertions";
 
+import { prepareCollectContextWithSessionVisualGraphs } from "@/lib/project/visual-graph-session-ui";
 import { runCollectProjectSnapshotV2CaseSuite } from "./collect-project-snapshot-v2.cases";
 import {
   buildSampleVisualGraphEntry,
@@ -419,6 +420,34 @@ export const runVisualGraphCollectCaseSuite = (): CaseResult[] => {
         (key) =>
           !(key in (journalSnapshot.visualGraphs?.[0]?.graphSpec as unknown as Record<string, unknown>))
       )
+  );
+
+  const vgbSession = buildSessionDataset(PRIMARY_ID, "DatasetA.csv");
+  const vgbBase = buildBaseContext({
+    sessionDatasets: [vgbSession],
+    activeDatasetId: PRIMARY_ID,
+    projectVisualGraphEntries: [runtimeEntry],
+  });
+  const vgbPreparedOnly = prepareCollectContextWithSessionVisualGraphs(
+    vgbBase,
+    [runtimeEntry]
+  );
+  const vgbPreparedSnapshot = collectProjectSnapshotV2(vgbPreparedOnly);
+  assertCase(
+    "s2.localFlush.prepareWithoutRestoreDropsVgb",
+    vgbPreparedOnly.projectVisualGraphEntries === undefined &&
+      vgbPreparedSnapshot.visualGraphs === undefined
+  );
+
+  const vgbLocalSaveCtx = {
+    ...vgbPreparedOnly,
+    projectVisualGraphEntries: vgbBase.projectVisualGraphEntries,
+  };
+  const vgbLocalSaveSnapshot = collectProjectSnapshotV2(vgbLocalSaveCtx);
+  assertCase(
+    "s2.localFlush.restoreEntriesKeepsVgb",
+    vgbLocalSaveCtx.projectVisualGraphEntries?.length === 1 &&
+      vgbLocalSaveSnapshot.visualGraphs?.length === 1
   );
 
   const b2Results = runCollectProjectSnapshotV2CaseSuite();

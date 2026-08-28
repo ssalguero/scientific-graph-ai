@@ -264,6 +264,7 @@ export function useGraphEditorProjectFile(params: UseGraphEditorProjectFileParam
     setIsProjectDirty: params.setIsProjectDirty,
     suppressProjectDirtyRef,
     onProjectOpened: params.onProjectOpened,
+    prepareCollectContextForSave: params.prepareCollectContextForSave,
   });
 
   const [autosaveTick, setAutosaveTick] = useState(0);
@@ -277,6 +278,7 @@ export function useGraphEditorProjectFile(params: UseGraphEditorProjectFileParam
     activeLocalProjectId: localPersistence.activeLocalProjectId,
     repo: localPersistence.repo,
     buildCollectContextV2: projectActions.buildCollectContextV2,
+    prepareCollectContextForSave: params.prepareCollectContextForSave,
     onAutosaved: () => setAutosaveTick((value) => value + 1),
     onAutosaveError: (message) => setAutosaveHasError(message != null),
     onSavingChange: setIsAutosaving,

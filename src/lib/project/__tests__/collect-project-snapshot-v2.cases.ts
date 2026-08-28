@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import type { ExperimentalSeries } from "@/lib/experimentalData";
 import {
   collectProjectSnapshotV2,
@@ -295,6 +298,88 @@ export const runCollectProjectSnapshotV2CaseSuite = (): CaseResult[] => {
       ?.preserveAnalysisOnReimport === false &&
       inactivePreserveSnapshot.datasets.find((dataset) => dataset.id === DATASET_B_ID)
         ?.preserveAnalysisOnReimport === true
+  );
+
+  const DIRTY_SERIES_B: ExperimentalSeries[] = [
+    {
+      id: "s2",
+      name: "Series B",
+      color: "#dc3912",
+      points: [
+        { x: 1, y: 50 },
+        { x: 2, y: 60 },
+        { x: 3, y: 70 },
+      ],
+    },
+  ];
+  const staleSessionB = buildSessionDataset(
+    DATASET_B_ID,
+    "DatasetB.csv",
+    SAMPLE_SERIES_B
+  );
+  const staleLocalCtx = buildBaseContext({
+    sessionDatasets: [sessionA, staleSessionB],
+    activeDatasetId: DATASET_B_ID,
+    experimentalSeries: DIRTY_SERIES_B,
+  });
+  const staleActive = staleLocalCtx.sessionDatasets.find(
+    (dataset) => dataset.id === DATASET_B_ID
+  );
+  assertCase(
+    "s2.localFlush.rawSessionStale",
+    staleActive?.datasetPayload.series[0]?.points.length === 2 &&
+      staleActive.datasetPayload.series[0]?.points[0]?.y === 5
+  );
+
+  const flushedLocalCtx: EditorProjectCollectContextV2 = {
+    ...staleLocalCtx,
+    sessionDatasets: staleLocalCtx.sessionDatasets.map((dataset) =>
+      dataset.id === staleLocalCtx.activeDatasetId
+        ? {
+            ...dataset,
+            seriesCount: DIRTY_SERIES_B.length,
+            observationCount: DIRTY_SERIES_B.reduce(
+              (total, item) => total + item.points.length,
+              0
+            ),
+            datasetPayload: {
+              ...dataset.datasetPayload,
+              series: DIRTY_SERIES_B,
+            },
+          }
+        : dataset
+    ),
+  };
+  const flushedActive = flushedLocalCtx.sessionDatasets.find(
+    (dataset) => dataset.id === DATASET_B_ID
+  );
+  assertCase(
+    "s2.localFlush.preparedSessionMatchesEditor",
+    flushedActive?.datasetPayload.series[0]?.points.length === 3 &&
+      flushedActive.datasetPayload.series[0]?.points[0]?.y === 50
+  );
+
+  const readApp = (fileName: string) =>
+    fs.readFileSync(path.join(process.cwd(), "src", "app", fileName), "utf8");
+  const localActionsSource = readApp("localProjectActions.ts");
+  const autosaveSource = readApp("useProjectDraftAutosave.ts");
+  const localPersistenceSource = readApp("useLocalProjectPersistence.ts");
+  const graphFileSource = readApp("useGraphEditorProjectFile.ts");
+  assertCase(
+    "s2.localFlush.localActionsRestoresVgbEntries",
+    localActionsSource.includes("projectVisualGraphEntries: base.projectVisualGraphEntries")
+  );
+  assertCase(
+    "s2.localFlush.autosaveUsesLocalSaveContext",
+    autosaveSource.includes("buildLocalSaveCollectContext")
+  );
+  assertCase(
+    "s2.localFlush.localPersistenceWiresPrepare",
+    localPersistenceSource.includes("prepareCollectContextForSave")
+  );
+  assertCase(
+    "s2.localFlush.graphFileWiresPrepareToLocal",
+    graphFileSource.includes("prepareCollectContextForSave: params.prepareCollectContextForSave")
   );
 
   return results;
