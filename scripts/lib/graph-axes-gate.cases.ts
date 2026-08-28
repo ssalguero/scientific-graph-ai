@@ -50,6 +50,7 @@ const FROZEN_AXES_PUBLIC_SYMBOLS = [
   "clampPositiveLogDomain",
   "adaptYDomainForLogScale",
   "computeXAxisDomainForChart",
+  "computeYAxisDomainForChart",
   "getChartTheme",
   "alignVisibleRangeToDataRange",
 ];
@@ -218,6 +219,7 @@ export const runGraphAxesGateExtensionCaseSuite = (): CaseResult[] => {
     /const sanitizeChartDataForLogScale\s*=/,
     /const adaptYDomainForLogScale\s*=/,
     /const computeXAxisDomainForChart\s*=/,
+    /const computeYAxisDomainForChart\s*=/,
     /const getAxisScaleModeLabel\s*=/,
     /const clampPositiveLogDomain\s*=/,
     /type AxisScaleMode\s*=\s*"/,

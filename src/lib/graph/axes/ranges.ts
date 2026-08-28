@@ -112,3 +112,29 @@ export const computeXAxisDomainForChart = (
 
   return [Math.min(...positiveX), Math.max(...positiveX)];
 };
+
+export const computeYAxisDomainForChart = (
+  usesLogY: boolean,
+  domain: [number, number] | undefined,
+  chartScaleSamples: ChartScaleSample[]
+): [number, number] | undefined => {
+  if (!usesLogY) {
+    return domain;
+  }
+
+  const adapted = adaptYDomainForLogScale(domain);
+  if (adapted) return adapted;
+
+  const positiveY = chartScaleSamples
+    .filter((sample) => Number.isFinite(sample.y) && sample.y > 0)
+    .map((sample) => sample.y);
+  if (positiveY.length === 0) {
+    return [1e-6, 1];
+  }
+
+  return (
+    clampPositiveLogDomain(Math.min(...positiveY), Math.max(...positiveY)) ?? [
+      1e-6, 1,
+    ]
+  );
+};

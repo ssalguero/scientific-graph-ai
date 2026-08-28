@@ -6,6 +6,7 @@ import {
   computePanVisibleRange,
   computeWheelZoomVisibleRange,
   computeXAxisDomainForChart,
+  computeYAxisDomainForChart,
   getAxisScaleModeLabel,
   getAxisScaleViolations,
   getAxisScaleWarnings,
@@ -150,6 +151,76 @@ export const runAxesCaseSuite = (): CaseResult[] => {
   assertCase(
     "ranges.computeXAxisDomainForChart.logEmptyPositive",
     logEmpty[0] === 1e-6 && logEmpty[1] === 1
+  );
+
+  const linearYDomain: [number, number] = [0, 100];
+  const linearYUnchanged = computeYAxisDomainForChart(
+    false,
+    linearYDomain,
+    [{ x: 1, y: 4 }]
+  );
+  assertCase(
+    "ranges.computeYAxisDomainForChart.linearUnchanged",
+    linearYUnchanged === linearYDomain &&
+      linearYUnchanged?.[0] === 0 &&
+      linearYUnchanged?.[1] === 100
+  );
+  assertCase(
+    "ranges.computeYAxisDomainForChart.linearUndefined",
+    computeYAxisDomainForChart(false, undefined, [{ x: 1, y: 4 }]) ===
+      undefined
+  );
+
+  const logYExplicit = computeYAxisDomainForChart(true, [0, 100], []);
+  assertCase(
+    "ranges.computeYAxisDomainForChart.logYExplicitPositive",
+    logYExplicit !== undefined &&
+      logYExplicit[0] > 0 &&
+      logYExplicit[1] === 100 &&
+      Number.isFinite(logYExplicit[0]) &&
+      Number.isFinite(logYExplicit[1])
+  );
+
+  const xSquaredSamples: { x: number; y: number }[] = [];
+  for (let x = -10; x <= 10; x += 0.5) {
+    xSquaredSamples.push({ x, y: x * x });
+  }
+  const logYFromUndefined = computeYAxisDomainForChart(
+    true,
+    undefined,
+    xSquaredSamples
+  );
+  assertCase(
+    "ranges.computeYAxisDomainForChart.logYUndefinedXSquared",
+    logYFromUndefined !== undefined &&
+      Number.isFinite(logYFromUndefined[0]) &&
+      Number.isFinite(logYFromUndefined[1]) &&
+      logYFromUndefined[0] > 0 &&
+      logYFromUndefined[1] > logYFromUndefined[0] &&
+      logYFromUndefined[0] <= 0.25 &&
+      logYFromUndefined[1] >= 100
+  );
+  assertCase(
+    "ranges.computeYAxisDomainForChart.logYUndefinedNoMutation",
+    xSquaredSamples.some((sample) => sample.x === 0 && sample.y === 0)
+  );
+
+  const xSquaredPositiveX: { x: number; y: number }[] = [
+    { x: 0.1, y: 0.01 },
+    { x: 10, y: 100 },
+  ];
+  const logYPositiveXRange = computeYAxisDomainForChart(
+    true,
+    undefined,
+    xSquaredPositiveX
+  );
+  assertCase(
+    "ranges.computeYAxisDomainForChart.logYPositiveXRange",
+    logYPositiveXRange !== undefined &&
+      logYPositiveXRange[0] > 0 &&
+      logYPositiveXRange[1] > logYPositiveXRange[0] &&
+      logYPositiveXRange[0] <= 0.01 &&
+      logYPositiveXRange[1] >= 100
   );
 
   assertCase(

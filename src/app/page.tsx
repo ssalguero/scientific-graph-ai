@@ -179,9 +179,9 @@ import { formatMathWarning } from "@/lib/graph/curves/warnings";
 
 export { translateNaturalLanguageToMath };
 import {
-  adaptYDomainForLogScale,
   applyExperimentalXViewportFit,
   computeXAxisDomainForChart,
+  computeYAxisDomainForChart,
   getAxisScaleModeLabel,
   getAxisScaleViolations,
   getAxisScaleWarnings,
@@ -20495,19 +20495,26 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   );
   const mathYAxisDomainForChart = useMemo(
     () =>
-      usesLogY ? adaptYDomainForLogScale(mathYAxisDomain) : mathYAxisDomain,
-    [usesLogY, mathYAxisDomain]
+      computeYAxisDomainForChart(
+        usesLogY,
+        mathYAxisDomain,
+        chartScaleSamples
+      ),
+    [usesLogY, mathYAxisDomain, chartScaleSamples]
   );
   const experimentalYAxisDomainForChart = useMemo(
     () =>
-      usesLogY
-        ? adaptYDomainForLogScale(experimentalYAxisDomain)
-        : experimentalYAxisDomain,
-    [usesLogY, experimentalYAxisDomain]
+      computeYAxisDomainForChart(
+        usesLogY,
+        experimentalYAxisDomain,
+        chartScaleSamples
+      ),
+    [usesLogY, experimentalYAxisDomain, chartScaleSamples]
   );
   const yAxisDomainForChart = useMemo(
-    () => (usesLogY ? adaptYDomainForLogScale(yAxisDomain) : yAxisDomain),
-    [usesLogY, yAxisDomain]
+    () =>
+      computeYAxisDomainForChart(usesLogY, yAxisDomain, chartScaleSamples),
+    [usesLogY, yAxisDomain, chartScaleSamples]
   );
   const hasChartContent =
     chartData.length > 0 || experimentalSeries.length > 0;
