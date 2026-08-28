@@ -241,6 +241,18 @@ export const buildFastPathPreview = (
   return preview;
 };
 
+const isNumericPairRow = (
+  row: unknown,
+  xColumnIndex: number,
+  yColumnIndex: number
+): boolean => {
+  if (!Array.isArray(row)) return false;
+  return (
+    cellToNumber(row[xColumnIndex]) !== null &&
+    cellToNumber(row[yColumnIndex]) !== null
+  );
+};
+
 /** Builds fast-path audit from delimited text rows (ÉPICA B.3). */
 export const buildFastPathPreviewFromDelimitedRows = (
   rows: unknown[][],
@@ -248,22 +260,30 @@ export const buildFastPathPreviewFromDelimitedRows = (
   xColumnIndex: number,
   yColumnIndex: number
 ): ImportPreview => {
+  const resolvedHeaderRowIndex = isNumericPairRow(
+    rows[0],
+    xColumnIndex,
+    yColumnIndex
+  )
+    ? -1
+    : headerRowIndex;
+
   const mapping: ColumnMapping = {
     xColumnIndex,
     yColumnIndex,
-    xLabel: String(rows[headerRowIndex]?.[xColumnIndex] ?? "X"),
-    yLabel: String(rows[headerRowIndex]?.[yColumnIndex] ?? "Y"),
+    xLabel: String(rows[resolvedHeaderRowIndex]?.[xColumnIndex] ?? "X"),
+    yLabel: String(rows[resolvedHeaderRowIndex]?.[yColumnIndex] ?? "Y"),
     rowFilter: "skip-sparse",
   };
   const region: TableRegion = {
-    startRow: headerRowIndex,
+    startRow: resolvedHeaderRowIndex,
     endRow: rows.length - 1,
     startCol: 0,
     endCol: Math.max(
       ...rows.map((row) => (Array.isArray(row) ? row.length - 1 : 0)),
       1
     ),
-    headerRowIndex,
+    headerRowIndex: resolvedHeaderRowIndex,
     metadataRowCount: 0,
     confidence: 1,
   };

@@ -260,6 +260,75 @@ assertCase(
   }
 );
 
+const headerlessAuditPreview = buildFastPathPreviewFromDelimitedRows(
+  [
+    ["1", "20"],
+    ["2", "21"],
+  ],
+  0,
+  0,
+  1
+);
+const headerlessAuditValidation = validateImportPreview(
+  headerlessAuditPreview,
+  undefined,
+  { xColumnIndex: 0, yColumnIndex: 1 }
+);
+assertCase(
+  "prod1b.fast-path.headerless-audit",
+  headerlessAuditPreview.points.length === 2 &&
+    headerlessAuditPreview.stats.importablePointCount === 2 &&
+    !headerlessAuditValidation.errors.some((issue) => issue.code === "Q-01"),
+  {
+    pointCount: headerlessAuditPreview.points.length,
+    importablePointCount: headerlessAuditPreview.stats.importablePointCount,
+    errors: headerlessAuditValidation.errors,
+  }
+);
+
+const arbitraryHeaderAuditPreview = buildFastPathPreviewFromDelimitedRows(
+  [
+    ["time", "temperature"],
+    ["1", "20"],
+    ["2", "21"],
+  ],
+  0,
+  0,
+  1
+);
+assertCase(
+  "prod1b.fast-path.arbitrary-header-audit",
+  arbitraryHeaderAuditPreview.points.length === 2 &&
+    arbitraryHeaderAuditPreview.stats.importablePointCount === 2 &&
+    arbitraryHeaderAuditPreview.points[0]?.x === 1 &&
+    arbitraryHeaderAuditPreview.points[0]?.y === 20,
+  {
+    pointCount: arbitraryHeaderAuditPreview.points.length,
+    firstPoint: arbitraryHeaderAuditPreview.points[0],
+  }
+);
+
+const xyHeaderAuditPreview = buildFastPathPreviewFromDelimitedRows(
+  [
+    ["x", "y"],
+    ["1", "20"],
+    ["2", "21"],
+  ],
+  0,
+  0,
+  1
+);
+assertCase(
+  "prod1b.fast-path.xy-header-audit",
+  xyHeaderAuditPreview.points.length === 2 &&
+    xyHeaderAuditPreview.stats.importablePointCount === 2 &&
+    xyHeaderAuditPreview.points[0]?.x === 1 &&
+    xyHeaderAuditPreview.points[1]?.y === 21,
+  {
+    pointCount: xyHeaderAuditPreview.points.length,
+  }
+);
+
 assertCase(
   "epic-b.baseline.frozen",
   EPIC_B_BASELINE.dataset5.overall === 77.0 &&

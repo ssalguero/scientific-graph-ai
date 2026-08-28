@@ -277,7 +277,7 @@ export function Sidebar({
 
   return (
     <SidebarRailCollapsedContext.Provider value={effectiveRailCollapsed}>
-      {isMobile && !overlayOpen && !chromeSuppressed ? (
+      {isMobile && !overlayOpen ? (
         <button
           ref={triggerRef}
           type="button"
@@ -312,7 +312,9 @@ export function Sidebar({
         data-chrome-suppressed={chromeSuppressed ? "true" : undefined}
         data-mobile-overlay={isMobile && overlayOpen ? "open" : undefined}
         aria-hidden={
-          chromeSuppressed || (isMobile && !overlayOpen) ? true : undefined
+          (chromeSuppressed && !isMobile) || (isMobile && !overlayOpen)
+            ? true
+            : undefined
         }
       >
         <div
