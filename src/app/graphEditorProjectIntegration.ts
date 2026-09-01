@@ -1,3 +1,4 @@
+import type { ProductScreenId } from "@/lib/product-navigation";
 import type { ExperimentalSeries } from "@/lib/experimentalData";
 import type { WorksheetColumnRegistry } from "@/lib/experimentalWorksheet";
 import type { ImportAuxiliaryColumn, ImportReport } from "@/lib/import/types";
@@ -120,6 +121,8 @@ export type GraphEditorProjectIntegrationInput = {
   ) => void;
   activeWorkspaceSection: RuntimeWorkspaceSection;
   setActiveWorkspaceSection: (value: RuntimeWorkspaceSection) => void;
+  productScreen: ProductScreenId;
+  setProductScreen: (value: ProductScreenId) => void;
   analysisInspectorSection: AnalysisInspectorSection;
   setAnalysisInspectorSection: (value: AnalysisInspectorSection) => void;
   enabledModules: Record<string, boolean>;
@@ -200,6 +203,7 @@ export const createGraphEditorProjectIntegration = (
       inspectorSection: input.analysisInspectorSection,
       enabledModules: { ...input.enabledModules },
       controlPanelTab: input.controlPanelTab,
+      productScreen: input.productScreen,
     },
     title: input.title,
     minX: input.minX,
@@ -279,9 +283,11 @@ export const createGraphEditorProjectIntegration = (
         },
       }),
     setActiveWorkspaceSection: (value) =>
+      // TEMPORARY persist/hydrate adapter. Not the Product Face router.
       input.setActiveWorkspaceSection(
         value as Parameters<typeof input.setActiveWorkspaceSection>[0]
       ),
+    setProductScreen: (value) => input.setProductScreen(value),
     setAnalysisInspectorSection: (value) =>
       input.setAnalysisInspectorSection(
         value as Parameters<typeof input.setAnalysisInspectorSection>[0]

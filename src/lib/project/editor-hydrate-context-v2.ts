@@ -1,3 +1,4 @@
+import type { ProductScreenId } from "@/lib/product-navigation/screens";
 import type { ExperimentalSeries } from "@/lib/experimentalData";
 import type { ImportReport } from "@/lib/import/types";
 import type { GuidedWorkflowSession } from "@/lib/scientific/workflow/types";
@@ -69,6 +70,7 @@ export type EditorProjectApplyContextV2 = {
     B: EditorComparisonSlotApplyV2;
   }) => void;
   setActiveWorkspaceSection: (value: ProjectWorkspaceV1["activeSection"]) => void;
+  setProductScreen: (value: ProductScreenId) => void;
   setAnalysisInspectorSection: (
     value: ProjectWorkspaceV1["inspectorSection"]
   ) => void;

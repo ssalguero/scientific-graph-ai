@@ -164,6 +164,7 @@ export const captureMetadataNameFromPatch = (patch: HydrateProjectV2Patch): stri
     setGuidedWorkflowSession: () => undefined,
     setComparisonSlots: () => undefined,
     setActiveWorkspaceSection: () => undefined,
+    setProductScreen: () => undefined,
     setAnalysisInspectorSection: () => undefined,
     setEnabledModules: () => undefined,
     setControlPanelTab: () => undefined,

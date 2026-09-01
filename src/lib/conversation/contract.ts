@@ -42,14 +42,16 @@ export const CONVERSATION_CORE_CONTEXT_PROVIDERS = [
 
 export const CONVERSATION_POLICY = {
   onDemandOnly: true,
-  allowLlm: false,
+  /** GenerationPort is allowed. Not an agent runtime and not a vendor SDK. */
+  allowLlm: true,
+  allowGenerationPort: true,
   allowAutoNavigation: false,
   allowAutoExecution: false,
   allowMethodDecision: false,
   allowPersistentMemory: false,
   allowProactiveIntervention: false,
-  allowTranscript: false,
-  maxClarifications: 1,
+  allowTranscript: true,
+  maxClarifications: 8,
   maxContinuationInvitationsAfterYes: 1,
 } as const;
 

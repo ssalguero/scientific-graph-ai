@@ -35,6 +35,7 @@ export {
   type ProjectMetadataV2,
   type ProjectVisualGraphPersistedV2,
   type ProjectWorksheetV2,
+  type ProjectWorkspaceV2,
   type ScientificProjectV2,
 } from "./types-v2";
 

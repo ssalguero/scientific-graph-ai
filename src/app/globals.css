@@ -322,7 +322,8 @@ html[data-crp-importar-shell="true"] [data-workspace-canvas] *:has(> [data-impor
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
-  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
 }
 
 /*
@@ -337,7 +338,31 @@ html[data-crp-datos-shell="true"] button[aria-label^="Expandir Inspector"],
 html[data-crp-datos-shell="true"] button[aria-label^="Expandir Consola"],
 html[data-crp-datos-shell="true"] button[aria-label="Expand Explorer"],
 html[data-crp-datos-shell="true"] button[aria-label="Expand Inspector"],
-html[data-crp-datos-shell="true"] button[aria-label="Expand Console"] {
+html[data-crp-datos-shell="true"] button[aria-label="Expand Console"],
+html[data-crp-graph-shell="true"] [data-panel-expand-host],
+html[data-crp-graph-shell="true"] [data-panel-expand],
+html[data-crp-graph-shell="true"] button[aria-label^="Expandir Explorer"],
+html[data-crp-graph-shell="true"] button[aria-label^="Expandir Inspector"],
+html[data-crp-graph-shell="true"] button[aria-label^="Expandir Consola"],
+html[data-crp-graph-shell="true"] button[aria-label="Expand Explorer"],
+html[data-crp-graph-shell="true"] button[aria-label="Expand Inspector"],
+html[data-crp-graph-shell="true"] button[aria-label="Expand Console"],
+html[data-crp-comparar-shell="true"] [data-panel-expand-host],
+html[data-crp-comparar-shell="true"] [data-panel-expand],
+html[data-crp-comparar-shell="true"] button[aria-label^="Expandir Explorer"],
+html[data-crp-comparar-shell="true"] button[aria-label^="Expandir Inspector"],
+html[data-crp-comparar-shell="true"] button[aria-label^="Expandir Consola"],
+html[data-crp-comparar-shell="true"] button[aria-label="Expand Explorer"],
+html[data-crp-comparar-shell="true"] button[aria-label="Expand Inspector"],
+html[data-crp-comparar-shell="true"] button[aria-label="Expand Console"],
+html[data-crp-vgb-shell="true"] [data-panel-expand-host],
+html[data-crp-vgb-shell="true"] [data-panel-expand],
+html[data-crp-vgb-shell="true"] button[aria-label^="Expandir Explorer"],
+html[data-crp-vgb-shell="true"] button[aria-label^="Expandir Inspector"],
+html[data-crp-vgb-shell="true"] button[aria-label^="Expandir Consola"],
+html[data-crp-vgb-shell="true"] button[aria-label="Expand Explorer"],
+html[data-crp-vgb-shell="true"] button[aria-label="Expand Inspector"],
+html[data-crp-vgb-shell="true"] button[aria-label="Expand Console"] {
   display: none !important;
   width: 0 !important;
   max-width: 0 !important;
@@ -353,7 +378,10 @@ html[data-crp-datos-shell="true"] button[aria-label="Expand Console"] {
   visibility: hidden !important;
 }
 
-html[data-crp-datos-shell="true"] [data-workspace-panel] {
+html[data-crp-datos-shell="true"] [data-workspace-panel],
+html[data-crp-graph-shell="true"] [data-workspace-panel],
+html[data-crp-comparar-shell="true"] [data-workspace-panel],
+html[data-crp-vgb-shell="true"] [data-workspace-panel] {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
@@ -363,7 +391,10 @@ html[data-crp-datos-shell="true"] [data-workspace-panel] {
   border: 0 !important;
 }
 
-html[data-crp-datos-shell="true"] [data-workspace-canvas] {
+html[data-crp-datos-shell="true"] [data-workspace-canvas],
+html[data-crp-graph-shell="true"] [data-workspace-canvas],
+html[data-crp-comparar-shell="true"] [data-workspace-canvas],
+html[data-crp-vgb-shell="true"] [data-workspace-canvas] {
   border: 0 !important;
   border-color: transparent !important;
   box-shadow: none !important;
@@ -517,4 +548,26 @@ html[data-crp-reports-shell="true"] [data-workspace-canvas] {
   flex-direction: column !important;
   min-height: 0 !important;
   overflow: auto !important;
+}
+
+/*
+ * R13 — Product Face: leftover sidebar recovery is not Face navigation.
+ * Panels/rails stay mounted for IDE recovery; this toggle must not compete
+ * with Product Screen identity on any Face route.
+ */
+html[data-product-face="true"] button[aria-label="Expandir barra lateral"],
+html[data-product-face="true"] button[aria-label="Abrir barra lateral"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  visibility: hidden !important;
 }

@@ -7,6 +7,7 @@
  * - green  — existing --color-feedback-success
  * - yellow — existing --color-feedback-warning (amber / yellow product use)
  * - coral  #f97316 — experimentalWorksheet series palette (coral/orange)
+ * - cyan  #06b6d4 — Constructor Visual Face Card (not muted leftover)
  *
  * Does not rewrite Theme Contract. Dark product palette remains protected.
  */
@@ -20,6 +21,7 @@ export const CAPABILITY_ACCENT_BRIDGE = {
   "--color-capability-green": "var(--color-feedback-success)",
   "--color-capability-yellow": "var(--color-feedback-warning)",
   "--color-capability-coral": "#f97316",
+  "--color-capability-cyan": "#06b6d4",
   "--color-capability-muted": "var(--color-text-muted)",
 } as const satisfies Record<string, string>;
 
@@ -32,6 +34,7 @@ export type CapabilityAccent =
   | "green"
   | "yellow"
   | "coral"
+  | "cyan"
   | "muted";
 
 export const CAPABILITY_ACCENT_BY_OPTION: Record<
@@ -41,9 +44,9 @@ export const CAPABILITY_ACCENT_BY_OPTION: Record<
   "analyze-dataset": "pink",
   "compare-datasets": "violet",
   "math-graph": "green",
+  "constructor-visual": "cyan",
   "analyze-workspace": "yellow",
   "evaluate-publication": "coral",
-  "expert-mode": "muted",
 };
 
 export function capabilityAccentCssVar(accent: CapabilityAccent): string {

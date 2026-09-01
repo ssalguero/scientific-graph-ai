@@ -212,6 +212,7 @@ const createCaptureApplyContext = (): {
       captured.comparisonSlots = value;
     },
     setActiveWorkspaceSection: () => undefined,
+    setProductScreen: () => undefined,
     setAnalysisInspectorSection: () => undefined,
     setEnabledModules: () => undefined,
     setControlPanelTab: () => undefined,

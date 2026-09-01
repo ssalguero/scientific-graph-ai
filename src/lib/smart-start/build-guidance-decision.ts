@@ -111,7 +111,7 @@ function isUnrelatedConcreteRequest(text: string): boolean {
     winner.intentId === "compare-datasets" ||
     winner.intentId === "math-graph" ||
     winner.intentId === "evaluate-publication" ||
-    winner.intentId === "expert-mode" ||
+    winner.intentId === "constructor-visual" ||
     winner.intentId === "open-project"
   );
 }
@@ -123,7 +123,7 @@ function isClassifierOwnedAction(
     winnerId === "compare-datasets" ||
     winnerId === "math-graph" ||
     winnerId === "evaluate-publication" ||
-    winnerId === "expert-mode" ||
+    winnerId === "constructor-visual" ||
     winnerId === "open-project"
   );
 }
@@ -453,20 +453,20 @@ function guidanceForWinner(
       enrichment
     );
   }
-  if (winnerId === "expert-mode") {
+  if (winnerId === "constructor-visual") {
     return decision(
       {
-        interpretation: "Busca herramientas avanzadas.",
+        interpretation: "Quiere armar una figura visual de trabajo.",
         explanation:
-          "Si lo necesita, la tarjeta Avanzado abre ese conjunto de opciones. No es el camino habitual.",
+          "Use la tarjeta Constructor Visual. No es el gráfico y=f(x). La revisión queda en Resultados.",
         prerequisite: null,
-        suggestedCardIds: ["expert-mode"],
-        primaryCardId: "expert-mode",
+        suggestedCardIds: ["constructor-visual"],
+        primaryCardId: "constructor-visual",
         clarification: null,
         uncertainty: "none",
         candidateIntentIds: candidates,
       },
-      "unknown",
+      "plot",
       dataSource,
       enrichment
     );
@@ -476,7 +476,7 @@ function guidanceForWinner(
       {
         interpretation: "Quiere continuar un proyecto guardado.",
         explanation:
-          "Eso no es una tarjeta de Inicio. Las tarjetas visibles siguen siendo Importar, Comparar, Gráfico y=f(x), Analizar, Evaluar metodología y Avanzado.",
+          "Eso no es una tarjeta de Inicio. Las tarjetas visibles siguen siendo Importar datos, Comparar datos, Gráfico y=f(x), Constructor Visual, Analizar y Evaluar metodología.",
         prerequisite: null,
         suggestedCardIds: [],
         primaryCardId: null,
@@ -897,7 +897,7 @@ export function buildGuidanceDecision(
       {
         interpretation: "No hay una intención clara.",
         explanation:
-          "Pruebe describir el objetivo o use una tarjeta: Importar, Comparar, Gráfico y=f(x), Analizar, Evaluar metodología o Avanzado.",
+          "Pruebe describir el objetivo o use una tarjeta: Importar datos, Comparar datos, Gráfico y=f(x), Constructor Visual, Analizar o Evaluar metodología.",
         prerequisite: null,
         suggestedCardIds: [],
         primaryCardId: null,

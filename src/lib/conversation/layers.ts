@@ -32,6 +32,8 @@ export const CONVERSATION_LAYER_OWNERS = {
     "src/lib/conversation/compare-adapter.ts",
     "src/lib/conversation/math-adapter.ts",
     "src/lib/conversation/system-context.ts",
+    "src/lib/conversation/experience/run-turn.ts",
+    "src/lib/conversation/experience/generation-port.ts",
   ],
   analysis_scientific: [
     "workspace engines and inspector controls (user-driven; not conversation)",

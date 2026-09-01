@@ -132,6 +132,7 @@ const captureApplyFromPatch = (patch: HydrateProjectV2Patch): CapturedUiRuntime 
       captured.comparisonSourceB = value.B.sourceDatasetId;
     },
     setActiveWorkspaceSection: () => undefined,
+    setProductScreen: () => undefined,
     setAnalysisInspectorSection: () => undefined,
     setEnabledModules: () => undefined,
     setControlPanelTab: () => undefined,

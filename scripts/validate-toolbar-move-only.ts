@@ -121,10 +121,11 @@ assertCase(
 );
 
 assertCase(
-  "move.handlers.selectWorkspaceSection",
-  /\bselectWorkspaceSection\b/.test(pageSource) &&
-    /onSelect=\{selectWorkspaceSection\}/.test(pageSource),
-  "selectWorkspaceSection wired in page"
+  "move.handlers.productScreen.not-tab-router",
+  /\bopenProductScreen\b/.test(pageSource) &&
+    !/onSelect=\{selectWorkspaceSection\}/.test(pageSource) &&
+    /onSelect=\{\(\) => undefined\}/.test(pageSource),
+  "Tabs do not govern Product Face navigation"
 );
 
 assertCase(

@@ -13,18 +13,17 @@ type IntentRule = {
 
 export const INTENT_RULES: IntentRule[] = [
   {
-    id: "expert-mode",
+    id: "constructor-visual",
     keywords: [
-      "avanzado",
-      "experto",
-      "laboratorio completo",
-      "todas las herramientas",
-      "acceso completo",
-      "modo experto",
+      "constructor visual",
+      "vgb",
+      "figura visual",
+      "grafico visual",
+      "gráfico visual",
     ],
-    recommendedProfile: "expert",
-    flowLabel: "Avanzado",
-    destinationLabel: "Datos → Avanzado (laboratorio completo)",
+    recommendedProfile: "standard",
+    flowLabel: "Constructor Visual",
+    destinationLabel: "Constructor Visual (distinto de y=f(x))",
     priority: 60,
   },
   {
@@ -84,7 +83,7 @@ export const INTENT_RULES: IntentRule[] = [
     recommendedProfile: "standard",
     flowLabel: "Evaluar metodología",
     destinationLabel:
-      "Análisis → Estadística / indicadores SCI-50→60 (no publica figura VGB)",
+      "Evaluar metodología (indicadores SCI-50→60; no publica figura VGB)",
     priority: 45,
   },
   {

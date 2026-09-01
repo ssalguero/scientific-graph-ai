@@ -54,6 +54,8 @@ export type {
   HydrateProjectV2Patch,
 } from "./types";
 
+export type { ProjectWorkspaceV2 } from "./domain/types-v2";
+
 export type { VisibilityKeyV1 } from "./keys";
 
 export {

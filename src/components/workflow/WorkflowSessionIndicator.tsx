@@ -23,6 +23,8 @@ export type WorkflowSessionIndicatorProps = {
   plan: GuidedWorkflowPlan;
   session: GuidedWorkflowSession;
   hostTab: GuidedWorkflowWorkspaceTab | null;
+  /** Product Face label for the step host. Not a Tab name. */
+  hostContinuityLabel?: string | null;
   activeTab: GuidedWorkflowWorkspaceTab;
   onCancel: () => void;
 };
@@ -47,6 +49,7 @@ export function WorkflowSessionIndicator({
   plan,
   session,
   hostTab,
+  hostContinuityLabel,
   activeTab,
   onCancel,
 }: WorkflowSessionIndicatorProps) {
@@ -94,7 +97,7 @@ export function WorkflowSessionIndicator({
         </p>
       ) : showOffHostHint ? (
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-          Continúe en {WORKSPACE_TAB_LABELS[hostTab!]} para aplicar u omitir el
+          Continúe en {hostContinuityLabel ?? WORKSPACE_TAB_LABELS[hostTab!]} para aplicar u omitir el
           paso actual.
         </p>
       ) : null}

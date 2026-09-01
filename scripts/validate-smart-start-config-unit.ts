@@ -162,6 +162,27 @@ assertCase(
   "local type removed"
 );
 
+assertCase(
+  "r1.cards.destination-hints",
+  SMART_START_OPTIONS.every(
+    (option) =>
+      typeof option.destinationHint === "string" &&
+      option.destinationHint.startsWith("Abre ")
+  ),
+  SMART_START_OPTIONS.map((option) => option.destinationHint).join(",")
+);
+
+assertCase(
+  "r1.cards.no-generic-buckets",
+  SMART_START_OPTIONS.every(
+    (option) =>
+      !["Avanzado", "Herramientas", "Más", "Otros", "Configuración"].includes(
+        option.title
+      )
+  ),
+  SMART_START_OPTIONS.map((option) => option.title).join(",")
+);
+
 const summary = {
   phase: "smart-start-config-unit",
   pass: results.every((item) => item.pass),

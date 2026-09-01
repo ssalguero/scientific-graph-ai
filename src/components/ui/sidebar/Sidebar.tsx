@@ -527,7 +527,7 @@ export function Sidebar({
               {showAssistantItem ? (
                 <SidebarItem
                   icon="advisor"
-                  label="Asistente científico"
+                  label="Informe heurístico"
                   onClick={onOpenAssistant}
                   badge={
                     effectiveRailCollapsed ? undefined : (

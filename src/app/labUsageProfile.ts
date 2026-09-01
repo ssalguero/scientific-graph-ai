@@ -70,7 +70,13 @@ export function profileShowsInspectorCategory(
   profile: LabUsageProfile
 ): boolean {
   if (profile === "basic") {
-    return section === "visualization" || section === "statistics";
+    // R6: inference methods already lived in Estadística → Esencial for basic.
+    // Showing the Inferencia domain keeps those capabilities visible.
+    return (
+      section === "visualization" ||
+      section === "statistics" ||
+      section === "inference"
+    );
   }
   return true;
 }

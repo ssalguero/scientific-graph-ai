@@ -43,7 +43,7 @@ assertCase(
 );
 assertCase(
   "cc03.cta.activates-results-workspace",
-  comparisonCtaWindow.includes('selectWorkspaceSection("results")')
+  comparisonCtaWindow.includes('openProductScreen("results")')
 );
 assertCase(
   "cc03.cta.requests-focus-on-existing-surface",

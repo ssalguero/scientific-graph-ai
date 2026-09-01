@@ -81,13 +81,16 @@ assertCase(
 
 assertCase(
   "p5.4.policy-human-control",
-  CONVERSATION_POLICY.allowLlm === false &&
+  CONVERSATION_POLICY.allowGenerationPort === true &&
+    CONVERSATION_POLICY.allowLlm === true &&
     CONVERSATION_POLICY.allowAutoNavigation === false &&
     CONVERSATION_POLICY.allowAutoExecution === false &&
     CONVERSATION_POLICY.allowMethodDecision === false &&
     CONVERSATION_POLICY.allowPersistentMemory === false &&
     CONVERSATION_POLICY.allowProactiveIntervention === false &&
-    CONVERSATION_POLICY.onDemandOnly === true,
+    CONVERSATION_POLICY.onDemandOnly === true &&
+    CONVERSATION_POLICY.allowTranscript === true &&
+    CONVERSATION_POLICY.maxClarifications > 1,
   JSON.stringify(CONVERSATION_POLICY)
 );
 
@@ -155,6 +158,8 @@ const uiImportDirs = [
 const uiImportHits = uiImportDirs.flatMap((dir) =>
   collectSourceFiles(dir)
     .filter((rel) => {
+      const normalized = rel.replace(/\\/g, "/");
+      if (normalized.includes("/api/")) return false;
       const source = readFileSync(join(repoRoot, rel), "utf8");
       return (
         source.includes("@/lib/conversation") ||
@@ -337,7 +342,8 @@ const queryBoxSource = readFileSync(
 );
 assertCase(
   "p6.1.query-box-no-mutators",
-  queryBoxSource.includes("runConversationCore") &&
+  queryBoxSource.includes("ScientificConversationSurface") &&
+    queryBoxSource.includes("normalizeMathContext") &&
     !queryBoxSource.includes("selectWorkspaceSection") &&
     !queryBoxSource.includes("setAnalysisInspectorSection") &&
     !queryBoxSource.includes("handleSmartStartSelect") &&

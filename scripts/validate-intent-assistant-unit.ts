@@ -53,7 +53,20 @@ assertIntent("example.compare-ab", "comparar grupos A/B en un experimento", "com
 assertIntent("example.math-sine", "graficar función seno y coseno", "math-graph", "standard");
 assertIntent("example.publication", "evaluar paper para revista científica", "evaluate-publication", "standard");
 assertIntent("example.open-project", "abrir mi proyecto sgproj guardado", "open-project", "standard");
-assertIntent("example.expert", "modo experto con herramientas avanzadas", "expert-mode", "expert");
+assertIntent(
+  "example.constructor-visual",
+  "abrir constructor visual vgb",
+  "constructor-visual",
+  "standard"
+);
+{
+  const leftoverExpert = classifyIntent("modo experto con herramientas avanzadas");
+  results.push({
+    id: "example.expert-not-vgb",
+    pass: leftoverExpert?.intentId !== "constructor-visual",
+    detail: leftoverExpert ? leftoverExpert.intentId : "null",
+  });
+}
 
 results.push({
   id: "empty.input",

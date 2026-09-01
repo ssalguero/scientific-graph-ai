@@ -1,4 +1,5 @@
 import type { ExperimentalSeries } from "@/lib/experimentalData";
+import { resolvePersistedProductScreen } from "@/lib/product-navigation";
 import { projectDatasetV2ToSessionDataset } from "@/lib/project/adapters/sgproj/map-session-dataset";
 import type {
   EditorProjectApplyContextV2,
@@ -355,7 +356,13 @@ export const applyHydrateProjectV2Patch = (
   });
   apply.setGuidedWorkflowSession({ ...project.workflow.session });
 
-  apply.setActiveWorkspaceSection(project.workspace.activeSection);
+  apply.setProductScreen(
+    resolvePersistedProductScreen({
+      productScreen: project.workspace.productScreen,
+      activeSection: project.workspace.activeSection,
+      controlPanelTab: project.workspace.controlPanelTab,
+    })
+  );
   apply.setAnalysisInspectorSection(project.workspace.inspectorSection);
   apply.setEnabledModules({ ...project.workspace.enabledModules });
   if (project.workspace.controlPanelTab) {

@@ -24,7 +24,7 @@ const TOPIC_CHANGE_IDS = new Set([
   "compare-datasets",
   "math-graph",
   "evaluate-publication",
-  "expert-mode",
+  "constructor-visual",
   "open-project",
 ]);
 

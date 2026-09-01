@@ -124,7 +124,11 @@ export const runPr5Wave2ContinuityCases = (assertCase: AssertCase): void => {
   );
   assertCase(
     "pr5.wave2.journey.next-action-continuity",
-    page.includes('label: "Continuar a Datos →"') &&
+    page.includes('label: "Analizar →"') &&
+      page.includes('openProductScreen("analizar")') &&
+      page.includes('openProductScreen("comparar")') &&
+      page.includes('openProductScreen("graph")') &&
+      page.includes('openProductScreen("vgb")') &&
       page.includes('label: "Continuar a Análisis →"') &&
       page.includes('label: "Ver gráfico / Resultados →"') &&
       page.includes('label: "Ir a Reportes"') &&
@@ -157,8 +161,11 @@ export const runPr5Wave2ContinuityCases = (assertCase: AssertCase): void => {
       PR5_GE_VGB_DISTINCT.includes("Constructor Visual (VGB)") &&
       PR5_GE_VGB_DISTINCT.includes("capacidades distintas") &&
       page.includes("PR5_GE_VGB_DISTINCT") &&
+      page.includes('openProductScreen("graph")') &&
+      page.includes('openProductScreen("vgb")') &&
       page.includes('openDataView("curves")') &&
-      page.includes('openDataView("visual-builder")')
+      page.includes('if (view === "visual-builder")') &&
+      page.includes('openProductScreen("vgb")')
   );
   assertCase(
     "pr5.wave2.results.compare-report-export-paths",
@@ -167,7 +174,7 @@ export const runPr5Wave2ContinuityCases = (assertCase: AssertCase): void => {
       page.includes("createPublicationVgbFigureNumericExport") &&
       page.includes("exportVgbPublicationNumeric") &&
       page.includes("formatPdfCtr08BlockMessage()") &&
-      page.includes("selectWorkspaceSection(\"reports\")")
+      page.includes("openProductScreen(\"reports\")")
   );
   assertCase(
     "pr5.wave2.boundary.session-modules-unmodified",
@@ -239,7 +246,8 @@ export const runPr5Wave2ContinuityCases = (assertCase: AssertCase): void => {
     page.includes("data-pr5-home-disposition") &&
       page.includes("formatPr5ContinuityDisposition()") &&
       !page.includes("absolute inset-x-0 bottom-2") &&
-      homeLauncher.includes("flex-wrap") &&
+      (homeLauncher.includes("flex-wrap") ||
+        homeLauncher.includes("grid-cols")) &&
       !homeLauncher.includes("flex-nowrap") &&
       homeCss.includes("[data-pr5-home-disposition]") &&
       homeCss.includes("flex: 0 0 auto")

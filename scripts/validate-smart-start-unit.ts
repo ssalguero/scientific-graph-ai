@@ -122,6 +122,8 @@ subGatesPass = runTsxScript("validate-conversation-core-unit.ts", "conversation-
 subGatesPass = runTsxScript("validate-conversation-compare-unit.ts", "conversation-compare-unit") && subGatesPass;
 subGatesPass = runTsxScript("validate-conversation-math-unit.ts", "conversation-math-unit") && subGatesPass;
 subGatesPass = runTsxScript("validate-conversation-location-unit.ts", "conversation-location-unit") && subGatesPass;
+subGatesPass = runTsxScript("validate-conversation-experience-unit.ts", "conversation-experience-unit") && subGatesPass;
+subGatesPass = runTsxScript("validate-product-navigation-unit.ts", "product-navigation-unit") && subGatesPass;
 
 const summary = {
   phase: "smart-start-unit",

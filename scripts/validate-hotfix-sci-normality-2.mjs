@@ -41,7 +41,7 @@ const INFERENCE_TOGGLES = [
 const ADVISOR_TOGGLES = [
   "Mostrar reporte científico",
   "Mostrar interpretación científica",
-  "Mostrar asistente científico",
+  "Mostrar informe heurístico",
 ];
 
 const LEGACY_MARKERS = [
@@ -113,7 +113,7 @@ async function expandStatisticsInspectorGroups(page) {
 
 async function enableModules(page) {
   await page.getByRole("tab", { name: "Análisis" }).click();
-  await selectInspectorCategory(page, "Estadística");
+  await selectInspectorCategory(page, "Descripción y relación");
   await expandStatisticsInspectorGroups(page);
   const disabledToggles = [];
   for (const toggle of STATISTICS_TOGGLES) {
@@ -125,7 +125,7 @@ async function enableModules(page) {
     const state = await enableToggle(page, toggle);
     if (state.enabled === false) disabledToggles.push(toggle);
   }
-  await selectInspectorCategory(page, "Advisor");
+  await selectInspectorCategory(page, "Orientación heurística");
   for (const toggle of ADVISOR_TOGGLES) {
     const state = await enableToggle(page, toggle);
     if (state.enabled === false) disabledToggles.push(toggle);
@@ -301,7 +301,7 @@ async function validateSci58Comparison(page) {
   await captureComparisonSlot(page, "B");
 
   await page.getByRole("tab", { name: "Análisis" }).click();
-  await selectInspectorCategory(page, "Estadística");
+  await selectInspectorCategory(page, "Descripción y relación");
   const toggleState = await enableToggle(
     page,
     "Mostrar Multi-Dataset Comparison Dashboard"
@@ -603,12 +603,12 @@ async function validateDataset(page, datasetPath, datasetName) {
   }
 
   result.checks.sci20Visible = await page
-    .getByText("Asistente científico", { exact: false })
+    .getByText("Informe heurístico", { exact: false })
     .first()
     .isVisible()
     .catch(() => false);
   if (result.checks.sci20Visible) {
-    await expandNotebook(page, "Asistente científico");
+    await expandNotebook(page, "Informe heurístico");
   }
 
   await page.getByRole("tab", { name: "Reportes" }).click();

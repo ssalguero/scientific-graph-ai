@@ -325,7 +325,7 @@ assertCase(
     pearsonDefine.userConcepts.some((item) => item.conceptId === "pearson") &&
     pearsonDefine.userConcepts.every((item) => item.conceptId !== "unknown") &&
     pearsonDefine.primaryCardId === null &&
-    /estad[ií]stica/i.test(pearsonDefine.explanation) &&
+    /descripci[oó]n y relaci[oó]n/i.test(pearsonDefine.explanation) &&
     /correlaci/i.test(pearsonDefine.explanation) &&
     !/recomend|es correcta|debes usar|el m[eé]todo correcto/i.test(
       `${pearsonDefine.interpretation} ${pearsonDefine.explanation} ${pearsonDefine.continuationPrompt ?? ""}`
@@ -413,7 +413,7 @@ assertCase(
     multi.suggestedCardIds.includes("analyze-workspace") &&
     /pearson/i.test(`${multi.interpretation} ${multi.explanation}`) &&
     /regresi/i.test(`${multi.interpretation} ${multi.explanation}`) &&
-    /estad[ií]stica/i.test(multi.explanation) &&
+    /descripci[oó]n y relaci[oó]n/i.test(multi.explanation) &&
     /matem[aá]ticas/i.test(multi.explanation) &&
     !/recomend|m[eé]todo correcto|elija Pearson|elija regresi|mejor m[eé]todo/i.test(
       `${multi.interpretation} ${multi.explanation}`
@@ -455,14 +455,14 @@ assertCase(
 const anovaUse = buildGuidanceDecision("Quiero hacer una ANOVA", emptyCtx);
 const anovaCopy = `${anovaUse.interpretation} ${anovaUse.explanation}`;
 assertCase(
-  "p4.11.anova-location-statistics",
+  "p4.11.anova-location-inference",
   anovaUse.userConcepts.some(
     (item) =>
-      item.conceptId === "anova" && item.productAreaId === "analysis/statistics"
+      item.conceptId === "anova" && item.productAreaId === "analysis/inference"
   ) &&
-    /estad[ií]stica/i.test(anovaCopy) &&
-    /esencial/i.test(anovaCopy) &&
-    !/inferencia/i.test(anovaCopy) &&
+    /inferencia/i.test(anovaCopy) &&
+    /pruebas de grupos/i.test(anovaCopy) &&
+    !/esencial/i.test(anovaCopy) &&
     anovaUse.primaryCardId === "analyze-dataset",
   anovaCopy
 );
@@ -1070,7 +1070,7 @@ assertCase(
   conversationContractSource.includes("WIRED_CONVERSATION_DOMAINS") &&
     conversationContractSource.includes('"home"') &&
     conversationContractSource.includes("homeConversationContext") &&
-    conversationContractSource.includes("allowLlm: false") &&
+    conversationContractSource.includes("allowGenerationPort: true") &&
     !conversationContractSource.includes("openai") &&
     !assistantSource.includes("@/lib/conversation"),
   "p5.4 freeze"

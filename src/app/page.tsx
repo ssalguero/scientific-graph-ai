@@ -237,7 +237,19 @@ import {
   writeUserPreferences,
   type ThemeMode,
 } from "@/lib/app-preferences";
+import { usePathname } from "next/navigation";
 import { useSmartStart } from "./useSmartStart";
+import { useProductScreen } from "./useProductScreen";
+import {
+  guidedWorkflowHostMatchesProductScreen,
+  guidedWorkflowHostProductScreenLabel,
+  guidedWorkflowTabToProductScreen,
+  legacyRenderPlanForScreen,
+  legacyWorkspaceSectionFromScreen,
+  persistedWorkspaceToProductScreen,
+  isShareGraphPathname,
+  type ProductScreenId,
+} from "@/lib/product-navigation";
 import {
   LabExpertModeToast,
   LabUsageProfileSelector,
@@ -579,11 +591,36 @@ type DataWorkspaceView = "experimental" | "curves" | "advanced" | "visual-builde
 const DATA_WORKSPACE_VIEWS: {
   id: DataWorkspaceView;
   label: string;
+  group: string;
+  description: string;
 }[] = [
-  { id: "experimental", label: "Experimental" },
-  { id: "curves", label: "Constructor y=f(x)" },
-  { id: "visual-builder", label: "📊 Constructor Visual" },
-  { id: "advanced", label: "Avanzado" },
+  {
+    id: "experimental",
+    label: "Experimental",
+    group: "Datos experimentales",
+    description:
+      "Importá y editá series medidas. Este camino alimenta Análisis.",
+  },
+  {
+    id: "curves",
+    label: "Constructor y=f(x)",
+    group: "Construir gráfico",
+    description:
+      "GE: expresiones matemáticas. La figura se revisa en Resultados. No es el Constructor Visual.",
+  },
+  {
+    id: "visual-builder",
+    label: "Constructor Visual",
+    group: "Construir gráfico",
+    description:
+      "VGB: figura visual de trabajo. Distinto de y=f(x). No alimenta Análisis automáticamente.",
+  },
+  {
+    id: "advanced",
+    label: "Avanzado",
+    group: "Más herramientas",
+    description: "Biblioteca y opciones especializadas.",
+  },
 ];
 
 type ScientificReportSectionCollapsibleProps = {
@@ -628,6 +665,7 @@ function ScientificReportSectionCollapsible({
 
 type WorkspaceSection = "home" | "data" | "analysis" | "results" | "reports";
 
+/** Legacy IDE tab catalog. Not the Product Face router (FASE 0). */
 const WORKSPACE_TABS: { id: WorkspaceSection; label: string }[] = [
   { id: "home", label: "Inicio" },
   { id: "data", label: "Datos" },
@@ -1005,19 +1043,19 @@ const SCIENTIFIC_MODULES: Omit<ScientificModule, "enabled">[] = [
     id: "basic",
     name: "Análisis básico",
     icon: "📊",
-    description: "Visualización, rango, ejes y escalas",
+    description: "Muestreo, rango, ejes y escalas del análisis",
   },
   {
     id: "mathematics",
     name: "Análisis matemático",
     icon: "🧮",
-    description: "Funciones, derivadas e integrales",
+    description: "Regresión, derivadas e integrales de curvas",
   },
   {
     id: "statistics",
     name: "Análisis estadístico",
     icon: "📉",
-    description: "Distribuciones y estadística descriptiva",
+    description: "Descripción, relación y estructura de datos",
   },
   {
     id: "inference",
@@ -1027,9 +1065,9 @@ const SCIENTIFIC_MODULES: Omit<ScientificModule, "enabled">[] = [
   },
   {
     id: "assistant",
-    name: "Asistente científico",
+    name: "Informe heurístico",
     icon: "🧠",
-    description: "Interpretación y recomendaciones",
+    description: "Orientación heurística; no es Preguntar",
   },
   {
     id: "reports",
@@ -1074,6 +1112,7 @@ const INSPECTOR_SECTION_MODULE_ID: Record<AnalysisInspectorSection, string> = {
   advisor: "assistant",
 };
 
+/** Inspector contextual — scientific domains stay in Analizar Product Face, not the empty Inspector dock. */
 const ANALYSIS_INSPECTOR_CATEGORIES: {
   id: AnalysisInspectorSection;
   label: string;
@@ -1083,37 +1122,42 @@ const ANALYSIS_INSPECTOR_CATEGORIES: {
 }[] = [
   {
     id: "visualization",
-    label: "Visualización",
+    label: "Muestreo y ejes",
     icon: "📊",
-    description: "Rango, ejes y escalas del gráfico.",
+    description:
+      "Dominio X, ejes y escalas usados al muestrear y mostrar el análisis. No es Constructor Visual ni Gráfico y=f(x).",
     moduleId: "basic",
   },
   {
     id: "mathematics",
-    label: "Matemática",
+    label: "Modelado de curvas",
     icon: "📈",
-    description: "Regresiones, derivadas e integrales.",
+    description:
+      "Regresión y análisis de curvas y=f(x): derivada, integral, raíces e intersecciones.",
     moduleId: "mathematics",
   },
   {
     id: "statistics",
-    label: "Estadística",
+    label: "Descripción y relación",
     icon: "📉",
-    description: "Descriptiva, correlación, outliers y distribución.",
+    description:
+      "Descripción, Pearson/Spearman y estructura de los datos. Distinto de Inferencia y de Evaluar metodología.",
     moduleId: "statistics",
   },
   {
     id: "inference",
     label: "Inferencia",
     icon: "🧪",
-    description: "t-Test, ANOVA, Tukey y pruebas no paramétricas.",
+    description:
+      "Pruebas de grupos: t-test, ANOVA, no paramétricas, comparaciones múltiples y magnitud del efecto.",
     moduleId: "inference",
   },
   {
     id: "advisor",
-    label: "Advisor",
+    label: "Orientación heurística",
     icon: "🧠",
-    description: "Advisor, interpretación y asistente.",
+    description:
+      "Orientación heurística del sistema. No es Preguntar; no ejecuta ni elige métodos.",
     moduleId: "assistant",
   },
 ];
@@ -15318,6 +15362,8 @@ type GraphEditorProps = {
   shareGraphId?: string;
 };
 
+let workspaceGraphEditorMounts = 0;
+
 export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const [title, setTitle] = useState("");
   const [curves, setCurves] = useState<Curve[]>([
@@ -15496,12 +15542,55 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   // Curva actualmente seleccionada para los botones de ejemplos
   const [activeCurveIndex, setActiveCurveIndex] = useState<number>(0);
   const [functionSearch, setFunctionSearch] = useState("");
-  const [activeWorkspaceSection, setActiveWorkspaceSection] =
-    useState<WorkspaceSection>("home");
+  /**
+   * FASE 0 — Product Face router is ProductScreenId + openProductScreen + URL.
+   * activeWorkspaceSection is DERIVED for the legacy tabpanel renderer.
+   * Direction: ProductScreenId → render. Not activeWorkspaceSection → screen.
+   *
+   * TEMPORARY overlays (not ProductScreenId; ADR):
+   * - legacyDatosSurfaceActive: leftover "← Datos" from other leftover surfaces.
+   *   Product Face Importar does not use this overlay.
+   * - leftoverVisualBuilderActive may still exist as dormant leftover chrome.
+   *   Face VGB is ProductScreenId `vgb`. Overlay must not govern Face.
+   */
+  const { productScreen, openProductScreen: syncProductScreen } =
+    useProductScreen(Boolean(shareGraphId));
+  const [legacyDatosSurfaceActive, setLegacyDatosSurfaceActive] =
+    useState(false);
+  const [legacyVisualBuilderActive, setLegacyVisualBuilderActive] =
+    useState(false);
+  const applyEnterScreenFlagsRef = useRef<(screen: ProductScreenId) => void>(
+    () => undefined
+  );
+  const openProductScreen = (screen: ProductScreenId) => {
+    setLegacyDatosSurfaceActive(false);
+    setLegacyVisualBuilderActive(false);
+    applyEnterScreenFlagsRef.current(screen);
+    syncProductScreen(screen);
+  };
+  const openScreenFromWorkflowTab = (
+    tab: GuidedWorkflowWorkspaceTab,
+    templateId: string | null
+  ) => {
+    const screen = guidedWorkflowTabToProductScreen(tab, templateId);
+    if (!screen) return;
+    // R10: adapter only. workspaceTab is not a router.
+    // FASE 0: Comparar is its own ProductScreen. compare-groups may run on
+    // comparar; it must not auto-open analizar. Explicit Analizar stays a
+    // user action via openProductScreen("analizar").
+    if (templateId === "compare-groups" && screen === "analizar") {
+      return;
+    }
+    openProductScreen(screen);
+  };
+  const activeWorkspaceSection: WorkspaceSection =
+    legacyDatosSurfaceActive || legacyVisualBuilderActive
+      ? "data"
+      : legacyWorkspaceSectionFromScreen(productScreen);
   useEffect(() => {
     if (!pendingComparisonResultsFocusRef.current) return;
     if (!showMultiDatasetComparison) return;
-    if (activeWorkspaceSection !== "results") return;
+    if (productScreen !== "results") return;
     const node = document.getElementById(
       "scientific-multi-dataset-comparison-dashboard"
     );
@@ -15509,16 +15598,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     pendingComparisonResultsFocusRef.current = false;
     node.scrollIntoView({ behavior: "smooth", block: "start" });
     node.focus();
-  }, [showMultiDatasetComparison, activeWorkspaceSection]);
+  }, [showMultiDatasetComparison, productScreen]);
   const [sidebarRailCollapsed, setSidebarRailCollapsed] = useState(true);
   const sidebarUserRailPreferenceRef = useRef<boolean | null>(null);
   const sidebarWasFaceShellRef = useRef(true);
   const [dataWorkspaceView, setDataWorkspaceView] =
-    useState<DataWorkspaceView>("experimental");
+    useState<DataWorkspaceView>(
+      () => legacyRenderPlanForScreen(productScreen).dataWorkspaceView
+    );
   const [continueVisualGraphId, setContinueVisualGraphId] = useState<
     string | null
   >(null);
-  const [importDestinationActive, setImportDestinationActive] = useState(false);
+  const [importDestinationActive, setImportDestinationActive] = useState(
+    () => legacyRenderPlanForScreen(productScreen).importDestinationActive
+  );
   const importarDestinationRef = useRef<HTMLDivElement | null>(null);
   const [sidebarGraphLibraryOpen, setSidebarGraphLibraryOpen] = useState(false);
   const [projectActivityPanelOpen, setProjectActivityPanelOpen] = useState(false);
@@ -15539,7 +15632,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     () => createDefaultEnabledModules()
   );
   const [analysisInspectorSection, setAnalysisInspectorSection] =
-    useState<AnalysisInspectorSection>("visualization");
+    useState<AnalysisInspectorSection>(
+      () =>
+        legacyRenderPlanForScreen(productScreen).analysisInspectorSection ??
+        "visualization"
+    );
   const visibleInspectorCategories = useMemo(
     () =>
       ANALYSIS_INSPECTOR_CATEGORIES.filter(
@@ -15604,7 +15701,20 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   );
   const [controlPanelTab, setControlPanelTab] = useState<
     "graph" | "library" | "data"
-  >("graph");
+  >(() => legacyRenderPlanForScreen(productScreen).controlPanelTab ?? "graph");
+  /**
+   * TEMPORARY persist/hydrate adapter only. Not the Product Face router.
+   * `data` cannot distinguish importar/comparar/graph (persist adapter). `avanzado` is not Face.
+   * controlPanelTab is the render-time value; hydrate sets section before tab (stale).
+   */
+  const setActiveWorkspaceSection = (section: WorkspaceSection) => {
+    openProductScreen(
+      persistedWorkspaceToProductScreen({
+        activeSection: section,
+        controlPanelTab,
+      })
+    );
+  };
   const [experimentalSeries, setExperimentalSeries] = useState<
     ExperimentalSeries[]
   >([]);
@@ -15750,13 +15860,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     if (analysisInspectorSection !== "statistics") return;
     if (activeWorkspaceSection !== "analysis") return;
     setMethodologyPublicationOpen(true);
-    const timer = window.setTimeout(() => {
-      methodologyPublicationGroupRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 150);
-    return () => window.clearTimeout(timer);
   }, [
     highlightPublicationDashboards,
     analysisInspectorSection,
@@ -15782,10 +15885,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   }, [lastImportReport]);
 
   useEffect(() => {
-    if (activeWorkspaceSection === "reports" && !isReportsModuleEnabled) {
-      setActiveWorkspaceSection("data");
+    if (productScreen === "reports" && !isReportsModuleEnabled) {
+      // ADR: no ProductScreenId for "Datos". Temporary overlay, not importar.
+      setLegacyDatosSurfaceActive(true);
     }
-  }, [activeWorkspaceSection, isReportsModuleEnabled]);
+  }, [productScreen, isReportsModuleEnabled]);
 
   const toggleScientificModule = (moduleId: string) => {
     setEnabledModules((previous) => ({
@@ -17967,7 +18071,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       guidedWorkflowContext
     );
   }, [guidedWorkflowSession, guidedWorkflowContext]);
-  const guidedWorkflowHostTab = useMemo((): WorkspaceSection | null => {
+  const guidedWorkflowHostTab = useMemo((): GuidedWorkflowWorkspaceTab | null => {
     if (
       !activeGuidedWorkflowPlan ||
       guidedWorkflowSession.status === "idle" ||
@@ -17988,13 +18092,47 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   }, [activeGuidedWorkflowPlan, guidedWorkflowSession]);
   const showGuidedWorkflowPanel =
     guidedWorkflowHostTab !== null &&
-    (guidedWorkflowSession.status === "completed" ||
-      activeWorkspaceSection === guidedWorkflowHostTab);
+    guidedWorkflowHostMatchesProductScreen(
+      guidedWorkflowHostTab,
+      guidedWorkflowSession.templateId,
+      productScreen
+    );
   const showWorkflowSessionIndicator =
     activeGuidedWorkflowPlan !== null &&
     (guidedWorkflowSession.status === "active" ||
       guidedWorkflowSession.status === "completed") &&
-    activeWorkspaceSection !== "home";
+    productScreen !== "home";
+  const guidedWorkflowPreguntarObservation = (() => {
+    const templateId = guidedWorkflowSession.templateId;
+    if (
+      !templateId ||
+      guidedWorkflowSession.status === "idle" ||
+      guidedWorkflowSession.status === "cancelled"
+    ) {
+      return null;
+    }
+    const plan = activeGuidedWorkflowPlan;
+    const step = plan?.steps[guidedWorkflowSession.currentStepIndex];
+    const hostScreen = step
+      ? guidedWorkflowTabToProductScreen(step.workspaceTab, templateId)
+      : guidedWorkflowHostTab
+        ? guidedWorkflowTabToProductScreen(guidedWorkflowHostTab, templateId)
+        : null;
+    return [
+      `workflow ${templateId} ${guidedWorkflowSession.status}`,
+      step && plan
+        ? `paso ${guidedWorkflowSession.currentStepIndex + 1}/${plan.steps.length} ${step.id}`
+        : guidedWorkflowSession.status === "completed"
+          ? "workflow completado"
+          : "sin paso actual",
+      `completados ${guidedWorkflowSession.completedStepIds.length}`,
+      hostScreen
+        ? `etapa ProductScreen ${hostScreen}`
+        : "etapa sin ProductScreen mapeado",
+      `productScreen actual ${productScreen}`,
+      "Preguntar no inicia ni avanza el workflow",
+    ].join("; ");
+  })();
   const visibilityState = useMemo<VisibilityState>(
     () => ({
       showDerivative,
@@ -18163,7 +18301,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     });
     const firstStep = plan.steps[0];
     if (firstStep) {
-      setActiveWorkspaceSection(firstStep.workspaceTab);
+      openScreenFromWorkflowTab(firstStep.workspaceTab, templateId);
       if (firstStep.inspectorSection) {
         setAnalysisInspectorSection(firstStep.inspectorSection);
       }
@@ -18181,12 +18319,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   const {
     showSmartStartScreen,
     showCompareStepsBanner,
+    setShowCompareStepsBanner,
     showPublicationEntryBanner,
     handleSmartStartSelect,
-    handleSmartStartExpertMode,
     handlePublicationEntryGoToImport,
     handlePublicationEntryStartWorkflow,
-    selectWorkspaceSection,
     dismissCompareStepsBanner,
     dismissPublicationEntryBanner,
   } = useSmartStart({
@@ -18199,36 +18336,63 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     guidedWorkflowSession,
     guidedWorkflowContext,
     labUsageProfile,
-    dataImportSectionRef,
-    dataMultiDatasetSectionRef,
-    dataConstructorSectionRef,
-    firstCurveExpressionRef,
     projectPanelRef,
     openProjectButtonRef,
-    setActiveWorkspaceSection,
-    setDataWorkspaceView,
-    setDataSectionOpen,
+    openProductScreen,
     setLabUsageProfile,
-    setStatisticsDashboardsOpen,
     setExpertModeToastVisible,
-    setAnalysisInspectorSection,
-    setControlPanelTab,
-    setShowMultiDatasetComparison,
-    setHighlightPublicationDashboards,
     setHighlightProjectPanel,
     startGuidedWorkflow,
-    setImportDestinationActive,
-    importDestinationActive,
-    importarDestinationRef,
   });
+  applyEnterScreenFlagsRef.current = (screen: ProductScreenId) => {
+    const plan = legacyRenderPlanForScreen(screen);
+    if (screen === "home") {
+      setImportDestinationActive(false);
+      return;
+    }
+    if (screen === "results" || screen === "reports") {
+      return;
+    }
+    setImportDestinationActive(plan.importDestinationActive);
+    if (
+      screen === "importar" ||
+      screen === "comparar" ||
+      screen === "graph" ||
+      screen === "vgb"
+    ) {
+      setDataWorkspaceView(plan.dataWorkspaceView);
+      setDataSectionOpen(plan.dataSectionOpen);
+    }
+    if (plan.controlPanelTab) {
+      setControlPanelTab(plan.controlPanelTab);
+    }
+    if (screen === "comparar") {
+      setShowMultiDatasetComparison(true);
+      setShowCompareStepsBanner(true);
+    }
+    if (plan.analysisInspectorSection) {
+      setAnalysisInspectorSection(plan.analysisInspectorSection);
+    }
+    if (plan.statisticsDashboardsOpen) {
+      setStatisticsDashboardsOpen(true);
+    }
+    if (plan.highlightPublicationDashboards) {
+      setHighlightPublicationDashboards(true);
+    }
+  };
+  useEffect(() => {
+    setLegacyDatosSurfaceActive(false);
+    setLegacyVisualBuilderActive(false);
+    applyEnterScreenFlagsRef.current(productScreen);
+  }, [productScreen]);
   const revealScientificAssistant = () => {
     setShowScientificAssistant(true);
     setScientificAssistantSectionOpen(true);
-    selectWorkspaceSection("results");
+    openProductScreen("results");
   };
   useEffect(() => {
     if (!showScientificAssistant || !scientificAssistantSectionOpen) return;
-    if (activeWorkspaceSection !== "results") return;
+    if (productScreen !== "results") return;
     const timer = window.setTimeout(() => {
       scientificAssistantSectionRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -18239,7 +18403,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   }, [
     showScientificAssistant,
     scientificAssistantSectionOpen,
-    activeWorkspaceSection,
+    productScreen,
   ]);
   const cancelGuidedWorkflow = () => {
     const cancelledTemplateId = guidedWorkflowSession.templateId;
@@ -18284,7 +18448,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       return;
     }
 
-    setActiveWorkspaceSection(step.workspaceTab);
+    // R10: workspaceTab is host metadata, not a Product Face router.
+    // ProductScreen changes use openProductScreen from start/apply/explicit CTAs.
     if (step.inspectorSection) {
       setAnalysisInspectorSection(step.inspectorSection);
     }
@@ -18349,7 +18514,10 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     applyGuidedWorkflowToggles(toggles, guidedWorkflowToggleSetters);
 
     if (step.navigateAfterApply !== false) {
-      setActiveWorkspaceSection(step.workspaceTab);
+      openScreenFromWorkflowTab(
+        step.workspaceTab,
+        guidedWorkflowSession.templateId
+      );
       if (step.inspectorSection) {
         setAnalysisInspectorSection(step.inspectorSection);
       }
@@ -18382,7 +18550,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         );
         return replaced ?? previous;
       });
-      selectWorkspaceSection("results");
+      openProductScreen("results");
       return;
     }
     const entry = createProjectVisualGraphEntry({
@@ -18407,7 +18575,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         )
       );
     });
-    selectWorkspaceSection("results");
+    openProductScreen("results");
   };
   const buildCurrentComparisonProfileProvenance = useCallback((
     slotLabel: ComparisonSlotId
@@ -20810,6 +20978,8 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     setComparisonSlots,
     activeWorkspaceSection,
     setActiveWorkspaceSection,
+    productScreen,
+    setProductScreen: openProductScreen,
     analysisInspectorSection,
     setAnalysisInspectorSection,
     enabledModules,
@@ -21100,8 +21270,25 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     ) {
       setLabUsageProfile("standard");
     }
-    setDataWorkspaceView(view);
-    selectWorkspaceSection("data");
+    if (view === "curves") {
+      openProductScreen("graph");
+      return;
+    }
+    if (view === "advanced") {
+      // Leftover Avanzado view only. Not Face. Must not open Graph.
+      setDataWorkspaceView("advanced");
+      setImportDestinationActive(false);
+      return;
+    }
+    if (view === "experimental") {
+      // "Ir a Importación experimental" from VGB: importar is the defined screen.
+      openProductScreen("importar");
+      return;
+    }
+    if (view === "visual-builder") {
+      openProductScreen("vgb");
+      return;
+    }
   };
 
   const requestResetProject = () => {
@@ -21121,17 +21308,86 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     Boolean(recoveryPrompt) ||
     Boolean(pendingFileOpenConflict) ||
     highlightProjectPanel;
-  const isHomeShell = activeWorkspaceSection === "home";
+  const isHomeShell =
+    productScreen === "home" &&
+    !legacyDatosSurfaceActive &&
+    !legacyVisualBuilderActive;
+  // FASE 1: Importar is owned by ProductScreenId, not the Datos tabpanel.
+  // legacyDatosSurfaceActive remains the overlay with no ProductScreenId (ADR).
   const isImportarShell =
-    importDestinationActive && activeWorkspaceSection === "data";
+    productScreen === "importar" &&
+    !legacyDatosSurfaceActive &&
+    !legacyVisualBuilderActive;
+  // FASE 2: Graph y=f(x) is owned by ProductScreenId, not the Datos tabpanel.
+  const isGraphShell =
+    productScreen === "graph" &&
+    !legacyDatosSurfaceActive &&
+    !legacyVisualBuilderActive;
+  const isCompararShell =
+    productScreen === "comparar" &&
+    !legacyDatosSurfaceActive &&
+    !legacyVisualBuilderActive;
+  // R4: Constructor Visual is owned by ProductScreenId(vgb), not the Datos tabpanel.
+  const isVgbShell =
+    productScreen === "vgb" &&
+    !legacyDatosSurfaceActive &&
+    !legacyVisualBuilderActive;
+  // FASE 4: Analizar is owned by ProductScreenId, not the Análisis tabpanel.
+  const isAnalizarShell =
+    productScreen === "analizar" &&
+    !legacyDatosSurfaceActive &&
+    !legacyVisualBuilderActive;
+  // R7: Evaluar metodología is owned by ProductScreenId, not the Análisis tabpanel.
+  const isEvaluarShell =
+    productScreen === "evaluar-metodologia" &&
+    !legacyDatosSurfaceActive &&
+    !legacyVisualBuilderActive;
+  // FASE 3: Comparar is owned by ProductScreenId, not the Datos tabpanel.
   const isDatosShell =
-    activeWorkspaceSection === "data" && !importDestinationActive;
-  const isAnalysisShell = activeWorkspaceSection === "analysis";
-  const isResultsShell = activeWorkspaceSection === "results";
+    activeWorkspaceSection === "data" &&
+    !isImportarShell &&
+    !isGraphShell &&
+    !isCompararShell &&
+    !isVgbShell;
+  const showLegacyDatosPanel = isDatosShell;
+  const isAnalysisShell =
+    activeWorkspaceSection === "analysis" &&
+    !isAnalizarShell &&
+    !isEvaluarShell;
+  const showLegacyAnalysisPanel = isAnalysisShell;
+  // R12: Results is owned by ProductScreenId, not the Resultados tabpanel.
+  const isResultsShell =
+    productScreen === "results" &&
+    !legacyDatosSurfaceActive &&
+    !legacyVisualBuilderActive;
+  const showLegacyResultsPanel =
+    activeWorkspaceSection === "results" &&
+    !isResultsShell;
+  // R9: Reports is owned by ProductScreenId, not the Reportes tabpanel.
   const isReportsShell =
-    activeWorkspaceSection === "reports" && isReportsModuleEnabled;
+    productScreen === "reports" &&
+    !legacyDatosSurfaceActive &&
+    !legacyVisualBuilderActive &&
+    isReportsModuleEnabled;
+  const showLegacyReportsPanel =
+    activeWorkspaceSection === "reports" &&
+    isReportsModuleEnabled &&
+    !isReportsShell;
   const sidebarChromeSuppressed =
     (isHomeShell && !homeNeedsProjectAttention) || isImportarShell;
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-product-screen", productScreen);
+    document.documentElement.setAttribute("data-product-face", "true");
+  }, [productScreen]);
+  useEffect(() => {
+    if (shareGraphId) return;
+    workspaceGraphEditorMounts += 1;
+    document.documentElement.setAttribute(
+      "data-graph-editor-mounts",
+      String(workspaceGraphEditorMounts)
+    );
+  }, [shareGraphId]);
 
   // CRP-6.3.x — presentation hook for Home IDE chrome / scroll suppressions (CSS).
   useEffect(() => {
@@ -21189,7 +21445,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       }
     } else {
       root.removeAttribute("data-crp-datos-shell");
-      if (!isImportarShell) {
+      if (!isImportarShell && !isGraphShell && !isCompararShell && !isAnalizarShell && !isVgbShell && !isEvaluarShell) {
         const restored = canvas?.getAttribute("data-datos-restored-title");
         if (canvas && restored) {
           canvas.setAttribute("title", restored);
@@ -21199,7 +21455,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     }
     return () => {
       root.removeAttribute("data-crp-datos-shell");
-      if (!isImportarShell) {
+      if (!isImportarShell && !isGraphShell && !isCompararShell && !isAnalizarShell && !isVgbShell && !isEvaluarShell) {
         const restored = canvas?.getAttribute("data-datos-restored-title");
         if (canvas && restored) {
           canvas.setAttribute("title", restored);
@@ -21207,7 +21463,112 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
         }
       }
     };
-  }, [isDatosShell, isImportarShell]);
+  }, [isDatosShell, isImportarShell, isGraphShell, isCompararShell, isAnalizarShell, isVgbShell, isEvaluarShell]);
+
+  // FASE 2 — Graph presentation-only IDE suppress (same chrome as Datos, not ownership).
+  useEffect(() => {
+    const root = document.documentElement;
+    const canvas = document.querySelector("[data-workspace-canvas]");
+    if (isGraphShell) {
+      root.setAttribute("data-crp-graph-shell", "true");
+      if (canvas?.getAttribute("title")) {
+        canvas.setAttribute(
+          "data-graph-restored-title",
+          canvas.getAttribute("title") ?? ""
+        );
+        canvas.removeAttribute("title");
+      }
+    } else {
+      root.removeAttribute("data-crp-graph-shell");
+      if (!isImportarShell && !isDatosShell && !isCompararShell && !isAnalizarShell && !isVgbShell && !isEvaluarShell) {
+        const restored = canvas?.getAttribute("data-graph-restored-title");
+        if (canvas && restored) {
+          canvas.setAttribute("title", restored);
+          canvas.removeAttribute("data-graph-restored-title");
+        }
+      }
+    }
+    return () => {
+      root.removeAttribute("data-crp-graph-shell");
+      if (!isImportarShell && !isDatosShell && !isCompararShell && !isAnalizarShell && !isVgbShell && !isEvaluarShell) {
+        const restored = canvas?.getAttribute("data-graph-restored-title");
+        if (canvas && restored) {
+          canvas.setAttribute("title", restored);
+          canvas.removeAttribute("data-graph-restored-title");
+        }
+      }
+    };
+  }, [isGraphShell, isImportarShell, isDatosShell, isCompararShell, isAnalizarShell, isVgbShell, isEvaluarShell]);
+
+  // FASE 3 — Comparar presentation-only IDE suppress (same chrome as Datos, not ownership).
+  useEffect(() => {
+    const root = document.documentElement;
+    const canvas = document.querySelector("[data-workspace-canvas]");
+    if (isCompararShell) {
+      root.setAttribute("data-crp-comparar-shell", "true");
+      if (canvas?.getAttribute("title")) {
+        canvas.setAttribute(
+          "data-comparar-restored-title",
+          canvas.getAttribute("title") ?? ""
+        );
+        canvas.removeAttribute("title");
+      }
+    } else {
+      root.removeAttribute("data-crp-comparar-shell");
+      if (!isImportarShell && !isDatosShell && !isGraphShell && !isAnalizarShell && !isVgbShell && !isEvaluarShell) {
+        const restored = canvas?.getAttribute("data-comparar-restored-title");
+        if (canvas && restored) {
+          canvas.setAttribute("title", restored);
+          canvas.removeAttribute("data-comparar-restored-title");
+        }
+      }
+    }
+    return () => {
+      root.removeAttribute("data-crp-comparar-shell");
+      if (!isImportarShell && !isDatosShell && !isGraphShell && !isAnalizarShell && !isVgbShell && !isEvaluarShell) {
+        const restored = canvas?.getAttribute("data-comparar-restored-title");
+        if (canvas && restored) {
+          canvas.setAttribute("title", restored);
+          canvas.removeAttribute("data-comparar-restored-title");
+        }
+      }
+    };
+  }, [isCompararShell, isImportarShell, isDatosShell, isGraphShell, isAnalizarShell, isVgbShell, isEvaluarShell]);
+
+  // R4 — VGB presentation-only IDE suppress (same chrome as Datos, not ownership).
+  useEffect(() => {
+    const root = document.documentElement;
+    const canvas = document.querySelector("[data-workspace-canvas]");
+    if (isVgbShell) {
+      root.setAttribute("data-crp-vgb-shell", "true");
+      if (canvas?.getAttribute("title")) {
+        canvas.setAttribute(
+          "data-vgb-restored-title",
+          canvas.getAttribute("title") ?? ""
+        );
+        canvas.removeAttribute("title");
+      }
+    } else {
+      root.removeAttribute("data-crp-vgb-shell");
+      if (!isImportarShell && !isDatosShell && !isGraphShell && !isCompararShell && !isAnalizarShell && !isEvaluarShell) {
+        const restored = canvas?.getAttribute("data-vgb-restored-title");
+        if (canvas && restored) {
+          canvas.setAttribute("title", restored);
+          canvas.removeAttribute("data-vgb-restored-title");
+        }
+      }
+    }
+    return () => {
+      root.removeAttribute("data-crp-vgb-shell");
+      if (!isImportarShell && !isDatosShell && !isGraphShell && !isCompararShell && !isAnalizarShell && !isEvaluarShell) {
+        const restored = canvas?.getAttribute("data-vgb-restored-title");
+        if (canvas && restored) {
+          canvas.setAttribute("title", restored);
+          canvas.removeAttribute("data-vgb-restored-title");
+        }
+      }
+    };
+  }, [isVgbShell, isImportarShell, isDatosShell, isGraphShell, isCompararShell, isAnalizarShell, isEvaluarShell]);
 
   // CRP-6.3 Phase 1 — presentation-only IDE silence on Análisis / Resultados / Reportes.
   // Same contract as Datos: infrastructure stays mounted; not researcher-facing. No recovery UI.
@@ -21221,7 +21582,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       root.removeAttribute("data-crp-reports-shell");
     };
     const restoreCanvasTitle = () => {
-      if (isDatosShell || isImportarShell) return;
+      if (isDatosShell || isImportarShell || isGraphShell || isCompararShell || isAnalizarShell || isVgbShell || isEvaluarShell || isReportsShell) return;
       const restored = canvas?.getAttribute(restoreKey);
       if (canvas && restored) {
         canvas.setAttribute("title", restored);
@@ -21230,7 +21591,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
     };
 
     clearJourneyShellAttrs();
-    if (isAnalysisShell) {
+    if (isAnalizarShell || isEvaluarShell || isAnalysisShell) {
       root.setAttribute("data-crp-analysis-shell", "true");
     } else if (isResultsShell) {
       root.setAttribute("data-crp-results-shell", "true");
@@ -21238,7 +21599,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       root.setAttribute("data-crp-reports-shell", "true");
     }
 
-    if (isAnalysisShell || isResultsShell || isReportsShell) {
+    if (isAnalizarShell || isEvaluarShell || isAnalysisShell || isResultsShell || isReportsShell) {
       if (canvas?.getAttribute("title")) {
         canvas.setAttribute(restoreKey, canvas.getAttribute("title") ?? "");
         canvas.removeAttribute("title");
@@ -21252,11 +21613,16 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
       restoreCanvasTitle();
     };
   }, [
+    isAnalizarShell,
+    isEvaluarShell,
     isAnalysisShell,
     isResultsShell,
     isReportsShell,
     isDatosShell,
     isImportarShell,
+    isGraphShell,
+    isCompararShell,
+    isVgbShell,
   ]);
 
   useEffect(() => {
@@ -21279,894 +21645,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
 
   // CRP-6.1 — instructional copy lives in Smart Start / stage content (compact header).
 
-  // D54.3 — Orchestration only: assemble domain/chrome slots.
-  // Shell layout authority lives in WorkspaceLayout → LayoutEngine (not page).
-  // page does not resolve LayoutTree, regions, or shell geometry.
-  return (
-    <>
-    <ThemeModeSync themeMode={themeMode} />
-    <WorkspaceLayout
-      themeMode={themeMode}
-      toolbar={
-          <AdaptiveToolbar
-            left={
-              <>
-                {/*
-                  CRP-6.3.x calibration — brand lockup + auth on one header band.
-                  icon.png is existing product mark only; Owner may omit if teal clashes.
-                */}
-                <header className="flex w-full flex-wrap items-center justify-between gap-x-[var(--spacing-default)] gap-y-[var(--spacing-tight)] border-b border-[var(--color-border-default)] py-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    {/*
-                      Existing product mark (src/app/icon.png → /icon.png).
-                      Teal mark kept only for Owner fit check vs pink/violet Home.
-                    */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/icon.png"
-                      alt=""
-                      width={28}
-                      height={28}
-                      className="size-7 shrink-0 rounded-sm object-cover"
-                      data-brand-mark
-                      aria-hidden
-                    />
-                    <h1 className="text-[length:var(--typography-heading-md-font-size)] font-semibold leading-[var(--typography-heading-md-line-height)] tracking-tight text-[var(--color-text-primary)]">
-                      Scientific Graph AI
-                    </h1>
-                    {!isHomeShell ? (
-                      <p
-                        className="min-w-0 truncate text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)]"
-                        data-workspace-session-context=""
-                      >
-                        {workspaceSessionContext}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div
-                    className="flex shrink-0 flex-wrap items-center justify-end gap-2 pr-[var(--spacing-tight)]"
-                    data-auth-shell-slot
-                    aria-label="Cuenta"
-                  >
-                    <button
-                      type="button"
-                      className={`${btnOutlineSm} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
-                      onClick={() => setGuestAuthNoticeAt(Date.now())}
-                    >
-                      Iniciar sesión
-                    </button>
-                    <button
-                      type="button"
-                      className={`${btnOutlineSm} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
-                      onClick={() => setGuestAuthNoticeAt(Date.now())}
-                    >
-                      Registrarse
-                    </button>
-                  </div>
-                </header>
-
-                <nav
-                  className="flex flex-wrap gap-x-0.5 gap-y-0 border-b border-[var(--color-border-default)]"
-                  role="tablist"
-                  aria-label="Workspace científico"
-                >
-                  {visibleWorkspaceTabs.map((tab) => (
-                    <WorkspaceTab
-                      key={tab.id}
-                      section={tab.id}
-                      label={tab.label}
-                      isActive={activeWorkspaceSection === tab.id}
-                      onSelect={selectWorkspaceSection}
-                      visibleSections={visibleWorkspaceTabs.map(
-                        (visibleTab) => visibleTab.id
-                      )}
-                      badge={
-                        tab.id === "analysis"
-                          ? activeVisibilityToggleCount
-                          : undefined
-                      }
-                    />
-                  ))}
-                </nav>
-
-                {showWorkflowSessionIndicator && activeGuidedWorkflowPlan ? (
-                  <div className="mb-2">
-                    <WorkflowSessionIndicator
-                      plan={activeGuidedWorkflowPlan}
-                      session={guidedWorkflowSession}
-                      hostTab={
-                        guidedWorkflowHostTab !== null &&
-                        guidedWorkflowHostTab !== "home"
-                          ? guidedWorkflowHostTab
-                          : null
-                      }
-                      activeTab={
-                        activeWorkspaceSection as GuidedWorkflowWorkspaceTab
-                      }
-                      onCancel={cancelGuidedWorkflow}
-                    />
-                  </div>
-                ) : null}
-
-                {!isHomeShell ? (
-                  <div
-                    className="max-w-[14rem] origin-left pointer-events-auto"
-                    data-lab-profile-chrome
-                  >
-                    <LabUsageProfileSelector
-                      value={labUsageProfile}
-                      onChange={setLabUsageProfile}
-                      persistenceBadgeClassName={persistenceBadge}
-                    />
-                  </div>
-                ) : null}
-              </>
-            }
-          />
-      }
-      sidebar={
-      <Sidebar
-        workspaceSection={activeWorkspaceSection}
-        collapsed={sidebarRailCollapsed}
-        onCollapsedChange={handleSidebarCollapsedChange}
-        chromeSuppressed={sidebarChromeSuppressed}
-        onNewCurve={() => {
-          newGraph();
-          openDataView("curves");
-        }}
-        onClearCurves={clearGraph}
-        graphLibraryOpen={sidebarGraphLibraryOpen}
-        onToggleGraphLibrary={() =>
-          setSidebarGraphLibraryOpen((open) => !open)
-        }
-        graphs={graphs}
-        graphLabels={graphSidebarLabels}
-        selectedGraphId={selectedGraphId}
-        onLoadGraph={(graph) => loadGraph(graph)}
-        projectPanelRef={projectPanelRef}
-        highlightProjectPanel={highlightProjectPanel}
-        projectFilePanelProps={{
-          projectMetadata,
-          feedback: projectFileFeedback,
-          onDismissFeedback: () => setProjectFileFeedback(null),
-          onNewProject: handleNewProject,
-          onSaveProject: handleSaveProject,
-          onOpenProjectFile: handleOpenProjectFile,
-          onSaveLocalProject: handleSaveLocalProject,
-          onOpenLocalLibrary: openLibrary,
-          autosaveIndicator: persistenceUi.autosaveIndicator,
-          sessionConflict: persistenceUi.sessionConflict,
-          projectSizeMessage: persistenceUi.projectSize.message,
-          recoveryPrompt: recoveryPrompt
-            ? { projectName: recoveryPrompt.projectName }
-            : null,
-          recoveryPromptMessage: persistenceUi.recoveryPromptMessage,
-          onRestoreRecovery: () => {
-            void restoreRecoveryDraft();
-          },
-          onDismissRecovery: dismissRecovery,
-          pendingFileOpenConflict,
-          onDismissPendingFileOpenConflict: dismissPendingFileOpenConflict,
-          onResolvePendingFileOpenConflict: (resolution) => {
-            void resolvePendingFileOpenConflict(resolution);
-          },
-          openProjectButtonRef,
-        }}
-        projectActivityOpen={projectActivityPanelOpen}
-        onToggleProjectActivity={() =>
-          setProjectActivityPanelOpen((open) => !open)
-        }
-        projectHistoryEntries={projectHistoryEntries}
-        localProjectsPanelProps={{
-          isOpen: isLibraryOpen,
-          projects: localProjects,
-          isLoading: localProjectsLoading,
-          loadError: localProjectsLoadError,
-          activeProjectId: activeLocalProjectId,
-          onClose: closeLibrary,
-          onRefresh: () => void refreshProjects(),
-          onOpen: (id) => void handleOpenLocalProjectWithSource(id),
-          onDelete: async (id) => {
-            await handleDeleteLocalProject(id);
-            await refreshProjects();
-          },
-          onDuplicate: async (id, name) => {
-            await handleDuplicateLocalProject(id, name);
-            await refreshProjects();
-          },
-          onRename: async (id, name) => {
-            await handleRenameLocalProject(id, name);
-            await refreshProjects();
-          },
-          onExport: (id) => void handleExportLocalProjectSgproj(id),
-        }}
-        onResetProject={requestResetProject}
-        modules={SCIENTIFIC_MODULES.map((module) => ({
-          id: module.id,
-          name: module.name,
-          description: formatPr5GatedModuleDescription(
-            isScientificModuleEnabled(enabledModules, module.id),
-            module.description
-          ),
-          enabled: isScientificModuleEnabled(enabledModules, module.id),
-          badgeLabel: module.badge
-            ? getScientificModuleBadgeLabel(module.badge)
-            : undefined,
-          onToggle: () => toggleScientificModule(module.id),
-        }))}
-        activeModuleCount={activeModuleCount}
-        modulesTotal={SCIENTIFIC_MODULES.length}
-        isAssistantEnabled={isAssistantModuleEnabled}
-        isReportsEnabled={isReportsModuleEnabled}
-        onOpenAssistant={() => {
-          revealScientificAssistant();
-        }}
-        onOpenReports={() => setActiveWorkspaceSection("reports")}
-        onOpenFunctionLibrary={() => {
-          setActiveWorkspaceSection("data");
-          setDataWorkspaceView("advanced");
-          setControlPanelTab("library");
-        }}
-        recentProjectsOpen={recentProjectsPanelOpen}
-        onToggleRecentProjects={() => {
-          setRecentProjectsPanelOpen((open) => {
-            const next = !open;
-            if (next && !recentProjectsFetchedRef.current) {
-              recentProjectsFetchedRef.current = true;
-              void refreshRecentProjects();
-            }
-            return next;
-          });
-        }}
-        recentProjectsPanelProps={{
-          projects: recentProjects,
-          isLoading: recentProjectsLoading,
-          loadError: recentProjectsLoadError,
-          activeProjectId: activeLocalProjectId,
-          onOpen: (id) => {
-            void (async () => {
-              await handleOpenLocalProjectWithSource(id);
-              void refreshRecentProjects();
-            })();
-          },
-          onOpenLibrary: () => void openLibrary(),
-        }}
-        settingsOpen={settingsPanelOpen}
-        onToggleSettings={() => setSettingsPanelOpen((open) => !open)}
-        settingsPanelProps={{
-          theme: themeMode,
-          showContextualHints,
-          appVersion: APP_DISPLAY_VERSION,
-          onThemeChange: setThemeMode,
-          onShowContextualHintsChange: setShowContextualHints,
-        }}
-      />
-      }
-      workspace={
-      <WorkspaceContent
-        workspace={
-          <>
-          <section
-            className={
-              activeWorkspaceSection === "home"
-                ? "flex h-full min-h-0 flex-1 flex-col"
-                : "hidden"
-            }
-            id={workspacePanelId("home")}
-            role="tabpanel"
-            aria-labelledby={workspaceTabId("home")}
-            aria-hidden={activeWorkspaceSection !== "home"}
-            data-home-stage
-          >
-            <SmartStartScreen
-              onSelect={handleSmartStartSelect}
-              hasDataset={Boolean(currentDatasetInfo)}
-              hasExperimentalSeries={experimentalSeries.length > 0}
-            />
-            <p
-              className="shrink-0 px-4 py-2 text-center text-[11px] leading-snug text-[var(--color-text-muted)]"
-              data-pr5-home-disposition
-            >
-              {formatPr5ContinuityDisposition()}
-            </p>
-          </section>
-
-          {isDatosShell || isAnalysisShell ? (
-            <ConversationQueryBox
-              workspaceSection={activeWorkspaceSection}
-              dataWorkspaceView={dataWorkspaceView}
-              comparisonSurfaceOpen={showMultiDatasetComparison}
-              importDestinationActive={importDestinationActive}
-              hasDataset={Boolean(currentDatasetInfo)}
-              hasExperimentalSeries={experimentalSeries.length > 0}
-              inspectorCategory={analysisInspectorSection}
-              hasExecutedAnalysis={
-                showStatistics || showCorrelation || showTTest || showAnova
-              }
-              slotAOccupied={comparisonSlots.A.profile !== null}
-              slotBOccupied={comparisonSlots.B.profile !== null}
-              slotAFileName={
-                comparisonSlots.A.profile?.datasetInfo.fileName ?? null
-              }
-              slotBFileName={
-                comparisonSlots.B.profile?.datasetInfo.fileName ?? null
-              }
-              constructorPanelOpen={dataSectionOpen.constructor}
-              hasNonEmptyExpressions={hasActiveMathCurves}
-              hasGraphedCurves={chartData.length > 0}
-            />
-          ) : null}
-
-          <>
-          <section
-            className={activeWorkspaceSection === "data" ? "" : "hidden"}
-            id={workspacePanelId("data")}
-            role="tabpanel"
-            aria-labelledby={workspaceTabId("data")}
-            aria-hidden={activeWorkspaceSection !== "data"}
-          >
-            {importDestinationActive ? (
-              <div ref={importarDestinationRef}>
-                <WorkflowContinuityBar
-                  stepLabel="Ahora · Importar"
-                  contextLine={
-                    currentDatasetInfo || experimentalSeries.length > 0
-                      ? "Dataset listo. Continúe a Datos."
-                      : "Importe datos para continuar a Datos."
-                  }
-                  actions={
-                    currentDatasetInfo || experimentalSeries.length > 0
-                      ? [
-                          {
-                            label: "Continuar a Datos →",
-                            onClick: () => selectWorkspaceSection("data"),
-                            prominence: "primary" as const,
-                          },
-                        ]
-                      : []
-                  }
-                />
-                <ImportarDestination
-                  selectedDataSourceId={selectedDataSourceId}
-                  onSourceChange={(sourceId) => {
-                    setSelectedDataSourceId(sourceId);
-                    setExperimentalImportError(null);
-                  }}
-                  canImport={canImportExperimentalData}
-                  isImporting={isExperimentalImporting}
-                  importError={experimentalImportError}
-                  lastImportReport={lastImportReport}
-                  importReportHasIssues={importReportHasIssues}
-                  currentDatasetInfo={currentDatasetInfo}
-                  experimentalSeries={experimentalSeries}
-                  onImportFile={handleExperimentalImport}
-                  onContinueToDatos={() => selectWorkspaceSection("data")}
-                  workbookWizard={workbookImportWizard}
-                  onCloseWizard={() =>
-                    setWorkbookImportWizard({ open: false, analysis: null })
-                  }
-                  onWizardComplete={handleWorkbookImportComplete}
-                />
-              </div>
-            ) : (
-            <>
-            <h2 className="sr-only">Datos</h2>
-            <WorkflowContinuityBar
-              stepLabel={
-                currentDatasetInfo?.fileName ?? "Sin dataset experimental"
-              }
-              contextLine={[
-                experimentalSeries.length === 0 && !hasChartContent
-                  ? "Importe datos experimentales para habilitar Análisis."
-                  : workflowContextLine,
-                PR5_GE_VGB_DISTINCT,
-              ].join(" ")}
-              actions={[
-                ...(chartData.length > 0 || projectVisualGraphs.length > 0
-                  ? [
-                      {
-                        label: "Ver gráfico / Resultados →",
-                        onClick: () => selectWorkspaceSection("results"),
-                        prominence: "primary" as const,
-                      },
-                    ]
-                  : []),
-                {
-                  label: "Continuar a Análisis →",
-                  onClick: () => selectWorkspaceSection("analysis"),
-                  disabled: experimentalSeries.length === 0 && !hasChartContent,
-                  prominence:
-                    chartData.length > 0 || projectVisualGraphs.length > 0
-                      ? "tertiary"
-                      : "primary",
-                },
-              ]}
-            />
-            <div
-              className="mb-2 flex flex-wrap gap-1.5"
-              role="tablist"
-              aria-label="Vista de datos"
-            >
-              {visibleDataWorkspaceViews.map((view) => (
-                <button
-                  key={view.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={dataWorkspaceView === view.id}
-                  onClick={() => setDataWorkspaceView(view.id)}
-                  className={
-                    dataWorkspaceView === view.id
-                      ? `rounded-md border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--color-text-primary)] ${DS_FOCUS_RING}`
-                      : `${btnOutlineSm} font-medium ${DS_FOCUS_RING}`
-                  }
-                >
-                  {view.label}
-                </button>
-              ))}
-            </div>
-            <div className="space-y-2">
-              {dataWorkspaceView === "experimental" ? (
-              <div className="flex flex-col">
-              {showCompareStepsBanner && profileShowsMultiDataset(labUsageProfile) ? (
-                <div className="order-[1] mb-2">
-                <CompareStepsBanner
-                  slotAReady={comparisonSlots.A.profile !== null}
-                  slotBReady={comparisonSlots.B.profile !== null}
-                  onDismiss={dismissCompareStepsBanner}
-                />
-                </div>
-              ) : null}
-              <div className={currentDatasetInfo ? "order-[20] mb-2" : "order-[10] mb-2"}>
-              <NotebookSection
-                title={
-                  currentDatasetInfo
-                    ? "Importar o cambiar archivo"
-                    : "Importar datos experimentales"
-                }
-                icon="📥"
-                subtitle={
-                  currentDatasetInfo
-                    ? undefined
-                    : "CSV, TXT, Excel (.xlsx/.xls), ODS"
-                }
-                open={!currentDatasetInfo ? true : dataSectionOpen.import}
-                onOpenChange={(open) =>
-                  setDataSectionOpen((previous) => ({
-                    ...previous,
-                    import: open,
-                  }))
-                }
-                sectionRef={dataImportSectionRef}
-                className={currentDatasetInfo ? undefined : dataImportPanel}
-              >
-                    <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-2">
-                      <div className="min-w-0 flex-1 lg:max-w-[11rem]">
-                        <label
-                          htmlFor="experimental-data-source"
-                          className={`${fieldLabel} mb-0.5`}
-                        >
-                          Fuente
-                        </label>
-                        <select
-                          id="experimental-data-source"
-                          value={selectedDataSourceId}
-                          onChange={(e) => {
-                            setSelectedDataSourceId(
-                              e.target.value as ExperimentalDataSourceId
-                            );
-                            setExperimentalImportError(null);
-                          }}
-                          disabled={isExperimentalImporting}
-                          className={inputField}
-                        >
-                          {EXPERIMENTAL_DATA_SOURCES.map((source) => (
-                            <option
-                              key={source.id}
-                              value={source.id}
-                              disabled={!source.enabled}
-                            >
-                              {source.label}
-                              {!source.enabled ? " (próximamente)" : ""}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => experimentalFileInputRef.current?.click()}
-                        disabled={
-                          !canImportExperimentalData || isExperimentalImporting
-                        }
-                        className={`${actionBarBtnPrimary} w-full lg:w-auto lg:min-w-[10rem] disabled:opacity-50 disabled:cursor-not-allowed`}
-                        title="Importa CSV, Excel u otros formatos de datos experimentales"
-                        aria-busy={isExperimentalImporting}
-                      >
-                        {isExperimentalImporting
-                          ? "Importando…"
-                          : "Importar datos experimentales"}
-                      </button>
-
-                      <label
-                        className="inline-flex items-center gap-2 text-xs sm:text-sm text-[var(--color-text-primary)] cursor-pointer lg:mb-1"
-                        title="Conserva los análisis seleccionados al cargar un nuevo dataset"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={preserveAnalysisConfiguration}
-                          onChange={(e) =>
-                            setPreserveAnalysisConfiguration(e.target.checked)
-                          }
-                          disabled={isExperimentalImporting}
-                          className={`h-3.5 w-3.5 rounded border-[var(--color-border-default)] text-[var(--color-brand-primary)] ${DS_FOCUS_RING}`}
-                        />
-                        Mantener configuración
-                      </label>
-
-                      <input
-                        ref={experimentalFileInputRef}
-                        type="file"
-                        accept={experimentalFileAccept || undefined}
-                        className="hidden"
-                        onChange={handleExperimentalImport}
-                        disabled={isExperimentalImporting}
-                      />
-                    </div>
-
-                    {isExperimentalImporting ? (
-                      <p
-                        className="mt-2 text-xs font-medium text-[var(--color-brand-primary)]"
-                        role="status"
-                        aria-live="polite"
-                      >
-                        Leyendo archivo experimental…
-                      </p>
-                    ) : null}
-
-                    {experimentalImportError && (
-                      <p className={`mt-2 ${alertError}`} role="alert">
-                        {experimentalImportError}
-                      </p>
-                    )}
-
-                    {lastImportReport ? (
-                      <div className="mt-2 space-y-2">
-                        {!importReportHasIssues ? (
-                          <p
-                            className="rounded-md border border-[var(--color-feedback-success)]/30 bg-[color-mix(in_srgb,var(--color-feedback-success)_16%,var(--color-surface-default))] px-2.5 py-1.5 text-xs font-medium text-[var(--color-feedback-success)]"
-                            role="status"
-                          >
-                            Importación OK · {lastImportReport.importedPointCount}{" "}
-                            puntos · cobertura{" "}
-                            {Math.round(lastImportReport.coverageRatio * 100)}%
-                            {lastImportReport.auditPartial
-                              ? " · auditoría parcial"
-                              : ""}
-                          </p>
-                        ) : (
-                          <p
-                            className="rounded-md border border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] px-2.5 py-1.5 text-xs font-medium text-[var(--color-feedback-warning)]"
-                            role="status"
-                          >
-                            Importación con avisos ·{" "}
-                            {lastImportReport.importedPointCount} puntos ·{" "}
-                            {lastImportReport.errorCount +
-                              lastImportReport.warningCount}{" "}
-                            avisos
-                          </p>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setImportReportExpanded((expanded) => !expanded)
-                          }
-                          className={`${btnOutlineSm} font-medium`}
-                          aria-expanded={importReportExpanded}
-                        >
-                          {importReportExpanded ? "Ocultar" : "Ver"} informe de
-                          importación
-                          {importReportHasIssues
-                            ? ` (${lastImportReport.errorCount + lastImportReport.warningCount} avisos)`
-                            : ""}
-                        </button>
-                        {importReportExpanded ? (
-                          <ImportReportPanel report={lastImportReport} />
-                        ) : null}
-                      </div>
-                    ) : null}
-              </NotebookSection>
-              </div>
-
-              <div
-                data-datos-worksheet=""
-                className={
-                  showCompareStepsBanner
-                    ? "order-[6] mb-2"
-                    : currentDatasetInfo
-                      ? "order-[5] mb-2"
-                      : "order-[12] mb-2"
-                }
-              >
-                <ScientificWorksheetPanel
-                  series={experimentalSeries}
-                  modified={worksheetModified}
-                  onSeriesChange={handleWorksheetSeriesChange}
-                  onWorksheetPayloadChange={handleWorksheetPayloadChange}
-                  auxiliaryColumns={activeAuxiliaryColumns}
-                  initialColumnRegistry={activeColumnRegistry}
-                  btnOutlineSm={btnOutlineSm}
-                  btnPrimary={btnPrimary}
-                  inputField={inputField}
-                  fieldLabel={fieldLabel}
-                  dataEmptyState={dataEmptyState}
-                  datasetResetKey={activeDatasetId}
-                />
-              </div>
-
-              {currentDatasetInfo ? (
-                <div className="order-[21] mb-2">
-                <NotebookSection
-                  title="Archivo activo"
-                  subtitle={currentDatasetInfo.importedAt}
-                  defaultOpen={false}
-                  badge={`${currentDatasetInfo.observationCount} obs.`}
-                >
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-[var(--color-text-primary)]">
-                    <p>
-                      <span className="font-semibold">Series:</span>{" "}
-                      <span className="tabular-nums">
-                        {currentDatasetInfo.seriesCount}
-                      </span>
-                    </p>
-                    <p>
-                      <span className="font-semibold">Observaciones:</span>{" "}
-                      <span className="tabular-nums">
-                        {currentDatasetInfo.observationCount}
-                      </span>
-                    </p>
-                  </div>
-                </NotebookSection>
-                </div>
-              ) : null}
-
-              {sessionDatasets.length > 0 ? (
-              <div className={currentDatasetInfo ? "order-[22] mb-2" : "order-[11] mb-2"}>
-              <NotebookSection
-                title="Datasets en sesión"
-                icon="📚"
-                subtitle="Active o envíe a slots sin reimportar"
-                defaultOpen={!currentDatasetInfo}
-                badge={String(sessionDatasets.length)}
-              >
-                <SessionDatasetPanel
-                  datasets={sessionDatasets}
-                  activeDatasetId={activeDatasetId}
-                  slotADatasetKey={slotADatasetKey}
-                  slotBDatasetKey={slotBDatasetKey}
-                  onActivate={activateSessionDataset}
-                  onSendToSlot={sendSessionDatasetToSlot}
-                  onRemove={removeSessionDataset}
-                  onViewReport={viewSessionDatasetReport}
-                  btnOutlineSm={btnOutlineSm}
-                  btnPrimary={btnPrimary}
-                  dataEmptyState={dataEmptyState}
-                  persistenceBadge={persistenceBadge}
-                />
-              </NotebookSection>
-              </div>
-              ) : null}
-
-              {experimentalSeries.length > 0 ? (
-              <div className="order-[23] mb-2">
-              <NotebookSection
-                title="Series del dataset"
-                icon="📊"
-                subtitle={`${experimentalSeries.length} series · ${experimentalSeries.reduce(
-                  (total, series) => total + series.points.length,
-                  0
-                )} puntos`}
-                defaultOpen={false}
-                badge={String(experimentalSeries.length)}
-              >
-                    {experimentalSeries.length > 3 ? (
-                        <div className="overflow-x-auto -mx-1 px-1">
-                          <table className="w-full text-xs sm:text-sm">
-                            <thead>
-                              <tr className="text-left text-[var(--color-text-muted)]">
-                                <th className="py-1 pr-2 font-medium">Serie</th>
-                                <th className="py-1 pr-2 font-medium">Puntos</th>
-                                <th className="py-1 font-medium text-right">
-                                  Acción
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {experimentalSeries.map((series) => (
-                                <tr
-                                  key={series.id}
-                                  className="border-t border-[var(--color-border-default)]"
-                                >
-                                  <td className="py-1 pr-2 text-[var(--color-text-primary)]">
-                                    {series.name}
-                                  </td>
-                                  <td className="py-1 pr-2 text-[var(--color-text-muted)]">
-                                    {series.points.length}
-                                  </td>
-                                  <td className="py-1 text-right">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        removeExperimentalSeries(series.id)
-                                      }
-                                      className={`${btnOutlineSm} text-[var(--color-feedback-danger)] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] hover:bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))]`}
-                                    >
-                                      Eliminar
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <ul className="space-y-1">
-                          {experimentalSeries.map((series) => (
-                            <li
-                              key={series.id}
-                              className="flex flex-wrap items-center justify-between gap-1.5 rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-2 py-1 text-xs sm:text-sm text-[var(--color-text-primary)]"
-                            >
-                              <span>
-                                {series.name}{" "}
-                                <span className="text-[var(--color-text-muted)]">
-                                  ({series.points.length} pts)
-                                </span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeExperimentalSeries(series.id)
-                                }
-                                className={`${btnOutlineSm} text-[var(--color-feedback-danger)] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] hover:bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))]`}
-                              >
-                                Eliminar
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-              </NotebookSection>
-              </div>
-              ) : null}
-
-              {(hasEnoughSeriesForCorrelation || showCompareStepsBanner) &&
-                profileShowsMultiDataset(labUsageProfile) && (
-                <div
-                  className={
-                    showCompareStepsBanner ? "order-[2] mb-2" : "order-[30] mb-2"
-                  }
-                >
-                <NotebookSection
-                  title="Comparar datasets"
-                  icon="📊"
-                  subtitle="Captura Slot A y Slot B aquí. La revisión de la comparación está en Resultados."
-                  open={dataSectionOpen.multiDataset}
-                  onOpenChange={(open) =>
-                    setDataSectionOpen((previous) => ({
-                      ...previous,
-                      multiDataset: open,
-                    }))
-                  }
-                  sectionRef={dataMultiDatasetSectionRef}
-                >
-                  {(["A", "B"] as ComparisonSlotId[]).map((slotId) => {
-                    const slot = comparisonSlots[slotId];
-                    const profile = slot.profile;
-                    const sourceDataset = slot.sourceDatasetId
-                      ? sessionDatasets.find(
-                          (dataset) => dataset.id === slot.sourceDatasetId
-                        )
-                      : undefined;
-                    const sourceAvailable =
-                      profile?.captureMetadata?.sourceUnavailable === true
-                        ? false
-                        : slot.sourceDatasetId
-                          ? sourceDataset !== undefined
-                          : "unknown";
-                    const currentProvenance =
-                      sourceDataset?.id === activeDatasetId
-                        ? buildCurrentComparisonProfileProvenance(slotId)
-                        : null;
-                    return (
-                      <div
-                        key={slotId}
-                        className={`${contentPanel} mb-2 last:mb-0`}
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                              {slot.label}
-                            </p>
-                            {profile ? (
-                              <>
-                                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                                  {profile.datasetInfo.fileName} ·{" "}
-                                  {new Date(profile.capturedAt).toLocaleString()}
-                                </p>
-                                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                                  {formatDatasetAnalysisProfileMiniSummary(
-                                    profile
-                                  )}
-                                </p>
-                                <p className="text-xs mt-1">
-                                  <span
-                                    className={
-                                      profile.isComplete
-                                        ? "text-emerald-600"
-                                        : "text-amber-600"
-                                    }
-                                  >
-                                    {profile.isComplete
-                                      ? "Perfil completo"
-                                      : "Perfil parcial"}
-                                  </span>
-                                </p>
-                                <ComparisonFreshnessBadge
-                                  profile={profile}
-                                  currentProvenance={currentProvenance}
-                                  sourceAvailable={sourceAvailable}
-                                />
-                              </>
-                            ) : (
-                              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                                Vacío — capture desde el dataset activo.
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              className={btnOutlineSm}
-                              disabled={!currentDatasetInfo}
-                              onClick={() => captureComparisonSlot(slotId)}
-                            >
-                              {profile ? "Actualizar" : "Capturar"} {slot.label}
-                            </button>
-                            <button
-                              type="button"
-                              className={btnOutlineSm}
-                              disabled={!profile}
-                              onClick={() => clearComparisonSlot(slotId)}
-                            >
-                              Limpiar
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {hasEnoughDataForMultiDatasetComparison ? (
-                    <p className="mt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          pendingComparisonResultsFocusRef.current = true;
-                          setShowMultiDatasetComparison(true);
-                          selectWorkspaceSection("results");
-                        }}
-                        className={workflowContinuityLinkClass}
-                      >
-                        Ver comparación en Resultados
-                      </button>
-                    </p>
-                  ) : null}
-                </NotebookSection>
-                </div>
-              )}
-
-              </div>
-              ) : null}
-
-              {dataWorkspaceView === "curves" ? (
+  // FASE 2: existing constructor. Product Face mounts it on ProductScreenId(graph).
+  // Datos curves view remains a leftover path (Comparar/overlay); not the Face owner.
+  const graphConstructor = (
               <NotebookSection
                 title="Constructor de curvas"
                 icon="📐"
@@ -22381,7 +21862,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     <p className="mt-2">
                       <button
                         type="button"
-                        onClick={() => selectWorkspaceSection("results")}
+                        onClick={() => openProductScreen("results")}
                         className={workflowContinuityLinkClass}
                       >
                         Ver gráfico principal en Resultados →
@@ -22423,13 +21904,15 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   )}
                 </div>
               </NotebookSection>
-              ) : null}
+  );
 
-              {dataWorkspaceView === "advanced" ? (
+  // R3: Biblioteca de funciones belongs to Graph (approved). Same catalog as leftover
+  // Avanzado view. Not a Product Screen, not a Card. Inserts into the active curve.
+  const functionLibrarySection = (
               <NotebookSection
                 title="Biblioteca de funciones"
                 icon="📚"
-                subtitle="Avanzado — busca e inserta en la curva activa"
+                subtitle="Busca e inserta en la curva activa"
                 defaultOpen={false}
                 className={dataAdvancedPanel}
               >
@@ -22472,16 +21955,18 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     )}
                   </div>
               </NotebookSection>
-              ) : null}
+  );
 
-              {dataWorkspaceView === "visual-builder" ? (
+  // R4: Constructor Visual belongs to ProductScreenId(vgb). Same VisualGraphBuilder
+  // as leftover Datos visual-builder. Not GE. Not a new Card or screen.
+  const visualBuilderSection = (
               <NotebookSection
                 title="Constructor Visual"
                 icon="📊"
                 subtitle={
                   currentDatasetInfo
-                    ? `Diseñe gráficos desde la Worksheet de ${currentDatasetInfo.fileName}`
-                    : "Diseñe gráficos desde las columnas de la Worksheet"
+                    ? `VGB — figura visual desde ${currentDatasetInfo.fileName}. No es y=f(x). No alimenta Análisis automáticamente.`
+                    : "VGB — figura visual de trabajo. Distinto del Constructor y=f(x) (GE)."
                 }
                 defaultOpen
               >
@@ -22542,60 +22027,154 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   soonBadgeClassName={sidebarSoonBadge}
                 />
               </NotebookSection>
-              ) : null}
+  );
 
-              {workbookImportWizard.open && workbookImportWizard.analysis && (
-                <WorkbookImportWizard
-                  open={workbookImportWizard.open}
-                  analysis={workbookImportWizard.analysis}
-                  sourceId={selectedDataSourceId}
-                  onClose={() =>
-                    setWorkbookImportWizard({ open: false, analysis: null })
+  // FASE 3: existing comparison slots. Product Face mounts them on ProductScreenId(comparar).
+  // Datos experimental view remains a leftover path; not the Face owner.
+  const compararDatasetsSection = (
+                <NotebookSection
+                  title="Comparar datasets"
+                  icon="📊"
+                  subtitle="Captura Slot A y Slot B aquí. La revisión de la comparación está en Resultados."
+                  open={isCompararShell || dataSectionOpen.multiDataset}
+                  onOpenChange={(open) =>
+                    setDataSectionOpen((previous) => ({
+                      ...previous,
+                      multiDataset: open,
+                    }))
                   }
-                  onComplete={handleWorkbookImportComplete}
-                />
-              )}
-            </div>
-            </>
-            )}
-          </section>
-
-          <section
-            className={activeWorkspaceSection === "analysis" ? "" : "hidden"}
-            id={workspacePanelId("analysis")}
-            role="tabpanel"
-            aria-labelledby={workspaceTabId("analysis")}
-            aria-hidden={activeWorkspaceSection !== "analysis"}
-          >
-            <h2 className={sectionLabel}>🔬 Análisis</h2>
-            <p className={`${panelHeadingSubtext} -mt-1 mb-2`}>
-              Controles del análisis actual. El gráfico dominante está en
-              Resultados.
-            </p>
-            <WorkflowContinuityBar
-              stepLabel="Ahora · Análisis"
-              contextLine={`${PR5_ANALYSIS_ROLE} ${PR5_COMPUTATION_NOT_STOPPED} ${workflowContextLine}`}
-              actions={[
-                {
-                  label: "← Datos",
-                  onClick: () => selectWorkspaceSection("data"),
-                },
-                ...(hasEnoughDataForMultiDatasetComparison
-                  ? [
-                      {
-                        label: "Comparar en Resultados",
-                        onClick: () => {
+                  sectionRef={dataMultiDatasetSectionRef}
+                >
+                  {(["A", "B"] as ComparisonSlotId[]).map((slotId) => {
+                    const slot = comparisonSlots[slotId];
+                    const profile = slot.profile;
+                    const sourceDataset = slot.sourceDatasetId
+                      ? sessionDatasets.find(
+                          (dataset) => dataset.id === slot.sourceDatasetId
+                        )
+                      : undefined;
+                    const sourceAvailable =
+                      profile?.captureMetadata?.sourceUnavailable === true
+                        ? false
+                        : slot.sourceDatasetId
+                          ? sourceDataset !== undefined
+                          : "unknown";
+                    const currentProvenance =
+                      sourceDataset?.id === activeDatasetId
+                        ? buildCurrentComparisonProfileProvenance(slotId)
+                        : null;
+                    return (
+                      <div
+                        key={slotId}
+                        className={`${contentPanel} mb-2 last:mb-0`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                              {slot.label}
+                            </p>
+                            {profile ? (
+                              <>
+                                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                                  {profile.datasetInfo.fileName} ·{" "}
+                                  {new Date(profile.capturedAt).toLocaleString()}
+                                </p>
+                                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                                  {formatDatasetAnalysisProfileMiniSummary(
+                                    profile
+                                  )}
+                                </p>
+                                <p className="text-xs mt-1">
+                                  <span
+                                    className={
+                                      profile.isComplete
+                                        ? "text-emerald-600"
+                                        : "text-amber-600"
+                                    }
+                                  >
+                                    {profile.isComplete
+                                      ? "Perfil completo"
+                                      : "Perfil parcial"}
+                                  </span>
+                                </p>
+                                <ComparisonFreshnessBadge
+                                  profile={profile}
+                                  currentProvenance={currentProvenance}
+                                  sourceAvailable={sourceAvailable}
+                                />
+                              </>
+                            ) : (
+                              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                                Vacío — capture desde el dataset activo.
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              className={btnOutlineSm}
+                              disabled={!currentDatasetInfo}
+                              onClick={() => captureComparisonSlot(slotId)}
+                            >
+                              {profile ? "Actualizar" : "Capturar"} {slot.label}
+                            </button>
+                            <button
+                              type="button"
+                              className={btnOutlineSm}
+                              disabled={!profile}
+                              onClick={() => clearComparisonSlot(slotId)}
+                            >
+                              Limpiar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {hasEnoughDataForMultiDatasetComparison ? (
+                    <p className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
                           pendingComparisonResultsFocusRef.current = true;
                           setShowMultiDatasetComparison(true);
-                          selectWorkspaceSection("results");
-                        },
+                          openProductScreen("results");
+                        }}
+                        className={workflowContinuityLinkClass}
+                      >
+                        Ver comparación en Resultados
+                      </button>
+                    </p>
+                  ) : null}
+                </NotebookSection>
+  );
+
+  // R7: SCI-50→55 / SCI-56 / SCI-60 controls live on Evaluar. Dashboards stay in Results.
+  const evaluarMethodologyBody = (
+    <>
+            <h2 className={sectionLabel}>Evaluar metodología</h2>
+            <p className={`${panelHeadingSubtext} -mt-1 mb-2`}>
+              Indicadores SCI-50→60 de preparación metodológica. Distinto de
+              Analizar. La revisión está en Resultados. No publica una figura
+              VGB. Calculado por Scientific Graph AI. La IA interpreta, no
+              recalcula.
+            </p>
+            <WorkflowContinuityBar
+              stepLabel="Ahora · Evaluar"
+              contextLine={`Preparación metodológica. Distinto de Analizar y de Comparar. ${PR5_ANALYSIS_ROLE} ${PR5_COMPUTATION_NOT_STOPPED} ${workflowContextLine}`}
+              actions={[
+                ...(!currentDatasetInfo
+                  ? [
+                      {
+                        label: "Ir a Importar →",
+                        onClick: () => openProductScreen("importar"),
                       },
                     ]
                   : []),
                 {
                   label: "Ver gráfico / Resultados →",
-                  onClick: () => selectWorkspaceSection("results"),
-                  prominence: "primary",
+                  onClick: () => openProductScreen("results"),
+                  prominence: "primary" as const,
                 },
               ]}
             />
@@ -22612,7 +22191,392 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 onDismiss={dismissPublicationEntryBanner}
               />
             ) : null}
+            {guidedWorkflowSession.templateId === "evaluate-publication" &&
+              guidedWorkflowHostTab === "analysis" &&
+              showGuidedWorkflowPanel &&
+              activeGuidedWorkflowPlan && (
+                <div className="mb-2">
+                  <GuidedWorkflowPanel
+                    plan={activeGuidedWorkflowPlan}
+                    session={guidedWorkflowSession}
+                    onApplyStep={applyCurrentGuidedWorkflowStep}
+                    onSkipStep={skipCurrentGuidedWorkflowStep}
+                    onCancel={cancelGuidedWorkflow}
+                  />
+                </div>
+              )}
+            <div className={`${card} w-full`} data-workspace-surface="evaluar-controls">
+              <div className="space-y-2.5">
+                      {profileShowsStatisticsGroup("metodologia", labUsageProfile) ? (
+                      <div ref={methodologyPublicationGroupRef}>
+                      <InspectorToggleGroup
+                        title="Metodología y publicación"
+                        defaultOpen={true}
+                        open={
+                          forceExpertInspectorOpen
+                            ? true
+                            : methodologyPublicationOpen
+                              ? true
+                              : undefined
+                        }
+                        onOpenChange={setMethodologyPublicationOpen}
+                      >
+                      <MethodologyVisibilityCallout
+                        message={METHODOLOGY_PUBLICATION_VISIBILITY_CALLOUT_MESSAGE}
+                        className="mb-1"
+                      />
+                      <div className="space-y-0.5">
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForConsistencyEngine
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]}
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showConsistencyEngine}
+                            onChange={(e) =>
+                              setShowConsistencyEngine(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForConsistencyEngine}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showConsistencyEngine"
+                        visible={showConsistencyEngine}
+                        disabled={!hasEnoughSeriesForConsistencyEngine}
+                        hidden={!showContextualHints}
+                      />
+                      </div>
+
+                      <div className="space-y-0.5">
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForReportQualityEngine
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-51"]}
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showReportQualityEngine}
+                            onChange={(e) =>
+                              setShowReportQualityEngine(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForReportQualityEngine}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showReportQualityEngine"
+                        visible={showReportQualityEngine}
+                        disabled={!hasEnoughSeriesForReportQualityEngine}
+                        hidden={!showContextualHints}
+                      />
+                      </div>
+
+                      <div className="space-y-0.5">
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForReproducibilityExplorer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-52"]}
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showReproducibilityExplorer}
+                            onChange={(e) =>
+                              setShowReproducibilityExplorer(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForReproducibilityExplorer}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showReproducibilityExplorer"
+                        visible={showReproducibilityExplorer}
+                        disabled={!hasEnoughSeriesForReproducibilityExplorer}
+                        hidden={!showContextualHints}
+                      />
+                      </div>
+
+                      <div className="space-y-0.5">
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForEvidenceStrengthEngine
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-53"]}
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showEvidenceStrengthEngine}
+                            onChange={(e) =>
+                              setShowEvidenceStrengthEngine(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForEvidenceStrengthEngine}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showEvidenceStrengthEngine"
+                        visible={showEvidenceStrengthEngine}
+                        disabled={!hasEnoughSeriesForEvidenceStrengthEngine}
+                        hidden={!showContextualHints}
+                      />
+                      </div>
+
+                      <div className="space-y-0.5">
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForPublicationReadinessAnalyzer
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-55"]}
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showPublicationReadinessAnalyzer}
+                            onChange={(e) =>
+                              setShowPublicationReadinessAnalyzer(
+                                e.target.checked
+                              )
+                            }
+                            disabled={
+                              !hasEnoughSeriesForPublicationReadinessAnalyzer
+                            }
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showPublicationReadinessAnalyzer"
+                        visible={showPublicationReadinessAnalyzer}
+                        disabled={
+                          !hasEnoughSeriesForPublicationReadinessAnalyzer
+                        }
+                        hidden={!showContextualHints}
+                      />
+                      </div>
+
+                      <div className="space-y-0.5">
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForAssumptionTracker
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-54"]}
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showAssumptionTracker}
+                            onChange={(e) =>
+                              setShowAssumptionTracker(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForAssumptionTracker}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showAssumptionTracker"
+                        visible={showAssumptionTracker}
+                        disabled={!hasEnoughSeriesForAssumptionTracker}
+                        hidden={!showContextualHints}
+                      />
+                      </div>
+                      </InspectorToggleGroup>
+                      </div>
+                      ) : null}
+
+                      {profileShowsStatisticsGroup("dashboards", labUsageProfile) ? (
+                      <InspectorToggleGroup
+                        title="Evaluación SCI (revisión en Resultados)"
+                        defaultOpen={true}
+                        open={
+                          forceExpertInspectorOpen
+                            ? true
+                            : statisticsDashboardsOpen
+                        }
+                        onOpenChange={setStatisticsDashboardsOpen}
+                      >
+                      <div className="space-y-0.5">
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForMethodologicalDashboard
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        } ${
+                          highlightPublicationDashboards
+                            ? "ring-2 ring-[var(--color-brand-primary)]/40 rounded-lg px-2 py-1.5 bg-[var(--color-brand-primary)]/5"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"]}
+                          {highlightPublicationDashboards ? (
+                            <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--color-brand-primary)]">
+                              SCI-56
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showMethodologicalDashboard}
+                            onChange={(e) =>
+                              setShowMethodologicalDashboard(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForMethodologicalDashboard}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showMethodologicalDashboard"
+                        visible={showMethodologicalDashboard}
+                        disabled={!hasEnoughSeriesForMethodologicalDashboard}
+                        hidden={!showContextualHints}
+                      />
+                      </div>
+
+                      <div className="space-y-0.5">
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForPublicationDashboard
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        } ${
+                          highlightPublicationDashboards
+                            ? "ring-2 ring-[var(--color-brand-primary)]/40 rounded-lg px-2 py-1.5 bg-[var(--color-brand-primary)]/5"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]}
+                          {highlightPublicationDashboards ? (
+                            <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--color-brand-primary)]">
+                              SCI-60
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showPublicationDashboard}
+                            onChange={(e) =>
+                              setShowPublicationDashboard(e.target.checked)
+                            }
+                            disabled={!hasEnoughSeriesForPublicationDashboard}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                      <ToggleVisibilityHint
+                        toggleKey="showPublicationDashboard"
+                        visible={showPublicationDashboard}
+                        disabled={!hasEnoughSeriesForPublicationDashboard}
+                        hidden={!showContextualHints}
+                      />
+                      </div>
+                      </InspectorToggleGroup>
+                      ) : null}
+              </div>
+            </div>
+    </>
+  );
+
+  // FASE 4: existing analysis inspector. Product Face mounts it on ProductScreenId(analizar).
+  // R7: SCI methodology controls belong to Evaluar. Leftover Análisis tabpanel is not Face owner.
+  const analizarAnalysisBody = (
+    <>
+            <h2 className={sectionLabel}>🔬 Analizar</h2>
+            <p className={`${panelHeadingSubtext} -mt-1 mb-2`}>
+              Elegí un dominio científico y activá el método que corresponde.
+              No es un inventario para encender todo. Distinto de Comparar y de
+              Evaluar metodología. La revisión está en Resultados. Calculado por
+              Scientific Graph AI. La IA interpreta, no recalcula.
+            </p>
+            <WorkflowContinuityBar
+              stepLabel="Ahora · Analizar"
+              contextLine={`Configurá métodos sobre los datos. Distinto de Comparar y de Evaluar metodología. ${PR5_ANALYSIS_ROLE} ${PR5_COMPUTATION_NOT_STOPPED} ${workflowContextLine}`}
+              actions={[
+                ...(!currentDatasetInfo
+                  ? [
+                      {
+                        label: "Ir a Importar →",
+                        onClick: () => openProductScreen("importar"),
+                      },
+                    ]
+                  : []),
+                ...(hasEnoughDataForMultiDatasetComparison
+                  ? [
+                      {
+                        label: "Comparar en Resultados",
+                        onClick: () => {
+                          pendingComparisonResultsFocusRef.current = true;
+                          setShowMultiDatasetComparison(true);
+                          openProductScreen("results");
+                        },
+                      },
+                    ]
+                  : []),
+                {
+                  label: "Ver gráfico / Resultados →",
+                  onClick: () => openProductScreen("results"),
+                  prominence: "primary" as const,
+                },
+              ]}
+            />
             {guidedWorkflowHostTab === "analysis" &&
+              guidedWorkflowSession.templateId !== "evaluate-publication" &&
               showGuidedWorkflowPanel &&
               activeGuidedWorkflowPlan && (
                 <div className="mb-2">
@@ -22626,11 +22590,14 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </div>
               )}
             <div className={`${card} w-full`} data-workspace-surface="analysis-controls">
+              <p className={`${panelHeadingSubtext} !mt-0 mb-2`}>
+                Dominios científicos de Analizar. No son pestañas del producto.
+              </p>
               <div className="flex flex-col gap-3 lg:flex-row">
                 <nav
                   className="w-full shrink-0 space-y-1 lg:w-[22%] xl:w-[20%]"
                   role="tablist"
-                  aria-label="Categorías del inspector"
+                  aria-label="Dominios científicos del análisis"
                 >
                   {visibleInspectorCategories.map((category) => (
                     <InspectorCategoryButton
@@ -22939,7 +22906,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   >
                     <div className="space-y-2.5">
                       <InspectorToggleGroup
-                        title="Esencial"
+                        title="Descripción y diagnóstico"
                         defaultOpen={true}
                         open={forceExpertInspectorOpen ? true : undefined}
                       >
@@ -22992,223 +22959,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
-
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForCorrelation
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">Mostrar t-test</span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showTTest}
-                            onChange={(e) => setShowTTest(e.target.checked)}
-                            disabled={!hasEnoughSeriesForCorrelation}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-
-                      <div
-                        className={
-                          !hasEnoughSeriesForCorrelation || !showTTest
-                            ? "opacity-50 pointer-events-none"
-                            : ""
-                        }
-                      >
-                        <label
-                          htmlFor="ttest-series-a-select"
-                          className={fieldLabel}
-                        >
-                          Serie A
-                        </label>
-                        <select
-                          id="ttest-series-a-select"
-                          value={tTestSeriesA?.id ?? ""}
-                          onChange={(event) =>
-                            setSelectedTTestSeriesA(event.target.value)
-                          }
-                          disabled={
-                            !hasEnoughSeriesForCorrelation || !showTTest
-                          }
-                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                          {visibleExperimentalSeries.map((series) => (
-                            <option key={series.id} value={series.id}>
-                              {series.name}
-                            </option>
-                          ))}
-                        </select>
-
-                        <label
-                          htmlFor="ttest-series-b-select"
-                          className={`${fieldLabel} mt-2`}
-                        >
-                          Serie B
-                        </label>
-                        <select
-                          id="ttest-series-b-select"
-                          value={tTestSeriesB?.id ?? ""}
-                          onChange={(event) =>
-                            setSelectedTTestSeriesB(event.target.value)
-                          }
-                          disabled={
-                            !hasEnoughSeriesForCorrelation || !showTTest
-                          }
-                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                          {visibleExperimentalSeries.map((series) => (
-                            <option key={series.id} value={series.id}>
-                              {series.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForAnova
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">Mostrar ANOVA</span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showAnova}
-                            onChange={(e) => setShowAnova(e.target.checked)}
-                            disabled={!hasEnoughSeriesForAnova}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasVisibleExperimentalSeries
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar pruebas no paramétricas
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showNonParametric}
-                            onChange={(e) =>
-                              setShowNonParametric(e.target.checked)
-                            }
-                            disabled={!hasVisibleExperimentalSeries}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-
-                      <div
-                        className={
-                          !hasVisibleExperimentalSeries || !showNonParametric
-                            ? "opacity-50 pointer-events-none"
-                            : ""
-                        }
-                      >
-                        <label
-                          htmlFor="non-parametric-mode-select"
-                          className={fieldLabel}
-                        >
-                          Método
-                        </label>
-                        <select
-                          id="non-parametric-mode-select"
-                          value={nonParametricMode}
-                          onChange={(event) =>
-                            setNonParametricMode(
-                              event.target.value as NonParametricMode
-                            )
-                          }
-                          disabled={
-                            !hasVisibleExperimentalSeries || !showNonParametric
-                          }
-                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                          <option value="mann-whitney">Mann-Whitney U</option>
-                          <option value="kruskal-wallis">Kruskal-Wallis H</option>
-                        </select>
-
-                        {nonParametricMode === "mann-whitney" && (
-                          <>
-                            <label
-                              htmlFor="mann-whitney-series-a-select"
-                              className={`${fieldLabel} mt-2`}
-                            >
-                              Serie A
-                            </label>
-                            <select
-                              id="mann-whitney-series-a-select"
-                              value={mannWhitneySeriesA?.id ?? ""}
-                              onChange={(event) =>
-                                setSelectedMannWhitneySeriesA(
-                                  event.target.value
-                                )
-                              }
-                              disabled={
-                                !hasEnoughSeriesForCorrelation ||
-                                !showNonParametric
-                              }
-                              className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
-                            >
-                              {visibleExperimentalSeries.map((series) => (
-                                <option key={series.id} value={series.id}>
-                                  {series.name}
-                                </option>
-                              ))}
-                            </select>
-
-                            <label
-                              htmlFor="mann-whitney-series-b-select"
-                              className={`${fieldLabel} mt-2`}
-                            >
-                              Serie B
-                            </label>
-                            <select
-                              id="mann-whitney-series-b-select"
-                              value={mannWhitneySeriesB?.id ?? ""}
-                              onChange={(event) =>
-                                setSelectedMannWhitneySeriesB(
-                                  event.target.value
-                                )
-                              }
-                              disabled={
-                                !hasEnoughSeriesForCorrelation ||
-                                !showNonParametric
-                              }
-                              className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
-                            >
-                              {visibleExperimentalSeries.map((series) => (
-                                <option key={series.id} value={series.id}>
-                                  {series.name}
-                                </option>
-                              ))}
-                            </select>
-                          </>
-                        )}
-                      </div>
                       </InspectorToggleGroup>
 
                       {profileShowsStatisticsGroup("descriptiva", labUsageProfile) ? (
                       <InspectorToggleGroup
-                        title="Descriptiva"
+                        title="Relación (Pearson / Spearman)"
                         defaultOpen={false}
                         open={forceExpertInspectorOpen ? true : undefined}
                       >
@@ -24165,361 +23920,6 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           <span className={toggleThumb} aria-hidden />
                         </span>
                       </label>
-                      </InspectorToggleGroup>
-                      ) : null}
-
-                      {profileShowsStatisticsGroup("metodologia", labUsageProfile) ? (
-                      <div ref={methodologyPublicationGroupRef}>
-                      <InspectorToggleGroup
-                        title="Metodología y publicación"
-                        defaultOpen={false}
-                        open={
-                          forceExpertInspectorOpen
-                            ? true
-                            : methodologyPublicationOpen
-                              ? true
-                              : undefined
-                        }
-                        onOpenChange={setMethodologyPublicationOpen}
-                      >
-                      <MethodologyVisibilityCallout
-                        message={METHODOLOGY_PUBLICATION_VISIBILITY_CALLOUT_MESSAGE}
-                        className="mb-1"
-                      />
-                      <div className="space-y-0.5">
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForConsistencyEngine
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-50"]}
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showConsistencyEngine}
-                            onChange={(e) =>
-                              setShowConsistencyEngine(e.target.checked)
-                            }
-                            disabled={!hasEnoughSeriesForConsistencyEngine}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-                      <ToggleVisibilityHint
-                        toggleKey="showConsistencyEngine"
-                        visible={showConsistencyEngine}
-                        disabled={!hasEnoughSeriesForConsistencyEngine}
-                        hidden={!showContextualHints}
-                      />
-                      </div>
-
-                      <div className="space-y-0.5">
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForReportQualityEngine
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-51"]}
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showReportQualityEngine}
-                            onChange={(e) =>
-                              setShowReportQualityEngine(e.target.checked)
-                            }
-                            disabled={!hasEnoughSeriesForReportQualityEngine}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-                      <ToggleVisibilityHint
-                        toggleKey="showReportQualityEngine"
-                        visible={showReportQualityEngine}
-                        disabled={!hasEnoughSeriesForReportQualityEngine}
-                        hidden={!showContextualHints}
-                      />
-                      </div>
-
-                      <div className="space-y-0.5">
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForReproducibilityExplorer
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-52"]}
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showReproducibilityExplorer}
-                            onChange={(e) =>
-                              setShowReproducibilityExplorer(e.target.checked)
-                            }
-                            disabled={!hasEnoughSeriesForReproducibilityExplorer}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-                      <ToggleVisibilityHint
-                        toggleKey="showReproducibilityExplorer"
-                        visible={showReproducibilityExplorer}
-                        disabled={!hasEnoughSeriesForReproducibilityExplorer}
-                        hidden={!showContextualHints}
-                      />
-                      </div>
-
-                      <div className="space-y-0.5">
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForEvidenceStrengthEngine
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-53"]}
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showEvidenceStrengthEngine}
-                            onChange={(e) =>
-                              setShowEvidenceStrengthEngine(e.target.checked)
-                            }
-                            disabled={!hasEnoughSeriesForEvidenceStrengthEngine}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-                      <ToggleVisibilityHint
-                        toggleKey="showEvidenceStrengthEngine"
-                        visible={showEvidenceStrengthEngine}
-                        disabled={!hasEnoughSeriesForEvidenceStrengthEngine}
-                        hidden={!showContextualHints}
-                      />
-                      </div>
-
-                      <div className="space-y-0.5">
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForPublicationReadinessAnalyzer
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-55"]}
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showPublicationReadinessAnalyzer}
-                            onChange={(e) =>
-                              setShowPublicationReadinessAnalyzer(
-                                e.target.checked
-                              )
-                            }
-                            disabled={
-                              !hasEnoughSeriesForPublicationReadinessAnalyzer
-                            }
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-                      <ToggleVisibilityHint
-                        toggleKey="showPublicationReadinessAnalyzer"
-                        visible={showPublicationReadinessAnalyzer}
-                        disabled={
-                          !hasEnoughSeriesForPublicationReadinessAnalyzer
-                        }
-                        hidden={!showContextualHints}
-                      />
-                      </div>
-                      </InspectorToggleGroup>
-                      </div>
-                      ) : null}
-
-                      {profileShowsStatisticsGroup("inferencia_avanzada", labUsageProfile) ? (
-                      <InspectorToggleGroup
-                        title="Inferencia avanzada"
-                        defaultOpen={false}
-                        open={forceExpertInspectorOpen ? true : undefined}
-                      >
-                      <div className="space-y-0.5">
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForAssumptionTracker
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-54"]}
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showAssumptionTracker}
-                            onChange={(e) =>
-                              setShowAssumptionTracker(e.target.checked)
-                            }
-                            disabled={!hasEnoughSeriesForAssumptionTracker}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-                      <ToggleVisibilityHint
-                        toggleKey="showAssumptionTracker"
-                        visible={showAssumptionTracker}
-                        disabled={!hasEnoughSeriesForAssumptionTracker}
-                        hidden={!showContextualHints}
-                      />
-                      </div>
-                      </InspectorToggleGroup>
-                      ) : null}
-
-                      {profileShowsStatisticsGroup("dashboards", labUsageProfile) ? (
-                      <InspectorToggleGroup
-                        title="Dashboards"
-                        defaultOpen={false}
-                        open={
-                          forceExpertInspectorOpen
-                            ? true
-                            : statisticsDashboardsOpen
-                        }
-                        onOpenChange={setStatisticsDashboardsOpen}
-                      >
-                      <div className="space-y-0.5">
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForMethodologicalDashboard
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        } ${
-                          highlightPublicationDashboards
-                            ? "ring-2 ring-[var(--color-brand-primary)]/40 rounded-lg px-2 py-1.5 bg-[var(--color-brand-primary)]/5"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-56"]}
-                          {highlightPublicationDashboards ? (
-                            <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--color-brand-primary)]">
-                              SCI-56
-                            </span>
-                          ) : null}
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showMethodologicalDashboard}
-                            onChange={(e) =>
-                              setShowMethodologicalDashboard(e.target.checked)
-                            }
-                            disabled={!hasEnoughSeriesForMethodologicalDashboard}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-                      <ToggleVisibilityHint
-                        toggleKey="showMethodologicalDashboard"
-                        visible={showMethodologicalDashboard}
-                        disabled={!hasEnoughSeriesForMethodologicalDashboard}
-                        hidden={!showContextualHints}
-                      />
-                      </div>
-
-                      <div className="space-y-0.5">
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughSeriesForPublicationDashboard
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        } ${
-                          highlightPublicationDashboards
-                            ? "ring-2 ring-[var(--color-brand-primary)]/40 rounded-lg px-2 py-1.5 bg-[var(--color-brand-primary)]/5"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar {COMPOSITE_METHODOLOGY_PRIMARY_LABELS["SCI-60"]}
-                          {highlightPublicationDashboards ? (
-                            <span className="ml-1 text-[10px] font-semibold uppercase text-[var(--color-brand-primary)]">
-                              SCI-60
-                            </span>
-                          ) : null}
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showPublicationDashboard}
-                            onChange={(e) =>
-                              setShowPublicationDashboard(e.target.checked)
-                            }
-                            disabled={!hasEnoughSeriesForPublicationDashboard}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
-                      <ToggleVisibilityHint
-                        toggleKey="showPublicationDashboard"
-                        visible={showPublicationDashboard}
-                        disabled={!hasEnoughSeriesForPublicationDashboard}
-                        hidden={!showContextualHints}
-                      />
-                      </div>
-
-                      <label
-                        className={`${toggleLabel} ${
-                          !hasEnoughDataForMultiDatasetComparison
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                      >
-                        <span className="flex-1 min-w-0">
-                          Mostrar Multi-Dataset Comparison Dashboard
-                        </span>
-                        <span className={toggleShell}>
-                          <input
-                            type="checkbox"
-                            className={toggleInput}
-                            checked={showMultiDatasetComparison}
-                            onChange={(e) =>
-                              setShowMultiDatasetComparison(e.target.checked)
-                            }
-                            disabled={!hasEnoughDataForMultiDatasetComparison}
-                          />
-                          <span className={toggleTrackBg} aria-hidden />
-                          <span className={toggleThumb} aria-hidden />
-                        </span>
-                      </label>
 
                       <label
                         className={`${toggleLabel} ${
@@ -24547,6 +23947,44 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                       </label>
                       </InspectorToggleGroup>
                       ) : null}
+
+                      {profileShowsStatisticsGroup("dashboards", labUsageProfile) ? (
+                      <InspectorToggleGroup
+                        title="Comparación multi-dataset (revisión en Resultados)"
+                        defaultOpen={false}
+                        open={
+                          forceExpertInspectorOpen
+                            ? true
+                            : statisticsDashboardsOpen
+                        }
+                        onOpenChange={setStatisticsDashboardsOpen}
+                      >
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughDataForMultiDatasetComparison
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar Multi-Dataset Comparison Dashboard
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showMultiDatasetComparison}
+                            onChange={(e) =>
+                              setShowMultiDatasetComparison(e.target.checked)
+                            }
+                            disabled={!hasEnoughDataForMultiDatasetComparison}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+                      </InspectorToggleGroup>
+                      ) : null}
                     </div>
                   </div>
 
@@ -24557,8 +23995,227 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     )}
                     aria-hidden={analysisInspectorSection !== "inference"}
                   >
+                    <div className="space-y-2.5">
                     <InspectorToggleGroup
-                      title="Inferencia avanzada"
+                      title="Pruebas de grupos"
+                      defaultOpen={true}
+                      open={forceExpertInspectorOpen ? true : undefined}
+                    >
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForCorrelation
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">Mostrar t-test</span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showTTest}
+                            onChange={(e) => setShowTTest(e.target.checked)}
+                            disabled={!hasEnoughSeriesForCorrelation}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <div
+                        className={
+                          !hasEnoughSeriesForCorrelation || !showTTest
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      >
+                        <label
+                          htmlFor="ttest-series-a-select"
+                          className={fieldLabel}
+                        >
+                          Serie A
+                        </label>
+                        <select
+                          id="ttest-series-a-select"
+                          value={tTestSeriesA?.id ?? ""}
+                          onChange={(event) =>
+                            setSelectedTTestSeriesA(event.target.value)
+                          }
+                          disabled={
+                            !hasEnoughSeriesForCorrelation || !showTTest
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          {visibleExperimentalSeries.map((series) => (
+                            <option key={series.id} value={series.id}>
+                              {series.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        <label
+                          htmlFor="ttest-series-b-select"
+                          className={`${fieldLabel} mt-2`}
+                        >
+                          Serie B
+                        </label>
+                        <select
+                          id="ttest-series-b-select"
+                          value={tTestSeriesB?.id ?? ""}
+                          onChange={(event) =>
+                            setSelectedTTestSeriesB(event.target.value)
+                          }
+                          disabled={
+                            !hasEnoughSeriesForCorrelation || !showTTest
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          {visibleExperimentalSeries.map((series) => (
+                            <option key={series.id} value={series.id}>
+                              {series.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasEnoughSeriesForAnova
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">Mostrar ANOVA</span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showAnova}
+                            onChange={(e) => setShowAnova(e.target.checked)}
+                            disabled={!hasEnoughSeriesForAnova}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <label
+                        className={`${toggleLabel} ${
+                          !hasVisibleExperimentalSeries
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0">
+                          Mostrar pruebas no paramétricas
+                        </span>
+                        <span className={toggleShell}>
+                          <input
+                            type="checkbox"
+                            className={toggleInput}
+                            checked={showNonParametric}
+                            onChange={(e) =>
+                              setShowNonParametric(e.target.checked)
+                            }
+                            disabled={!hasVisibleExperimentalSeries}
+                          />
+                          <span className={toggleTrackBg} aria-hidden />
+                          <span className={toggleThumb} aria-hidden />
+                        </span>
+                      </label>
+
+                      <div
+                        className={
+                          !hasVisibleExperimentalSeries || !showNonParametric
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      >
+                        <label
+                          htmlFor="non-parametric-mode-select"
+                          className={fieldLabel}
+                        >
+                          Método
+                        </label>
+                        <select
+                          id="non-parametric-mode-select"
+                          value={nonParametricMode}
+                          onChange={(event) =>
+                            setNonParametricMode(
+                              event.target.value as NonParametricMode
+                            )
+                          }
+                          disabled={
+                            !hasVisibleExperimentalSeries || !showNonParametric
+                          }
+                          className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <option value="mann-whitney">Mann-Whitney U</option>
+                          <option value="kruskal-wallis">Kruskal-Wallis H</option>
+                        </select>
+
+                        {nonParametricMode === "mann-whitney" && (
+                          <>
+                            <label
+                              htmlFor="mann-whitney-series-a-select"
+                              className={`${fieldLabel} mt-2`}
+                            >
+                              Serie A
+                            </label>
+                            <select
+                              id="mann-whitney-series-a-select"
+                              value={mannWhitneySeriesA?.id ?? ""}
+                              onChange={(event) =>
+                                setSelectedMannWhitneySeriesA(
+                                  event.target.value
+                                )
+                              }
+                              disabled={
+                                !hasEnoughSeriesForCorrelation ||
+                                !showNonParametric
+                              }
+                              className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              {visibleExperimentalSeries.map((series) => (
+                                <option key={series.id} value={series.id}>
+                                  {series.name}
+                                </option>
+                              ))}
+                            </select>
+
+                            <label
+                              htmlFor="mann-whitney-series-b-select"
+                              className={`${fieldLabel} mt-2`}
+                            >
+                              Serie B
+                            </label>
+                            <select
+                              id="mann-whitney-series-b-select"
+                              value={mannWhitneySeriesB?.id ?? ""}
+                              onChange={(event) =>
+                                setSelectedMannWhitneySeriesB(
+                                  event.target.value
+                                )
+                              }
+                              disabled={
+                                !hasEnoughSeriesForCorrelation ||
+                                !showNonParametric
+                              }
+                              className={`${inputField} disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              {visibleExperimentalSeries.map((series) => (
+                                <option key={series.id} value={series.id}>
+                                  {series.name}
+                                </option>
+                              ))}
+                            </select>
+                          </>
+                        )}
+                      </div>
+                    </InspectorToggleGroup>
+
+                    <InspectorToggleGroup
+                      title="Magnitud y comparaciones"
                       defaultOpen={false}
                       open={forceExpertInspectorOpen ? true : undefined}
                     >
@@ -24610,6 +24267,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         </span>
                       </label>
                     </InspectorToggleGroup>
+                    </div>
                   </div>
 
                   <div
@@ -24620,7 +24278,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                     aria-hidden={analysisInspectorSection !== "advisor"}
                   >
                     <InspectorToggleGroup
-                      title="Advisor"
+                      title="Orientación heurística"
                       defaultOpen={false}
                       open={forceExpertInspectorOpen ? true : undefined}
                     >
@@ -24707,7 +24365,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                         }`}
                       >
                         <span className="flex-1 min-w-0">
-                          Mostrar asistente científico
+                          Mostrar informe heurístico
                         </span>
                         <span className={toggleShell}>
                           <input
@@ -24735,16 +24393,407 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                 </div>
               </div>
             </div>
-          </section>
+    </>
+  );
 
-          <section
-            className={activeWorkspaceSection === "results" ? "" : "hidden"}
-            id={workspacePanelId("results")}
-            role="tabpanel"
-            aria-labelledby={workspaceTabId("results")}
-            aria-hidden={activeWorkspaceSection !== "results"}
-          >
+  // R9: report assembly/output lives on Reports Product Surface.
+  const reportsOutputBody = (
+    <>
+            <h2 className={`${sectionLabel} tracking-tight`}>📄 Reportes y Pack</h2>
+            <p className={`${panelHeadingSubtext} !mt-0 mb-3 max-w-3xl`}>
+              Salida documental científica: reporte y Pack de publicación. No es
+              un chat. La IA de esta pantalla explica estructura y contenido.
+            </p>
+            <WorkflowContinuityBar
+              stepLabel="Ahora · Reportes"
+              contextLine={formatPr5ReportPublicationContext({
+                liveReportAvailable: Boolean(scientificReport),
+                publicationCount: canIncludeVgbPublicationFiguresInReport(
+                  vgbFigureLifecycleStore.publications
+                )
+                  ? vgbFigureLifecycleStore.publications.length
+                  : 0,
+              })}
+              actions={[
+                {
+                  label: "← Resultados",
+                  onClick: () => openProductScreen("results"),
+                  prominence: "secondary",
+                },
+              ]}
+            />
+            {guidedWorkflowHostTab === "reports" &&
+              showGuidedWorkflowPanel &&
+              activeGuidedWorkflowPlan && (
+                <div className="mb-2">
+                  <GuidedWorkflowPanel
+                    plan={activeGuidedWorkflowPlan}
+                    session={guidedWorkflowSession}
+                    onApplyStep={applyCurrentGuidedWorkflowStep}
+                    onSkipStep={skipCurrentGuidedWorkflowStep}
+                    onCancel={cancelGuidedWorkflow}
+                  />
+                </div>
+              )}
+
+            <div className="space-y-3">
+              {showScientificReport &&
+                profileShowsScientificReport(labUsageProfile) && (
+                <NotebookSection
+                  title="Reporte científico"
+                  icon="📄"
+                  subtitle="Documento generado automáticamente"
+                  defaultOpen
+                >
+                  {scientificReport ? (
+                    <div className={contentPanel}>
+                      <p className="font-semibold text-base">
+                        {scientificReport.title}
+                      </p>
+                      <p className="text-sm text-[var(--color-text-muted)] mt-1">
+                        {formatScientificReportDate(
+                          scientificReport.generatedAt
+                        )}
+                      </p>
+                      <div className="mt-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/50 p-3">
+                        <p className="text-xs font-semibold text-[var(--color-text-primary)]">
+                          Autoridad de revisión científica
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                          Bloques actuales (reporte, interpretación y advisory):
+                          {" "}GENERATED {allGeneratedTextReviewCounts.GENERATED}
+                          {" "}· REVIEWED{" "}
+                          {
+                            allGeneratedTextReviewCounts.RESEARCHER_REVIEWED
+                          }
+                          {" "}· APPROVED{" "}
+                          {
+                            allGeneratedTextReviewCounts.RESEARCHER_APPROVED
+                          }
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                          El contenido generado no es autoritativo ni citable
+                          como afirmación de la persona investigadora. Revisar
+                          no implica aprobar.
+                        </p>
+                        <div className={`${actionBarGroup} mt-2`}>
+                          <button
+                            type="button"
+                            onClick={markCurrentScientificReportReviewed}
+                            disabled={
+                              allGeneratedTextReviewCounts.GENERATED === 0
+                            }
+                            className={`${btnOutline} disabled:cursor-not-allowed disabled:opacity-50`}
+                          >
+                            Marcar revisión explícita
+                          </button>
+                          <button
+                            type="button"
+                            onClick={approveCurrentScientificReport}
+                            disabled={
+                              allGeneratedTextReviewCounts.RESEARCHER_REVIEWED ===
+                              0
+                            }
+                            className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-50`}
+                          >
+                            Aprobar contenido vigente
+                          </button>
+                        </div>
+                        {!currentScientificReportExportReviewManifest.allowed ? (
+                          <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                            {formatPdfCtr08BlockMessage()}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className={`${contentPanel} mt-3`}>
+                        <p className="font-semibold text-sm">
+                          Resumen ejecutivo
+                        </p>
+                        <p className="text-sm mt-1">
+                          {scientificReport.summary}
+                        </p>
+                      </div>
+                      <div className="mt-3">
+                        {canIncludeVgbPublicationFiguresInReport(
+                          vgbFigureLifecycleStore.publications
+                        ) ? (
+                          <p className="mb-2 text-xs text-[var(--color-text-muted)]">
+                            {PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE}
+                          </p>
+                        ) : null}
+                        {scientificReport.sections.map((section) => (
+                          <ScientificReportSectionCollapsible
+                            key={section.title}
+                            title={section.title}
+                            content={section.content}
+                            defaultOpen={
+                              section.title ===
+                              VGB_PUBLICATION_FIGURE_REPORT_TITLE
+                            }
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={emptyState}>
+                      <p>No hay datos suficientes para generar un reporte.</p>
+                      {canIncludeVgbPublicationFiguresInReport(
+                        vgbFigureLifecycleStore.publications
+                      ) ? (
+                        <p className="mt-2">
+                          {formatPr5ReportPublicationContext({
+                            liveReportAvailable: false,
+                            publicationCount:
+                              vgbFigureLifecycleStore.publications.length,
+                          })}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                </NotebookSection>
+              )}
+
+              <NotebookSection
+                title="Exportaciones"
+                icon="📤"
+                subtitle="Pack de publicación y exportaciones individuales"
+                defaultOpen={Boolean(scientificReport)}
+              >
+                {scientificReport ? (
+                  <PdfExportVisibilityBanner
+                    shortMessage={PDF_EXPORT_DISCLAIMER.shortMessage}
+                    longMessage={PDF_EXPORT_DISCLAIMER.longMessage}
+                    className="mb-2"
+                  />
+                ) : null}
+                <div className="space-y-3">
+                  <div className="rounded-lg border border-[var(--color-brand-primary)]/30 bg-[var(--color-surface-canvas)]/40 p-3">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                      {PUBLICATION_PACK_LITE_TITLE}
+                    </p>
+                    <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
+                      {PUBLICATION_PACK_LITE_SEMANTICS}
+                    </p>
+                    <div className={actionBarGroup}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void downloadPublicationPackLite();
+                        }}
+                        disabled={
+                          publicationPackLiteExporting ||
+                          scientificReportPdfExporting ||
+                          !scientificReport
+                        }
+                        title={PUBLICATION_PACK_LITE_SEMANTICS}
+                        className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-50`}
+                      >
+                        {publicationPackLiteExporting
+                          ? "Descargando Pack Lite..."
+                          : "Descargar Pack Lite"}
+                      </button>
+                    </div>
+                    {publicationPackLiteMessage ? (
+                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                        {publicationPackLiteMessage}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                      Exportaciones individuales · gráfico
+                    </p>
+                    <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--color-text-muted)]">
+                      <label className="inline-flex items-center gap-1.5">
+                        <span>PNG DPI</span>
+                        <select
+                          value={chartExportPixelRatio}
+                          disabled={!hasChartContent}
+                          onChange={(event) =>
+                            setChartExportPixelRatio(
+                              resolveChartExportPixelRatio(
+                                Number(event.target.value)
+                              )
+                            )
+                          }
+                          className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-1.5 py-0.5 text-[var(--color-text-primary)]"
+                          title="pixelRatio de captura PNG (≥ 2)"
+                        >
+                          {CHART_EXPORT_PIXEL_RATIO_PRESETS.map((ratio) => (
+                            <option key={ratio} value={ratio}>
+                              {ratio}x
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="inline-flex items-center gap-1.5">
+                        <span>sampleStep</span>
+                        <select
+                          value={chartExportSampleStep}
+                          disabled={!hasChartContent}
+                          onChange={(event) =>
+                            setChartExportSampleStep(
+                              resolveChartExportSampleStep(
+                                Number(event.target.value)
+                              )
+                            )
+                          }
+                          className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-1.5 py-0.5 text-[var(--color-text-primary)]"
+                          title="Muestreo de curvas al exportar PNG/SVG (superficie export; no altera GRAPH)"
+                        >
+                          {CHART_EXPORT_SAMPLE_STEP_PRESETS.map((step) => (
+                            <option key={step} value={step}>
+                              {step}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    {!hasChartContent ? (
+                      <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
+                        PNG/SVG requieren contenido en el gráfico principal.
+                      </p>
+                    ) : null}
+                    <div className={actionBarGroup}>
+                      <button
+                        type="button"
+                        onClick={exportChartPng}
+                        disabled={!hasChartContent}
+                        title="Exportar PNG"
+                        className={actionBarBtnExport}
+                      >
+                        PNG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={exportChartSvg}
+                        disabled={!hasChartContent}
+                        title="Exportar SVG"
+                        className={actionBarBtnExport}
+                      >
+                        SVG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={exportChartJson}
+                        title="Exportar configuración del gráfico (no es exportación científica numérica)"
+                        className={actionBarBtnExport}
+                      >
+                        Configuración JSON
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                      Exportaciones individuales · documento
+                    </p>
+                    <div className={actionBarGroup}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleExportScientificReportPdf();
+                        }}
+                        disabled={
+                          scientificReportPdfExporting ||
+                          publicationPackLiteExporting
+                        }
+                        title="Exportar reporte científico en PDF"
+                        className={`${actionBarBtnExport} disabled:cursor-not-allowed disabled:opacity-50`}
+                      >
+                        {scientificReportPdfExporting
+                          ? "Exportando PDF..."
+                          : "📄 Exportar PDF"}
+                      </button>
+                    </div>
+                    {scientificReportPdfMessage && (
+                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                        {scientificReportPdfMessage}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </NotebookSection>
+
+              {profileShowsReportsCopyPanel(labUsageProfile) ? (
+              <NotebookSection
+                title="Copiar contenido"
+                icon="📋"
+                subtitle="Portapapeles para reporte, interpretación e informe heurístico"
+                defaultOpen={false}
+              >
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCopyScientificReport();
+                    }}
+                    disabled={!scientificReport}
+                    className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {scientificReportCopied ? "Copiado" : "Copiar reporte"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCopyScientificInterpretation();
+                    }}
+                    disabled={!scientificInterpretation}
+                    className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {scientificInterpretationCopied
+                      ? "Copiado"
+                      : "📋 Copiar interpretación"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCopyScientificAssistantReport();
+                    }}
+                    disabled={!scientificAssistantReport}
+                    className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {scientificAssistantCopied
+                      ? "Copiado"
+                      : "📋 Copiar análisis"}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                  La copia de contenido interpretativo o advisory exige
+                  aprobación investigadora vigente e incluye disclosure de
+                  autoridad generada.
+                </p>
+                {generatedTextCopyMessage ? (
+                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                    {generatedTextCopyMessage}
+                  </p>
+                ) : null}
+              </NotebookSection>
+              ) : null}
+
+              {profileShowsScientificReport(labUsageProfile) &&
+                !showScientificReport &&
+                !showScientificInterpretation &&
+                !showScientificAssistant && (
+                  <p className={emptyState}>
+                    Active reporte, interpretación o informe heurístico en Analizar
+                    para ver contenido aquí.
+                  </p>
+                )}
+            </div>
+    </>
+  );
+
+  // R12: scientific review lives on Results Product Surface.
+  const resultsReviewBody = (
+    <>
             <h2 className={`${sectionLabel} mb-2`}>📈 Resultados</h2>
+            <p className={`${panelHeadingSubtext} -mt-1 mb-2`}>
+              Revisión e interpretación. Análisis permanece como control.
+              Calculado por Scientific Graph AI. La explicación de la IA no
+              reemplaza el cálculo.
+            </p>
             <WorkflowContinuityBar
               stepLabel="Ahora · Resultados"
               contextLine={`${PR5_RESULTS_ROLE} ${PR5_GE_VGB_DISTINCT} ${PR5_COMPARE_PATH} ${workflowContextLine}${
@@ -24753,11 +24802,11 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               actions={[
                 {
                   label: "← Análisis",
-                  onClick: () => selectWorkspaceSection("analysis"),
+                  onClick: () => openProductScreen("analizar"),
                 },
                 {
                   label: "Constructor Visual",
-                  onClick: () => openDataView("visual-builder"),
+                  onClick: () => openProductScreen("vgb"),
                 },
                 ...(hasEnoughDataForMultiDatasetComparison
                   ? [
@@ -24772,7 +24821,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                   : []),
                 {
                   label: "Ir a Reportes",
-                  onClick: () => selectWorkspaceSection("reports"),
+                  onClick: () => openProductScreen("reports"),
                   prominence: "primary",
                   disabled: !isReportsModuleEnabled,
                 },
@@ -24890,7 +24939,7 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
                           }
                           onContinueEdit={() => {
                             setContinueVisualGraphId(entry.id);
-                            openDataView("visual-builder");
+                            openProductScreen("vgb");
                           }}
                         />
                       </div>
@@ -28538,9 +28587,9 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
             {isAssistantModuleEnabled &&
               showScientificAssistant && (
               <NotebookSection
-                title="Asistente científico"
+                title="Informe heurístico"
                 icon="🧪"
-                subtitle="Conclusiones y flujo recomendado"
+                subtitle="Informe heurístico del sistema. Calculado por Scientific Graph AI. No es la IA conversacional."
                 open={scientificAssistantSectionOpen}
                 onOpenChange={setScientificAssistantSectionOpen}
                 sectionRef={scientificAssistantSectionRef}
@@ -28642,403 +28691,1286 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
               </NotebookSection>
             )}
             </div>
+
+    </>
+  );
+  // D54.3 — Orchestration only: assemble domain/chrome slots.
+  // Shell layout authority lives in WorkspaceLayout → LayoutEngine (not page).
+  // page does not resolve LayoutTree, regions, or shell geometry.
+  const showProductFaceConversation =
+    isImportarShell ||
+    isDatosShell ||
+    isGraphShell ||
+    isVgbShell ||
+    isCompararShell ||
+    isAnalizarShell ||
+    isEvaluarShell ||
+    isAnalysisShell ||
+    isResultsShell ||
+    isReportsShell;
+  const productFaceConversation = showProductFaceConversation ? (
+    <ConversationQueryBox
+      productScreen={productScreen}
+      workspaceSection={activeWorkspaceSection}
+      dataWorkspaceView={dataWorkspaceView}
+      comparisonSurfaceOpen={showMultiDatasetComparison}
+      importDestinationActive={
+        productScreen === "importar" || importDestinationActive
+      }
+      hasDataset={Boolean(currentDatasetInfo)}
+      hasExperimentalSeries={experimentalSeries.length > 0}
+      inspectorCategory={analysisInspectorSection}
+      hasExecutedAnalysis={
+        showStatistics || showCorrelation || showTTest || showAnova
+      }
+      slotAOccupied={comparisonSlots.A.profile !== null}
+      slotBOccupied={comparisonSlots.B.profile !== null}
+      slotAFileName={
+        comparisonSlots.A.profile?.datasetInfo.fileName ?? null
+      }
+      slotBFileName={
+        comparisonSlots.B.profile?.datasetInfo.fileName ?? null
+      }
+      constructorPanelOpen={dataSectionOpen.constructor}
+      hasNonEmptyExpressions={hasActiveMathCurves}
+      hasGraphedCurves={chartData.length > 0}
+      hasExistingReport={Boolean(scientificReport)}
+      hasVgbFigures={projectVisualGraphs.length > 0}
+      methodologyActive={productScreen === "evaluar-metodologia"}
+      workflowTemplate={guidedWorkflowSession.templateId}
+      systemObservation={
+        [
+        isImportarShell
+          ? [
+              "pantalla Importar",
+              `formato seleccionado ${selectedDataSourceId}`,
+              currentDatasetInfo
+                ? `dataset ${currentDatasetInfo.fileName}; ${currentDatasetInfo.seriesCount} series; ${currentDatasetInfo.observationCount} observaciones`
+                : "sin dataset experimental activo",
+              lastImportReport
+                ? `informe: ${lastImportReport.importedPointCount} puntos; cobertura ${Math.round(lastImportReport.coverageRatio * 100)}%; advertencias ${lastImportReport.warningCount}; errores ${lastImportReport.errorCount}`
+                : "sin informe de importación",
+              experimentalImportError
+                ? `error de importación: ${experimentalImportError}`
+                : null,
+              currentDatasetInfo || experimentalSeries.length > 0
+                ? "siguiente etapa: Analizar, Comparar, Gráfico y=f(x) o Constructor Visual (el usuario decide)"
+                : "siguiente etapa: incorporar un archivo válido",
+            ]
+              .filter(Boolean)
+              .join("; ")
+          : isVgbShell
+            ? [
+                "pantalla Constructor Visual",
+                "VGB distinto de Gráfico y=f(x) (GE)",
+                currentDatasetInfo
+                  ? `dataset ${currentDatasetInfo.fileName}`
+                  : "sin dataset experimental activo",
+                experimentalSeries.length > 0
+                  ? `${experimentalSeries.length} series experimentales`
+                  : "sin series experimentales",
+                continueVisualGraphId
+                  ? "editando figura persistida"
+                  : "figura nueva",
+                projectVisualGraphs.length > 0
+                  ? `${projectVisualGraphs.length} figuras de trabajo`
+                  : "sin figuras VGB",
+              ].join("; ")
+            : isAnalizarShell
+              ? [
+                  "pantalla Analizar",
+                  "Analizar distinto de Comparar y de Evaluar metodología",
+                  currentDatasetInfo
+                    ? `dataset activo ${currentDatasetInfo.fileName}`
+                    : "sin dataset experimental activo",
+                  experimentalSeries.length > 0
+                    ? `${experimentalSeries.length} series experimentales`
+                    : "sin series experimentales",
+                  `dominio científico ${analysisInspectorSection}`,
+                  showCorrelation
+                    ? `correlación ${correlationMethod}`
+                    : "correlación inactiva",
+                  showStatistics ? "descriptiva activa" : "descriptiva inactiva",
+                  showTTest ? "t-test activo" : "t-test inactivo",
+                  showAnova ? "ANOVA activo" : "ANOVA inactivo",
+                  chartData.length > 0
+                    ? "resultados con gráfico disponibles"
+                    : "sin gráfico en Resultados",
+                  guidedWorkflowSession.templateId
+                    ? `workflow ${guidedWorkflowSession.templateId} activo en Analizar`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join("; ")
+            : isEvaluarShell
+              ? [
+                  "pantalla Evaluar metodología",
+                  "productScreen evaluar-metodologia",
+                  "Evaluar distinto de Analizar y de Comparar",
+                  currentDatasetInfo
+                    ? `dataset activo ${currentDatasetInfo.fileName}`
+                    : "sin dataset experimental activo",
+                  showConsistencyEngine ? "SCI-50 activo" : "SCI-50 inactivo",
+                  showReportQualityEngine ? "SCI-51 activo" : "SCI-51 inactivo",
+                  showReproducibilityExplorer
+                    ? "SCI-52 activo"
+                    : "SCI-52 inactivo",
+                  showEvidenceStrengthEngine
+                    ? "SCI-53 activo"
+                    : "SCI-53 inactivo",
+                  showAssumptionTracker ? "SCI-54 activo" : "SCI-54 inactivo",
+                  showPublicationReadinessAnalyzer
+                    ? "SCI-55 activo"
+                    : "SCI-55 inactivo",
+                  showMethodologicalDashboard
+                    ? "SCI-56 activo"
+                    : "SCI-56 inactivo",
+                  showPublicationDashboard
+                    ? "SCI-60 activo"
+                    : "SCI-60 inactivo",
+                  publicationReadinessAnalyzerAnalysis
+                    ? "SCI-55 análisis disponible"
+                    : "SCI-55 análisis no disponible",
+                  methodologicalDashboardAnalysis
+                    ? "SCI-56 análisis disponible"
+                    : "SCI-56 análisis no disponible",
+                  publicationDashboardAnalysis
+                    ? "SCI-60 análisis disponible"
+                    : "SCI-60 análisis no disponible",
+                  chartData.length > 0
+                    ? "resultados con gráfico disponibles"
+                    : "sin gráfico en Resultados",
+                  guidedWorkflowSession.templateId === "evaluate-publication"
+                    ? "workflow evaluate-publication activo en Evaluar"
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join("; ")
+            : isResultsShell
+              ? [
+                  "pantalla Resultados",
+                  "productScreen results",
+                  "Resultados distinto de Reportes",
+                  currentDatasetInfo
+                    ? `dataset activo ${currentDatasetInfo.fileName}`
+                    : "sin dataset experimental activo",
+                  chartData.length > 0
+                    ? "gráfico principal disponible"
+                    : "sin gráfico en Resultados",
+                  projectVisualGraphs.length > 0
+                    ? `${projectVisualGraphs.length} figuras VGB`
+                    : "sin figuras VGB",
+                  showScientificInterpretation
+                    ? "interpretación activa"
+                    : "interpretación inactiva",
+                ]
+                  .filter(Boolean)
+                  .join("; ")
+            : isCompararShell
+              ? [
+                  "pantalla Comparar",
+                  "Comparar distinto de Analizar",
+                  comparisonSlots.A.profile
+                    ? `A ocupado ${comparisonSlots.A.profile.datasetInfo.fileName}`
+                    : "A vacío",
+                  comparisonSlots.B.profile
+                    ? `B ocupado ${comparisonSlots.B.profile.datasetInfo.fileName}`
+                    : "B vacío",
+                  currentDatasetInfo
+                    ? `dataset activo ${currentDatasetInfo.fileName}`
+                    : "sin dataset experimental activo",
+                  hasEnoughDataForMultiDatasetComparison
+                    ? "comparación lista para revisar en Resultados"
+                    : "falta capturar A y B",
+                  guidedWorkflowSession.templateId === "compare-groups"
+                    ? "workflow compare-groups activo en Comparar; no auto-navega a Analizar"
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join("; ")
+            : isReportsShell
+              ? [
+                  "pantalla Reportes",
+                  "productScreen reports",
+                  "Reportes distinto de Resultados",
+                  currentDatasetInfo
+                    ? `dataset activo ${currentDatasetInfo.fileName}`
+                    : "sin dataset experimental activo",
+                  scientificReport
+                    ? "reporte científico disponible"
+                    : "reporte científico no disponible",
+                  showScientificReport
+                    ? "reporte activado"
+                    : "reporte no activado",
+                  scientificInterpretation
+                    ? "interpretación disponible para el reporte"
+                    : "interpretación no disponible",
+                  scientificAssistantReport
+                    ? "informe heurístico disponible para copiar"
+                    : "informe heurístico no disponible",
+                  hasChartContent
+                    ? "exportación PNG/SVG disponible"
+                    : "PNG/SVG no disponible (sin gráfico)",
+                  scientificReport
+                    ? "Pack Lite y PDF disponibles desde el reporte existente"
+                    : "Pack Lite y PDF no disponibles",
+                  canIncludeVgbPublicationFiguresInReport(
+                    vgbFigureLifecycleStore.publications
+                  )
+                    ? `${vgbFigureLifecycleStore.publications.length} figuras VGB publicadas`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join("; ")
+            : [
+              currentDatasetInfo
+                ? `dataset activo ${currentDatasetInfo.fileName}`
+                : "sin dataset experimental activo",
+              experimentalSeries.length > 0
+                ? `${experimentalSeries.length} series experimentales`
+                : "sin series experimentales",
+              chartData.length > 0
+                ? "gráfico con contenido en Resultados"
+                : "gráfico de Resultados vacío",
+            ].join("; "),
+          guidedWorkflowPreguntarObservation,
+        ]
+          .filter(Boolean)
+          .join("; ")
+      }
+    />
+  ) : null;
+  return (
+    <>
+    <ThemeModeSync themeMode={themeMode} />
+    <WorkspaceLayout
+      themeMode={themeMode}
+      toolbar={
+          <AdaptiveToolbar
+            left={
+              <>
+                {/*
+                  CRP-6.3.x calibration — brand lockup + auth on one header band.
+                  icon.png is existing product mark only; Owner may omit if teal clashes.
+                */}
+                <header className="flex w-full flex-wrap items-center justify-between gap-x-[var(--spacing-default)] gap-y-[var(--spacing-tight)] border-b border-[var(--color-border-default)] py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {/*
+                      Existing product mark (src/app/icon.png → /icon.png).
+                      Teal mark kept only for Owner fit check vs pink/violet Home.
+                    */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/icon.png"
+                      alt=""
+                      width={28}
+                      height={28}
+                      className="size-7 shrink-0 rounded-sm object-cover"
+                      data-brand-mark
+                      aria-hidden
+                    />
+                    <h1 className="text-[length:var(--typography-heading-md-font-size)] font-semibold leading-[var(--typography-heading-md-line-height)] tracking-tight text-[var(--color-text-primary)]">
+                      Scientific Graph AI
+                    </h1>
+                    {!isHomeShell ? (
+                      <p
+                        className="min-w-0 truncate text-[length:var(--typography-caption-xs-font-size)] leading-[var(--typography-caption-xs-line-height)] text-[var(--color-text-muted)]"
+                        data-workspace-session-context=""
+                      >
+                        {workspaceSessionContext}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div
+                    className="flex shrink-0 flex-wrap items-center justify-end gap-2 pr-[var(--spacing-tight)]"
+                    data-auth-shell-slot
+                    aria-label="Cuenta"
+                  >
+                    <button
+                      type="button"
+                      className={`${btnOutlineSm} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
+                      onClick={() => setGuestAuthNoticeAt(Date.now())}
+                    >
+                      Iniciar sesión
+                    </button>
+                    <button
+                      type="button"
+                      className={`${btnOutlineSm} h-9 px-4 text-[length:var(--typography-body-sm-font-size)]`}
+                      onClick={() => setGuestAuthNoticeAt(Date.now())}
+                    >
+                      Registrarse
+                    </button>
+                  </div>
+                </header>
+
+                {/* Leftover IDE tablist. Isolated from Product Face: hidden,
+                    onSelect is a no-op, and Face routing is openProductScreen.
+                    Not a Product Face router. */}
+                <nav
+                  className="hidden flex flex-wrap gap-x-0.5 gap-y-0 border-b border-[var(--color-border-default)]"
+                  hidden
+                  aria-hidden="true"
+                  inert
+                  role="tablist"
+                  aria-label="Workspace científico"
+                >
+                  {visibleWorkspaceTabs.map((tab) => (
+                    <WorkspaceTab
+                      key={tab.id}
+                      section={tab.id}
+                      label={tab.label}
+                      isActive={activeWorkspaceSection === tab.id}
+                      onSelect={() => undefined}
+                      visibleSections={visibleWorkspaceTabs.map(
+                        (visibleTab) => visibleTab.id
+                      )}
+                      badge={
+                        tab.id === "analysis"
+                          ? activeVisibilityToggleCount
+                          : undefined
+                      }
+                    />
+                  ))}
+                </nav>
+
+                {showWorkflowSessionIndicator && activeGuidedWorkflowPlan ? (
+                  <div className="mb-2">
+                    <WorkflowSessionIndicator
+                      plan={activeGuidedWorkflowPlan}
+                      session={guidedWorkflowSession}
+                      hostTab={guidedWorkflowHostTab}
+                      hostContinuityLabel={guidedWorkflowHostProductScreenLabel(
+                        guidedWorkflowHostTab,
+                        guidedWorkflowSession.templateId
+                      )}
+                      activeTab={
+                        activeWorkspaceSection as GuidedWorkflowWorkspaceTab
+                      }
+                      onCancel={cancelGuidedWorkflow}
+                    />
+                  </div>
+                ) : null}
+
+                {!isHomeShell && !isImportarShell ? (
+                  <div
+                    className="max-w-[14rem] origin-left pointer-events-auto"
+                    data-lab-profile-chrome
+                  >
+                    <LabUsageProfileSelector
+                      value={labUsageProfile}
+                      onChange={setLabUsageProfile}
+                      persistenceBadgeClassName={persistenceBadge}
+                    />
+                  </div>
+                ) : null}
+              </>
+            }
+          />
+      }
+      sidebar={
+      <Sidebar
+        workspaceSection={activeWorkspaceSection}
+        collapsed={sidebarRailCollapsed}
+        onCollapsedChange={handleSidebarCollapsedChange}
+        chromeSuppressed={sidebarChromeSuppressed}
+        onNewCurve={() => {
+          newGraph();
+          openDataView("curves");
+        }}
+        onClearCurves={clearGraph}
+        graphLibraryOpen={sidebarGraphLibraryOpen}
+        onToggleGraphLibrary={() =>
+          setSidebarGraphLibraryOpen((open) => !open)
+        }
+        graphs={graphs}
+        graphLabels={graphSidebarLabels}
+        selectedGraphId={selectedGraphId}
+        onLoadGraph={(graph) => loadGraph(graph)}
+        projectPanelRef={projectPanelRef}
+        highlightProjectPanel={highlightProjectPanel}
+        projectFilePanelProps={{
+          projectMetadata,
+          feedback: projectFileFeedback,
+          onDismissFeedback: () => setProjectFileFeedback(null),
+          onNewProject: handleNewProject,
+          onSaveProject: handleSaveProject,
+          onOpenProjectFile: handleOpenProjectFile,
+          onSaveLocalProject: handleSaveLocalProject,
+          onOpenLocalLibrary: openLibrary,
+          autosaveIndicator: persistenceUi.autosaveIndicator,
+          sessionConflict: persistenceUi.sessionConflict,
+          projectSizeMessage: persistenceUi.projectSize.message,
+          recoveryPrompt: recoveryPrompt
+            ? { projectName: recoveryPrompt.projectName }
+            : null,
+          recoveryPromptMessage: persistenceUi.recoveryPromptMessage,
+          onRestoreRecovery: () => {
+            void restoreRecoveryDraft();
+          },
+          onDismissRecovery: dismissRecovery,
+          pendingFileOpenConflict,
+          onDismissPendingFileOpenConflict: dismissPendingFileOpenConflict,
+          onResolvePendingFileOpenConflict: (resolution) => {
+            void resolvePendingFileOpenConflict(resolution);
+          },
+          openProjectButtonRef,
+        }}
+        projectActivityOpen={projectActivityPanelOpen}
+        onToggleProjectActivity={() =>
+          setProjectActivityPanelOpen((open) => !open)
+        }
+        projectHistoryEntries={projectHistoryEntries}
+        localProjectsPanelProps={{
+          isOpen: isLibraryOpen,
+          projects: localProjects,
+          isLoading: localProjectsLoading,
+          loadError: localProjectsLoadError,
+          activeProjectId: activeLocalProjectId,
+          onClose: closeLibrary,
+          onRefresh: () => void refreshProjects(),
+          onOpen: (id) => void handleOpenLocalProjectWithSource(id),
+          onDelete: async (id) => {
+            await handleDeleteLocalProject(id);
+            await refreshProjects();
+          },
+          onDuplicate: async (id, name) => {
+            await handleDuplicateLocalProject(id, name);
+            await refreshProjects();
+          },
+          onRename: async (id, name) => {
+            await handleRenameLocalProject(id, name);
+            await refreshProjects();
+          },
+          onExport: (id) => void handleExportLocalProjectSgproj(id),
+        }}
+        onResetProject={requestResetProject}
+        modules={SCIENTIFIC_MODULES.map((module) => ({
+          id: module.id,
+          name: module.name,
+          description: formatPr5GatedModuleDescription(
+            isScientificModuleEnabled(enabledModules, module.id),
+            module.description
+          ),
+          enabled: isScientificModuleEnabled(enabledModules, module.id),
+          badgeLabel: module.badge
+            ? getScientificModuleBadgeLabel(module.badge)
+            : undefined,
+          onToggle: () => toggleScientificModule(module.id),
+        }))}
+        activeModuleCount={activeModuleCount}
+        modulesTotal={SCIENTIFIC_MODULES.length}
+        isAssistantEnabled={isAssistantModuleEnabled}
+        isReportsEnabled={isReportsModuleEnabled}
+        onOpenAssistant={() => {
+          revealScientificAssistant();
+        }}
+        onOpenReports={() => openProductScreen("reports")}
+        onOpenFunctionLibrary={() => {
+          // R3 approved destination: Biblioteca → Graph. Not a Biblioteca screen.
+          openProductScreen("graph");
+        }}
+        recentProjectsOpen={recentProjectsPanelOpen}
+        onToggleRecentProjects={() => {
+          setRecentProjectsPanelOpen((open) => {
+            const next = !open;
+            if (next && !recentProjectsFetchedRef.current) {
+              recentProjectsFetchedRef.current = true;
+              void refreshRecentProjects();
+            }
+            return next;
+          });
+        }}
+        recentProjectsPanelProps={{
+          projects: recentProjects,
+          isLoading: recentProjectsLoading,
+          loadError: recentProjectsLoadError,
+          activeProjectId: activeLocalProjectId,
+          onOpen: (id) => {
+            void (async () => {
+              await handleOpenLocalProjectWithSource(id);
+              void refreshRecentProjects();
+            })();
+          },
+          onOpenLibrary: () => void openLibrary(),
+        }}
+        settingsOpen={settingsPanelOpen}
+        onToggleSettings={() => setSettingsPanelOpen((open) => !open)}
+        settingsPanelProps={{
+          theme: themeMode,
+          showContextualHints,
+          appVersion: APP_DISPLAY_VERSION,
+          onThemeChange: setThemeMode,
+          onShowContextualHintsChange: setShowContextualHints,
+        }}
+      />
+      }
+      workspace={
+      <WorkspaceContent
+        workspace={
+          <>
+          <section
+            className={
+              isHomeShell
+                ? "flex h-full min-h-0 flex-1 flex-col"
+                : "hidden"
+            }
+            data-product-surface="home"
+            aria-label="Inicio"
+            aria-hidden={!isHomeShell}
+            data-home-stage
+          >
+            {isHomeShell ? (
+              <>
+            <SmartStartScreen
+              onSelect={handleSmartStartSelect}
+              hasDataset={Boolean(currentDatasetInfo)}
+              hasExperimentalSeries={experimentalSeries.length > 0}
+            />
+            <p
+              className="sr-only"
+              data-pr5-home-disposition
+            >
+              {formatPr5ContinuityDisposition()}
+            </p>
+              </>
+            ) : null}
           </section>
 
           <section
             className={
-              activeWorkspaceSection === "reports" && isReportsModuleEnabled
-                ? ""
+              isImportarShell
+                ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
                 : "hidden"
             }
-            id={workspacePanelId("reports")}
-            role="tabpanel"
-            aria-labelledby={workspaceTabId("reports")}
-            aria-hidden={
-              activeWorkspaceSection !== "reports" || !isReportsModuleEnabled
-            }
+            data-product-surface="importar"
+            aria-label="Importar"
+            aria-hidden={!isImportarShell}
           >
-            <h2 className={`${sectionLabel} tracking-tight`}>📄 Reportes y Pack</h2>
-            <p className={`${panelHeadingSubtext} !mt-0 mb-3 max-w-3xl`}>
-              Obtenga el reporte científico y el Pack de publicación.
-            </p>
+            {isImportarShell ? (
+              <>
+              <div ref={importarDestinationRef}>
+                <WorkflowContinuityBar
+                  stepLabel="Ahora · Importar"
+                  contextLine={
+                    currentDatasetInfo || experimentalSeries.length > 0
+                      ? "Importación lista. Elegí la siguiente capacidad."
+                      : "Incorporá un archivo. CSV, TXT, XLSX u ODS."
+                  }
+                  actions={
+                    currentDatasetInfo || experimentalSeries.length > 0
+                      ? [
+                          {
+                            label: "Analizar →",
+                            onClick: () => openProductScreen("analizar"),
+                            prominence: "primary" as const,
+                          },
+                          {
+                            label: "Comparar",
+                            onClick: () => openProductScreen("comparar"),
+                          },
+                          {
+                            label: "Gráfico y=f(x)",
+                            onClick: () => openProductScreen("graph"),
+                          },
+                          {
+                            label: "Constructor Visual",
+                            onClick: () => openProductScreen("vgb"),
+                          },
+                        ]
+                      : []
+                  }
+                />
+                <ImportarDestination
+                  selectedDataSourceId={selectedDataSourceId}
+                  onSourceChange={(sourceId) => {
+                    setSelectedDataSourceId(sourceId);
+                    setExperimentalImportError(null);
+                  }}
+                  canImport={canImportExperimentalData}
+                  isImporting={isExperimentalImporting}
+                  importError={experimentalImportError}
+                  lastImportReport={lastImportReport}
+                  importReportHasIssues={importReportHasIssues}
+                  currentDatasetInfo={currentDatasetInfo}
+                  experimentalSeries={experimentalSeries}
+                  onImportFile={handleExperimentalImport}
+                  onOpenProductScreen={(screen) => openProductScreen(screen)}
+                  workbookWizard={workbookImportWizard}
+                  onCloseWizard={() =>
+                    setWorkbookImportWizard({ open: false, analysis: null })
+                  }
+                  onWizardComplete={handleWorkbookImportComplete}
+                />
+              </div>
+              <div
+                className="w-full min-w-0 shrink-0 px-[var(--spacing-default)]"
+                data-importar-preguntar=""
+              >
+                {productFaceConversation}
+              </div>
+              </>
+            ) : null}
+          </section>
+
+          <section
+            className={
+              isGraphShell
+                ? "flex h-full min-h-0 flex-1 flex-col"
+                : "hidden"
+            }
+            data-product-surface="graph"
+            aria-label="Gráfico y=f(x)"
+            aria-hidden={!isGraphShell}
+          >
+            {isGraphShell ? (
+              <>
+              <div data-graph-constructor="">{graphConstructor}</div>
+              <div data-function-library="">{functionLibrarySection}</div>
+              </>
+            ) : null}
+          </section>
+
+          <section
+            className={
+              isVgbShell
+                ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
+                : "hidden"
+            }
+            data-product-surface="vgb"
+            aria-label="Constructor Visual"
+            aria-hidden={!isVgbShell}
+          >
+            {isVgbShell ? (
+              <div data-vgb-constructor="">{visualBuilderSection}</div>
+            ) : null}
+          </section>
+
+          <section
+            className={
+              isCompararShell
+                ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
+                : "hidden"
+            }
+            data-product-surface="comparar"
+            aria-label="Comparar"
+            aria-hidden={!isCompararShell}
+          >
+            {isCompararShell ? (
+              <div data-comparar-surface="">
+                <WorkflowContinuityBar
+                  stepLabel="Ahora · Comparar"
+                  contextLine="Compará dos datasets o grupos (A y B). Distinto de Analizar. La revisión está en Resultados."
+                  actions={[
+                    ...(hasEnoughDataForMultiDatasetComparison
+                      ? [
+                          {
+                            label: "Ver comparación en Resultados",
+                            onClick: () => {
+                              pendingComparisonResultsFocusRef.current = true;
+                              setShowMultiDatasetComparison(true);
+                              openProductScreen("results");
+                            },
+                            prominence: "primary" as const,
+                          },
+                        ]
+                      : []),
+                    {
+                      label: "Continuar a Análisis →",
+                      onClick: () => openProductScreen("analizar"),
+                      disabled:
+                        experimentalSeries.length === 0 && !hasChartContent,
+                    },
+                    ...(!currentDatasetInfo
+                      ? [
+                          {
+                            label: "Ir a Importar →",
+                            onClick: () => openProductScreen("importar"),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+                {showCompareStepsBanner ? (
+                  <div className="mb-2">
+                    <CompareStepsBanner
+                      slotAReady={comparisonSlots.A.profile !== null}
+                      slotBReady={comparisonSlots.B.profile !== null}
+                      onDismiss={dismissCompareStepsBanner}
+                    />
+                  </div>
+                ) : null}
+                {compararDatasetsSection}
+              </div>
+            ) : null}
+          </section>
+
+          <section
+            className={
+              isAnalizarShell
+                ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
+                : "hidden"
+            }
+            data-product-surface="analizar"
+            aria-label="Analizar"
+            aria-hidden={!isAnalizarShell}
+          >
+            {isAnalizarShell ? (
+              <div data-analizar-surface="">{analizarAnalysisBody}</div>
+            ) : null}
+          </section>
+
+          <section
+            className={
+              isEvaluarShell
+                ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
+                : "hidden"
+            }
+            data-product-surface="evaluar-metodologia"
+            aria-label="Evaluar metodología"
+            aria-hidden={!isEvaluarShell}
+          >
+            {isEvaluarShell ? (
+              <div data-evaluar-surface="">{evaluarMethodologyBody}</div>
+            ) : null}
+          </section>
+
+          <section
+            className={
+              isReportsShell
+                ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
+                : "hidden"
+            }
+            data-product-surface="reports"
+            aria-label="Reportes"
+            aria-hidden={!isReportsShell}
+          >
+            {isReportsShell ? (
+              <div data-reports-surface="">{reportsOutputBody}</div>
+            ) : null}
+          </section>
+
+          <section
+            className={
+              isResultsShell
+                ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
+                : "hidden"
+            }
+            data-product-surface="results"
+            aria-label="Resultados"
+            aria-hidden={!isResultsShell}
+          >
+            {isResultsShell ? (
+              <div data-results-surface="">{resultsReviewBody}</div>
+            ) : null}
+          </section>
+          {!isImportarShell ? productFaceConversation : null}
+
+          <>
+          {/* Leftover Datos tabpanel. Product Face VGB is data-product-surface=vgb,
+              not this panel. */}
+          <section
+            className={showLegacyDatosPanel ? "" : "hidden"}
+            id={workspacePanelId("data")}
+            role="tabpanel"
+            aria-labelledby={workspaceTabId("data")}
+            aria-hidden={!showLegacyDatosPanel}
+            hidden={!showLegacyDatosPanel}
+            inert={!showLegacyDatosPanel || undefined}
+          >
+            {showLegacyDatosPanel ? (
+            <>
+            <h2 className="sr-only">Datos</h2>
             <WorkflowContinuityBar
-              stepLabel="Ahora · Reportes"
-              contextLine={formatPr5ReportPublicationContext({
-                liveReportAvailable: Boolean(scientificReport),
-                publicationCount: canIncludeVgbPublicationFiguresInReport(
-                  vgbFigureLifecycleStore.publications
-                )
-                  ? vgbFigureLifecycleStore.publications.length
-                  : 0,
-              })}
+              stepLabel={
+                currentDatasetInfo?.fileName ?? "Sin dataset experimental"
+              }
+              contextLine={[
+                experimentalSeries.length === 0 && !hasChartContent
+                  ? "Importe datos experimentales para habilitar Análisis."
+                  : workflowContextLine,
+                PR5_GE_VGB_DISTINCT,
+              ].join(" ")}
               actions={[
+                ...(chartData.length > 0 || projectVisualGraphs.length > 0
+                  ? [
+                      {
+                        label: "Ver gráfico / Resultados →",
+                        onClick: () => openProductScreen("results"),
+                        prominence: "primary" as const,
+                      },
+                    ]
+                  : []),
                 {
-                  label: "← Resultados",
-                  onClick: () => selectWorkspaceSection("results"),
-                  prominence: "secondary",
+                  label: "Continuar a Análisis →",
+                  onClick: () => openProductScreen("analizar"),
+                  disabled: experimentalSeries.length === 0 && !hasChartContent,
+                  prominence:
+                    chartData.length > 0 || projectVisualGraphs.length > 0
+                      ? "tertiary"
+                      : "primary",
                 },
               ]}
             />
-            {guidedWorkflowHostTab === "reports" &&
-              showGuidedWorkflowPanel &&
-              activeGuidedWorkflowPlan && (
-                <div className="mb-2">
-                  <GuidedWorkflowPanel
-                    plan={activeGuidedWorkflowPlan}
-                    session={guidedWorkflowSession}
-                    onApplyStep={applyCurrentGuidedWorkflowStep}
-                    onSkipStep={skipCurrentGuidedWorkflowStep}
-                    onCancel={cancelGuidedWorkflow}
-                  />
-                </div>
-              )}
-
-            <div className="space-y-3">
-              {showScientificReport &&
-                profileShowsScientificReport(labUsageProfile) && (
-                <NotebookSection
-                  title="Reporte científico"
-                  icon="📄"
-                  subtitle="Documento generado automáticamente"
-                  defaultOpen
-                >
-                  {scientificReport ? (
-                    <div className={contentPanel}>
-                      <p className="font-semibold text-base">
-                        {scientificReport.title}
-                      </p>
-                      <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                        {formatScientificReportDate(
-                          scientificReport.generatedAt
-                        )}
-                      </p>
-                      <div className="mt-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/50 p-3">
-                        <p className="text-xs font-semibold text-[var(--color-text-primary)]">
-                          Autoridad de revisión científica
-                        </p>
-                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                          Bloques actuales (reporte, interpretación y advisory):
-                          {" "}GENERATED {allGeneratedTextReviewCounts.GENERATED}
-                          {" "}· REVIEWED{" "}
-                          {
-                            allGeneratedTextReviewCounts.RESEARCHER_REVIEWED
-                          }
-                          {" "}· APPROVED{" "}
-                          {
-                            allGeneratedTextReviewCounts.RESEARCHER_APPROVED
-                          }
-                        </p>
-                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                          El contenido generado no es autoritativo ni citable
-                          como afirmación de la persona investigadora. Revisar
-                          no implica aprobar.
-                        </p>
-                        <div className={`${actionBarGroup} mt-2`}>
-                          <button
-                            type="button"
-                            onClick={markCurrentScientificReportReviewed}
-                            disabled={
-                              allGeneratedTextReviewCounts.GENERATED === 0
-                            }
-                            className={`${btnOutline} disabled:cursor-not-allowed disabled:opacity-50`}
-                          >
-                            Marcar revisión explícita
-                          </button>
-                          <button
-                            type="button"
-                            onClick={approveCurrentScientificReport}
-                            disabled={
-                              allGeneratedTextReviewCounts.RESEARCHER_REVIEWED ===
-                              0
-                            }
-                            className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-50`}
-                          >
-                            Aprobar contenido vigente
-                          </button>
-                        </div>
-                        {!currentScientificReportExportReviewManifest.allowed ? (
-                          <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
-                            {formatPdfCtr08BlockMessage()}
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className={`${contentPanel} mt-3`}>
-                        <p className="font-semibold text-sm">
-                          Resumen ejecutivo
-                        </p>
-                        <p className="text-sm mt-1">
-                          {scientificReport.summary}
-                        </p>
-                      </div>
-                      <div className="mt-3">
-                        {canIncludeVgbPublicationFiguresInReport(
-                          vgbFigureLifecycleStore.publications
-                        ) ? (
-                          <p className="mb-2 text-xs text-[var(--color-text-muted)]">
-                            {PR5_REPORT_PUBLICATION_SECTION_DISCLOSURE}
-                          </p>
-                        ) : null}
-                        {scientificReport.sections.map((section) => (
-                          <ScientificReportSectionCollapsible
-                            key={section.title}
-                            title={section.title}
-                            content={section.content}
-                            defaultOpen={
-                              section.title ===
-                              VGB_PUBLICATION_FIGURE_REPORT_TITLE
-                            }
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className={emptyState}>
-                      <p>No hay datos suficientes para generar un reporte.</p>
-                      {canIncludeVgbPublicationFiguresInReport(
-                        vgbFigureLifecycleStore.publications
-                      ) ? (
-                        <p className="mt-2">
-                          {formatPr5ReportPublicationContext({
-                            liveReportAvailable: false,
-                            publicationCount:
-                              vgbFigureLifecycleStore.publications.length,
-                          })}
-                        </p>
-                      ) : null}
-                    </div>
-                  )}
-                </NotebookSection>
-              )}
-
-              <NotebookSection
-                title="Exportaciones"
-                icon="📤"
-                subtitle="Pack de publicación y exportaciones individuales"
-                defaultOpen={Boolean(scientificReport)}
+            <div className="mb-2 space-y-1.5">
+              <div
+                className="flex flex-wrap gap-1.5"
+                role="tablist"
+                aria-label="Vista de datos"
               >
-                {scientificReport ? (
-                  <PdfExportVisibilityBanner
-                    shortMessage={PDF_EXPORT_DISCLAIMER.shortMessage}
-                    longMessage={PDF_EXPORT_DISCLAIMER.longMessage}
-                    className="mb-2"
-                  />
-                ) : null}
-                <div className="space-y-3">
-                  <div className="rounded-lg border border-[var(--color-brand-primary)]/30 bg-[var(--color-surface-canvas)]/40 p-3">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                      {PUBLICATION_PACK_LITE_TITLE}
-                    </p>
-                    <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
-                      {PUBLICATION_PACK_LITE_SEMANTICS}
-                    </p>
-                    <div className={actionBarGroup}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void downloadPublicationPackLite();
-                        }}
-                        disabled={
-                          publicationPackLiteExporting ||
-                          scientificReportPdfExporting ||
-                          !scientificReport
-                        }
-                        title={PUBLICATION_PACK_LITE_SEMANTICS}
-                        className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-50`}
-                      >
-                        {publicationPackLiteExporting
-                          ? "Descargando Pack Lite..."
-                          : "Descargar Pack Lite"}
-                      </button>
-                    </div>
-                    {publicationPackLiteMessage ? (
-                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-                        {publicationPackLiteMessage}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 p-3">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                      Exportaciones individuales · gráfico
-                    </p>
-                    <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--color-text-muted)]">
-                      <label className="inline-flex items-center gap-1.5">
-                        <span>PNG DPI</span>
-                        <select
-                          value={chartExportPixelRatio}
-                          disabled={!hasChartContent}
-                          onChange={(event) =>
-                            setChartExportPixelRatio(
-                              resolveChartExportPixelRatio(
-                                Number(event.target.value)
-                              )
-                            )
-                          }
-                          className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-1.5 py-0.5 text-[var(--color-text-primary)]"
-                          title="pixelRatio de captura PNG (≥ 2)"
+                {visibleDataWorkspaceViews.map((view) => (
+                  <button
+                    key={view.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={dataWorkspaceView === view.id}
+                    title={`${view.group}. ${view.description}`}
+                    onClick={() => setDataWorkspaceView(view.id)}
+                    className={
+                      dataWorkspaceView === view.id
+                        ? `rounded-md border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--color-text-primary)] ${DS_FOCUS_RING}`
+                        : `${btnOutlineSm} font-medium ${DS_FOCUS_RING}`
+                    }
+                  >
+                    {view.label}
+                  </button>
+                ))}
+              </div>
+              {visibleDataWorkspaceViews.map((view) =>
+                view.id === dataWorkspaceView ? (
+                  <p
+                    key={`data-view-hint-${view.id}`}
+                    className="text-[11px] leading-snug text-[var(--color-text-muted)]"
+                  >
+                    <span className="font-semibold text-[var(--color-text-primary)]">
+                      {view.group}.
+                    </span>{" "}
+                    {view.description}
+                  </p>
+                ) : null
+              )}
+            </div>
+            <div className="space-y-2">
+              {dataWorkspaceView === "experimental" ? (
+              <div className="flex flex-col">
+              {showCompareStepsBanner && profileShowsMultiDataset(labUsageProfile) ? (
+                <div className="order-[1] mb-2">
+                <CompareStepsBanner
+                  slotAReady={comparisonSlots.A.profile !== null}
+                  slotBReady={comparisonSlots.B.profile !== null}
+                  onDismiss={dismissCompareStepsBanner}
+                />
+                </div>
+              ) : null}
+              <div className={currentDatasetInfo ? "order-[20] mb-2" : "order-[10] mb-2"}>
+              {/*
+                Leftover IDE import inside Datos tabpanel.
+                Product Face owner is ProductScreenId(importar) → ImportarDestination.
+                Same handleExperimentalImport pipeline; not a second Face owner.
+                Kept only while leftover overlay/Datos still depends on it.
+              */}
+              <NotebookSection
+                title={
+                  currentDatasetInfo
+                    ? "Importar o cambiar archivo"
+                    : "Importar datos experimentales"
+                }
+                icon="📥"
+                subtitle={
+                  currentDatasetInfo
+                    ? undefined
+                    : "CSV, TXT, Excel (.xlsx/.xls), ODS"
+                }
+                open={!currentDatasetInfo ? true : dataSectionOpen.import}
+                onOpenChange={(open) =>
+                  setDataSectionOpen((previous) => ({
+                    ...previous,
+                    import: open,
+                  }))
+                }
+                sectionRef={dataImportSectionRef}
+                className={currentDatasetInfo ? undefined : dataImportPanel}
+              >
+                    <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-2">
+                      <div className="min-w-0 flex-1 lg:max-w-[11rem]">
+                        <label
+                          htmlFor="experimental-data-source"
+                          className={`${fieldLabel} mb-0.5`}
                         >
-                          {CHART_EXPORT_PIXEL_RATIO_PRESETS.map((ratio) => (
-                            <option key={ratio} value={ratio}>
-                              {ratio}x
+                          Fuente
+                        </label>
+                        <select
+                          id="experimental-data-source"
+                          value={selectedDataSourceId}
+                          onChange={(e) => {
+                            setSelectedDataSourceId(
+                              e.target.value as ExperimentalDataSourceId
+                            );
+                            setExperimentalImportError(null);
+                          }}
+                          disabled={isExperimentalImporting}
+                          className={inputField}
+                        >
+                          {EXPERIMENTAL_DATA_SOURCES.map((source) => (
+                            <option
+                              key={source.id}
+                              value={source.id}
+                              disabled={!source.enabled}
+                            >
+                              {source.label}
+                              {!source.enabled ? " (próximamente)" : ""}
                             </option>
                           ))}
                         </select>
-                      </label>
-                      <label className="inline-flex items-center gap-1.5">
-                        <span>sampleStep</span>
-                        <select
-                          value={chartExportSampleStep}
-                          disabled={!hasChartContent}
-                          onChange={(event) =>
-                            setChartExportSampleStep(
-                              resolveChartExportSampleStep(
-                                Number(event.target.value)
-                              )
-                            )
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => experimentalFileInputRef.current?.click()}
+                        disabled={
+                          !canImportExperimentalData || isExperimentalImporting
+                        }
+                        className={`${actionBarBtnPrimary} w-full lg:w-auto lg:min-w-[10rem] disabled:opacity-50 disabled:cursor-not-allowed`}
+                        title="Importa CSV, Excel u otros formatos de datos experimentales"
+                        aria-busy={isExperimentalImporting}
+                      >
+                        {isExperimentalImporting
+                          ? "Importando…"
+                          : "Importar datos experimentales"}
+                      </button>
+
+                      <label
+                        className="inline-flex items-center gap-2 text-xs sm:text-sm text-[var(--color-text-primary)] cursor-pointer lg:mb-1"
+                        title="Conserva los análisis seleccionados al cargar un nuevo dataset"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={preserveAnalysisConfiguration}
+                          onChange={(e) =>
+                            setPreserveAnalysisConfiguration(e.target.checked)
                           }
-                          className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-1.5 py-0.5 text-[var(--color-text-primary)]"
-                          title="Muestreo de curvas al exportar PNG/SVG (superficie export; no altera GRAPH)"
-                        >
-                          {CHART_EXPORT_SAMPLE_STEP_PRESETS.map((step) => (
-                            <option key={step} value={step}>
-                              {step}
-                            </option>
-                          ))}
-                        </select>
+                          disabled={isExperimentalImporting}
+                          className={`h-3.5 w-3.5 rounded border-[var(--color-border-default)] text-[var(--color-brand-primary)] ${DS_FOCUS_RING}`}
+                        />
+                        Mantener configuración
                       </label>
+
+                      <input
+                        ref={experimentalFileInputRef}
+                        type="file"
+                        accept={experimentalFileAccept || undefined}
+                        className="hidden"
+                        onChange={handleExperimentalImport}
+                        disabled={isExperimentalImporting}
+                      />
                     </div>
-                    {!hasChartContent ? (
-                      <p className="mb-2 text-[11px] text-[var(--color-text-muted)]">
-                        PNG/SVG requieren contenido en el gráfico principal.
+
+                    {isExperimentalImporting ? (
+                      <p
+                        className="mt-2 text-xs font-medium text-[var(--color-brand-primary)]"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        Leyendo archivo experimental…
                       </p>
                     ) : null}
-                    <div className={actionBarGroup}>
-                      <button
-                        type="button"
-                        onClick={exportChartPng}
-                        disabled={!hasChartContent}
-                        title="Exportar PNG"
-                        className={actionBarBtnExport}
-                      >
-                        PNG
-                      </button>
-                      <button
-                        type="button"
-                        onClick={exportChartSvg}
-                        disabled={!hasChartContent}
-                        title="Exportar SVG"
-                        className={actionBarBtnExport}
-                      >
-                        SVG
-                      </button>
-                      <button
-                        type="button"
-                        onClick={exportChartJson}
-                        title="Exportar configuración del gráfico (no es exportación científica numérica)"
-                        className={actionBarBtnExport}
-                      >
-                        Configuración JSON
-                      </button>
-                    </div>
-                  </div>
 
-                  <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-canvas)]/40 p-3">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                      Exportaciones individuales · documento
-                    </p>
-                    <div className={actionBarGroup}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void handleExportScientificReportPdf();
-                        }}
-                        disabled={
-                          scientificReportPdfExporting ||
-                          publicationPackLiteExporting
-                        }
-                        title="Exportar reporte científico en PDF"
-                        className={`${actionBarBtnExport} disabled:cursor-not-allowed disabled:opacity-50`}
-                      >
-                        {scientificReportPdfExporting
-                          ? "Exportando PDF..."
-                          : "📄 Exportar PDF"}
-                      </button>
-                    </div>
-                    {scientificReportPdfMessage && (
-                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-                        {scientificReportPdfMessage}
+                    {experimentalImportError && (
+                      <p className={`mt-2 ${alertError}`} role="alert">
+                        {experimentalImportError}
                       </p>
                     )}
-                  </div>
-                </div>
-              </NotebookSection>
 
-              {profileShowsReportsCopyPanel(labUsageProfile) ? (
-              <NotebookSection
-                title="Copiar contenido"
-                icon="📋"
-                subtitle="Portapapeles para reporte, interpretación y asistente"
-                defaultOpen={false}
-              >
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handleCopyScientificReport();
-                    }}
-                    disabled={!scientificReport}
-                    className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {scientificReportCopied ? "Copiado" : "Copiar reporte"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handleCopyScientificInterpretation();
-                    }}
-                    disabled={!scientificInterpretation}
-                    className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {scientificInterpretationCopied
-                      ? "Copiado"
-                      : "📋 Copiar interpretación"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handleCopyScientificAssistantReport();
-                    }}
-                    disabled={!scientificAssistantReport}
-                    className={`${btnOutline} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {scientificAssistantCopied
-                      ? "Copiado"
-                      : "📋 Copiar análisis"}
-                  </button>
-                </div>
-                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-                  La copia de contenido interpretativo o advisory exige
-                  aprobación investigadora vigente e incluye disclosure de
-                  autoridad generada.
-                </p>
-                {generatedTextCopyMessage ? (
-                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                    {generatedTextCopyMessage}
-                  </p>
-                ) : null}
+                    {lastImportReport ? (
+                      <div className="mt-2 space-y-2">
+                        {!importReportHasIssues ? (
+                          <p
+                            className="rounded-md border border-[var(--color-feedback-success)]/30 bg-[color-mix(in_srgb,var(--color-feedback-success)_16%,var(--color-surface-default))] px-2.5 py-1.5 text-xs font-medium text-[var(--color-feedback-success)]"
+                            role="status"
+                          >
+                            Importación OK · {lastImportReport.importedPointCount}{" "}
+                            puntos · cobertura{" "}
+                            {Math.round(lastImportReport.coverageRatio * 100)}%
+                            {lastImportReport.auditPartial
+                              ? " · auditoría parcial"
+                              : ""}
+                          </p>
+                        ) : (
+                          <p
+                            className="rounded-md border border-[color-mix(in_srgb,var(--color-feedback-warning)_35%,var(--color-border-default))] bg-[color-mix(in_srgb,var(--color-feedback-warning)_16%,var(--color-surface-default))] px-2.5 py-1.5 text-xs font-medium text-[var(--color-feedback-warning)]"
+                            role="status"
+                          >
+                            Importación con avisos ·{" "}
+                            {lastImportReport.importedPointCount} puntos ·{" "}
+                            {lastImportReport.errorCount +
+                              lastImportReport.warningCount}{" "}
+                            avisos
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setImportReportExpanded((expanded) => !expanded)
+                          }
+                          className={`${btnOutlineSm} font-medium`}
+                          aria-expanded={importReportExpanded}
+                        >
+                          {importReportExpanded ? "Ocultar" : "Ver"} informe de
+                          importación
+                          {importReportHasIssues
+                            ? ` (${lastImportReport.errorCount + lastImportReport.warningCount} avisos)`
+                            : ""}
+                        </button>
+                        {importReportExpanded ? (
+                          <ImportReportPanel report={lastImportReport} />
+                        ) : null}
+                      </div>
+                    ) : null}
               </NotebookSection>
+              </div>
+
+              <div
+                data-datos-worksheet=""
+                className={
+                  showCompareStepsBanner
+                    ? "order-[6] mb-2"
+                    : currentDatasetInfo
+                      ? "order-[5] mb-2"
+                      : "order-[12] mb-2"
+                }
+              >
+                <ScientificWorksheetPanel
+                  series={experimentalSeries}
+                  modified={worksheetModified}
+                  onSeriesChange={handleWorksheetSeriesChange}
+                  onWorksheetPayloadChange={handleWorksheetPayloadChange}
+                  auxiliaryColumns={activeAuxiliaryColumns}
+                  initialColumnRegistry={activeColumnRegistry}
+                  btnOutlineSm={btnOutlineSm}
+                  btnPrimary={btnPrimary}
+                  inputField={inputField}
+                  fieldLabel={fieldLabel}
+                  dataEmptyState={dataEmptyState}
+                  datasetResetKey={activeDatasetId}
+                />
+              </div>
+
+              {currentDatasetInfo ? (
+                <div className="order-[21] mb-2">
+                <NotebookSection
+                  title="Archivo activo"
+                  subtitle={currentDatasetInfo.importedAt}
+                  defaultOpen={false}
+                  badge={`${currentDatasetInfo.observationCount} obs.`}
+                >
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-[var(--color-text-primary)]">
+                    <p>
+                      <span className="font-semibold">Series:</span>{" "}
+                      <span className="tabular-nums">
+                        {currentDatasetInfo.seriesCount}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="font-semibold">Observaciones:</span>{" "}
+                      <span className="tabular-nums">
+                        {currentDatasetInfo.observationCount}
+                      </span>
+                    </p>
+                  </div>
+                </NotebookSection>
+                </div>
               ) : null}
 
-              {profileShowsScientificReport(labUsageProfile) &&
-                !showScientificReport &&
-                !showScientificInterpretation &&
-                !showScientificAssistant && (
-                  <p className={emptyState}>
-                    Active reporte, interpretación o asistente en la pestaña
-                    Análisis para ver contenido aquí.
-                  </p>
-                )}
+              {sessionDatasets.length > 0 ? (
+              <div className={currentDatasetInfo ? "order-[22] mb-2" : "order-[11] mb-2"}>
+              <NotebookSection
+                title="Datasets en sesión"
+                icon="📚"
+                subtitle="Active o envíe a slots sin reimportar"
+                defaultOpen={!currentDatasetInfo}
+                badge={String(sessionDatasets.length)}
+              >
+                <SessionDatasetPanel
+                  datasets={sessionDatasets}
+                  activeDatasetId={activeDatasetId}
+                  slotADatasetKey={slotADatasetKey}
+                  slotBDatasetKey={slotBDatasetKey}
+                  onActivate={activateSessionDataset}
+                  onSendToSlot={sendSessionDatasetToSlot}
+                  onRemove={removeSessionDataset}
+                  onViewReport={viewSessionDatasetReport}
+                  btnOutlineSm={btnOutlineSm}
+                  btnPrimary={btnPrimary}
+                  dataEmptyState={dataEmptyState}
+                  persistenceBadge={persistenceBadge}
+                />
+              </NotebookSection>
+              </div>
+              ) : null}
+
+              {experimentalSeries.length > 0 ? (
+              <div className="order-[23] mb-2">
+              <NotebookSection
+                title="Series del dataset"
+                icon="📊"
+                subtitle={`${experimentalSeries.length} series · ${experimentalSeries.reduce(
+                  (total, series) => total + series.points.length,
+                  0
+                )} puntos`}
+                defaultOpen={false}
+                badge={String(experimentalSeries.length)}
+              >
+                    {experimentalSeries.length > 3 ? (
+                        <div className="overflow-x-auto -mx-1 px-1">
+                          <table className="w-full text-xs sm:text-sm">
+                            <thead>
+                              <tr className="text-left text-[var(--color-text-muted)]">
+                                <th className="py-1 pr-2 font-medium">Serie</th>
+                                <th className="py-1 pr-2 font-medium">Puntos</th>
+                                <th className="py-1 font-medium text-right">
+                                  Acción
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {experimentalSeries.map((series) => (
+                                <tr
+                                  key={series.id}
+                                  className="border-t border-[var(--color-border-default)]"
+                                >
+                                  <td className="py-1 pr-2 text-[var(--color-text-primary)]">
+                                    {series.name}
+                                  </td>
+                                  <td className="py-1 pr-2 text-[var(--color-text-muted)]">
+                                    {series.points.length}
+                                  </td>
+                                  <td className="py-1 text-right">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        removeExperimentalSeries(series.id)
+                                      }
+                                      className={`${btnOutlineSm} text-[var(--color-feedback-danger)] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] hover:bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))]`}
+                                    >
+                                      Eliminar
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <ul className="space-y-1">
+                          {experimentalSeries.map((series) => (
+                            <li
+                              key={series.id}
+                              className="flex flex-wrap items-center justify-between gap-1.5 rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-2 py-1 text-xs sm:text-sm text-[var(--color-text-primary)]"
+                            >
+                              <span>
+                                {series.name}{" "}
+                                <span className="text-[var(--color-text-muted)]">
+                                  ({series.points.length} pts)
+                                </span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeExperimentalSeries(series.id)
+                                }
+                                className={`${btnOutlineSm} text-[var(--color-feedback-danger)] border-[color-mix(in_srgb,var(--color-feedback-danger)_35%,var(--color-border-default))] hover:bg-[color-mix(in_srgb,var(--color-feedback-danger)_14%,var(--color-surface-default))]`}
+                              >
+                                Eliminar
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+              </NotebookSection>
+              </div>
+              ) : null}
+
+              {/* FASE 3 leftover: slots remain in Datos experimental view.
+                  Product Face owner is ProductScreenId(comparar), not this panel. */}
+              {(hasEnoughSeriesForCorrelation || showCompareStepsBanner) &&
+                profileShowsMultiDataset(labUsageProfile) && (
+                <div
+                  className={
+                    showCompareStepsBanner ? "order-[2] mb-2" : "order-[30] mb-2"
+                  }
+                >
+                {compararDatasetsSection}
+                </div>
+              )}
+
+              </div>
+              ) : null}
+
+              {dataWorkspaceView === "curves" ? graphConstructor : null}
+
+              {/* Leftover Avanzado view. Product Face Biblioteca owner is Graph.
+                  Must not redirect Avanzado → Graph. */}
+              {dataWorkspaceView === "advanced" ? functionLibrarySection : null}
+
+              {/* Leftover Datos visual-builder. Product Face owner is ProductScreenId(vgb), not this panel.
+                  Must not run alongside Face VGB (isDatosShell excludes isVgbShell). */}
+              {dataWorkspaceView === "visual-builder" ? visualBuilderSection : null}
+
+              {workbookImportWizard.open && workbookImportWizard.analysis && (
+                <WorkbookImportWizard
+                  open={workbookImportWizard.open}
+                  analysis={workbookImportWizard.analysis}
+                  sourceId={selectedDataSourceId}
+                  onClose={() =>
+                    setWorkbookImportWizard({ open: false, analysis: null })
+                  }
+                  onComplete={handleWorkbookImportComplete}
+                />
+              )}
             </div>
+            </>
+            ) : null}
+          </section>
+
+          <section
+            className={showLegacyAnalysisPanel ? "" : "hidden"}
+            id={workspacePanelId("analysis")}
+            role="tabpanel"
+            aria-labelledby={workspaceTabId("analysis")}
+            aria-hidden={!showLegacyAnalysisPanel}
+            hidden={!showLegacyAnalysisPanel}
+            inert={!showLegacyAnalysisPanel || undefined}
+          >
+            {/* R7 leftover: Análisis tabpanel is not Product Face owner.
+                Evaluar methodology lives on data-product-surface=evaluar-metodologia. */}
+            {showLegacyAnalysisPanel ? analizarAnalysisBody : null}
+          </section>
+
+          <section
+            className={showLegacyResultsPanel ? "" : "hidden"}
+            id={workspacePanelId("results")}
+            role="tabpanel"
+            aria-labelledby={workspaceTabId("results")}
+            aria-hidden={!showLegacyResultsPanel}
+            hidden={!showLegacyResultsPanel}
+            inert={!showLegacyResultsPanel || undefined}
+          >
+            {/* R12 leftover: Resultados tabpanel is not Product Face owner.
+                Results review lives on data-product-surface=results. */}
+            {showLegacyResultsPanel ? resultsReviewBody : null}
+          </section>
+
+          <section
+            className={showLegacyReportsPanel ? "" : "hidden"}
+            id={workspacePanelId("reports")}
+            role="tabpanel"
+            aria-labelledby={workspaceTabId("reports")}
+            aria-hidden={!showLegacyReportsPanel}
+            hidden={!showLegacyReportsPanel}
+            inert={!showLegacyReportsPanel || undefined}
+          >
+            {/* R9 leftover: Reportes tabpanel is not Product Face owner.
+                Reports output lives on data-product-surface=reports. */}
+            {showLegacyReportsPanel ? reportsOutputBody : null}
           </section>
             </>
 
@@ -29141,15 +30073,35 @@ export function GraphEditor({ shareGraphId }: GraphEditorProps) {
   );
 }
 
-export default function Home() {
-  // UX-9.1 — ProductCompositionHost owns WindowManager + FocusProvider composition.
-  // D65.8 — SessionProvider + SessionBridge (silent; windowIds sync only; no persistence).
+/**
+ * Persistent scientific shell. Mounted from the root layout so GraphEditor
+ * survives `/` ↔ product pathname navigations. Share `/graph/[id]` uses the
+ * page slot only (its own GraphEditor).
+ */
+export function ProductWorkspaceShell({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const pathname = usePathname() ?? "/";
+  if (isShareGraphPathname(pathname)) {
+    return <>{children}</>;
+  }
   return (
-    <ProductCompositionHost>
-      <SessionProvider>
-        <SessionBridge />
-        <GraphEditor />
-      </SessionProvider>
-    </ProductCompositionHost>
+    <>
+      <ProductCompositionHost>
+        <SessionProvider>
+          <SessionBridge />
+          <GraphEditor />
+        </SessionProvider>
+      </ProductCompositionHost>
+      {children}
+    </>
   );
+}
+
+export default function Home() {
+  // Composition lives in ProductWorkspaceShell so the App Router page slot
+  // can change (`/` ↔ `/importar`) without remounting GraphEditor.
+  return null;
 }

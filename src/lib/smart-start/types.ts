@@ -1,13 +1,13 @@
 import type { LabUsageProfile } from "@/app/labUsageProfile";
 
-/** Home launcher capability ids (six entries). */
+/** Home launcher capability ids. Count follows the approved Face Card map. */
 export const SMART_START_CARD_OPTION_IDS = [
   "analyze-dataset",
   "compare-datasets",
   "math-graph",
+  "constructor-visual",
   "analyze-workspace",
   "evaluate-publication",
-  "expert-mode",
 ] as const;
 
 export type SmartStartCardOptionId = (typeof SMART_START_CARD_OPTION_IDS)[number];
@@ -85,7 +85,10 @@ export type MethodInterest = {
 export type GuidanceSpeechAct = "use" | "define" | "explore" | "unknown";
 
 /** Verified Home guidance product areas. Not inspector navigation commands. */
-export type GuidanceProductAreaId = "analysis/mathematics" | "analysis/statistics";
+export type GuidanceProductAreaId =
+  | "analysis/mathematics"
+  | "analysis/statistics"
+  | "analysis/inference";
 
 /**
  * User-mentioned scientific vocabulary. Not a Card, not a classifier winner.

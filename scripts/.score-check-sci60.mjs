@@ -57,7 +57,7 @@ async function expandStatisticsInspectorGroups(page) {
 
 async function enableToggles(page) {
   await page.getByRole("tab", { name: "Análisis" }).click();
-  await page.getByRole("tab", { name: "Estadística", exact: true }).click();
+  await page.getByRole("tab", { name: "Descripción y relación", exact: true }).click();
   await expandStatisticsInspectorGroups(page);
   for (const label of [
     "Mostrar Evidence Strength Engine",

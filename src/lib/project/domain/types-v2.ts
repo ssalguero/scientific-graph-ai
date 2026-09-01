@@ -10,6 +10,8 @@ import type {
 } from "@/lib/scientific/comparison/types";
 import type { GraphSpecification } from "@/lib/visualGraphBuilder";
 
+import type { ProductScreenId } from "@/lib/product-navigation/screens";
+
 import type {
   ComparisonSlotIdV1,
   DatasetAnalysisProfileInferentialSnapshotV1,
@@ -115,6 +117,14 @@ export type ProjectVisualGraphPersistedV2 = {
 
 export type ProjectAnalysisConfigV2 = ProjectAnalysisConfigV1;
 
+/**
+ * Additive v2 workspace. `activeSection` remains compatibility.
+ * `productScreen` is the optional Face location (R11). Absent on pre-R11 files.
+ */
+export type ProjectWorkspaceV2 = ProjectWorkspaceV1 & {
+  productScreen?: ProductScreenId;
+};
+
 /** Scientific project domain model — schema v2 (multi-dataset). */
 export type ScientificProjectV2 = {
   metadata: ProjectMetadataV2;
@@ -123,7 +133,7 @@ export type ScientificProjectV2 = {
   analysisConfig: ProjectAnalysisConfigV2;
   workflow: ProjectWorkflowV1;
   comparison: ProjectComparisonV2;
-  workspace: ProjectWorkspaceV1;
+  workspace: ProjectWorkspaceV2;
   graphContext: ProjectGraphContextV1 | null;
   visualGraphs?: ProjectVisualGraphPersistedV2[];
   extensions?: Record<string, unknown>;

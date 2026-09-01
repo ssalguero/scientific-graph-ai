@@ -6,15 +6,14 @@ import type { SessionDataset } from "@/lib/sessionDatasetRegistry";
 import type { ProjectVisualGraphEntry } from "@/lib/visualGraphBuilder";
 
 import type { VisibilityKeyV1 } from "./keys";
+import type { ProjectWorkspaceV2, ScientificProjectV2 } from "./domain/types-v2";
 import type {
   DatasetAnalysisProfileV1,
   ProjectAnalysisModesV1,
   ProjectAnalysisSelectionsV1,
   ProjectImportedDatasetInfo,
   ProjectMetadataV1,
-  ProjectWorkspaceV1,
 } from "./types";
-import type { ScientificProjectV2 } from "./domain/types-v2";
 
 export type EditorComparisonProfileV2Collect = DatasetAnalysisProfileV1;
 
@@ -44,7 +43,7 @@ export type EditorProjectCollectContextV2 = {
     A: EditorComparisonSlotCollect;
     B: EditorComparisonSlotCollect;
   };
-  workspace: ProjectWorkspaceV1;
+  workspace: ProjectWorkspaceV2;
   title: string;
   minX: number;
   maxX: number;

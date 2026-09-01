@@ -298,7 +298,7 @@ assertCase(
   /ANALYSIS_INSPECTOR_CATEGORIES/.test(pageSource) &&
     /getAnalysisInspectorPanelClass/.test(pageSource) &&
     /Inspector contextual/.test(pageSource) &&
-    /Categorías del inspector/.test(pageSource),
+    /Dominios científicos del análisis/.test(pageSource),
   "Analysis Inspector markers remain in page.tsx"
 );
 

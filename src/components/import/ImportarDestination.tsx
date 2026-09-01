@@ -64,21 +64,20 @@ const FORMAT_EXTENSIONS: Record<ImportarFormat, readonly string[]> = {
 
 const PINK = capabilityAccentCssVar("pink");
 
-const continueSecondaryClass = [
+const nextActionPrimaryClass = [
   "inline-flex h-11 items-center justify-center rounded-2xl",
-  "bg-transparent px-5",
-  "text-[length:var(--typography-body-lg-font-size)] font-medium",
-  "text-[var(--color-text-muted)]",
-  "disabled:cursor-not-allowed disabled:opacity-40",
+  "px-5 text-[length:var(--typography-body-lg-font-size)] font-semibold",
+  "text-[var(--color-text-inverse)] min-w-[8.5rem]",
   DS_FOCUS_RING,
   DS_MOTION_FEEDBACK,
 ].join(" ");
 
-const continuePrimaryClass = [
-  "inline-flex h-12 items-center justify-center rounded-2xl",
-  "px-10 text-[length:var(--typography-body-lg-font-size)] font-semibold",
-  "text-[var(--color-text-inverse)] min-w-[14rem]",
-  "disabled:cursor-not-allowed disabled:opacity-50",
+const nextActionSecondaryClass = [
+  "inline-flex h-11 items-center justify-center rounded-2xl",
+  "px-5 text-[length:var(--typography-body-lg-font-size)] font-medium",
+  "min-w-[8.5rem]",
+  "border border-[var(--color-border-default)]",
+  "bg-[var(--color-surface-default)] text-[var(--color-text-primary)]",
   DS_FOCUS_RING,
   DS_MOTION_FEEDBACK,
 ].join(" ");
@@ -130,6 +129,53 @@ function fileMatchesFormat(fileName: string, format: ImportarFormat): boolean {
   return FORMAT_EXTENSIONS[format].some((ext) => lower.endsWith(ext));
 }
 
+const IMPORTAR_NEXT_SCREENS = [
+  { screen: "analizar" as const, label: "Analizar", prominence: "primary" as const },
+  { screen: "comparar" as const, label: "Comparar", prominence: "secondary" as const },
+  { screen: "graph" as const, label: "Gráfico y=f(x)", prominence: "secondary" as const },
+  { screen: "vgb" as const, label: "Constructor Visual", prominence: "secondary" as const },
+];
+
+function ImportarNextActions({
+  onOpenProductScreen,
+}: {
+  onOpenProductScreen: (
+    screen: "analizar" | "comparar" | "graph" | "vgb"
+  ) => void;
+}) {
+  return (
+    <div
+      className="mt-2 flex w-full min-w-0 flex-col items-center gap-2 [@media(max-height:720px)]:mt-1"
+      data-importar-next-actions=""
+    >
+      <p className="text-[length:var(--typography-body-font-size)] text-[var(--color-text-muted)]">
+        Siguiente acción
+      </p>
+      <div className="flex w-full min-w-0 flex-wrap items-center justify-center gap-2">
+        {IMPORTAR_NEXT_SCREENS.map((action) => (
+          <button
+            key={action.screen}
+            type="button"
+            className={
+              action.prominence === "primary"
+                ? nextActionPrimaryClass
+                : nextActionSecondaryClass
+            }
+            style={
+              action.prominence === "primary"
+                ? { backgroundColor: PINK }
+                : undefined
+            }
+            onClick={() => onOpenProductScreen(action.screen)}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const PREVIEW_ROW_LIMIT = 6;
 
 type ImportPreviewRow = {
@@ -170,7 +216,9 @@ type ImportarDestinationProps = {
   currentDatasetInfo: ComparisonDatasetInfo | null;
   experimentalSeries: readonly ExperimentalSeries[];
   onImportFile: (event: ChangeEvent<HTMLInputElement>) => void;
-  onContinueToDatos: () => void;
+  onOpenProductScreen: (
+    screen: "analizar" | "comparar" | "graph" | "vgb"
+  ) => void;
   workbookWizard: {
     open: boolean;
     analysis: WorkbookAnalysis | null;
@@ -197,7 +245,7 @@ export function ImportarDestination({
   currentDatasetInfo,
   experimentalSeries,
   onImportFile,
-  onContinueToDatos,
+  onOpenProductScreen,
   workbookWizard,
   onCloseWizard,
   onWizardComplete,
@@ -368,7 +416,7 @@ export function ImportarDestination({
         }
       >
         <h2 className="text-[36px] font-semibold leading-tight tracking-tight text-[var(--color-text-primary)]">
-          {datasetReady ? "Datos listos" : "Importar"}
+          Importar
         </h2>
         {datasetReady ? (
           <>
@@ -428,7 +476,7 @@ export function ImportarDestination({
 
   return (
     <div
-      className={`mx-auto flex w-full max-w-[48rem] flex-col items-center px-[var(--spacing-default)] py-2 text-center ${DS_MOTION_ENTER}`}
+      className={`mx-auto flex w-full max-w-[48rem] min-w-0 flex-col items-center overflow-x-hidden px-[var(--spacing-default)] py-2 text-center ${DS_MOTION_ENTER}`}
       data-importar-destination=""
       aria-label="Importar"
       style={capabilityAccentBridgeStyle}
@@ -525,15 +573,6 @@ export function ImportarDestination({
               {formatReject ?? importError}
             </p>
           ) : null}
-
-          <button
-            type="button"
-            className={`mt-2 ${continueSecondaryClass}`}
-            onClick={onContinueToDatos}
-            disabled
-          >
-            Continuar a Datos
-          </button>
         </>
       ) : (
         <div
@@ -679,14 +718,7 @@ export function ImportarDestination({
               : "Importación completada"}
           </p>
 
-          <button
-            type="button"
-            className={`mt-2 [@media(max-height:720px)]:mt-1 ${continuePrimaryClass}`}
-            style={{ backgroundColor: PINK }}
-            onClick={onContinueToDatos}
-          >
-            Continuar a Datos
-          </button>
+          <ImportarNextActions onOpenProductScreen={onOpenProductScreen} />
 
           <button
             type="button"

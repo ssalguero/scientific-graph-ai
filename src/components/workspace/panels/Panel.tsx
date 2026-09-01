@@ -34,6 +34,8 @@ export type PanelProps = {
  * Layout freeze: flex flex-col min-h-0 overflow-hidden.
  * Collapsed freeze: left/right width 0; bottom height 0; overflow-hidden.
  * Children always remain mounted (collapse = geometry only).
+ * R13 — collapsed panels stay mounted for IDE recovery but are inert /
+ * aria-hidden so they do not compete with Product Face navigation.
  */
 export function Panel({
   title,
@@ -85,6 +87,8 @@ export function Panel({
       data-panel-active={isActive ? "true" : "false"}
       data-panel-collapsed={collapsed ? "true" : "false"}
       aria-label={title}
+      aria-hidden={collapsed || undefined}
+      inert={collapsed || undefined}
       style={style}
       className={`flex shrink-0 flex-col min-h-0 overflow-hidden border bg-[var(--color-surface-default)] transition-[colors,box-shadow] duration-[var(--motion-enter-duration)] ease-[var(--motion-enter-easing)] ${activeClass} ${responsiveHide} ${animatedClass}`}
     >

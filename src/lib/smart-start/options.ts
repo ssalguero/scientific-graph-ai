@@ -5,6 +5,8 @@ export type SmartStartOption = {
   title: string;
   description: string;
   actionLabel: string;
+  /** Visible Home hint: which Product Screen the Card opens. */
+  destinationHint: string;
   /** Product Face hierarchy hint — presentation only (CRP-6.1 / 6.3). */
   prominence?: "primary" | "secondary" | "supporting";
 };
@@ -12,46 +14,53 @@ export type SmartStartOption = {
 export const SMART_START_OPTIONS: SmartStartOption[] = [
   {
     id: "analyze-dataset",
-    title: "Importar",
-    description: "Incorpora tus datos para comenzar.",
+    title: "Importar datos",
+    description: "Incorporá un archivo experimental y empezá el flujo de datos.",
     actionLabel: "Empezar con datos",
+    destinationHint: "Abre Importar",
     prominence: "primary",
   },
   {
     id: "compare-datasets",
-    title: "Comparar",
-    description: "Compara grupos, conjuntos o resultados.",
+    title: "Comparar datos",
+    description: "Compará grupos o datasets. La revisión queda en Resultados.",
     actionLabel: "Abrir comparación",
+    destinationHint: "Abre Comparar",
     prominence: "secondary",
   },
   {
     id: "math-graph",
     title: "Gráfico y=f(x)",
     description:
-      "Expresiones y funciones matemáticas y=f(x). La visualización queda en Resultados. No abre el Constructor Visual.",
+      "Formulá expresiones matemáticas y=f(x). Distinto del Constructor Visual.",
     actionLabel: "Abrir y=f(x)",
+    destinationHint: "Abre Gráfico y=f(x)",
+    prominence: "secondary",
+  },
+  {
+    id: "constructor-visual",
+    title: "Constructor Visual",
+    description:
+      "Armá una figura visual de trabajo desde datos. Distinto de y=f(x).",
+    actionLabel: "Abrir Constructor Visual",
+    destinationHint: "Abre Constructor Visual",
     prominence: "secondary",
   },
   {
     id: "analyze-workspace",
     title: "Analizar",
-    description: "Analiza tus datos y encuentra patrones.",
+    description: "Configurá métodos y parámetros. La lectura está en Resultados.",
     actionLabel: "Ir a Análisis",
+    destinationHint: "Abre Analizar",
     prominence: "secondary",
   },
   {
     id: "evaluate-publication",
     title: "Evaluar metodología",
     description:
-      "Indicadores SCI-50→60 para preparación metodológica. No publica una figura VGB.",
+      "Indicadores SCI-50→60 de preparación metodológica. No publica una figura VGB.",
     actionLabel: "Iniciar evaluación",
+    destinationHint: "Abre Evaluar metodología",
     prominence: "secondary",
-  },
-  {
-    id: "expert-mode",
-    title: "Avanzado",
-    description: "Accede a herramientas y opciones avanzadas.",
-    actionLabel: "Abrir avanzado",
-    prominence: "supporting",
   },
 ];

@@ -5,7 +5,7 @@ import type { MethodInterest, UserConcept } from "./types";
 type ConceptEntry = {
   conceptId: string;
   userTerm: string;
-  productAreaId: "analysis/mathematics" | "analysis/statistics";
+  productAreaId: "analysis/mathematics" | "analysis/statistics" | "analysis/inference";
   aliases: readonly string[];
 };
 
@@ -36,7 +36,7 @@ const CONCEPT_CATALOG: readonly ConceptEntry[] = [
   {
     conceptId: "anova",
     userTerm: "ANOVA",
-    productAreaId: "analysis/statistics",
+    productAreaId: "analysis/inference",
     aliases: ["anova"],
   },
   {
@@ -165,15 +165,15 @@ export function formatConceptLocationCopy(concepts: UserConcept[]): string {
   }
   if (ids.has("pearson") || ids.has("correlation")) {
     sentences.push(
-      "Pearson es una opción de método en Análisis (Estadística), dentro de correlación."
+      "Pearson es una opción de método en Analizar → Descripción y relación, dentro de correlación."
     );
   }
   if (ids.has("anova")) {
-    sentences.push("ANOVA está en Análisis → Estadística → Esencial.");
+    sentences.push("ANOVA está en Analizar → Inferencia → Pruebas de grupos.");
   }
   if (ids.has("descriptive") || ids.has("distribution")) {
     sentences.push(
-      "Las herramientas descriptivas y de distribución están en Análisis (Estadística)."
+      "Las herramientas descriptivas y de distribución están en Analizar → Descripción y relación."
     );
   }
   if (ids.has("unknown")) {

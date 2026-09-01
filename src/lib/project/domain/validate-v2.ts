@@ -1,3 +1,4 @@
+import { isProductScreenId } from "@/lib/product-navigation/screens";
 import {
   CONTROL_PANEL_TABS,
   INSPECTOR_SECTIONS,
@@ -1178,6 +1179,20 @@ export const validateScientificProjectV2 = (
     pushDomainIssue(
       errors,
       domainIssue("V2-WS-TAB", "workspace.controlPanelTab", "Invalid control panel tab")
+    );
+  }
+
+  if (
+    workspace.productScreen !== undefined &&
+    !isProductScreenId(workspace.productScreen)
+  ) {
+    pushDomainIssue(
+      errors,
+      domainIssue(
+        "V2-WS-PRODUCT-SCREEN",
+        "workspace.productScreen",
+        "Invalid ProductScreenId"
+      )
     );
   }
 

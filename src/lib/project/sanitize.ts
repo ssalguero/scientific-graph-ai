@@ -1,3 +1,4 @@
+import { isProductScreenId } from "@/lib/product-navigation/screens";
 import { GUIDED_WORKFLOW_IDLE_SESSION } from "@/lib/scientific/workflow/catalog";
 import type { GuidedWorkflowSession } from "@/lib/scientific/workflow/types";
 
@@ -21,6 +22,7 @@ import type {
   ProjectWorkspaceV1,
   ScientificProjectV1,
 } from "./types";
+import type { ProjectWorkspaceV2 } from "./domain/types-v2";
 import {
   GUIDED_WORKFLOW_TEMPLATE_IDS,
   GUIDED_WORKFLOW_STATUS_VALUES,
@@ -202,7 +204,7 @@ export const sanitizeWorkflowSession = (
 export const sanitizeWorkspace = (
   workspace: ProjectWorkspaceV1,
   warnings: ProjectValidationIssue[]
-): ProjectWorkspaceV1 => {
+): ProjectWorkspaceV2 => {
   const enabledModules = { ...workspace.enabledModules };
   for (const key of MODULE_KEYS_V1) {
     if (typeof enabledModules[key] !== "boolean") {
@@ -285,11 +287,30 @@ export const sanitizeWorkspace = (
     );
   }
 
+  const candidateScreen = (workspace as ProjectWorkspaceV2).productScreen;
+  let productScreen: ProjectWorkspaceV2["productScreen"];
+  if (candidateScreen !== undefined) {
+    if (isProductScreenId(candidateScreen)) {
+      productScreen = candidateScreen;
+    } else {
+      pushIssue(
+        warnings,
+        issue(
+          "H-WS-PRODUCT-SCREEN",
+          "workspace.productScreen",
+          "Invalid ProductScreenId — omitted; restore uses activeSection fallback",
+          "warning"
+        )
+      );
+    }
+  }
+
   return {
     activeSection,
     inspectorSection,
     enabledModules,
     controlPanelTab,
+    ...(productScreen !== undefined ? { productScreen } : {}),
   };
 };
 

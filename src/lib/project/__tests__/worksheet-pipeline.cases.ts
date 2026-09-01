@@ -316,6 +316,7 @@ export const runWorksheetPipelineCaseSuite = (): CaseResult[] => {
     setGuidedWorkflowSession: () => undefined,
     setComparisonSlots: () => undefined,
     setActiveWorkspaceSection: () => undefined,
+    setProductScreen: () => undefined,
     setAnalysisInspectorSection: () => undefined,
     setEnabledModules: () => undefined,
     setControlPanelTab: () => undefined,

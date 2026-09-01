@@ -12,7 +12,7 @@ export const SMART_START_WORKSPACE_ICON: Record<
   "analyze-dataset": "cap-import",
   "compare-datasets": "cap-compare",
   "math-graph": "cap-graph",
+  "constructor-visual": "cap-advanced",
   "analyze-workspace": "cap-analyze",
   "evaluate-publication": "cap-publish",
-  "expert-mode": "cap-advanced",
 };
